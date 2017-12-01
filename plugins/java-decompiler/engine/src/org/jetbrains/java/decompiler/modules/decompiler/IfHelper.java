@@ -61,9 +61,7 @@ public class IfHelper {
     return res;
   }
 
-
   public static boolean mergeIfs(Statement statement, HashSet<Integer> setReorderedIfs) {
-
     if (statement.type != Statement.TYPE_IF && statement.type != Statement.TYPE_SEQUENCE) {
       return false;
     }
@@ -71,7 +69,6 @@ public class IfHelper {
     boolean res = false;
 
     while (true) {
-
       boolean updated = false;
 
       List<Statement> lst = new ArrayList<>();
@@ -85,7 +82,6 @@ public class IfHelper {
       boolean stsingle = (lst.size() == 1);
 
       for (Statement stat : lst) {
-
         if (stat.type == Statement.TYPE_IF) {
           IfNode rtnode = buildGraph((IfStatement)stat, stsingle);
 
@@ -98,7 +94,6 @@ public class IfHelper {
           }
 
           if (!setReorderedIfs.contains(stat.id)) {
-
             if (updated = collapseIfElse(rtnode)) {
               break;
             }
@@ -119,14 +114,13 @@ public class IfHelper {
         break;
       }
 
-      res |= updated;
+      res |= true;
     }
 
     return res;
   }
 
   private static boolean collapseIfIf(IfNode rtnode) {
-
     if (rtnode.edgetypes.get(0) == 0) {
       IfNode ifbranch = rtnode.succs.get(0);
       if (ifbranch.succs.size() == 2) {
@@ -144,7 +138,7 @@ public class IfHelper {
             ifchild.removeSuccessor(ifchild.getAllSuccessorEdges().get(0));
             ifparent.getStats().removeWithKey(ifchild.id);
 
-            if (ifbranch.edgetypes.get(0).intValue() == 1) { // target null
+            if (ifbranch.edgetypes.get(0) == 1) { // target null
 
               ifparent.setIfstat(null);
 
@@ -200,7 +194,7 @@ public class IfHelper {
 
   private static boolean collapseIfElse(IfNode rtnode) {
 
-    if (rtnode.edgetypes.get(0).intValue() == 0) {
+    if (rtnode.edgetypes.get(0) == 0) {
       IfNode ifbranch = rtnode.succs.get(0);
       if (ifbranch.succs.size() == 2) {
 
@@ -216,8 +210,8 @@ public class IfHelper {
             ifchild.getFirst().removeSuccessor(ifchild.getIfEdge());
             ifparent.getStats().removeWithKey(ifchild.id);
 
-            if (ifbranch.edgetypes.get(1).intValue() == 1 &&
-                ifbranch.edgetypes.get(0).intValue() == 1) { // target null
+            if (ifbranch.edgetypes.get(1) == 1 &&
+                ifbranch.edgetypes.get(0) == 1) { // target null
 
               ifparent.setIfstat(null);
 
@@ -254,7 +248,7 @@ public class IfHelper {
 
   private static boolean collapseElse(IfNode rtnode) {
 
-    if (rtnode.edgetypes.get(1).intValue() == 0) {
+    if (rtnode.edgetypes.get(1) == 0) {
       IfNode elsebranch = rtnode.succs.get(1);
       if (elsebranch.succs.size() == 2) {
 
@@ -419,16 +413,14 @@ public class IfHelper {
     return res;
   }
 
-
   // FIXME: rewrite the entire method!!! keep in mind finally exits!!
   private static boolean reorderIf(IfStatement ifstat) {
-
     if (ifstat.iftype == IfStatement.IFTYPE_IFELSE) {
       return false;
     }
 
-    boolean ifdirect = false, elsedirect = false;
-    boolean noifstat = false, noelsestat = false;
+    boolean ifdirect, elsedirect;
+    boolean noifstat = false, noelsestat;
     boolean ifdirectpath = false, elsedirectpath = false;
 
     Statement parent = ifstat.getParent();
@@ -439,32 +431,20 @@ public class IfHelper {
     if (ifstat.getIfstat() == null) {
       noifstat = true;
 
-      if (ifstat.getIfEdge().getType() == StatEdge.TYPE_FINALLYEXIT) {
-        ifdirect = true;
-      }
-      else {
-        ifdirect = MergeHelper.isDirectPath(from, ifstat.getIfEdge().getDestination());
-      }
+      ifdirect = ifstat.getIfEdge().getType() == StatEdge.TYPE_FINALLYEXIT ||
+                 MergeHelper.isDirectPath(from, ifstat.getIfEdge().getDestination());
     }
     else {
       List<StatEdge> lstSuccs = ifstat.getIfstat().getAllSuccessorEdges();
-      if (!lstSuccs.isEmpty() && lstSuccs.get(0).getType() == StatEdge.TYPE_FINALLYEXIT) {
-        ifdirect = true;
-      }
-      else {
-        ifdirect = hasDirectEndEdge(ifstat.getIfstat(), from);
-      }
+      ifdirect = !lstSuccs.isEmpty() && lstSuccs.get(0).getType() == StatEdge.TYPE_FINALLYEXIT ||
+                 hasDirectEndEdge(ifstat.getIfstat(), from);
     }
 
     Statement last = parent.type == Statement.TYPE_SEQUENCE ? parent.getStats().getLast() : ifstat;
     noelsestat = (last == ifstat);
 
-    if (!last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_FINALLYEXIT) {
-      elsedirect = true;
-    }
-    else {
-      elsedirect = hasDirectEndEdge(last, from);
-    }
+    elsedirect = !last.getAllSuccessorEdges().isEmpty() && last.getAllSuccessorEdges().get(0).getType() == StatEdge.TYPE_FINALLYEXIT ||
+                 hasDirectEndEdge(last, from);
 
     if (!noelsestat && existsPath(ifstat, ifstat.getAllSuccessorEdges().get(0).getDestination())) {
       return false;

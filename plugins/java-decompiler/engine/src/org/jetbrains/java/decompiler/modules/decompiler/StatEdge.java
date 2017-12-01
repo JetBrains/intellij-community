@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StatEdge {
-
-  public static final int TYPE_ALL = 0xFF;
-
   public static final int TYPE_REGULAR = 1;
   public static final int TYPE_EXCEPTION = 2;
   public static final int TYPE_BREAK = 4;

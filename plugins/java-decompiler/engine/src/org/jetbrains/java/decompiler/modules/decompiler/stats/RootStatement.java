@@ -5,13 +5,10 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
-
 public class RootStatement extends Statement {
-
-  private DummyExitStatement dummyExit;
+  private final DummyExitStatement dummyExit;
 
   public RootStatement(Statement head, DummyExitStatement dummyExit) {
-
     type = Statement.TYPE_ROOT;
 
     first = head;
@@ -27,9 +24,5 @@ public class RootStatement extends Statement {
 
   public DummyExitStatement getDummyExit() {
     return dummyExit;
-  }
-
-  public void setDummyExit(DummyExitStatement dummyExit) {
-    this.dummyExit = dummyExit;
   }
 }

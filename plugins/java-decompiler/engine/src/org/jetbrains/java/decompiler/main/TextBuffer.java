@@ -56,7 +56,8 @@ public class TextBuffer {
   }
 
   public TextBuffer prepend(String s) {
-    insert(0, s);
+    myStringBuilder.insert(0, s);
+    shiftMapping(s.length());
     return this;
   }
 
@@ -167,20 +168,15 @@ public class TextBuffer {
     return myStringBuilder.length();
   }
 
-  public String substring(int start) {
-    return myStringBuilder.substring(start);
-  }
-
-  public TextBuffer setStart(int position) {
+  public void setStart(int position) {
     myStringBuilder.delete(0, position);
-    shiftMapping(0, -position);
-    return this;
+    shiftMapping(-position);
   }
 
   public void setLength(int position) {
     myStringBuilder.setLength(position);
     if (myLineToOffsetMapping != null) {
-      HashMap<Integer, Integer> newMap = new HashMap<>();
+      Map<Integer, Integer> newMap = new HashMap<>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
         if (entry.getValue() <= position) {
           newMap.put(entry.getKey(), entry.getValue());
@@ -201,12 +197,12 @@ public class TextBuffer {
     return this;
   }
 
-  private void shiftMapping(int startOffset, int shiftOffset) {
+  private void shiftMapping(int shiftOffset) {
     if (myLineToOffsetMapping != null) {
-      HashMap<Integer, Integer> newMap = new HashMap<>();
+      Map<Integer, Integer> newMap = new HashMap<>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
         int newValue = entry.getValue();
-        if (newValue >= startOffset) {
+        if (newValue >= 0) {
           newValue += shiftOffset;
         }
         if (newValue >= 0) {
@@ -221,12 +217,6 @@ public class TextBuffer {
     if (myLineToOffsetMapping == null) {
       myLineToOffsetMapping = new HashMap<>();
     }
-  }
-
-  public TextBuffer insert(int offset, String s) {
-    myStringBuilder.insert(offset, s);
-    shiftMapping(offset, s.length());
-    return this;
   }
 
   public int countLines() {
@@ -283,11 +273,7 @@ public class TextBuffer {
       myLineMapping = new HashMap<>();
       for (int i = 0; i < lineMapping.length; i += 2) {
         int key = lineMapping[i + 1];
-        Set<Integer> existing = myLineMapping.get(key);
-        if (existing == null) {
-          existing = new TreeSet<>();
-          myLineMapping.put(key, existing);
-        }
+        Set<Integer> existing = myLineMapping.computeIfAbsent(key, k -> new TreeSet<>());
         existing.add(lineMapping[i]);
       }
     }

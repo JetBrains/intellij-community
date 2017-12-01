@@ -103,18 +103,10 @@ public class ClassesProcessor {
                   }
 
                   // reference to the nested class
-                  Set<String> set = mapNestedClassReferences.get(enclClassName);
-                  if (set == null) {
-                    mapNestedClassReferences.put(enclClassName, set = new HashSet<>());
-                  }
-                  set.add(innerName);
+                  mapNestedClassReferences.computeIfAbsent(enclClassName, k1 -> new HashSet<>()).add(innerName);
 
                   // reference to the enclosing class
-                  set = mapEnclosingClassReferences.get(innerName);
-                  if (set == null) {
-                    mapEnclosingClassReferences.put(innerName, set = new HashSet<>());
-                  }
-                  set.add(enclClassName);
+                  mapEnclosingClassReferences.computeIfAbsent(innerName, k -> new HashSet<>()).add(enclClassName);
                 }
               }
             }
@@ -281,7 +273,7 @@ public class ClassesProcessor {
     }
   }
 
-  private static void initWrappers(ClassNode node) throws IOException {
+  private static void initWrappers(ClassNode node) {
     if (node.type == ClassNode.CLASS_LAMBDA) {
       return;
     }
@@ -355,7 +347,6 @@ public class ClassesProcessor {
 
       lambdaInformation = new LambdaInformation();
 
-      lambdaInformation.class_name = lambda_class_name;
       lambdaInformation.method_name = lambda_method_name;
       lambdaInformation.method_descriptor = lambda_method_descriptor;
 
@@ -405,7 +396,6 @@ public class ClassesProcessor {
     }
 
     public static class LambdaInformation {
-      public String class_name;
       public String method_name;
       public String method_descriptor;
 

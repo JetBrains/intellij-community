@@ -1,13 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.match;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.FunctionExprent;
@@ -16,6 +9,8 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+
+import java.util.*;
 
 
 public class MatchEngine {
@@ -114,9 +109,9 @@ public class MatchEngine {
         MatchProperties property = (node_type == MatchNode.MATCHNODE_STATEMENT ? stat_properties : expr_properties).get(values[0]);
         if(property == null) { // unknown property defined
           throw new RuntimeException("Unknown matching property");
-        } else {
-
-          Object value = null;
+        }
+        else {
+          Object value;
           int parameter = 0;
 
           String strValue = values[1];
@@ -222,19 +217,17 @@ public class MatchEngine {
   }
 
   public boolean checkAndSetVariableValue(String name, Object value) {
-
     Object old_value = variables.get(name);
-    if(old_value == null) {
-      variables.put(name, value);
-    } else if(!old_value.equals(value)) {
-      return false;
+    if (old_value != null) {
+      return old_value.equals(value);
     }
-
-    return true;
+    else {
+      variables.put(name, value);
+      return true;
+    }
   }
 
   public Object getVariableValue(String name) {
     return variables.get(name);
   }
-
 }

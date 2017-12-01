@@ -14,13 +14,11 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CatchStatement extends Statement {
-
   private final List<List<String>> exctstrings = new ArrayList<>();
-
   private final List<VarExprent> vars = new ArrayList<>();
 
   // *****************************************************************************
@@ -31,8 +29,7 @@ public class CatchStatement extends Statement {
     type = TYPE_TRYCATCH;
   }
 
-  private CatchStatement(Statement head, Statement next, HashSet<Statement> setHandlers) {
-
+  private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
     this();
 
     first = head;
@@ -62,15 +59,12 @@ public class CatchStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-
     if (head.getLastBasicType() != LASTBASICTYPE_GENERAL) {
       return null;
     }
 
-    HashSet<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
-
+    Set<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
     if (!setHandlers.isEmpty()) {
-
       int hnextcount = 0; // either no statements with connection to next, or more than 1
 
       Statement next = null;
@@ -185,7 +179,6 @@ public class CatchStatement extends Statement {
   }
 
   public Statement getSimpleCopy() {
-
     CatchStatement cs = new CatchStatement();
 
     for (List<String> exc : this.exctstrings) {

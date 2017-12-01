@@ -186,18 +186,10 @@ public class InlineSingleBlockHelper {
   }
 
   public static boolean isBreakEdgeLabeled(Statement source, Statement closure) {
-
     if (closure.type == Statement.TYPE_DO || closure.type == Statement.TYPE_SWITCH) {
-
       Statement parent = source.getParent();
-
-      if (parent == closure) {
-        return false;
-      }
-      else {
-        return parent.type == Statement.TYPE_DO || parent.type == Statement.TYPE_SWITCH ||
-               isBreakEdgeLabeled(parent, closure);
-      }
+      return parent != closure &&
+             (parent.type == Statement.TYPE_DO || parent.type == Statement.TYPE_SWITCH || isBreakEdgeLabeled(parent, closure));
     }
     else {
       return true;

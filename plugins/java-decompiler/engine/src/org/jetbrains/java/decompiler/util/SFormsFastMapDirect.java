@@ -105,10 +105,6 @@ public class SFormsFastMapDirect {
     putInternal(key, value, false);
   }
 
-  public void remove(int key) {
-    putInternal(key, null, true);
-  }
-
   public void removeAllFields() {
     FastSparseSet<Integer>[] arr = elements[2];
     int[] arrnext = next[2];

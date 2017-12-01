@@ -7,11 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassWrapperNode {
-
   private final StructClass classStruct;
-
-  private ClassWrapperNode superclass;
-
   private final List<ClassWrapperNode> subclasses = new ArrayList<>();
 
   public ClassWrapperNode(StructClass cl) {
@@ -19,7 +15,6 @@ public class ClassWrapperNode {
   }
 
   public void addSubclass(ClassWrapperNode node) {
-    node.setSuperclass(this);
     subclasses.add(node);
   }
 
@@ -29,13 +24,5 @@ public class ClassWrapperNode {
 
   public List<ClassWrapperNode> getSubclasses() {
     return subclasses;
-  }
-
-  public ClassWrapperNode getSuperclass() {
-    return superclass;
-  }
-
-  public void setSuperclass(ClassWrapperNode superclass) {
-    this.superclass = superclass;
   }
 }

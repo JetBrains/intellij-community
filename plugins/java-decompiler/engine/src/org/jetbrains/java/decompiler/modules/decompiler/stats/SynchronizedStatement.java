@@ -137,15 +137,7 @@ public class SynchronizedStatement extends Statement {
     return body;
   }
 
-  public void setBody(Statement body) {
-    this.body = body;
-  }
-
   public List<Exprent> getHeadexprentList() {
     return headexprent;
-  }
-
-  public Exprent getHeadexprent() {
-    return headexprent.get(0);
   }
 }

@@ -28,7 +28,7 @@ public class StructExceptionsAttribute extends StructGeneralAttribute {
   }
 
   public String getExcClassname(int index, ConstantPool pool) {
-    return pool.getPrimitiveConstant(throwsExceptions.get(index).intValue()).getString();
+    return pool.getPrimitiveConstant(throwsExceptions.get(index)).getString();
   }
 
   public List<Integer> getThrowsExceptions() {

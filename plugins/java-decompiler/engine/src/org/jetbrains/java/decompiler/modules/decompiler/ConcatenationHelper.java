@@ -212,13 +212,9 @@ public class ConcatenationHelper {
   }
 
   private static boolean isNewConcat(NewExprent expr, VarType cltype) {
-
     if (expr.getNewType().equals(cltype)) {
       VarType[] params = expr.getConstructor().getDescriptor().params;
-      if (params.length == 0 || (params.length == 1 &&
-                                 params[0].equals(VarType.VARTYPE_STRING))) {
-        return true;
-      }
+      return params.length == 0 || params.length == 1 && params[0].equals(VarType.VARTYPE_STRING);
     }
 
     return false;

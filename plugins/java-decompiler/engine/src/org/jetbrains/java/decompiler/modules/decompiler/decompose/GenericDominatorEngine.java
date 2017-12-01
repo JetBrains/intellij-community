@@ -112,10 +112,6 @@ public class GenericDominatorEngine {
     }
   }
 
-  public VBStyleCollection<IGraphNode, IGraphNode> getOrderedIDoms() {
-    return colOrderedIDoms;
-  }
-
   public boolean isDominator(IGraphNode node, IGraphNode dom) {
 
     while (!node.equals(dom)) {

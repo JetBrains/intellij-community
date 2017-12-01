@@ -33,7 +33,7 @@ public class ControlFlowGraph implements CodeConstants {
 
   private Map<BasicBlock, BasicBlock> subroutines;
 
-  private Set<BasicBlock> finallyExits = new HashSet<>();
+  private final Set<BasicBlock> finallyExits = new HashSet<>();
 
   // *****************************************************************************
   // constructors
@@ -47,19 +47,6 @@ public class ControlFlowGraph implements CodeConstants {
   // *****************************************************************************
   // public methods
   // *****************************************************************************
-
-  public void free() {
-
-    for (BasicBlock block : blocks) {
-      block.free();
-    }
-
-    blocks.clear();
-    first = null;
-    last = null;
-    exceptions.clear();
-    finallyExits.clear();
-  }
 
   public void removeMarkers() {
     for (BasicBlock block : blocks) {
@@ -80,12 +67,11 @@ public class ControlFlowGraph implements CodeConstants {
       buf.append("----- Edges -----").append(new_line_separator);
 
       List<BasicBlock> suc = block.getSuccs();
-      for (int j = 0; j < suc.size(); j++) {
-        buf.append(">>>>>>>>(regular) Block ").append(suc.get(j).id).append(new_line_separator);
+      for (BasicBlock aSuc : suc) {
+        buf.append(">>>>>>>>(regular) Block ").append(aSuc.id).append(new_line_separator);
       }
       suc = block.getSuccExceptions();
-      for (int j = 0; j < suc.size(); j++) {
-        BasicBlock handler = suc.get(j);
+      for (BasicBlock handler : suc) {
         ExceptionRangeCFG range = getExceptionRange(handler, block);
 
         if (range == null) {
@@ -156,13 +142,7 @@ public class ControlFlowGraph implements CodeConstants {
       }
     }
 
-    Iterator<Entry<BasicBlock, BasicBlock>> it = subroutines.entrySet().iterator();
-    while (it.hasNext()) {
-      Entry<BasicBlock, BasicBlock> ent = it.next();
-      if (ent.getKey() == block || ent.getValue() == block) {
-        it.remove();
-      }
-    }
+    subroutines.entrySet().removeIf(ent -> ent.getKey() == block || ent.getValue() == block);
   }
 
   public ExceptionRangeCFG getExceptionRange(BasicBlock handler, BasicBlock block) {
@@ -261,7 +241,7 @@ public class ControlFlowGraph implements CodeConstants {
           for (int j = dests.length - 1; j >= 0; j--) {
             inststates[dests[j]] = 1;
           }
-          inststates[swinstr.getDefaultdest()] = 1;
+          inststates[swinstr.getDefaultDestination()] = 1;
           if (i + 1 < len) {
             inststates[i + 1] = 1;
           }
@@ -322,7 +302,7 @@ public class ControlFlowGraph implements CodeConstants {
       BasicBlock block = lstbb.get(i);
       Instruction instr = block.getLastInstruction();
 
-      boolean fallthrough = instr.canFallthrough();
+      boolean fallthrough = instr.canFallThrough();
       BasicBlock bTemp;
 
       switch (instr.group) {
@@ -336,10 +316,10 @@ public class ControlFlowGraph implements CodeConstants {
           SwitchInstruction sinstr = (SwitchInstruction)instr;
           int[] dests = sinstr.getDestinations();
 
-          bTemp = mapInstrBlocks.get(((SwitchInstruction)instr).getDefaultdest());
+          bTemp = mapInstrBlocks.get(((SwitchInstruction)instr).getDefaultDestination());
           block.addSuccessor(bTemp);
-          for (int j = 0; j < dests.length; j++) {
-            bTemp = mapInstrBlocks.get(dests[j]);
+          for (int dest1 : dests) {
+            bTemp = mapInstrBlocks.get(dest1);
             block.addSuccessor(bTemp);
           }
       }
@@ -617,9 +597,8 @@ public class ControlFlowGraph implements CodeConstants {
             node.replaceSuccessor(child, mapNewNodes.get(childid));
           }
           else if (common_blocks.contains(child)) {
-
             // make a copy of the current block
-            BasicBlock copy = (BasicBlock)child.clone();
+            BasicBlock copy = child.clone();
             copy.id = ++last_id;
             // copy all successors
             if (copy.getLastInstruction().opcode == CodeConstants.opc_ret &&
@@ -816,10 +795,6 @@ public class ControlFlowGraph implements CodeConstants {
     return blocks;
   }
 
-  public void setBlocks(VBStyleCollection<BasicBlock, Integer> blocks) {
-    this.blocks = blocks;
-  }
-
   public BasicBlock getFirst() {
     return first;
   }
@@ -828,39 +803,15 @@ public class ControlFlowGraph implements CodeConstants {
     this.first = first;
   }
 
-  public List<BasicBlock> getEndBlocks() {
-    return last.getPreds();
-  }
-
   public List<ExceptionRangeCFG> getExceptions() {
     return exceptions;
-  }
-
-  public void setExceptions(List<ExceptionRangeCFG> exceptions) {
-    this.exceptions = exceptions;
   }
 
   public BasicBlock getLast() {
     return last;
   }
 
-  public void setLast(BasicBlock last) {
-    this.last = last;
-  }
-
-  public Map<BasicBlock, BasicBlock> getSubroutines() {
-    return subroutines;
-  }
-
-  public void setSubroutines(Map<BasicBlock, BasicBlock> subroutines) {
-    this.subroutines = subroutines;
-  }
-
   public Set<BasicBlock> getFinallyExits() {
     return finallyExits;
-  }
-
-  public void setFinallyExits(HashSet<BasicBlock> finallyExits) {
-    this.finallyExits = finallyExits;
   }
 }

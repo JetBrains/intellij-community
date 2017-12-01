@@ -30,10 +30,12 @@ public class TextUtil {
     if (length == 0) return "";
     StringBuilder buf = new StringBuilder();
     String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
-    while (length-- > 0) {
-      buf.append(indent);
-    }
+    append(buf, indent, length);
     return buf.toString();
+  }
+
+  public static void append(StringBuilder buf, String string, int times) {
+    while (times-- > 0) buf.append(string);
   }
 
   public static boolean isPrintableUnicode(char c) {

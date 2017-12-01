@@ -8,17 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CheckTypesResult {
-
   private final List<ExprentTypePair> lstMaxTypeExprents = new ArrayList<>();
-
   private final List<ExprentTypePair> lstMinTypeExprents = new ArrayList<>();
 
   public void addMaxTypeExprent(Exprent exprent, VarType type) {
-    lstMaxTypeExprents.add(new ExprentTypePair(exprent, type, null));
+    lstMaxTypeExprents.add(new ExprentTypePair(exprent, type));
   }
 
   public void addMinTypeExprent(Exprent exprent, VarType type) {
-    lstMinTypeExprents.add(new ExprentTypePair(exprent, type, null));
+    lstMinTypeExprents.add(new ExprentTypePair(exprent, type));
   }
 
   public List<ExprentTypePair> getLstMaxTypeExprents() {
@@ -32,12 +30,10 @@ public class CheckTypesResult {
   public static class ExprentTypePair {
     public final Exprent exprent;
     public final VarType type;
-    public final VarType desttype;
 
-    public ExprentTypePair(Exprent exprent, VarType type, VarType desttype) {
+    public ExprentTypePair(Exprent exprent, VarType type) {
       this.exprent = exprent;
       this.type = type;
-      this.desttype = desttype;
     }
   }
 }

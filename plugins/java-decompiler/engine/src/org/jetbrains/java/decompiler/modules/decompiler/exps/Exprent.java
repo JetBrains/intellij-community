@@ -143,8 +143,7 @@ public class Exprent implements IMatchable {
     String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
     if (position != null) {
       if (position.matches("-?\\d+")) {
-        return lstAllExprents
-          .get((lstAllExprents.size() + Integer.parseInt(position)) % lstAllExprents.size()); // care for negative positions
+        return lstAllExprents.get((lstAllExprents.size() + Integer.parseInt(position)) % lstAllExprents.size()); // care for negative positions
       }
     }
     else if (index < lstAllExprents.size()) { // use 'index' parameter
@@ -162,7 +161,7 @@ public class Exprent implements IMatchable {
 
     for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       MatchProperties key = rule.getKey();
-      if (key == MatchProperties.EXPRENT_TYPE && this.type != ((Integer)rule.getValue().value).intValue()) {
+      if (key == MatchProperties.EXPRENT_TYPE && this.type != (Integer)rule.getValue().value) {
         return false;
       }
       if (key == MatchProperties.EXPRENT_RET && !engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {

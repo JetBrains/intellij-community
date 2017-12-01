@@ -30,21 +30,17 @@ public class LambdaProcessor {
       processClass(child);
     }
 
-    hasLambda(node);
-  }
-
-  public boolean hasLambda(ClassNode node) throws IOException {
     ClassesProcessor clProcessor = DecompilerContext.getClassProcessor();
     StructClass cl = node.classStruct;
 
     if (cl.getBytecodeVersion() < CodeConstants.BYTECODE_JAVA_8) { // lambda beginning with Java 8
-      return false;
+      return;
     }
 
     StructBootstrapMethodsAttribute bootstrap =
       (StructBootstrapMethodsAttribute)cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
     if (bootstrap == null || bootstrap.getMethodsNumber() == 0) {
-      return false; // no bootstrap constants in pool
+      return; // no bootstrap constants in pool
     }
 
     BitSet lambda_methods = new BitSet();
@@ -61,7 +57,7 @@ public class LambdaProcessor {
     }
 
     if (lambda_methods.isEmpty()) {
-      return false; // no lambda bootstrap constant found
+      return; // no lambda bootstrap constant found
     }
 
     Map<String, String> mapMethodsLambda = new HashMap<>();
@@ -78,7 +74,7 @@ public class LambdaProcessor {
           Instruction instr = seq.getInstr(i);
 
           if (instr.opcode == CodeConstants.opc_invokedynamic) {
-            LinkConstant invoke_dynamic = cl.getPool().getLinkConstant(instr.getOperand(0));
+            LinkConstant invoke_dynamic = cl.getPool().getLinkConstant(instr.operand(0));
 
             if (lambda_methods.get(invoke_dynamic.index1)) { // lambda invocation found
 
@@ -126,7 +122,5 @@ public class LambdaProcessor {
     }
 
     // FIXME: mixed hierarchy?
-
-    return false;
   }
 }

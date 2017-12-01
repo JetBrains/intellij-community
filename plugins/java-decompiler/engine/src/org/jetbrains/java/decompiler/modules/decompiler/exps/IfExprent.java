@@ -30,10 +30,9 @@ public class IfExprent extends Exprent {
   public static final int IF_ACMPEQ = 14;
   public static final int IF_ACMPNE = 15;
 
-  public static final int IF_CAND = 16;
-  public static final int IF_COR = 17;
-
-  public static final int IF_NOT = 18;
+  //public static final int IF_CAND = 16;
+  //public static final int IF_COR = 17;
+  //public static final int IF_NOT = 18;
   public static final int IF_VALUE = 19;
 
   private static final int[] FUNC_TYPES = {

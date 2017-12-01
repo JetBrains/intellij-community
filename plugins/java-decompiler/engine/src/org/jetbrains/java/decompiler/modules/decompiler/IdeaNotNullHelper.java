@@ -111,7 +111,7 @@ public class IdeaNotNullHelper {
         return false;
       }
 
-      removeParameterCheck(stat, mt);
+      removeParameterCheck(stat);
 
       return true;
     }
@@ -119,7 +119,7 @@ public class IdeaNotNullHelper {
     return false;
   }
 
-  private static void removeParameterCheck(Statement stat, StructMethod mt) {
+  private static void removeParameterCheck(Statement stat) {
 
     Statement st = stat.getFirst();
     while (st.type == Statement.TYPE_SEQUENCE) {
@@ -128,11 +128,7 @@ public class IdeaNotNullHelper {
 
     IfStatement ifstat = (IfStatement)st;
 
-    if (ifstat.getElsestat() == null) { // if
-      // TODO:
-    }
-    else { // if - else
-
+    if (ifstat.getElsestat() != null) { // if - else
       StatEdge ifedge = ifstat.getIfEdge();
       StatEdge elseedge = ifstat.getElseEdge();
 
@@ -171,11 +167,7 @@ public class IdeaNotNullHelper {
       }
     }
 
-    if (is_notnull_check) {
-      return removeReturnCheck(stat, mt);
-    }
-
-    return false;
+    return is_notnull_check && removeReturnCheck(stat, mt);
   }
 
 

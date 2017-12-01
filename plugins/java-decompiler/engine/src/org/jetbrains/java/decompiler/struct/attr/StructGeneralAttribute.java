@@ -33,7 +33,6 @@ public class StructGeneralAttribute {
   public static final String ATTRIBUTE_SYNTHETIC = "Synthetic";
   public static final String ATTRIBUTE_DEPRECATED = "Deprecated";
   public static final String ATTRIBUTE_LINE_NUMBER_TABLE = "LineNumberTable";
-  public static final String ATTRIBUTE_SOURCE_FILE = "SourceFile";
 
   private String name;
 
@@ -81,9 +80,6 @@ public class StructGeneralAttribute {
     }
     else if (ATTRIBUTE_LINE_NUMBER_TABLE.equals(name)) {
       attr = new StructLineNumberTableAttribute();
-    }
-    else if (ATTRIBUTE_SOURCE_FILE.equals(name)) {
-      attr = new StructSourceFileAttribute();
     }
     else {
       // unsupported attribute

@@ -265,7 +265,7 @@ public class LabelHelper {
           Statement stlast = swst.getCaseStatements().get(last);
           if (stlast.getExprents() != null && stlast.getExprents().isEmpty()) {
             StatEdge edge = stlast.getAllSuccessorEdges().get(0);
-            mapEdges.put(edge.getDestination(), new ArrayList<>(Arrays.asList(new StatEdge[]{edge})));
+            mapEdges.put(edge.getDestination(), new ArrayList<>(Collections.singletonList(edge)));
           }
           else {
             mapEdges = setExplicitEdges(stlast);
@@ -326,7 +326,7 @@ public class LabelHelper {
             edge.explicit = false;
           }
 
-          mapEdges.put(newedge.getDestination(), new ArrayList<>(Arrays.asList(new StatEdge[]{newedge})));
+          mapEdges.put(newedge.getDestination(), new ArrayList<>(Collections.singletonList(newedge)));
         }
       }
     }
@@ -374,7 +374,7 @@ public class LabelHelper {
     }
 
     if (statedge != null) {
-      mapEdges.put(statedge.getDestination(), new ArrayList<>(Arrays.asList(new StatEdge[]{statedge})));
+      mapEdges.put(statedge.getDestination(), new ArrayList<>(Collections.singletonList(statedge)));
     }
   }
 
@@ -406,24 +406,26 @@ public class LabelHelper {
     }
   }
 
-  private static HashSet<Statement>[] processStatementLabel(Statement stat) {
+  private static class LabelSets {
+    private final Set<Statement> breaks = new HashSet<>();
+    private final Set<Statement> continues = new HashSet<>();
+  }
 
-    HashSet<Statement> setBreak = new HashSet<>();
-    HashSet<Statement> setContinue = new HashSet<>();
+  private static LabelSets processStatementLabel(Statement stat) {
+    LabelSets sets = new LabelSets();
 
     if (stat.getExprents() == null) {
       for (Statement st : stat.getStats()) {
-        HashSet<Statement>[] arr = processStatementLabel(st);
-
-        setBreak.addAll(arr[0]);
-        setContinue.addAll(arr[1]);
+        LabelSets nested = processStatementLabel(st);
+        sets.breaks.addAll(nested.breaks);
+        sets.continues.addAll(nested.continues);
       }
 
       boolean shieldType = (stat.type == Statement.TYPE_DO || stat.type == Statement.TYPE_SWITCH);
       if (shieldType) {
         for (StatEdge edge : stat.getLabelEdges()) {
-          if (edge.explicit && ((edge.getType() == StatEdge.TYPE_BREAK && setBreak.contains(edge.getSource())) ||
-                                (edge.getType() == StatEdge.TYPE_CONTINUE && setContinue.contains(edge.getSource())))) {
+          if (edge.explicit && ((edge.getType() == StatEdge.TYPE_BREAK && sets.breaks.contains(edge.getSource())) ||
+                                (edge.getType() == StatEdge.TYPE_CONTINUE && sets.continues.contains(edge.getSource())))) {
             edge.labeled = false;
           }
         }
@@ -431,16 +433,16 @@ public class LabelHelper {
 
       switch (stat.type) {
         case Statement.TYPE_DO:
-          setContinue.clear();
+          sets.continues.clear();
         case Statement.TYPE_SWITCH:
-          setBreak.clear();
+          sets.breaks.clear();
       }
     }
 
-    setBreak.add(stat);
-    setContinue.add(stat);
+    sets.breaks.add(stat);
+    sets.continues.add(stat);
 
-    return new HashSet[] { setBreak, setContinue };
+    return sets;
   }
 
   public static void replaceContinueWithBreak(Statement stat) {

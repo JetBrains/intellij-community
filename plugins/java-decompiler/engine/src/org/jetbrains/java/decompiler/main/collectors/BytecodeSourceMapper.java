@@ -8,7 +8,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class BytecodeSourceMapper {
-
   private int offset_total;
 
   // class, method, bytecode offset, source line
@@ -19,15 +18,8 @@ public class BytecodeSourceMapper {
   private final Set<Integer> unmappedLines = new TreeSet<>();
 
   public void addMapping(String className, String methodName, int bytecodeOffset, int sourceLine) {
-    Map<String, Map<Integer, Integer>> class_mapping = mapping.get(className);
-    if (class_mapping == null) {
-      mapping.put(className, class_mapping = new LinkedHashMap<>()); // need to preserve order
-    }
-
-    Map<Integer, Integer> method_mapping = class_mapping.get(methodName);
-    if (method_mapping == null) {
-      class_mapping.put(methodName, method_mapping = new HashMap<>());
-    }
+    Map<String, Map<Integer, Integer>> class_mapping = mapping.computeIfAbsent(className, k -> new LinkedHashMap<>()); // need to preserve order
+    Map<Integer, Integer> method_mapping = class_mapping.computeIfAbsent(methodName, k -> new HashMap<>());
 
     // don't overwrite
     if (!method_mapping.containsKey(bytecodeOffset)) {
@@ -96,14 +88,6 @@ public class BytecodeSourceMapper {
         }
       }
     }
-  }
-
-  public int getTotalOffset() {
-    return offset_total;
-  }
-
-  public void setTotalOffset(int offset_total) {
-    this.offset_total = offset_total;
   }
 
   public void addTotalOffset(int offset_total) {

@@ -222,7 +222,7 @@ public class StackVarsProcessor {
   }
 
 
-  private static Exprent isReplaceableVar(Exprent exprent, HashMap<VarVersionPair, Exprent> mapVarValues, SSAUConstructorSparseEx ssau) {
+  private static Exprent isReplaceableVar(Exprent exprent, HashMap<VarVersionPair, Exprent> mapVarValues) {
 
     Exprent dest = null;
 
@@ -473,7 +473,7 @@ public class StackVarsProcessor {
       }
     }
 
-    Exprent dest = isReplaceableVar(exprent, mapVarValues, ssau);
+    Exprent dest = isReplaceableVar(exprent, mapVarValues);
     if (dest != null) {
       return new Object[]{dest, true, true};
     }

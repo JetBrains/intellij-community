@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
+import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -157,12 +158,9 @@ public class GenericMain {
   }
 
   public static String getGenericCastTypeName(GenericType type) {
-    String s = getTypeName(type);
-    int dim = type.arrayDim;
-    while (dim-- > 0) {
-      s += "[]";
-    }
-    return s;
+    StringBuilder s = new StringBuilder(getTypeName(type));
+    TextUtil.append(s, "[]", type.arrayDim);
+    return s.toString();
   }
 
   private static String getTypeName(GenericType type) {

@@ -132,7 +132,7 @@ public class VarDefinitionHelper {
           else {
             List<Exprent> lstSpecial = Arrays.asList(dstat.getConditionExprent(), dstat.getIncExprent());
             for (VarExprent var : getAllVars(lstSpecial)) {
-              if (var.getIndex() == index.intValue()) {
+              if (var.getIndex() == index) {
                 stat = stat.getParent();
                 break;
               }
@@ -181,7 +181,7 @@ public class VarDefinitionHelper {
       }
 
       if (!defset) {
-        VarExprent var = new VarExprent(index.intValue(), varproc.getVarType(new VarVersionPair(index.intValue(), 0)), varproc);
+        VarExprent var = new VarExprent(index, varproc.getVarType(new VarVersionPair(index.intValue(), 0)), varproc);
         var.setDefinition(true);
 
         lst.add(addindex, var);
@@ -295,7 +295,7 @@ public class VarDefinitionHelper {
 
     // put all variables defined in this statement into the set
     for (Entry<Integer, Integer> en : mapCount.entrySet()) {
-      if (en.getValue().intValue() > 1) {
+      if (en.getValue() > 1) {
         mapVarDefStatements.put(en.getKey(), stat);
       }
     }
@@ -329,7 +329,7 @@ public class VarDefinitionHelper {
       Exprent left = ((AssignmentExprent)expr).getLeft();
       if (left.type == Exprent.EXPRENT_VAR) {
         VarExprent var = (VarExprent)left;
-        if (var.getIndex() == index.intValue()) {
+        if (var.getIndex() == index) {
           var.setDefinition(true);
           return true;
         }

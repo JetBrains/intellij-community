@@ -12,10 +12,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class CatchAllStatement extends Statement {
 
@@ -64,13 +61,11 @@ public class CatchAllStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-
     if (head.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
       return null;
     }
 
-    HashSet<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
-
+    Set<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
     if (setHandlers.size() != 1) {
       return null;
     }
@@ -190,26 +185,17 @@ public class CatchAllStatement extends Statement {
     return handler;
   }
 
-
-  public void setHandler(Statement handler) {
-    this.handler = handler;
-  }
-
-
   public boolean isFinally() {
     return isFinally;
   }
-
 
   public void setFinally(boolean isFinally) {
     this.isFinally = isFinally;
   }
 
-
   public VarExprent getMonitor() {
     return monitor;
   }
-
 
   public void setMonitor(VarExprent monitor) {
     this.monitor = monitor;

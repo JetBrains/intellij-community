@@ -46,17 +46,17 @@ public class ConstantPool implements NewClassNameBuilder {
           break;
 
         case CodeConstants.CONSTANT_Float:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Float, Float.valueOf(in.readFloat())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Float, in.readFloat()));
           break;
 
         case CodeConstants.CONSTANT_Long:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Long, Long.valueOf(in.readLong())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Long, in.readLong()));
           pool.add(null);
           i++;
           break;
 
         case CodeConstants.CONSTANT_Double:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Double, Double.valueOf(in.readDouble())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Double, in.readDouble()));
           pool.add(null);
           i++;
           break;
@@ -135,10 +135,6 @@ public class ConstantPool implements NewClassNameBuilder {
           in.discard(3);
       }
     }
-  }
-
-  public int size() {
-    return pool.size();
   }
 
   public String[] getClassElement(int elementType, String className, int nameIndex, int descriptorIndex) {

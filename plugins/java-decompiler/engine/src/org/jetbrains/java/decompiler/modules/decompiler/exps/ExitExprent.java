@@ -144,20 +144,13 @@ public class ExitExprent extends Exprent {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
-    if(!super.match(matchNode, engine)) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
 
     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_EXITTYPE);
-    if(type != null) {
-      if(this.exitType != type.intValue()) {
-        return false;
-      }
-    }
-
-    return true;
+    return type == null || this.exitType == type;
   }
-
 }

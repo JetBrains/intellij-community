@@ -90,35 +90,27 @@ public class VarTypeProcessor {
   }
 
   private static void resetExprentTypes(DirectGraph graph) {
-    graph.iterateExprents(new DirectGraph.ExprentIterator() {
-      @Override
-      public int processExprent(Exprent exprent) {
-        List<Exprent> lst = exprent.getAllExprents(true);
-        lst.add(exprent);
+    graph.iterateExprents(exprent -> {
+      List<Exprent> lst = exprent.getAllExprents(true);
+      lst.add(exprent);
 
-        for (Exprent expr : lst) {
-          if (expr.type == Exprent.EXPRENT_VAR) {
-            ((VarExprent)expr).setVarType(VarType.VARTYPE_UNKNOWN);
-          }
-          else if (expr.type == Exprent.EXPRENT_CONST) {
-            ConstExprent constExpr = (ConstExprent)expr;
-            if (constExpr.getConstType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
-              constExpr.setConstType(new ConstExprent(constExpr.getIntValue(), constExpr.isBoolPermitted(), null).getConstType());
-            }
+      for (Exprent expr : lst) {
+        if (expr.type == Exprent.EXPRENT_VAR) {
+          ((VarExprent)expr).setVarType(VarType.VARTYPE_UNKNOWN);
+        }
+        else if (expr.type == Exprent.EXPRENT_CONST) {
+          ConstExprent constExpr = (ConstExprent)expr;
+          if (constExpr.getConstType().typeFamily == CodeConstants.TYPE_FAMILY_INTEGER) {
+            constExpr.setConstType(new ConstExprent(constExpr.getIntValue(), constExpr.isBoolPermitted(), null).getConstType());
           }
         }
-        return 0;
       }
+      return 0;
     });
   }
 
   private boolean processVarTypes(DirectGraph graph) {
-    return graph.iterateExprents(new DirectGraph.ExprentIterator() {
-      @Override
-      public int processExprent(Exprent exprent) {
-        return checkTypeExprent(exprent) ? 0 : 1;
-      }
-    });
+    return graph.iterateExprents(exprent -> checkTypeExprent(exprent) ? 0 : 1);
   }
 
   private boolean checkTypeExprent(Exprent exprent) {

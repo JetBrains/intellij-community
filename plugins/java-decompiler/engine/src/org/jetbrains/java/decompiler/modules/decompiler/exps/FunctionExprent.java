@@ -399,8 +399,7 @@ public class FunctionExprent extends Exprent {
 
   @Override
   public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<>(lstOperands);
-    return lst;
+    return new ArrayList<>(lstOperands);
   }
 
   @Override
@@ -609,20 +608,13 @@ public class FunctionExprent extends Exprent {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
-    if(!super.match(matchNode, engine)) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
 
     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.EXPRENT_FUNCTYPE);
-    if(type != null) {
-      if(this.funcType != type.intValue()) {
-        return false;
-      }
-    }
-
-    return true;
+    return type == null || this.funcType == type;
   }
-
 }

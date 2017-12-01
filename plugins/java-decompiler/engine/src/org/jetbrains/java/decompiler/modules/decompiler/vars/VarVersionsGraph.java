@@ -8,11 +8,7 @@ import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
 
-
 public class VarVersionsGraph {
-
-  public int counter = 0;
-
   public final VBStyleCollection<VarVersionNode, VarVersionPair> nodes = new VBStyleCollection<>();
 
   private GenericDominatorEngine engine;
@@ -109,9 +105,7 @@ public class VarVersionsGraph {
   }
 
   private static void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, HashSet<VarVersionNode> setVisited) {
-
-    HashMap<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<>();
-
+    Map<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<>();
     LinkedList<VarVersionNode> stackNode = new LinkedList<>();
     LinkedList<Integer> stackIndex = new LinkedList<>();
 
@@ -125,27 +119,20 @@ public class VarVersionsGraph {
 
       setVisited.add(node);
 
-      List<VarVersionEdge> lstSuccs = mapNodeSuccs.get(node);
-      if (lstSuccs == null) {
-        mapNodeSuccs.put(node, lstSuccs = new ArrayList<>(node.succs));
-      }
-
+      List<VarVersionEdge> lstSuccs = mapNodeSuccs.computeIfAbsent(node, n -> new ArrayList<>(n.succs));
       for (; index < lstSuccs.size(); index++) {
         VarVersionNode succ = lstSuccs.get(index).dest;
 
         if (!setVisited.contains(succ)) {
           stackIndex.add(index + 1);
-
           stackNode.add(succ);
           stackIndex.add(0);
-
           break;
         }
       }
 
       if (index == lstSuccs.size()) {
         lst.add(0, node);
-
         stackNode.removeLast();
       }
     }

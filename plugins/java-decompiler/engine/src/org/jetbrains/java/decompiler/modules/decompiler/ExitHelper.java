@@ -208,9 +208,7 @@ public class ExitHelper {
     return true;
   }
 
-  public static boolean removeRedundantReturns(RootStatement root) {
-    boolean res = false;
-
+  public static void removeRedundantReturns(RootStatement root) {
     DummyExitStatement dummyExit = root.getDummyExit();
 
     for (StatEdge edge : dummyExit.getAllPredecessorEdges()) {
@@ -225,13 +223,10 @@ public class ExitHelper {
               // remove redundant return
               dummyExit.addBytecodeOffsets(ex.bytecode);
               lstExpr.remove(lstExpr.size() - 1);
-              res = true;
             }
           }
         }
       }
     }
-
-    return res;
   }
 }

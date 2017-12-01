@@ -398,21 +398,19 @@ public class FlattenStatementsHelper {
     }
 
     if (finallyShortRangeSource != null) {
-
       boolean isContinueEdge = (edgetype == StatEdge.TYPE_CONTINUE);
 
-      List<String[]> lst = mapShortRangeFinallyPathIds.get(sourcenode.id);
-      if (lst == null) {
-        mapShortRangeFinallyPathIds.put(sourcenode.id, lst = new ArrayList<>());
-      }
-      lst.add(new String[]{finallyShortRangeSource.id, destination.id.toString(), finallyShortRangeEntry.id.toString(),
-        isFinallyMonitorExceptionPath ? "1" : null, isContinueEdge ? "1" : null});
+      mapShortRangeFinallyPathIds.computeIfAbsent(sourcenode.id, k -> new ArrayList<>()).add(new String[]{
+        finallyShortRangeSource.id,
+        destination.id.toString(),
+        finallyShortRangeEntry.id.toString(),
+        isFinallyMonitorExceptionPath ? "1" : null,
+        isContinueEdge ? "1" : null});
 
-      lst = mapLongRangeFinallyPathIds.get(sourcenode.id);
-      if (lst == null) {
-        mapLongRangeFinallyPathIds.put(sourcenode.id, lst = new ArrayList<>());
-      }
-      lst.add(new String[]{finallyLongRangeSource.id, destination.id.toString(), finallyLongRangeEntry.id.toString(),
+      mapLongRangeFinallyPathIds.computeIfAbsent(sourcenode.id, k -> new ArrayList<>()).add(new String[]{
+        finallyLongRangeSource.id,
+        destination.id.toString(),
+        finallyLongRangeEntry.id.toString(),
         isContinueEdge ? "1" : null});
     }
   }

@@ -33,11 +33,9 @@ public class Statements {
     if (inv.getFunctype() == InvocationExprent.TYP_INIT && inv.getInstance().type == Exprent.EXPRENT_VAR) {
       VarExprent instVar = (VarExprent)inv.getInstance();
       VarVersionPair varPair = new VarVersionPair(instVar);
-      String classname = method.varproc.getThisVars().get(varPair);
-      if (classname != null) { // any this instance. TODO: Restrict to current class?
-        if (withThis || !wrapper.getClassStruct().qualifiedName.equals(inv.getClassname())) {
-          return true;
-        }
+      String className = method.varproc.getThisVars().get(varPair);
+      if (className != null) { // any this instance. TODO: Restrict to current class?
+        return withThis || !wrapper.getClassStruct().qualifiedName.equals(inv.getClassname());
       }
     }
 

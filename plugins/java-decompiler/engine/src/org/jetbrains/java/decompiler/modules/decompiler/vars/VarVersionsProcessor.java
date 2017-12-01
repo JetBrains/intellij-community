@@ -22,7 +22,7 @@ import java.util.Map.Entry;
 public class VarVersionsProcessor {
   private final StructMethod method;
   private Map<Integer, Integer> mapOriginalVarIndices = Collections.emptyMap();
-  private VarTypeProcessor typeProcessor;
+  private final VarTypeProcessor typeProcessor;
 
   public VarVersionsProcessor(StructMethod mt, MethodDescriptor md) {
     method = mt;
@@ -91,24 +91,21 @@ public class VarVersionsProcessor {
   }
 
   private static void updateVersions(DirectGraph graph, final Map<VarVersionPair, Integer> versions) {
-    graph.iterateExprents(new DirectGraph.ExprentIterator() {
-      @Override
-      public int processExprent(Exprent exprent) {
-        List<Exprent> lst = exprent.getAllExprents(true);
-        lst.add(exprent);
+    graph.iterateExprents(exprent -> {
+      List<Exprent> lst = exprent.getAllExprents(true);
+      lst.add(exprent);
 
-        for (Exprent expr : lst) {
-          if (expr.type == Exprent.EXPRENT_VAR) {
-            VarExprent var = (VarExprent)expr;
-            Integer version = versions.get(new VarVersionPair(var));
-            if (version != null) {
-              var.setVersion(version);
-            }
+      for (Exprent expr : lst) {
+        if (expr.type == Exprent.EXPRENT_VAR) {
+          VarExprent var = (VarExprent)expr;
+          Integer version = versions.get(new VarVersionPair(var));
+          if (version != null) {
+            var.setVersion(version);
           }
         }
-
-        return 0;
       }
+
+      return 0;
     });
   }
 
@@ -145,12 +142,7 @@ public class VarVersionsProcessor {
 
     for (VarVersionPair pair : mapExprentMinTypes.keySet()) {
       if (pair.version >= 0) {  // don't merge constants
-        Set<Integer> set = mapVarVersions.get(pair.var);
-        if (set == null) {
-          set = new HashSet<>();
-          mapVarVersions.put(pair.var, set);
-        }
-        set.add(pair.version);
+        mapVarVersions.computeIfAbsent(pair.var, k -> new HashSet<>()).add(pair.version);
       }
     }
 
@@ -243,31 +235,28 @@ public class VarVersionsProcessor {
     }
 
     // set new vars
-    graph.iterateExprents(new DirectGraph.ExprentIterator() {
-      @Override
-      public int processExprent(Exprent exprent) {
-        List<Exprent> lst = exprent.getAllExprents(true);
-        lst.add(exprent);
+    graph.iterateExprents(exprent -> {
+      List<Exprent> lst = exprent.getAllExprents(true);
+      lst.add(exprent);
 
-        for (Exprent expr : lst) {
-          if (expr.type == Exprent.EXPRENT_VAR) {
-            VarExprent newVar = (VarExprent)expr;
-            Integer newVarIndex = mapVarPaar.get(new VarVersionPair(newVar));
-            if (newVarIndex != null) {
-              newVar.setIndex(newVarIndex);
-              newVar.setVersion(0);
-            }
-          }
-          else if (expr.type == Exprent.EXPRENT_CONST) {
-            VarType maxType = mapExprentMaxTypes.get(new VarVersionPair(expr.id, -1));
-            if (maxType != null && maxType.equals(VarType.VARTYPE_CHAR)) {
-              ((ConstExprent)expr).setConstType(maxType);
-            }
+      for (Exprent expr : lst) {
+        if (expr.type == Exprent.EXPRENT_VAR) {
+          VarExprent newVar = (VarExprent)expr;
+          Integer newVarIndex = mapVarPaar.get(new VarVersionPair(newVar));
+          if (newVarIndex != null) {
+            newVar.setIndex(newVarIndex);
+            newVar.setVersion(0);
           }
         }
-
-        return 0;
+        else if (expr.type == Exprent.EXPRENT_CONST) {
+          VarType maxType = mapExprentMaxTypes.get(new VarVersionPair(expr.id, -1));
+          if (maxType != null && maxType.equals(VarType.VARTYPE_CHAR)) {
+            ((ConstExprent)expr).setConstType(maxType);
+          }
+        }
       }
+
+      return 0;
     });
 
     if (previousVersionsProcessor != null) {
@@ -286,7 +275,7 @@ public class VarVersionsProcessor {
   }
 
   public VarType getVarType(VarVersionPair pair) {
-    return typeProcessor == null ? null : typeProcessor.getVarType(pair);
+    return typeProcessor.getVarType(pair);
   }
 
   public void setVarType(VarVersionPair pair, VarType type) {
@@ -294,13 +283,8 @@ public class VarVersionsProcessor {
   }
 
   public int getVarFinal(VarVersionPair pair) {
-    int ret = VarTypeProcessor.VAR_FINAL;
-    if (typeProcessor != null) {
-      Integer fin = typeProcessor.getMapFinalVars().get(pair);
-      ret = fin == null ? VarTypeProcessor.VAR_FINAL : fin.intValue();
-    }
-
-    return ret;
+    Integer fin = typeProcessor.getMapFinalVars().get(pair);
+    return fin == null ? VarTypeProcessor.VAR_FINAL : fin;
   }
 
   public void setVarFinal(VarVersionPair pair, int finalType) {

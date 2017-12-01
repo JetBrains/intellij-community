@@ -87,18 +87,14 @@ public class ClassReference14Processor {
 
       RootStatement root = meth.root;
       if (root != null) {
-
         DirectGraph graph = meth.getOrBuildGraph();
-
-        graph.iterateExprents(new DirectGraph.ExprentIterator() {
-          public int processExprent(Exprent exprent) {
-            for (Entry<ClassWrapper, MethodWrapper> ent : mapClassMeths.entrySet()) {
-              if (replaceInvocations(exprent, ent.getKey(), ent.getValue())) {
-                setFound.add(ent.getKey());
-              }
+        graph.iterateExprents(exprent -> {
+          for (Entry<ClassWrapper, MethodWrapper> ent : mapClassMeths.entrySet()) {
+            if (replaceInvocations(exprent, ent.getKey(), ent.getValue())) {
+              setFound.add(ent.getKey());
             }
-            return 0;
           }
+          return 0;
         });
       }
     }

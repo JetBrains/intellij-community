@@ -70,12 +70,12 @@ public class ImportCollector {
   public String getShortName(String fullName, boolean imported) {
     ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/'));
 
-    String result = null;
+    StringBuilder result = null;
     if (node != null && node.classStruct.isOwn()) {
-      result = node.simpleName;
+      result = new StringBuilder(node.simpleName);
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
-        result = node.parent.simpleName + '.' + result;
+        result.insert(0, node.parent.simpleName + '.');
         node = node.parent;
       }
 
@@ -84,7 +84,7 @@ public class ImportCollector {
         fullName = fullName.replace('/', '.');
       }
       else {
-        return result;
+        return result.toString();
       }
     }
     else {
@@ -121,7 +121,7 @@ public class ImportCollector {
       }
     }
 
-    return result == null ? shortName : result;
+    return result == null ? shortName : result.toString();
   }
 
   public int writeImports(TextBuffer buffer) {

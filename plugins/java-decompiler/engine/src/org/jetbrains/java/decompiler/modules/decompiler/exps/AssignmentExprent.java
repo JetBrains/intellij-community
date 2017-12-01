@@ -176,10 +176,6 @@ public class AssignmentExprent extends Exprent {
     return left;
   }
 
-  public void setLeft(Exprent left) {
-    this.left = left;
-  }
-
   public Exprent getRight() {
     return right;
   }

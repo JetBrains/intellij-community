@@ -177,7 +177,7 @@ public class DomHelper {
         lstPosts.add(stt.id);
       }
 
-      Collections.sort(lstPosts, Comparator.comparing(mapSortOrder::get));
+      lstPosts.sort(Comparator.comparing(mapSortOrder::get));
 
       if (lstPosts.size() > 1 && lstPosts.get(0).intValue() == st.id) {
         lstPosts.add(lstPosts.remove(0));
@@ -453,14 +453,12 @@ public class DomHelper {
 
       Set<Integer> setExtPosts = mapExtPost.get(headid);
 
-      for (int i = 0; i < posts.size(); i++) {
-
-        Integer postid = posts.get(i);
-        if (!postid.equals(headid) && !setExtPosts.contains(postid)) {
+      for (Integer postId : posts) {
+        if (!postId.equals(headid) && !setExtPosts.contains(postId)) {
           continue;
         }
 
-        Statement post = stats.getWithKey(postid);
+        Statement post = stats.getWithKey(postId);
 
         if (post == null) { // possible in case of an inherited postdominance set
           continue;
@@ -539,14 +537,14 @@ public class DomHelper {
 
         // build statement and return
         if (excok) {
-          Statement res = null;
+          Statement res;
 
           setPreds.removeAll(setNodes);
           if (setPreds.size() == 0) {
             if ((setNodes.size() > 1 ||
                  head.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).contains(head))
                 && setNodes.size() < stats.size()) {
-              if (checkSynchronizedCompleteness(head, setNodes)) {
+              if (checkSynchronizedCompleteness(setNodes)) {
                 res = new GeneralStatement(head, setNodes, same ? null : post);
                 stat.collapseNodesToStatement(res);
 
@@ -561,8 +559,7 @@ public class DomHelper {
     return null;
   }
 
-  private static boolean checkSynchronizedCompleteness(Statement head, HashSet<Statement> setNodes) {
-
+  private static boolean checkSynchronizedCompleteness(Set<Statement> setNodes) {
     // check exit nodes
     for (Statement stat : setNodes) {
       if (stat.isMonitorEnter()) {
@@ -618,12 +615,7 @@ public class DomHelper {
               set.removeAll(setOldNodes);
 
               if (setOldNodes.contains(key)) {
-                Set<Integer> setNew = mapExtPost.get(newid);
-                if (setNew == null) {
-                  mapExtPost.put(newid, setNew = new HashSet<>());
-                }
-                setNew.addAll(set);
-
+                mapExtPost.computeIfAbsent(newid, k -> new HashSet<>()).addAll(set);
                 mapExtPost.remove(key);
               }
               else {

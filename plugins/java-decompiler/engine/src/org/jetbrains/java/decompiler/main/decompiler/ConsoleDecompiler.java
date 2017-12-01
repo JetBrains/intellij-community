@@ -244,10 +244,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   }
 
   private boolean checkEntry(String entryName, String file) {
-    Set<String> set = mapArchiveEntries.get(file);
-    if (set == null) {
-      mapArchiveEntries.put(file, set = new HashSet<>());
-    }
+    Set<String> set = mapArchiveEntries.computeIfAbsent(file, k -> new HashSet<>());
 
     boolean added = set.add(entryName);
     if (!added) {

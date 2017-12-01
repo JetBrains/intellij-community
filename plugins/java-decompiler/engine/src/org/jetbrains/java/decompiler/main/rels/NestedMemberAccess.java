@@ -247,9 +247,7 @@ public class NestedMemberAccess {
             }
           }
 
-          for (DirectNode ndx : nd.succs) {
-            stack.add(ndx);
-          }
+          stack.addAll(nd.succs);
         }
 
         if (replaced) {

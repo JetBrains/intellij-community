@@ -187,22 +187,19 @@ public class FieldExprent extends Exprent {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
-    if(!super.match(matchNode, engine)) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
 
     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_FIELD_NAME);
-    if(rule != null) {
-      if(rule.isVariable()) {
-        if(!engine.checkAndSetVariableValue((String)rule.value, this.name)) {
-          return false;
-        }
-      } else {
-        if(!rule.value.equals(this.name)) {
-          return false;
-        }
+    if (rule != null) {
+      if (rule.isVariable()) {
+        return engine.checkAndSetVariableValue((String)rule.value, this.name);
+      }
+      else {
+        return rule.value.equals(this.name);
       }
     }
 

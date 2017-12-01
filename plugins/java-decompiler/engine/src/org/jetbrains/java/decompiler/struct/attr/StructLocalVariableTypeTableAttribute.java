@@ -5,7 +5,6 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
 import java.io.IOException;
-import java.util.Set;
 
 /*
   u2 local_variable_type_table_length;

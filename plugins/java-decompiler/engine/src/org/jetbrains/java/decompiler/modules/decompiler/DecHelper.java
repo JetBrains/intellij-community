@@ -180,17 +180,9 @@ public class DecHelper {
     return true;
   }
 
-
-  public static HashSet<Statement> getUniquePredExceptions(Statement head) {
-
-    HashSet<Statement> setHandlers = new HashSet<>(head.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_FORWARD));
-
-    Iterator<Statement> it = setHandlers.iterator();
-    while (it.hasNext()) {
-      if (it.next().getPredecessorEdges(StatEdge.TYPE_EXCEPTION).size() > 1) {
-        it.remove();
-      }
-    }
+  public static Set<Statement> getUniquePredExceptions(Statement head) {
+    Set<Statement> setHandlers = new HashSet<>(head.getNeighbours(StatEdge.TYPE_EXCEPTION, Statement.DIRECTION_FORWARD));
+    setHandlers.removeIf(statement -> statement.getPredecessorEdges(StatEdge.TYPE_EXCEPTION).size() > 1);
     return setHandlers;
   }
 

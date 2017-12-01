@@ -41,9 +41,6 @@ public class SSAUConstructorSparseEx {
   private final HashMap<String, SFormsFastMapDirect> extraVarVersions = new HashMap<>();
   //private HashMap<String, HashMap<Integer, FastSet<Integer>>> extraVarVersions = new HashMap<String, HashMap<Integer, FastSet<Integer>>>();
 
-  // (var, version), version
-  private final HashMap<VarVersionPair, HashSet<Integer>> phi = new HashMap<>();
-
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
 
@@ -344,7 +341,7 @@ public class SSAUConstructorSparseEx {
             if (calcLiveVars) {
               varMapToGraph(varpaar, varmap);
             }
-            setCurrentVar(varmap, varindex.intValue(), var.getVersion());
+            setCurrentVar(varmap, varindex, var.getVersion());
           }
       }
     }
@@ -359,7 +356,7 @@ public class SSAUConstructorSparseEx {
 
       int cardinality = vers.getCardinality();
       if (cardinality == 1) { // size == 1
-        if (current_vers.intValue() != 0) {
+        if (current_vers != 0) {
           if (calcLiveVars) {
             varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
           }
@@ -384,7 +381,7 @@ public class SSAUConstructorSparseEx {
       }
       else if (cardinality == 2) { // size > 1
 
-        if (current_vers.intValue() != 0) {
+        if (current_vers != 0) {
           if (calcLiveVars) {
             varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
           }
@@ -449,7 +446,7 @@ public class SSAUConstructorSparseEx {
 
       Integer tempver = getNextFreeVersion(phivar.var, stat);
 
-      VarVersionNode tempnode = new VarVersionNode(phivar.var, tempver.intValue());
+      VarVersionNode tempnode = new VarVersionNode(phivar.var, tempver);
 
       colnodes.add(tempnode);
       colpaars.add(new VarVersionPair(phivar.var, tempver.intValue()));
@@ -468,9 +465,6 @@ public class SSAUConstructorSparseEx {
     }
 
     ssuversions.addNodes(colnodes, colpaars);
-
-    // update phi node
-    phi.put(phivar, phiVers);
   }
 
   private void varMapToGraph(VarVersionPair varpaar, SFormsFastMapDirect varmap) {
@@ -583,7 +577,7 @@ public class SSAUConstructorSparseEx {
         }
 
         // false path?
-        boolean isFalsePath = true;
+        boolean isFalsePath;
 
         if (recFinally) {
           isFalsePath = !finwrap.destination.equals(nodeid);
@@ -799,10 +793,6 @@ public class SSAUConstructorSparseEx {
     }
 
     return null;
-  }
-
-  public HashMap<VarVersionPair, HashSet<Integer>> getPhi() {
-    return phi;
   }
 
   public VarVersionsGraph getSsuversions() {

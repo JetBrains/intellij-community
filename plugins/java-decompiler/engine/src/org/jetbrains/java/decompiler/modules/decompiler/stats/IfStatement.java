@@ -36,8 +36,6 @@ public class IfStatement extends Statement {
 
   private boolean negated = false;
 
-  private boolean iffflag;
-
   private final List<Exprent> headexprent = new ArrayList<>(1); // contains IfExprent
 
   // *****************************************************************************
@@ -190,7 +188,6 @@ public class IfStatement extends Statement {
   }
 
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
-    String indstr = TextUtil.getIndentString(indent);
     TextBuffer buf = new TextBuffer();
 
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
@@ -236,10 +233,10 @@ public class IfStatement extends Statement {
           !elsestat.isLabeled() &&
           (elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).isEmpty()
            || !elsestat.getSuccessorEdges(STATEDGE_DIRECT_ALL).get(0).explicit)) { // else if
-        TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent, false, tracer);
-        content.setStart(indstr.length());
-
         buf.appendIndent(indent).append("} else ");
+
+        TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent, false, tracer);
+        content.setStart(TextUtil.getIndentString(indent).length());
         buf.append(content);
 
         elseif = true;
@@ -330,7 +327,6 @@ public class IfStatement extends Statement {
     IfStatement is = new IfStatement();
     is.iftype = this.iftype;
     is.negated = this.negated;
-    is.iffflag = this.iffflag;
 
     return is;
   }
@@ -387,14 +383,6 @@ public class IfStatement extends Statement {
     return (IfExprent)headexprent.get(0);
   }
 
-  public boolean isIffflag() {
-    return iffflag;
-  }
-
-  public void setIffflag(boolean iffflag) {
-    this.iffflag = iffflag;
-  }
-
   public void setElseEdge(StatEdge elseedge) {
     this.elseedge = elseedge;
   }
@@ -415,16 +403,16 @@ public class IfStatement extends Statement {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public IMatchable findObject(MatchNode matchNode, int index) {
-
     IMatchable object = super.findObject(matchNode, index);
-    if(object != null) {
+    if (object != null) {
       return object;
     }
 
-    if(matchNode.getType() == MatchNode.MATCHNODE_EXPRENT) {
+    if (matchNode.getType() == MatchNode.MATCHNODE_EXPRENT) {
       String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
-      if("head".equals(position)) {
+      if ("head".equals(position)) {
         return getHeadexprent();
       }
     }
@@ -432,20 +420,13 @@ public class IfStatement extends Statement {
     return null;
   }
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
-    if(!super.match(matchNode, engine)) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
 
     Integer type = (Integer)matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
-    if(type != null) {
-      if(this.iftype != type.intValue()) {
-        return false;
-      }
-    }
-
-    return true;
+    return type == null || this.iftype == type;
   }
-
 }
