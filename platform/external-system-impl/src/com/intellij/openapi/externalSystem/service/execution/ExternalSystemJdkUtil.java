@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,7 @@ public class ExternalSystemJdkUtil {
     }
 
     if (USE_JAVA_HOME.equals(jdkName)) {
-      String javaHome = System.getenv("JAVA_HOME");
+      String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (StringUtil.isEmptyOrSpaces(javaHome)) throw new UndefinedJavaHomeException();
       if (!isValidJdk(javaHome)) throw new InvalidJavaHomeException(javaHome);
       return JavaSdk.getInstance().createJdk("", javaHome);
@@ -100,7 +101,7 @@ public class ExternalSystemJdkUtil {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      String javaHome = System.getenv("JAVA_HOME");
+      String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (isValidJdk(javaHome)) {
         return Pair.create(USE_JAVA_HOME, JavaSdk.getInstance().createJdk("", javaHome));
       }

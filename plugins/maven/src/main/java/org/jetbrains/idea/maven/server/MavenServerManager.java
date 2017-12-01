@@ -44,6 +44,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Converter;
@@ -218,7 +219,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @NotNull
   private Sdk getJdk() {
     if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = System.getenv("JAVA_HOME");
+      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (!StringUtil.isEmptyOrSpaces(javaHome)) {
         return JavaSdk.getInstance().createJdk("", javaHome);
       }
