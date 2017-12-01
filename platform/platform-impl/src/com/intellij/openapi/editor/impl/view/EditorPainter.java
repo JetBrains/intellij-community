@@ -77,7 +77,7 @@ class EditorPainter implements TextDrawingCallback {
     }
     
     int startLine = myView.yToVisualLine(clip.y);
-    int endLine = myView.yToVisualLine(clip.y + clip.height);
+    int endLine = myView.yToVisualLine(clip.y + clip.height - 1);
     int startOffset = myView.visualLineToOffset(startLine);
     int endOffset = myView.visualLineToOffset(endLine + 1);
     ClipDetector clipDetector = new ClipDetector(myEditor, clip);
