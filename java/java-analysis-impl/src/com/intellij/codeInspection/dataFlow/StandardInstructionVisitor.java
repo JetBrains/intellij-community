@@ -604,6 +604,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.bitwiseAnd(right));
       }
     }
+    else if (JavaTokenType.PERC == opSign) {
+      LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+      LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
+      if(left != null && right != null) {
+        result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.mod(right));
+      }
+    }
     else if (JavaTokenType.PLUS == opSign) {
       result = instruction.getNonNullStringValue(runner.getFactory());
     }
