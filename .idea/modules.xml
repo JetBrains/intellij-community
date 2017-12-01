@@ -223,6 +223,7 @@
       <module fileurl="file://$PROJECT_DIR$/../base/layoutlib-api/layoutlib-api.iml" filepath="$PROJECT_DIR$/../base/layoutlib-api/layoutlib-api.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-api/lint-api.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-api/lint-api.iml" group="android/sdktools/lint" />
       <module fileurl="file://$PROJECT_DIR$/../base/lint/libs/lint-checks/lint-checks.iml" filepath="$PROJECT_DIR$/../base/lint/libs/lint-checks/lint-checks.iml" group="android/sdktools/lint" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/google/lldb-integration-tests/lldb-integration-tests.iml" filepath="$PROJECT_DIR$/../vendor/google/lldb-integration-tests/lldb-integration-tests.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stats-collector/log-events/log-events.iml" filepath="$PROJECT_DIR$/plugins/stats-collector/log-events/log-events.iml" group="plugins/stats-collector" />
       <module fileurl="file://$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" filepath="$PROJECT_DIR$/plugins/stream-debugger/stream-debugger.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
