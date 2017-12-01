@@ -29,7 +29,8 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
            " 2;" +
            "}",
 
-           "class X {  //some comment  //another comment\n" +
+           "class X {  //some comment\n" +
+           "    //another comment\n" +
            "    boolean b = 2 < 1;}");
   }
 
