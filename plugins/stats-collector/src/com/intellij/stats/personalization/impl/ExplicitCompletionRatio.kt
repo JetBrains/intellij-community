@@ -15,7 +15,7 @@ class ExplicitCompletionRatio : UserFactor {
         val factorReader =
                 UserFactorStorage.getInstance().getFactorReader(UserFactorDescriptions.COMPLETION_FINISH_TYPE)
         val total = factorReader.getTotalExplicitSelectCount() + factorReader.getTotalTypedSelectCount()
-        if (total == 0) return null
-        return (factorReader.getTotalExplicitSelectCount().toDouble() / total).toString()
+        if (total == 0.0) return null
+        return (factorReader.getTotalExplicitSelectCount() / total).toString()
     }
 }
