@@ -30,6 +30,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
@@ -138,6 +139,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     setDocument(myDocument); // reinit editor.
   }
 
+  @NotNull
   @Override
   public String getText() {
     return myDocument.getText();
@@ -233,7 +235,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public void setText(@Nullable final String text) {
     ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
-      myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
+      myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
       if (myEditor != null) {
         final CaretModel caretModel = myEditor.getCaretModel();
         if (caretModel.getOffset() >= myDocument.getTextLength()) {

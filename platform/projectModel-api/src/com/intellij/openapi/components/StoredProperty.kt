@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
+import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import kotlin.reflect.KProperty
@@ -62,8 +63,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
+    val getterName = (accessor as? PropertyAccessor)?.getterName
     for (property in properties) {
-      if (property.name == accessor.name) {
+      if (property.name == accessor.name || property.name == getterName) {
         return property.value != property.defaultValue
       }
     }

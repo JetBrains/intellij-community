@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.applet;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -206,12 +192,12 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myHtmlFile;
   }
 
-  private String toNull(String s) {
+  private static String toNull(String s) {
     s = s.trim();
     return s.length() == 0 ? null : s;
   }
 
-  private String toSystemFormat(String s) {
+  private static String toSystemFormat(String s) {
     s = s.trim();
     return s.length() == 0 ? null : s.replace(File.separatorChar, '/');
   }
@@ -223,28 +209,29 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     configuration.setAppletParameters(params);
   }
 
-  public void resetEditorFrom(@NotNull final AppletConfiguration configuration) {
-    getClassNameComponent().setText(configuration.MAIN_CLASS_NAME);
-    String presentableHtmlName = configuration.HTML_FILE_NAME;
+  public void resetEditorFrom(@NotNull AppletConfiguration runConfiguration) {
+    AppletConfigurationOptions configuration = runConfiguration.getOptions();
+    getClassNameComponent().setText(configuration.getMainClassName());
+    String presentableHtmlName = configuration.getHtmlFileName();
     if (presentableHtmlName != null && !StringUtil.startsWithIgnoreCase(presentableHtmlName, HTTP_PREFIX)) {
       presentableHtmlName = presentableHtmlName.replace('/', File.separatorChar);
     }
     getHtmlPathComponent().setText(presentableHtmlName);
-    getPolicyFileComponent().setText(configuration.getPolicyFile());
-    getVMParametersComponent().setText(configuration.VM_PARAMETERS);
-    getWidthComponent().setText(Integer.toString(configuration.WIDTH));
-    getHeightComponent().setText(Integer.toString(configuration.HEIGHT));
+    getPolicyFileComponent().setText(runConfiguration.getPolicyFile());
+    getVMParametersComponent().setText(configuration.getVmParameters());
+    getWidthComponent().setText(Integer.toString(configuration.getWidth()));
+    getHeightComponent().setText(Integer.toString(configuration.getHeight()));
 
-    (configuration.HTML_USED ? myURL : myMainClass).setSelected(true);
+    (configuration.getHtmlUsed() ? myURL : myMainClass).setSelected(true);
     changePanel();
 
-    final AppletConfiguration.AppletParameter[] appletParameters = configuration.getAppletParameters();
+    final AppletConfiguration.AppletParameter[] appletParameters = runConfiguration.getAppletParameters();
     if (appletParameters != null) {
       myParameters.setItems(cloneParameters(Arrays.asList(appletParameters)));
     }
-    myModuleSelector.reset(configuration);
+    myModuleSelector.reset(runConfiguration);
     myJrePathEditor
-      .setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+      .setPathOrName(configuration.getAlternativeJrePath(), configuration.getAlternativeJrePathEnabled());
   }
 
   private RawCommandLineEditor getVMParametersComponent() {
@@ -261,25 +248,26 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myWholePanel;
   }
 
-  public void checkEditorData(final AppletConfiguration configuration) {
-    configuration.MAIN_CLASS_NAME = toNull(getClassNameComponent().getText());
-    configuration.HTML_FILE_NAME = toSystemFormat(getHtmlPathComponent().getText());
-    configuration.VM_PARAMETERS = toNull(getVMParametersComponent().getText());
-    configuration.setPolicyFile(getPolicyFileComponent().getText());
-    myModuleSelector.applyTo(configuration);
+  public void checkEditorData(@NotNull AppletConfiguration runConfiguration) {
+    AppletConfigurationOptions configuration = runConfiguration.getOptions();
+    configuration.setMainClassName(getClassNameComponent().getText().trim());
+    configuration.setHtmlFileName(toSystemFormat(getHtmlPathComponent().getText()));
+    configuration.setVmParameters(getVMParametersComponent().getText().trim());
+    runConfiguration.setPolicyFile(getPolicyFileComponent().getText());
+    myModuleSelector.applyTo(runConfiguration);
     try {
-      configuration.WIDTH = Integer.parseInt(getWidthComponent().getText());
+      configuration.setWidth(Integer.parseInt(getWidthComponent().getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
     try {
-      configuration.HEIGHT = Integer.parseInt(getHeightComponent().getText());
+      configuration.setHeight(Integer.parseInt(getHeightComponent().getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
-    configuration.HTML_USED = myURL.isSelected();
-    configuration.ALTERNATIVE_JRE_PATH = myJrePathEditor.getJrePathOrName();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myJrePathEditor.isAlternativeJreSelected();
+    configuration.setHtmlUsed(myURL.isSelected());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
   }
 
   private void createUIComponents() {
