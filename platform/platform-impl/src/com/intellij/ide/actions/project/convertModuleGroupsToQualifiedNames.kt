@@ -69,6 +69,11 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, { lines[it.index] })
   }
 
+  override fun dispose() {
+    EditorFactory.getInstance().releaseEditor(editor)
+    super.dispose()
+  }
+
   override fun doOKAction() {
     val mapping = getMapping()
     if (mapping == null) {
