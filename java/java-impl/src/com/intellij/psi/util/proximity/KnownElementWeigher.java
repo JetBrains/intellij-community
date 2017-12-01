@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,28 +117,29 @@ public class KnownElementWeigher extends ProximityWeigher {
   }
 
   private static Comparable getJdkClassProximity(@Nullable PsiClass element) {
-    if (element == null || element.getContainingClass() != null) {
-      return 0;
-    }
+    String qname = element == null ? null : element.getQualifiedName();
+    if (qname == null) return null;
+    
+    if (isDispreferredName(qname)) return -1;
 
-    @NonNls final String qname = element.getQualifiedName();
-    if (qname != null) {
-      String pkg = StringUtil.getPackageName(qname);
-      if (qname.equals(JAVA_LANG_OBJECT)) return 5;
-      if (POPULAR_JDK_CLASSES.contains(qname)) return 8;
-      if (pkg.equals("java.lang")) return 6;
-      if (pkg.equals("java.util")) return 7;
+    if (element.getContainingClass() != null) return 0;
+    
+    String pkg = StringUtil.getPackageName(qname);
+    if (qname.equals(JAVA_LANG_OBJECT)) return 5;
+    if (POPULAR_JDK_CLASSES.contains(qname)) return 8;
+    if (pkg.equals("java.lang")) return 6;
+    if (pkg.equals("java.util")) return 7;
 
-      if (qname.startsWith("java.lang")) return 5;
-      if (qname.startsWith("java.util")) return 4;
+    if (qname.startsWith("java.lang")) return 5;
+    if (qname.startsWith("java.util")) return 4;
 
-      if (pkg.equals("javax.swing")) return 3;
-      if (qname.startsWith("java.")) return 2;
-      if (qname.startsWith("javax.")) return 1;
-      if (qname.startsWith("com.")) return -1;
-      if (qname.startsWith("net.")) return -1;
-    }
+    if (pkg.equals("javax.swing")) return 3;
+    if (qname.startsWith("java.")) return 2;
+    if (qname.startsWith("javax.")) return 1;
     return 0;
   }
 
+  private static boolean isDispreferredName(String qname) {
+    return qname.startsWith("com.") || qname.startsWith("net.");
+  }
 }
