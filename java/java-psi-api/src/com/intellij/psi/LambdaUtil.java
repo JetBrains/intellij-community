@@ -893,4 +893,35 @@ public class LambdaUtil {
     }
     return true;
   }
+
+  /**
+   * {@link #isSameOverloadAfterReplacement(PsiLambdaExpression, Supplier)} overload to test the same lambda body,
+   * but with only return value {@code expression} changed to {@code replacement}
+   */
+  public static boolean isSameOverloadAfterReplacement(@NotNull PsiExpression lambdaReturnExpression,
+                                                       @NotNull PsiExpression replacement) {
+    if (lambdaReturnExpression.getParent() instanceof PsiReturnStatement || lambdaReturnExpression.getParent() instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(lambdaReturnExpression, PsiLambdaExpression.class, true, PsiMethod.class);
+      if (lambdaExpression != null &&
+          !isSameOverloadAfterReplacement(lambdaExpression, () -> {
+            PsiLambdaExpression lambdaExpression1 = PsiTreeUtil.getParentOfType(lambdaReturnExpression, PsiLambdaExpression.class);
+            if (lambdaExpression1 == null) return null;
+            PsiElement body = lambdaExpression1.getBody();
+            if (body == null) return null;
+            Object marker = new Object();
+            PsiTreeUtil.mark(lambdaReturnExpression, marker);
+            PsiElement copy = body.copy();
+            PsiElement exprInReturn = PsiTreeUtil.releaseMark(copy, marker);
+            if (exprInReturn == null) return null;
+            if (exprInReturn == copy) {
+              return exprInReturn.replace(replacement);
+            }
+            exprInReturn.replace(replacement);
+            return copy;
+          })) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
