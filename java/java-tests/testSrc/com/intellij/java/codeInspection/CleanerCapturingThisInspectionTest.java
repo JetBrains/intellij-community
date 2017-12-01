@@ -10,41 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CleanerCapturingThisInspectionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testLambdaInstanceField() {
-    doTest();
-  }
-
-  public void testLambdaInstanceSuperField() {
-    doTest();
-  }
-
-  public void testLambdaInstanceMethod() {
-    doTest();
-  }
-
-  public void testLambdaThis() {
-    doTest();
-  }
-
-  public void testLambdaExprBodyInstanceMethod() {
-    doTest();
-  }
-
-  public void testAnonymous() {
-    doTest();
-  }
-
-  public void testInner() {
-    doTest();
-  }
-
-  public void testStaticMethodReference() {
-    doTest();
-  }
-
-  public void testInstanceMethodReference() {
-    doTest();
-  }
+  public void testCleanerCapturingThisInspection() {doTest();}
 
   @Override
   protected void setUp() throws Exception {

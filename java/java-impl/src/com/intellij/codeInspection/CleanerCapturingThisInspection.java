@@ -69,17 +69,13 @@ public class CleanerCapturingThisInspection extends AbstractBaseJavaLocalInspect
     if (element instanceof PsiThisExpression) {
       return true;
     }
-    else if (element instanceof PsiMethodCallExpression) {
-      PsiMethod method = tryCast(((PsiMethodCallExpression)element).getMethodExpression().resolve(), PsiMethod.class);
-      if (method == null) return false;
-      return !method.hasModifierProperty(PsiModifier.STATIC);
-    }
     else if (element instanceof PsiReferenceExpression) {
-      PsiField field = tryCast(((PsiReferenceExpression)element).resolve(), PsiField.class);
-      if (field == null) return false;
-      PsiClass fieldContainingClass = field.getContainingClass();
-      if (fieldContainingClass == null) return false;
-      return InheritanceUtil.isInheritorOrSelf(containingClass, fieldContainingClass, true);
+      PsiMember member = tryCast(((PsiReferenceExpression)element).resolve(), PsiMember.class);
+      if (member == null) return false;
+      PsiClass memberContainingClass = member.getContainingClass();
+      if (memberContainingClass == null) return false;
+      if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberContainingClass, true)) return false;
+      return !member.hasModifierProperty(PsiModifier.STATIC);
     }
     return false;
   }
