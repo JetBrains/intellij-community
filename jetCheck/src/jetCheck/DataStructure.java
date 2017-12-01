@@ -17,8 +17,8 @@ public interface DataStructure {
 
   /**
    * @return a non-negative number used by various generators to guide the sizes of structures (e.g. collections) they create.
-   * The sizes need not be exactly equal to this hint, but in average bigger hints should in average correspond to bigger structures. When generators invoke other generators using {@link #subStructure}, the size hint of the sub-structure is
-   * generally less than the parent's one.
+   * The sizes need not be exactly equal to this hint, but in average bigger hints should in average correspond to bigger structures. When generators invoke other generators, the size hint of the structure used by called generators is
+   * generally less than the original one's.
    */
   int getSizeHint();
   
@@ -26,8 +26,7 @@ public interface DataStructure {
     return drawInt(IntDistribution.uniform(0, getSizeHint()));
   }
 
-  @NotNull
-  DataStructure subStructure();
+  <T> T generate(@NotNull Generator<T> generator);
   
   <T> T generateNonShrinkable(@NotNull Generator<T> generator);
 

@@ -26,7 +26,7 @@ public class Generator<T> {
   /**
    * Creates a generator from a custom function, that creates objects of the given type based on the data from {@link DataStructure}.
    * The generator may call {@link DataStructure#drawInt} methods directly (and interpret those ints in any way it wishes),
-   * or invoke other generators using {@link #generateValue(DataStructure)}.<p/>
+   * or invoke other generators using {@link DataStructure#generate(Generator)}.<p/>
    * 
    * When a property is falsified, the DataStructure is attempted to be minimized, and the generator will be run on
    * ever "smaller" versions of it, this enables automatic minimization on all kinds of generated types.<p/>
@@ -37,13 +37,6 @@ public class Generator<T> {
   @NotNull
   public static <T> Generator<T> from(@NotNull Function<DataStructure, T> function) {
     return new Generator<>(function);
-  }
-
-  /**
-   * Generates a value inside the given data structure.
-   */
-  public T generateValue(@NotNull DataStructure data) {
-    return myFunction.apply(data.subStructure());
   }
 
   Function<DataStructure, T> getGeneratorFunction() {
@@ -65,10 +58,10 @@ public class Generator<T> {
    */
   public <V> Generator<V> flatMap(@NotNull Function<T,Generator<V>> fun) {
     return from(data -> {
-      T value = generateValue(data);
+      T value = data.generate(this);
       Generator<V> result = fun.apply(value);
       if (result == null) throw new NullPointerException(fun + " returned null on " + value);
-      return result.generateValue(data);
+      return data.generate(result);
     });
   }
 
@@ -121,7 +114,7 @@ public class Generator<T> {
     if (alternatives.isEmpty()) throw new IllegalArgumentException("No alternatives to choose from");
     return from(data -> {
       int index = data.generateNonShrinkable(integers(0, alternatives.size() - 1));
-      return alternatives.get(index).generateValue(data);
+      return data.generate(alternatives.get(index));
     });
   }
  
@@ -140,7 +133,7 @@ public class Generator<T> {
 
   /** Gets the data from two generators and invokes the given function to produce a result based on the two generated values. */
   public static <A,B,C> Generator<C> zipWith(Generator<A> gen1, Generator<B> gen2, BiFunction<A,B,C> zip) {
-    return from(data -> zip.apply(gen1.generateValue(data), gen2.generateValue(data)));
+    return from(data -> zip.apply(data.generate(gen1), data.generate(gen2)));
   }
 
   /**
@@ -269,7 +262,7 @@ public class Generator<T> {
   private static <T> List<T> generateList(Generator<T> itemGenerator, DataStructure data, int size) {
     List<T> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
-      list.add(itemGenerator.generateValue(data));
+      list.add(data.generate(itemGenerator));
     }
     return Collections.unmodifiableList(list);
   }

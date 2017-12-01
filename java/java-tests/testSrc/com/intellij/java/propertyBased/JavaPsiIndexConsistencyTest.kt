@@ -47,9 +47,9 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
       PsiIndexConsistencyTester.commonActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)),
       Generator.sampledFrom(AddImport, AddEnum, InvisiblePsiChange),
       Generator.booleans().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
-      Generator.from { data -> TextChange(Generator.asciiIdentifiers().suchThat { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) }.generateValue(data),
-                                          Generator.booleans().generateValue(data),
-                                          Generator.booleans().generateValue(data)) }
+      Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
+                                          data.generate(Generator.booleans()),
+                                          data.generate(Generator.booleans())) }
     )
     PropertyChecker.forAll(Generator.listsOf(genAction)).withIterationCount(20).shouldHold { actions ->
       val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
