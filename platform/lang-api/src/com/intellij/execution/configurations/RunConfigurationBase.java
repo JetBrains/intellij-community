@@ -14,6 +14,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -55,8 +56,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @NotNull
-  protected RunConfigurationOptions createOptions() {
-    return new RunConfigurationOptions();
+  private RunConfigurationOptions createOptions() {
+    return ReflectionUtil.newInstance(getOptionsClass());
   }
 
   protected RunConfigurationOptions getOptions() {
@@ -128,6 +129,8 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
     runConfiguration.myLogFiles = new ArrayList<>(myLogFiles);
     runConfiguration.myPredefinedLogFiles = new ArrayList<>(myPredefinedLogFiles);
+
+    runConfiguration.myOptions = createOptions();
     runConfiguration.myOptions.copyFrom(myOptions);
     copyCopyableDataTo(runConfiguration);
 
@@ -206,16 +209,14 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
       myPredefinedLogFiles.add(logFile);
     }
 
-    if (this instanceof PersistentStateComponent) {
-      PersistentStateComponent instance = (PersistentStateComponent)this;
-      myOptions = XmlSerializer.deserialize(element, ComponentSerializationUtil.getStateClass(instance.getClass()));
-    }
-    else {
-      myOptions = XmlSerializer.deserialize(element, getOptionsClass());
-    }
+    myOptions = XmlSerializer.deserialize(element, getOptionsClass());
   }
 
-  Class<? extends RunConfigurationOptions> getOptionsClass() {
+  protected Class<? extends RunConfigurationOptions> getOptionsClass() {
+    if (this instanceof PersistentStateComponent) {
+      PersistentStateComponent instance = (PersistentStateComponent)this;
+      return ComponentSerializationUtil.getStateClass(instance.getClass());
+    }
     return RunConfigurationOptions.class;
   }
 

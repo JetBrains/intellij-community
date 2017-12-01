@@ -33,12 +33,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     options.resetModificationCount();
   }
 
-  @NotNull
-  @Override
-  protected ModuleBasedConfigurationOptions<ConfigurationModule> createOptions() {
-    return new ModuleBasedConfigurationOptions<>();
-  }
-
   @Override
   protected ModuleBasedConfigurationOptions<ConfigurationModule> getOptions() {
     //noinspection unchecked
@@ -46,7 +40,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   @Override
-  Class<ModuleBasedConfigurationOptions> getOptionsClass() {
+  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
     return ModuleBasedConfigurationOptions.class;
   }
 
@@ -96,6 +90,18 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
     configuration.setName(getName());
     return configuration;
+  }
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    ConfigurationModule module = getConfigurationModule();
+    super.readExternal(element);
+
+    // if null after read, it means that no such field at all in the data, but our clients expect that will be some not null ConfigurationModule wrapper
+    if (getConfigurationModule() == null) {
+      module.setModule(null);
+      getOptions().setModule(module);
+    }
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")

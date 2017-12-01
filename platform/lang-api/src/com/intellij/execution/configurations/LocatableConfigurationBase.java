@@ -18,19 +18,13 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
     super(project, factory, name);
   }
 
-  @NotNull
-  @Override
-  protected RunConfigurationOptions createOptions() {
-    return new LocatableRunConfigurationOptions();
-  }
-
   @Override
   protected LocatableRunConfigurationOptions getOptions() {
     return (LocatableRunConfigurationOptions)super.getOptions();
   }
 
   @Override
-  Class<? extends LocatableRunConfigurationOptions> getOptionsClass() {
+  protected Class<? extends LocatableRunConfigurationOptions> getOptionsClass() {
     return LocatableRunConfigurationOptions.class;
   }
 
