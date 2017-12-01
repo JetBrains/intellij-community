@@ -182,7 +182,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     }
 
     Path targetDir = Paths.get(targetDirectory).toAbsolutePath().normalize()
-    BuildHelper.copyDir(Paths.get(context.paths.kotlinHome).toAbsolutePath().normalize(), targetDir.resolve("plugins/Kotlin"), context)
+    BuildHelper.copyDir(Paths.get("$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize(), targetDir.resolve("plugins/Kotlin"), context)  // Android Studio: modified by Change Ib7f754ea
 
     /* Disabled in Android Studio:
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
