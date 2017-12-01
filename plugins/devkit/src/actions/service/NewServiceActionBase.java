@@ -364,7 +364,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
       IdeaPlugin ideaPlugin = fileElement.getRootElement();
       Extensions targetExtensions = ideaPlugin.getExtensions().stream()
-        .filter(extensions -> !(extensions instanceof IncludedXmlTag))
+        .filter(extensions -> !(extensions.getXmlTag() instanceof IncludedXmlTag))
         .filter(extensions -> Extensions.DEFAULT_PREFIX.equals(extensions.getDefaultExtensionNs().getStringValue()))
         .findAny()
         .orElseGet(() -> ideaPlugin.addExtensions());
