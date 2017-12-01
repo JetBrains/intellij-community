@@ -488,6 +488,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Remove 'for' statement");
   }
 
+  public void testSimplifyConcatWithParentheses() {
+    doTest();
+    checkIntentionResult("Simplify 'f' to false");
+  }
+
   public void testUsingInterfaceConstant() { doTest();}
 
   //https://youtrack.jetbrains.com/issue/IDEA-162184
