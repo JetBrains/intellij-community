@@ -333,7 +333,9 @@ class EditorPainter implements TextDrawingCallback {
                                           MarkupModelEx markupModel,
                                           int startOffset,
                                           int endOffset) {
-    markupModel.processRangeHighlightersOverlappingWith(startOffset, endOffset, highlighter -> {
+    // we decrement startOffset to capture also line-range highlighters on the previous line,
+    // cause they can render a separator visible on current line
+    markupModel.processRangeHighlightersOverlappingWith(startOffset - 1, endOffset, highlighter -> {
       paintLineMarkerSeparator(highlighter, clip, g, yShift);
       return true;
     });
