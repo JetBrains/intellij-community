@@ -40,7 +40,6 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -315,7 +314,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                           @NotNull final List<LocalInspectionToolWrapper> wrappers) {
     final Set<PsiFile> injected = new THashSet<>();
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, getFile(), false, (injectedPsi, places) -> injected.add(injectedPsi));
+      PsiFile containingFile = getFile();
+      InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false,
+                                                                                   (injectedPsi, places) -> injected.add(injectedPsi));
     }
     if (injected.isEmpty()) return;
     Processor<PsiFile> processor = injectedPsi -> {
