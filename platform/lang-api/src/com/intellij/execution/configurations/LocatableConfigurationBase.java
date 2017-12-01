@@ -30,7 +30,7 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
   }
 
   @Override
-  Class<LocatableRunConfigurationOptions> getOptionsClass() {
+  Class<? extends LocatableRunConfigurationOptions> getOptionsClass() {
     return LocatableRunConfigurationOptions.class;
   }
 

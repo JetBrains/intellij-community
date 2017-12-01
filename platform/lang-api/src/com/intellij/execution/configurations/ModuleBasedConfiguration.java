@@ -45,6 +45,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return (ModuleBasedConfigurationOptions<ConfigurationModule>)super.getOptions();
   }
 
+  @Override
+  Class<ModuleBasedConfigurationOptions> getOptionsClass() {
+    return ModuleBasedConfigurationOptions.class;
+  }
+
   public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(configurationModule.getProject(), factory, "");
 
