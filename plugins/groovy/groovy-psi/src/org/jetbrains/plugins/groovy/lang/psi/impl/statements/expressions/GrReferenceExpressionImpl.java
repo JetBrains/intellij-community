@@ -203,10 +203,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
 
     if (ResolveUtil.isDefinitelyKeyOfMap(this)) {
-      final PsiType type = getTypeFromMapAccess(this);
-      if (type != null) {
-        return type;
-      }
+      return getTypeFromMapAccess(this);
     }
 
     PsiType result = getNominalTypeInner(resolved);
@@ -269,16 +266,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName()) &&
           "getClass".equals(method.getName())) {
-        return TypesUtil.createJavaLangClassType(PsiImplUtil.getQualifierType(this), getProject(), getResolveScope());
+        return getTypeFromClassRef();
       }
 
       return PsiUtil.getSmartReturnType(method);
     }
 
     if (resolved == null) {
-      final PsiType fromClassRef = getTypeFromClassRef(this);
-      if (fromClassRef != null) {
-        return fromClassRef;
+      if ("class".equals(getReferenceName())) {
+        final PsiType fromClassRef = getTypeFromClassRef();
+        if (fromClassRef != null) {
+          return fromClassRef;
+        }
       }
 
       final PsiType fromMapAccess = getTypeFromMapAccess(this);
@@ -335,11 +334,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Nullable
-  private static PsiType getTypeFromClassRef(@NotNull GrReferenceExpressionImpl ref) {
-    if ("class".equals(ref.getReferenceName())) {
-      return TypesUtil.createJavaLangClassType(PsiImplUtil.getQualifierType(ref), ref.getProject(), ref.getResolveScope());
-    }
-    return null;
+  private PsiType getTypeFromClassRef() {
+    PsiType qualifierType = PsiImplUtil.getQualifierType(this);
+
+    if (qualifierType == null && !PsiUtil.isCompileStatic(this)) return null;
+    return TypesUtil.createJavaLangClassType(qualifierType, getProject(), getResolveScope());
   }
 
   @Nullable
@@ -435,6 +434,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       else if (nameType == GroovyTokenTypes.kSUPER) {
         final GroovyResolveResult[] results = GrSuperReferenceResolver.resolveSuperExpression(this);
         if (results != null) return results;
+      } else if (nameType == GroovyTokenTypes.kCLASS && !PsiUtil.isCompileStatic(this)) {
+        GrExpression qualifier = getQualifier();
+        if (qualifier == null || qualifier.getType() == null) return GroovyResolveResult.EMPTY_ARRAY;
       }
       final GroovyResolveResult[] results = resolveReferenceExpression(this, forceRValue, incompleteCode);
       if (results.length == 0) {
