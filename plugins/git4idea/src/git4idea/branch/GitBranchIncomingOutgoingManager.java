@@ -8,13 +8,14 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVcsSettings;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
@@ -29,8 +30,11 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.util.containers.ContainerUtil.emptyList;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
 import static git4idea.repo.GitRefUtil.getResolvedHashes;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static one.util.streamex.StreamEx.of;
 
@@ -140,20 +144,28 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
                                      @NotNull List<String> branchRefNames) {
     Map<String, Hash> result = ContainerUtil.newHashMap();
     VcsFileUtil.chunkArguments(branchRefNames).forEach(refs -> {
-      List<String> params = ContainerUtil.newArrayList();
-      if (!myUseForceAuthentication) {
-        params.addAll(Arrays.asList("-c", "credential.helper="));
-      }
-      params.addAll(Arrays.asList("--heads", remote.getName()));
+      List<String> params = newArrayList("--heads", remote.getName());
       params.addAll(refs);
-      GitCommandResult lsRemoteResult =
-        Git.getInstance().lsRemote(myProject, repository.getRoot(), remote, ArrayUtil.toStringArray(params));
+      GitCommandResult lsRemoteResult = Git.getInstance().runCommand(() -> createLsRemoteHandler(repository, remote, params));
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = ContainerUtil.map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
       }
+      else if (lsRemoteResult.isAuthenticationFailed()) {
+        //todo handle this
+      }
     });
     return result;
+  }
+
+  @NotNull
+  private GitLineHandler createLsRemoteHandler(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull List<String> params) {
+    GitLineHandler h = new GitLineHandler(myProject, repository.getRoot(), GitCommand.LS_REMOTE,
+                                          !myUseForceAuthentication ? singletonList("credential.helper=") : emptyList());
+    h.setIgnoreAuthenticationRequest(!myUseForceAuthentication);
+    h.addParameters(params);
+    h.setUrls(remote.getUrls());
+    return h;
   }
 
   private boolean shouldUpdateBranchesToPull(@NotNull GitRepository repository) {
@@ -203,7 +215,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
         trackInfosByRemote.get(info.getRemote()).add(info);
       }
       else {
-        trackInfosByRemote.put(info.getRemote(), ContainerUtil.newArrayList(info));
+        trackInfosByRemote.put(info.getRemote(), newArrayList(info));
       }
     }
     return trackInfosByRemote;
