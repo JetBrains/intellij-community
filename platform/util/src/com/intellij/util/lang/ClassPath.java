@@ -98,9 +98,7 @@ public class ClassPath {
     try {
       int i;
       if (myCanUseCache) {
-        boolean allUrlsWereProcessed;
-
-        allUrlsWereProcessed = myAllUrlsWereProcessed;
+        boolean allUrlsWereProcessed = myAllUrlsWereProcessed;
         i = allUrlsWereProcessed ? 0 : myLastLoaderProcessed.get();
 
         Resource prevResource = myCache.iterateLoaders(s, flag ? ourCheckedIterator : ourUncheckedIterator, s, this);
@@ -200,7 +198,7 @@ public class ClassPath {
     if (file.isDirectory()) {
       return new FileLoader(url, index, myCanHavePersistentIndex);
     }
-    else if (file.isFile()) {
+    if (file.isFile()) {
       Loader loader = new JarLoader(url, myCanLockJars, index, myPreloadJarContents, this);
       if (processRecursively) {
         String[] referencedJars = loadManifestClasspath((JarLoader)loader);
@@ -259,8 +257,8 @@ public class ClassPath {
   }
 
   private class MyEnumeration implements Enumeration<URL> {
-    private int myIndex = 0;
-    private Resource myRes = null;
+    private int myIndex;
+    private Resource myRes;
     private final String myName;
     private final String myShortName;
     private final boolean myCheck;
@@ -279,7 +277,7 @@ public class ClassPath {
         if (name.endsWith("/")) {
           myCache.iterateLoaders(name.substring(0, name.length() - 1), ourLoaderCollector, loadersSet, this);
         } else {
-          myCache.iterateLoaders(name.concat("/"), ourLoaderCollector, loadersSet, this);
+          myCache.iterateLoaders(name + "/", ourLoaderCollector, loadersSet, this);
         }
 
         loaders = new ArrayList<Loader>(loadersSet);
@@ -320,10 +318,12 @@ public class ClassPath {
       return false;
     }
 
+    @Override
     public boolean hasMoreElements() {
       return next();
     }
 
+    @Override
     public URL nextElement() {
       if (!next()) {
         throw new NoSuchElementException();
@@ -415,8 +415,8 @@ public class ClassPath {
   }
 
   private static final boolean ourLogTiming = Boolean.getBoolean("idea.print.classpath.timing");
-  private static long ourTotalTime = 0;
-  private static int ourTotalRequests = 0;
+  private static long ourTotalTime;
+  private static int ourTotalRequests;
 
   private static long startTiming() {
     return ourLogTiming ? System.nanoTime() : 0;
@@ -430,10 +430,10 @@ public class ClassPath {
     ourTotalTime += time;
     ++ourTotalRequests;
     if (time > 10000000L) {
-      System.out.println((time / 1000000) + " ms for " + msg);
+      System.out.println(time / 1000000 + " ms for " + msg);
     }
     if (ourTotalRequests % 1000 == 0) {
-      System.out.println(path.toString() + ", requests:" + ourTotalRequests + ", time:" + (ourTotalTime / 1000000) + "ms");
+      System.out.println(path + ", requests:" + ourTotalRequests + ", time:" + (ourTotalTime / 1000000) + "ms");
     }
   }
 
