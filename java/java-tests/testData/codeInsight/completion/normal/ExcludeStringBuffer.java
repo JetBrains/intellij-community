@@ -1,3 +1,3 @@
 public class Main {
-  StringBuf<caret>
+  StringBuf<caret>x
 }

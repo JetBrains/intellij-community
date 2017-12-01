@@ -15,19 +15,11 @@
  */
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.testFramework.LightProjectDescriptor
-
 /**
  * @author peter
  */
-class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
-  @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
-  }
-
+class NormalCompletionDfaTest extends NormalCompletionTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8
@@ -78,11 +70,6 @@ public class FooImpl extends Foo {
 }
 '''
     doTest()
-  }
-
-  private void doTest() throws Exception {
-    configureByTestName()
-    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void testCastInstanceofedQualifierInLambda() { doTest() }
