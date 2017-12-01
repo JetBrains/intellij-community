@@ -123,6 +123,12 @@ public class DoubleNegationInspection extends BaseInspection {
       if (!isNegation(operand)) {
         return;
       }
+      if (operand instanceof PsiPrefixExpression) {
+        PsiExpression nestedOperand = ((PsiPrefixExpression)operand).getOperand();
+        if (nestedOperand == null || !LambdaUtil.isSameOverloadAfterReplacement(expression, nestedOperand)) {
+          return;
+        }
+      }
       registerError(expression);
     }
 
