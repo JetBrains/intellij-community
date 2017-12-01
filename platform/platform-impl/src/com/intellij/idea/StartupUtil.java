@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -74,6 +75,7 @@ public class StartupUtil {
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     boolean newConfigFolder = false;
 
     if (!Main.isHeadless()) {

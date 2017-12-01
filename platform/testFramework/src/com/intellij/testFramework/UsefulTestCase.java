@@ -87,6 +87,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
   static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);

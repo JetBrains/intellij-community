@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.fixtures.impl;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EdtTestUtil;
@@ -30,6 +31,10 @@ public class BaseFixture implements IdeaTestFixture {
   private boolean myInitialized;
   private boolean myDisposed;
   private final Disposable myTestRootDisposable = Disposer.newDisposable();
+
+  static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
+  }
 
   @Override
   public void setUp() throws Exception {
