@@ -32,6 +32,7 @@ import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FindInProjectManager {
   private final Project myProject;
@@ -46,6 +47,10 @@ public class FindInProjectManager {
   }
 
   public void findInProject(@NotNull DataContext dataContext) {
+    findInProject(dataContext, null);
+  }
+
+  public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel predefinedModel) {
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
@@ -59,12 +64,17 @@ public class FindInProjectManager {
     }
 
     final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = findManager.getFindInProjectModel().clone();
-    findModel.setReplaceState(false);
-    findModel.setOpenInNewTabVisible(true);
-    findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
-    findModel.setOpenInNewTab(toOpenInNewTab);
-    initModel(findModel, dataContext);
+    final FindModel findModel;
+    if (predefinedModel != null) {
+      findModel = predefinedModel.clone();
+    } else {
+      findModel = findManager.getFindInProjectModel().clone();
+      findModel.setReplaceState(false);
+      findModel.setOpenInNewTabVisible(true);
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
+      findModel.setOpenInNewTab(toOpenInNewTab);
+      initModel(findModel, dataContext);
+    }
 
     findManager.showFindDialog(findModel, () -> {
       findModel.setOpenInNewTabVisible(false);
