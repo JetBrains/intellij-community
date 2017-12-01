@@ -99,7 +99,7 @@ public class JavaReflectionReferenceUtil {
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
-  @Nullable
+  @Contract("null -> null")
   public static ReflectiveType getReflectiveType(@Nullable PsiExpression context) {
     context = ParenthesesUtils.stripParentheses(context);
     if (context == null) {
@@ -144,6 +144,24 @@ public class JavaReflectionReferenceUtil {
         }
       }
     }
+
+    if (context instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)context;
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiVariable) {
+        PsiVariable variable = (PsiVariable)resolved;
+        if (isJavaLangClass(PsiTypesUtil.getPsiClass(variable.getType()))) {
+          final PsiExpression definition = findVariableDefinition(reference, variable);
+          if (definition != null) {
+            ReflectiveType result = ourGuard.doPreventingRecursion(variable, false, () -> getReflectiveType(definition));
+            if (result != null) {
+              return result;
+            }
+          }
+        }
+      }
+    }
+
     final PsiType type = context.getType();
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
@@ -169,15 +187,6 @@ public class JavaReflectionReferenceUtil {
         final PsiClass argumentClass = PsiTypesUtil.getPsiClass(erasure);
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass, false);
-        }
-      }
-    }
-    if (context instanceof PsiReferenceExpression) {
-      final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
-      if (resolved instanceof PsiVariable) {
-        final PsiExpression definition = findVariableDefinition((PsiReferenceExpression)context, (PsiVariable)resolved);
-        if (definition != null) {
-          return ourGuard.doPreventingRecursion(resolved, false, () -> getReflectiveType(definition));
         }
       }
     }
