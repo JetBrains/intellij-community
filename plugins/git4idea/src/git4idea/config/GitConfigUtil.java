@@ -24,10 +24,14 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.Map;
+
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
 
 /**
  * Git utilities for working with configuration
@@ -97,6 +101,18 @@ public class GitConfigUtil {
       return null;
     }
     return output.substring(0, pos);
+  }
+
+  /**
+   * Converts the git config boolean value (which can be specified in various ways) to Java Boolean.
+   * @return true if the value represents "true", false if the value represents "false", null if the value doesn't look like a boolean value.
+   */
+  @Nullable
+  public static Boolean getBooleanValue(@NotNull String value) {
+    value = value.toLowerCase(Locale.ENGLISH);
+    if (newHashSet("true", "yes", "on", "1").contains(value)) return true;
+    if (newHashSet("false", "no", "off", "0", "").contains(value)) return false;
+    return null;
   }
 
   /**

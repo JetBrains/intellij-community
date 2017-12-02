@@ -112,7 +112,7 @@ public abstract class GitUpdater {
           if (isRebaseValue(rebaseValue)) {
             return REBASE;
           }
-          if (rebaseValue.equalsIgnoreCase("false") || rebaseValue.equalsIgnoreCase("no")) {
+          if (GitConfigUtil.getBooleanValue(rebaseValue) == Boolean.FALSE) {
             // explicit override of a more generic pull.rebase config value
             return MERGE;
           }
@@ -138,10 +138,9 @@ public abstract class GitUpdater {
   }
 
   private static boolean isRebaseValue(@NotNull String configValue) {
-    return configValue.equalsIgnoreCase("true") ||
+    return GitConfigUtil.getBooleanValue(configValue) == Boolean.TRUE ||
            configValue.equalsIgnoreCase("interactive") ||
-           configValue.equalsIgnoreCase("preserve") ||
-           configValue.equalsIgnoreCase("yes"); // 'yes' is not specified in the man, but actually works
+           configValue.equalsIgnoreCase("preserve"); // 'yes' is not specified in the man, but actually works
   }
 
   @NotNull
