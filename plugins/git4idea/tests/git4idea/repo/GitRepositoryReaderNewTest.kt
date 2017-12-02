@@ -55,7 +55,6 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
     makeCommit("file.txt")
     conflict(repo, "feature")
     commit(repo)
-    commit(repo)
     git("checkout HEAD^")
     git("rebase feature", true)
 
