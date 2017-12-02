@@ -310,8 +310,8 @@ final class PaintersHelper implements Painter.Listener {
           sh = useWidth ? h * cw / w : ch;
         }
         else {
-          sw = cw < w ? w : (cw + w) / w * w;
-          sh = ch < h ? h : (ch + h) / h * h;
+          sw = cw < w ? w : ((cw / w + 1) / 2 * 2 + 1) * w;
+          sh = ch < h ? h : ((ch / h + 1) / 2 * 2 + 1) * h;
         }
         int sw0 = scaled == null ? -1 : scaled.getWidth(null);
         int sh0 = scaled == null ? -1 : scaled.getHeight(null);
