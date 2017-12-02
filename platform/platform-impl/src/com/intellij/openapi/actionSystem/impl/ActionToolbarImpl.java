@@ -288,13 +288,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         rightAligned.add(action);
         continue;
       }
-//      if (action instanceof Separator && isNavBar()) {
-//        continue;
-//      }
-
-      //if (action instanceof ComboBoxAction) {
-      //  ((ComboBoxAction)action).setSmallVariant(true);
-      //}
 
       if (layoutSecondaries) {
         if (!myActionGroup.isPrimary(action)) {
