@@ -77,6 +77,10 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     PropertyChecker.forAll(integers().suchThat(i -> i < 0)).shouldHold(i -> i < 0);
   }
 
+  public void testNestedSometimesVeryRareSuchThat() {
+    forAllStable(frequency(50, constant(0), 1, integers(1, 1000)).suchThat(i -> i > 0)).shouldHold(i -> i > 0);
+  }
+
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),

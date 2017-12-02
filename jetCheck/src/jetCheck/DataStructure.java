@@ -26,9 +26,12 @@ public interface DataStructure {
     return drawInt(IntDistribution.uniform(0, getSizeHint()));
   }
 
+  /** Runs the given generator on this data structure and returns the result */
   <T> T generate(@NotNull Generator<T> generator);
   
+  /** @see Generator#noShrink() */
   <T> T generateNonShrinkable(@NotNull Generator<T> generator);
 
+  /** @see Generator#suchThat */
   <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition);
 }

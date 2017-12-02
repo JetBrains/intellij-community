@@ -74,10 +74,18 @@ public class Generator<T> {
   }
 
   /**
-   * Skips all generated data that doesn't satisfy the given condition. Useful to avoid infrequent corner cases.
-   * If the condition fails too often, data generation is stopped prematurely due to inability to produce the data.<p/>
+   * Attempts to generate the value several times, until one comes out that satisfies the given condition. That value is returned as generator result.
+   * Results of all previous attempts are discarded. During shrinking, the underlying data structures from those attempts
+   * won't be used for re-running generation, so be careful that those attempts don't leave any traces of themselves 
+   * (e.g. side effects, even ones internal to an outer generator).<p/> 
    * 
-   * To eliminate large portions of search space, consider changing the generator instead of using {@code suchThat}.
+   * If the condition still fails after a large number of attempts, data generation is stopped prematurely and {@link CannotSatisfyCondition} exception is thrown.<p/>
+   * 
+   * This method is useful to avoid infrequent corner cases (e.g. {@code integers().suchThat(i -> i != 0)}). 
+   * To eliminate large portions of search space, this strategy might prove ineffective 
+   * and result in generator failure due to inability to come up with satisfying examples 
+   * (e.g. {@code integers().suchThat(i -> i > 0 && i <= 10)} 
+   * where the condition would be {@code true} in just 10 of about 4 billion times). In such cases, please consider changing the generator instead of using {@code suchThat}.
    */
   public Generator<T> suchThat(@NotNull Predicate<T> condition) {
     return from(data -> data.generateConditional(this, condition));
