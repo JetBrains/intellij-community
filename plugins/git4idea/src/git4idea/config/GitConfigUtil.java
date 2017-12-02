@@ -16,8 +16,6 @@
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,8 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +36,6 @@ public class GitConfigUtil {
 
   public static final String USER_NAME = "user.name";
   public static final String USER_EMAIL = "user.email";
-  public static final String BRANCH_AUTOSETUP_REBASE = "branch.autosetuprebase";
   public static final String CORE_AUTOCRLF = "core.autocrlf";
 
   private GitConfigUtil() {
@@ -77,31 +72,6 @@ public class GitConfigUtil {
       start = pos + 1;
       result.put(key, value);
     }
-  }
-
-  /**
-   * Get configuration values for the repository. Note that the method executes a git command.
-   *
-   * @param project the context project
-   * @param root    the git root
-   * @param key     the keys to be queried
-   * @return list of pairs ({@link Pair#first} is the key, {@link Pair#second} is the value)
-   * @throws VcsException an exception
-   */
-  public static List<Couple<String>> getAllValues(Project project, VirtualFile root, @NonNls String key) throws VcsException {
-    List<Couple<String>> result = new ArrayList<>();
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
-    h.setSilent(true);
-    h.addParameters("--null", "--get-all", key);
-    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
-    int start = 0;
-    int pos;
-    while ((pos = output.indexOf('\u0000', start)) != -1) {
-      String value = output.substring(start, pos);
-      start = pos + 1;
-      result.add(Couple.of(key, value));
-    }
-    return result;
   }
 
 
@@ -214,22 +184,6 @@ public class GitConfigUtil {
   public static String getFileNameEncoding() {
     // TODO the best guess is that the default encoding is used.
     return Charset.defaultCharset().name();
-  }
-
-  /**
-   * Unset the current value
-   *
-   * @param project the project
-   * @param root    the git root
-   * @param key     the key to unset
-   * @throws VcsException if there is a problem with running git
-   */
-  public static void unsetValue(Project project, VirtualFile root, String key) throws VcsException {
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
-    h.setSilent(true);
-    h.ignoreErrorCode(1);
-    h.addParameters("--unset", key);
-    Git.getInstance().runCommand(h).getOutputOrThrow();
   }
 
   /**
