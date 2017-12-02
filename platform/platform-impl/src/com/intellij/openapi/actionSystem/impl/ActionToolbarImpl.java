@@ -279,8 +279,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
     final List<AnAction> rightAligned = new ArrayList<>();
+    boolean isLastElementSeparator = false;
     if (myAddSeparatorFirst) {
       add(new MySeparator());
+      isLastElementSeparator = true;
     }
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
@@ -297,8 +299,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
 
       if (action instanceof Separator) {
+        if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
           add(new MySeparator());
+          isLastElementSeparator = true;
+          continue;
         }
       }
       else if (action instanceof CustomComponentAction) {
@@ -307,6 +312,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       else {
         add(createToolbarButton(action));
       }
+      isLastElementSeparator = false;
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
