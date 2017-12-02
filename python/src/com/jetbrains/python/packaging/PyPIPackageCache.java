@@ -6,6 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -62,7 +64,7 @@ public class PyPIPackageCache {
   }
 
   public PyPIPackageCache(@NotNull List<String> packageNames) {
-    myPackageNames = packageNames;
+    myPackageNames = ContainerUtil.map(packageNames, PackageInfo::new);
   }
 
   @NotNull
@@ -71,11 +73,11 @@ public class PyPIPackageCache {
   }
 
   @SerializedName("packages")
-  private List<String> myPackageNames = new ArrayList<>();
+  private List<PackageInfo> myPackageNames = new ArrayList<>();
 
   @NotNull
   public List<String> getPackageNames() {
-    return Collections.unmodifiableList(myPackageNames);
+    return Collections.unmodifiableList(ContainerUtil.map(myPackageNames, PackageInfo::getName));
   }
 
   /**
@@ -87,6 +89,25 @@ public class PyPIPackageCache {
    * when the cache is merely not ready.
    */
   public boolean containsPackage(@NotNull String name) {
-    return Collections.binarySearch(myPackageNames, name, String.CASE_INSENSITIVE_ORDER) >= 0;
+    final Comparator<PackageInfo> caseInsensitiveNameComparator = Comparator.comparing(PackageInfo::getName, String.CASE_INSENSITIVE_ORDER);
+    return Collections.binarySearch(myPackageNames, new PackageInfo(name), caseInsensitiveNameComparator) >= 0;
+  }
+
+  private static class PackageInfo {
+    @SerializedName("n")
+    private String myName;
+
+    @SuppressWarnings("unused")
+    public PackageInfo() {
+    }
+
+    public PackageInfo(@NotNull String name) {
+      myName = name;
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
   }
 }
