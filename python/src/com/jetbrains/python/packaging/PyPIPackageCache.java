@@ -14,7 +14,6 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -37,8 +36,6 @@ public class PyPIPackageCache {
       try (Reader reader = Files.newBufferedReader(getCachePath(), StandardCharsets.UTF_8)) {
         ourInstance = ourGson.fromJson(reader, PyPIPackageCache.class);
         LOG.info("Loaded " + ourInstance.getPackageNames().size() + " packages from " + getCachePath());
-      }
-      catch (NoSuchFileException ignored) {
       }
       catch (IOException exception) {
         LOG.warn("Cannot load PyPI package cache from the filesystem", exception);
