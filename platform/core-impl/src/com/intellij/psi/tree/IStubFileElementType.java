@@ -40,6 +40,13 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
     super(debugName, language);
   }
 
+  /**
+   * Stub structure version. Should be incremented each time when stub tree changes (e.g. elements added/removed,
+   * element serialization/deserialization changes).
+   * Make sure to invoke super method for {@link TemplateLanguage} to prevent stub serialization problems due to
+   * data language stub changes
+   * @return stub version
+   */
   public int getStubVersion() {
     if (getLanguage() instanceof TemplateLanguage) {
       if (templateStubVersion == -1) templateStubVersion = calcStubVersion();
