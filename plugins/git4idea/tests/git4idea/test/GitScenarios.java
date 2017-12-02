@@ -182,10 +182,6 @@ public class GitScenarios {
     return git(repository, "commit -m just_a_commit");
   }
 
-  public static String commit(GitRepository repository) {
-    return GitScenarios.commit(repository, "just_a_file_" + String.valueOf(Math.random()) + ".txt");
-  }
-
   public static boolean branchExists(GitRepository repo, String branch) {
     return git(repo, "branch").contains(branch);
   }
