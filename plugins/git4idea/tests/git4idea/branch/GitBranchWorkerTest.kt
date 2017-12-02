@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
@@ -399,6 +400,36 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   fun `test deny to smart merge in first repo should show nothing`() {
     `check deny to smart operation in first repo should show nothing`("merge")
+  }
+
+  fun `test local changes would be overwritten in several repositories`() {
+    val local1 = "local1.txt"
+    localChangesOverwrittenByWithoutConflict(first, "feature", listOf(local1))
+    val local2 = "local2.txt"
+    localChangesOverwrittenByWithoutConflict(second, "feature", listOf(local2))
+    val file1 = File(first.root.path, local1)
+    val file2 = File(second.root.path, local2)
+    val expectedLocalChanges = listOf(file1, file2).map { it.path }
+    cd(last)
+    git("branch feature")
+    updateChangeListManager()
+
+    var smartOperationDialogTimes = 0
+    val filesInDialog = mutableListOf<String>()
+    checkoutOrMerge("checkout", "feature", object : TestUiHandler() {
+      override fun showSmartOperationDialog(project: Project,
+                                            changes: List<Change>,
+                                            paths: Collection<String>,
+                                            operation: String,
+                                            forceButton: String?): GitSmartOperationDialog.Choice {
+        smartOperationDialogTimes++
+        filesInDialog.addAll(ChangesUtil.getPaths(changes).map { it.path })
+        return GitSmartOperationDialog.Choice.SMART
+      }
+    })
+
+    assertSameElements("Local changes would be overwritten by checkout are shown incorrectly", filesInDialog, expectedLocalChanges)
+    assertEquals("Smart checkout dialog should be shown only once", 1, smartOperationDialogTimes)
   }
 
   private fun `check deny to smart operation in first repo should show nothing`(operation: String) {
