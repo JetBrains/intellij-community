@@ -227,9 +227,13 @@ public class Generator<T> {
     return integers(0, Integer.MAX_VALUE);
   }
 
-  /** Generates integers in the given range (both ends inclusive) */
+  /** Generates integers uniformly distributed in the given range (both ends inclusive) */
   public static Generator<Integer> integers(int min, int max) {
-    IntDistribution distribution = IntDistribution.uniform(min, max);
+    return integers(IntDistribution.uniform(min, max));
+  }
+
+  /** Generates integers with the given distribution */
+  public static Generator<Integer> integers(@NotNull IntDistribution distribution) {
     return from(data -> data.drawInt(distribution));
   }
 
