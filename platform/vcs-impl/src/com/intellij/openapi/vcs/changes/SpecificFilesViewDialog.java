@@ -64,7 +64,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
       public void calcData(DataKey key, DataSink sink) {
         super.calcData(key, sink);
         if (shownDataKey.is(key.getName())) {
-          sink.put(shownDataKey, getSelectedFiles());
+          sink.put(shownDataKey, getSelectedVirtualFiles(null));
         }
       }
 
