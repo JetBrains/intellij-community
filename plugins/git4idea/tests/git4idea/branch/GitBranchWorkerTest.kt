@@ -409,7 +409,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
     localChangesOverwrittenByWithoutConflict(second, "feature", listOf(local2))
     val file1 = File(first.root.path, local1)
     val file2 = File(second.root.path, local2)
-    val expectedLocalChanges = listOf(file1, file2).map { it.path }
+    val expectedLocalChanges = listOf(file1, file2).map { FileUtil.toSystemIndependentName(it.path) }
     cd(last)
     git("branch feature")
     updateChangeListManager()
