@@ -133,7 +133,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
           return;
         }
       }
-      if (isClone && SingletonUtil.isSingleton(method.getContainingClass())) {
+      if (isClone && ClassUtils.isSingleton(method.getContainingClass())) {
         return;
       }
       if (MethodCallUtils.containsSuperMethodCall(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
