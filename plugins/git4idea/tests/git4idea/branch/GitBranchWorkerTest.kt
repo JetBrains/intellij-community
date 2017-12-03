@@ -405,13 +405,25 @@ class GitBranchWorkerTest : GitPlatformTest() {
   fun `test local changes would be overwritten in several repositories`() {
     val local1 = "local1.txt"
     localChangesOverwrittenByWithoutConflict(first, "feature", listOf(local1))
-    val local2 = "local2.txt"
-    localChangesOverwrittenByWithoutConflict(second, "feature", listOf(local2))
-    val file1 = File(first.root.path, local1)
-    val file2 = File(second.root.path, local2)
-    val expectedLocalChanges = listOf(file1, file2).map { FileUtil.toSystemIndependentName(it.path) }
+
+    // in addition to a local change preventing checkout...
+    cd(second)
+    val local2 = second.file("local2.txt")
+    local2.create(LOCAL_CHANGES_OVERWRITTEN_BY.initial).addCommit("initial-local2")
+    git("checkout -b feature")
+    local2.prepend(LOCAL_CHANGES_OVERWRITTEN_BY.branchLine).addCommit("feature-local2")
+    // ... make another file producing diff between master and feature (but not related to the 'local change would be overwritten' error)
+    second.file("feature.txt").create("feature\n").addCommit("feature.txt")
+    git("checkout master")
+    local2.append(LOCAL_CHANGES_OVERWRITTEN_BY.masterLine)
+
     cd(last)
     git("branch feature")
+
+    val file1 = File(first.root.path, local1)
+    val file2 = local2.file
+    val expectedLocalChanges = listOf(file1, file2).map { FileUtil.toSystemIndependentName(it.path) }
+
     updateChangeListManager()
 
     var smartOperationDialogTimes = 0

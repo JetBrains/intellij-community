@@ -209,4 +209,12 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
   fun exists() = file.exists()
 
   fun read() = FileUtil.loadFile(file)
+
+  fun cat(): String = FileUtil.loadFile(file)
+
+  fun prepend(content: String): TestFile {
+    val previousContent = cat()
+    FileUtil.writeToFile(file, content + previousContent)
+    return this
+  }
 }
