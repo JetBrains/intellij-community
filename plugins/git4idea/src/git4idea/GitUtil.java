@@ -871,7 +871,7 @@ public class GitUtil {
       file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
     }
     if (file == null) {
-      LOG.warn("VirtualFile not found for " + absolutePath);
+      LOG.debug("VirtualFile not found for " + absolutePath);
     }
     return file;
   }
@@ -909,11 +909,8 @@ public class GitUtil {
           String message = "Change is not found for " + file.getPath();
           if (changeListManager.isInUpdate()) {
             message += " because ChangeListManager is being updated.";
-            LOG.debug(message);
           }
-          else {
-            LOG.info(message);
-          }
+          LOG.debug(message);
         }
       }
     }
