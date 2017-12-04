@@ -859,7 +859,7 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
 
   @Override
   public void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter) {
-    myDelegate.registerLineExtensionPainter(lineExtensionPainter);
+    throw new UnsupportedOperationException();
   }
 
   @Override
