@@ -322,7 +322,9 @@ class CommunityRepositoryModules {
 
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
-
+      withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
+      withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
+      withProjectLibrary("analytics-protos")
 
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
