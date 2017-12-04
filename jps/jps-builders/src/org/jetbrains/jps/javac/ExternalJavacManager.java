@@ -217,7 +217,7 @@ public class ExternalJavacManager {
 
   public void stop() {
     myChannelRegistrar.close().awaitUninterruptibly();
-    myExecutor.shutdownNow();
+    myExecutor.shutdown();
   }
 
   private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid,
