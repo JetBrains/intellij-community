@@ -17,11 +17,7 @@ package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.ide.actions.ShowSettingsUtilImpl;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -30,10 +26,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -79,34 +73,9 @@ public class VcsPushDialog extends DialogWrapper {
       optionsPanel.add(panel);
     }
     optionsPanel.setBorder(JBUI.Borders.emptyTop(6));
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(optionsPanel);
-    if (!myController.isForcePushEnabled()) {
-      panel.addToTop(createForcePushInfoLabel());
-    }
     return JBUI.Panels.simplePanel(0, 2)
       .addToCenter(myListPanel)
-      .addToBottom(panel);
-  }
-
-  @NotNull
-  private JComponent createForcePushInfoLabel() {
-    JPanel text = new JPanel();
-    text.setLayout(new BoxLayout(text, BoxLayout.X_AXIS));
-    JLabel label = new JLabel("You can enable and configure Force Push in " + ShowSettingsUtil.getSettingsMenuName() + ".");
-    label.setEnabled(false);
-    label.setFont(JBUI.Fonts.smallFont());
-    text.add(label);
-    ActionLink here = new ActionLink("Configure", new AnAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        Project project = myController.getProject();
-        VcsPushDialog.this.doCancelAction(e.getInputEvent());
-        ShowSettingsUtilImpl.showSettingsDialog(project, "vcs.Git", "force push");
-      }
-    });
-    here.setFont(JBUI.Fonts.smallFont());
-    text.add(here);
-    return JBUI.Panels.simplePanel().addToRight(text).withBorder(JBUI.Borders.emptyBottom(4));
+      .addToBottom(optionsPanel);
   }
 
   @Override
@@ -138,12 +107,7 @@ public class VcsPushDialog extends DialogWrapper {
     myForcePushAction = new ForcePushAction();
     myForcePushAction.setEnabled(canForcePush());
     myForcePushAction.putValue(Action.NAME, "&Force Push");
-    if (myController.isForcePushEnabled()) {
-      myPushAction = new ComplexPushAction(myForcePushAction);
-    } else {
-      myPushAction = new OkAction() {};
-      myPushAction.putValue(Action.NAME, "&Push");
-    }
+    myPushAction = new ComplexPushAction(myForcePushAction);
     myPushAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
     actions.add(myPushAction);
     actions.add(getCancelAction());
@@ -156,7 +120,7 @@ public class VcsPushDialog extends DialogWrapper {
   }
 
   private boolean canForcePush() {
-    return myController.isForcePushEnabled() && myController.getProhibitedTarget() == null && myController.isPushAllowed();
+    return myController.getProhibitedTarget() == null && myController.isPushAllowed();
   }
 
   @Nullable
@@ -243,11 +207,9 @@ public class VcsPushDialog extends DialogWrapper {
       boolean canForcePush = canForcePush();
       myForcePushAction.setEnabled(canForcePush);
       String tooltip = null;
-      if (!canForcePush) {
-        PushTarget target = myController.getProhibitedTarget();
-        tooltip = myController.isForcePushEnabled() && target != null
-                  ? "Force push to <b>" + target.getPresentation() + "</b> is prohibited"
-                  : "<b>Force Push</b> can be enabled in the Settings";
+      PushTarget target = myController.getProhibitedTarget();
+      if (!canForcePush && target!=null) {
+        tooltip = "Force push to <b>" + target.getPresentation() + "</b> is prohibited";
       }
       myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);
     }

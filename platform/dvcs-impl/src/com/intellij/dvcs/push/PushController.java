@@ -121,10 +121,6 @@ public class PushController implements Disposable {
     });
   }
 
-  public boolean isForcePushEnabled() {
-    return ContainerUtil.exists(myView2Model.values(), model -> model.getSupport().isForcePushEnabled());
-  }
-
   @Nullable
   public PushTarget getProhibitedTarget() {
     MyRepoModel model = ContainerUtil.find(myView2Model.values(), (Condition<MyRepoModel>)model1 -> {
