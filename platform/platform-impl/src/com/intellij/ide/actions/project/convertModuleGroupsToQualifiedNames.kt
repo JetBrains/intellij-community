@@ -2,11 +2,11 @@
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
+import com.intellij.codeInsight.intention.IntentionManager
+import com.intellij.lang.StdLanguages
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LineExtensionInfo
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.module.ModuleManager
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -26,34 +26,38 @@ import javax.swing.Action
 import javax.swing.JPanel
 
 class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWrapper(project) {
+  private val editorArea: EditorTextField
   private val document: Document
-  private val editor: Editor
+    get() = editorArea.document
   private val modules = ModuleManager.getInstance(project).modules
 
   init {
     title = ProjectBundle.message("convert.module.groups.dialog.title")
     setOKButtonText(ProjectBundle.message("convert.module.groups.button.text"))
-    document = EditorFactory.getInstance().createDocument(generateInitialText())
-    editor = EditorFactory.getInstance().createEditor(document, project)
-    editor.settings.apply {
-      isLineNumbersShown = false
-      isLineMarkerAreaShown = false
-      isFoldingOutlineShown = false
-      isRightMarginShown = false
-      additionalLinesCount = 0
-      additionalColumnsCount = 0
-      isAdditionalPageAtBottom = false
-    }
-    (editor as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
+    editorArea = EditorTextFieldProvider.getInstance().getEditorField(StdLanguages.TEXT, project, listOf(EditorCustomization {
+      it.settings.apply {
+        isLineNumbersShown = false
+        isLineMarkerAreaShown = false
+        isFoldingOutlineShown = false
+        isRightMarginShown = false
+        additionalLinesCount = 0
+        additionalColumnsCount = 0
+        isAdditionalPageAtBottom = false
+        isShowIntentionBulb = false
+      }
+      it.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false)
+      (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
+    }, MonospaceEditorCustomization.getInstance()))
+    editorArea.text = generateInitialText()
     init()
   }
 
   override fun createCenterPanel(): JPanel {
     val text = XmlStringUtil.wrapInHtml(ProjectBundle.message("convert.module.groups.description.text"))
-    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(editor.component).addToTop(JBLabel(text))
+    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(editorArea).addToTop(JBLabel(text))
   }
 
-  override fun getPreferredFocusedComponent() = editor.contentComponent
+  override fun getPreferredFocusedComponent() = editorArea.focusTarget
 
   private fun generateLineExtension(line: Int): Collection<LineExtensionInfo> {
     val lineText = document.charsSequence.subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)).toString()
@@ -86,11 +90,6 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     if (lines.size != modules.size) return null
 
     return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, { lines[it.index] })
-  }
-
-  override fun dispose() {
-    EditorFactory.getInstance().releaseEditor(editor)
-    super.dispose()
   }
 
   override fun doOKAction() {
