@@ -76,11 +76,15 @@ public class KeywordArgumentCompletionUtil {
           }
           ContainerUtil.addIfNotNull(result, parameter.getName());
         }
+        PyFunction func = null;
         if (type instanceof PyFunctionType) {
-          final PyFunction func = as(((PyFunctionType)type).getCallable(), PyFunction.class);
-          if (func != null) {
-            addKeywordArgumentVariantsForFunction(callSite, func, parameters, result, new HashSet<>(), context);
-          }
+          func = as(((PyFunctionType)type).getCallable(), PyFunction.class);
+        }
+        else if (type instanceof PyClassType) {
+          func = ((PyClassType)type).getPyClass().findInitOrNew(true, context);
+        }
+        if (func != null) {
+          addKeywordArgumentVariantsForFunction(callSite, func, result, new HashSet<>(), context);
         }
       }
     }
@@ -95,7 +99,6 @@ public class KeywordArgumentCompletionUtil {
 
   private static void addKeywordArgumentVariantsForFunction(@NotNull final PyCallExpression callExpr,
                                                             @NotNull final PyFunction function,
-                                                            @NotNull final List<PyCallableParameter> parameters,
                                                             @NotNull final List<String> ret,
                                                             @NotNull final Set<PyCallable> visited,
                                                             @NotNull final TypeEvalContext context) {
@@ -107,7 +110,7 @@ public class KeywordArgumentCompletionUtil {
     final KwArgParameterCollector collector = new KwArgParameterCollector(needSelf, ret);
 
     StreamEx
-      .of(parameters)
+      .of(function.getParameters(context))
       .map(PyCallableParameter::getParameter)
       .nonNull()
       .forEach(parameter -> parameter.accept(collector));
@@ -125,7 +128,7 @@ public class KeywordArgumentCompletionUtil {
 
         final PyFunction superMethod = as(PySuperMethodsSearch.search(function, context).findFirst(), PyFunction.class);
         if (superMethod != null) {
-          addKeywordArgumentVariantsForFunction(callExpr, superMethod, superMethod.getParameters(context), ret, visited, context);
+          addKeywordArgumentVariantsForFunction(callExpr, superMethod, ret, visited, context);
         }
       }
     }
