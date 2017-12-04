@@ -56,6 +56,7 @@ abstract class UserFactorStorageBase
 
     @Tag("AggregateFactor")
     class DailyAggregateFactor : MutableDoubleFactor {
+        // todo[bibaev]: avoid using String to store date
         @MapAnnotation(surroundValueWithTag = false, surroundWithTag = false, keyAttributeName = "date", sortBeforeSave = true)
         var aggregates: MutableMap<String, DailyData> = HashMap()
 
@@ -74,10 +75,15 @@ abstract class UserFactorStorageBase
             aggregates.onToday()
         }
 
-        private fun MutableMap<String, DailyData>.onToday(): MutableMap<String, Double> =
-                this.computeIfAbsent(DateUtil.today(), { DailyData() }).data
-
         override fun onDate(date: String): Map<String, Double>? = aggregates[date]?.data
+
+        override fun setOnDate(date: String, key: String, value: Double) = aggregates.onDate(date).set(key, value)
+
+        private fun MutableMap<String, DailyData>.onDate(date: String): MutableMap<String, Double> =
+                this.computeIfAbsent(date, { DailyData() }).data
+
+        private fun MutableMap<String, DailyData>.onToday(): MutableMap<String, Double> =
+                this.onDate(DateUtil.today())
     }
 
     @Tag("DailyCollectedData")
