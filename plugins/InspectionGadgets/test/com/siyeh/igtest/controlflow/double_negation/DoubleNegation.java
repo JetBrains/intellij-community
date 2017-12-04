@@ -13,6 +13,7 @@ class LambdaUnfriendlyOverload<T> {
 
   void test() {
     act(s -> !!s.equals("abc"));
+    act(s -> !(!s.equals("abc")));
   }
 }
 
