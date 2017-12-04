@@ -324,15 +324,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(instruction);
     if (handler == null) return Collections.emptyList();
+    memState = memState.createCopy();
     DfaCallArguments callArguments = popCall(instruction, runner, memState, false);
-    List<DfaMemoryState> states =
-      callArguments.myArguments == null ? Collections.emptyList() :
-      handler.handle(callArguments, memState, runner.getFactory());
-    if (states.isEmpty()) {
-      memState.push(getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory()));
-      return Collections.singletonList(memState);
-    }
-    return states;
+    return callArguments.myArguments == null ? Collections.emptyList() :
+         handler.handle(callArguments, memState, runner.getFactory());
   }
 
   @NotNull

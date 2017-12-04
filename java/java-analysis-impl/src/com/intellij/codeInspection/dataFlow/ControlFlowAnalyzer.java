@@ -20,7 +20,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.inliner.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -883,23 +882,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     ifNoException.setOffset(myCurrentFlow.getInstructionCount());
   }
 
-  private static class ApplyNotNullInstruction extends Instruction {
-    @Override
-    public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
-      DfaValue value = state.pop();
-      DfaValueFactory factory = runner.getFactory();
-      if (state.applyCondition(factory.createCondition(value, RelationType.NE, factory.getConstFactory().getNull()))) {
-        return nextInstruction(runner, state);
-      }
-      return DfaInstructionState.EMPTY_ARRAY;
-    }
-
-    @Override
-    public String toString() {
-      return "APPLY NOT NULL";
-    }
-  }
-
   @Override
   public void visitTryStatement(PsiTryStatement statement) {
     startElement(statement);
@@ -1499,10 +1481,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     JavaResolveResult result = methodExpression.advancedResolve(false);
     PsiElement method = result.getElement();
     PsiParameter[] parameters = method instanceof PsiMethod ? ((PsiMethod)method).getParameterList().getParameters() : null;
-    boolean isEqualsCall = expressions.length == 1 && method instanceof PsiMethod &&
-                           "equals".equals(((PsiMethod)method).getName()) && parameters.length == 1 &&
-                           parameters[0].getType().equalsToText(JAVA_LANG_OBJECT) &&
-                           PsiType.BOOLEAN.equals(((PsiMethod)method).getReturnType());
 
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression paramExpr = expressions[i];
@@ -1510,30 +1488,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       if (parameters != null && i < parameters.length) {
         generateBoxingUnboxingInstructionFor(paramExpr, result.getSubstitutor().substitute(parameters[i].getType()));
       }
-      if (i == 0 && isEqualsCall) {
-        // stack: .., qualifier, arg1
-        addInstruction(new SpliceInstruction(2, 0, 1, 0));
-        // stack: .., arg1, qualifier, arg1
-      }
     }
 
     addBareCall(expression, expression.getMethodExpression());
-
-    if (isEqualsCall) {
-      // assume equals argument must be not-null if the result is true
-      // don't assume the call result to be false if arg1==null
-
-      // stack: .., arg1, call-result
-      ConditionalGotoInstruction ifFalse = addInstruction(new ConditionalGotoInstruction(null, true, null));
-
-      addInstruction(new ApplyNotNullInstruction());
-      addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
-      addInstruction(new GotoInstruction(getEndOffset(expression)));
-
-      ifFalse.setOffset(myCurrentFlow.getInstructionCount());
-      addInstruction(new PopInstruction());
-      addInstruction(new PushInstruction(myFactory.getConstFactory().getFalse(), null));
-    }
     finishElement(expression);
   }
 
