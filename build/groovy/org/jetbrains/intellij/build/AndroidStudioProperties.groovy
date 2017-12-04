@@ -358,8 +358,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   MacDistributionCustomizer createMacCustomizer(String projectHome) {
     return new MacDistributionCustomizer() {
       {
-        // TODO: In order to re-enable this, override getPathToHelpZip to point to the zip file continaing the help bundle.
-        // helpId = "AI"
         urlSchemes = ["idea"]
         associateIpr = true
         enableYourkitAgentInEAP = false
