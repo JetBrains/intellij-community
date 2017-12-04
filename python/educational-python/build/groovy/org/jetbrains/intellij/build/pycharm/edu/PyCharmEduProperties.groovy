@@ -108,6 +108,12 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         bundleIdentifier = "com.jetbrains.pycharm"
         dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
       }
+
+      @Override
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} RC" : ""
+        "PyCharm Edu${suffix}.app"
+      }
     }
   }
 
