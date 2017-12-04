@@ -88,9 +88,7 @@ public class _LastInSuiteTest extends TestCase {
       System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
 
       try {
-        LeakHunter.checkProjectLeak();
-        // TODO: re-enable the stricter leak checking from IJ207.3
-        // LeakHunter.checkNonDefaultProjectLeak();
+        LeakHunter.checkNonDefaultProjectLeak();
       }
       catch (AssertionError | Exception e) {
         captureMemorySnapshot();

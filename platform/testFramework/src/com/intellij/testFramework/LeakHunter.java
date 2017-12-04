@@ -119,6 +119,9 @@ public class LeakHunter {
     // inspect static fields of all loaded classes
     Vector<Class> allLoadedClasses = ReflectionUtil.getField(classLoader.getClass(), classLoader, Vector.class, "classes");
 
+    // Remove expired invocations, so they are not used as object roots.
+    LaterInvocator.purgeExpiredItems();
+
     return Arrays.asList(ApplicationManager.getApplication(),
                          Disposer.getTree(),
                          IdeEventQueue.getInstance(),
