@@ -426,7 +426,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (executionConsole instanceof BuildView) {
         actions = ((BuildView)executionConsole).getSwitchActions();
       }
-      return new DefaultExecutionResult(executionConsole, processHandler, actions);
+      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
+      executionResult.setRestartActions(restartActions);
+      return executionResult;
     }
 
     private BuildProgressListener createBuildView(ExternalSystemTaskId id,
