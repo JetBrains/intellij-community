@@ -170,14 +170,6 @@ For final build (post RC) :
     and make sure it's set to ChannelStatus.BETA.getCode() (for beta releases)
     or ChannelStatus.RELEASE.getCode() (for final.)
 
-10. Switch the launcher icons back from the preview colors (yellow) to
-    the stable colors (green). One way to do this is to revert the following
-    CL in tools/adt/ideA:
-
-    commit 85304d8edd8c7979831c1c8fa337b1406940ce4f
-    Update launcher icons to use a yellow tint for preview releases
-    Change-Id: Ic2db50f66bc9f3f6292e6f54bbd150001cf9cfec
-
 --------------------------------------------------------------------------------
 For AOSP push:
 

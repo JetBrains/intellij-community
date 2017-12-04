@@ -369,7 +369,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         // the icons manually. Fix this when the other platforms have the
         // same mechanisms for our .ico and .svg files
         icnsPath = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
-        icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
+        icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/preview/AndroidStudio.icns"
       }
 
       @Override
