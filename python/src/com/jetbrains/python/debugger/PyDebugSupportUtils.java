@@ -118,9 +118,6 @@ public class PyDebugSupportUtils {
 
   public static boolean isCurrentPythonDebugProcess(Project project) {
     XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
-    if (session != null && session.getDebugProcess() instanceof PyDebugProcess) {
-      return true;
-    }
-    return false;
+    return session != null && session.getDebugProcess() instanceof PyDebugProcess;
   }
 }
