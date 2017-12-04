@@ -476,7 +476,7 @@ public class TreeState implements JDOMExternalizable {
   }
 
   private Promise<List<TreePath>> select(@NotNull JTree tree) {
-    return collectResults(mySelectedPaths.stream().map(elements -> TreeUtil.promiseAccept(tree, new Visitor(elements))).collect(toList()));
+    return collectResults(mySelectedPaths.stream().map(elements -> TreeUtil.promiseVisit(tree, new Visitor(elements))).collect(toList()));
   }
 
   private boolean visit(@NotNull JTree tree) {

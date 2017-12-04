@@ -1,37 +1,25 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.tree;
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+package com.intellij.ui.tree;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.tree.AsyncTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.concurrency.Invoker;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.EventQueue;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual;
 import static com.intellij.ui.tree.TreePathUtil.convertArrayToTreePath;
-import static java.util.concurrent.TimeUnit.MINUTES;
+import static com.intellij.ui.tree.TreeTestUtil.node;
 
 /**
  * @author Sergey.Malenkov
  */
-public final class TreeUtilAcceptTest {
+public final class TreeUtilVisitTest {
   @Test
   public void testAcceptDepth1() {
     testFind(() -> new DepthVisitor(1), 1);
@@ -128,13 +116,14 @@ public final class TreeUtilAcceptTest {
   }
 
   private static void testFind(@NotNull Supplier<Visitor> supplier, long count, String value) {
-    test(TreeUtilAcceptTest::root, (tree, promise) -> {
+    TreeTest.test(TreeUtilVisitTest::root, test -> test.assertTree("+Root\n", () -> {
       @NotNull Visitor visitor = supplier.get();
-      TreeUtil.accept(tree, visitor, path -> invokeSafely(promise, () -> {
+      TreeUtil.visit(test.getTree(), visitor, path -> test.invokeSafely(() -> {
         Assert.assertEquals(count, visitor.counter.get());
         Assert.assertEquals(value, value(path));
+        test.done();
       }));
-    });
+    }));
   }
 
 
@@ -209,69 +198,77 @@ public final class TreeUtilAcceptTest {
   }
 
   private static void testShow(@NotNull Supplier<Visitor> supplier, @NotNull String expected) {
-    test(TreeUtilAcceptTest::root, (tree, promise) -> {
+    TreeTest.test(TreeUtilVisitTest::root, test -> test.assertTree("+Root\n", () -> {
       @NotNull Visitor visitor = supplier.get();
-      TreeUtil.accept(tree, visitor, path -> invokeSafely(promise, () -> {
-        Assert.assertNotNull(path);
-        tree.makeVisible(path);
-        tree.setSelectionPath(path);
-        assertTreeEqual(tree, expected, true);
-      }));
-    });
+      TreeUtil.visit(test.getTree(), visitor, path -> {
+        test.getTree().makeVisible(path);
+        test.addSelection(path, () -> test.assertTree(expected, true, test::done));
+      });
+    }));
   }
 
 
   @Test
   public void testExpandOne() {
-    test(TreeUtilAcceptTest::root, (tree, promise) -> TreeUtil.expand(tree, 1, () -> invokeSafely(promise, () -> assertTreeEqual(
-      tree, "-Root\n" +
-            " +RootColor\n" +
-            " +RootDigit\n" +
-            " +RootGreek\n"))));
+    TreeTest.test(TreeUtilVisitTest::root, test
+      -> test.assertTree("+Root\n", ()
+      -> TreeUtil.expand(test.getTree(), 1, ()
+      -> test.assertTree("-Root\n" +
+                         " +RootColor\n" +
+                         " +RootDigit\n" +
+                         " +RootGreek\n",
+                         test::done))));
   }
 
   @Test
   public void testExpandTwo() {
-    test(TreeUtilAcceptTest::rootDeep, (tree, promise) -> TreeUtil.expand(tree, 2, () -> invokeSafely(promise, () -> assertTreeEqual(
-      tree, "-Root\n" +
-            " -1\n" +
-            "  +11\n" +
-            "  +12\n" +
-            "  +13\n" +
-            " -2\n" +
-            "  +21\n" +
-            "  +22\n" +
-            "  +23\n" +
-            " -3\n" +
-            "  +31\n" +
-            "  +32\n" +
-            "  +33\n"))));
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+      -> test.assertTree("+Root\n", ()
+      -> TreeUtil.expand(test.getTree(), 2, ()
+      -> test.assertTree("-Root\n" +
+                         " -1\n" +
+                         "  +11\n" +
+                         "  +12\n" +
+                         "  +13\n" +
+                         " -2\n" +
+                         "  +21\n" +
+                         "  +22\n" +
+                         "  +23\n" +
+                         " -3\n" +
+                         "  +31\n" +
+                         "  +32\n" +
+                         "  +33\n",
+                         test::done))));
   }
 
   @Test
   public void testExpandAll() {
-    test(TreeUtilAcceptTest::root, (tree, promise) -> TreeUtil.expandAll(tree, () -> invokeSafely(promise, () -> assertTreeEqual(
-      tree, "-Root\n" +
-            " -RootColor\n" +
-            "  RootColorRed\n" +
-            "  RootColorGreen\n" +
-            "  RootColorBlue\n" +
-            " -RootDigit\n" +
-            "  RootDigitOne\n" +
-            "  RootDigitTwo\n" +
-            "  RootDigitThree\n" +
-            "  RootDigitFour\n" +
-            "  RootDigitFive\n" +
-            "  RootDigitSix\n" +
-            "  RootDigitSeven\n" +
-            "  RootDigitEight\n" +
-            "  RootDigitNine\n" +
-            " -RootGreek\n" +
-            "  RootGreekAlpha\n" +
-            "  RootGreekBeta\n" +
-            "  RootGreekGamma\n" +
-            "  RootGreekDelta\n" +
-            "  RootGreekEpsilon\n"))));
+    TreeTest.test(TreeUtilVisitTest::root, test
+      -> test.assertTree("+Root\n", ()
+      -> TreeUtil.expandAll(test.getTree(), ()
+      -> test.assertTree("-Root\n" +
+                         " -RootColor\n" +
+                         "  RootColorRed\n" +
+                         "  RootColorGreen\n" +
+                         "  RootColorBlue\n" +
+                         " -RootDigit\n" +
+                         "  RootDigitOne\n" +
+                         "  RootDigitTwo\n" +
+                         "  RootDigitThree\n" +
+                         "  RootDigitFour\n" +
+                         "  RootDigitFive\n" +
+                         "  RootDigitSix\n" +
+                         "  RootDigitSeven\n" +
+                         "  RootDigitEight\n" +
+                         "  RootDigitNine\n" +
+                         " -RootGreek\n" +
+                         "  RootGreekAlpha\n" +
+                         "  RootGreekBeta\n" +
+                         "  RootGreekGamma\n" +
+                         "  RootGreekDelta\n" +
+                         "  RootGreekEpsilon\n",
+                         test::done))
+    ));
   }
 
   @Test
@@ -437,105 +434,17 @@ public final class TreeUtilAcceptTest {
   }
 
   private static void testMakeVisible(String expected, String... array) {
-    test(TreeUtilAcceptTest::rootDeep, (tree, promise)
-      -> TreeUtil.makeVisible(tree, new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString), path
-      -> invokeSafely(promise, () -> {
-      Assert.assertNotNull(path);
-      tree.setSelectionPath(path);
-      assertTreeEqual(tree, expected, true);
-    })));
-  }
-
-
-  private static void invokeLater(@NotNull AsyncPromise<Throwable> promise, @NotNull Runnable runnable) {
-    EventQueue.invokeLater(() -> invokeSafely(promise, runnable, false));
-  }
-
-  private static void invokeSafely(@NotNull AsyncPromise<Throwable> promise, @NotNull Runnable runnable) {
-    invokeSafely(promise, runnable, true);
-  }
-
-  private static void invokeSafely(@NotNull AsyncPromise<Throwable> promise, @NotNull Runnable runnable, boolean stop) {
-    try {
-      runnable.run();
-      if (stop) promise.setResult(null);
-    }
-    catch (Throwable throwable) {
-      promise.setResult(throwable);
-    }
-  }
-
-  private static void test(Supplier<DefaultMutableTreeNode> supplier, BiConsumer<JTree, AsyncPromise<Throwable>> consumer) {
-    test(consumer, parent -> model(supplier.get(), 0, false, null));
-    test(consumer, parent -> model(supplier.get(), 10, false, null));
-    test(consumer, parent -> model(supplier.get(), 0, true, new Invoker.EDT(parent)));
-    test(consumer, parent -> model(supplier.get(), 0, false, new Invoker.EDT(parent)));
-    test(consumer, parent -> model(supplier.get(), 10, true, new Invoker.EDT(parent)));
-    test(consumer, parent -> model(supplier.get(), 10, false, new Invoker.EDT(parent)));
-    test(consumer, parent -> model(supplier.get(), 0, true, new Invoker.BackgroundThread(parent)));
-    test(consumer, parent -> model(supplier.get(), 0, false, new Invoker.BackgroundThread(parent)));
-    test(consumer, parent -> model(supplier.get(), 10, true, new Invoker.BackgroundThread(parent)));
-    test(consumer, parent -> model(supplier.get(), 10, false, new Invoker.BackgroundThread(parent)));
-  }
-
-  private static void test(BiConsumer<JTree, AsyncPromise<Throwable>> consumer, Function<Disposable, TreeModel> function) {
-    if (EventQueue.isDispatchThread()) throw new IllegalThreadStateException("main thread is expected");
-    AsyncPromise<Throwable> promise = new AsyncPromise<>();
-    Disposable parent = Disposer.newDisposable();
-    TreeModel model = function.apply(parent);
-    AsyncTreeModel atm = model instanceof AsyncTreeModel ? (AsyncTreeModel)model : null;
-    invokeLater(promise, () -> {
-      @SuppressWarnings("UndesirableClassUsage")
-      JTree tree = new JTree(model);
-      new Runnable() {
-        @Override
-        public void run() {
-          if (atm != null && atm.isProcessing()) {
-            invokeLater(promise, this);
-          }
-          else {
-            tree.collapseRow(0); // because root node is expanded by default
-            assertTreeEqual(tree, "+Root\n");
-            consumer.accept(tree, promise);
-          }
-        }
-      }.run();
-    });
-    try {
-      Throwable throwable = promise.blockingGet(2, MINUTES);
-      if (throwable != null) throw new IllegalStateException("test failed", throwable);
-    }
-    finally {
-      Disposer.dispose(parent);
-    }
-  }
-
-  private static TreeModel model(DefaultMutableTreeNode root, long delay, boolean showLoadingNode, Invoker invoker) {
-    TreeModel model = new DefaultTreeModel(root);
-    if (delay > 0) {
-      model = new TreeModelWithDelay(model, delay);
-    }
-    if (invoker != null) {
-      model = new TreeModelWithInvoker(model, invoker);
-      model = new AsyncTreeModel(model, showLoadingNode);
-      Disposer.register(invoker, (Disposable)model);
-    }
-    return model;
+    TreeTest.test(TreeUtilVisitTest::rootDeep, test
+      -> TreeUtil.makeVisible(test.getTree(), new TreeVisitor.ByTreePath<>(true, convertArrayToTreePath(array), Object::toString), path
+      -> test.addSelection(path, ()
+      -> test.assertTree(expected, true, test::done))));
   }
 
   private static String value(TreePath path) {
     return path == null ? null : path.getLastPathComponent().toString();
   }
 
-  private static DefaultMutableTreeNode node(@NotNull Object object, Object... children) {
-    if (object instanceof DefaultMutableTreeNode && ArrayUtil.isEmpty(children)) return (DefaultMutableTreeNode)object;
-    if (object instanceof TreeNode) throw new IllegalArgumentException("do not use a tree node as a node content");
-    DefaultMutableTreeNode node = new DefaultMutableTreeNode(object);
-    for (Object child : children) node.add(node(child));
-    return node;
-  }
-
-  private static DefaultMutableTreeNode root() {
+  private static TreeNode root() {
     return node("Root",
                 node("RootColor",
                      node("RootColorRed"),
@@ -559,7 +468,7 @@ public final class TreeUtilAcceptTest {
                      node("RootGreekEpsilon")));
   }
 
-  private static DefaultMutableTreeNode rootDeep() {
+  private static TreeNode rootDeep() {
     return node("Root",
                 node("1",
                      node("11",

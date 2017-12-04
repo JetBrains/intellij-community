@@ -18,13 +18,12 @@ package com.intellij.ui.tree;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.ReflectionUtil.getField;
 import static org.junit.Assert.assertEquals;
 
@@ -33,7 +32,7 @@ public class AbstractTreeWalkerTest {
 
   @Test
   public void testInterrupt() {
-    Node root = createRoot();
+    TreeNode root = createRoot();
     test(root, 1, path -> TreeVisitor.Action.INTERRUPT, root);
     test(null, 0, path -> TreeVisitor.Action.INTERRUPT);
   }
@@ -68,8 +67,8 @@ public class AbstractTreeWalkerTest {
   }
 
   private static void testDeepVisit(int count) {
-    Node node = new Node(count);
-    for (int i = 1; i < count; i++) node = new Node(count - i, node);
+    TreeNode node = node(count);
+    for (int i = 1; i < count; i++) node = node(count - i, node);
     test(node, count, path -> TreeVisitor.Action.CONTINUE);
   }
 
@@ -112,10 +111,10 @@ public class AbstractTreeWalkerTest {
 
   @Test
   public void testColorFinder() {
-    Node color = createColorNode();
-    Node digit = createDigitNode();
-    Node greek = createGreekNode();
-    Node root = new Node("root", color, digit, greek);
+    TreeNode root = createRoot();
+    TreeNode color = root.getChildAt(0);
+    TreeNode digit = root.getChildAt(1);
+    TreeNode greek = root.getChildAt(2);
     TreePath parent = new TreePath(root);
     test(parent, color, 1, createFinder(root));
     test(parent, color, 1, createFinder(color), root, color);
@@ -167,10 +166,11 @@ public class AbstractTreeWalkerTest {
   }
 
   private static TreeVisitor createFinder(TreeNode node) {
-    return new TreeVisitor.ByComponent<Object, Object>(node, o -> o) {
+    return new TreeVisitor.ByComponent<TreeNode, Object>(node, o -> o) {
       @Override
-      protected boolean contains(@NotNull Object pathComponent, @NotNull Object thisComponent) {
-        return pathComponent instanceof Node && thisComponent instanceof Node && ((Node)thisComponent).isNodeAncestor((Node)pathComponent);
+      protected boolean contains(@NotNull Object pathComponent, @NotNull TreeNode thisComponent) {
+        while (pathComponent != thisComponent && thisComponent != null) thisComponent = thisComponent.getParent();
+        return thisComponent != null;
       }
     };
   }
@@ -442,35 +442,11 @@ public class AbstractTreeWalkerTest {
 
 
   @NotNull
-  private static Node createRoot() {
-    return new Node("root", createColorNode(), createDigitNode(), createGreekNode());
-  }
-
-  @NotNull
-  private static Node createColorNode() {
-    return new Node("color", "red", "green", "blue");
-  }
-
-  @NotNull
-  private static Node createDigitNode() {
-    return new Node("digit", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine");
-  }
-
-  @NotNull
-  private static Node createGreekNode() {
-    return new Node("greek", "alpha", "beta", "gamma", "delta", "epsilon");
-  }
-
-
-  private static class Node extends DefaultMutableTreeNode {
-    private Node(Object content, Object... children) {
-      super(content);
-      for (Object child : children) {
-        add(child instanceof MutableTreeNode
-            ? (MutableTreeNode)child
-            : new Node(child));
-      }
-    }
+  private static TreeNode createRoot() {
+    return node("root",
+                node("color", "red", "green", "blue"),
+                node("digit", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"),
+                node("greek", "alpha", "beta", "gamma", "delta", "epsilon"));
   }
 
 
