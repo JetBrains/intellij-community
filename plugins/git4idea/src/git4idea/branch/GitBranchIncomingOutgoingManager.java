@@ -40,6 +40,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   //store map from local branch to related cached remote branch hash per repository
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPull = newConcurrentMap();
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPush = newConcurrentMap();
+  @NotNull private final Map<GitRepository, Set<GitRemote>> myAuthErrorMap = newConcurrentMap();
   @NotNull private final Project myProject;
   @Nullable private ScheduledFuture<?> myPeriodicalUpdater;
   private volatile boolean myUseForceAuthentication;
@@ -56,7 +57,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
   }
 
   public boolean hasAuthenticationProblems() {
-    return true;
+    return !myAuthErrorMap.isEmpty();
   }
 
   public void setUseForceAuthentication(boolean useForceAuthentication) {
@@ -158,9 +159,17 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       if (lsRemoteResult.success()) {
         Map<String, String> hashWithNameMap = map2MapNotNull(lsRemoteResult.getOutput(), GitRefUtil::parseRefsLine);
         result.putAll(getResolvedHashes(hashWithNameMap));
+        myAuthErrorMap.computeIfPresent(repository, (r, remotes) -> {
+          remotes.remove(remote);
+          return nullize(remotes);
+        });
       }
       else if (lsRemoteResult.isAuthenticationFailed()) {
-        //todo handle this
+        myAuthErrorMap.compute(repository, (repo, remoteSet) -> {
+          if (remoteSet == null) return newHashSet(remote);
+          remoteSet.add(remote);
+          return remoteSet;
+        });
       }
     });
     return result;
