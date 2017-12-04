@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -422,9 +424,9 @@ public class ClassWriter {
     }
     if (initializer != null) {
       if (isEnum && initializer.type == Exprent.EXPRENT_NEW) {
-        NewExprent nexpr = (NewExprent)initializer;
-        nexpr.setEnumConst(true);
-        buffer.append(nexpr.toJava(indent, tracer));
+        NewExprent expr = (NewExprent)initializer;
+        expr.setEnumConst(true);
+        buffer.append(expr.toJava(indent, tracer));
       }
       else {
         buffer.append(" = ");
@@ -433,7 +435,7 @@ public class ClassWriter {
           ((ConstExprent) initializer).adjustConstType(fieldType);
         }
 
-        // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
+        // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode instruction
         buffer.append(initializer.toJava(indent, tracer));
       }
     }

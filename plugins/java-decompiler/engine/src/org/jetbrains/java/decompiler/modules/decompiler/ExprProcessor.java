@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -675,7 +677,6 @@ public class ExprProcessor implements CodeConstants {
   }
 
   public static String getTypeName(VarType type, boolean getShort) {
-
     int tp = type.type;
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       return typeNames[tp];
