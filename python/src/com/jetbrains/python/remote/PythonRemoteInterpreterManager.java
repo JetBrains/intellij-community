@@ -153,7 +153,8 @@ public abstract class PythonRemoteInterpreterManager {
         return;
       }
     }
-    exeGroup.addParameter("-u");
+    // `-u` option takes no argument so it is safe to move it to the front
+    exeGroup.addParameterAt(0, "-u");
   }
 
   public static String toSystemDependent(String path, boolean isWin) {
