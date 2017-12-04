@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.ui;
 
@@ -16,7 +18,6 @@ import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notification.NotificationType;
@@ -69,7 +70,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 public class InspectionResultsView extends JPanel implements Disposable, DataProvider, OccurenceNavigator {
@@ -85,7 +85,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   @NotNull
   private final AnalysisScope myScope;
   @NonNls
-  private static final String HELP_ID = "reference.toolWindows.inspections";
+  public static final String HELP_ID = "reference.toolWindows.inspections";
 
   private final Splitter mySplitter;
   @NotNull
@@ -325,9 +325,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   private void createActionsToolbar() {
-    JPanel westPanel = new JPanel(new BorderLayout());
-    westPanel.add(createLeftActionsToolbar(), BorderLayout.WEST);
-    westPanel.add(createRightActionsToolbar(), BorderLayout.EAST);
+    JPanel westPanel = JBUI.Panels.simplePanel()
+      .addToLeft(createLeftActionsToolbar())
+      .addToRight(createRightActionsToolbar());
     add(westPanel, BorderLayout.WEST);
   }
 
@@ -354,7 +354,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
     group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
-    group.add(new ContextHelpAction(HELP_ID));
 
     return createToolbar(group);
   }
