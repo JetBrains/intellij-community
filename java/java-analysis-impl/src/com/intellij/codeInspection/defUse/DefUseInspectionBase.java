@@ -158,7 +158,9 @@ public class DefUseInspectionBase extends AbstractBaseJavaLocalInspectionTool {
     for (final FieldWrite fieldWrite : fieldWrites) {
       if (wasDefinitelyAssigned) {
         if (fieldWrite.isInitializer()) {
-          reportInitializerProblem(field, holder, isOnTheFly);
+          if (REPORT_REDUNDANT_INITIALIZER) {
+            reportInitializerProblem(field, holder, isOnTheFly);
+          }
         }
         else {
           for (PsiAssignmentExpression assignment : fieldWrite.getAssignments()) {
