@@ -251,9 +251,9 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @NotNull
-  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) {
+  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myForwardIndex != null) {
-      return getKeysDiffBuilder(inputId);
+      return myForwardIndex.getDiffBuilder(inputId);
     }
     return new EmptyInputDataDiffBuilder(inputId);
   }
