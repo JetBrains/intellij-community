@@ -6,26 +6,26 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
 public class TestEditorSplitter {
+
   private final HashMap<String, TestEditorTabGroup> myTabGroups = new HashMap<>();
+
   private static final String Default = "Default";
-  private String myActiveTabGroupName = Default;
+
+  private String myActiveTabGroupName;
 
   public TestEditorSplitter() {
     myTabGroups.put(Default, new TestEditorTabGroup(Default));
     myActiveTabGroupName = Default;
   }
 
-  private TestEditorTabGroup getActiveTabGroup() {
+  protected TestEditorTabGroup getActiveTabGroup() {
     return myTabGroups.get(myActiveTabGroupName);
-  }
-
-  public void openAndFocusTab(VirtualFile virtualFile, FileEditor fileEditor, FileEditorProvider provider) {
-    getActiveTabGroup().openTab(virtualFile, fileEditor, provider);
   }
 
   public void setActiveTabGroup(@NotNull String tabGroup) {
@@ -35,6 +35,10 @@ public class TestEditorSplitter {
       myTabGroups.put(tabGroup, result);
     }
     myActiveTabGroupName = tabGroup;
+  }
+
+  public void openAndFocusTab(VirtualFile virtualFile, FileEditor fileEditor, FileEditorProvider provider) {
+    getActiveTabGroup().openTab(virtualFile, fileEditor, provider);
   }
 
   @Nullable
@@ -73,12 +77,22 @@ public class TestEditorSplitter {
       }
     }
     testEditorTabGroup.closeTab(file);
-    if (!Objects.equals(key, Default) && testEditorTabGroup.getTabCount() == 0)
+    if (!Objects.equals(key, Default) && testEditorTabGroup.getTabCount() == 0) {
       myTabGroups.remove(key);
+      myActiveTabGroupName = myTabGroups.entrySet().iterator().next().getValue().Name();
+    }
   }
 
   @Nullable
   public Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
     return getActiveTabGroup().getEditorAndProvider(file);
+  }
+
+  public HashMap<String, TestEditorTabGroup> getTabGroups() {
+    return myTabGroups;
+  }
+
+  public int getTabGroupCount() {
+    return myTabGroups.size();
   }
 }

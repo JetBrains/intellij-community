@@ -61,6 +61,10 @@ public class TestEditorTabGroup {
     return myOpenedTabs.containsKey(file);
   }
 
+  public LinkedHashMap<VirtualFile, Pair<FileEditor, FileEditorProvider>> getTabs() {
+    return myOpenedTabs;
+  }
+
   public int getTabCount() {
     return myOpenedTabs.size();
   }

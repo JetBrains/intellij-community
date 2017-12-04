@@ -46,8 +46,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +58,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   private final Project myProject;
   private int counter = 0;
 
-  private final Map<VirtualFile, Editor> myVirtualFile2Editor = new HashMap<>();
+  private final Map<String, Map<VirtualFile, Editor>> myVirtualFile2Editor = new HashMap<>();
   private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
@@ -75,6 +74,9 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
         }
       }
     });
+
+    String activeTabGroupName = myTestEditorSplitter.getActiveTabGroup().Name();
+    myVirtualFile2Editor.put(activeTabGroupName, new HashMap<>());
   }
 
   @Override
@@ -83,12 +85,12 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<>();
-    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(file, focusEditor)), "", null);
+    CommandProcessor.getInstance().executeCommand(myProject, () -> result.set(openFileImpl3(file, focusEditor, -1)), "", null);
     return result.get();
 
   }
 
-  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final VirtualFile file, boolean focusEditor) {
+  private Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(final VirtualFile file, boolean focusEditor, int offset) {
     // for non-text editors. uml, etc
     final FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
     if (provider != null && provider.accept(getProject(), file)) {
@@ -96,7 +98,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     }
 
     //text editor
-    Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file), focusEditor);
+    Editor editor = openTextEditor(new OpenFileDescriptor(myProject, file, offset), focusEditor);
     assert editor != null;
     final FileEditor fileEditor = TextEditorProvider.getInstance().getTextEditor(editor);
     final FileEditorProvider fileEditorProvider = getProvider();
@@ -119,7 +121,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     FileEditorProvider newProvider = myTestEditorSplitter.getProviderFromFocused();
 
     final FileEditorManagerEvent event =
-        new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
+      new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
     final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
     notifyPublisher(() -> publisher.selectionChanged(event));
@@ -152,15 +154,26 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void createSplitter(int orientation, EditorWindow window) {
+    // Store the current focused file to re-open it in the new tab group
+    VirtualFile focusedFile = myTestEditorSplitter.getFocusedFile();
+
+    int offset = -1;
+    Editor previousEditor = myVirtualFile2Editor.get(myTestEditorSplitter.getActiveTabGroup().Name()).get(focusedFile);
+
+    if (previousEditor != null)
+      offset = previousEditor.getCaretModel().getOffset();
+
     String containerName = createNewTabbedContainerName();
     myTestEditorSplitter.setActiveTabGroup(containerName);
+
+    // Open new tab on created split window
+    openFileImpl3(focusedFile, true, offset);
   }
 
   private String createNewTabbedContainerName() {
     counter++;
     return "SplitTabContainer" + ((Object) counter).toString();
   }
-
 
   @Override
   public void changeSplitterOrientation() {
@@ -169,7 +182,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void flipTabs() {
-
   }
 
   @Override
@@ -179,7 +191,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public boolean isInSplitter() {
-    return false;
+    return myTestEditorSplitter.getTabGroupCount() > 1;
   }
 
   @Override
@@ -230,8 +242,10 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    for (VirtualFile file : new LinkedList<>(myVirtualFile2Editor.keySet())) {
-      closeFile(file);
+    for (Map<VirtualFile, Editor> group : myVirtualFile2Editor.values()) {
+      for (VirtualFile file : new LinkedList<>(group.keySet())) {
+        closeFile(file);
+      }
     }
   }
 
@@ -298,12 +312,10 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void unsplitWindow() {
-
   }
 
   @Override
   public void unsplitAllWindow() {
-
   }
 
   @Override
@@ -350,15 +362,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeFile(@NotNull final VirtualFile file) {
-    Editor editor = myVirtualFile2Editor.remove(file);
+    Editor editor = myVirtualFile2Editor.get(myTestEditorSplitter.getActiveTabGroup().Name()).remove(file);
     if (editor != null){
       TextEditorProvider editorProvider = TextEditorProvider.getInstance();
       editorProvider.disposeEditor(editorProvider.getTextEditor(editor));
       EditorFactory.getInstance().releaseEditor(editor);
     }
-    if (Comparing.equal(file, myActiveFile)) {
-      myActiveFile = null;
-    }
+
+    myActiveFile = myTestEditorSplitter.getActiveTabGroup().getOpenedFile();
 
     modifyTabWell(() -> myTestEditorSplitter.closeFile(file));
   }
@@ -393,29 +404,34 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public VirtualFile[] getOpenFiles() {
-    return VfsUtilCore.toVirtualFileArray(myVirtualFile2Editor.keySet());
+    Map<VirtualFile, Editor> activeGroup = myVirtualFile2Editor.get(myTestEditorSplitter.getActiveTabGroup().Name());
+    return VfsUtilCore.toVirtualFileArray(activeGroup.keySet());
   }
 
   public Editor getEditor(VirtualFile file) {
-    return myVirtualFile2Editor.get(file);
+    return myVirtualFile2Editor.get(myTestEditorSplitter.getActiveTabGroup().Name()).get(file);
   }
 
   @Override
   @NotNull
   public FileEditor[] getAllEditors() {
-    FileEditor[] result = new FileEditor[myVirtualFile2Editor.size()];
-    int i = 0;
-    for (Map.Entry<VirtualFile, Editor> entry : myVirtualFile2Editor.entrySet()) {
-      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(entry.getValue());
-      result[i++] = textEditor;
+    List<FileEditor> result = new ArrayList<>();
+
+    final Collection<TestEditorTabGroup> allSplitters = myTestEditorSplitter.getTabGroups().values();
+
+    for (TestEditorTabGroup splitter : allSplitters) {
+      LinkedHashMap<VirtualFile, Pair<FileEditor, FileEditorProvider>> tabs = splitter.getTabs();
+      for (Pair<FileEditor, FileEditorProvider> tab : tabs.values()) {
+        result.add(tab.first);
+      }
     }
-    return result;
+
+    return result.toArray(new FileEditor[result.size()]);
   }
 
   @Override
   public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
   }
-
 
   @Override
   public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
@@ -424,7 +440,14 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
     final VirtualFile file = descriptor.getFile();
-    Editor editor = myVirtualFile2Editor.get(file);
+
+    Map<VirtualFile, Editor> activeGroupFiles = myVirtualFile2Editor.get(myTestEditorSplitter.getActiveTabGroup().Name());
+    if (activeGroupFiles == null) {
+      activeGroupFiles = new HashMap<>();
+      myVirtualFile2Editor.put(myTestEditorSplitter.getActiveTabGroup().Name(), activeGroupFiles);
+    }
+
+    Editor editor = activeGroupFiles.get(file);
 
     if (editor == null) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
@@ -436,10 +459,10 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       ((EditorEx) editor).setHighlighter(highlighter);
       ((EditorEx) editor).setFile(file);
 
-      myVirtualFile2Editor.put(file, editor);
+      activeGroupFiles.put(file, editor);
     }
 
-    if (descriptor.getOffset() >= 0){
+    if (descriptor.getOffset() >= 0 && focusEditor){
       editor.getCaretModel().moveToOffset(descriptor.getOffset());
     }
     else if (descriptor.getLine() >= 0 && descriptor.getColumn() >= 0){
@@ -498,7 +521,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public int getWindowSplitCount() {
-    return 0;
+    return myTestEditorSplitter.getTabGroupCount();
   }
 
   @Override
