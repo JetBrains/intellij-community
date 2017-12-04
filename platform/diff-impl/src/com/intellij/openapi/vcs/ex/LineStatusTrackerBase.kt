@@ -357,7 +357,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
-  private fun runBulkRollback(condition: (Block) -> Boolean) {
+  protected fun runBulkRollback(condition: (Block) -> Boolean) {
     if (!isValid()) return
 
     updateDocument(Side.RIGHT, VcsBundle.message("command.name.rollback.change")) {

@@ -361,6 +361,11 @@ class PartialLocalLineStatusTracker(project: Project,
     @CalledInAwt abstract fun applyChanges()
   }
 
+  @CalledInAwt
+  fun rollbackChangelistChanges(changelistId: String) {
+    runBulkRollback { it.marker.changelistId == changelistId }
+  }
+
 
   protected class MyLineStatusMarkerRenderer(override val tracker: PartialLocalLineStatusTracker) :
     LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {

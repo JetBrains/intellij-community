@@ -46,6 +46,7 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
+    myViewer.setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
     myViewer.rebuildTree();
   }
 
