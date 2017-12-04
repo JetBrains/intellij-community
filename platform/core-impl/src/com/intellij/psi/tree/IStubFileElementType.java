@@ -48,11 +48,7 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
    * @return stub version
    */
   public int getStubVersion() {
-    if (getLanguage() instanceof TemplateLanguage) {
-      if (templateStubVersion == -1) templateStubVersion = calcStubVersion();
-      return templateStubVersion;
-    }
-    return 0;
+    return getLanguage() instanceof TemplateLanguage ? getTemplateStubVersion() : 0;
   }
 
   public StubBuilder getBuilder() {
@@ -81,6 +77,11 @@ public class IStubFileElementType<T extends PsiFileStub> extends StubFileElement
 
   public boolean shouldBuildStubFor(final VirtualFile file) {
     return true;
+  }
+
+  public static int getTemplateStubVersion() {
+    if (templateStubVersion == -1) templateStubVersion = calcStubVersion();
+    return templateStubVersion;
   }
 
   private static int calcStubVersion() {
