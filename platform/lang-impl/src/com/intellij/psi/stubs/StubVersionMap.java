@@ -226,7 +226,7 @@ class StubVersionMap {
       IStubFileElementType elementType = (IStubFileElementType)owner;
       if (elementType.getLanguage()  instanceof TemplateLanguage) {
         LOG.assertTrue(elementType.getStubVersion() >= IStubFileElementType.getTemplateStubVersion(),
-                       "Template language stub version should call super.getStubVersion()");
+                       elementType.getLanguage() + " stub version should call super.getStubVersion()");
       }
       return elementType.getStubVersion();
     } else {
