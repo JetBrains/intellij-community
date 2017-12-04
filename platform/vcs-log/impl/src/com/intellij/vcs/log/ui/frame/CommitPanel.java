@@ -19,14 +19,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
@@ -51,14 +52,18 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 
 public class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
   private static final int REFERENCES_BORDER = 12;
   private static final int TOP_BORDER = 4;
+  private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
   @NotNull private final VcsLogData myLogData;
 
@@ -68,12 +73,14 @@ public class CommitPanel extends JBPanel {
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final Consumer<String> myNavigate;
 
   @Nullable private VcsFullCommitDetails myCommit;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<String> navigate) {
     myLogData = logData;
     myColorManager = colorManager;
+    myNavigate = navigate;
 
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
     setOpaque(false);
@@ -181,7 +188,8 @@ public class CommitPanel extends JBPanel {
     return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
   }
 
-  private static class DataPanel extends HtmlPanel {
+  private class DataPanel extends HtmlPanel {
+    private static final String GO_TO_HASH = "go-to-hash:";
     @NotNull private final Project myProject;
     @Nullable private String myMainText;
 
@@ -198,6 +206,15 @@ public class CommitPanel extends JBPanel {
     public void updateUI() {
       super.updateUI();
       update();
+    }
+
+    @Override
+    public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
+        myNavigate.consume(e.getDescription().substring(GO_TO_HASH.length()));
+      } else {
+        BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
+      }
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
@@ -222,12 +239,12 @@ public class CommitPanel extends JBPanel {
     }
 
     @NotNull
-    private static String getHtmlWithFonts(@NotNull String input) {
+    private String getHtmlWithFonts(@NotNull String input) {
       return getHtmlWithFonts(input, getCommitDetailsFont().getStyle());
     }
 
     @NotNull
-    private static String getHtmlWithFonts(@NotNull String input, int style) {
+    private String getHtmlWithFonts(@NotNull String input, int style) {
       return FontUtil.getHtmlWithFonts(input, style, getCommitDetailsFont());
     }
 
@@ -255,13 +272,13 @@ public class CommitPanel extends JBPanel {
       String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
       String description = fullMessage.substring(subject.length());
       return "<b>" +
-             getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject)), Font.BOLD) +
+             getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(myProject, subject, this::replaceHashes)), Font.BOLD) +
              "</b>" +
-             getHtmlWithFonts(escapeMultipleSpaces(IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description)));
+             getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(myProject, description, this::replaceHashes)));
     }
 
     @NotNull
-    private static String escapeMultipleSpaces(@NotNull String text) {
+    private String escapeMultipleSpaces(@NotNull String text) {
       StringBuilder result = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
         if (text.charAt(i) == ' ') {
@@ -280,7 +297,7 @@ public class CommitPanel extends JBPanel {
     }
 
     @NotNull
-    private static String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
+    private String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
       long authorTime = commit.getAuthorTime();
       long commitTime = commit.getCommitTime();
 
@@ -302,7 +319,7 @@ public class CommitPanel extends JBPanel {
     }
 
     @NotNull
-    private static String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
+    private String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
       String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
       String gray = ColorUtil.toHex(JBColor.GRAY);
 
@@ -320,19 +337,33 @@ public class CommitPanel extends JBPanel {
     }
 
     @NotNull
-    private static String getAuthorName(@NotNull VcsUser user) {
+    private String getAuthorName(@NotNull VcsUser user) {
       String username = VcsUserUtil.getShortPresentation(user);
       return user.getEmail().isEmpty() ? username : username + getEmailText(user);
     }
 
     @NotNull
-    private static String getEmailText(@NotNull VcsUser user) {
+    private String getEmailText(@NotNull VcsUser user) {
       return " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
     }
 
     @Override
     public Color getBackground() {
       return getCommitDetailsBackground();
+    }
+
+    @NotNull
+    private String replaceHashes(@NotNull String s) {
+      Matcher matcher = HASH_PATTERN.matcher(s);
+      StringBuffer result = new StringBuffer();
+
+      while (matcher.find()) {
+        String hash = matcher.group();
+        matcher.appendReplacement(result, "<a href=\"" + GO_TO_HASH + hash + "\">" + hash + "</a>");
+      }
+      matcher.appendTail(result);
+
+      return result.toString();
     }
   }
 

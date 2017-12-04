@@ -125,6 +125,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     }
   }
 
+  protected void navigate(@NotNull String hash) {
+  }
+
   private void rebuildCommitPanels(int[] selection) {
     myEmptyText.setText("");
 
@@ -137,7 +140,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
       if (i > 0) {
         myMainContentPanel.add(new SeparatorComponent(0, OnePixelDivider.BACKGROUND, null));
       }
-      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager));
+      myMainContentPanel.add(new CommitPanel(myLogData, myColorManager, this::navigate));
     }
 
     // clear superfluous items
