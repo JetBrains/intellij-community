@@ -68,12 +68,14 @@ public class PythonMockSdk {
 
     final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
     final VirtualFile typeShedDir = PyTypeShed.INSTANCE.getDirectory();
-    PyTypeShed.INSTANCE.findRootsForLanguageLevel(level).forEach(path -> {
-      final VirtualFile file = typeShedDir.findFileByRelativePath(path);
-      if (file != null) {
-        roots.putValue(OrderRootType.CLASSES, file);
-      }
-    });
+    if (typeShedDir != null) {
+      PyTypeShed.INSTANCE.findRootsForLanguageLevel(level).forEach(path -> {
+        final VirtualFile file = typeShedDir.findFileByRelativePath(path);
+        if (file != null) {
+          roots.putValue(OrderRootType.CLASSES, file);
+        }
+      });
+    }
 
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     roots.putValue(PythonSdkType.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));
