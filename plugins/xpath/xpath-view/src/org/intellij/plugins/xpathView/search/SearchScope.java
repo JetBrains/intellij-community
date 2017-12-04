@@ -61,15 +61,6 @@ public final class SearchScope {
     myRecursive = true;
   }
 
-  public SearchScope(SearchScope scope) {
-    myScopeType = scope.getScopeType();
-
-    myModuleName = scope.getModuleName();
-    myPath = scope.getPath();
-    myRecursive = scope.isRecursive();
-    myScopeName = scope.getScopeName();
-  }
-
   public SearchScope(ScopeType scopeType, String directoryName, boolean recursive, String moduleName, String scopeName) {
     myScopeType = scopeType;
     myPath = directoryName;
