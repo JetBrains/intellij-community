@@ -58,6 +58,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myBuildNumber;
   private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
+  private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
@@ -143,6 +144,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
   private static final String ELEMENT_LOGO = "logo";
   private static final String ATTRIBUTE_URL = "url";
+  private static final String COPYRIGHT_START = "copyrightStart";
   private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
@@ -536,6 +538,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myShowLicensee;
   }
 
+  public String getCopyrightStart() {
+    return myCopyrightStart;
+  }
+
   public String getStatisticsSettingsUrl() {
     return myStatisticsSettingsUrl;
   }
@@ -644,6 +650,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
       myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
+      myCopyrightStart = companyElement.getAttributeValue(COPYRIGHT_START, myCopyrightStart);
     }
 
     Element buildElement = getChild(parentNode, ELEMENT_BUILD);
