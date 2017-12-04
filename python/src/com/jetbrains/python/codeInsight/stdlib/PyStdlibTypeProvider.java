@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +95,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return namedTupleTypeForCallee;
     }
 
+    final PyCallableType namedTupleReplaceType = getNamedTupleReplaceType(referenceExpression, context);
+    if (namedTupleReplaceType != null) {
+      return namedTupleReplaceType;
+    }
+
     return null;
   }
 
@@ -117,6 +123,23 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
     if (referenceTarget instanceof PyTargetExpression) {
       return getNamedTupleTypeForTarget((PyTargetExpression)referenceTarget, context);
+    }
+
+    return null;
+  }
+
+  @Nullable
+  static PyCallableType getNamedTupleReplaceType(@NotNull PsiElement referenceTarget,
+                                                 @NotNull TypeEvalContext context,
+                                                 @Nullable PsiElement anchor) {
+    if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
+      final PyClass containingClass = ((PyFunction)referenceTarget).getContainingClass();
+      if (containingClass != null && PyTypingTypeProvider.NAMEDTUPLE.equals(containingClass.getQualifiedName())) {
+        final PyExpression callee = ((PyCallExpression)anchor).getCallee();
+        if (callee instanceof PyReferenceExpression) {
+          return getNamedTupleReplaceType((PyReferenceExpression)callee, context);
+        }
+      }
     }
 
     return null;
@@ -252,8 +275,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyClassLikeType classLikeType = as(firstArgument != null ? context.getType(firstArgument) : null, PyClassLikeType.class);
         return classLikeType != null ? Ref.create(classLikeType.toInstance()) : null;
       }
-      else if (callSite != null &&
-               ArrayUtil.contains(qname, PyTypingTypeProvider.NAMEDTUPLE + "._make", PyTypingTypeProvider.NAMEDTUPLE + "._replace")) {
+      else if (callSite != null && qname.equals(PyTypingTypeProvider.NAMEDTUPLE + "._make")) {
         final PyExpression receiver = callSite.getReceiver(function);
         if (receiver != null) {
           final PyType receiverType = context.getType(receiver);
@@ -357,6 +379,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return type instanceof PyClassLikeType && ContainerUtil.exists(((PyClassLikeType)type).getAncestorTypes(context), isNT);
   }
 
+  public static boolean isTypingNamedTupleDirectInheritor(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final Condition<PyClassLikeType> isTypingNT =
+      type ->
+        type != null &&
+        !(type instanceof PyNamedTupleType) &&
+        PyTypingTypeProvider.NAMEDTUPLE.equals(type.getClassQName());
+
+    return ContainerUtil.exists(cls.getSuperClassTypes(context), isTypingNT);
+  }
+
   @Nullable
   @Override
   public PyType getContextManagerVariableType(@NotNull PyClass contextManager,
@@ -409,14 +441,48 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyNamedTupleType getNamedTupleTypeForTypingNTInheritorAsCallee(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
-    final Condition<PyClassLikeType> isTypingNT =
-      type ->
-        type != null &&
-        !(type instanceof PyNamedTupleType) &&
-        PyTypingTypeProvider.NAMEDTUPLE.equals(type.getClassQName());
+  private static PyCallableType getNamedTupleReplaceType(@NotNull PyReferenceExpression referenceExpression,
+                                                         @NotNull TypeEvalContext context) {
+    final PyCallExpression call = PyCallExpressionNavigator.getPyCallExpressionByCallee(referenceExpression);
+    if (call == null) {
+      return null;
+    }
 
-    if (ContainerUtil.exists(cls.getSuperClassTypes(context), isTypingNT)) {
+    final PyExpression qualifier = referenceExpression.getQualifier();
+    if (qualifier != null && "_replace".equals(referenceExpression.getReferencedName())) {
+      final PyType qualifierType = context.getType(qualifier);
+      if (qualifierType instanceof PyClassLikeType) {
+        final PyNamedTupleType namedTupleType = StreamEx
+          .of(qualifierType)
+          .append(((PyClassLikeType)qualifierType).getSuperClassTypes(context))
+          .select(PyNamedTupleType.class)
+          .findFirst()
+          .orElse(null);
+
+        if (namedTupleType != null) {
+          if (namedTupleType.isTyped()) {
+            return createTypedNamedTupleReplaceType(referenceExpression, namedTupleType.getFields(), qualifierType);
+          }
+          else {
+            return createUntypedNamedTupleReplaceType(call, namedTupleType.getFields(), qualifierType, context);
+          }
+        }
+
+        if (qualifierType instanceof PyClassType) {
+          final PyClass cls = ((PyClassType)qualifierType).getPyClass();
+          if (isTypingNamedTupleDirectInheritor(cls, context)) {
+            return createTypedNamedTupleReplaceType(referenceExpression, collectTypingNTInheritorFields(cls, context), qualifierType);
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PyNamedTupleType getNamedTupleTypeForTypingNTInheritorAsCallee(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    if (isTypingNamedTupleDirectInheritor(cls, context)) {
       final String name = cls.getName();
       if (name != null) {
         final PsiElement typingNT =
@@ -425,35 +491,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
         final PyClass tupleClass = as(typingNT, PyClass.class);
         if (tupleClass != null) {
-          final Set<PyTargetExpression> fields = new TreeSet<>(Comparator.comparingInt(PyTargetExpression::getTextOffset));
-
-          cls.processClassLevelDeclarations(
-            new PsiScopeProcessor() {
-              @Override
-              public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
-                if (element instanceof PyTargetExpression) {
-                  final PyTargetExpression target = (PyTargetExpression)element;
-                  if (target.getAnnotation() != null) {
-                    fields.add(target);
-                  }
-                }
-
-                return true;
-              }
-            }
-          );
-
-          final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
-            Collectors.toMap(PyTargetExpression::getName,
-                             field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
-                             (v1, v2) -> v2,
-                             LinkedHashMap::new);
-
           return new PyNamedTupleType(tupleClass,
                                       cls,
                                       name,
-                                      fields.stream().collect(toNTFields),
-                                      PyNamedTupleType.DefinitionLevel.NEW_TYPE);
+                                      collectTypingNTInheritorFields(cls, context),
+                                      PyNamedTupleType.DefinitionLevel.NEW_TYPE,
+                                      true);
         }
       }
     }
@@ -491,11 +534,14 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return null;
     }
 
+    final Map<String, Optional<String>> fields = stub.getFields();
+
     return new PyNamedTupleType(tupleClass,
                                 referenceTarget,
                                 stub.getName(),
-                                parseNamedTupleFields(referenceTarget, stub.getFields(), context),
-                                definitionLevel);
+                                parseNamedTupleFields(referenceTarget, fields, context),
+                                definitionLevel,
+                                ContainerUtil.find(fields.values(), Optional::isPresent) != null);
   }
 
   @Nullable
@@ -507,6 +553,92 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
 
     return null;
+  }
+
+  @NotNull
+  private static PyCallableType createTypedNamedTupleReplaceType(@NotNull PsiElement anchor,
+                                                                 @NotNull Map<String, PyNamedTupleType.FieldTypeAndDefaultValue> fields,
+                                                                 @NotNull PyType resultType) {
+    final List<PyCallableParameter> parameters = new ArrayList<>();
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(anchor.getProject());
+
+    parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()));
+
+    final PyNoneLiteralExpression ellipsis = elementGenerator.createEllipsis();
+
+    for (Map.Entry<String, PyNamedTupleType.FieldTypeAndDefaultValue> entry : fields.entrySet()) {
+      final PyExpression value = entry.getValue().getDefaultValue();
+
+      parameters.add(PyCallableParameterImpl.nonPsi(entry.getKey(), entry.getValue().getType(), value == null ? ellipsis : value));
+    }
+
+    return new PyCallableTypeImpl(parameters, resultType);
+  }
+
+  @NotNull
+  private static PyCallableType createUntypedNamedTupleReplaceType(@NotNull PyCallExpression call,
+                                                                   @NotNull Map<String, PyNamedTupleType.FieldTypeAndDefaultValue> fields,
+                                                                   @NotNull PyType resultType,
+                                                                   @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = new ArrayList<>();
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(call.getProject());
+
+    parameters.add(PyCallableParameterImpl.psi(elementGenerator.createSingleStarParameter()));
+
+    final PyNoneLiteralExpression ellipsis = elementGenerator.createEllipsis();
+
+    for (String name : fields.keySet()) {
+      parameters.add(PyCallableParameterImpl.nonPsi(name, null, ellipsis));
+    }
+
+    if (resultType instanceof PyNamedTupleType) {
+      final Map<String, PyType> newFields = new HashMap<>();
+
+      for (PyExpression argument : call.getArguments()) {
+        if (argument instanceof PyKeywordArgument) {
+          final PyKeywordArgument keywordArgument = (PyKeywordArgument)argument;
+          final PyExpression value = keywordArgument.getValueExpression();
+          if (value != null) {
+            newFields.put(keywordArgument.getKeyword(), context.getType(value));
+          }
+        }
+      }
+
+      return new PyCallableTypeImpl(parameters, ((PyNamedTupleType)resultType).clarifyFields(newFields));
+    }
+    else {
+      return new PyCallableTypeImpl(parameters, resultType);
+    }
+  }
+
+  @NotNull
+  private static LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue> collectTypingNTInheritorFields(@NotNull PyClass cls,
+                                                                                                                 @NotNull TypeEvalContext context) {
+    final List<PyTargetExpression> fields = new ArrayList<>();
+
+    cls.processClassLevelDeclarations(
+      new PsiScopeProcessor() {
+        @Override
+        public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
+          if (element instanceof PyTargetExpression) {
+            final PyTargetExpression target = (PyTargetExpression)element;
+            if (target.getAnnotationValue() != null) {
+              fields.add(target);
+            }
+          }
+
+          return true;
+        }
+      }
+    );
+
+    final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
+      Collectors.toMap(PyTargetExpression::getName,
+                       field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
+                       (v1, v2) -> v2,
+                       LinkedHashMap::new);
+
+    return fields.stream().collect(toNTFields);
   }
 
   @Nullable

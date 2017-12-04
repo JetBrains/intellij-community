@@ -2670,6 +2670,11 @@ public class PyTypeTest extends PyTestCase {
            "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
            "    pass\n" +
            "expr = Cat(\"name\", 5)._replace(name=\"newname\")");
+
+    doTest("str",
+           "from collections import namedtuple\n" +
+           "Cat = namedtuple(\"Cat\", \"name age\")\n" +
+           "expr = Cat(\"name\", 5)._replace(age=\"five\").age");
   }
 
   // PY-27148
@@ -2690,6 +2695,14 @@ public class PyTypeTest extends PyTestCase {
                    "from typing import NamedTuple\n" +
                    "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
                    "expr = Cat(\"name\", 5)._replace(name=\"newname\")")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("int",
+                   "from typing import NamedTuple\n" +
+                   "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
+                   "expr = Cat(\"name\", 5)._replace(age=\"give\").age")
     );
   }
 

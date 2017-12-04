@@ -641,24 +641,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22249
   public void testInitializingCollectionsNamedTuple() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final Map<String, PsiElement> test = loadTest(2);
+    final Map<String, PsiElement> test = loadTest(2);
 
-        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
-          final List<String> texts = Collections.singletonList("bar, baz");
-          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+      final List<String> texts = Collections.singletonList("bar, baz");
+      final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
 
-          feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
-        }
-      }
-    );
+      feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+    }
   }
 
   public void testInitializingTypingNamedTuple() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
+      LanguageLevel.PYTHON36,
       () -> {
         final Map<String, PsiElement> test = loadTest(7);
 
@@ -691,6 +686,29 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       () -> {
         for (int offset : StreamEx.of(loadTest(2).values()).map(PsiElement::getTextOffset)) {
           feignCtrlP(offset).check("self: Foo, arg: int", new String[]{"arg: int"}, new String[]{"self: Foo, "});
+        }
+      }
+    );
+  }
+
+  // PY-27148
+  public void testCollectionsNamedTupleReplace() {
+    final Map<String, PsiElement> test = loadTest(2);
+
+    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+      feignCtrlP(offset).check("*, bar=..., baz=...", ArrayUtil.EMPTY_STRING_ARRAY);
+    }
+  }
+
+  // PY-27148
+  public void testTypingNamedTupleReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+          feignCtrlP(offset).check("*, bar: int=..., baz: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
         }
       }
     );

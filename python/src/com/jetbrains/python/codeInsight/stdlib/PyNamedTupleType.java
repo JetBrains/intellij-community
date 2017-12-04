@@ -33,11 +33,14 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @NotNull
   private final DefinitionLevel myDefinitionLevel;
 
+  private final boolean myTyped;
+
   public PyNamedTupleType(@NotNull PyClass tupleClass,
                           @NotNull PsiElement declaration,
                           @NotNull String name,
                           @NotNull Map<String, FieldTypeAndDefaultValue> fields,
-                          @NotNull DefinitionLevel definitionLevel) {
+                          @NotNull DefinitionLevel definitionLevel,
+                          boolean typed) {
     super(tupleClass,
           Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
           false,
@@ -47,6 +50,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
     myFields = Collections.unmodifiableMap(fields);
     myName = name;
     myDefinitionLevel = definitionLevel;
+    myTyped = typed;
   }
 
   @Override
@@ -74,11 +78,11 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel == DefinitionLevel.NT_FUNCTION) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped);
     }
     else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
       final Map<String, FieldTypeAndDefaultValue> fields = takeFieldsTypesFromCallSiteIfNeeded(context, callSite);
-      return new PyNamedTupleType(myClass, myDeclaration, myName, fields, DefinitionLevel.INSTANCE);
+      return new PyNamedTupleType(myClass, myDeclaration, myName, fields, DefinitionLevel.INSTANCE, myTyped);
     }
 
     return null;
@@ -88,7 +92,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Override
   public PyClassType toInstance() {
     return myDefinitionLevel == DefinitionLevel.NEW_TYPE
-           ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE)
+           ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE, myTyped)
            : this;
   }
 
@@ -97,7 +101,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   public PyClassLikeType toClass() {
     return myDefinitionLevel == DefinitionLevel.INSTANCE
            ? this
-           : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
+           : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped);
   }
 
   @Override
@@ -149,10 +153,33 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
            : null;
   }
 
+  public boolean isTyped() {
+    return myTyped;
+  }
+
+  @NotNull
+  public PyNamedTupleType clarifyFields(@NotNull Map<String, PyType> fieldNameToType) {
+    if (!myTyped) {
+      final LinkedHashMap<String, FieldTypeAndDefaultValue> newFields = new LinkedHashMap<>(myFields);
+
+      for (Map.Entry<String, PyType> entry : fieldNameToType.entrySet()) {
+        final String fieldName = entry.getKey();
+
+        if (newFields.containsKey(fieldName)) {
+          newFields.put(fieldName, new FieldTypeAndDefaultValue(entry.getValue(), null));
+        }
+      }
+
+      return new PyNamedTupleType(myClass, myDeclaration, myName, newFields, myDefinitionLevel, false);
+    }
+
+    return this;
+  }
+
   @NotNull
   private Map<String, FieldTypeAndDefaultValue> takeFieldsTypesFromCallSiteIfNeeded(@NotNull TypeEvalContext context,
                                                                                     @NotNull PyCallSiteExpression callSite) {
-    if (StreamEx.of(getElementTypes()).allMatch(Objects::isNull)) {
+    if (!myTyped) {
       final List<PyExpression> arguments = callSite.getArguments(null);
 
       if (arguments.size() == myFields.size()) {

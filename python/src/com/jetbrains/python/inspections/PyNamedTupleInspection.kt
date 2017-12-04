@@ -8,12 +8,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
+import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
-import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import java.util.*
 
@@ -52,16 +51,11 @@ class PyNamedTupleInspection : PyInspection() {
     override fun visitPyClass(node: PyClass?) {
       super.visitPyClass(node)
 
-      if (node != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) && isTypingNTInheritor(node)) {
+      if (node != null &&
+          LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
+          PyStdlibTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
         inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
       }
-    }
-
-    private fun isTypingNTInheritor(cls: PyClass): Boolean {
-      val isTypingNT: (PyClassLikeType?) -> Boolean =
-        { it != null && it !is PyNamedTupleType && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
-
-      return cls.getSuperClassTypes(myTypeEvalContext).find(isTypingNT) != null
     }
   }
 
