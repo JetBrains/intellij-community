@@ -52,6 +52,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HeaderlessTabbedPane;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.containers.ContainerUtil;
@@ -899,7 +900,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       Container parentComponent;
       if (dialogClosed) {
         IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
-        parentComponent = ideFrame.getComponent();
+        parentComponent = ideFrame != null ? ideFrame.getComponent() : WindowManager.getInstance().findVisibleFrame();
       }
       else {
         parentComponent = getContentPane();
