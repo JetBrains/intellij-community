@@ -9,7 +9,7 @@ import com.intellij.stats.personalization.UserFactorStorage
  * @author Vitaliy.Bibaev
  */
 class CompletionTypeRatio(private val type: CompletionType) : UserFactor {
-    override val id: String = "${type}_ratio"
+    override val id: String = "CompletionTypeRatioOf$type"
 
     override fun compute(storage: UserFactorStorage): String? {
         val reader = storage.getFactorReader(UserFactorDescriptions.COMPLETION_TYPE)

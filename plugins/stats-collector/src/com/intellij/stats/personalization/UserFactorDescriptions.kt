@@ -9,6 +9,7 @@ object UserFactorDescriptions {
     val COMPLETION_TYPE = Descriptor("completionType", ::CompletionTypeUpdater, ::CompletionTypeReader)
     val COMPLETION_FINISH_TYPE =
             Descriptor("completionFinishedType", ::CompletionFinishTypeUpdater, ::CompletionFinishTypeReader)
+    val COMPLETION_USAGE = Descriptor("completionUsage", ::CompletionUsageUpdater, ::CompletionUsageReader)
 
 
     class Descriptor<out U : FactorUpdater, out R : FactorReader>(

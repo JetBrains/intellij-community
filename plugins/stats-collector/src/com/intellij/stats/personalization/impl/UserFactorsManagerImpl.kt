@@ -26,6 +26,10 @@ class UserFactorsManagerImpl(project: Project) : UserFactorsManager, ProjectComp
         register(CompletionTypeRatio(CompletionType.BASIC))
         register(CompletionTypeRatio(CompletionType.SMART))
         register(CompletionTypeRatio(CompletionType.CLASS_NAME))
+
+        register(TodayCompletionUsageCount())
+        register(TotalUsageCount())
+        register(WeekAverageUsageCount())
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()
