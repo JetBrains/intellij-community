@@ -29,10 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Consumer;
@@ -128,7 +125,9 @@ public class CodeInsightUtil {
         element2 = element2.getParent();
       }
     }
-    if (endOffset != element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
+    if (endOffset != element2.getTextRange().getEndOffset() && !isAtTrailingComment(element1, element2, endOffset)) {
+      return PsiElement.EMPTY_ARRAY;
+    }
 
     if (parent instanceof PsiCodeBlock &&
         element1 == ((PsiCodeBlock)parent).getLBrace() && element2 == ((PsiCodeBlock)parent).getRBrace()) {
@@ -147,6 +146,28 @@ public class CodeInsightUtil {
 
     PsiElement[] children = parent.getChildren();
     return getStatementsInRange(children, element1, element2);
+  }
+
+  private static boolean isAtTrailingComment(PsiElement element1, PsiElement element2, int offset) {
+    if (element1 == element2 && element1 instanceof PsiExpressionStatement) {
+      for (PsiElement child = element1.getLastChild(); child != null; child = child.getPrevSibling()) {
+        if (PsiUtil.isJavaToken(child, JavaTokenType.SEMICOLON) && child.getTextRange().getEndOffset() == offset) {
+          return false; // findExpressionInRange() counts this as an expression - don't interfere with it
+        }
+      }
+    }
+    PsiElement trailing = element2;
+    while (trailing.getTextRange().contains(offset) && trailing.getLastChild() != null) {
+      trailing = trailing.getLastChild();
+    }
+    while (trailing instanceof PsiComment || trailing instanceof PsiWhiteSpace) {
+      PsiElement previous = trailing.getPrevSibling();
+      if (trailing.getTextRange().contains(offset)) {
+        return true;
+      }
+      trailing = previous;
+    }
+    return false;
   }
 
   @NotNull
@@ -243,20 +264,19 @@ public class CodeInsightUtil {
 
   @NotNull
   public static PsiExpression[] findReferenceExpressions(PsiElement scope, PsiElement referee) {
-    ArrayList<PsiElement> array = new ArrayList<>();
-    if (scope != null) {
-      addReferenceExpressions(array, scope, referee);
-    }
-    return array.toArray(new PsiExpression[array.size()]);
+    if (scope == null) return PsiExpression.EMPTY_ARRAY;
+    List<PsiExpression> array = new ArrayList<>();
+    addReferenceExpressions(array, scope, referee);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addReferenceExpressions(ArrayList<PsiElement> array, PsiElement scope, PsiElement referee) {
+  private static void addReferenceExpressions(List<PsiExpression> array, PsiElement scope, PsiElement referee) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiReferenceExpression) {
         PsiElement ref = ((PsiReferenceExpression)child).resolve();
         if (ref != null && PsiEquivalenceUtil.areElementsEquivalent(ref, referee)) {
-          array.add(child);
+          array.add((PsiExpression)child);
         }
       }
       addReferenceExpressions(array, child, referee);

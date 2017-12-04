@@ -1217,6 +1217,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testBeforeCommentAfterSelectedFragment() throws Exception {
+    doTest();
+  }
+
+  public void testInsideCommentAfterSelectedFragment() throws Exception {
+    doTest();
+  }
+
   public void testEmptyBlockStatement() throws Exception {
     doExitPointsTest(false);
   }

@@ -59,6 +59,7 @@ public class ParametrizedDuplicates {
 
   private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
                                  @NotNull ExtractMethodProcessor originalProcessor) {
+    pattern = getFilteredElements(pattern);
     LOG.assertTrue(pattern.length != 0, "pattern length");
     if (pattern[0] instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
