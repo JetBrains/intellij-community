@@ -46,10 +46,6 @@ public class FindInProjectManager {
     myProject = project;
   }
 
-  public void findInProject(@NotNull DataContext dataContext) {
-    findInProject(dataContext, null);
-  }
-
   public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel predefinedModel) {
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
