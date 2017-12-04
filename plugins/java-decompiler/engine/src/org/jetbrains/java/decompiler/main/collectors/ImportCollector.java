@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
@@ -68,14 +70,15 @@ public class ImportCollector {
   }
 
   public String getShortName(String fullName, boolean imported) {
-    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/'));
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
 
-    StringBuilder result = null;
+    String result = null;
     if (node != null && node.classStruct.isOwn()) {
-      result = new StringBuilder(String.valueOf(node.simpleName));
+      result = node.simpleName;
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
-        result.insert(0, node.parent.simpleName + '.');
+        //noinspection StringConcatenationInLoop
+        result = node.parent.simpleName + '.' + result;
         node = node.parent;
       }
 
@@ -84,7 +87,7 @@ public class ImportCollector {
         fullName = fullName.replace('/', '.');
       }
       else {
-        return result.toString();
+        return result;
       }
     }
     else {
@@ -121,7 +124,7 @@ public class ImportCollector {
       }
     }
 
-    return result == null ? shortName : result.toString();
+    return result == null ? shortName : result;
   }
 
   public int writeImports(TextBuffer buffer) {
