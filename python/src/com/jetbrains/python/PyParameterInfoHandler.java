@@ -227,7 +227,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         highlightIndex = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
       }
       else if (lastParamIndex < parameterList.size() - 1) { // lastParamIndex not at end, or no args
-        if (indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
+        if (!indexToNamedParameter.containsKey(lastParamIndex) || indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
           highlightIndex = lastParamIndex; // stick to *arg
         }
         else {

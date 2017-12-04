@@ -750,6 +750,22 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // EA-102450
+  public void testKeywordOnlyWithFilledPositional() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(4);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, kw1, kw2", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, kw1, kw2", ArrayUtil.EMPTY_STRING_ARRAY);
+
+        feignCtrlP(test.get("<arg3>").getTextOffset()).check("*, kw1, kw2", new String[]{"kw1, "});
+        feignCtrlP(test.get("<arg4>").getTextOffset()).check("*, kw1, kw2", new String[]{"kw2"});
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.
