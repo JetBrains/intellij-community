@@ -39,8 +39,21 @@ fun DailyAggregatedDoubleFactor.aggregateSum(): Map<String, Double> = aggregateB
 
 fun DailyAggregatedDoubleFactor.aggregateAverage(): Map<String, Double> {
     val result = mutableMapOf<String, Double>()
-
-    // TODO: implement
+    val counts = mutableMapOf<String, Int>()
+    for (onDate in availableDates().mapNotNull(this::onDate)) {
+        for ((key, value) in onDate) {
+            result.compute(key) { _, old ->
+                if (old != null) {
+                    val n = counts[key]!!.toDouble()
+                    counts.computeIfPresent(key) { _, value -> value + 1 }
+                    (n / (n + 1)) * old + value / (n + 1)
+                } else {
+                    counts[key] = 1
+                    value
+                }
+            }
+        }
+    }
 
     return result
 }
