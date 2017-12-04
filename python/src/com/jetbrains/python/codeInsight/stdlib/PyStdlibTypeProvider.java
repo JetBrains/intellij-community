@@ -492,7 +492,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
         final PyClass tupleClass = as(typingNT, PyClass.class);
         if (tupleClass != null) {
           return new PyNamedTupleType(tupleClass,
-                                      cls,
                                       name,
                                       collectTypingNTInheritorFields(cls, context),
                                       PyNamedTupleType.DefinitionLevel.NEW_TYPE,
@@ -537,7 +536,6 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final Map<String, Optional<String>> fields = stub.getFields();
 
     return new PyNamedTupleType(tupleClass,
-                                referenceTarget,
                                 stub.getName(),
                                 parseNamedTupleFields(referenceTarget, fields, context),
                                 definitionLevel,
