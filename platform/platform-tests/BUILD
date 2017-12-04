@@ -48,5 +48,7 @@ iml_module(
         "//tools/idea:testExtensions[module, test]",
         "//tools/idea/platform/bootstrap[module]",
         "//tools/idea/.idea/libraries:Guava",
+        "//tools/base/common:studio.common[module, test]",
+        "//tools/base/testutils:studio.testutils[module, test]",
     ],
 )
