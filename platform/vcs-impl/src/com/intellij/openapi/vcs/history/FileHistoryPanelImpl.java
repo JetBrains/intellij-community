@@ -725,7 +725,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       };
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
@@ -823,7 +823,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return StringUtil.repeatSymbol('m', 14);
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
@@ -875,7 +875,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       return myRenderer;
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
