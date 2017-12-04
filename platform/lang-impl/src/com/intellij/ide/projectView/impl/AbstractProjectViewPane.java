@@ -768,7 +768,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
     TreeVisitor visitor = AsyncProjectViewSupport.createVisitor(element);
     if (visitor == null || myTree == null) return Promises.rejectedPromise();
-    return TreeUtil.promiseAccept(myTree, visitor);
+    return TreeUtil.promiseVisit(myTree, visitor);
   }
 
   AsyncProjectViewSupport getAsyncSupport() {
