@@ -107,7 +107,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myProviders = providers;
     myFatalErrorsConsumer = fatalErrorsConsumer;
     myRoots = ContainerUtil.newLinkedHashSet();
-    mySingleTaskController = new MySingleTaskController(project);
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
 
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
@@ -131,6 +130,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       myIndexingTime.put(root, new AtomicLong());
       myIndexingLimit.put(root, new AtomicInteger(getIndexingLimit()));
     }
+
+    mySingleTaskController = new MySingleTaskController(project, myIndexStorage != null ? myIndexStorage : this);
 
     Disposer.register(disposableParent, this);
   }
@@ -450,7 +451,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   public void dispose() {
   }
 
-  static class IndexStorage {
+  static class IndexStorage implements Disposable {
     private static final String COMMITS = "commits";
     private static final String MESSAGES = "messages";
     private static final String PARENTS = "parents";
@@ -472,8 +473,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
                         @NotNull FatalErrorHandler fatalErrorHandler,
                         @NotNull Disposable parentDisposable)
       throws IOException {
-      Disposable disposable = Disposer.newDisposable();
-      Disposer.register(parentDisposable, disposable);
+      Disposer.register(parentDisposable, this);
 
       try {
         int version = getVersion();
@@ -481,28 +481,28 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         File commitsStorage = getStorageFile(INDEX, COMMITS, logId, version);
         myIsFresh = !commitsStorage.exists();
         commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
-        Disposer.register(disposable, () -> catchAndWarn(commits::close));
+        Disposer.register(this, () -> catchAndWarn(commits::close));
 
         File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION);
         messages = new PersistentHashMap<>(messagesStorage, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
-        Disposer.register(disposable, () -> catchAndWarn(messages::close));
+        Disposer.register(this, () -> catchAndWarn(messages::close));
 
-        trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, disposable);
-        users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, disposable);
-        paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, disposable);
+        trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, this);
+        users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, this);
 
         File parentsStorage = getStorageFile(INDEX, PARENTS, logId, version);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
                                           new IntListDataExternalizer(), Page.PAGE_SIZE, version);
-        Disposer.register(disposable, () -> catchAndWarn(parents::close));
+        Disposer.register(this, () -> catchAndWarn(parents::close));
 
         File renamesStorage = getStorageFile(INDEX, RENAMES, logId, version);
         renames = new PersistentSetImpl<>(renamesStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
-        Disposer.register(disposable, () -> catchAndWarn(renames::close));
+        Disposer.register(this, () -> catchAndWarn(renames::close));
       }
       catch (Throwable t) {
-        Disposer.dispose(disposable);
+        Disposer.dispose(this);
         throw t;
       }
     }
@@ -533,14 +533,18 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     public boolean isFresh() {
       return myIsFresh;
     }
+
+    @Override
+    public void dispose() {
+    }
   }
 
   private class MySingleTaskController extends SingleTaskController<IndexingRequest, Void> {
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
-    public MySingleTaskController(@NotNull Project project) {
-      super(EmptyConsumer.getInstance(), false);
+    public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
+      super(project, EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 
