@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -53,8 +54,8 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @Nullable
   String getDocString();
 
-  @Nullable // Made nullable for compatibility
+  @NotNull
   default List<String> getSuperClassesText() {
-    return null;
+    return Collections.emptyList();
   }
 }

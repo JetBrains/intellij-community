@@ -30,7 +30,8 @@ import java.util.Map;
 /**
  * @author max
  */
-public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
+public class
+PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   @Nullable
   private final String myName;
@@ -62,16 +63,15 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     this(name, parentStub, superClasses, subscriptedSuperClassesText, null, metaClass, slots, docString, stubElementType);
   }
 
-  public PyClassStubImpl(
-    @Nullable String name,
-    @Nullable StubElement parentStub,
-    @NotNull Map<QualifiedName, QualifiedName> superClasses,
-    @NotNull List<String> subscriptedSuperClassesText,
-    @Nullable List<String> superClassesText,
-    @Nullable QualifiedName metaClass,
-    @Nullable List<String> slots,
-    @Nullable String docString,
-    @NotNull IStubElementType stubElementType) {
+  public PyClassStubImpl(@Nullable String name,
+                         @Nullable StubElement parentStub,
+                         @NotNull Map<QualifiedName, QualifiedName> superClasses,
+                         @NotNull List<String> subscriptedSuperClassesText,
+                         @Nullable List<String> superClassesText,
+                         @Nullable QualifiedName metaClass,
+                         @Nullable List<String> slots,
+                         @Nullable String docString,
+                         @NotNull IStubElementType stubElementType) {
     super(parentStub, stubElementType);
     myName = name;
     mySuperClasses = superClasses;
@@ -116,7 +116,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     return myDocString;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public List<String> getSuperClassesText() {
     return mySuperClassesText;
