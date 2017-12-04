@@ -667,10 +667,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLineExtensionPainters.add(lineExtensionPainter);
   }
 
-  public void processLineExtensions(int line, Consumer<LineExtensionInfo> consumer) {
+  public boolean processLineExtensions(int line, Processor<LineExtensionInfo> processor) {
     for (IntFunction<Collection<LineExtensionInfo>> painter : myLineExtensionPainters) {
       for (LineExtensionInfo extension : painter.apply(line)) {
-        consumer.consume(extension);
+        if (!processor.process(extension)) {
+          return false;
+        }
       }
     }
     if (myProject != null && myVirtualFile != null) {
@@ -678,11 +680,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
         if (extensions != null) {
           for (LineExtensionInfo extension : extensions) {
-            consumer.consume(extension);
+            if (!processor.process(extension)) {
+              return false;
+            }
           }
         }
       }
     }
+    return true;
   }
 
   @Override

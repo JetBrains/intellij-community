@@ -41,7 +41,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 /**
@@ -272,9 +271,8 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   private void validateMaxLineWithExtension() {
     if (myMaxLineWithExtensionWidth > 0) {
-      AtomicBoolean hasExtensions = new AtomicBoolean();
-      myEditor.processLineExtensions(myWidestLineWithExtension, (info) -> hasExtensions.set(true));
-      if (!hasExtensions.get()) {
+      boolean hasNoExtensions = myEditor.processLineExtensions(myWidestLineWithExtension, (info) -> false);
+      if (hasNoExtensions) {
         myMaxLineWithExtensionWidth = 0;
       }
     }
