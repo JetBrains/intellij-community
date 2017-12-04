@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
@@ -81,21 +82,21 @@ public class ExternalSystemJdkUtil {
 
   @NotNull
   public static Pair<String, Sdk> getAvailableJdk(@Nullable Project project) throws ExternalSystemJdkException {
+    Condition<Sdk> sdkCondition = sdk -> sdk != null && sdk.getSdkType() == JavaSdk.getInstance() && isValidJdk(sdk.getHomePath());
     if (project != null) {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (res != null) return Pair.create(USE_PROJECT_JDK, res);
+      if (sdkCondition.value(res)) return Pair.create(USE_PROJECT_JDK, res);
 
       Module[] modules = ModuleManager.getInstance(project).getModules();
       for (Module module : modules) {
         Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-        if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+        if (sdkCondition.value(res)) {
           return Pair.create(USE_PROJECT_JDK, sdk);
         }
       }
     }
 
-    Sdk mostRecentSdk = ProjectJdkTable.getInstance().findMostRecentSdk(
-      sdk -> sdk.getSdkType() == JavaSdk.getInstance() && isValidJdk(sdk.getHomePath()));
+    Sdk mostRecentSdk = ProjectJdkTable.getInstance().findMostRecentSdk(sdkCondition);
     if (mostRecentSdk != null) {
       return Pair.create(mostRecentSdk.getName(), mostRecentSdk);
     }
@@ -120,7 +121,7 @@ public class ExternalSystemJdkUtil {
     return false;
   }
 
-  private static boolean isValidJdk(@Nullable String homePath) {
+  public static boolean isValidJdk(@Nullable String homePath) {
     return !StringUtil.isEmptyOrSpaces(homePath) && (JdkUtil.checkForJdk(homePath) || JdkUtil.checkForJre(homePath));
   }
 }
