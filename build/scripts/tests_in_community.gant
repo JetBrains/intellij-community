@@ -33,7 +33,6 @@ target("default": "Run tests") {
   options.platformPrefix = "AndroidStudio"
   options.mainModule = "community-main-tests"
   options.testPatterns = "org.jetbrains.android.*;com.android.tools.idea.*;com.android.tools.ndk.*;com.google.gct.*"
-  options.jvmMemoryOptions = "-Xmx1024m -Dsun.io.useCanonCaches=false"
   /*
   options.debugPort = 5005
   options.suspendDebugProcess = true

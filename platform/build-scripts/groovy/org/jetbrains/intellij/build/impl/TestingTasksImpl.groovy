@@ -80,7 +80,7 @@ class TestingTasksImpl extends TestingTasks {
     }
     else {
       jvmArgs.addAll([
-        "-Xmx750m",
+        "-Xmx1024m",
         "-Xms750m",
         "-Dsun.io.useCanonCaches=false"
       ])
