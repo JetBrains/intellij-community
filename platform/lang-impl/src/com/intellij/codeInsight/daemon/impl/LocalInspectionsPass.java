@@ -134,12 +134,21 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                @NotNull final List<LocalInspectionToolWrapper> toolWrappers) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<>(toolWrappers), iManager, false, false, progress);
+    boolean isSingleToolRun = context.getCurrentProfile().getSingleTool() != null;
     addDescriptorsFromInjectedResults(iManager, context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
+    Set<String> toolsWithInformationInBatch = new HashSet<>();
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
+      final String shortName = toolWrapper.getShortName();
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
+        if (!isSingleToolRun &&
+            descriptor.getHighlightType() == ProblemHighlightType.INFORMATION &&
+            toolsWithInformationInBatch.add(shortName)) {
+          LOG.error("Tool '" + shortName + "' registers INFORMATION level problem in batch mode, " +
+                    "though warning or level is used in user's settings");
+        }
         addDescriptors(toolWrapper, descriptor, context);
       }
     }
