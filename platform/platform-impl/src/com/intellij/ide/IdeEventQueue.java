@@ -128,10 +128,18 @@ public class IdeEventQueue extends EventQueue {
   private final com.intellij.util.EventDispatcher<PostEventHook>
     myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
-  private LinkedHashMap <AWTEvent, Runnable> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
+  private LinkedHashMap <AWTEvent, ArrayList<Runnable>> myRunnablesWaitingFocusChange = new LinkedHashMap<>();
 
   public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
-    ifFocusEventsInTheQueue(e -> myRunnablesWaitingFocusChange.put(e, runnable), runnable);
+    ifFocusEventsInTheQueue(e -> {
+      if (myRunnablesWaitingFocusChange.containsKey(e)) {
+        FOCUS_AWARE_RUNNABLES_LOG.info("We have already have a runnable for the event: " + e);
+        myRunnablesWaitingFocusChange.get(e).add(runnable);
+      }
+      ArrayList<Runnable> runnables = new ArrayList<>();
+      runnables.add(runnable);
+      myRunnablesWaitingFocusChange.put(e, runnables);
+    }, runnable);
   }
 
   private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
@@ -431,13 +439,22 @@ public class IdeEventQueue extends EventQueue {
       FOCUS_AWARE_RUNNABLES_LOG.info("Focus event list (execute on focus event): " + focusEventsList.stream().
         collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
       StreamEx.of(focusEventsList).
-          takeWhile(entry -> entry.equals(finalEvent)).
-          collect(Collectors.toList()).forEach(entry -> {
+        takeWhile(entry -> entry.equals(finalEvent)).
+        collect(Collectors.toList()).forEach(entry -> {
           focusEventsList.remove(entry);
-          Runnable runnable = myRunnablesWaitingFocusChange.remove(entry);
-          FOCUS_AWARE_RUNNABLES_LOG.info("Remove [" + entry.getID() + "; " + entry.getSource().getClass().getName() + "] and run " + ((runnable == null) ? "NULL" : runnable.getClass().getName()));
-          if (runnable != null) {
-            runnable.run();
+          ArrayList<Runnable> listOfRunnables = myRunnablesWaitingFocusChange.remove(entry);
+          if (listOfRunnables != null) {
+            listOfRunnables.forEach(runnable -> {
+              FOCUS_AWARE_RUNNABLES_LOG.info("Remove [" +
+                                             entry.getID() +
+                                             "; " +
+                                             entry.getSource().getClass().getName() +
+                                             "] and run " +
+                                             ((runnable == null) ? "NULL" : runnable.getClass().getName()));
+              if (runnable != null) {
+                runnable.run();
+              }
+            });
           }
         });
     }
