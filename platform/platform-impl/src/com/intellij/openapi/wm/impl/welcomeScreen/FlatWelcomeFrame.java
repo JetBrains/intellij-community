@@ -524,7 +524,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       logo.setBorder(JBUI.Borders.empty(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
-      JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
+      final String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
+                                     ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+                                     : ApplicationNamesInfo.getInstance().getFullProductName();
+      JLabel appName = new JLabel(applicationName);
       Font font = getProductFont();
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(JBUI.scale(36f)).deriveFont(Font.PLAIN));
