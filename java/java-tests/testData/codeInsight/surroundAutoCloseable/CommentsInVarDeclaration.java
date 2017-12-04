@@ -6,6 +6,7 @@ class C {
     void m(File file) throws IOException {
         <caret>FileInputStream fileInputStream = new FileInputStream(file);
         String s = "initial value";//Non-NLS
-        String bar = s + fileInputStream.read();
+        s = s + fileInputStream.read();
+        s += "end";
     }
 }
