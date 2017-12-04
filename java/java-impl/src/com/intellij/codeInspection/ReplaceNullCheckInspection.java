@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -12,10 +13,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -30,11 +34,31 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T")
   );
 
+  public boolean noWarningReplacementBigger = true;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel
+      .addCheckbox(InspectionsBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
+    return panel;
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    if (!noWarningReplacementBigger) {
+      node.addContent(new Element("option")
+                        .setAttribute("name", "noWarningReplacementBigger")
+                        .setAttribute("value", String.valueOf(noWarningReplacementBigger)));
+    }
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
-    if(!PsiUtil.isLanguageLevel9OrHigher(file)) {
+    if (!PsiUtil.isLanguageLevel9OrHigher(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -46,9 +70,9 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
         PsiStatement nextToDelete = context.getNextToDelete();
         int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
-        boolean isInfoLevel = ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
+        boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
-        holder.registerProblem(ifStatement.getChildren()[0], InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
+        holder.registerProblem(ifStatement.getFirstChild(), InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
                                new ReplaceWithRequireNonNullFix(method, false));
       }
 
@@ -68,8 +92,14 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         TernaryNotNullContext context = TernaryNotNullContext.from(ternary);
         if(context == null) return;
         String method = getMethodWithClass(context.getNonNullExpr(), false);
+        String name = context.getVariable().getName();
+        boolean replacementShorter =
+          name != null
+          && context.getNonNullExpr().getTextLength() + method.length() + name.length() < context.getTernary().getTextLength() + MINIMAL_WARN_DELTA_SIZE;
+        boolean isInfoLevel = noWarningReplacementBigger && replacementShorter;
+        ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         holder.registerProblem(ternary, InspectionsBundle.message("inspection.require.non.null.message", method),
-                               ProblemHighlightType.INFORMATION, new ReplaceWithRequireNonNullFix(method, true));
+                               highlightType, new ReplaceWithRequireNonNullFix(method, true));
       }
     };
   }
