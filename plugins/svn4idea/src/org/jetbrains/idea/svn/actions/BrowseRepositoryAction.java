@@ -3,7 +3,6 @@
  */
 package org.jetbrains.idea.svn.actions;
 
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,6 +36,7 @@ public class BrowseRepositoryAction extends AnAction implements DumbAware {
       if (w == null) {
         RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
         w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
+        w.setHelpId("reference.svn.repository");
         final Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
         Disposer.register(content, component);
         w.getContentManager().addContent(content);
@@ -58,7 +58,7 @@ public class BrowseRepositoryAction extends AnAction implements DumbAware {
       JComponent component = myDialog.createBrowserComponent(true);
 
       add(component, BorderLayout.CENTER);
-      add(myDialog.createToolbar(false, new ContextHelpAction("reference.svn.repository")), BorderLayout.WEST);
+      add(myDialog.createToolbar(false), BorderLayout.WEST);
     }
 
     public void dispose() {
