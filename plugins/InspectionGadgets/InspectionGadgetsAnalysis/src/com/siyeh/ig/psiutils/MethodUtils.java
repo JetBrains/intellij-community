@@ -28,6 +28,14 @@ public class MethodUtils {
 
   private MethodUtils() {}
 
+  public static boolean isCopyConstructor(@Nullable PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return false;
+    }
+    final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+    return parameters.length == 1 && constructor.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(parameters[0].getType());
+  }
+
   @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
     return method != null && methodMatches(method, CommonClassNames.JAVA_UTIL_COMPARATOR, PsiType.INT, "compare", null, null);
@@ -378,13 +386,6 @@ public class MethodUtils {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
-  }
-
-  @Contract("null -> false")
-  public static boolean isStringLength(@Nullable PsiMethod method) {
-    if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
   }
 
   public static boolean haveEquivalentModifierLists(PsiMethod method, PsiMethod superMethod) {
