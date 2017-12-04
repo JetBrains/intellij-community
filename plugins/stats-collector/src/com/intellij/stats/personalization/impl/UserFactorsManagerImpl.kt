@@ -4,14 +4,13 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.completion.FeatureManager
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
 import com.intellij.stats.personalization.UserFactor
 import com.intellij.stats.personalization.UserFactorsManager
 
 /**
  * @author Vitaliy.Bibaev
  */
-class UserFactorsManagerImpl(project: Project) : UserFactorsManager, ProjectComponent {
+class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     private companion object {
 
         val LOG = Logger.getInstance(UserFactorsManagerImpl::class.java)
