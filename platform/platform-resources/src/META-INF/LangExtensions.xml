@@ -202,8 +202,8 @@
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
-    <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
-                    serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
+                        serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                     serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
