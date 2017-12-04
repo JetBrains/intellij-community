@@ -124,9 +124,7 @@ class MLSorter : CompletionFinalSorter() {
                                 relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
         val prefixLength = lookup.prefixLength()
-        val userFactors = UserFactorsManager.getInstance(lookup.project)
-                .getAllFactors()
-                .associate { it.id to it.compute(lookup.project) }
+        val userFactors = lookup.getUserData(UserFactorsManager.USER_FACTORS_KEY) ?: emptyMap()
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
