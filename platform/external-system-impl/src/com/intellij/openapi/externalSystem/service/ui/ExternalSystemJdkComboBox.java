@@ -210,12 +210,15 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     Map<String, JdkComboBoxItem> result = new LinkedHashMap<>();
 
     for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
+      if (!((SdkType)sdk.getSdkType()).sdkHasValidPath(sdk)) {
+        continue;
+      }
       String name = sdk.getName();
       String comment = buildComment(sdk);
-      result.put(name, new JdkComboBoxItem(name, name, comment, ((SdkType)sdk.getSdkType()).sdkHasValidPath(sdk)));
+      result.put(name, new JdkComboBoxItem(name, name, comment, true));
     }
 
-    if(suggestJre) {
+    if (suggestJre) {
       final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       assert internalJdk.getHomePath() != null;
       result.put(ExternalSystemJdkUtil.USE_INTERNAL_JAVA,
@@ -239,14 +242,13 @@ public class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<ExternalSys
     }
 
     String javaHomePath = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
-    String javaHomeLabel = ExternalSystemBundle.message("external.system.java.home.env");
-
-    result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
-               new JdkComboBoxItem(
-                 ExternalSystemJdkUtil.USE_JAVA_HOME, javaHomeLabel,
-                 javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath), javaHomePath != null
-               ));
-
+    if (ExternalSystemJdkUtil.isValidJdk(javaHomePath)) {
+      result.put(ExternalSystemJdkUtil.USE_JAVA_HOME,
+                 new JdkComboBoxItem(
+                   ExternalSystemJdkUtil.USE_JAVA_HOME, ExternalSystemBundle.message("external.system.java.home.env"),
+                   truncateLongPath(javaHomePath), true
+                 ));
+    }
     return result;
   }
 
