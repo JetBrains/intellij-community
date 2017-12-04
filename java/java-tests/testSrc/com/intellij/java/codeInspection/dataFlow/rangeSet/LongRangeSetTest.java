@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.util.Random;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.*;
 import static org.junit.Assert.*;
@@ -321,16 +322,23 @@ public class LongRangeSetTest {
     checkMod(range(0, 10).union(range(30, 50)), range(-20, -10).union(range(15, 25)), "{0..24}");
     checkMod(point(10), point(0), "{}");
     checkMod(range(0, 10), point(0), "{}");
+    checkMod(range(Long.MIN_VALUE, Long.MIN_VALUE + 3), point(Long.MIN_VALUE), "{-9223372036854775807..-9223372036854775805, 0}");
+    checkMod(range(Long.MAX_VALUE - 3, Long.MAX_VALUE), point(Long.MAX_VALUE), "{0..9223372036854775806}");
   }
 
-  void checkMod(LongRangeSet dividentRange, LongRangeSet divisorRange, String expected) {
-    LongRangeSet result = dividentRange.mod(divisorRange);
+  void checkMod(LongRangeSet dividendRange, LongRangeSet divisorRange, String expected) {
+    LongRangeSet result = dividendRange.mod(divisorRange);
     assertEquals(expected, result.toString());
-    assertTrue(
-      dividentRange.stream()
-        .mapToObj(divident -> divisorRange.stream()
-          .filter(divisor -> divisor != 0).map(divisor -> divident % divisor)).flatMapToLong(Function.identity())
-        .allMatch(result::contains));
+    String errors = dividendRange.stream()
+      .mapToObj(dividend -> divisorRange.stream()
+        .filter(divisor -> divisor != 0)
+        .filter(divisor -> !result.contains(dividend % divisor))
+        .mapToObj(divisor -> dividend + " % " + divisor + " = " + (dividend % divisor)))
+      .flatMap(Function.identity())
+      .collect(Collectors.joining("\n"));
+    if (!errors.isEmpty()) {
+      fail("Expected range " + expected + " is not satisfied:\n" + errors);
+    }
   }
 
   @Test

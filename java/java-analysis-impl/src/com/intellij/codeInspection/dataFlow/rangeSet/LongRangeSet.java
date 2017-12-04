@@ -737,7 +737,9 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
       if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
-      if (divisor instanceof Point && ((Point)divisor).myValue == Long.MIN_VALUE) return this;
+      if (divisor instanceof Point && ((Point)divisor).myValue == Long.MIN_VALUE) {
+        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).union(point(0)) : this;
+      }
       if (divisor.contains(Long.MIN_VALUE)) {
         return possibleMod();
       }
