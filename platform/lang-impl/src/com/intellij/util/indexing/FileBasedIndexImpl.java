@@ -553,7 +553,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     try {
       waitUntilIndicesAreInitialized();
       myAllIndicesInitializedFuture.get();
-      LOG.info("All indices should be initialized");
     } catch (Throwable ignore) {}
   }
 
