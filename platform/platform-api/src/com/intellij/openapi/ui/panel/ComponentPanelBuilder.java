@@ -25,6 +25,13 @@ public interface ComponentPanelBuilder extends PanelBuilder {
   ComponentPanelBuilder withLabel(String labelText);
 
   /**
+   * Move label on top of the owner component. Default position is on the left of the owner component.
+   *
+   * @return <code>this</code>
+   */
+  ComponentPanelBuilder moveLabelOnTop();
+
+  /**
    * @param commentText help context styled text written below the owner component.
    *
    * @return <code>this</code>

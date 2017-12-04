@@ -20,6 +20,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
   private final JComponent myComponent;
 
   private String myLabelText;
+  private boolean myLabelOnTop;
   private String myComment;
   private boolean myCommentBelow = true;
   private String myHTDescription;
@@ -33,6 +34,12 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
   @Override
   public ComponentPanelBuilder withLabel(String labelText) {
     myLabelText = labelText;
+    return this;
+  }
+
+  @Override
+  public ComponentPanelBuilder moveLabelOnTop() {
+    myLabelOnTop = true;
     return this;
   }
 
@@ -91,14 +98,22 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
     gc.anchor = GridBagConstraints.LINE_START;
 
     if (StringUtil.isNotEmpty(myLabelText)) {
-      gc.insets = JBUI.insetsRight(8);
       JLabel lbl = new JLabel();
       LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(myLabelText).setToLabel(lbl);
       lbl.setLabelFor(myComponent);
-      panel.add(lbl, gc);
+
+      if (myLabelOnTop) {
+        gc.insets = JBUI.insetsBottom(4);
+        gc.gridx++;
+        panel.add(lbl, gc);
+        gc.gridy++;
+      } else {
+        gc.insets = JBUI.insetsRight(8);
+        panel.add(lbl, gc);
+      }
     }
 
-    gc.gridx++;
+    gc.gridx += myLabelOnTop ? 0 : 1;
     gc.weightx = 1.0;
     gc.insets = JBUI.emptyInsets();
 

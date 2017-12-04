@@ -118,6 +118,9 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       panel.add(JBPanelFactory.panel(new JRadioButton("Radiobutton")).
         withTooltip("Radiobutton description").withComment("Radiobutton comment").createPanel());
 
+      panel.add(JBPanelFactory.panel(new JTextArea(3, 40)).
+        withLabel("Extra arguments:").moveLabelOnTop().createPanel());
+
       return panel;
     }
 
@@ -145,11 +148,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         add(JBPanelFactory.panel(new JCheckBox("Run in a loop")).
               withComment("Comment text")).
 
+        add(JBPanelFactory.panel(new JTextArea(3, 40)).
+          withLabel("Extra arguments:").moveLabelOnTop()).
+
         createPanel();
 
-      if (panel != null) {
-        panel.setBorder(JBUI.Borders.emptyTop(5));
-      }
+      panel.setBorder(JBUI.Borders.emptyTop(5));
       return panel;
     }
 
@@ -196,14 +200,10 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         progressPanel.setCommentText(Integer.toString(0));
       }
 
-      if (innerPanel != null) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(JBUI.Borders.emptyTop(5));
-        panel.add(innerPanel, BorderLayout.NORTH);
-        return panel;
-      } else {
-        return null;
-      }
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.setBorder(JBUI.Borders.emptyTop(5));
+      panel.add(innerPanel, BorderLayout.NORTH);
+      return panel;
     }
 
     private JComponent createProgressGridPanel() {
