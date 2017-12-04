@@ -190,7 +190,8 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       if (!(child instanceof PsiDeclarationStatement)) continue;
 
       PsiElement anchor = child;
-      for (PsiElement declared : ((PsiDeclarationStatement)child).getDeclaredElements()) {
+      PsiElement[] declaredElements = ((PsiDeclarationStatement)child).getDeclaredElements();
+      for (PsiElement declared : declaredElements) {
         if (!(declared instanceof PsiLocalVariable)) continue;
 
         int endOffset = last.getTextRange().getEndOffset();
@@ -204,13 +205,14 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
           assert name != null : child.getText();
           toFormat.add(parent.addBefore(factory.createVariableDeclarationStatement(name, var.getType(), null), statement));
 
+          CommentTracker commentTracker = new CommentTracker();
           PsiExpression varInit = var.getInitializer();
           if (varInit != null) {
-            String varAssignText = name + " = " + varInit.getText() + ";";
+            String varAssignText = name + " = " + commentTracker.markUnchanged(varInit).getText() + ";";
             anchor = parent.addAfter(factory.createStatementFromText(varAssignText, parent), anchor);
           }
 
-          var.delete();
+          commentTracker.deleteAndRestoreComments(declaredElements.length == 1 ? child : var);
         }
       }
 

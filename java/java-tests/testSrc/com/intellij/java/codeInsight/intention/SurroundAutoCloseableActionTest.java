@@ -34,6 +34,7 @@ public class SurroundAutoCloseableActionTest extends LightCodeInsightFixtureTest
   public void testSplitVar() { doTest(); }
   public void testExpression() { doTest(); }
   public void testExpressionIncomplete() { doTest(); }
+  public void testCommentsInVarDeclaration() { doTest(); }
 
   private void doTest() {
     String name = getTestName(false);
