@@ -215,6 +215,9 @@ class CommunityRepositoryModules {
       withModule("coverage_rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
+    plugin("error-prone") {
+      withModule("error-prone-jps-plugin", "jps/error-prone-jps-plugin.jar")
+    },
     plugin("java-decompiler-plugin") {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"
