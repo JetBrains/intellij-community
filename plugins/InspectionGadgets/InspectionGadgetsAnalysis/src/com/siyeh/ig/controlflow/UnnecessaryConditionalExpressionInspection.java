@@ -114,7 +114,7 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
       }
       else if (BoolUtils.isTrue(thenExpression) && BoolUtils.isFalse(elseExpression)) {
         if (!(parent instanceof PsiLambdaExpression) ||
-            LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent, () -> condition)) {
+            LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> condition)) {
           registerError(expression, condition.getText());
         }
       }

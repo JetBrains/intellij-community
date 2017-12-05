@@ -275,7 +275,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return isPossibleObjectComparison(boxingExpression, polyadicExpression);
       }
       return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression) ||
-             !LambdaUtil.isSameOverloadAfterReplacement(boxingExpression, boxedExpression);
+             !LambdaUtil.isSafeLambdaReturnValueReplacement(boxingExpression, boxedExpression);
     }
 
     private boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {
