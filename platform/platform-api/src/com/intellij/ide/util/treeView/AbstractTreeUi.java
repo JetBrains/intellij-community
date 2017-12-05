@@ -1008,7 +1008,7 @@ public class AbstractTreeUi {
       DefaultMutableTreeNode nodeToUpdate = null;
       boolean updateElementStructure = updateStructure;
       for (Object element = fromElement; element != null; element = getTreeStructure().getParentElement(element)) {
-        final DefaultMutableTreeNode node = getNodeForElement(element, false);
+        final DefaultMutableTreeNode node = getFirstNode(element);
         if (node != null) {
           nodeToUpdate = node;
           break;
