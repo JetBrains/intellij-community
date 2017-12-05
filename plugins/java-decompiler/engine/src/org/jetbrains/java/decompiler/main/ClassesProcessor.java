@@ -77,37 +77,33 @@ public class ClassesProcessor {
 
               Inner rec = new Inner();
               rec.simpleName = simpleName;
-              rec.type = entry.outerNameIdx != 0 ? ClassNode.CLASS_MEMBER : entry.simpleNameIdx != 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_ANONYMOUS;
+              rec.type = entry.simpleNameIdx == 0 ? ClassNode.CLASS_ANONYMOUS : entry.outerNameIdx == 0 ? ClassNode.CLASS_LOCAL : ClassNode.CLASS_MEMBER;
               rec.accessFlags = entry.accessFlags;
 
               // enclosing class
-              String enclClassName;
-              if (entry.outerNameIdx != 0) {
-                enclClassName = entry.enclosingName;
+              String enclClassName = entry.outerNameIdx != 0 ? entry.enclosingName : cl.qualifiedName;
+              if (enclClassName == null || innerName.equals(enclClassName)) {
+                continue;  // invalid name or self reference
               }
-              else {
-                enclClassName = cl.qualifiedName;
+              if (rec.type == ClassNode.CLASS_MEMBER && !innerName.equals(enclClassName + '$' + entry.simpleName)) {
+                continue;  // not a real inner class
               }
 
-              if (!innerName.equals(enclClassName)) {  // self reference
-                StructClass enclosing_class = context.getClasses().get(enclClassName);
-                if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
-
-                  Inner existingRec = mapInnerClasses.get(innerName);
-                  if (existingRec == null) {
-                    mapInnerClasses.put(innerName, rec);
-                  }
-                  else if (!Inner.equal(existingRec, rec)) {
-                    String message = "Inconsistent inner class entries for " + innerName + "!";
-                    DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
-                  }
-
-                  // reference to the nested class
-                  mapNestedClassReferences.computeIfAbsent(enclClassName, k1 -> new HashSet<>()).add(innerName);
-
-                  // reference to the enclosing class
-                  mapEnclosingClassReferences.computeIfAbsent(innerName, k -> new HashSet<>()).add(enclClassName);
+              StructClass enclosingClass = context.getClasses().get(enclClassName);
+              if (enclosingClass != null && enclosingClass.isOwn()) { // own classes only
+                Inner existingRec = mapInnerClasses.get(innerName);
+                if (existingRec == null) {
+                  mapInnerClasses.put(innerName, rec);
                 }
+                else if (!Inner.equal(existingRec, rec)) {
+                  String message = "Inconsistent inner class entries for " + innerName + "!";
+                  DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
+                }
+
+                // reference to the nested class
+                mapNestedClassReferences.computeIfAbsent(enclClassName, k -> new HashSet<>()).add(innerName);
+                // reference to the enclosing class
+                mapEnclosingClassReferences.computeIfAbsent(innerName, k -> new HashSet<>()).add(enclClassName);
               }
             }
           }
@@ -136,7 +132,6 @@ public class ClassesProcessor {
 
             Set<String> setNestedClasses = mapNestedClassReferences.get(superClass);
             if (setNestedClasses != null) {
-
               StructClass scl = superNode.classStruct;
               StructInnerClassesAttribute inner = (StructInnerClassesAttribute)scl.getAttribute("InnerClasses");
 
