@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.comparison.iterables.FairDiffIterable
+import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
@@ -51,7 +52,7 @@ class DocumentTracker : Disposable {
   val document1: Document
   val document2: Document
 
-  private val tracker: LineTracker = LineTracker(multicaster)
+  private val tracker: LineTracker = LineTracker(dispatcher)
   private val freezeHelper: FreezeHelper = FreezeHelper()
 
   private var isDisposed: Boolean = false
@@ -428,6 +429,8 @@ class DocumentTracker : Disposable {
     fun onRangesChanged(before: List<Block>, after: Block) {}
     fun onRangeShifted(before: Block, after: Block) {}
 
+    fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean = true
+
     fun onRangeRemoved(block: Block) {}
     fun onRangeAdded(block: Block) {}
 
@@ -450,7 +453,9 @@ class DocumentTracker : Disposable {
 }
 
 
-private class LineTracker(private val multicaster: Listener) {
+private class LineTracker(private val dispatcher: EventDispatcher<Listener>) {
+  private val multicaster = dispatcher.multicaster
+
   var blocks: List<Block> = emptyList()
     private set
 
@@ -474,18 +479,20 @@ private class LineTracker(private val multicaster: Listener) {
 
     val newBlocks = ArrayList<Block>()
 
-    for (block in blocks) {
-      if (block.isDirty) {
-        val freshBlocks = refreshBlock(block, text1, text2, lineOffsets1, lineOffsets2, fastRefresh)
+    BlockGroupsProcessor(text1, lineOffsets1).processMergeableGroups(blocks) { group ->
+      if (group.any { it.isDirty }) {
+        MergingBlockProcessor(dispatcher).processMergedBlocks(group) { original, mergedBlock ->
+          val freshBlocks = refreshBlock(mergedBlock, text1, text2, lineOffsets1, lineOffsets2, fastRefresh)
 
-        removedBlocks.add(block)
-        addedBlocks.addAll(freshBlocks)
-        multicaster.onRangeRefreshed(block, freshBlocks)
+          removedBlocks.addAll(original)
+          addedBlocks.addAll(freshBlocks)
+          multicaster.onRangeRefreshed(mergedBlock, freshBlocks)
 
-        newBlocks.addAll(freshBlocks)
+          newBlocks.addAll(freshBlocks)
+        }
       }
       else {
-        newBlocks.add(block)
+        newBlocks.addAll(group)
       }
     }
 
@@ -743,5 +750,79 @@ private class LineTracker(private val multicaster: Listener) {
 
   private fun Listener.onRangesAdded(blocks: List<Block>) {
     blocks.forEach(this::onRangeAdded)
+  }
+}
+
+private class BlockGroupsProcessor(private val text1: CharSequence,
+                                   private val lineOffsets1: LineOffsets) {
+  fun processMergeableGroups(blocks: List<Block>,
+                             processGroup: (group: List<Block>) -> Unit) {
+    if (blocks.isEmpty()) return
+
+    var i = 0
+    var blockStart = 0
+    while (i < blocks.size - 1) {
+      if (!isWhitespaceOnlySeparated(blocks[i], blocks[i + 1])) {
+        processGroup(blocks.subList(blockStart, i + 1))
+        blockStart = i + 1
+      }
+      i += 1
+    }
+    processGroup(blocks.subList(blockStart, i + 1))
+  }
+
+  private fun isWhitespaceOnlySeparated(block1: Block, block2: Block): Boolean {
+    val range1 = DiffUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
+    val range2 = DiffUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
+    val start = range1.endOffset
+    val end = range2.startOffset
+    return trimStart(text1, start, end) == end
+  }
+}
+
+private class MergingBlockProcessor(private val dispatcher: EventDispatcher<Listener>) {
+  fun processMergedBlocks(group: List<Block>,
+                          processBlock: (original: List<Block>, merged: Block) -> Unit) {
+    assert(!group.isEmpty())
+
+    val originalGroup = mutableListOf<Block>()
+    var merged: Block? = null
+
+    for (block in group) {
+      if (merged == null) {
+        originalGroup.add(block)
+        merged = block
+      }
+      else {
+        val newMerged = mergeBlocks(merged, block)
+        if (newMerged != null) {
+          originalGroup.add(block)
+          merged = newMerged
+        }
+        else {
+          processBlock(originalGroup, merged)
+          originalGroup.clear()
+          originalGroup.add(block)
+          merged = block
+        }
+      }
+    }
+
+    processBlock(originalGroup, merged!!)
+  }
+
+  private fun mergeBlocks(block1: Block, block2: Block): Block? {
+    val isDirty = block1.isDirty || block2.isDirty
+    val isTooBig = block1.isTooBig || block2.isTooBig
+    val range = Range(block1.range.start1, block2.range.end1,
+                      block1.range.start2, block2.range.end2)
+    val merged = Block(range, isDirty, isTooBig)
+
+    for (listener in dispatcher.listeners) {
+      if (!listener.onRangesMerged(block1, block2, merged)) {
+        return null // merging vetoed
+      }
+    }
+    return merged
   }
 }

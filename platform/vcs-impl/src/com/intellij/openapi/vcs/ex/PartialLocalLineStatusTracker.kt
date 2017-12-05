@@ -240,6 +240,28 @@ class PartialLocalLineStatusTracker(project: Project,
       after.marker = before.marker
     }
 
+    override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
+      if (range1.marker == range2.marker) {
+        merged.marker = range1.marker
+        return true
+      }
+
+      if (range1.range.isEmpty || range2.range.isEmpty) {
+        if (range1.range.isEmpty && range2.range.isEmpty) {
+          merged.marker = defaultMarker
+        }
+        else if (range1.range.isEmpty) {
+          merged.marker = range2.marker
+        }
+        else {
+          merged.marker = range1.marker
+        }
+        return true
+      }
+
+      return false
+    }
+
     override fun afterRefresh() {
       updateAffectedChangeLists()
     }
