@@ -191,7 +191,7 @@ public class DfaExpressionFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtilBase.isSimplePropertyGetter(method) && !(method.getReturnType() instanceof PsiPrimitiveType)) {
+      if (PropertyUtilBase.isSimplePropertyGetter(method)) {
         String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
           return method;
