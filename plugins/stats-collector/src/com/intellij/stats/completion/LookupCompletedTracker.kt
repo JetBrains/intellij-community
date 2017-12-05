@@ -64,6 +64,13 @@ class LookupCompletedTracker : LookupAdapter() {
         UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.PREFIX_LENGTH_ON_COMPLETION) { updater ->
             updater.fireCompletionPerformed(prefixLength)
         }
+
+        val itemPosition = lookup.selectedIndex
+        if (itemPosition != -1) {
+            UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.SELECTED_ITEM_POSITION) { updater ->
+                updater.fireCompletionPerformed(itemPosition)
+            }
+        }
     }
 
     private fun processTypedSelect(lookup: LookupImpl, element: LookupElement) {

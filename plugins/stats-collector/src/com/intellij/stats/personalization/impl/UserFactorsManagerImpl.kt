@@ -12,7 +12,6 @@ import com.intellij.stats.personalization.UserFactorsManager
  */
 class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     private companion object {
-
         val LOG = Logger.getInstance(UserFactorsManagerImpl::class.java)
     }
     private val userFactors = mutableMapOf<String, UserFactor>()
@@ -32,6 +31,10 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
 
         register(MostFrequentPrefixLength())
         register(AveragePrefixLength())
+
+        register(AverageSelectedItemPosition())
+        register(MaxSelectedItemPosition())
+        register(MostFrequentSelectedItemPosition())
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()
