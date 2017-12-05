@@ -381,7 +381,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @NotNull
   @Override
-  public Collection<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
+  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
     throw new UnsupportedOperationException();
   }
 

@@ -62,7 +62,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     }
 
     final Set<LocalChangeList> lists = new THashSet<>();
-    lists.addAll(manager.getInvolvedLists(changes));
+    lists.addAll(manager.getAffectedLists(changes));
 
     new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), new ArrayList<>(changes)).show();
   }

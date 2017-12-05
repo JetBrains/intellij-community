@@ -60,7 +60,7 @@ public class RollbackWorker {
                          @Nullable final Runnable afterVcsRefreshInAwt,
                          @Nullable final String localHistoryActionName) {
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    Collection<LocalChangeList> affectedChangelists = changeListManager.getInvolvedLists(changes);
+    Collection<LocalChangeList> affectedChangelists = changeListManager.getAffectedLists(changes);
 
     final Runnable afterRefresh = () -> {
       InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?

@@ -984,9 +984,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public Collection<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
+  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
     synchronized (myDataLock) {
-      return myWorker.getInvolvedLists(changes);
+      return myWorker.getAffectedLists(changes);
     }
   }
 
@@ -994,7 +994,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList getChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
-      List<LocalChangeList> lists = myWorker.getChangeListsForChange(change);
+      List<LocalChangeList> lists = myWorker.getAffectedLists(change);
       return ContainerUtil.getFirstItem(lists);
     }
   }
@@ -1002,7 +1002,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public String getChangeListNameIfOnlyOne(final Change[] changes) {
     synchronized (myDataLock) {
-      List<LocalChangeList> lists = myWorker.getInvolvedLists(Arrays.asList(changes));
+      List<LocalChangeList> lists = myWorker.getAffectedLists(Arrays.asList(changes));
       return lists.size() == 1 ? lists.get(0).getName() : null;
     }
   }

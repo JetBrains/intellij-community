@@ -166,17 +166,17 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  public List<LocalChangeList> getInvolvedLists(@NotNull Collection<Change> changes) {
-    return ContainerUtil.map(getInvolvedListsData(changes), this::toChangeList);
+  public List<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
+    return ContainerUtil.map(getAffectedListsData(changes), this::toChangeList);
   }
 
   @NotNull
-  public List<LocalChangeList> getChangeListsForChange(@NotNull Change change) {
-    return getInvolvedLists(Collections.singletonList(change));
+  public List<LocalChangeList> getAffectedLists(@NotNull Change change) {
+    return getAffectedLists(Collections.singletonList(change));
   }
 
   @NotNull
-  public List<ListData> getInvolvedListsData(@NotNull Collection<Change> changes) {
+  private List<ListData> getAffectedListsData(@NotNull Collection<Change> changes) {
     Set<ListData> result = new HashSet<>();
 
     for (Change change : changes) {
