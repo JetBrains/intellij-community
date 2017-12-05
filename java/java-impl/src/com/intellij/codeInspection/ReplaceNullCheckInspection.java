@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +24,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
-  private int MINIMAL_WARN_DELTA_SIZE = 30;
+  private static final int MINIMAL_WARN_DELTA_SIZE = 30;
 
   private static final CallMatcher STREAM_EMPTY = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "empty")
     .parameterCount(0);
@@ -43,15 +42,6 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     panel
       .addCheckbox(InspectionsBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
     return panel;
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    if (!noWarningReplacementBigger) {
-      node.addContent(new Element("option")
-                        .setAttribute("name", "noWarningReplacementBigger")
-                        .setAttribute("value", String.valueOf(noWarningReplacementBigger)));
-    }
   }
 
   @NotNull
