@@ -254,8 +254,8 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  private static boolean isFileUnderContentRoot(DirectoryIndex index, VirtualFile file) {
-    return index.getInfoForFile(file).getContentRoot() != null;
+  private static boolean isFileUnderContentRoot(DirectoryIndex index, @Nullable VirtualFile file) {
+    return file != null && index.getInfoForFile(file).getContentRoot() != null;
   }
 
   private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {
