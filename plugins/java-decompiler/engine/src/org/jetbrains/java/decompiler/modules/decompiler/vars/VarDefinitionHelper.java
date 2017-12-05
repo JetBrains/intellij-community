@@ -158,7 +158,7 @@ public class VarDefinitionHelper {
 
       boolean defset = false;
 
-      // search for the first assignement to var [index]
+      // search for the first assignment to var [index]
       int addindex = 0;
       for (Exprent expr : lst) {
         if (setDefinition(expr, index)) {

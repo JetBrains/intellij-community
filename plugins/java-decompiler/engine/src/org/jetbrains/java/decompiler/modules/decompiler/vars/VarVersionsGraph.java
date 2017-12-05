@@ -23,24 +23,21 @@ public class VarVersionsGraph {
     nodes.addAllWithKey(colnodes, colpaars);
   }
 
-  public boolean isDominatorSet(VarVersionNode node, HashSet<VarVersionNode> domnodes) {
-
+  public boolean isDominatorSet(VarVersionNode node, Set<VarVersionNode> domnodes) {
     if (domnodes.size() == 1) {
       return engine.isDominator(node, domnodes.iterator().next());
     }
     else {
-
-      HashSet<VarVersionNode> marked = new HashSet<>();
+      Set<VarVersionNode> marked = new HashSet<>();
 
       if (domnodes.contains(node)) {
         return true;
       }
 
-      LinkedList<VarVersionNode> lstNodes = new LinkedList<>();
+      List<VarVersionNode> lstNodes = new LinkedList<>();
       lstNodes.add(node);
 
       while (!lstNodes.isEmpty()) {
-
         VarVersionNode nd = lstNodes.remove(0);
         if (marked.contains(nd)) {
           continue;
@@ -66,8 +63,7 @@ public class VarVersionsGraph {
   }
 
   public void initDominators() {
-
-    final HashSet<VarVersionNode> roots = new HashSet<>();
+    Set<VarVersionNode> roots = new HashSet<>();
 
     for (VarVersionNode node : nodes) {
       if (node.preds.isEmpty()) {
@@ -88,23 +84,20 @@ public class VarVersionsGraph {
     engine.initialize();
   }
 
-  private static LinkedList<VarVersionNode> getReversedPostOrder(Collection<VarVersionNode> roots) {
-
-    LinkedList<VarVersionNode> lst = new LinkedList<>();
-    HashSet<VarVersionNode> setVisited = new HashSet<>();
+  private static List<VarVersionNode> getReversedPostOrder(Collection<VarVersionNode> roots) {
+    List<VarVersionNode> lst = new LinkedList<>();
+    Set<VarVersionNode> setVisited = new HashSet<>();
 
     for (VarVersionNode root : roots) {
-
-      LinkedList<VarVersionNode> lstTemp = new LinkedList<>();
+      List<VarVersionNode> lstTemp = new LinkedList<>();
       addToReversePostOrderListIterative(root, lstTemp, setVisited);
-
       lst.addAll(lstTemp);
     }
 
     return lst;
   }
 
-  private static void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, HashSet<VarVersionNode> setVisited) {
+  private static void addToReversePostOrderListIterative(VarVersionNode root, List<VarVersionNode> lst, Set<VarVersionNode> setVisited) {
     Map<VarVersionNode, List<VarVersionEdge>> mapNodeSuccs = new HashMap<>();
     LinkedList<VarVersionNode> stackNode = new LinkedList<>();
     LinkedList<Integer> stackIndex = new LinkedList<>();
@@ -113,7 +106,6 @@ public class VarVersionsGraph {
     stackIndex.add(0);
 
     while (!stackNode.isEmpty()) {
-
       VarVersionNode node = stackNode.getLast();
       int index = stackIndex.removeLast();
 

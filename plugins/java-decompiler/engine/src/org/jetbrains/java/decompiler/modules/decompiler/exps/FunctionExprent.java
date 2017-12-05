@@ -217,9 +217,7 @@ public class FunctionExprent extends Exprent {
   public VarType getExprType() {
     VarType exprType = null;
 
-    if (funcType <= FUNCTION_NEG || funcType == FUNCTION_IPP || funcType == FUNCTION_PPI
-        || funcType == FUNCTION_IMM || funcType == FUNCTION_MMI) {
-
+    if (funcType <= FUNCTION_NEG || funcType == FUNCTION_IPP || funcType == FUNCTION_PPI || funcType == FUNCTION_IMM || funcType == FUNCTION_MMI) {
       VarType type1 = lstOperands.get(0).getExprType();
       VarType type2 = null;
       if (lstOperands.size() > 1) {
@@ -268,7 +266,6 @@ public class FunctionExprent extends Exprent {
       Exprent param1 = lstOperands.get(1);
       Exprent param2 = lstOperands.get(2);
       VarType supertype = VarType.getCommonSupertype(param1.getExprType(), param2.getExprType());
-
       if (param1.type == Exprent.EXPRENT_CONST && param2.type == Exprent.EXPRENT_CONST &&
           supertype.type != CodeConstants.TYPE_BOOLEAN && VarType.VARTYPE_INT.isSuperset(supertype)) {
         exprType = VarType.VARTYPE_INT;
@@ -324,9 +321,6 @@ public class FunctionExprent extends Exprent {
     switch (funcType) {
       case FUNCTION_IIF:
         VarType supertype = getExprType();
-        if (supertype == null) {
-          supertype = getExprType();
-        }
         result.addMinTypeExprent(param1, VarType.VARTYPE_BOOLEAN);
         result.addMinTypeExprent(param2, VarType.getMinTypeInFamily(supertype.typeFamily));
         result.addMinTypeExprent(lstOperands.get(2), VarType.getMinTypeInFamily(supertype.typeFamily));

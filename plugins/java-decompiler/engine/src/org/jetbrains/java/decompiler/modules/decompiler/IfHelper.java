@@ -9,39 +9,25 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SequenceStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-
+import java.util.*;
 
 public class IfHelper {
-
-
   public static boolean mergeAllIfs(RootStatement root) {
-
     boolean res = mergeAllIfsRec(root, new HashSet<>());
-
     if (res) {
       SequenceHelper.condenseSequences(root);
     }
-
     return res;
   }
 
-
-  private static boolean mergeAllIfsRec(Statement stat, HashSet<Integer> setReorderedIfs) {
-
+  private static boolean mergeAllIfsRec(Statement stat, Set<Integer> setReorderedIfs) {
     boolean res = false;
 
     if (stat.getExprents() == null) {
-
       while (true) {
-
         boolean changed = false;
 
         for (Statement st : stat.getStats()) {
-
           res |= mergeAllIfsRec(st, setReorderedIfs);
 
           // collapse composed if's
@@ -61,7 +47,7 @@ public class IfHelper {
     return res;
   }
 
-  public static boolean mergeIfs(Statement statement, HashSet<Integer> setReorderedIfs) {
+  public static boolean mergeIfs(Statement statement, Set<Integer> setReorderedIfs) {
     if (statement.type != Statement.TYPE_IF && statement.type != Statement.TYPE_SEQUENCE) {
       return false;
     }
@@ -193,11 +179,9 @@ public class IfHelper {
   }
 
   private static boolean collapseIfElse(IfNode rtnode) {
-
     if (rtnode.edgetypes.get(0) == 0) {
       IfNode ifbranch = rtnode.succs.get(0);
       if (ifbranch.succs.size() == 2) {
-
         // if-else branch
         if (ifbranch.succs.get(0).value == rtnode.succs.get(1).value) {
 
@@ -245,9 +229,7 @@ public class IfHelper {
     return false;
   }
 
-
   private static boolean collapseElse(IfNode rtnode) {
-
     if (rtnode.edgetypes.get(1) == 0) {
       IfNode elsebranch = rtnode.succs.get(1);
       if (elsebranch.succs.size() == 2) {
@@ -308,9 +290,7 @@ public class IfHelper {
         }
       }
       else if (elsebranch.succs.size() == 1) {
-
         if (elsebranch.succs.get(0).value == rtnode.succs.get(0).value) {
-
           IfStatement firstif = (IfStatement)rtnode.value;
           Statement second = elsebranch.value;
 
@@ -349,9 +329,7 @@ public class IfHelper {
     return false;
   }
 
-
   private static IfNode buildGraph(IfStatement stat, boolean stsingle) {
-
     if (stat.iftype == IfStatement.IFTYPE_IFELSE) {
       return null;
     }
@@ -664,9 +642,7 @@ public class IfHelper {
     return false;
   }
 
-
   private static Statement getNextStatement(Statement stat) {
-
     Statement parent = stat.getParent();
     switch (parent.type) {
       case Statement.TYPE_ROOT:
@@ -688,7 +664,6 @@ public class IfHelper {
   }
 
   private static boolean existsPath(Statement from, Statement to) {
-
     for (StatEdge edge : to.getAllPredecessorEdges()) {
       if (from.containsStatementStrict(edge.getSource())) {
         return true;
@@ -700,7 +675,6 @@ public class IfHelper {
 
   private static class IfNode {
     public final Statement value;
-
     public final List<IfNode> succs = new ArrayList<>();
     public final List<Integer> edgetypes = new ArrayList<>();
 

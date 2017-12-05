@@ -647,11 +647,13 @@ public class ClassWriter {
           descriptor = GenericMain.parseMethodSignature(attr.getSignature());
           if (descriptor != null) {
             long actualParams = md.params.length;
-            List<VarVersionPair> sigFields = methodWrapper.signatureFields;
-            if (sigFields != null) {
-              actualParams = sigFields.stream().filter(Objects::isNull).count();
+            List<VarVersionPair> mask = methodWrapper.synthParameters;
+            if (mask != null) {
+              actualParams = mask.stream().filter(Objects::isNull).count();
             }
-            else if (isEnum && init) actualParams -= 2;
+            else if (isEnum && init) {
+              actualParams -= 2;
+            }
             if (actualParams != descriptor.params.size()) {
               String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
@@ -685,12 +687,11 @@ public class ClassWriter {
         buffer.append(toValidJavaIdentifier(name));
         buffer.append('(');
 
-        // parameters
-        List<VarVersionPair> signFields = methodWrapper.signatureFields;
+        List<VarVersionPair> mask = methodWrapper.synthParameters;
 
         int lastVisibleParameterIndex = -1;
         for (int i = 0; i < md.params.length; i++) {
-          if (signFields == null || signFields.get(i) == null) {
+          if (mask == null || mask.get(i) == null) {
             lastVisibleParameterIndex = i;
           }
         }
@@ -701,7 +702,7 @@ public class ClassWriter {
         int start = isEnum && init && !hasDescriptor ? 2 : 0;
         int params = hasDescriptor ? descriptor.params.size() : md.params.length;
         for (int i = start; i < params; i++) {
-          if (hasDescriptor || (signFields == null || signFields.get(i) == null)) {
+          if (hasDescriptor || mask == null || mask.get(i) == null) {
             if (!firstParameter) {
               buffer.append(", ");
             }

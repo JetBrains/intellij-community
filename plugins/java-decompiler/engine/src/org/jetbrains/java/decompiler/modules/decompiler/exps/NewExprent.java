@@ -20,7 +20,6 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -90,10 +89,8 @@ public class NewExprent extends Exprent {
         }
       }
     }
-    else {
-      if (constructor != null) {
-        return constructor.checkExprTypeBounds();
-      }
+    else if (constructor != null) {
+      return constructor.checkExprTypeBounds();
     }
 
     return result;
@@ -102,20 +99,17 @@ public class NewExprent extends Exprent {
   @Override
   public List<Exprent> getAllExprents() {
     List<Exprent> lst = new ArrayList<>();
-    if (newType.arrayDim == 0) {
-      if (constructor != null) {
-        Exprent constructor_instance = constructor.getInstance();
 
-        if (constructor_instance != null) { // should be true only for a lambda expression with a virtual content method
-          lst.add(constructor_instance);
-        }
-
-        lst.addAll(constructor.getLstParameters());
-      }
-    }
-    else {
+    if (newType.arrayDim != 0) {
       lst.addAll(lstDims);
       lst.addAll(lstArrayElements);
+    }
+    else if (constructor != null) {
+      Exprent constructor = this.constructor.getInstance();
+      if (constructor != null) { // should be true only for a lambda expression with a virtual content method
+        lst.add(constructor);
+      }
+      lst.addAll(this.constructor.getLstParameters());
     }
 
     return lst;
@@ -193,35 +187,22 @@ public class NewExprent extends Exprent {
       buf.append('(');
 
       if (!lambda && constructor != null) {
-        InvocationExprent invSuper = child.superInvocation;
-
-        ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(invSuper.getClassname());
-
-        List<VarVersionPair> sigFields = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).signatureFields;
-        if (sigFields == null && newNode != null) { // own class
-          if (newNode.getWrapper() != null) {
-            sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, invSuper.getStringDescriptor()).signatureFields;
-          }
-          else {
-            if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0 &&
-                !constructor.getLstParameters().isEmpty()) { // member non-static class invoked with enclosing class instance
-              sigFields = new ArrayList<>(Collections.nCopies(constructor.getLstParameters().size(), (VarVersionPair)null));
-              sigFields.set(0, new VarVersionPair(-1, 0));
-            }
-          }
+        List<Exprent> parameters = constructor.getLstParameters();
+        List<VarVersionPair> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
+        if (mask == null) {
+          InvocationExprent superCall = child.superInvocation;
+          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassname(), superCall.getStringDescriptor(), parameters.size());
         }
-
-        List<Exprent> lstParameters = constructor.getLstParameters();
 
         int start = enumConst ? 2 : 0;
         boolean firstParam = true;
-        for (int i = start; i < lstParameters.size(); i++) {
-          if (sigFields == null || sigFields.get(i) == null) {
+        for (int i = start; i < parameters.size(); i++) {
+          if (mask == null || mask.get(i) == null) {
             if (!firstParam) {
               buf.append(", ");
             }
 
-            ExprProcessor.getCastedExprent(lstParameters.get(i), constructor.getDescriptor().params[i], buf, indent, true, tracer);
+            ExprProcessor.getCastedExprent(parameters.get(i), constructor.getDescriptor().params[i], buf, indent, true, tracer);
 
             firstParam = false;
           }
@@ -289,33 +270,20 @@ public class NewExprent extends Exprent {
       }
 
       if (constructor != null) {
-        List<Exprent> lstParameters = constructor.getLstParameters();
-
-        ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(constructor.getClassname());
-
-        List<VarVersionPair> sigFields = null;
-        if (newNode != null) { // own class
-          if (newNode.getWrapper() != null) {
-            sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).signatureFields;
-          }
-          else if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0 && !constructor.getLstParameters().isEmpty()) {
-            // member non-static class invoked with enclosing class instance
-            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
-            sigFields.set(0, new VarVersionPair(-1, 0));
-          }
-        }
+        List<Exprent> parameters = constructor.getLstParameters();
+        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassname(), constructor.getStringDescriptor(), parameters.size());
 
         int start = enumConst ? 2 : 0;
-        if (!enumConst || start < lstParameters.size()) {
+        if (!enumConst || start < parameters.size()) {
           buf.append('(');
 
           boolean firstParam = true;
-          for (int i = start; i < lstParameters.size(); i++) {
-            if (sigFields == null || sigFields.get(i) == null) {
-              Exprent expr = InvocationExprent.unboxIfNeeded(lstParameters.get(i));
+          for (int i = start; i < parameters.size(); i++) {
+            if (mask == null || mask.get(i) == null) {
+              Exprent expr = InvocationExprent.unboxIfNeeded(parameters.get(i));
               VarType leftType = constructor.getDescriptor().params[i];
 
-              if (i == lstParameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
+              if (i == parameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
                 ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
                 if (node != null && node.namelessConstructorStub) {
                   break;  // skip last parameter of synthetic constructor call

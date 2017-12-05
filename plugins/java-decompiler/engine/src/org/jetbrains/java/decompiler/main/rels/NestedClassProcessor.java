@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class NestedClassProcessor {
-
   public void processClass(ClassNode root, ClassNode node) {
     // hide synthetic lambda content methods
     if (node.type == ClassNode.CLASS_LAMBDA && !node.lambdaInformation.is_method_reference) {
@@ -93,22 +92,18 @@ public class NestedClassProcessor {
     }
 
     MethodWrapper method = parent.getWrapper().getMethods().getWithKey(child.lambdaInformation.content_method_key);
-    final MethodWrapper enclosingMethod = parent.getWrapper().getMethods().getWithKey(child.enclosingMethod);
+    MethodWrapper enclosingMethod = parent.getWrapper().getMethods().getWithKey(child.enclosingMethod);
 
     MethodDescriptor md_lambda = MethodDescriptor.parseDescriptor(child.lambdaInformation.method_descriptor);
-    final MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambdaInformation.content_method_descriptor);
+    MethodDescriptor md_content = MethodDescriptor.parseDescriptor(child.lambdaInformation.content_method_descriptor);
 
-    final int vars_count = md_content.params.length - md_lambda.params.length;
-    //		if(vars_count < 0) { // should not happen, but just in case...
-    //			vars_count = 0;
-    //		}
-
-    final boolean is_static_lambda_content = child.lambdaInformation.is_content_method_static;
+    int vars_count = md_content.params.length - md_lambda.params.length;
+    boolean is_static_lambda_content = child.lambdaInformation.is_content_method_static;
 
     String parent_class_name = parent.getWrapper().getClassStruct().qualifiedName;
     String lambda_class_name = child.simpleName;
 
-    final VarType lambda_class_type = new VarType(lambda_class_name, true);
+    VarType lambda_class_type = new VarType(lambda_class_name, true);
 
     // this pointer
     if (!is_static_lambda_content && DecompilerContext.getOption(IFernflowerPreferences.LAMBDA_TO_ANONYMOUS_CLASS)) {
@@ -116,7 +111,7 @@ public class NestedClassProcessor {
       method.varproc.setVarName(new VarVersionPair(0, 0), parent.simpleName + ".this");
     }
 
-    final Map<VarVersionPair, String> mapNewNames = new HashMap<>();
+    Map<VarVersionPair, String> mapNewNames = new HashMap<>();
 
     enclosingMethod.getOrBuildGraph().iterateExprents(exprent -> {
       List<Exprent> lst = exprent.getAllExprents(true);
@@ -172,7 +167,7 @@ public class NestedClassProcessor {
     List<ClassNode> copy = new ArrayList<>(node.nested);
 
     for (ClassNode child : copy) {
-      if (child.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
+      if (child.classStruct.isSynthetic()) {
         continue;
       }
 
@@ -234,19 +229,15 @@ public class NestedClassProcessor {
     return false;
   }
 
-  private static void computeLocalVarsAndDefinitions(final ClassNode node) {
-    // local var masks
-    // class name, constructor descriptor, field mask
-    final Map<String, Map<String, List<VarFieldPair>>> mapVarMasks = new HashMap<>();
+  private static void computeLocalVarsAndDefinitions(ClassNode node) {
+    // class name -> constructor descriptor -> var to field link
+    Map<String, Map<String, List<VarFieldPair>>> mapVarMasks = new HashMap<>();
 
     int clTypes = 0;
 
     for (ClassNode nd : node.nested) {
-      if (nd.classStruct.hasModifier(CodeConstants.ACC_SYNTHETIC)) {
-        continue;
-      }
-
       if (nd.type != ClassNode.CLASS_LAMBDA &&
+          !nd.classStruct.isSynthetic() &&
           (nd.access & CodeConstants.ACC_STATIC) == 0 &&
           (nd.access & CodeConstants.ACC_INTERFACE) == 0) {
         clTypes |= nd.type;
@@ -263,11 +254,11 @@ public class NestedClassProcessor {
     }
 
     // local var masks
-    final Map<String, Map<String, List<VarFieldPair>>> mapVarFieldPairs = new HashMap<>();
+    Map<String, Map<String, List<VarFieldPair>>> mapVarFieldPairs = new HashMap<>();
 
     if (clTypes != ClassNode.CLASS_MEMBER) {
       // iterate enclosing class
-      for (final MethodWrapper method : node.getWrapper().getMethods()) {
+      for (MethodWrapper method : node.getWrapper().getMethods()) {
         if (method.root != null) { // neither abstract, nor native
           method.getOrBuildGraph().iterateExprents(exprent -> {
             List<Exprent> lst = exprent.getAllExprents(true);
@@ -388,34 +379,33 @@ public class NestedClassProcessor {
       for (Entry<String, List<VarFieldPair>> entry : enclosing.getValue().entrySet()) {
         mergeListSignatures(entry.getValue(), interPairMask, false);
 
-        MethodWrapper method = nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey());
-        method.signatureFields = new ArrayList<>();
-
+        List<VarVersionPair> mask = new ArrayList<>(entry.getValue().size());
         boolean firstSignField = nestedNode.type != ClassNode.CLASS_ANONYMOUS;
         for (VarFieldPair pair : entry.getValue()) {
-          method.signatureFields.add(pair == null || (!firstSignField && pair.fieldKey.isEmpty()) ? null : pair.varPair);
+          mask.add(pair == null || (!firstSignField && pair.fieldKey.isEmpty()) ? null : pair.varPair);
           firstSignField = false;
         }
+        nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey()).synthParameters = mask;
       }
     }
   }
 
-  private static void insertLocalVars(ClassNode parent, final ClassNode child) {
+  private static void insertLocalVars(ClassNode parent, ClassNode child) {
     // enclosing method, is null iff member class
     MethodWrapper enclosingMethod = parent.getWrapper().getMethods().getWithKey(child.enclosingMethod);
 
     // iterate all child methods
-    for (final MethodWrapper method : child.getWrapper().getMethods()) {
+    for (MethodWrapper method : child.getWrapper().getMethods()) {
       if (method.root != null) { // neither abstract nor native
         Map<VarVersionPair, String> mapNewNames = new HashMap<>();  // local var names
         Map<VarVersionPair, VarType> mapNewTypes = new HashMap<>();  // local var types
 
-        final Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
-        if (method.signatureFields != null) {
+        Map<Integer, VarVersionPair> mapParamsToNewVars = new HashMap<>();
+        if (method.synthParameters != null) {
           int index = 0, varIndex = 1;
           MethodDescriptor md = MethodDescriptor.parseDescriptor(method.methodStruct.getDescriptor());
 
-          for (VarVersionPair pair : method.signatureFields) {
+          for (VarVersionPair pair : method.synthParameters) {
             if (pair != null) {
               VarVersionPair newVar = new VarVersionPair(method.counter.getCounterAndIncrement(CounterContainer.VAR_COUNTER), 0);
 
@@ -450,7 +440,7 @@ public class NestedClassProcessor {
           }
         }
 
-        final Map<String, VarVersionPair> mapFieldsToNewVars = new HashMap<>();
+        Map<String, VarVersionPair> mapFieldsToNewVars = new HashMap<>();
         for (ClassNode classNode = child; classNode != null; classNode = classNode.parent) {
           for (Entry<String, VarVersionPair> entry : classNode.mapFieldsToVars.entrySet()) {
             VarVersionPair newVar = new VarVersionPair(method.counter.getCounterAndIncrement(CounterContainer.VAR_COUNTER), 0);
@@ -632,10 +622,10 @@ public class NestedClassProcessor {
               assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
             FieldExprent left = (FieldExprent)assignExpr.getLeft();
             StructField fd = cl.getField(left.getName(), left.getDescriptor().descriptorString);
-
-            if (fd != null && cl.qualifiedName.equals(left.getClassname()) &&
+            if (fd != null &&
+                cl.qualifiedName.equals(left.getClassname()) &&
                 fd.hasModifier(CodeConstants.ACC_FINAL) &&
-                (fd.isSynthetic() || (noSynthFlag && fd.hasModifier(CodeConstants.ACC_PRIVATE)))) {
+                (fd.isSynthetic() || noSynthFlag && fd.hasModifier(CodeConstants.ACC_PRIVATE))) {
               // local (== not inherited) field
               field = InterpreterUtil.makeUniqueKey(left.getName(), left.getDescriptor().descriptorString);
               break;

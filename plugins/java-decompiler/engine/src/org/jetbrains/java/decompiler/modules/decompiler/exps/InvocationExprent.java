@@ -300,10 +300,11 @@ public class InvocationExprent extends Exprent {
           buf.append("<invokedynamic>");
         }
         buf.append("(");
-
         break;
+
       case TYP_CLINIT:
         throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
+
       case TYP_INIT:
         if (super_qualifier != null) {
           buf.append("super(");
@@ -311,31 +312,20 @@ public class InvocationExprent extends Exprent {
         else if (isInstanceThis) {
           buf.append("this(");
         }
+        else if (instance != null) {
+          buf.append(instance.toJava(indent, tracer)).append(".<init>(");
+        }
         else {
-          if (instance != null) {
-            buf.append(instance.toJava(indent, tracer)).append(".<init>(");
-          }
-          else {
-            throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
-          }
+          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
         }
     }
 
-    List<VarVersionPair> sigFields = null;
+    List<VarVersionPair> mask = null;
     boolean isEnum = false;
     if (functype == TYP_INIT) {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
-
-      if (newNode != null) {  // own class
-        if (newNode.getWrapper() != null) {
-          sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, stringDescriptor).signatureFields;
-        }
-        else {
-          if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
-            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
-            sigFields.set(0, new VarVersionPair(-1, 0));
-          }
-        }
+      if (newNode != null) {
+        mask = ExprUtil.getSyntheticParametersMask(newNode, stringDescriptor, lstParameters.size());
         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       }
     }
@@ -353,7 +343,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null || sigFields.get(i) == null) {
+      if (mask == null || mask.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
 
@@ -373,7 +363,7 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    buf.append(")");
+    buf.append(')');
 
     return buf;
   }

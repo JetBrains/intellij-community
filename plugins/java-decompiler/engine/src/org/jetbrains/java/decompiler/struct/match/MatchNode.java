@@ -1,15 +1,14 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.match;
 
+import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
-
 public class MatchNode {
-
   public static class RuleValue {
     public final int parameter;
     public final Object value;
@@ -33,11 +32,8 @@ public class MatchNode {
   public static final int MATCHNODE_EXPRENT = 1;
 
   private final int type;
-
   private final Map<MatchProperties, RuleValue> rules = new HashMap<>();
-
   private final List<MatchNode> children = new ArrayList<>();
-
 
   public MatchNode(int type) {
     this.type = type;
@@ -67,5 +63,4 @@ public class MatchNode {
     RuleValue rule = rules.get(property);
     return rule == null ? null : rule.value;
   }
-
 }

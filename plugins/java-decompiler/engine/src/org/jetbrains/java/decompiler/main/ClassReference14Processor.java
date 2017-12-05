@@ -42,10 +42,8 @@ public class ClassReference14Processor {
     ctor.setStringDescriptor("()V");
     ctor.setFunctype(InvocationExprent.TYP_INIT);
     ctor.setDescriptor(MethodDescriptor.parseDescriptor("()V"));
-
     NewExprent newExpr = new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<>(), null);
     newExpr.setConstructor(ctor);
-
     InvocationExprent invCause = new InvocationExprent();
     invCause.setName("initCause");
     invCause.setClassname("java/lang/NoClassDefFoundError");
@@ -54,18 +52,18 @@ public class ClassReference14Processor {
     invCause.setInstance(newExpr);
     invCause.setLstParameters(
       Collections.singletonList(new VarExprent(2, new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"), null)));
-
     HANDLER_EXPR = new ExitExprent(ExitExprent.EXIT_THROW, invCause, null, null);
   }
 
   public static void processClassReferences(ClassNode node) {
     // find the synthetic method Class class$(String) if present
-    HashMap<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<>();
+    Map<ClassWrapper, MethodWrapper> mapClassMeths = new HashMap<>();
     mapClassMethods(node, mapClassMeths);
     if (mapClassMeths.isEmpty()) {
       return;
     }
-    HashSet<ClassWrapper> setFound = new HashSet<>();
+
+    Set<ClassWrapper> setFound = new HashSet<>();
     processClassRec(node, mapClassMeths, setFound);
 
     if (!setFound.isEmpty()) {
@@ -76,15 +74,11 @@ public class ClassReference14Processor {
     }
   }
 
-  private static void processClassRec(ClassNode node,
-                                      final HashMap<ClassWrapper, MethodWrapper> mapClassMeths,
-                                      final HashSet<ClassWrapper> setFound) {
-
-    final ClassWrapper wrapper = node.getWrapper();
+  private static void processClassRec(ClassNode node, Map<ClassWrapper, MethodWrapper> mapClassMeths, Set<ClassWrapper> setFound) {
+    ClassWrapper wrapper = node.getWrapper();
 
     // search code
     for (MethodWrapper meth : wrapper.getMethods()) {
-
       RootStatement root = meth.root;
       if (root != null) {
         DirectGraph graph = meth.getOrBuildGraph();
@@ -166,13 +160,10 @@ public class ClassReference14Processor {
     }
   }
 
-
   private static boolean replaceInvocations(Exprent exprent, ClassWrapper wrapper, MethodWrapper meth) {
-
     boolean res = false;
 
     while (true) {
-
       boolean found = false;
 
       for (Exprent expr : exprent.getAllExprents()) {
@@ -195,9 +186,7 @@ public class ClassReference14Processor {
     return res;
   }
 
-
   private static String isClass14Invocation(Exprent exprent, ClassWrapper wrapper, MethodWrapper meth) {
-
     if (exprent.type == Exprent.EXPRENT_FUNCTION) {
       FunctionExprent fexpr = (FunctionExprent)exprent;
       if (fexpr.getFuncType() == FunctionExprent.FUNCTION_IIF) {

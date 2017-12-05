@@ -12,13 +12,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 
 import java.util.*;
 
-
 public class MatchEngine {
-
-  private MatchNode rootNode = null;
-
-  private final Map<String, Object> variables = new HashMap<>();
-
   private static final Map<String, MatchProperties> stat_properties = new HashMap<>();
   private static final Map<String, MatchProperties> expr_properties = new HashMap<>();
   private static final Map<String, Integer> stat_type = new HashMap<>();
@@ -83,19 +77,19 @@ public class MatchEngine {
     expr_const_type.put("string", VarType.VARTYPE_STRING);
   }
 
+  private final MatchNode rootNode;
+  private final Map<String, Object> variables = new HashMap<>();
 
-  public void parse(String description) {
-
+  public MatchEngine(String description) {
     // each line is a separate statement/exprent
     String[] lines = description.split("\n");
 
     int depth = 0;
     LinkedList<MatchNode> stack = new LinkedList<>();
 
-    for(String line : lines) {
-
+    for (String line : lines) {
       List<String> properties = new ArrayList<>(Arrays.asList(line.split("\\s+"))); // split on any number of whitespaces
-      if(properties.get(0).isEmpty()) {
+      if (properties.get(0).isEmpty()) {
         properties.remove(0);
       }
 
@@ -103,11 +97,11 @@ public class MatchEngine {
 
       // create new node
       MatchNode matchNode = new MatchNode(node_type);
-      for(int i = 1; i < properties.size(); ++i) {
+      for (int i = 1; i < properties.size(); ++i) {
         String[] values = properties.get(i).split(":");
 
         MatchProperties property = (node_type == MatchNode.MATCHNODE_STATEMENT ? stat_properties : expr_properties).get(values[0]);
-        if(property == null) { // unknown property defined
+        if (property == null) { // unknown property defined
           throw new RuntimeException("Unknown matching property");
         }
         else {
@@ -115,61 +109,61 @@ public class MatchEngine {
           int parameter = 0;
 
           String strValue = values[1];
-          if(values.length == 3) {
+          if (values.length == 3) {
             parameter = Integer.parseInt(values[1]);
             strValue = values[2];
           }
 
-          switch(property) {
-          case STATEMENT_TYPE:
-            value = stat_type.get(strValue);
-            break;
-          case STATEMENT_STATSIZE:
-          case STATEMENT_EXPRSIZE:
-            value = Integer.valueOf(strValue);
-            break;
-          case STATEMENT_POSITION:
-          case EXPRENT_POSITION:
-          case EXPRENT_INVOCATION_CLASS:
-          case EXPRENT_INVOCATION_SIGNATURE:
-          case EXPRENT_INVOCATION_PARAMETER:
-          case EXPRENT_VAR_INDEX:
-          case EXPRENT_FIELD_NAME:
-          case EXPRENT_CONSTVALUE:
-          case STATEMENT_RET:
-          case EXPRENT_RET:
-            value = strValue;
-            break;
-          case STATEMENT_IFTYPE:
-            value = stat_if_type.get(strValue);
-            break;
-          case EXPRENT_FUNCTYPE:
-            value = expr_func_type.get(strValue);
-            break;
-          case EXPRENT_EXITTYPE:
-            value = expr_exit_type.get(strValue);
-            break;
-          case EXPRENT_CONSTTYPE:
-            value = expr_const_type.get(strValue);
-            break;
-          case EXPRENT_TYPE:
-            value = expr_type.get(strValue);
-            break;
-          default:
-            throw new RuntimeException("Unhandled matching property");
+          switch (property) {
+            case STATEMENT_TYPE:
+              value = stat_type.get(strValue);
+              break;
+            case STATEMENT_STATSIZE:
+            case STATEMENT_EXPRSIZE:
+              value = Integer.valueOf(strValue);
+              break;
+            case STATEMENT_POSITION:
+            case EXPRENT_POSITION:
+            case EXPRENT_INVOCATION_CLASS:
+            case EXPRENT_INVOCATION_SIGNATURE:
+            case EXPRENT_INVOCATION_PARAMETER:
+            case EXPRENT_VAR_INDEX:
+            case EXPRENT_FIELD_NAME:
+            case EXPRENT_CONSTVALUE:
+            case STATEMENT_RET:
+            case EXPRENT_RET:
+              value = strValue;
+              break;
+            case STATEMENT_IFTYPE:
+              value = stat_if_type.get(strValue);
+              break;
+            case EXPRENT_FUNCTYPE:
+              value = expr_func_type.get(strValue);
+              break;
+            case EXPRENT_EXITTYPE:
+              value = expr_exit_type.get(strValue);
+              break;
+            case EXPRENT_CONSTTYPE:
+              value = expr_const_type.get(strValue);
+              break;
+            case EXPRENT_TYPE:
+              value = expr_type.get(strValue);
+              break;
+            default:
+              throw new RuntimeException("Unhandled matching property");
           }
 
           matchNode.addRule(property, new RuleValue(parameter, value));
         }
       }
 
-      if(stack.isEmpty()) { // first line, root node
+      if (stack.isEmpty()) { // first line, root node
         stack.push(matchNode);
-      } else {
-
+      }
+      else {
         // return to the correct parent on the stack
         int new_depth = line.lastIndexOf(' ', depth) + 1;
-        for(int i = new_depth; i <= depth; ++i) {
+        for (int i = new_depth; i <= depth; ++i) {
           stack.pop();
         }
 
@@ -190,25 +184,24 @@ public class MatchEngine {
   }
 
   private boolean match(MatchNode matchNode, IMatchable object) {
-
-    if(!object.match(matchNode, this)) {
+    if (!object.match(matchNode, this)) {
       return false;
     }
 
     int expr_index = 0;
     int stat_index = 0;
-
-    for(MatchNode childNode : matchNode.getChildren()) {
+    for (MatchNode childNode : matchNode.getChildren()) {
       boolean isStatement = childNode.getType() == MatchNode.MATCHNODE_STATEMENT;
 
       IMatchable childObject = object.findObject(childNode, isStatement ? stat_index : expr_index);
-      if(childObject == null || !match(childNode, childObject)) {
+      if (childObject == null || !match(childNode, childObject)) {
         return false;
       }
 
-      if(isStatement) {
+      if (isStatement) {
         stat_index++;
-      } else {
+      }
+      else {
         expr_index++;
       }
     }
