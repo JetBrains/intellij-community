@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -524,9 +526,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   @NotNull
   private static String getAdText() {
-    return XDebuggerBundle.message("xdebugger.evaluate.history.navigate.ad",
-                                   DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_NEXT_OCCURENCE),
-                                   DebuggerUIUtil.getActionShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE));
+    return DebuggerUIUtil.getShortcutsAdText("xdebugger.evaluate.history.navigate.ad",
+                                             IdeActions.ACTION_NEXT_OCCURENCE, IdeActions.ACTION_PREVIOUS_OCCURENCE);
   }
 
   public static void copyCaretPosition(@Nullable Editor source, @Nullable Editor destination) {
