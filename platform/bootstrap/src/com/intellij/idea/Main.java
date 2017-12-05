@@ -125,7 +125,9 @@ public class Main {
   }
 
   public static boolean isApplicationStarterForBuilding(final String[] args) {
-    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") || Comparing.strEqual(args[0], "listBundledPlugins"));
+    return args.length > 0 && (Comparing.strEqual(args[0], "traverseUI") ||
+                               Comparing.strEqual(args[0], "listBundledPlugins") ||
+                               Comparing.strEqual(args[0], "buildAppcodeCache"));
   }
 
   public static void showMessage(String title, Throwable t) {
