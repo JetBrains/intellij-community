@@ -1305,6 +1305,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   void doFlush(@NotNull DfaVariableValue varPlain, boolean markUnknown) {
+    if(isNull(varPlain)) {
+      myStack.replaceAll(val -> val == varPlain ? myFactory.getConstFactory().getNull() : val);
+    }
     DfaVariableValue varNegated = varPlain.getNegatedValue();
 
     removeEquivalenceRelations(varPlain);

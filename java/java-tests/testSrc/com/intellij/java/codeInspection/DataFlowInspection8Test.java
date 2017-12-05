@@ -218,4 +218,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   public void testPrimitiveGetters() { doTest(); }
+  public void testUnknownOnStack() { doTest(); }
 }
