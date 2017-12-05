@@ -18,6 +18,7 @@ interface MutableDoubleFactor : DailyAggregatedDoubleFactor {
     fun addObservation(key: String, value: Double)
 
     fun setOnDate(date: String, key: String, value: Double)
+    fun updateOnDate(date: String, updater: MutableMap<String, Double>.() -> Unit)
 }
 
 private fun DailyAggregatedDoubleFactor.aggregateBy(reduce: (Double, Double) -> Double): Map<String, Double> {

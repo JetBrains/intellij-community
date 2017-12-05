@@ -79,6 +79,19 @@ abstract class UserFactorStorageBase
 
         override fun setOnDate(date: String, key: String, value: Double) = aggregates.onDate(date).set(key, value)
 
+        override fun updateOnDate(date: String, updater: MutableMap<String, Double>.() -> Unit) {
+            aggregates.compute(date) { _, data ->
+                if (data == null) {
+                    val dailyData = DailyData()
+                    updater.invoke(dailyData.data)
+                    dailyData
+                } else {
+                    updater.invoke(data.data)
+                    data
+                }
+            }
+        }
+
         private fun MutableMap<String, DailyData>.onDate(date: String): MutableMap<String, Double> =
                 this.computeIfAbsent(date, { DailyData() }).data
 
