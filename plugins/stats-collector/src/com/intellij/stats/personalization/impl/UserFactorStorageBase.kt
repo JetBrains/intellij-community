@@ -50,7 +50,7 @@ abstract class UserFactorStorageBase
         @MapAnnotation(surroundKeyWithTag = false, keyAttributeName = "name", sortBeforeSave = true)
         var stringFactors: MutableMap<String, String> = HashMap()
 
-        @MapAnnotation(surroundValueWithTag = false, keyAttributeName = "name", sortBeforeSave = true)
+        @MapAnnotation(surroundValueWithTag = false, keyAttributeName = "name", sortBeforeSave = true, surroundWithTag = false)
         var aggregateFactors: MutableMap<String, DailyAggregateFactor> = HashMap()
     }
 
@@ -101,7 +101,7 @@ abstract class UserFactorStorageBase
 
     @Tag("DailyCollectedData")
     class DailyData {
-        @MapAnnotation(keyAttributeName = "key", valueAttributeName = "value", entryTagName = "observation", sortBeforeSave = true)
+        @MapAnnotation(surroundWithTag = false, keyAttributeName = "key", valueAttributeName = "value", entryTagName = "observation", sortBeforeSave = true)
         var data: MutableMap<String, Double> = HashMap()
     }
 }
