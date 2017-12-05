@@ -93,6 +93,9 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
       case "test":
         scope = "testCompile ";
         break;
+      case "provided":
+        scope = "compileOnly ";
+        break;
       case "compile":
       case "runtime":
         scope += " ";
