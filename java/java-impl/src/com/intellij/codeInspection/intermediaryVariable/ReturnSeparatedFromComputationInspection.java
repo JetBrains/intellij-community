@@ -11,10 +11,12 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Query;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -34,9 +36,6 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!(holder.getFile() instanceof PsiJavaFile)) {
-      return PsiElementVisitor.EMPTY_VISITOR;
-    }
     return new JavaElementVisitor() {
       @Override
       public void visitReturnStatement(PsiReturnStatement returnStatement) {
@@ -218,15 +217,18 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         return;
       }
     }
+    List<PsiExpression> inlinedExpressions = new ArrayList<>();
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
       for (PsiReference usage : usages) {
-        usage.getElement().replace(value);
+        PsiExpression expression = InlineUtil.inlineVariable(context.returnedVariable, value, (PsiJavaCodeReferenceElement)usage);
+        inlinedExpressions.add(expression);
       }
     }
     if (isSimple || isSingleUsage || usages.isEmpty()) {
       context.returnedVariable.delete();
     }
+    HighlightUtils.highlightElements(inlinedExpressions);
   }
 
   @Contract("null -> false")
