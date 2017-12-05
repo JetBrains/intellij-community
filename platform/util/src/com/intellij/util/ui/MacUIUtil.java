@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -201,7 +203,7 @@ public class MacUIUtil {
   public static Cursor getInvertedTextCursor() {
     if (INVERTED_TEXT_CURSOR == null) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      Image cursorImage = toolkit.getImage(MacUIUtil.class.getClassLoader().getResource("/mac/text.png"));
+      Image cursorImage = toolkit.getImage(MacUIUtil.class.getClassLoader().getResource("/mac/text.png")); // will also load text@2x.png
       INVERTED_TEXT_CURSOR = toolkit.createCustomCursor(cursorImage, new Point(15, 13), "InvertedTextCursor");
     }
     return INVERTED_TEXT_CURSOR;
