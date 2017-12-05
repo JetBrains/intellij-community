@@ -44,7 +44,7 @@ task downloadGradleDistribution2(type: Download) {
 }
 
 task downloadOfflineRepo(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_0_02.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_0_01.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
