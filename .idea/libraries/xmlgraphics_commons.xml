@@ -1,9 +1,12 @@
 <component name="libraryTable">
-  <library name="xmlgraphics-commons">
+  <library name="xmlgraphics-commons" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.apache.xmlgraphics:xmlgraphics-commons:1.5" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/xmlgraphics-commons-1.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/xmlgraphics-commons/1.5/xmlgraphics-commons-1.5.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlgraphics/xmlgraphics-commons/1.5/xmlgraphics-commons-1.5-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

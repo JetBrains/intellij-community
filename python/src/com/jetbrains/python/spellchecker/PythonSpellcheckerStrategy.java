@@ -48,7 +48,7 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
       final List<ASTNode> strNodes = element.getStringNodes();
       final List<String> prefixes = ContainerUtil.mapNotNull(strNodes, n -> StringUtil.nullize(new StringNodeInfo(n).getPrefix()));
       
-      if (element.textContains('\\') && !prefixes.stream().anyMatch(PyStringLiteralUtil::isRawPrefix)) {
+      if (element.textContains('\\') && prefixes.stream().noneMatch(PyStringLiteralUtil::isRawPrefix)) {
         for (Pair<TextRange, String> fragment : element.getDecodedFragments()) {
           final String value = fragment.getSecond();
           final int startOffset = fragment.getFirst().getStartOffset();

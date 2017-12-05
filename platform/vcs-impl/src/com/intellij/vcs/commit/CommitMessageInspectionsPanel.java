@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -92,7 +78,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     for (ToolDescriptors toolDescriptors : myInitialToolDescriptors) {
       myRoot.add(new MyInspectionTreeNode(toolDescriptors));
     }
-    TreeUtil.sortRecursively(myRoot, new InspectionsConfigTreeComparator());
+    TreeUtil.sortRecursively(myRoot, InspectionsConfigTreeComparator.INSTANCE);
   }
 
   private void init() {
@@ -204,9 +190,9 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     }
   }
 
-  private static class MyInspectionTreeNode extends InspectionConfigTreeNode {
+  private static class MyInspectionTreeNode extends InspectionConfigTreeNode.Tool {
     public MyInspectionTreeNode(@NotNull ToolDescriptors descriptors) {
-      setUserObject(descriptors);
+      super(() -> descriptors);
     }
 
     @NotNull
@@ -222,7 +208,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
     }
 
     @Override
-    public boolean isProperSetting() {
+    protected boolean calculateIsProperSettings() {
       return false;
     }
   }

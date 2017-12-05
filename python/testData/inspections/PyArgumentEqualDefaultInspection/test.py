@@ -34,7 +34,7 @@ class C(object):
     def delx(self):
         del self._x
 
-    x = property(getx, <weak_warning descr="Argument equals to default parameter value">None</weak_warning>, fdel = delx, doc = "I'm the 'x' property.")
+    x = property(getx, None, fdel = delx, doc = "I'm the 'x' property.")
 
 
 # PY-3455

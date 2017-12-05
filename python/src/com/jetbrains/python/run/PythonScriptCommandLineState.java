@@ -68,7 +68,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                  PythonProcessStarter processStarter,
                                  final CommandLinePatcher... patchers) throws ExecutionException {
     Project project = myConfig.getProject();
-    assert myConfig.getSdk() != null;
 
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
@@ -85,6 +84,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, myConfig.getSdk(), settingsProvider);
       String workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
       String[] setupFragment = PydevConsoleRunnerFactory.createSetupFragment(module, workingDir, pathMapper, settingsProvider);
+
+      if (myConfig.getSdk() == null) {
+        throw new ExecutionException("Cannot find SDK for Run configuration " + myConfig.getName());
+      }
 
       PythonScriptWithConsoleRunner runner =
         new PythonScriptWithConsoleRunner(project, myConfig.getSdk(), PyConsoleType.PYTHON, workingDir,
@@ -225,7 +228,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     @Override
     protected GeneralCommandLine createCommandLine(@NotNull Sdk sdk,
                                                    @NotNull Map<String, String> environmentVariables,
-                                                   String workingDir, int[] ports) {
+                                                   @Nullable String workingDir,
+                                                   @NotNull int[] ports) {
       GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports, PythonHelper.RUN_IN_CONSOLE);
 
       final GeneralCommandLine cmd = generateCommandLine(myPatchers);

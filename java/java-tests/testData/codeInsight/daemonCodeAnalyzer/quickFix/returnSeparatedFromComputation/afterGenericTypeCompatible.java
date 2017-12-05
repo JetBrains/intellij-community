@@ -3,11 +3,10 @@ import java.util.*;
 
 class T {
     List<String> f(boolean b) {
-        List raw = null;
         if (b) {
             return g();
         }
-        return raw;
+        return null;
     }
 
     List<String> g() {

@@ -6,9 +6,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -76,7 +74,7 @@ class DistributionJARsBuilder {
       }
     }
 
-    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + productLayout.includedPlatformModules).collectMany(new LinkedHashSet<String>()) {
+    Set<String> allProductDependencies = (productLayout.getIncludedPluginModules(enabledPluginModules) + getIncludedPlatformModules(productLayout)).collectMany(new LinkedHashSet<String>()) {
       JpsJavaExtensionService.dependencies(buildContext.findRequiredModule(it)).productionOnly().getModules().collect {it.name}
     }
 
@@ -87,16 +85,16 @@ class DistributionJARsBuilder {
           withModule(it, jarName)
         }
       }
-      productLayout.platformApiJarModules.each {
+      getPlatformApiModules(productLayout).each {
         withModule(it, "platform-api.jar")
       }
-      productLayout.platformImplJarModules.each {
+      getPlatformImplModules(productLayout).each {
         withModule(it, "platform-impl.jar")
       }
-      productLayout.productApiModules.each {
+      getProductApiModules(productLayout).each {
         withModule(it, "openapi.jar")
       }
-      productLayout.productImplementationModules.each {
+      getProductImplModules(productLayout).each {
         withModule(it, productLayout.mainJarName)
       }
       productLayout.moduleExcludes.entrySet().each {
@@ -114,6 +112,9 @@ class DistributionJARsBuilder {
       withModule("platform-resources", "resources.jar")
       withModule("colorSchemes", "resources.jar")
       withModule("platform-resources-en", productLayout.mainJarName)
+      withModule("jps-model-serialization", "jps-model.jar")
+      withModule("jps-model-impl", "jps-model.jar")
+
       if (allProductDependencies.contains("coverage-common") && !productLayout.bundledPluginModules.contains("coverage")) {
         withModule("coverage-common", productLayout.mainJarName)
       }
@@ -127,6 +128,7 @@ class DistributionJARsBuilder {
         withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
       }
       withProjectLibrariesFromIncludedModules(buildContext)
+      removeVersionFromProjectLibraryJarNames("Trove4j")
     }
   }
 
@@ -138,11 +140,32 @@ class DistributionJARsBuilder {
     (platform.moduleJars.values() as List<String>) + toolModules
   }
 
+  static List<String> getIncludedPlatformModules(ProductModulesLayout modulesLayout) {
+    getPlatformApiModules(modulesLayout) + getPlatformImplModules(modulesLayout) + getProductApiModules(modulesLayout) +
+    getProductImplModules(modulesLayout) + modulesLayout.additionalPlatformJars.values()
+  }
+
   /**
    * @return module names which are required to run necessary tools from build scripts
    */
   static List<String> getToolModules() {
     ["java-runtime", "platform-main", /*required to build searchable options index*/ "updater"]
+  }
+
+  static List<String> getPlatformApiModules(ProductModulesLayout productLayout) {
+    productLayout.platformApiModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_API_MODULES : []
+  }
+
+  static List<String> getPlatformImplModules(ProductModulesLayout productLayout) {
+    productLayout.platformImplementationModules.isEmpty() ? CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES : []
+  }
+
+  static List<String> getProductApiModules(ProductModulesLayout productLayout) {
+    productLayout.platformApiModules.isEmpty() ? productLayout.productApiModules : productLayout.platformApiModules
+  }
+
+  static List<String> getProductImplModules(ProductModulesLayout productLayout) {
+    productLayout.platformImplementationModules.isEmpty() ? productLayout.productImplementationModules : productLayout.platformImplementationModules
   }
 
   Collection<String> getIncludedProjectArtifacts() {
@@ -216,7 +239,7 @@ class DistributionJARsBuilder {
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
     def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules)
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
@@ -406,7 +429,7 @@ class DistributionJARsBuilder {
           }
         }
         layout.includedProjectLibraries.each {
-          projectLibrary(it)
+          projectLibrary(it, layout instanceof PlatformLayout && layout.projectLibrariesWithRemovedVersionFromJarNames.contains(it))
         }
         layout.includedArtifacts.entrySet().each {
           def artifactName = it.key

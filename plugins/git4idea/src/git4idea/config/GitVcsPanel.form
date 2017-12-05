@@ -134,31 +134,6 @@
               <text value="Warn when committing in detached HEAD or during rebase"/>
             </properties>
           </component>
-          <component id="885e3" class="javax.swing.JCheckBox" binding="myEnableForcePush">
-            <constraints>
-              <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <selected value="true"/>
-              <text value="Allow &amp;force push"/>
-            </properties>
-          </component>
-          <component id="fbb33" class="javax.swing.JTextField" binding="myProtectedBranchesField" custom-create="true" default-binding="true">
-            <constraints>
-              <grid row="6" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value=""/>
-            </properties>
-          </component>
-          <component id="e7b92" class="com.intellij.ui.components.JBLabel" binding="myProtectedBranchesLabel">
-            <constraints>
-              <grid row="6" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Protected branches:"/>
-            </properties>
-          </component>
           <component id="2e80d" class="com.intellij.ui.components.JBCheckBox" binding="mySyncControl">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="8" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -188,10 +163,31 @@
           </component>
           <component id="840a6" class="javax.swing.JComboBox" binding="myUpdateMethodComboBox" custom-create="true" default-binding="true">
             <constraints>
-              <grid row="4" column="1" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
           </component>
+          <component id="fbb33" class="javax.swing.JTextField" binding="myProtectedBranchesField" custom-create="true" default-binding="true">
+            <constraints>
+              <grid row="6" column="1" row-span="1" col-span="6" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value=""/>
+            </properties>
+          </component>
+          <component id="e7b92" class="com.intellij.ui.components.JBLabel" binding="myProtectedBranchesLabel">
+            <constraints>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Protected branches:"/>
+            </properties>
+          </component>
+          <hspacer id="56749">
+            <constraints>
+              <grid row="4" column="2" row-span="1" col-span="6" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
     </children>

@@ -22,7 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An interface for indentation calculation. Used in editor actions like Enter handling.
+ * An interface for fast indentation calculation as an alternative to formatter-based logic. Used in editor actions like Enter handling.
+ * Assumes that indent string is constructed using the editor document {@code editor.getDocument()} and the current offset without
+ * any document commits and PSI tree rebuilding which can be a time consuming operation. If there is no {@code LineIndentProvider} for the
+ * current editor and language context OR if a line indent provider can't calculate the indent (returns {@code null}), the document is
+ * committed and a formatter-based line indent calculation is performed.
  */
 public interface LineIndentProvider {
   /**

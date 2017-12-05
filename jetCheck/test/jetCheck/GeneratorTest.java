@@ -23,7 +23,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   7);
+                   181);
   }
 
   public void testListContainsDivisible() {
@@ -35,19 +35,19 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testStringContains() {
     assertEquals("a", checkGeneratesExample(stringsOf(asciiPrintableChars()),
                                             s -> s.contains("a"),
-                                            16));
+                                            8));
   }
 
   public void testLetterStringContains() {
     checkFalsified(stringsOf(asciiLetters()),
                    s -> !s.contains("a"),
-                   3);
+                   1);
   }
 
   public void testIsSorted() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                                                            35);
+                                                            34);
     List<Integer> value = failure.getMinimalCounterexample().getExampleValue();
     assertEquals(2, value.size());
     assertTrue(value.toString(), value.stream().allMatch(i -> Math.abs(i) < 2));
@@ -60,7 +60,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           26);
+                                                           44);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 
@@ -77,17 +77,18 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     PropertyChecker.forAll(integers().suchThat(i -> i < 0)).shouldHold(i -> i < 0);
   }
 
+  public void testNestedSometimesVeryRareSuchThat() {
+    forAllStable(frequency(50, constant(0), 1, integers(1, 1000)).suchThat(i -> i > 0)).shouldHold(i -> i > 0);
+  }
+
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),
-                   4);
+                   0);
   }
 
-  public void testLongListsHappen() {
-    PropertyFailure<List<Integer>> failure = checkFalsified(listsOf(integers()),
-                                                            l -> l.size() < 200,
-                                                            419);
-    assertEquals(200, failure.getMinimalCounterexample().getExampleValue().size());
+  public void testListNotLongerThanMaxDefaultSize() {
+    PropertyChecker.forAll(listsOf(integers())).withIterationCount(1_000).shouldHold(l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
   }
 
   public void testNonEmptyList() {
@@ -111,20 +112,20 @@ public class GeneratorTest extends PropertyCheckerTestCase {
       .shouldHold(s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkGeneratesExample(asciiIdentifiers(),
                           s -> s.contains("_"),
-                          2);
+                          11);
   }
 
   public void testBoolean() {
     List<Boolean> list = checkGeneratesExample(listsOf(booleans()),
                                                l -> l.contains(true) && l.contains(false),
-                                               3);
+                                               4);
     assertEquals(2, list.size());
   }
 
   public void testShrinkingNonEmptyList() {
     List<Integer> list = checkGeneratesExample(nonEmptyLists(integers(0, 100)),
                                                l -> l.contains(42),
-                                               5);
+                                               12);
     assertEquals(1, list.size());
   }
 
@@ -150,17 +151,17 @@ public class GeneratorTest extends PropertyCheckerTestCase {
                      String s = l.toString();
                      return !"abcdefghijklmnopqrstuvwxyz()[]#!".chars().allMatch(c -> s.indexOf((char)c) >= 0);
                    },
-                   244);
+                   225);
   }
 
   public void testSameFrequency() {
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2))),
                    l -> !l.contains(1) || !l.contains(2),
-                   2);
+                   3);
 
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2)).with(1, constant(3))),
                    l -> !l.contains(1) || !l.contains(2) || !l.contains(3),
-                   17);
+                   8);
   }
 
 }

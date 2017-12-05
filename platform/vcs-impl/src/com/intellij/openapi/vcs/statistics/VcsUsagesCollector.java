@@ -19,10 +19,14 @@ import com.intellij.internal.statistic.AbstractProjectsUsagesCollector;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 public class VcsUsagesCollector extends AbstractProjectsUsagesCollector {
@@ -35,8 +39,19 @@ public class VcsUsagesCollector extends AbstractProjectsUsagesCollector {
 
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
-    return ContainerUtil.map2Set(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss(), vcs -> {
-      return new UsageDescriptor(vcs.getName(), 1);
-    });
+    Set<UsageDescriptor> usages = new HashSet<>();
+
+    AbstractVcs[] activeVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
+    List<String> vcsNames = ContainerUtil.map(activeVcss, AbstractVcs::getName);
+
+    for (String vcs : vcsNames) {
+      usages.add(new UsageDescriptor(vcs, 1));
+    }
+
+    if (vcsNames.size() > 1) {
+      usages.add(new UsageDescriptor(StringUtil.join(ContainerUtil.sorted(vcsNames), ","), 1));
+    }
+
+    return usages;
   }
 }

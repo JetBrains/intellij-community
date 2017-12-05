@@ -2439,10 +2439,11 @@ public class PyTypeTest extends PyTestCase {
     checkTypes(expectedType, parseExpr(text));
   }
 
-  private static void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
+  private void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
     assertNotNull(expr);
     for (TypeEvalContext context : getTypeEvalContexts(expr)) {
       assertType(expectedType, expr, context);
+      assertProjectFilesNotParsed(context);
     }
   }
 

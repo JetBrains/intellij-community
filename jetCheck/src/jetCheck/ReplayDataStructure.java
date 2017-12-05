@@ -31,18 +31,18 @@ class ReplayDataStructure extends AbstractDataStructure {
 
   @NotNull
   @Override
-  public DataStructure subStructure() {
+  DataStructure subStructure() {
     return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint(), customizer);
   }
 
   @Override
   public <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
-    return generator.generateValue(this);
+    return generate(generator);
   }
 
   @Override
   public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
-    T value = generator.generateValue(this);
+    T value = generate(generator);
     if (!condition.test(value)) throw new CannotRestoreValue();
     return value;
   }

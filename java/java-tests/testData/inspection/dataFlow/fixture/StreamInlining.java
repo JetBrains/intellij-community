@@ -46,8 +46,49 @@ public class StreamInlining {
 
   void test2(int[] array) {
     IntStream.of(array).filter(x -> x < 5)
-      .filter(x -> x > 7) // TODO: find variable state for non-qualified value
+      .filter(x -> <warning descr="Condition 'x > 7' is always 'false'">x > 7</warning>)
       .forEach(value -> System.out.println(value));
+  }
+
+  void testInstanceof(List<?> objects) {
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(x -> <warning descr="Condition 'x instanceof Number' is always 'false'">x instanceof Number</warning>)
+      .forEach(System.out::println);
+  }
+
+  void testIsInstanceIncomplete(List<?> objects) {
+    IntStream is = objects.stream()
+      .filter(String.class::isInstance)
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)x);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>);
+  }
+
+  Stream<String> testInstanceOfMap(List<?> objects) {
+    return objects.stream().filter(it -> it instanceof String)
+      .map(entry -> {
+        if (<warning descr="Condition 'entry instanceof String' is always 'true'">entry instanceof String</warning>) {
+          return (String)entry;
+        }
+        return null;
+      })
+      .filter(<warning descr="Method reference result is always 'true'">Objects::nonNull</warning>);
+  }
+
+  void test(Stream<String> stream, Optional<String> opt) {
+    stream.filter(<warning descr="Condition 'String.class::isInstance' is redundant and can be replaced with a null check">String.class::isInstance</warning>).forEach(System.out::println);
+    opt.filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>).ifPresent(System.out::println);
   }
 
   // IDEA-152871

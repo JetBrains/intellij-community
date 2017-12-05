@@ -109,11 +109,7 @@ public class CustomMethodHandlers {
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ignoreCase ? leftConst.equalsIgnoreCase(rightConst) : leftConst.equals(rightConst)));
     }
-    DfaValue leftLength = SpecialField.STRING_LENGTH.createValue(factory, args.myQualifier);
-    DfaValue rightLength = SpecialField.STRING_LENGTH.createValue(factory, arg);
-    DfaValue trueRelation = factory.createCondition(leftLength, RelationType.EQ, rightLength);
-    DfaValue falseRelation = factory.createCondition(leftLength, RelationType.NE, rightLength);
-    return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
+    return Collections.emptyList();
   }
 
   private static List<DfaMemoryState> indexOf(DfaValue qualifier,

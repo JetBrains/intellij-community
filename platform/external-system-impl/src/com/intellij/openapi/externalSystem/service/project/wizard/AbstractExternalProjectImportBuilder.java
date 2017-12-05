@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.*;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
@@ -27,11 +28,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -107,11 +110,24 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   public void prepare(@NotNull WizardContext context) {
+    if (context.getProjectJdk() == null) {
+      context.setProjectJdk(resolveProjectJdk(context));
+    }
     myControl.setShowProjectFormatPanel(context.isCreatingNewProject());
-    myControl.reset();
+    myControl.reset(context);
     String pathToUse = getFileToImport();
     myControl.setLinkedProjectPath(pathToUse);
     doPrepare(context);
+  }
+
+  @Nullable
+  protected Sdk resolveProjectJdk(@NotNull WizardContext context) {
+    Project project = context.getProject() != null ? context.getProject() : ProjectManager.getInstance().getDefaultProject();
+    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+    if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
+      return sdkPair.second;
+    }
+    return null;
   }
 
   protected abstract void doPrepare(@NotNull WizardContext context);
@@ -405,5 +421,15 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       result = ProjectManager.getInstance().getDefaultProject();
     }
     return result;
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
+    }
+    return project;
   }
 }

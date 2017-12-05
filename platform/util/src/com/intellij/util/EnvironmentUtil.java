@@ -1,25 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.util;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +34,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -161,8 +162,11 @@ public class EnvironmentUtil {
 
 
   public static class ShellEnvReader {
-
     public Map<String, String> readShellEnv() throws Exception {
+      return readShellEnv(null);
+    }
+    
+    protected Map<String, String> readShellEnv(@Nullable Map<String, String> additionalEnvironment) throws Exception {
       File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
@@ -180,7 +184,34 @@ public class EnvironmentUtil {
 
         LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
-        return dumpProcessEnvToFile(command, envFile, "\0");
+        return runProcessAndReadOutputAndEnvs(command, null, additionalEnvironment, envFile).second;
+      }
+      finally {
+        FileUtil.delete(envFile);
+      }
+    }
+    
+    @NotNull
+    public Map<String, String> readBatEnv(@NotNull File batchFile, List<String> args) throws Exception {
+      return readBatOutputAndEnv(batchFile, args).second;
+    }
+
+    @NotNull
+    protected Pair<String, Map<String, String>> readBatOutputAndEnv(@NotNull File batchFile, List<String> args) throws Exception {
+      File envFile = FileUtil.createTempFile("intellij-cmd-env.", ".tmp", false);
+      try {
+        List<String> cl = new ArrayList<String>();
+        cl.add(CommandLineUtil.getWinShellName());
+        cl.add("/c");
+        cl.add("call");
+        cl.add(batchFile.getPath());
+        cl.addAll(args);
+        cl.add("&&");
+        cl.addAll(getReadEnvCommand());
+        cl.add(envFile.getPath());
+        cl.addAll(Arrays.asList("||", "exit", "/B", "%ERRORLEVEL%"));
+
+        return runProcessAndReadOutputAndEnvs(cl, batchFile.getParentFile(), null, envFile);
       }
       finally {
         FileUtil.delete(envFile);
@@ -188,35 +219,21 @@ public class EnvironmentUtil {
     }
 
     @NotNull
-    protected Map<String, String> dumpProcessEnvToFile(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
-      throws Exception {
-      return runProcessAndReadEnvs(command, envFile, lineSeparator);
+    private static List<String> getReadEnvCommand() {
+      return Arrays.asList(FileUtil.toSystemDependentName(System.getProperty("java.home") + "/bin/java"),
+                           "-cp", PathManager.getJarPathForClass(ReadEnv.class),
+                           ReadEnv.class.getCanonicalName());
     }
 
     @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command, @NotNull File envFile, String lineSeparator)
-      throws Exception {
-      return runProcessAndReadEnvs(command, null, envFile, lineSeparator);
-    }
-
-    @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
-                                                               @Nullable File workingDir,
-                                                               @NotNull File envFile,
-                                                               String lineSeparator) throws Exception {
-      return runProcessAndReadEnvs(command, workingDir, null, envFile, lineSeparator);
-    }
-
-    @NotNull
-    protected static Map<String, String> runProcessAndReadEnvs(@NotNull List<String> command,
-                                                               @Nullable File workingDir,
-                                                               @Nullable Map<String, String> envs,
-                                                               @NotNull File envFile,
-                                                               String lineSeparator) throws Exception {
+    protected static Pair<String, Map<String, String>> runProcessAndReadOutputAndEnvs(@NotNull List<String> command,
+                                                                                      @Nullable File workingDir,
+                                                                                      @Nullable Map<String, String> scriptEnvironment,
+                                                                                      @NotNull File envFile) throws Exception {
       ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
-      if (envs != null) {
+      if (scriptEnvironment != null) {
         // we might need default environment for the process to launch correctly
-        builder.environment().putAll(envs);
+        builder.environment().putAll(scriptEnvironment);
       }
       if (workingDir != null) builder.directory(workingDir);
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
@@ -230,7 +247,7 @@ public class EnvironmentUtil {
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " text:" + lines.length() + " out:" + StringUtil.trimEnd(gobbler.getText(), '\n'));
       }
-      return parseEnv(lines, lineSeparator);
+      return Pair.create(gobbler.getText(), parseEnv(lines));
     }
 
     @NotNull
@@ -250,18 +267,18 @@ public class EnvironmentUtil {
     }
 
     @Nullable
-    protected String getShell() throws Exception {
+    protected String getShell() {
       return System.getenv("SHELL");
     }
   }
 
   @NotNull
-  private static Map<String, String> parseEnv(String text, String lineSeparator) throws Exception {
+  private static Map<String, String> parseEnv(String text) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL", DISABLE_OMZ_AUTO_UPDATE, INTELLIJ_ENVIRONMENT_READER));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    String[] lines = text.split(lineSeparator);
+    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
@@ -390,7 +407,7 @@ public class EnvironmentUtil {
   @TestOnly
   static Map<String, String> testParser(@NotNull String lines) {
     try {
-      return parseEnv(lines, "\0");
+      return parseEnv(lines);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

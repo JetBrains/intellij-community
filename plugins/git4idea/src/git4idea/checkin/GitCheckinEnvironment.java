@@ -65,8 +65,9 @@ import git4idea.GitUserRegistry;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
@@ -93,7 +94,6 @@ import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BORDER;
 import static com.intellij.openapi.util.text.StringUtil.escapeXml;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath;
-import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.vcs.log.util.VcsUserUtil.isSamePerson;
 import static git4idea.GitUtil.*;
@@ -238,7 +238,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         if (!caseOnlyRenames.isEmpty()) {
           List<VcsException> exs = commitWithCaseOnlyRename(myProject, root, caseOnlyRenames, added, removed,
                                                             messageFile, myNextCommitAuthor);
-          exceptions.addAll(map(exs, GitCheckinEnvironment::cleanupExceptionText));
+          exceptions.addAll(exs);
         }
         else {
           try {
@@ -259,7 +259,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         }
       }
       catch (VcsException e) {
-        exceptions.add(cleanupExceptionText(e));
+        exceptions.add(e);
       }
       finally {
         if (!messageFile.delete()) {
@@ -350,22 +350,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     paths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
     paths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
 
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RESET);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
     handler.endOptions();
     handler.addRelativePaths(paths);
-    handler.run();
-  }
-
-  @NotNull
-  private static VcsException cleanupExceptionText(VcsException original) {
-    String msg = original.getMessage();
-    msg = cleanupErrorPrefixes(msg);
-    final String DURING_EXECUTING_SUFFIX = GitSimpleHandler.DURING_EXECUTING_ERROR_MESSAGE;
-    int suffix = msg.indexOf(DURING_EXECUTING_SUFFIX);
-    if (suffix > 0) {
-      msg = msg.substring(0, suffix);
-    }
-    return new VcsException(msg.trim(), original.getCause());
+    Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
@@ -395,14 +383,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     HashSet<FilePath> realAdded = new HashSet<>();
     HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
-    GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
     diff.setSilent(true);
     diff.setStdoutSuppressed(true);
     diff.addParameters("--diff-filter=ADMRUX", "--name-status", "--no-renames", "HEAD");
     diff.endOptions();
     String output;
     try {
-      output = diff.run();
+      output = Git.getInstance().runCommand(diff).getOutputOrThrow();
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -482,7 +470,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                   @NotNull VirtualFile root,
                                   @NotNull File messageFile,
                                   @Nullable String author) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
     handler.addParameters("-F", messageFile.getAbsolutePath());
     if (author != null) {
@@ -495,7 +483,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters("--no-verify");
     }
     handler.endOptions();
-    handler.run();
+    Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
   /**
@@ -506,10 +494,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
    */
   private static PartialOperation isMergeCommit(final VcsException ex) {
     String message = ex.getMessage();
-    if (message.contains("fatal: cannot do a partial commit during a merge")) {
+    if (message.contains("cannot do a partial commit during a merge")) {
       return PartialOperation.MERGE;
     }
-    if (message.contains("fatal: cannot do a partial commit during a cherry-pick")) {
+    if (message.contains("cannot do a partial commit during a cherry-pick")) {
       return PartialOperation.CHERRY_PICK;
     }
     return PartialOperation.NONE;
@@ -603,7 +591,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     throws VcsException {
     boolean amend = myNextCommitAmend;
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.COMMIT);
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
       handler.setStdoutSuppressed(false);
       if (myNextCommitSignOff) {
         handler.addParameters("--signoff");
@@ -626,7 +614,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       }
       handler.endOptions();
       handler.addParameters(paths);
-      handler.run();
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
     }
     if (!project.isDisposed()) {
       GitRepositoryManager manager = getRepositoryManager(project);
@@ -827,7 +815,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       @Nullable
       @Override
       protected String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
-        GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+        GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.LOG);
         h.addParameters("--max-count=1");
         h.addParameters("--encoding=UTF-8");
         String formatPattern;
@@ -840,7 +828,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           formatPattern = "%s%n%n%-b";
         }
         h.addParameters("--pretty=format:" + formatPattern);
-        return h.run();
+        return Git.getInstance().runCommand(h).getOutputOrThrow();
       }
     }
 

@@ -14,10 +14,38 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final String myDocString;
   private final String myDeprecationMessage;
   private final boolean myAsync;
+  private final boolean myGenerator;
   private final boolean myOnlyRaisesNotImplementedError;
   private final String myTypeComment;
   private final String myAnnotation;
 
+  public PyFunctionStubImpl(@Nullable String name,
+                            @Nullable String docString,
+                            @Nullable String deprecationMessage,
+                            boolean isAsync,
+                            boolean isGenerator,
+                            boolean onlyRaisesNotImplementedError,
+                            @Nullable String typeCommentContent,
+                            @Nullable String annotation,
+                            final StubElement parent,
+                            @NotNull IStubElementType stubElementType) {
+    super(parent, stubElementType);
+    myName = name;
+    myDocString = docString;
+    myDeprecationMessage = deprecationMessage;
+    myAsync = isAsync;
+    myGenerator = isGenerator;
+    myOnlyRaisesNotImplementedError = onlyRaisesNotImplementedError;
+    myTypeComment = typeCommentContent;
+    myAnnotation = annotation;
+  }
+
+  /**
+   * @deprecated Use {@link PyFunctionStubImpl#PyFunctionStubImpl(String, String, String, boolean, boolean, boolean, String, String, StubElement, IStubElementType)}
+   * that includes the additional {@code isGenerator} property.
+   * This constructor will be removed in 2018.2.
+   */
+  @Deprecated
   public PyFunctionStubImpl(@Nullable String name,
                             @Nullable String docString,
                             @Nullable String deprecationMessage,
@@ -27,14 +55,8 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
                             @Nullable String annotation, 
                             final StubElement parent,
                             @NotNull IStubElementType stubElementType) {
-    super(parent, stubElementType);
-    myName = name;
-    myDocString = docString;
-    myDeprecationMessage = deprecationMessage;
-    myAsync = isAsync;
-    myOnlyRaisesNotImplementedError = onlyRaisesNotImplementedError;
-    myTypeComment = typeCommentContent;
-    myAnnotation = annotation;
+    this(name, docString, deprecationMessage, isAsync, false, onlyRaisesNotImplementedError, typeCommentContent, annotation, parent,
+         stubElementType);
   }
 
   /**
@@ -86,6 +108,11 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   @Override
   public boolean isAsync() {
     return myAsync;
+  }
+
+  @Override
+  public boolean isGenerator() {
+    return myGenerator;
   }
 
   @Override

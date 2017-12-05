@@ -89,10 +89,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   private AsyncState getAsyncState() {
-    //if (!myInitialized) { // memory barrier
-    //  //throw new IndexNotReadyException();
-    //  LOG.error("Unexpected initialization problem");
-    //}
     AsyncState state = myState; // memory barrier
     if (state == null) {
       try {
@@ -493,13 +489,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     return extensions;
   }
 
-  //@Override
-  //public void dispose() {
-    // This index must be disposed only after StubUpdatingIndex is disposed
-    // To ensure this, disposing is done explicitly from StubUpdatingIndex by calling dispose() method
-    // do not call this method here to avoid double-disposal
-  //}
-
   public void dispose() {
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
       index.dispose();
@@ -600,7 +589,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     }
 
     public MyIndex(IndexExtension<K, StubIdList, Void> extension, IndexStorage<K, StubIdList> storage) throws IOException {
-      super(extension, storage);
+      super(extension, storage, null);
     }
 
     @Override

@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,10 +28,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterLi
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -55,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Objects;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
 /**
  * @author ilyas
@@ -98,7 +83,6 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
 
     if (!super.processDeclarations(processor, state, lastParent, place)) return false;
     if (!processParameters(processor, state, place)) return false;
-    if (ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY)) && !ResolveUtil.processElement(processor, getOwner(), state)) return false;
     if (!processClosureClassMembers(processor, state, lastParent, place)) return false;
 
     return true;
@@ -167,7 +151,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,
                                     @NotNull ResolveState state,
                                     @NotNull PsiElement place) {
-    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
+    if (!shouldProcessLocals(processor)) return true;
 
     if (hasParametersSection()) {
       for (GrParameter parameter : getParameters()) {
@@ -295,28 +279,28 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return res;
   }
 
-  private PsiVariable getOwner() {
-    return CachedValuesManager.getCachedValue(this, () -> {
-      final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-      PsiType type = null;
-      if (context instanceof GrTypeDefinition) {
-        type = factory.createType((PsiClass)context);
-      }
-      else if (context instanceof GrClosableBlock) {
-        type = GrClosureType.create((GrClosableBlock)context, true);
-      }
-      else if (context instanceof GroovyFile) {
-        final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
-        if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) type = factory.createType(scriptClass);
-      }
-      if (type == null) {
-        type = TypesUtil.getJavaLangObject(this);
-      }
+  @Nullable
+  @Override
+  public PsiType getOwnerType() {
+    return CachedValuesManager.getCachedValue(this, () -> Result.create(doGetOwnerType(), PsiModificationTracker.MODIFICATION_COUNT));
+  }
 
-      PsiVariable owner = new GrLightVariable(getManager(), OWNER_NAME, type, this);
-      return CachedValueProvider.Result.create(owner, PsiModificationTracker.MODIFICATION_COUNT);
-    });
+  @Nullable
+  private PsiType doGetOwnerType() {
+    final GroovyPsiElement context = PsiTreeUtil.getParentOfType(this, GrTypeDefinition.class, GrClosableBlock.class, GroovyFile.class);
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    if (context instanceof GrTypeDefinition) {
+      return factory.createType((PsiClass)context);
+    }
+    else if (context instanceof GrClosableBlock) {
+      return ((GrClosableBlock)context).getType();
+    }
+    else if (context instanceof GroovyFile) {
+      final PsiClass scriptClass = ((GroovyFile)context).getScriptClass();
+      if (scriptClass != null && GroovyNamesUtil.isIdentifier(scriptClass.getName())) return factory.createType(scriptClass);
+    }
+
+    return null;
   }
 
   @Override

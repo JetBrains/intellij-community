@@ -131,9 +131,9 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSCR37331() { doTest(); }
 
   public void testIDEADEV434() {
-    mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    mySettings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     doTest();
-    mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
+    mySettings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
     doTest();
   }
 
@@ -159,10 +159,10 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testIDEADEV13019() { doTestBracesNextLineStyle(); }
   public void testIDEA25139() { doTestBracesNextLineStyle(); }
   public void testClassBracesNextLine() { doTestBracesNextLineStyle(); }
-  public void testBeforeIfRBrace() { mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true; doTest(); }
+  public void testBeforeIfRBrace() { mySettings.getCommonSettings(JavaLanguage.INSTANCE).KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true; doTest(); }
   public void testNoUnnecessaryEmptyLineAtCodeBlock() { doTest(); }
   public void testForStatementGeneration() { doTest(); }
-  public void testSpaceAfterSemicolon() { mySettings.SPACE_AFTER_SEMICOLON = true; doTest(); }
+  public void testSpaceAfterSemicolon() { mySettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON = true; doTest(); }
   public void testNoSpaceAfterSemicolon() { myJavaSettings.SPACE_AFTER_SEMICOLON = false; doTest(); }
   public void testForUpdateGeneration() { doTest(); }
   public void testValidCodeBlock() { doTest(); }

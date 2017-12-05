@@ -31,7 +31,7 @@ abstract class PropertyCheckerTestCase extends TestCase {
     System.out.println(" " + getName());
     System.out.println("Value: " + e.getBreakingValue());
     System.out.println("Data: " + e.getData());
-    assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount());
+    assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount()); // to track if framework changes don't increase shrinking time significantly on average
     assertEquals(e.getBreakingValue(), generator.getGeneratorFunction().apply(e.getData()));
 
     return failure;

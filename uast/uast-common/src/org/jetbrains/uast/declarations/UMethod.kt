@@ -75,7 +75,7 @@ interface UMethod : UDeclaration, PsiMethod {
     val body = uastBody
     append(when (body) {
              is UBlockExpression -> " " + body.asRenderString()
-             else -> " = " + ((body ?: UastEmptyExpression).asRenderString())
+             else -> " = " + ((body ?: UastEmptyExpression(this@UMethod)).asRenderString())
            })
   }
 

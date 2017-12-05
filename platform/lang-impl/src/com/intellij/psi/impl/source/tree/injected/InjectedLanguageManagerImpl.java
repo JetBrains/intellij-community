@@ -20,8 +20,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
-import com.intellij.injected.editor.EditorWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
@@ -32,6 +30,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,7 +40,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -61,6 +63,7 @@ import java.util.*;
 /**
  * @author cdr
  */
+@SuppressWarnings("deprecation")
 public class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl");
   @SuppressWarnings("RedundantStringConstructorCall")
@@ -114,6 +117,10 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   @Override
   public void dispose() {
     myProgress.cancel();
+    disposeInvalidEditors();
+  }
+
+  public static void disposeInvalidEditors() {
     EditorWindowImpl.disposeInvalidEditors();
   }
 
@@ -151,7 +158,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
         int offset = documentWindow.injectedToHost(0);
         PsiElement element = ObjectUtils.notNull(hostPsiFile.findElementAt(offset), hostPsiFile);
         // it is here where the reparse happens and old file contents replaced
-        InjectedLanguageUtil.enumerate(element, hostPsiFile, true, (injectedPsi, places) -> {
+        enumerateEx(element, hostPsiFile, true, (injectedPsi, places) -> {
           DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
           if (newDocument != null) {
             PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
@@ -166,6 +173,12 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     else {
       JobLauncher.getInstance().submitToJobThread(() -> ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable), null);
     }
+  }
+
+  @Override
+  public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider provider) {
+    if (!(provider instanceof InjectedFileViewProvider)) return null;
+    return ((InjectedFileViewProvider)provider).getShreds().getHostPointer().getElement();
   }
 
   @Override
@@ -259,8 +272,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     Disposer.register(parentDisposable, () -> unregisterMultiHostInjector(injector));
   }
 
-  @Override
-  public boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
+  private boolean unregisterMultiHostInjector(@NotNull MultiHostInjector injector) {
     try {
       return myManualInjectors.remove(injector);
     }
@@ -400,6 +412,17 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     return InjectedLanguageUtil.mightHaveInjectedFragmentAtCaret(myProject, hostDocument, hostOffset);
   }
 
+  @NotNull
+  @Override
+  public DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+    Place shreds = ((DocumentWindowImpl)document).getShreds();
+    Project project = shreds.getHostPointer().getProject();
+    DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
+    Place place = new Place();
+    place.addAll(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
+    return new DocumentWindowImpl(delegate, document.isOneLine(), place);
+  }
+
   private static int appendRange(@NotNull List<TextRange> result, int start, int length) {
     if (length > 0) {
       int lastIndex = result.size() - 1;
@@ -479,7 +502,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     }
     final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<>();
-    InjectedLanguageUtil.enumerate(inTree, (injectedPsi, places) -> {
+    enumerate(inTree, (injectedPsi, places) -> {
       for (PsiLanguageInjectionHost.Shred place : places) {
         if (place.getHost() == inTree) {
           result.add(new Pair<>(injectedPsi, place.getRangeInsideHost()));

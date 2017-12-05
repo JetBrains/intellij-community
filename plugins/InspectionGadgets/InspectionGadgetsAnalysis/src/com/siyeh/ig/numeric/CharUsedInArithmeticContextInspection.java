@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -129,8 +130,9 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
         return;
       }
       final PsiExpression expression = (PsiExpression)element;
-      final String expressionText = expression.getText();
-      PsiReplacementUtil.replaceExpression(expression, '(' + typeText + ')' + expressionText);
+      CommentTracker commentTracker = new CommentTracker();
+      final String expressionText = commentTracker.markUnchanged(expression).getText();
+      PsiReplacementUtil.replaceExpression(expression, '(' + typeText + ')' + expressionText, commentTracker);
     }
   }
 

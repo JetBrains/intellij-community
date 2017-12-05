@@ -288,7 +288,7 @@ public class CodeFormatterFacade {
           }
         };
         for (PsiLanguageInjectionHost host : injectionHosts) {
-          InjectedLanguageUtil.enumerate(host, visitor);
+          InjectedLanguageManager.getInstance(file.getProject()).enumerate(host, visitor);
         }
       }
     }

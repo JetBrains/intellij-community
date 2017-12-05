@@ -1953,16 +1953,17 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testWrapParamsOnEveryItem() {
-    val codeStyleSettings = CodeStyleSettingsManager.getSettings(LightPlatformTestCase.getProject())
+    val codeStyleSettings = CodeStyleSettingsManager.getSettings(getProject())
 
-    val oldMargin = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN
-    val oldKeep = codeStyleSettings.KEEP_LINE_BREAKS
-    val oldWrap = codeStyleSettings.METHOD_PARAMETERS_WRAP
+    val javaSettings = codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE)
+    val oldMargin = javaSettings.RIGHT_MARGIN
+    val oldKeep = javaSettings.KEEP_LINE_BREAKS
+    val oldWrap = javaSettings.METHOD_PARAMETERS_WRAP
 
     try {
       codeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, 80)
-      codeStyleSettings.KEEP_LINE_BREAKS = false
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+      javaSettings.KEEP_LINE_BREAKS = false
+      javaSettings.METHOD_PARAMETERS_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
 
       doClassTest(
         "public void foo(String p1,\n" +
@@ -1986,8 +1987,8 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
     }
     finally {
       codeStyleSettings.setRightMargin(JavaLanguage.INSTANCE, oldMargin)
-      codeStyleSettings.KEEP_LINE_BREAKS = oldKeep
-      codeStyleSettings.METHOD_PARAMETERS_WRAP = oldWrap
+      javaSettings.KEEP_LINE_BREAKS = oldKeep
+      javaSettings.METHOD_PARAMETERS_WRAP = oldWrap
     }
 
   }
@@ -3397,6 +3398,48 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       "     *\n" +
       "     */\n" +
       "}\n"
+    )
+  }
+
+  fun testIdea183193() {
+    doTextTest(
+      "package de.tarent.bugreport;\n" +
+      "\n" +
+      "        /*-\n" +
+      "         * This is supposed\n" +
+      "         * to be a copyright comment\n" +
+      "         * and thus not wrapped.\n" +
+      "         */\n" +
+      "\n" +
+      "        /*\n" +
+      "         * This is supposed\n" +
+      "         * to be wrapped.\n" +
+      "         */\n" +
+      "\n" +
+      "/**\n" +
+      " * This is JavaDoc.\n" +
+      " */\n" +
+      "public class IndentBugReport {\n" +
+      "}",
+
+      "package de.tarent.bugreport;\n" +
+      "\n" +
+      "/*-\n" +
+      " * This is supposed\n" +
+      " * to be a copyright comment\n" +
+      " * and thus not wrapped.\n" +
+      " */\n" +
+      "\n" +
+      "/*\n" +
+      " * This is supposed\n" +
+      " * to be wrapped.\n" +
+      " */\n" +
+      "\n" +
+      "/**\n" +
+      " * This is JavaDoc.\n" +
+      " */\n" +
+      "public class IndentBugReport {\n" +
+      "}"
     )
   }
 }

@@ -132,6 +132,7 @@ public class AutoBoxingInspection extends BaseInspection {
       if (strippedExpression == null) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final String expressionText = strippedExpression.getText();
       @NonNls final String newExpression;
       if ("true".equals(expressionText)) {
@@ -141,14 +142,15 @@ public class AutoBoxingInspection extends BaseInspection {
         newExpression = "java.lang.Boolean.FALSE";
       }
       else {
+        commentTracker.markUnchanged(strippedExpression);
         newExpression = classToConstruct + ".valueOf(" + expressionText + ')';
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression);
+        PsiReplacementUtil.replaceExpression(typeCastExpression, newExpression, commentTracker);
       } else {
-        PsiReplacementUtil.replaceExpression(expression, newExpression);
+        PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
       }
     }
 

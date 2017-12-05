@@ -81,6 +81,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
            "  __class__\n" +
+           "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
            "  __slots__\n",
@@ -123,6 +124,7 @@ public class PyStructureViewTest extends PyTestCase {
            "  __reduce__(self)\n" +
            "  __reduce_ex__(self, protocol)\n" +
            "  __class__\n" +
+           "  __dict__\n" +
            "  __doc__\n" +
            "  __module__\n" +
            "  __slots__\n",

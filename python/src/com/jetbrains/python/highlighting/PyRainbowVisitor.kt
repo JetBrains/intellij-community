@@ -52,10 +52,9 @@ class PyRainbowVisitor : RainbowVisitor() {
   private fun processNamedParameter(namedParameter: PyNamedParameter) {
     val context = getNamedParameterContext(namedParameter) ?: return
     val name = namedParameter.name ?: return
+    val element = namedParameter.nameIdentifier ?: return
 
-    getHighlightedParameterElements(namedParameter).forEach {
-      addInfo(context, it, name, PyHighlighter.PY_PARAMETER)
-    }
+    addInfo(context, element, name, PyHighlighter.PY_PARAMETER)
   }
 
   private fun getReferenceContext(referenceExpression: PyReferenceExpression,
@@ -111,17 +110,6 @@ class PyRainbowVisitor : RainbowVisitor() {
   }
 
   private fun updateNameIfGlobal(context: PsiElement, name: String?) = if (context is PyFile && name != null) "global_$name" else name
-
-  private fun getHighlightedParameterElements(namedParameter: PyNamedParameter): List<PsiElement> {
-    val nameIdentifier = namedParameter.nameIdentifier
-
-    return if (namedParameter.isPositionalContainer || namedParameter.isKeywordContainer) {
-      listOfNotNull(namedParameter.firstChild, nameIdentifier)
-    }
-    else {
-      listOfNotNull(nameIdentifier)
-    }
-  }
 
   private fun addInfo(context: PsiElement, rainbowElement: PsiElement, name: String, key: TextAttributesKey? = DEFAULT_HIGHLIGHTING_KEY) {
     addInfo(getInfo(context, rainbowElement, name, key))

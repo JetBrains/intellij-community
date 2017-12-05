@@ -3,13 +3,13 @@
 from typing import Any, Dict, Optional
 
 def run(statement: str,
-        globals: Optional[Dict[str, Any]] = None,
-        locals: Optional[Dict[str, Any]] = None) -> None:
+        globals: Optional[Dict[str, Any]] = ...,
+        locals: Optional[Dict[str, Any]] = ...) -> None:
     ...
 
 def runeval(expression: str,
-            globals: Optional[Dict[str, Any]] = None,
-            locals: Optional[Dict[str, Any]] = None) -> Any:
+            globals: Optional[Dict[str, Any]] = ...,
+            locals: Optional[Dict[str, Any]] = ...) -> Any:
     ...
 
 def runctx(statement: str,
@@ -23,7 +23,7 @@ def runcall(*args: Any, **kwds: Any) -> Any:
 def set_trace() -> None:
     ...
 
-def post_mortem(t: Optional[Any] = None) -> None:
+def post_mortem(t: Optional[Any] = ...) -> None:
     ...
 
 def pm() -> None:

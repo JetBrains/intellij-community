@@ -11,11 +11,11 @@ abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val pr
   @Volatile
   protected var currentPendingSchemeName: String? = null
 
-  override var currentScheme: T? = null
+  override var activeScheme: T? = null
     internal set
 
   override var currentSchemeName: String?
-    get() = currentScheme?.let { processor.getSchemeKey(it) } ?: currentPendingSchemeName
+    get() = activeScheme?.let { processor.getSchemeKey(it) } ?: currentPendingSchemeName
     set(schemeName) = setCurrentSchemeName(schemeName, true)
 
   internal fun processPendingCurrentSchemeName(newScheme: T) {
@@ -27,8 +27,8 @@ abstract class SchemeManagerBase<T : Any, in MUTABLE_SCHEME : T>(internal val pr
   override fun setCurrent(scheme: T?, notify: Boolean) {
     currentPendingSchemeName = null
 
-    val oldCurrent = currentScheme
-    currentScheme = scheme
+    val oldCurrent = activeScheme
+    activeScheme = scheme
     if (notify && oldCurrent !== scheme) {
       processor.onCurrentSchemeSwitched(oldCurrent, scheme)
     }

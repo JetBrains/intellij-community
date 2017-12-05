@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -51,7 +37,7 @@ public class VarExprent extends Exprent {
   private int index;
   private VarType varType;
   private boolean definition = false;
-  private VarProcessor processor;
+  private final VarProcessor processor;
   private final int visibleOffset;
   private int version = 0;
   private boolean classDef = false;
@@ -233,10 +219,6 @@ public class VarExprent extends Exprent {
     return processor;
   }
 
-  public void setProcessor(VarProcessor processor) {
-    this.processor = processor;
-  }
-
   public int getVersion() {
     return version;
   }
@@ -260,31 +242,27 @@ public class VarExprent extends Exprent {
   public void setStack(boolean stack) {
     this.stack = stack;
   }
-  
+
   // *****************************************************************************
   // IMatchable implementation
   // *****************************************************************************
-  
-  public boolean match(MatchNode matchNode, MatchEngine engine) {
 
-    if(!super.match(matchNode, engine)) {
+  @Override
+  public boolean match(MatchNode matchNode, MatchEngine engine) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
-    
+
     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_VAR_INDEX);
-    if(rule != null) {
-      if(rule.isVariable()) {
-        if(!engine.checkAndSetVariableValue((String)rule.value, this.index)) {
-          return false;
-        }
-      } else { 
-        if(this.index != Integer.valueOf((String)rule.value).intValue()) {
-          return false;
-        }
+    if (rule != null) {
+      if (rule.isVariable()) {
+        return engine.checkAndSetVariableValue((String)rule.value, this.index);
+      }
+      else {
+        return this.index == Integer.valueOf((String)rule.value);
       }
     }
-    
+
     return true;
   }
-  
 }

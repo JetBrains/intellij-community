@@ -448,7 +448,7 @@ public class FindInProjectUtil {
 
     public StringUsageTarget(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;
-      myFindModel = findModel;
+      myFindModel = findModel.clone();
     }
 
     @Override
@@ -534,7 +534,7 @@ public class FindInProjectUtil {
       Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
-      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
 
     @Override

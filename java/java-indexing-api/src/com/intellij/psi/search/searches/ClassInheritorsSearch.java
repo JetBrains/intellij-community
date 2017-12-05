@@ -18,18 +18,17 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.util.AbstractQuery;
-import com.intellij.util.FilteredQuery;
-import com.intellij.util.Query;
-import com.intellij.util.QueryExecutor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
@@ -38,7 +37,7 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
   public static final ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.classInheritorsSearch");
   public static final ClassInheritorsSearch INSTANCE = new ClassInheritorsSearch();
 
-  public static class SearchParameters {
+  public static class SearchParameters implements QueryParameters {
     @NotNull private final PsiClass myClass;
     @NotNull private final SearchScope myScope;
     private final boolean myCheckDeep;
@@ -64,6 +63,17 @@ public class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass, Clas
     @NotNull
     public PsiClass getClassToProcess() {
       return myClass;
+    }
+
+    @Nullable
+    @Override
+    public Project getProject() {
+      return myClass.getProject();
+    }
+
+    @Override
+    public boolean isQueryValid() {
+      return myClass.isValid();
     }
 
     @NotNull

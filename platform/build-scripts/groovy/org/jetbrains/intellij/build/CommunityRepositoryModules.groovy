@@ -64,8 +64,6 @@ class CommunityRepositoryModules {
     "editor-ui-ex",
     "images",
     "indexing-impl",
-    "jps-model-impl",
-    "jps-model-serialization",
     "json",
     "lang-impl",
     "lvcs-impl",
@@ -216,6 +214,9 @@ class CommunityRepositoryModules {
       withModule("coverage-common", mainJarName)
       withModule("coverage_rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
+    },
+    plugin("error-prone") {
+      withModule("error-prone-jps-plugin", "jps/error-prone-jps-plugin.jar")
     },
     plugin("java-decompiler-plugin") {
       directoryName = "java-decompiler"

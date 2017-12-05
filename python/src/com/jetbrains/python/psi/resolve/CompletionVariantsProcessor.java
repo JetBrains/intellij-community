@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -77,14 +63,15 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
   @NotNull
   private LookupElement setupItem(@NotNull LookupElementBuilder item) {
     final PsiElement element = item.getPsiElement();
-    if (!myPlainNamesOnly) {
+    if (!myPlainNamesOnly && element != null) {
+      final Project project = element.getProject();
+      final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
+
       if (!mySuppressParentheses &&
           element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&
-          !PyUtil.hasCustomDecorators((PyFunction)element) &&
+          !PyKnownDecoratorUtil.hasUnknownDecorator((PyFunction)element, context) &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)element)) {
-        final Project project = element.getProject();
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
-        final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
         final List<PyCallableParameter> parameters = ((PyFunction)element).getParameters(context);
         final String params = StringUtil.join(parameters, PyCallableParameter::getName, ", ");
         item = item.withTailText("(" + params + ")");
@@ -169,9 +156,6 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
 
   @Override
   protected void addElement(@NotNull String name, @NotNull PsiElement element) {
-    if (PyUtil.isClassPrivateName(name) && !PyUtil.inSameFile(element, myContext)) {
-      return;
-    }
     markAsProcessed(name);
     myVariants.put(name, setupItem(LookupElementBuilder.createWithSmartPointer(name, element).withIcon(element.getIcon(0))));
   }

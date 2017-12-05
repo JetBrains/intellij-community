@@ -36,8 +36,10 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
@@ -78,7 +80,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
 
   private fun downloadLibraryAndReplace(library: LibraryEx,
                                         mavenCoordinates: JpsMavenRepositoryLibraryDescriptor) {
-    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version)
+    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version, mavenCoordinates.isIncludeTransitiveDependencies)
     val hasSources = RepositoryUtils.libraryHasSources(library)
     val hasJavadoc = RepositoryUtils.libraryHasJavaDocs(library)
     LOG.debug("Resolving $mavenCoordinates")
@@ -91,10 +93,7 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
                                    null) != Messages.YES) {
         return
       }
-      val coordinates = specifyMavenCoordinates(listOf(mavenCoordinates)) ?: return
-      ApplicationManager.getApplication().invokeLater {
-        downloadLibraryAndReplace(library, coordinates)
-      }
+      changeCoordinatesAndRetry(mavenCoordinates, library)
       return
     }
 
@@ -104,11 +103,16 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
     if (task.cancelled) return
 
     if (!task.filesAreTheSame) {
-      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
-                                     LibraryUtil.getPresentableName(library), project).showAndGet()
+      val dialog = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
+                                         LibraryUtil.getPresentableName(library), project)
+      dialog.show()
       task.deleteTemporaryFiles()
-      if (!ok) {
-        return
+      when (dialog.exitCode) {
+        DialogWrapper.CANCEL_EXIT_CODE -> return
+        LibraryJarsDiffDialog.CHANGE_COORDINATES_CODE -> {
+          changeCoordinatesAndRetry(mavenCoordinates, library)
+          return
+        }
       }
     }
     ApplicationManager.getApplication().invokeLater {
@@ -118,6 +122,13 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
                            editor.addRoots(roots)
                          }
                        })
+    }
+  }
+
+  private fun changeCoordinatesAndRetry(mavenCoordinates: JpsMavenRepositoryLibraryDescriptor, library: LibraryEx) {
+    val coordinates = specifyMavenCoordinates(listOf(mavenCoordinates)) ?: return
+    ApplicationManager.getApplication().invokeLater {
+      downloadLibraryAndReplace(library, coordinates)
     }
   }
 
@@ -140,11 +151,13 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       return null
     }
 
-    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText)
+    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies)
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
+    ProjectStructureConfigurable.getInstance(project).registerObsoleteLibraryRoots((library.getFiles(OrderRootType.CLASSES) +
+                                                                                    library.getFiles(OrderRootType.SOURCES)).asList())
     replaceLibrary(library) { editor ->
       editor.properties = configuration.properties
       editor.removeAllRoots()

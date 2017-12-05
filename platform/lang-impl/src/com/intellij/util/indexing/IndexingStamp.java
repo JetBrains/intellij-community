@@ -148,11 +148,11 @@ public class IndexingStamp {
     return getIndexVersion(indexId, currentIndexVersion) == null;
   }
 
-  private static final int ANY_VERSION = 1;
+  private static final int ANY_CURRENT_INDEX_VERSION = Integer.MIN_VALUE;
   private static final long NO_VERSION = 0;
   
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    IndexVersion version = getIndexVersion(indexName, ANY_VERSION);
+    IndexVersion version = getIndexVersion(indexName, ANY_CURRENT_INDEX_VERSION);
     return version != null ? version.myModificationCount : NO_VERSION;
   }
 
@@ -169,7 +169,7 @@ public class IndexingStamp {
         final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
         try {
 
-          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
+          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
               DataInputOutputUtil.readINT(in) == VERSION &&
               DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
             version = new IndexVersion(in);

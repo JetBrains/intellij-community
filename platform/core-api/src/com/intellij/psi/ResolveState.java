@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -26,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-@SuppressWarnings({"unchecked", "ConstantConditions"})
+@SuppressWarnings({"unchecked"})
 public class ResolveState {
   private static final ResolveState ourInitialState = new ResolveState();
 
@@ -38,6 +24,11 @@ public class ResolveState {
   @NotNull
   public <T> ResolveState put(@NotNull Key<T> key, T value) {
     return new OneElementResolveState(key, value);
+  }
+
+  @NotNull
+  public ResolveState putAll(@NotNull ResolveState state) {
+    return state;
   }
 
   public <T> T get(@NotNull Key<T> key) {
@@ -65,6 +56,12 @@ public class ResolveState {
       }
 
       return new TwoElementResolveState(myKey, myValue, key, value);
+    }
+
+    @NotNull
+    @Override
+    public ResolveState putAll(@NotNull ResolveState state) {
+      return state.get(myKey) == null ? state.put(myKey, myValue) : state;
     }
 
     @Override
@@ -103,6 +100,31 @@ public class ResolveState {
       return new ManyElementResolveState(this, key, value);
     }
 
+    @NotNull
+    @Override
+    public ResolveState putAll(@NotNull ResolveState state) {
+      if (state == ourInitialState) {
+        return this;
+      }
+      else if (state instanceof OneElementResolveState) {
+        OneElementResolveState oneState = (OneElementResolveState)state;
+        return put(oneState.myKey, oneState.myValue);
+      }
+      boolean has1 = state.get(myKey1) != null;
+      boolean has2 = state.get(myKey2) != null;
+      if (has1 && has2) {
+        return state;
+      }
+      else if (has1) {
+        return state.put(myKey2, myValue2);
+      }
+      else if (has2) {
+        return state.put(myKey1, myValue1);
+      }
+      // at this point our keys are not in other and other has at least 2 keys
+      return new ManyElementResolveState(state, this);
+    }
+
     @Override
     public <T> T get(@NotNull Key<T> key) {
       Object value;
@@ -126,15 +148,30 @@ public class ResolveState {
   private static class ManyElementResolveState extends ResolveState {
     private final Map<Object, Object> myValues = new THashMap<>();
 
-    ManyElementResolveState(@NotNull ManyElementResolveState parent, @NotNull Key key, Object value) {
-      myValues.putAll(parent.myValues);
+    ManyElementResolveState(@NotNull ResolveState state1, @NotNull ResolveState state2) {
+      putAllNoCopy(state1);
+      putAllNoCopy(state2);
+    }
+
+    ManyElementResolveState(@NotNull ResolveState state, @NotNull Key key, Object value) {
+      putAllNoCopy(state);
       myValues.put(key, value);
     }
 
-    ManyElementResolveState(@NotNull TwoElementResolveState twoState, @NotNull Key key, Object value) {
-      myValues.put(twoState.myKey1, twoState.myValue1);
-      myValues.put(twoState.myKey2, twoState.myValue2);
-      myValues.put(key, value);
+    private void putAllNoCopy(@NotNull ResolveState other) {
+      if (other instanceof OneElementResolveState) {
+        OneElementResolveState oneState = (OneElementResolveState)other;
+        myValues.put(oneState.myKey, oneState.myValue);
+      }
+      else if (other instanceof TwoElementResolveState) {
+        TwoElementResolveState twoState = (TwoElementResolveState)other;
+        myValues.put(twoState.myKey1, twoState.myValue1);
+        myValues.put(twoState.myKey2, twoState.myValue2);
+      }
+      else if (other instanceof ManyElementResolveState) {
+        ManyElementResolveState manyState = (ManyElementResolveState)other;
+        myValues.putAll(manyState.myValues);
+      }
     }
 
     @NotNull
@@ -143,11 +180,18 @@ public class ResolveState {
       return new ManyElementResolveState(this, key, value);
     }
 
+    @NotNull
+    @Override
+    public ResolveState putAll(@NotNull ResolveState state) {
+      if (state == ourInitialState) return this;
+      return new ManyElementResolveState(this, state);
+    }
+
     @Override
     public <T> T get(@NotNull Key<T> key) {
       final T value = (T)myValues.get(key);
       if (value == null && key instanceof KeyWithDefaultValue) {
-        return ((KeyWithDefaultValue<T>) key).getDefaultValue();
+        return ((KeyWithDefaultValue<T>)key).getDefaultValue();
       }
       return value;
     }

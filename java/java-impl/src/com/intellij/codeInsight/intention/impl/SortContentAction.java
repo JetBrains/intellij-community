@@ -92,7 +92,6 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
   private static boolean isNumericType(@NotNull PsiType type) {
     return type.equals(PsiType.INT) ||
-           type.equals(PsiType.CHAR) ||
            type.equals(PsiType.LONG) ||
            type.equals(PsiType.SHORT) ||
            type.equals(PsiType.BYTE);
@@ -189,9 +188,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (initializerExpression == null) return null;
       PsiExpression[] initializers = initializerExpression.getInitializers();
       if (initializers.length < MIN_EXPRESSION_COUNT) return null;
-      PsiNewExpression newExpr = tryCast(initializerExpression.getParent(), PsiNewExpression.class);
-      if (newExpr == null) return null;
-      PsiArrayType arrayType = tryCast(newExpr.getType(), PsiArrayType.class);
+      PsiArrayType arrayType = tryCast(initializerExpression.getType(), PsiArrayType.class);
       if (arrayType == null) return null;
       PsiType componentType = arrayType.getComponentType();
       if (!isSortableExpressions(initializers, componentType)) return null;

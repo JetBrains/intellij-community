@@ -1,5 +1,5 @@
 from distutils.version import Version
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar, Union, Text
 
 from click.core import Command, Group, Argument, Option, Parameter, Context
 from click.types import ParamType
@@ -21,7 +21,7 @@ def pass_obj(_T) -> _T:
 
 
 def make_pass_decorator(
-    object_type: type, ensure: bool = False
+    object_type: type, ensure: bool = ...
 ) -> Callable[[_T], _T]:
     ...
 
@@ -30,15 +30,15 @@ def make_pass_decorator(
 # arguments from core.pyi to help with type checking.
 
 def command(
-    name: Optional[str] = None,
-    cls: type = Command,
+    name: Optional[str] = ...,
+    cls: Optional[Type[Command]] = ...,
     # Command
     context_settings: Optional[Dict] = ...,
-    help: Optional[str] = None,
-    epilog: Optional[str] = None,
-    short_help: Optional[str] = None,
-    options_metavar: str = '[OPTIONS]',
-    add_help_option: bool = True,
+    help: Optional[str] = ...,
+    epilog: Optional[str] = ...,
+    short_help: Optional[str] = ...,
+    options_metavar: str = ...,
+    add_help_option: bool = ...,
 ) -> _Decorator:
     ...
 
@@ -46,22 +46,22 @@ def command(
 # This inherits attrs from Group, MultiCommand and Command.
 
 def group(
-    name: Optional[str] = None,
-    cls: type = Group,
+    name: Optional[str] = ...,
+    cls: Type[Command] = ...,
     # Group
-    commands: Optional[Dict[str, Command]] = None,
+    commands: Optional[Dict[str, Command]] = ...,
     # MultiCommand
-    invoke_without_command: bool = False,
-    no_args_is_help: Optional[bool] = None,
-    subcommand_metavar: Optional[str] = None,
-    chain: bool = False,
-    result_callback: Optional[Callable] = None,
+    invoke_without_command: bool = ...,
+    no_args_is_help: Optional[bool] = ...,
+    subcommand_metavar: Optional[str] = ...,
+    chain: bool = ...,
+    result_callback: Optional[Callable] = ...,
     # Command
-    help: Optional[str] = None,
-    epilog: Optional[str] = None,
-    short_help: Optional[str] = None,
-    options_metavar: str = '[OPTIONS]',
-    add_help_option: bool = True,
+    help: Optional[str] = ...,
+    epilog: Optional[str] = ...,
+    short_help: Optional[str] = ...,
+    options_metavar: str = ...,
+    add_help_option: bool = ...,
     # User-defined
     **kwargs: Any,
 ) -> _Decorator:
@@ -70,159 +70,155 @@ def group(
 
 def argument(
     *param_decls: str,
-    cls: type = Argument,
+    cls: Type[Argument] = ...,
     # Argument
-    required: Optional[bool] = None,
+    required: Optional[bool] = ...,
     # Parameter
-    type: Optional[Union[type, ParamType]] = None,
-    default: Optional[Any] = None,
+    type: Optional[Union[type, ParamType]] = ...,
+    default: Optional[Any] = ...,
     callback: Optional[_Callback] = ...,
-    nargs: Optional[int] = None,
-    metavar: Optional[str] = None,
-    expose_value: bool = True,
-    is_eager: bool = False,
-    envvar: Optional[Union[str, List[str]]] = None
+    nargs: Optional[int] = ...,
+    metavar: Optional[str] = ...,
+    expose_value: bool = ...,
+    is_eager: bool = ...,
+    envvar: Optional[Union[str, List[str]]] = ...
 ) -> _Decorator:
     ...
 
 
 def option(
     *param_decls: str,
-    cls: type = Option,
+    cls: Type[Option] = ...,
     # Option
-    show_default: bool = False,
-    prompt: bool = False,
-    confirmation_prompt: bool = False,
-    hide_input: bool = False,
-    is_flag: Optional[bool] = None,
-    flag_value: Optional[Any] = None,
-    multiple: bool = False,
-    count: bool = False,
-    allow_from_autoenv: bool = True,
-    type: Optional[Union[type, ParamType]] = None,
-    help: Optional[str] = None,
+    show_default: bool = ...,
+    prompt: Union[bool, Text] = ...,
+    confirmation_prompt: bool = ...,
+    hide_input: bool = ...,
+    is_flag: Optional[bool] = ...,
+    flag_value: Optional[Any] = ...,
+    multiple: bool = ...,
+    count: bool = ...,
+    allow_from_autoenv: bool = ...,
+    type: Optional[Union[type, ParamType]] = ...,
+    help: Optional[str] = ...,
     # Parameter
-    default: Optional[Any] = None,
-    required: bool = False,
+    default: Optional[Any] = ...,
+    required: bool = ...,
     callback: Optional[_Callback] = ...,
-    nargs: Optional[int] = None,
-    metavar: Optional[str] = None,
-    expose_value: bool = True,
-    is_eager: bool = False,
-    envvar: Optional[Union[str, List[str]]] = None
+    nargs: Optional[int] = ...,
+    metavar: Optional[str] = ...,
+    expose_value: bool = ...,
+    is_eager: bool = ...,
+    envvar: Optional[Union[str, List[str]]] = ...
 ) -> _Decorator:
     ...
 
 
-# Defaults copied from the decorator body.
 def confirmation_option(
     *param_decls: str,
-    cls: type = Option,
+    cls: Type[Option] = ...,
     # Option
-    show_default: bool = False,
-    prompt: str = 'Do you want to continue?',
-    confirmation_prompt: bool = False,
-    hide_input: bool = False,
-    is_flag: bool = True,
-    flag_value: Optional[Any] = None,
-    multiple: bool = False,
-    count: bool = False,
-    allow_from_autoenv: bool = True,
-    type: Optional[Union[type, ParamType]] = None,
-    help: str = 'Confirm the action without prompting.',
+    show_default: bool = ...,
+    prompt: Union[bool, Text] = ...,
+    confirmation_prompt: bool = ...,
+    hide_input: bool = ...,
+    is_flag: bool = ...,
+    flag_value: Optional[Any] = ...,
+    multiple: bool = ...,
+    count: bool = ...,
+    allow_from_autoenv: bool = ...,
+    type: Optional[Union[type, ParamType]] = ...,
+    help: str = ...,
     # Parameter
-    default: Optional[Any] = None,
+    default: Optional[Any] = ...,
     callback: Optional[_Callback] = ...,
-    nargs: Optional[int] = None,
-    metavar: Optional[str] = None,
-    expose_value: bool = False,
-    is_eager: bool = False,
-    envvar: Optional[Union[str, List[str]]] = None
+    nargs: Optional[int] = ...,
+    metavar: Optional[str] = ...,
+    expose_value: bool = ...,
+    is_eager: bool = ...,
+    envvar: Optional[Union[str, List[str]]] = ...
 ) -> _Decorator:
     ...
 
 
-# Defaults copied from the decorator body.
 def password_option(
     *param_decls: str,
-    cls: type = Option,
+    cls: Type[Option] = ...,
     # Option
-    show_default: bool = False,
-    prompt: bool = True,
-    confirmation_prompt: bool = True,
-    hide_input: bool = True,
-    is_flag: Optional[bool] = None,
-    flag_value: Optional[Any] = None,
-    multiple: bool = False,
-    count: bool = False,
-    allow_from_autoenv: bool = True,
-    type: Optional[Union[type, ParamType]] = None,
-    help: Optional[str] = None,
+    show_default: bool = ...,
+    prompt: Union[bool, Text] = ...,
+    confirmation_prompt: bool = ...,
+    hide_input: bool = ...,
+    is_flag: Optional[bool] = ...,
+    flag_value: Optional[Any] = ...,
+    multiple: bool = ...,
+    count: bool = ...,
+    allow_from_autoenv: bool = ...,
+    type: Optional[Union[type, ParamType]] = ...,
+    help: Optional[str] = ...,
     # Parameter
-    default: Optional[Any] = None,
+    default: Optional[Any] = ...,
     callback: Optional[_Callback] = ...,
-    nargs: Optional[int] = None,
-    metavar: Optional[str] = None,
-    expose_value: bool = True,
-    is_eager: bool = False,
-    envvar: Optional[Union[str, List[str]]] = None
+    nargs: Optional[int] = ...,
+    metavar: Optional[str] = ...,
+    expose_value: bool = ...,
+    is_eager: bool = ...,
+    envvar: Optional[Union[str, List[str]]] = ...
 ) -> _Decorator:
     ...
 
 
-# Defaults copied from the decorator body.
 def version_option(
-    version: Optional[Union[str, Version]] = None,
+    version: Optional[Union[str, Version]] = ...,
     *param_decls: str,
-    cls: type = Option,
+    cls: Type[Option] = ...,
     # Option
-    prog_name: Optional[str] = None,
-    show_default: bool = False,
-    prompt: bool = False,
-    confirmation_prompt: bool = False,
-    hide_input: bool = False,
-    is_flag: bool = True,
-    flag_value: Optional[Any] = None,
-    multiple: bool = False,
-    count: bool = False,
-    allow_from_autoenv: bool = True,
-    type: Optional[Union[type, ParamType]] = None,
-    help: str = 'Show the version and exit.',
+    prog_name: Optional[str] = ...,
+    show_default: bool = ...,
+    prompt: Union[bool, Text] = ...,
+    confirmation_prompt: bool = ...,
+    hide_input: bool = ...,
+    is_flag: bool = ...,
+    flag_value: Optional[Any] = ...,
+    multiple: bool = ...,
+    count: bool = ...,
+    allow_from_autoenv: bool = ...,
+    type: Optional[Union[type, ParamType]] = ...,
+    help: str = ...,
     # Parameter
-    default: Optional[Any] = None,
+    default: Optional[Any] = ...,
     callback: Optional[_Callback] = ...,
-    nargs: Optional[int] = None,
-    metavar: Optional[str] = None,
-    expose_value: bool = False,
-    is_eager: bool = True,
-    envvar: Optional[Union[str, List[str]]] = None
+    nargs: Optional[int] = ...,
+    metavar: Optional[str] = ...,
+    expose_value: bool = ...,
+    is_eager: bool = ...,
+    envvar: Optional[Union[str, List[str]]] = ...
 ) -> _Decorator:
     ...
 
 
-# Defaults copied from the decorator body.
 def help_option(
     *param_decls: str,
-    cls: type = Option,
+    cls: Type[Option] = ...,
     # Option
-    show_default: bool = False,
-    prompt: bool = False,
-    confirmation_prompt: bool = False,
-    hide_input: bool = False,
-    is_flag: bool = True,
-    flag_value: Optional[Any] = None,
-    multiple: bool = False,
-    count: bool = False,
-    allow_from_autoenv: bool = True,
-    type: Optional[Union[type, ParamType]] = None,
-    help: str = 'Show this message and exit.',
+    show_default: bool = ...,
+    prompt: Union[bool, Text] = ...,
+    confirmation_prompt: bool = ...,
+    hide_input: bool = ...,
+    is_flag: bool = ...,
+    flag_value: Optional[Any] = ...,
+    multiple: bool = ...,
+    count: bool = ...,
+    allow_from_autoenv: bool = ...,
+    type: Optional[Union[type, ParamType]] = ...,
+    help: str = ...,
     # Parameter
-    default: Optional[Any] = None,
+    default: Optional[Any] = ...,
     callback: Optional[_Callback] = ...,
-    nargs: Optional[int] = None,
-    metavar: Optional[str] = None,
-    expose_value: bool = False,
-    is_eager: bool = True,
-    envvar: Optional[Union[str, List[str]]] = None
+    nargs: Optional[int] = ...,
+    metavar: Optional[str] = ...,
+    expose_value: bool = ...,
+    is_eager: bool = ...,
+    envvar: Optional[Union[str, List[str]]] = ...
 ) -> _Decorator:
     ...

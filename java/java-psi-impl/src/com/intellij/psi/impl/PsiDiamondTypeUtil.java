@@ -77,7 +77,7 @@ public class PsiDiamondTypeUtil {
                 final PsiElement resolve = classReference.resolve();
                 if (resolve instanceof PsiClass) {
                   final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
-                  return areTypeArgumentsRedundant(typeArguments, expression, true, method, typeParameters);
+                  return areTypeArgumentsRedundant(typeArguments, context, true, method, typeParameters);
                 }
               }
             }
@@ -160,43 +160,44 @@ public class PsiDiamondTypeUtil {
   }
   
   public static boolean areTypeArgumentsRedundant(PsiType[] typeArguments,
-                                                  PsiExpression expression,
+                                                  PsiExpression context,
                                                   boolean constructorRef,
                                                   @Nullable PsiMethod method, 
                                                   PsiTypeParameter[] typeParameters) {
     try {
       final PsiElement copy;
-      final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
+      final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(context);
       if (typeByParent != null) {
-        if (isAugmented(expression)) {
+        if (isAugmented(context)) {
           return false;
         }
         final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-        final Project project = expression.getProject();
+        final Project project = context.getProject();
         final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-        PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, expression);
+        PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, context);
         //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
         newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
         final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
         LOG.assertTrue(initializer != null);
-        copy = initializer.getInitializers()[0].replace(expression);
+        copy = initializer.getInitializers()[0].replace(context);
       }
       else {
-        final PsiExpressionList argumentList = expression instanceof PsiCallExpression ? ((PsiCallExpression)expression).getArgumentList() : null;
-        final int offset = (argumentList != null ? argumentList : expression).getTextRange().getStartOffset();
-        final PsiCall call = LambdaUtil.treeWalkUp(expression);
+        final PsiExpressionList argumentList = context instanceof PsiCallExpression ? ((PsiCallExpression)context).getArgumentList() : null;
+        final Object marker = new Object();
+        PsiTreeUtil.mark(argumentList != null ? argumentList : context, marker);
+        final PsiCall call = LambdaUtil.treeWalkUp(context);
         if (call != null) {
           final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
-          copy = callCopy != null ? callCopy.findElementAt(offset - call.getTextRange().getStartOffset()) : null;
+          copy = callCopy != null ? PsiTreeUtil.releaseMark(callCopy, marker) : null;
         }
         else  {
-          final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(expression.getProject());
-          if (injectedLanguageManager.getInjectionHost(expression) != null) {
+          final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(context.getProject());
+          if (injectedLanguageManager.getInjectionHost(context) != null) {
             return false;
           }
-          final PsiFile containingFile = expression.getContainingFile();
+          final PsiFile containingFile = context.getContainingFile();
           final PsiFile fileCopy = (PsiFile)containingFile.copy();
-          copy = fileCopy.findElementAt(offset);
+          copy = PsiTreeUtil.releaseMark(fileCopy, marker);
           if (method != null && method.getContainingFile() == containingFile) {
             final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
             method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);
@@ -207,7 +208,7 @@ public class PsiDiamondTypeUtil {
           }
         }
       }
-      if (expression instanceof PsiMethodReferenceExpression) {
+      if (context instanceof PsiMethodReferenceExpression) {
         PsiMethodReferenceExpression methodRefCopy = PsiTreeUtil.getParentOfType(copy, PsiMethodReferenceExpression.class, false);
         if (methodRefCopy != null && !isInferenceEquivalent(typeArguments, typeParameters, method, methodRefCopy)) {
           return false;

@@ -110,6 +110,11 @@ public class HardcodedContracts {
       else if ("isEmpty".equals(methodName) && paramCount == 0) {
         return SpecialField.STRING_LENGTH.getEmptyContracts();
       }
+      else if (("equals".equals(methodName) || "equalsIgnoreCase".equals(methodName)) && paramCount == 1) {
+        return Arrays.asList(getEqualsContract(), MethodContract.singleConditionContract(
+          ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.NE,
+          ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), FALSE_VALUE));
+      }
     }
     else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_COLLECTION, PsiType.BOOLEAN, "isEmpty")) {
       return SpecialField.COLLECTION_SIZE.getEmptyContracts();
@@ -120,7 +125,7 @@ public class HardcodedContracts {
     }
     else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_SET, PsiType.BOOLEAN, "equals", (PsiType)null) ||
              MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_LIST, PsiType.BOOLEAN, "equals", (PsiType)null)) {
-      return Collections.singletonList(MethodContract.singleConditionContract(
+      return Arrays.asList(getEqualsContract(), MethodContract.singleConditionContract(
         ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.NE,
         ContractValue.argument(0).specialField(SpecialField.COLLECTION_SIZE), FALSE_VALUE));
     }
@@ -141,7 +146,7 @@ public class HardcodedContracts {
         ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.EQ, ContractValue.zero(), FALSE_VALUE));
     }
     else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_MAP, PsiType.BOOLEAN, "equals", (PsiType)null)) {
-      return Collections.singletonList(MethodContract.singleConditionContract(
+      return Arrays.asList(getEqualsContract(), MethodContract.singleConditionContract(
         ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.NE,
         ContractValue.argument(0).specialField(SpecialField.MAP_SIZE), FALSE_VALUE));
     }
@@ -176,8 +181,16 @@ public class HardcodedContracts {
         return Arrays.asList(optionalAbsentContract(FALSE_VALUE), MethodContract.trivialContract(TRUE_VALUE));
       }
     }
+    else if (MethodUtils.isEquals(method)) {
+      return Collections.singletonList(getEqualsContract());
+    }
 
     return Collections.emptyList();
+  }
+
+  @NotNull
+  private static StandardMethodContract getEqualsContract() {
+    return new StandardMethodContract(new MethodContract.ValueConstraint[] {NULL_VALUE}, FALSE_VALUE);
   }
 
   static MethodContract optionalAbsentContract(MethodContract.ValueConstraint returnValue) {

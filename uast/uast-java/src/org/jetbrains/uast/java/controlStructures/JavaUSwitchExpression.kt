@@ -67,6 +67,19 @@ private fun PsiCodeBlock.convertToSwitchEntryList(containingElement: UExpression
   return result
 }
 
+internal fun findUSwitchEntry(body: UExpressionList, el: PsiSwitchLabelStatement): JavaUSwitchEntry? =
+  body.also { require(it.kind == JavaSpecialExpressionKinds.SWITCH) }
+    .expressions.find { (it as? JavaUSwitchEntry)?.labels?.contains(el) ?: false } as? JavaUSwitchEntry
+
+internal fun findUSwitchClauseBody(switch: JavaUSwitchExpression, psi: PsiElement): UExpressionList {
+  val bodyExpressions = switch.body.expressions
+  val uExpression = bodyExpressions.find {
+    (it as JavaUSwitchEntry).body.expressions.any { it.psi == psi }
+  } ?: throw IllegalStateException("${psi.javaClass} not found in ${bodyExpressions.map { it.asLogString() }}")
+  return (uExpression as JavaUSwitchEntry).body
+}
+
+
 class JavaUSwitchEntry(
   val labels: List<PsiSwitchLabelStatement>,
   val statements: List<PsiStatement>,
@@ -77,7 +90,7 @@ class JavaUSwitchEntry(
   override val caseValues by lz {
     labels.mapNotNull {
       if (it.isDefaultCase) {
-        JavaUDefaultCaseExpression
+        JavaUDefaultCaseExpression(it, this)
       }
       else {
         val value = it.caseValue
@@ -100,12 +113,8 @@ class JavaUSwitchEntry(
   }
 }
 
-object JavaUDefaultCaseExpression : UExpression, JvmDeclarationUElement {
-  override val uastParent: UElement?
-    get() = null
-
-  override val psi: PsiElement?
-    get() = null
+class JavaUDefaultCaseExpression(override val psi: PsiElement?, givenParent: UElement?)
+  : JavaAbstractUExpression(givenParent), JvmDeclarationUElement {
 
   override val annotations: List<UAnnotation>
     get() = emptyList()

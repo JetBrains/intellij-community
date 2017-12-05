@@ -94,7 +94,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
         .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
-      toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+      JComponent component = toolWindow.getComponent();
+      if (component != null) {
+        component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+      }
       toolWindow.setIcon(AllIcons.Actions.Compile);
       toolWindow.setAvailable(true, null);
       toolWindow.hide(null);

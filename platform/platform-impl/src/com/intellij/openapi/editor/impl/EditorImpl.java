@@ -70,10 +70,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -119,6 +116,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntFunction;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
@@ -297,6 +295,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
+  public final Object myFractionalMetricsHintValue = Registry.is("editor.text.fractional.metrics")
+                                                     ? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+                                                     : RenderingHints.VALUE_FRACTIONALMETRICS_OFF;
   final EditorView myView;
 
   private boolean myCharKeyPressed;
@@ -310,6 +311,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myUseEditorAntialiasing = true;
 
   private final ImmediatePainter myImmediatePainter;
+
+  private final List<IntFunction<Collection<LineExtensionInfo>>> myLineExtensionPainters = new SmartList<>();
 
   static {
     ourCaretBlinkingCommand.start();
@@ -657,6 +660,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setPurePaintingMode(boolean enabled) {
     myPurePaintingMode = enabled;
+  }
+
+  @Override
+  public void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter) {
+    myLineExtensionPainters.add(lineExtensionPainter);
+  }
+
+  public boolean processLineExtensions(int line, Processor<LineExtensionInfo> processor) {
+    for (IntFunction<Collection<LineExtensionInfo>> painter : myLineExtensionPainters) {
+      for (LineExtensionInfo extension : painter.apply(line)) {
+        if (!processor.process(extension)) {
+          return false;
+        }
+      }
+    }
+    if (myProject != null && myVirtualFile != null) {
+      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+        Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
+        if (extensions != null) {
+          for (LineExtensionInfo extension : extensions) {
+            if (!processor.process(extension)) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   @Override
@@ -2185,6 +2216,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     else {
       myGutterComponent.setActiveFoldRegion(null);
+      if (myEditorComponent.isCursorSet()) {
+        Cursor cursor = myEditorComponent.getCursor();
+        if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) && 
+            cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
+            cursor != EMPTY_CURSOR &&
+            (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
+          // someone else has set cursor, don't touch it
+          return;
+        }
+      }
       if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
         int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
         if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {

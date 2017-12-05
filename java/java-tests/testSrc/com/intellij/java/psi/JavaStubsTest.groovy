@@ -304,4 +304,15 @@ class A {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test lone angle brackets"() {
+    String text = """
+class A {
+  {
+    PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(element, .class);
+    final <PsiElement, TextRange> pair;
+  }  
+}"""
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text))
+  }
+
 }

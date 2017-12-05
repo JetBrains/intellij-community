@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
 import org.junit.Assert;
 
@@ -41,6 +42,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   public void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
     Assert.assertNull(ProjectViewTestUtil.getNodeForElement(element, pane));
     pane.select(element, virtualFile, true);
+    PlatformTestUtil.waitUntilBusy(pane.getTree());
     Assert.assertTrue(ProjectViewTestUtil.isExpanded(element, pane));
   }
 
@@ -48,6 +50,7 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
     final AbstractProjectViewPSIPane pane = new TestProjectViewPSIPane(myProject, this, 9);
     pane.createComponent();
     Disposer.register(this, pane);
+    PlatformTestUtil.waitUntilBusy(pane.getTree());
     return pane;
   }
 

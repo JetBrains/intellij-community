@@ -138,6 +138,7 @@ class GitApplyChangesProcess(private val project: Project,
           waitForChangeListManagerUpdate()
 
           if (mergeCompleted) {
+            LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
             if (!committed) return false
@@ -148,10 +149,7 @@ class GitApplyChangesProcess(private val project: Project,
           }
         }
         else if (untrackedFilesDetector.wasMessageDetected()) {
-          var description = commitDetails(commit) +
-                            "<br/>Some untracked working tree files would be overwritten by $operationName.<br/>" +
-                            "Please move, remove or add them before you can $operationName. <a href='view'>View them</a>"
-          description += getSuccessfulCommitDetailsIfAny(successfulCommits)
+          var description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
                                                                     untrackedFilesDetector.relativeFilePaths, operationName, description)
@@ -198,10 +196,12 @@ class GitApplyChangesProcess(private val project: Project,
     }
     val changes = actualList.changes
     if (changes.isEmpty()) {
+      LOG.debug("No changes in the $actualList. All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       alreadyPicked.add(commit)
       return true
     }
 
+    LOG.debug("Showing commit dialog for changes: ${changes}")
     val committed = showCommitDialogAndWaitForCommit(repository, changeList, commitMessage, changes)
     if (committed) {
       refreshVfsAndMarkDirty(changes)
@@ -215,6 +215,9 @@ class GitApplyChangesProcess(private val project: Project,
       return false
     }
   }
+
+  private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
+    changeListManagerEx.changeLists.map { it -> "[${it.name}] ${it.changes}" }
 
   private fun waitForChangeListManagerUpdate() {
     val waiter = CountDownLatch(1)
@@ -248,6 +251,8 @@ class GitApplyChangesProcess(private val project: Project,
   private fun removeChangeListIfEmpty(changeList: LocalChangeList) {
     val actualList = changeListManager.getChangeList(changeList.id)
     if (actualList != null && actualList.changes.isEmpty()) {
+      LOG.debug("Changelist $actualList is empty, removing. " +
+                "All changes in the CLM: ${getAllChangesInLogFriendlyPresentation(changeListManager)}")
       changeListManager.removeChangeList(actualList)
     }
   }
@@ -373,7 +378,7 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   private fun commitDetails(commit: VcsFullCommitDetails): String {
-    return commit.id.toShortString() + " " + commit.subject
+    return commit.id.toShortString() + " " + StringUtil.escapeXml(commit.subject)
   }
 
   private fun toString(commitsInRoots: Map<GitRepository, List<VcsFullCommitDetails>>): String {

@@ -17,18 +17,17 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 
-/**
- * @author max
- */
-public class LocalCanBeFinalTest extends InspectionTestCase {
+public class LocalCanBeFinalTest extends LightCodeInsightFixtureTestCase {
   private LocalCanBeFinal myTool;
 
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/localCanBeFinal/";
   }
   
   @Override
@@ -38,26 +37,27 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
   }
 
   private void doTest() {
-    doTest("localCanBeFinal/" + getTestName(false), myTool);
+    myFixture.enableInspections(myTool);
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
   }
 
-  public void testmultiWriteNoRead() {
+  public void testMultiWriteNoRead() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
-  public void testif() {
+  public void testIfTest() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
-  public void testincompleteAssignment() {
+  public void testIncompleteAssignment() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
 
-  public void testparameters() {
+  public void testParameters() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
@@ -112,7 +112,7 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
     myTool.REPORT_VARIABLES = true;
     doTest();
   }
-  public void testforeach() {
+  public void testTestFinal2() {
     myTool.REPORT_PARAMETERS = true;
     myTool.REPORT_VARIABLES = true;
     doTest();
@@ -148,5 +148,15 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
     myTool.REPORT_PARAMETERS = false;
     myTool.REPORT_VARIABLES = true;
     doTest();
+  }
+
+  public void testResource() {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

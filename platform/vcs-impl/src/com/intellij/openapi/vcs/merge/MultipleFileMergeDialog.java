@@ -163,13 +163,13 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     myAcceptYoursButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        acceptRevision(true);
+        acceptRevision(MergeSession.Resolution.AcceptedYours);
       }
     });
     myAcceptTheirsButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        acceptRevision(false);
+        acceptRevision(MergeSession.Resolution.AcceptedTheirs);
       }
     });
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -252,7 +252,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     return "MultipleFileMergeDialog";
   }
 
-  private void acceptRevision(final boolean isCurrent) {
+  private void acceptRevision(@NotNull MergeSession.Resolution resolution) {
     FileDocumentManager.getInstance().saveAllDocuments();
     final Collection<VirtualFile> files = myTable.getSelection();
     if (!beforeResolve(files)) {
@@ -261,8 +261,9 @@ public class MultipleFileMergeDialog extends DialogWrapper {
 
     try {
       for (VirtualFile file : files) {
-        acceptFileRevision(file, isCurrent);
-        markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
+        acceptFileRevision(file, resolution);
+        checkMarkModifiedProject(file);
+        markFileProcessed(file, resolution);
       }
     }
     catch (Exception e) {
@@ -273,13 +274,16 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     updateModelFromFiles();
   }
 
-  private void acceptFileRevision(@NotNull VirtualFile file, boolean isCurrent) throws Exception {
+  private void acceptFileRevision(@NotNull VirtualFile file, @NotNull MergeSession.Resolution resolution) throws Exception {
     if (myMergeSession != null && !myMergeSession.canMerge(file)) return;
+
+    if (myMergeSession != null && myMergeSession.acceptFileRevision(file, resolution)) return;
 
     if (!DiffUtil.makeWritable(myProject, file)) {
       throw new IOException("File is read-only: " + file.getPresentableName());
     }
 
+    boolean isCurrent = resolution == MergeSession.Resolution.AcceptedYours;
     MergeData data = myProvider.loadRevisions(file);
 
     Ref<Exception> ex = new Ref<>();
@@ -291,7 +295,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
           }
           else {
             file.setBinaryContent(data.LAST);
-            checkMarkModifiedProject(file);
           }
         }
         catch (Exception e) {

@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project.autoimport;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -62,6 +63,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -69,7 +71,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -285,6 +286,16 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         addToRefreshQueue(projectPath, systemId, reportRefreshError);
       }
       else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
+        if (manager instanceof ExternalSystemAutoImportAware) {
+          Long lastTimestamp = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps().get(projectPath);
+          if (lastTimestamp != null) {
+            List<File> affectedFiles = ((ExternalSystemAutoImportAware)manager).getAffectedExternalProjectFiles(projectPath, myProject);
+            long currentTimeStamp = affectedFiles.stream().mapToLong(File::lastModified).sum();
+            if (lastTimestamp != currentTimeStamp) {
+              return;
+            }
+          }
+        }
         // re-schedule to wait for the active project import task end
         final ExternalSystemProgressNotificationManager progressManager =
           ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
@@ -333,16 +344,16 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           timeStamp += file.lastModified();
         }
         Map<String, Long> modificationStamps = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps();
-        if (isProjectOpen && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
+        if (isProjectOpen &&
+            myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
+            myProject.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
           Long affectedFilesTimestamp = modificationStamps.get(settings.getExternalProjectPath());
           affectedFilesTimestamp = affectedFilesTimestamp == null ? -1L : affectedFilesTimestamp;
           if (timeStamp != affectedFilesTimestamp) {
             scheduleUpdate(settings.getExternalProjectPath());
           }
         }
-        else {
-          modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
-        }
+        modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
 
         for (File file : files) {
           if (file == null) continue;
@@ -362,6 +373,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               Long crc = virtualFile.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
               if (crc != null) {
                 modificationStamps.put(path, crc);
+              }
+              else {
+                UIUtil.invokeLaterIfNeeded(() -> {
+                  Long newCrc = calculateCrc(virtualFile);
+                  virtualFile.putUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT, newCrc);
+                  modificationStamps.put(path, newCrc);
+                });
               }
             }
           }
@@ -492,35 +510,21 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                           ProjectSystemId systemId,
                           String projectPath) {
       super(systemId.getReadableName() + " Import",
-            ExternalSystemBundle.message("import.needed", systemId.getReadableName()),
-            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a>" +
-            " &nbsp;&nbsp;" +
-            "<a href='autoImport'>" + ExternalSystemBundle.message("import.enableAutoImport") + "</a>",
+            ExternalSystemBundle.message("import.needed", systemId.getReadableName()), "",
             NotificationType.INFORMATION, null);
-
       mySystemId = systemId;
       myNotificationMap = notificationMap;
       projectPaths = ContainerUtil.newHashSet(projectPath);
-      setListener(new NotificationListener.Adapter() {
+      addAction(new NotificationAction(ExternalSystemBundle.message("import.importChanged")) {
         @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          boolean isReimport = event.getDescription().equals("reimport");
-          boolean isAutoImport = event.getDescription().equals("autoImport");
-
-          projectPaths.stream()
-            .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
-            .distinct()
-            .filter(Objects::nonNull)
-            .forEach(settings -> {
-              if (isReimport) {
-                scheduleRefresh(project, settings.getExternalProjectPath(), systemId, true);
-              }
-              if (isAutoImport) {
-                settings.setUseAutoImport(true);
-                scheduleRefresh(project, settings.getExternalProjectPath(), systemId, false);
-              }
-            });
-          notification.expire();
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          doAction(notification, project, systemId, false);
+        }
+      });
+      addAction(new NotificationAction(ExternalSystemBundle.message("import.enableAutoImport")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          doAction(notification, project, systemId, true);
         }
       });
     }
@@ -530,6 +534,23 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       super.expire();
       projectPaths.clear();
       myNotificationMap.remove(mySystemId);
+    }
+
+    private void doAction(@NotNull Notification notification,
+                          Project project,
+                          ProjectSystemId systemId,
+                          boolean isAutoImport) {
+      projectPaths.stream()
+        .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
+        .distinct()
+        .filter(Objects::nonNull)
+        .forEach(settings -> {
+          if (isAutoImport) {
+            settings.setUseAutoImport(true);
+          }
+          scheduleRefresh(project, settings.getExternalProjectPath(), systemId, !isAutoImport);
+        });
+      notification.expire();
     }
   }
 

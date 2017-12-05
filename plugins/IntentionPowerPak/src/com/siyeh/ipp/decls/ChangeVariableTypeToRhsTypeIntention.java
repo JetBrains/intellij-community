@@ -18,6 +18,7 @@ package com.siyeh.ipp.decls;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -65,6 +66,6 @@ public class ChangeVariableTypeToRhsTypeIntention extends MutablyNamedIntention 
     if (variableTypeElement == null) {
       return;
     }
-    variableTypeElement.replace(typeElement);
+    new CommentTracker().replaceAndRestoreComments(variableTypeElement, typeElement);
   }
 }

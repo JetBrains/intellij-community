@@ -264,23 +264,20 @@ public class ParenthesesUtils {
                                                               boolean ignoreClarifyingParentheses) {
     final PsiExpression body = parenthesizedExpression.getExpression();
     if (body == null) {
-      parenthesizedExpression.delete();
+      new CommentTracker().deleteAndRestoreComments(parenthesizedExpression);
       return;
     }
     final PsiElement parent = parenthesizedExpression.getParent();
     if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression ||
         parent instanceof PsiArrayInitializerExpression || parent instanceof PsiLambdaExpression) {
-      final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
+      final PsiExpression newExpression = (PsiExpression)replaceWithBody(parenthesizedExpression, body);
       removeParentheses(newExpression, ignoreClarifyingParentheses);
       return;
     }
     else if (parent instanceof PsiArrayAccessExpression) {
       final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
       if (parenthesizedExpression == arrayAccessExpression.getIndexExpression()) {
-        // use addAfter() + delete() instead of replace() to
-        // workaround automatic insertion of parentheses by psi
-        final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
-        parenthesizedExpression.delete();
+        final PsiExpression newExpression = replaceBodyExplicitly(parenthesizedExpression, body, parent);
         removeParentheses(newExpression, ignoreClarifyingParentheses);
         return;
       }
@@ -307,26 +304,24 @@ public class ParenthesesUtils {
         if (parentType != null && parentType.equals(bodyType) && parentOperator.equals(bodyOperator)) {
           final PsiExpression[] parentOperands = parentPolyadicExpression.getOperands();
           if (PsiTreeUtil.isAncestor(parentOperands[0], body, true) || isCommutativeOperator(bodyOperator)) {
-            // use addAfter() + delete() instead of replace() to
-            // workaround automatic insertion of parentheses by psi
-            final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
-            parenthesizedExpression.delete();
+            final PsiExpression newExpression = replaceBodyExplicitly(parenthesizedExpression, body, parent);
             removeParentheses(newExpression, ignoreClarifyingParentheses);
             return;
           }
         }
-        if (ignoreClarifyingParentheses) {
+        if (ignoreClarifyingParentheses ||
+            (parentOperator == JavaTokenType.PLUS && TypeUtils.isJavaLangString(parentType) && !TypeUtils.isJavaLangString(bodyType))) {
           if (parentOperator.equals(bodyOperator)) {
             removeParentheses(body, ignoreClarifyingParentheses);
           }
         }
         else {
-          final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
+          final PsiExpression newExpression = (PsiExpression)replaceWithBody(parenthesizedExpression, body);
           removeParentheses(newExpression, ignoreClarifyingParentheses);
         }
       }
       else {
-        final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
+        final PsiExpression newExpression = (PsiExpression)replaceWithBody(parenthesizedExpression, body);
         removeParentheses(newExpression, ignoreClarifyingParentheses);
       }
     }
@@ -336,10 +331,26 @@ public class ParenthesesUtils {
         removeParentheses(body, ignoreClarifyingParentheses);
       }
       else {
-        final PsiExpression newExpression = (PsiExpression)parenthesizedExpression.replace(body);
+        final PsiExpression newExpression = (PsiExpression)replaceWithBody(parenthesizedExpression, body);
         removeParentheses(newExpression, ignoreClarifyingParentheses);
       }
     }
+  }
+
+  private static PsiExpression replaceBodyExplicitly(@NotNull PsiParenthesizedExpression parenthesizedExpression,
+                                                     PsiExpression body,
+                                                     PsiElement parent) {
+    // use addAfter() + delete() instead of replace() to
+    // workaround automatic insertion of parentheses by psi
+    final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
+    CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(body);
+    tracker.deleteAndRestoreComments(parenthesizedExpression);;
+    return newExpression;
+  }
+
+  private static PsiElement replaceWithBody(@NotNull PsiParenthesizedExpression parenthesizedExpression, PsiExpression body) {
+    return new CommentTracker().replaceAndRestoreComments(parenthesizedExpression, body);
   }
 
   private static void removeParensFromConditionalExpression(@NotNull PsiConditionalExpression conditionalExpression,

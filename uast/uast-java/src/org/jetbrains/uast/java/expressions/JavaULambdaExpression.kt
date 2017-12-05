@@ -39,7 +39,7 @@ class JavaULambdaExpression(
     when (b) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
       is PsiExpression -> JavaConverter.convertOrEmpty(b, this)
-      else -> UastEmptyExpression
+      else -> UastEmptyExpression(this)
     }
   }
 }

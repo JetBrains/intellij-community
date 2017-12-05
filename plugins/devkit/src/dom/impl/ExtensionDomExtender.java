@@ -40,6 +40,8 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastContextKt;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -126,7 +128,16 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass, @NotNull List<With> elements) {
     if (beanClass == null) return;
 
-    for (PsiField field : beanClass.getAllFields()) {
+    PsiField[] fields;
+    UClass beanClassNavigationClass = UastContextKt.toUElement(beanClass.getNavigationElement(), UClass.class);
+    if (beanClassNavigationClass != null) {
+      fields = beanClassNavigationClass.getAllFields();
+    }
+    else {
+      fields = beanClass.getAllFields(); // fallback
+    }
+
+    for (PsiField field : fields) {
       registerField(registrar, field, findWithElement(elements, field));
     }
   }

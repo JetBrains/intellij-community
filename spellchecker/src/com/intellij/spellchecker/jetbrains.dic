@@ -143,6 +143,7 @@ decompiling
 dedent
 deduplicate
 deferrable
+deferrer
 deque
 dereference
 dereferences
@@ -460,6 +461,7 @@ nullptr
 nvarchar
 oauth
 objc
+objenesis
 oidindex
 onchange
 onclick

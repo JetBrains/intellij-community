@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -32,7 +33,7 @@ public abstract class ApplicationStarterBase extends ApplicationStarterEx {
   }
 
   @Override
-  public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) {
+  public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
     if (!checkArguments(args)) {
       Messages.showMessageDialog(getUsageMessage(), StringUtil.toTitleCase(getCommandName()), Messages.getInformationIcon());
       return;

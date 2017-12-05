@@ -5,6 +5,7 @@ import java.util.Arrays;
 
 class C {
     void m(File file) throws IOException {
+        //comment
         int len;
         boolean empty;
         try (FileInputStream fileInputStream = new FileInputStream(file)) {

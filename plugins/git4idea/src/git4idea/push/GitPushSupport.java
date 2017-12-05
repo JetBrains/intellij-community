@@ -161,11 +161,6 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
     return !mySharedSettings.isBranchProtected(targetBranch);
   }
 
-  @Override
-  public boolean isForcePushEnabled() {
-    return mySettings.isForcePushAllowed();
-  }
-
   @Nullable
   @Override
   public VcsPushOptionsPanel createOptionsPanel() {

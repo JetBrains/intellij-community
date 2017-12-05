@@ -36,10 +36,7 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandler;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -225,10 +222,10 @@ public class GitVFSListener extends VcsVFSListener {
       @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) {
         for (FilePath file : files) {
-          GitHandler h = new GitSimpleHandler(myProject, root, GitCommand.MV);
           MovedFileInfo info = filesToMove.get(file);
+          GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
           h.addParameters("-f", info.myOldPath, info.myNewPath);
-          h.runInCurrentThread(null);
+          myGit.runCommand(h);
           toRefresh.add(new File(info.myOldPath));
           toRefresh.add(new File(info.myNewPath));
         }

@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -52,7 +53,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
   }
 
   @NonNls
-  static String calculateReplacementExpression(PsiLiteralExpression expression) {
+  static String calculateReplacementExpression(PsiLiteralExpression expression, CommentTracker commentTracker) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (!(parent instanceof PsiPolyadicExpression)) {
       return null;
@@ -68,7 +69,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
       else {
         replacement = lOperand;
       }
-      return replacement == null ? "" : buildReplacement(replacement, false);
+      return replacement == null ? "" : buildReplacement(replacement, false, commentTracker);
     }
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -86,9 +87,9 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         if (text.length() > 0) {
           text.append(" + ");
         }
-        text.append(buildReplacement(operandToReplace, seenString));
+        text.append(buildReplacement(operandToReplace, seenString, commentTracker));
         text.append(" + ");
-        text.append(operand.getText());
+        text.append(commentTracker.markUnchanged(operand).getText());
         replaced = true;
         continue;
       }
@@ -106,17 +107,19 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
       if (text.length() > 0) {
         text.append(" + ");
       }
-      text.append(operand.getText());
+      text.append(commentTracker.markUnchanged(operand).getText());
     }
     if (!replaced && operandToReplace != null) {
       text.append(" + ");
-      text.append(buildReplacement(operandToReplace, seenString));
+      text.append(buildReplacement(operandToReplace, seenString, commentTracker));
     }
     return text.toString();
   }
 
   @NonNls
-  static String buildReplacement(@NotNull PsiExpression operandToReplace, boolean seenString) {
+  static String buildReplacement(@NotNull PsiExpression operandToReplace,
+                                 boolean seenString,
+                                 CommentTracker commentTracker) {
     if (ExpressionUtils.isNullLiteral(operandToReplace)) {
       if (seenString) {
         return "null";
@@ -128,7 +131,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     if (seenString || ExpressionUtils.hasStringType(operandToReplace)) {
       return operandToReplace.getText();
     }
-    return "String.valueOf(" + operandToReplace.getText() + ')';
+    return "String.valueOf(" + commentTracker.markUnchanged(operandToReplace).getText() + ')';
   }
 
   @Override
@@ -141,7 +144,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     private final String m_name;
 
     private UnnecessaryTemporaryObjectFix(PsiLiteralExpression expression) {
-      m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression));
+      m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression, new CommentTracker()));
     }
 
     @Override
@@ -163,8 +166,9 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
       if (!(parent instanceof PsiExpression)) {
         return;
       }
-      final String newExpression = calculateReplacementExpression(expression);
-      PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression);
+      CommentTracker commentTracker = new CommentTracker();
+      final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      PsiReplacementUtil.replaceExpression((PsiExpression)parent, newExpression, commentTracker);
     }
   }
 

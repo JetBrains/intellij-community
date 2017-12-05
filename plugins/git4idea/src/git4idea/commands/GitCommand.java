@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  *   The descriptor of git command.
  * </p>
  * <p>
- *   It contains policy information about locking which is handled in {@link GitHandler#runInCurrentThread(java.lang.Runnable)} to prevent
+ *   It contains policy information about locking which is handled in {@link Git#runCommand(GitLineHandler)} to prevent
  *   simultaneous Git commands conflict on the index.lock file.
  *   write-commands can't be executed simultaneously, but a write-command doesn't prevent read-commands to execute.
  * </p>

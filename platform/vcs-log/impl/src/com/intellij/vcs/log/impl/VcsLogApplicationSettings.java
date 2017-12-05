@@ -41,17 +41,7 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   public void loadState(State state) {
     myState = state;
   }
-
-  // to remove after 2017.3 release
-  @Deprecated
-  public void migrateFrom(boolean compactReferenceView, boolean showTagNames) {
-    if (!myState.MIGRATED) {
-      myState.COMPACT_REFERENCES_VIEW = compactReferenceView;
-      myState.SHOW_TAG_NAMES = showTagNames;
-      myState.MIGRATED = true;
-    }
-  }
-
+  
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
@@ -102,7 +92,6 @@ public class VcsLogApplicationSettings implements PersistentStateComponent<VcsLo
   public static class State {
     public boolean COMPACT_REFERENCES_VIEW = true;
     public boolean SHOW_TAG_NAMES = false;
-    public boolean MIGRATED = false; // for migration from per-tab settings
     public boolean SHOW_CHANGES_FROM_PARENTS = false;
   }
 }

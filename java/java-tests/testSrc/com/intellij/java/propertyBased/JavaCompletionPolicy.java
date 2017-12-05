@@ -146,6 +146,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
         return false; // this.new Foo isn't completed when there's no "Foo"
       }
     }
+    if (leaf.textMatches(PsiKeyword.IMPLEMENTS)) {
+      PsiClass cls = PsiTreeUtil.getParentOfType(leaf, PsiClass.class);
+      if (cls == null || cls.isInterface()) {
+        return false;
+      }
+    }
     return true;
   }
 

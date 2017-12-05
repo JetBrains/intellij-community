@@ -223,6 +223,10 @@ public abstract class Language extends UserDataHolderBase {
 
   /** Fake language identifier without registering */
   protected Language(@NotNull String ID, @SuppressWarnings("UnusedParameters") boolean register) {
+    Language language = findLanguageByID(ID);
+    if (language != null) {
+      throw new IllegalArgumentException("Language with ID="+ID+" already registered: "+language+"; "+language.getClass());
+    }
     myID = ID;
     myBaseLanguage = null;
     myMimeTypes = null;

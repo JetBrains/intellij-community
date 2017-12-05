@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -70,7 +56,8 @@ public class TextBuffer {
   }
 
   public TextBuffer prepend(String s) {
-    insert(0, s);
+    myStringBuilder.insert(0, s);
+    shiftMapping(s.length());
     return this;
   }
 
@@ -181,20 +168,15 @@ public class TextBuffer {
     return myStringBuilder.length();
   }
 
-  public String substring(int start) {
-    return myStringBuilder.substring(start);
-  }
-
-  public TextBuffer setStart(int position) {
+  public void setStart(int position) {
     myStringBuilder.delete(0, position);
-    shiftMapping(0, -position);
-    return this;
+    shiftMapping(-position);
   }
 
   public void setLength(int position) {
     myStringBuilder.setLength(position);
     if (myLineToOffsetMapping != null) {
-      HashMap<Integer, Integer> newMap = new HashMap<>();
+      Map<Integer, Integer> newMap = new HashMap<>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
         if (entry.getValue() <= position) {
           newMap.put(entry.getKey(), entry.getValue());
@@ -215,12 +197,12 @@ public class TextBuffer {
     return this;
   }
 
-  private void shiftMapping(int startOffset, int shiftOffset) {
+  private void shiftMapping(int shiftOffset) {
     if (myLineToOffsetMapping != null) {
-      HashMap<Integer, Integer> newMap = new HashMap<>();
+      Map<Integer, Integer> newMap = new HashMap<>();
       for (Map.Entry<Integer, Integer> entry : myLineToOffsetMapping.entrySet()) {
         int newValue = entry.getValue();
-        if (newValue >= startOffset) {
+        if (newValue >= 0) {
           newValue += shiftOffset;
         }
         if (newValue >= 0) {
@@ -235,12 +217,6 @@ public class TextBuffer {
     if (myLineToOffsetMapping == null) {
       myLineToOffsetMapping = new HashMap<>();
     }
-  }
-
-  public TextBuffer insert(int offset, String s) {
-    myStringBuilder.insert(offset, s);
-    shiftMapping(offset, s.length());
-    return this;
   }
 
   public int countLines() {
@@ -297,11 +273,7 @@ public class TextBuffer {
       myLineMapping = new HashMap<>();
       for (int i = 0; i < lineMapping.length; i += 2) {
         int key = lineMapping[i + 1];
-        Set<Integer> existing = myLineMapping.get(key);
-        if (existing == null) {
-          existing = new TreeSet<>();
-          myLineMapping.put(key, existing);
-        }
+        Set<Integer> existing = myLineMapping.computeIfAbsent(key, k -> new TreeSet<>());
         existing.add(lineMapping[i]);
       }
     }

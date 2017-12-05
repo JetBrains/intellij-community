@@ -201,4 +201,9 @@ public abstract class XmlExtension {
   public boolean isCollapsibleTag(XmlTag tag) {
     return false;
   }
+
+  public static boolean isCollapsible(XmlTag tag) {
+    final XmlExtension extension = getExtensionByElement(tag);
+    return extension == null || extension.isCollapsibleTag(tag);
+  }
 }

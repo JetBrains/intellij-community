@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.util.Random;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.*;
 import static org.junit.Assert.*;
@@ -296,5 +297,57 @@ public class LongRangeSetTest {
     assertEquals(expected, result.toString());
     assertTrue(
       range1.stream().mapToObj(l1 -> range2.stream().map(l2 -> l1 & l2)).flatMapToLong(Function.identity()).allMatch(result::contains));
+  }
+
+  @Test
+  public void testMod() {
+    assertEquals(empty(), empty().mod(all()));
+    assertEquals(empty(), all().mod(empty()));
+    assertEquals(empty(), point(1).mod(empty()));
+    assertEquals(empty(), point(1).union(point(3)).mod(empty()));
+
+    assertEquals(point(10), point(110).mod(point(100)));
+    checkMod(range(10, 20), range(30, 40), "{10..20}");
+    checkMod(range(-10, 10), range(20, 30), "{-10..10}");
+    checkMod(point(0), range(-100, -50).union(range(20, 80)), "{0}");
+    checkMod(point(30), range(10, 40), "{0..30}");
+    checkMod(point(-30), range(-10, 40), "{-30..0}");
+    checkMod(point(Long.MIN_VALUE), range(-10, 40), "{-39..0}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE), "{-10..40}");
+    checkMod(range(-30, -20), point(23), "{-22..0}");
+    checkMod(point(10), range(30, 40), "{10}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE).union(point(70)), "{-10..40}");
+    checkMod(range(-10, 40), point(Long.MIN_VALUE).union(point(0)), "{-10..40}");
+    checkMod(point(10), point(Long.MIN_VALUE).union(point(0)), "{0, 10}");
+    checkMod(range(0, 10).union(range(30, 50)), range(-20, -10).union(range(15, 25)), "{0..24}");
+    checkMod(point(10), point(0), "{}");
+    checkMod(range(0, 10), point(0), "{}");
+    checkMod(range(Long.MIN_VALUE, Long.MIN_VALUE + 3), point(Long.MIN_VALUE), "{-9223372036854775807..-9223372036854775805, 0}");
+    checkMod(range(Long.MAX_VALUE - 3, Long.MAX_VALUE), point(Long.MAX_VALUE), "{0..9223372036854775806}");
+  }
+
+  void checkMod(LongRangeSet dividendRange, LongRangeSet divisorRange, String expected) {
+    LongRangeSet result = dividendRange.mod(divisorRange);
+    assertEquals(expected, result.toString());
+    String errors = dividendRange.stream()
+      .mapToObj(dividend -> divisorRange.stream()
+        .filter(divisor -> divisor != 0)
+        .filter(divisor -> !result.contains(dividend % divisor))
+        .mapToObj(divisor -> dividend + " % " + divisor + " = " + (dividend % divisor)))
+      .flatMap(Function.identity())
+      .collect(Collectors.joining("\n"));
+    if (!errors.isEmpty()) {
+      fail("Expected range " + expected + " is not satisfied:\n" + errors);
+    }
+  }
+
+  @Test
+  public void testContains() {
+    assertTrue(range(0, 10).contains(5));
+    assertTrue(range(0, 10).union(range(13, 20)).contains(point(5)));
+    assertTrue(range(0, 10).union(range(13, 20)).contains(empty()));
+    assertFalse(range(0, 10).union(range(13, 20)).contains(point(12)));
+    assertFalse(range(0, 10).union(range(13, 20)).contains(range(9, 15)));
+    assertTrue(range(0, 10).union(range(13, 20)).contains(range(2, 8).union(range(15, 17))));
   }
 }

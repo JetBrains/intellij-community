@@ -67,4 +67,5 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testLongRangeMod() { doTest(); }
 }

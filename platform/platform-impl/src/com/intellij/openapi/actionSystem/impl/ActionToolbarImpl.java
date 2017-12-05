@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -57,6 +44,7 @@ import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -206,6 +194,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
+  public String getPlace() {
+    return myPlace;
+  }
+
   @Override
   public void addNotify() {
     super.addNotify();
@@ -287,8 +279,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private void fillToolBar(final List<AnAction> actions, boolean layoutSecondaries) {
     final List<AnAction> rightAligned = new ArrayList<>();
+    boolean isLastElementSeparator = false;
     if (myAddSeparatorFirst) {
       add(new MySeparator());
+      isLastElementSeparator = true;
     }
     for (int i = 0; i < actions.size(); i++) {
       final AnAction action = actions.get(i);
@@ -296,13 +290,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         rightAligned.add(action);
         continue;
       }
-//      if (action instanceof Separator && isNavBar()) {
-//        continue;
-//      }
-
-      //if (action instanceof ComboBoxAction) {
-      //  ((ComboBoxAction)action).setSmallVariant(true);
-      //}
 
       if (layoutSecondaries) {
         if (!myActionGroup.isPrimary(action)) {
@@ -312,8 +299,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
 
       if (action instanceof Separator) {
+        if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
           add(new MySeparator());
+          isLastElementSeparator = true;
+          continue;
         }
       }
       else if (action instanceof CustomComponentAction) {
@@ -322,6 +312,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       else {
         add(createToolbarButton(action));
       }
+      isLastElementSeparator = false;
     }
 
     if (mySecondaryActions.getChildrenCount() > 0) {
@@ -370,6 +361,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       customComponent.setBorder(JBUI.Borders.emptyLeft(9));
     }
     tweakActionComponentUI(customComponent);
+
+    AbstractButton clickable = UIUtil.findComponentOfType(customComponent, AbstractButton.class);
+    if (clickable != null) {
+      class ToolbarClicksCollectorListener extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {ToolbarClicksCollector.record(action, myPlace);}
+      }
+      if (Arrays.stream(clickable.getMouseListeners()).noneMatch(ml -> ml instanceof ToolbarClicksCollectorListener)) {
+        clickable.addMouseListener(new ToolbarClicksCollectorListener());
+      }
+    }
     return customComponent;
   }
 

@@ -59,7 +59,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myVisiblePackBuilder = builder;
     myState = new State(initialSortType);
 
-    myTaskController = new SingleTaskController<Request, State>(state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
@@ -67,7 +67,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
-    }, true) {
+    }, true, this) {
       @NotNull
       @Override
       protected ProgressIndicator startNewBackgroundTask() {

@@ -29,19 +29,21 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   private final String prefix;
   private final String suffix;
   private final boolean usePsiRange;
+  private final boolean isOneLine;
 
   ShredImpl(@NotNull SmartPsiFileRange relevantRangeInHost,
             @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> hostElementPointer,
             @NotNull String prefix,
             @NotNull String suffix,
             @NotNull TextRange range,
-            boolean usePsiRange) {
+            boolean usePsiRange, boolean isOneLine) {
     this.hostElementPointer = hostElementPointer;
     this.relevantRangeInHost = relevantRangeInHost;
     this.prefix = prefix;
     this.suffix = suffix;
     this.range = range;
     this.usePsiRange = usePsiRange;
+    this.isOneLine = isOneLine;
 
     assertValid();
   }
@@ -55,7 +57,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   }
 
   ShredImpl withPsiRange() {
-    return new ShredImpl(relevantRangeInHost, hostElementPointer, prefix, suffix, range, true);
+    return new ShredImpl(relevantRangeInHost, hostElementPointer, prefix, suffix, range, true, isOneLine);
   }
 
   @NotNull
@@ -154,5 +156,9 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   @Override
   public String getSuffix() {
     return suffix;
+  }
+
+  boolean isOneLine() {
+    return isOneLine;
   }
 }

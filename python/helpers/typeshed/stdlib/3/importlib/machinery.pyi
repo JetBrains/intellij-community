@@ -22,7 +22,7 @@ if sys.version_info >= (3, 3):
             @classmethod
             def find_spec(cls, fullname: str,
                           path: Optional[Sequence[importlib.abc._Path]],
-                          target: Optional[types.ModuleType] = None) -> Optional[ModuleSpec]:
+                          target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
                 ...
         # InspectLoader
         @classmethod
@@ -79,7 +79,7 @@ if sys.version_info >= (3, 3):
             @classmethod
             def find_spec(cls, fullname: str,
                           path: Optional[Sequence[importlib.abc._Path]],
-                          target: Optional[types.ModuleType] = None) -> Optional[ModuleSpec]:
+                          target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
                 ...
         # InspectLoader
         @classmethod
@@ -136,7 +136,7 @@ if sys.version_info >= (3, 3):
             @classmethod
             def find_spec(cls, fullname: str,
                           path: Optional[Sequence[importlib.abc._Path]],
-                          target: Optional[types.ModuleType] = None) -> Optional[ModuleSpec]:
+                          target: Optional[types.ModuleType] = ...) -> Optional[ModuleSpec]:
                 ...
 else:
     class WindowsRegisteryFinder:

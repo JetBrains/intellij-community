@@ -60,6 +60,41 @@ class JavaIntentionPolicy extends IntentionPolicy {
 
 }
 
+class JavaCommentingStrategy extends JavaIntentionPolicy {
+  @Override
+  public boolean checkComments(IntentionAction intention) {
+    String intentionText = intention.getText();
+    boolean commentChangingActions = intentionText.startsWith("Replace with end-of-line comment") ||
+                                     intentionText.startsWith("Replace with block comment") ||
+                                     intentionText.startsWith("Remove //noinspection") ||
+                                     intentionText.startsWith("Unwrap 'if' statement") || //remove ifs content
+                                     intentionText.startsWith("Remove 'if' statement") || //remove content of the if with everything inside
+                                     intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") || //remove methods in batch
+                                     intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                     intentionText.startsWith("Move comment to separate line") || //merge comments on same line
+                                     intentionText.startsWith("Remove redundant arguments to call") || //removes arg with all comments inside
+                                     intentionText.startsWith("Convert to 'enum'") || //removes constructor with javadoc?
+                                     intentionText.startsWith("Replace 'switch' with 'if'") || //todo IDEA-113518
+                                     intentionText.startsWith("Remove redundant constructor") ||
+                                     intentionText.startsWith("Remove block marker comments") ||
+                                     intentionText.startsWith("Remove redundant method") ||
+                                     intentionText.startsWith("Delete unnecessary import") ||
+                                     intentionText.startsWith("Replace with 'throws Exception'") ||
+                                     intentionText.startsWith("Replace unicode escape with character") ||
+                                     intentionText.startsWith("Remove 'serialVersionUID' field") ||
+                                     intentionText.startsWith("Remove unnecessary") ||
+                                     intentionText.matches("Simplify '.*' to .*") ||
+                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag")
+      ;
+    return !commentChangingActions;
+  }
+
+  @Override
+  public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
+    return true;
+  }
+}
+
 class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
 
   @Override

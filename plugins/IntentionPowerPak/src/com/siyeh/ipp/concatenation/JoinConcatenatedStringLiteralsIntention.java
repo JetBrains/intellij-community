@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
     if (!(element instanceof PsiJavaToken)) {
       return;
     }
+    CommentTracker tracker = new CommentTracker();
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element.getParent();
     final StringBuilder newExpression = new StringBuilder();
@@ -77,7 +79,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
       }
       else {
         if (buffer.isEmpty()) {
-          newExpression.append(child.getText());
+          newExpression.append(tracker.markUnchanged(child).getText());
         }
         else {
           buffer.add(child);
@@ -85,8 +87,8 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
       }
     }
     for (PsiElement bufferedElement : buffer) {
-      newExpression.append(bufferedElement.getText());
+      newExpression.append(tracker.markUnchanged(bufferedElement).getText());
     }
-    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), tracker);
   }
 }

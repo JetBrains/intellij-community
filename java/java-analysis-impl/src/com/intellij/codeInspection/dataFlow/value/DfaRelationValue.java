@@ -56,6 +56,20 @@ public class DfaRelationValue extends DfaValue {
       myName = name;
     }
 
+    public boolean isSubRelation(RelationType other) {
+      if (other == this) return true;
+      switch (this) {
+        case LE:
+          return other == LT || other == EQ;
+        case GE:
+          return other == GT || other == EQ;
+        case NE:
+          return other == LT || other == GT;
+        default:
+          return false;
+      }
+    }
+
     @NotNull
     public RelationType getNegated() {
       switch (this) {

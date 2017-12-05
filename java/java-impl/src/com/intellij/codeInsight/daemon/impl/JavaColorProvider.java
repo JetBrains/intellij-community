@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ElementColorProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -191,8 +192,11 @@ public class JavaColorProvider implements ElementColorProvider {
 
     if (isIntLiteralInsideNewJBColorExpression(element)) {
       command = () -> replaceInt((PsiExpression)element, color.getRGB(), true, color.getAlpha() != 255);
-    } else {
-      PsiExpressionList argumentList = ((PsiNewExpression)element).getArgumentList();
+    }
+    else {
+      PsiNewExpression expression = PsiTreeUtil.getParentOfType(element, PsiNewExpression.class);
+      if (expression == null) return;
+      PsiExpressionList argumentList = expression.getArgumentList();
       assert argumentList != null;
 
       PsiExpression[] expr = argumentList.getExpressions();
@@ -233,9 +237,8 @@ public class JavaColorProvider implements ElementColorProvider {
         }
       };
     }
-    if (command != null) {
-      CommandProcessor.getInstance().executeCommand(element.getProject(), command, IdeBundle.message("change.color.command.text"), null, document);
-    }
+    CommandProcessor.getInstance()
+      .executeCommand(element.getProject(), command, IdeBundle.message("change.color.command.text"), null, document);
   }
 
   private static void replaceInt(PsiExpression expr, int newValue) {
@@ -249,15 +252,16 @@ public class JavaColorProvider implements ElementColorProvider {
   private static void replaceInt(PsiExpression expr, int newValue, boolean hex, boolean hasAlpha) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(expr.getProject());
     if (getInt(expr) != newValue) {
-      final Color c = new Color(newValue, hasAlpha);
       String text;
       if (hex) {
         text = "0x";
+        Color c = new Color(newValue, hasAlpha);
         if (hasAlpha) {
           text += Integer.toHexString(c.getAlpha());
         }
         text += ColorUtil.toHex(c).toUpperCase();
-      } else {
+      }
+      else {
         text = Integer.toString(newValue);
       }
 

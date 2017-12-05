@@ -65,7 +65,7 @@ public class EmptySchemesManager extends SchemeManager<Object> {
 
   @Nullable
   @Override
-  public Object getCurrentScheme() {
+  public Scheme getActiveScheme() {
     return null;
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,9 +25,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
@@ -36,7 +35,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -103,7 +101,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
       if (documentWindow != null) {
-        handler.navigate(((DocumentWindowImpl)documentWindow).hostToInjectedUnescaped(offset));
+        handler.navigate(documentWindow.hostToInjectedUnescaped(offset));
       }
     }
     return handler;
@@ -129,12 +127,12 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
   }
 
   public static QuickEditHandler getExistingHandler(@NotNull PsiFile injectedFile) {
-    Place shreds = InjectedLanguageUtil.getShreds(injectedFile);
     DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
-    if (shreds == null || documentWindow == null) return null;
+    if (documentWindow == null) return null;
 
-    TextRange hostRange = TextRange.create(shreds.get(0).getHostRangeMarker().getStartOffset(),
-                                           shreds.get(shreds.size() - 1).getHostRangeMarker().getEndOffset());
+    Segment[] hostRanges = documentWindow.getHostRanges();
+    TextRange hostRange = TextRange.create(hostRanges[0].getStartOffset(),
+                                           hostRanges[hostRanges.length - 1].getEndOffset());
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor.getDocument() != documentWindow.getDelegate()) continue;
       QuickEditHandler handler = editor.getUserData(QUICK_EDIT_HANDLER);

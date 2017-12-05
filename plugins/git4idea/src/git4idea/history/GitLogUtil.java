@@ -71,7 +71,7 @@ public class GitLogUtil {
       return Collections.emptyList();
     }
 
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
     h.setSilent(true);
@@ -81,7 +81,7 @@ public class GitLogUtil {
     h.addParameters(new ArrayList<>(hashes));
     h.endOptions();
 
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogRecord> records = parser.parse(output);
 
     return ContainerUtil.map(records, record -> {
@@ -128,7 +128,7 @@ public class GitLogUtil {
 
       userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
-    handler.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
   }
 
@@ -296,7 +296,7 @@ public class GitLogUtil {
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
-    handler.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
 
     sw.report();

@@ -38,7 +38,6 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.ui.UIUtil;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -46,10 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.Objects;
 
@@ -75,7 +70,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JCheckBox myAutoCommitOnCherryPick;
   private JBCheckBox myWarnAboutCrlf;
   private JCheckBox myWarnAboutDetachedHead;
-  private JCheckBox myEnableForcePush;
   private JTextField myProtectedBranchesField;
   private JBLabel myProtectedBranchesLabel;
   private JComboBox myUpdateMethodComboBox;
@@ -100,13 +94,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     }
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesField);
-    myEnableForcePush.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        UIUtil.setEnabled(myProtectedBranchesField, myEnableForcePush.isSelected(), true);
-        UIUtil.setEnabled(myProtectedBranchesLabel, myEnableForcePush.isSelected(), false);
-      }
-    });
   }
 
   private void testExecutable() {
@@ -191,7 +178,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myAutoCommitOnCherryPick.setSelected(projectSettings.isAutoCommitOnCherryPick());
     myWarnAboutCrlf.setSelected(projectSettings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
-    myEnableForcePush.setSelected(projectSettings.isForcePushAllowed());
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
     myProtectedBranchesField.setText(ParametersListUtil.COLON_LINE_JOINER.fun(sharedSettings.getForcePushProhibitedPatterns()));
   }
@@ -209,7 +195,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
             projectSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
             projectSettings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
             projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
-            projectSettings.isForcePushAllowed() != myEnableForcePush.isSelected() ||
             projectSettings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
             !ContainerUtil.sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(
               ContainerUtil.sorted(getProtectedBranchesPatterns())));
@@ -246,7 +231,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     projectSettings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
     projectSettings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     projectSettings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
-    projectSettings.setForcePushAllowed(myEnableForcePush.isSelected());
     projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
 
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());

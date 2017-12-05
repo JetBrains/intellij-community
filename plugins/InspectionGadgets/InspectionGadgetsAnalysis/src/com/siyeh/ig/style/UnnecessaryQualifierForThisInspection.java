@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class UnnecessaryQualifierForThisInspection extends BaseInspection implements CleanupLocalInspectionTool {
@@ -70,11 +70,12 @@ public class UnnecessaryQualifierForThisInspection extends BaseInspection implem
     public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement qualifier = descriptor.getPsiElement();
       final PsiElement parent = qualifier.getParent();
+      CommentTracker tracker = new CommentTracker();
       if (parent instanceof PsiThisExpression) {
-        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, PsiKeyword.THIS);
+        PsiReplacementUtil.replaceExpression((PsiThisExpression)parent, PsiKeyword.THIS, tracker);
       }
       else if (parent instanceof PsiSuperExpression) {
-        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, PsiKeyword.SUPER);
+        PsiReplacementUtil.replaceExpression((PsiSuperExpression)parent, PsiKeyword.SUPER, tracker);
       }
     }
   }

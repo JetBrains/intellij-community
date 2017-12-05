@@ -31,6 +31,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.*;
@@ -248,10 +250,12 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           return;
         }
 
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          for (Module module : modules) {
-            if (module.isDisposed()) continue;
-            String path = module.getModuleFilePath();
+        AbstractExternalSystemLocalSettings localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectData.getOwner());
+        SyncType syncType = localSettings.getProjectSyncType().get(projectData.getLinkedExternalProjectPath());
+        for (Module module : modules) {
+          if (module.isDisposed()) continue;
+          String path = module.getModuleFilePath();
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
               ServiceKt.getStateStore(module).save(new ArrayList<>());
@@ -267,10 +271,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             catch (Exception e) {
               LOG.warn(e);
             }
-            final ModifiableModuleModel moduleModel = modelsProvider.getModifiableModuleModel();
-            moduleModel.disposeModule(module);
-            ModuleBuilder.deleteModuleFile(path);
           }
+          modelsProvider.getModifiableModuleModel().disposeModule(module);
+          ModuleBuilder.deleteModuleFile(path);
         }
       }
       finally {
@@ -421,6 +424,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
       setBytecodeTargetLevel(project, module, moduleDataNode.getData());
+      moduleDataNode.putUserData(MODULE_KEY, null);
+      moduleDataNode.putUserData(ORDERED_DATA_MAP_KEY, null);
     }
 
     for (Module module : modelsProvider.getModules()) {

@@ -1,20 +1,9 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.ResizeToolWindowAction;
 import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.idea.ActionsBundle;
@@ -37,12 +26,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.content.Content;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -133,6 +120,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
     init(dumbAware);
 
     apply(info);
+  }
+
+  @Override
+  public String toString() {
+    return myToolWindow.getId();
   }
 
   public boolean isFocused() {
@@ -434,6 +426,22 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       group.addSeparator();
       group.add(new HideAction());
     }
+
+    group.addSeparator();
+    group.add(new ContextHelpAction() {
+      @Nullable
+      @Override
+      protected String getHelpId(DataContext dataContext) {
+        Content content = myToolWindow.getContentManager().getSelectedContent();
+        if (content != null) {
+          String helpId = content.getHelpId();
+          if (helpId != null) {
+            return helpId;
+          }
+        }
+        return myToolWindow.getHelpId();
+      }
+    });
     return group;
   }
 
@@ -623,14 +631,6 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       }
       else {
         fireTypeChanged(ToolWindowType.WINDOWED);
-      }
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      if (SystemInfo.isMac) {
-        e.getPresentation().setEnabledAndVisible(false);
       }
     }
   }

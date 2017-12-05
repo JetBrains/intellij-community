@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.LineExtensionInfo;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -45,6 +46,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.function.IntFunction;
 
 public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
@@ -292,6 +295,12 @@ public interface EditorEx extends Editor {
    * @param enabled  'pure painting mode' status to use
    */
   void setPurePaintingMode(boolean enabled);
+
+  /**
+   * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
+   * function will be drawn in the editor after end of the line (together with fragments returned by {@link com.intellij.openapi.editor.EditorLinePainter} extensions).
+   */
+  void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
 
   /**
    * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.

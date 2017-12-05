@@ -40,6 +40,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private JCheckBox myCbShowObjectId;
   private JCheckBox myCbShowStringsType;
   private JCheckBox myCbHexValue;
+  private JCheckBox myCbPopulateThrowableStack;
 
   private StateRestoringCheckBox myCbShowStaticFinalFields;
   //private final ArrayRendererConfigurable myArrayRendererConfigurable;
@@ -110,6 +111,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbShowObjectId = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.object.id"));
     myCbHexValue = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.hex.value"));
     myCbShowStringsType = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.show.strings.type"));
+    myCbPopulateThrowableStack = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.populate.throwable.stack"));
 
     myCbEnableToString = new JCheckBox(DebuggerBundle.message("label.base.renderer.configurable.enable.toString"));
     myRbAllThatOverride = new JRadioButton(DebuggerBundle.message("label.base.renderer.configurable.all.overriding"));
@@ -160,6 +162,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     panel.add(myCbShowStringsType, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     panel.add(myCbHexValue, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
     panel.add(myCbHideNullArrayElements, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
+    panel.add(myCbPopulateThrowableStack, new GridBagConstraints(0, RELATIVE, 3, 1, 1.0, 0.0, NORTH, HORIZONTAL, JBUI.insetsTop(4), 0, 0));
 
     panel.add(myCbEnableAlternateViews, new GridBagConstraints(0, RELATIVE, 1, 1, 0.0, 0.0, WEST, NONE, JBUI.insets(4, 0, 0, 10), 0, 0));
     // starting 4-th row
@@ -180,6 +183,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     generalSettings.AUTOSCROLL_TO_NEW_LOCALS  = myCbAutoscroll.isSelected();
     rendererSettings.setAlternateCollectionViewsEnabled(myCbEnableAlternateViews.isSelected());
     generalSettings.HIDE_NULL_ARRAY_ELEMENTS  = myCbHideNullArrayElements.isSelected();
+    generalSettings.POPULATE_THROWABLE_STACKTRACE  = myCbPopulateThrowableStack.isSelected();
 
     final ClassRenderer classRenderer = rendererSettings.getClassRenderer();
     classRenderer.SHOW_STATIC = myCbShowStatic.isSelected();
@@ -210,6 +214,7 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
     myCbAutoscroll.setSelected(generalSettings.AUTOSCROLL_TO_NEW_LOCALS);
     myCbHideNullArrayElements.setSelected(generalSettings.HIDE_NULL_ARRAY_ELEMENTS);
     myCbEnableAlternateViews.setSelected(rendererSettings.areAlternateCollectionViewsEnabled());
+    myCbPopulateThrowableStack.setSelected(generalSettings.POPULATE_THROWABLE_STACKTRACE);
 
     ClassRenderer classRenderer = rendererSettings.getClassRenderer();
 
@@ -251,7 +256,8 @@ public class DebuggerDataViewsConfigurable implements SearchableConfigurable {
   private boolean areGeneralSettingsModified() {
     ViewsGeneralSettings generalSettings = ViewsGeneralSettings.getInstance();
     return generalSettings.AUTOSCROLL_TO_NEW_LOCALS != myCbAutoscroll.isSelected() ||
-           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected();
+           generalSettings.HIDE_NULL_ARRAY_ELEMENTS != myCbHideNullArrayElements.isSelected() ||
+           generalSettings.POPULATE_THROWABLE_STACKTRACE != myCbPopulateThrowableStack.isSelected();
   }
 
   private boolean areDefaultRenderersModified() {

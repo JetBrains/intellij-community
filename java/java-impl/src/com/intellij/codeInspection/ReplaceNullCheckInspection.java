@@ -3,10 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.NullnessUtil;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -25,7 +24,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final EquivalenceChecker ourEquivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
-  private int MINIMAL_WARN_DELTA_SIZE = 30;
+  private static final int MINIMAL_WARN_DELTA_SIZE = 30;
 
   private static final CallMatcher STREAM_EMPTY = CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "empty")
     .parameterCount(0);
@@ -34,11 +33,22 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "of").parameterTypes("T")
   );
 
+  public boolean noWarningReplacementBigger = true;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel
+      .addCheckbox(InspectionsBundle.message("inspection.require.non.null.no.warning.replacement.bigger"), "noWarningReplacementBigger");
+    return panel;
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
-    if(!PsiUtil.isLanguageLevel9OrHigher(file)) {
+    if (!PsiUtil.isLanguageLevel9OrHigher(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -50,10 +60,10 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
         PsiStatement nextToDelete = context.getNextToDelete();
         int maybeImplicitElseLength = nextToDelete != null ? nextToDelete.getTextLength() : 0;
-        boolean isInfoLevel = ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
+        boolean isInfoLevel = noWarningReplacementBigger && ifStatement.getTextLength() + maybeImplicitElseLength - context.getLenAfterReplace() < MINIMAL_WARN_DELTA_SIZE;
         ProblemHighlightType highlight = getHighlight(context, isInfoLevel);
-        holder.registerProblem(ifStatement, InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
-                               new ReplaceWithRequireNonNullFix(method));
+        holder.registerProblem(ifStatement.getFirstChild(), InspectionsBundle.message("inspection.require.non.null.message", method), highlight,
+                               new ReplaceWithRequireNonNullFix(method, false));
       }
 
       @NotNull
@@ -72,16 +82,25 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         TernaryNotNullContext context = TernaryNotNullContext.from(ternary);
         if(context == null) return;
         String method = getMethodWithClass(context.getNonNullExpr(), false);
+        String name = context.getVariable().getName();
+        boolean replacementShorter =
+          name != null
+          && context.getNonNullExpr().getTextLength() + method.length() + name.length() < context.getTernary().getTextLength() + MINIMAL_WARN_DELTA_SIZE;
+        boolean isInfoLevel = noWarningReplacementBigger && replacementShorter;
+        ProblemHighlightType highlightType = isInfoLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         holder.registerProblem(ternary, InspectionsBundle.message("inspection.require.non.null.message", method),
-                               new ReplaceWithRequireNonNullFix(method));
+                               highlightType, new ReplaceWithRequireNonNullFix(method, true));
       }
     };
   }
 
   private static class ReplaceWithRequireNonNullFix implements LocalQuickFix {
     private final @NotNull String myMethod;
+    private final boolean myIsTernary;
 
-    private ReplaceWithRequireNonNullFix(@NotNull String method) {myMethod = method;}
+    private ReplaceWithRequireNonNullFix(@NotNull String method, boolean ternary) {myMethod = method;
+      myIsTernary = ternary;
+    }
 
     @Nls
     @NotNull
@@ -99,7 +118,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getStartElement();
+      PsiElement element = myIsTernary ? descriptor.getStartElement() : descriptor.getStartElement().getParent();
       final PsiElement result;
       if(element instanceof PsiIfStatement) {
         NotNullContext context = NotNullContext.from((PsiIfStatement)element);

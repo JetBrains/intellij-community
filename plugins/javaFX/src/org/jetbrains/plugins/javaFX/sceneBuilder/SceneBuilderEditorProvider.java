@@ -15,6 +15,11 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
  * @author Alexander Lobas
  */
 public class SceneBuilderEditorProvider implements FileEditorProvider, DumbAware{
+  static {
+    ClassLoader pluginClassLoader = SceneBuilderEditorProvider.class.getClassLoader();
+    pluginClassLoader.setPackageAssertionStatus("com.oracle.javafx.scenebuilder.kit", false);
+  }
+
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) &&

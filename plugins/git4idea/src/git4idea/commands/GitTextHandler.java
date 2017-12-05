@@ -38,6 +38,8 @@ import java.util.List;
  * The handler for git commands with text outputs
  */
 public abstract class GitTextHandler extends GitHandler {
+  private static final int WAIT_TIMEOUT_MS = 50;
+  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60 * 10;
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
@@ -129,7 +131,7 @@ public abstract class GitTextHandler extends GitHandler {
   protected void waitForProcess() {
     if (myHandler != null) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      while (!myHandler.waitFor(50)) {
+      while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
           if (indicator != null) {
             indicator.checkCanceled();
@@ -137,19 +139,24 @@ public abstract class GitTextHandler extends GitHandler {
         }
         catch (ProcessCanceledException pce) {
           myHandler.destroyProcess();
+          // signal was sent, but we still need to wait for process to finish its dark deeds
+          if (!myHandler.waitFor(TERMINATION_TIMEOUT_MS)) {
+            LOG.error("Time out while waiting for cancellation of [" + printableCommandLine() + "].\nDestroying process manually");
+            myHandler.getProcess().destroy();
+          }
           throw pce;
         }
       }
     }
   }
 
-  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     commandLine.setCharset(getCharset());
     return new MyOSProcessHandler(commandLine);
   }
 
-  private static class MyOSProcessHandler extends KillableProcessHandler {
-    private MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected static class MyOSProcessHandler extends KillableProcessHandler {
+    MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
       super(commandLine, true);
     }
 

@@ -2695,8 +2695,8 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> set) {
-    return set == null ? Collections.<K, V>emptyMap() : set;
+  public static <K, V> Map<K, V> notNullize(@Nullable Map<K, V> map) {
+    return map == null ? Collections.<K, V>emptyMap() : map;
   }
 
   @Contract(pure = true)

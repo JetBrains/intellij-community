@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,7 +105,8 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
           if (returnValue == null || newType.equals(returnValue.getType())) {
             return;
           }
-          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + returnValue.getText() + ';');
+          CommentTracker commentTracker = new CommentTracker();
+          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + commentTracker.markUnchanged(returnValue).getText() + ';', commentTracker);
         }
       });
       element.replace(newTypeElement);

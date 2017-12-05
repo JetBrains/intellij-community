@@ -208,7 +208,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
 
         List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (allLineLocations == null) { // no line numbers
+        if (allLineLocations == null && !method.isBridge()) { // no line numbers
           breakpoint.disableEmulation();
           return;
         }

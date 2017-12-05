@@ -47,12 +47,12 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final int myCheckboxWidth;
-  private final boolean myHighlightProblems;
   private boolean myShowFlatten;
   private boolean myIsModelFlat;
 
@@ -72,7 +72,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     super(ChangesBrowserNode.createRoot(project));
     myProject = project;
     myShowCheckboxes = showCheckboxes;
-    myHighlightProblems = highlightProblems;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
     setHorizontalAutoScrollingEnabled(false);
@@ -81,7 +80,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setOpaque(false);
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
 
-    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, myHighlightProblems);
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
@@ -265,7 +264,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
         while (enumeration.hasMoreElements()) {
           ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-          if (node != root && getNodeStatus(node) == CheckboxTree.NodeState.CLEAR) {
+          if (node != root && getNodeStatus(node) == State.NOT_SELECTED) {
             collapsePath(new TreePath(node.getPath()));
           }
         }
@@ -273,7 +272,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         enumeration = root.depthFirstEnumeration();
         while (enumeration.hasMoreElements()) {
           ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
-          if (node.isLeaf() && getNodeStatus(node) == CheckboxTree.NodeState.FULL) {
+          if (node.isLeaf() && getNodeStatus(node) == State.SELECTED) {
             selectedTreeRow = getRowForPath(new TreePath(node.getPath()));
             break;
           }
@@ -487,8 +486,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
         @SuppressWarnings("unchecked")
-        CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
-        myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
+        State state = getNodeStatus((ChangesBrowserNode)value);
+        myCheckBox.setSelected(state != State.NOT_SELECTED);
 
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
@@ -507,7 +506,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
 
-  private CheckboxTree.NodeState getNodeStatus(ChangesBrowserNode<?> node) {
+  private State getNodeStatus(ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -520,13 +519,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       }
     }
 
-    if (hasIncluded && hasExcluded) return CheckboxTree.NodeState.PARTIAL;
-    if (hasIncluded) return CheckboxTree.NodeState.FULL;
-    return CheckboxTree.NodeState.CLEAR;
+    if (hasIncluded && hasExcluded) return State.DONT_CARE;
+    if (hasIncluded) return State.SELECTED;
+    return State.NOT_SELECTED;
   }
 
   protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
-    return getNodeStatus(node) != CheckboxTree.NodeState.PARTIAL;
+    return getNodeStatus(node) != State.DONT_CARE;
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {

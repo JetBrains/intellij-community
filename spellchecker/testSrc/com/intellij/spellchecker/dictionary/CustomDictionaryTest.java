@@ -27,11 +27,12 @@ import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.openapi.util.io.FileUtil.createTempDirectory;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
+import static java.util.Collections.singletonList;
 
 public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   private static final String TEST_DIC = "test.dic";
@@ -50,8 +51,8 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     super.setUp();
     settings = SpellCheckerSettings.getInstance(getProject());
     spellCheckerManager = SpellCheckerManager.getInstance(getProject());
-    oldPaths = settings.getDictionaryFoldersPaths();
-    settings.setDictionaryFoldersPaths(Collections.singletonList(getTestDictDirectory()));
+    oldPaths = settings.getCustomDictionariesPaths();
+    settings.setCustomDictionariesPaths(new ArrayList<>(singletonList(getTestDictDirectory())));
     spellCheckerManager.fullConfigurationReload();
   }
 
@@ -59,7 +60,7 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   protected void tearDown() throws Exception {
     //noinspection SuperTearDownInFinally
     super.tearDown();
-    settings.setDictionaryFoldersPaths(oldPaths);
+    settings.setCustomDictionariesPaths(oldPaths);
   }
 
   @Override

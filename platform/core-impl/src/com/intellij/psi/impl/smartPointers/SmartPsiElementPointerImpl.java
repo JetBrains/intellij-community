@@ -21,11 +21,13 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
@@ -181,13 +183,19 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
       }
     }
 
+    if (element instanceof PsiFile) {
+      return new FileElementInfo((PsiFile)element);
+    }
+
+    Document document = FileDocumentManager.getInstance().getCachedDocument(viewProvider.getVirtualFile());
+    if (document != null &&
+        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
+      LOG.error("Smart pointers shouldn't be created during PSI changes");
+    }
+
     SmartPointerElementInfo info = createAnchorInfo(element, containingFile);
     if (info != null) {
       return info;
-    }
-
-    if (element instanceof PsiFile) {
-      return new FileElementInfo((PsiFile)element);
     }
 
     TextRange elementRange = element.getTextRange();

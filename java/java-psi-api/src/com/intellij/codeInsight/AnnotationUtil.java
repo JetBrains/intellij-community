@@ -98,6 +98,7 @@ public class AnnotationUtil {
       listOwner,
       () -> {
         Map<Collection<String>, PsiAnnotation> value = ConcurrentFactoryMap.createMap(annotationNames1-> {
+            PsiUtilCore.ensureValid(listOwner);
             final Project project = listOwner.getProject();
             final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
             for (String annotationName : annotationNames1) {

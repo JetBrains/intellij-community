@@ -15,14 +15,14 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       AtomicInteger modelLength = new AtomicInteger(0);
       Generator<List<InsertChar>> cmds = Generator.listsOf(Generator.from(cmdData -> {
         int index = cmdData.drawInt(IntDistribution.uniform(0, modelLength.getAndIncrement()));
-        char c = Generator.asciiLetters().generateValue(cmdData);
+        char c = cmdData.generate(Generator.asciiLetters());
         return new InsertChar(c, index);
       }));
-      return cmds.generateValue(data);
+      return data.generate(cmds);
     });
     List<InsertChar> minCmds = checkGeneratesExample(gen,
-                                                   cmds -> InsertChar.performOperations(cmds).contains("ab"),
-                                                     31);
+                                                     cmds -> InsertChar.performOperations(cmds).contains("ab"),
+                                                     89);
     assertEquals(minCmds.toString(), 2, minCmds.size());
   }
   

@@ -128,11 +128,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
+  @Nullable
   private PyConsoleStartFolding createConsoleFolding() {
     PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
     myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
-    getEditor().getDocument().addDocumentListener(startFolding);
-    ((FoldingModelEx)getEditor().getFoldingModel()).addListener(startFolding, this);
+    Editor editor = getEditor();
+    if (editor == null) {
+      return null;
+    }
+    editor.getDocument().addDocumentListener(startFolding);
+    ((FoldingModelEx)editor.getFoldingModel()).addListener(startFolding, this);
     return startFolding;
   }
 
@@ -140,9 +145,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     try {
       if (isDebugConsole && myExecuteActionHandler != null && getEditor() != null) {
         PyConsoleStartFolding folding = createConsoleFolding();
-        // in debug console we should add folding from the place where the folding was turned on
-        folding.setStartLineOffset(getEditor().getDocument().getTextLength());
-        folding.setNumberOfCommandToStop(2);
+        if (folding != null) {
+          // in debug console we should add folding from the place where the folding was turned on
+          folding.setStartLineOffset(getEditor().getDocument().getTextLength());
+          folding.setNumberOfCommandToStop(2);
+        }
       }
       else {
         myInitialized.doWhenDone(this::createConsoleFolding);
@@ -462,15 +469,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void restoreWindow() {
-    JBSplitter pane = (JBSplitter)getComponent(0);
-    removeAll();
-    if (mySplitView != null) {
+    Component component = getComponent(0);
+    if (mySplitView != null && component instanceof JBSplitter) {
+      JBSplitter pane = (JBSplitter)component;
+      removeAll();
       Disposer.dispose(mySplitView);
       mySplitView = null;
+      add(pane.getFirstComponent(), BorderLayout.CENTER);
+      validate();
+      repaint();
     }
-    add(pane.getFirstComponent(), BorderLayout.CENTER);
-    validate();
-    repaint();
   }
 
   @Nullable

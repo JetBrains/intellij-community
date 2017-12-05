@@ -171,6 +171,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
+      @Override
       public void finished() {
         if (treeHistoryProvider != null) {
           // scroll tree view to most recent change
@@ -187,6 +188,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         mySplitter.repaint();
       }
 
+      @Override
       public void consume(@NotNull VcsHistorySession vcsHistorySession) {
         FileHistoryPanelImpl.this.refresh(vcsHistorySession);
       }
@@ -646,7 +648,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Override
     public TableCellRenderer getCustomizedRenderer(TreeNodeOnVcsRevision revision, @Nullable TableCellRenderer renderer) {
       if (renderer instanceof BaseHistoryCellRenderer) {
-        ((BaseHistoryCellRenderer)renderer).setCurrentRevision(myHistorySession.isCurrentRevision(revision.getRevision().getRevisionNumber()));
+        ((BaseHistoryCellRenderer)renderer)
+          .setCurrentRevision(myHistorySession.isCurrentRevision(revision.getRevision().getRevisionNumber()));
       }
       return renderer;
     }
@@ -722,7 +725,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       };
     }
 
-    @Nullable
+    @NotNull
     @Override
     public Comparator<VcsFileRevision> getComparator() {
       return comparing(revision -> valueOf(revision));
@@ -819,6 +822,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public String getPreferredStringValue() {
       return StringUtil.repeatSymbol('m', 14);
     }
+
+    @NotNull
+    @Override
+    public Comparator<VcsFileRevision> getComparator() {
+      return comparing(revision -> valueOf(revision));
+    }
   }
 
   public static class MessageColumnInfo extends ColumnInfo<VcsFileRevision, String> {
@@ -864,6 +873,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     @Override
     public TableCellRenderer getRenderer(VcsFileRevision revision) {
       return myRenderer;
+    }
+
+    @NotNull
+    @Override
+    public Comparator<VcsFileRevision> getComparator() {
+      return comparing(revision -> valueOf(revision));
     }
   }
 

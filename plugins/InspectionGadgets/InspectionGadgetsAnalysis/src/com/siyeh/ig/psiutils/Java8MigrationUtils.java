@@ -16,10 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -262,12 +258,6 @@ public class Java8MigrationUtils {
 
     public PsiExpression getFullCondition() {
       return myFullCondition;
-    }
-
-    public void register(ProblemsHolder holder, boolean informationLevel, LocalQuickFix fix, String methodName) {
-      //noinspection DialogTitleCapitalization
-      holder.registerProblem(getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", methodName),
-                             informationLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
     }
 
     public boolean isMapValueType(@Nullable PsiType type) {

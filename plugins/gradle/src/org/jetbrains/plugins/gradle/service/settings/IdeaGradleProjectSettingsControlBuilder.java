@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemSettingsControlCustomizer;
@@ -22,18 +25,28 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +63,8 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -91,6 +106,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private JLabel myGradleJdkLabel;
   @Nullable
   private ExternalSystemJdkComboBox myGradleJdkComboBox;
+  @Nullable
+  private FixedSizeButton myGradleJdkSetUpButton;
   private boolean dropGradleJdkComponents;
 
   @Nullable
@@ -274,7 +291,25 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       myGradleJdkComboBox = new ExternalSystemJdkComboBox().withoutJre();
 
       content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-      content.add(myGradleJdkComboBox, ExternalSystemUiUtil.getFillLineConstraints(0));
+      JPanel gradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
+      gradleJdkPanel.setFocusable(false);
+      gradleJdkPanel.add(myGradleJdkComboBox, BorderLayout.CENTER);
+      myGradleJdkSetUpButton = new FixedSizeButton(myGradleJdkComboBox);
+      myGradleJdkSetUpButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
+      // FixedSizeButton isn't focusable but it should be selectable via keyboard.
+      DumbAwareAction.create(event -> {
+        for (ActionListener listener : myGradleJdkSetUpButton.getActionListeners()) {
+          listener.actionPerformed(new ActionEvent(myGradleJdkComboBox, ActionEvent.ACTION_PERFORMED, "action"));
+        }
+      }).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)),
+                                   myGradleJdkComboBox);
+
+      if (ScreenReader.isActive()) {
+        myGradleJdkSetUpButton.setFocusable(true);
+        myGradleJdkSetUpButton.getAccessibleContext().setAccessibleName(ApplicationBundle.message("button.new"));
+      }
+      gradleJdkPanel.add(myGradleJdkSetUpButton, BorderLayout.EAST);
+      content.add(gradleJdkPanel, ExternalSystemUiUtil.getFillLineConstraints(0));
     }
     return this;
   }
@@ -425,7 +460,15 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   @Override
-  public void reset(Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation) {
+  public void reset(@Nullable Project project, GradleProjectSettings settings, boolean isDefaultModuleCreation) {
+    reset(project, settings, isDefaultModuleCreation, null);
+  }
+
+  @Override
+  public void reset(@Nullable Project project,
+                    GradleProjectSettings settings,
+                    boolean isDefaultModuleCreation,
+                    @Nullable WizardContext wizardContext) {
     String gradleHome = settings.getGradleHome();
     if (myGradleHomePathField != null) {
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
@@ -438,7 +481,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       myStoreExternallyCheckBox.setSelected(settings.isStoreProjectFilesExternally());
     }
 
-    resetGradleJdkComboBox(project, settings);
+    resetGradleJdkComboBox(project, settings, wizardContext);
     resetWrapperControls(settings.getExternalProjectPath(), settings, isDefaultModuleCreation);
 
     if (myUseLocalDistributionButton != null && !myUseLocalDistributionButton.isSelected()) {
@@ -502,15 +545,24 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  private void resetGradleJdkComboBox(@Nullable final Project project, GradleProjectSettings settings) {
+  private void resetGradleJdkComboBox(@Nullable final Project project,
+                                      GradleProjectSettings settings,
+                                      @Nullable WizardContext wizardContext) {
     if (myGradleJdkComboBox == null) return;
 
     final String gradleJvm = settings.getGradleJvm();
     myGradleJdkComboBox.setProject(project);
 
-    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s -> (project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
+    Sdk projectJdk = wizardContext != null ? wizardContext.getProjectJdk() : null;
+    final String sdkItem = ObjectUtils.nullizeByCondition(gradleJvm, s ->
+      (projectJdk == null && project == null && StringUtil.equals(USE_PROJECT_JDK, s)) || StringUtil.isEmpty(s));
 
-    myGradleJdkComboBox.refreshData(sdkItem);
+    myGradleJdkComboBox.refreshData(sdkItem, projectJdk);
+    if (myGradleJdkSetUpButton != null) {
+      ProjectSdksModel sdksModel = ProjectStructureConfigurable.getInstance(
+        project == null || project.isDisposed() ? ProjectManager.getInstance().getDefaultProject() : project).getProjectJdksModel();
+      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id instanceof JavaSdk);
+    }
   }
 
   private void resetWrapperControls(String linkedProjectPath, @NotNull GradleProjectSettings settings, boolean isDefaultModuleCreation) {

@@ -456,6 +456,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("match literal contents", 1, findMatchesCount(s2, "\"'String:[regex( alpha )]\""));
     assertEquals("negate match literal contents", 2, findMatchesCount(s2, "\"'String:[!regex( alpha )]\""));
     assertEquals("match literal contents and all types", 1, findMatchesCount(s2, "\"'String:[regex( alpha ) && exprtype( .* )]\""));
+
+    String s3 = "class A {" +
+                "  int i = 0x20;" +
+                "  char c = 'a';" +
+                "  char d = 'A';" +
+                "  char e = 'z'" +
+                "}";
+    assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
+    assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
   }
 
   public void testCovariantArraySearch() {
@@ -607,7 +616,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "try { a(); } catch(Exception ex) {} catch(Error error) { 1=1; }\n" +
                     "try { a(); } catch(Exception ex) {}" +
                     "}}";
-    assertEquals("finally matching", 2,
+    assertEquals("catch parameter matching", 3,
                  findMatchesCount(s10031, "try { a(); } catch('_Type+ 'Arg+) { '_Statements*; }\n"));
 
     String s10033 = "class X {{ " +
@@ -795,10 +804,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s143 = "class A { A() {} };\n" +
                         "class B { B(int a) {} };\n" +
                         "class C { C() {} C(int a) {} };\n" +
-                        "class D {}\n" +
+                        "class D { void method() {} }\n" +
                         "class E {}";
     assertEquals("parameterless constructor search", 3,
                  findMatchesCount(s143, "class '_a { '_d{0,0}:[ script( \"__context__.constructor\" ) ]('_b+ '_c+); }"));
+    assertEquals("parameterless constructor search 2", 2,
+                 findMatchesCount(s143, "'_Constructor() { '_st*; }"));
   }
 
   public void testScriptSearch() {
@@ -2321,6 +2332,21 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
       fail("malformed pattern warning expected");
     } catch (MalformedPatternException ignored) {}
 
+    try {
+      findMatchesCount(source, "\\'aa\\'");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(source, "\\'$var$ \\'");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
+    try {
+      findMatchesCount(s4, "0x100000000");
+      fail("malformed pattern warning expected");
+    } catch (MalformedPatternException ignored) {}
+
     findMatchesCount(source, "'_ReturnType '_Method*('_ParameterType '_Parameter);");
   }
 
@@ -2453,6 +2479,18 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final List<MatchResult> matches = findMatches(source, pattern7, StdFileTypes.JAVA);
     assertEquals(3, matches.size());
     assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
+
+    String pattern8 = "try { '_St1*; } catch ('_E '_e{2,2}) { '_St2*; }";
+    final List<MatchResult> matches2 = findMatches(source, pattern8, StdFileTypes.JAVA);
+    assertEquals(1, matches2.size());
+    assertEquals("Find try with exactly 2 catch blocks",
+                 "try {\n" +
+                 "  } catch(NullPointerException  | UnsupportedOperationException e) {\n" +
+                 "    throw e;\n" +
+                 "  } catch(Exception e) {\n" +
+                 "     throw new RuntimeException(e);\n" +
+                 "  } finally {}",
+                 matches2.get(0).getMatchImage());
   }
 
   public void testFindAsserts() {

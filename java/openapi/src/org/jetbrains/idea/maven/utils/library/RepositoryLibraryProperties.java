@@ -41,7 +41,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version, boolean includeTransitiveDependencies) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies);
   }
 
   @Override

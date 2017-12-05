@@ -4,10 +4,10 @@ package com.intellij.codeInspection.dataFlow.rangeSet;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.ThreeState;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +24,16 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
  * @author Tagir Valeev
  */
 public abstract class LongRangeSet {
+  // TODO: create an external annotation and use it
+  private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), range(0, 23))
+    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), range(0, 59))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
+              range(0, Long.SIZE))
+    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
+              range(0, Integer.SIZE))
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ENUM, "ordinal").parameterCount(0), indexRange());
+
   LongRangeSet() {}
 
   /**
@@ -174,6 +184,8 @@ public abstract class LongRangeSet {
     }
     return all().subtract(result);
   }
+
+  abstract public LongRangeSet mod(LongRangeSet other);
 
   private static long[] splitAtZero(long[] ranges) {
     for (int i = 0; i < ranges.length; i += 2) {
@@ -392,8 +404,14 @@ public abstract class LongRangeSet {
   }
 
   @NotNull
-  public static LongRangeSet fromAnnotation(PsiModifierListOwner owner) {
+  public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
     if (owner == null) return all();
+    if (owner instanceof PsiMethod) {
+      LongRangeSet rangeSet = KNOWN_METHOD_RANGES.mapFirst((PsiMethod)owner);
+      if (rangeSet != null) {
+        return rangeSet;
+      }
+    }
     if (AnnotationUtil.isAnnotated(owner, "javax.annotation.Nonnegative", CHECK_TYPE)) {
       return range(0, Long.MAX_VALUE);
     }
@@ -458,6 +476,11 @@ public abstract class LongRangeSet {
     @Override
     public LongRangeSet abs(boolean isLong) {
       return this;
+    }
+
+    @Override
+    public LongRangeSet mod(LongRangeSet divisor) {
+      return empty();
     }
 
     @Override
@@ -534,6 +557,34 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public LongRangeSet mod(LongRangeSet divisor) {
+      if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
+      if (myValue == 0) return this;
+      if (divisor instanceof Point) {
+        return LongRangeSet.point(myValue % ((Point)divisor).myValue);
+      }
+      if (myValue != Long.MIN_VALUE) {
+        long abs = Math.abs(myValue);
+        if (!divisor.intersects(LongRangeSet.range(-abs, abs))) {
+          // like 10 % [15..20] == 10 regardless on exact divisor value
+          return this;
+        }
+      }
+      LongRangeSet addend = empty();
+      if (divisor.contains(Long.MIN_VALUE)) {
+        divisor = divisor.subtract(point(Long.MIN_VALUE));
+        addend = point(myValue);
+      }
+      long max = Math.max(0, Math.max(Math.abs(divisor.min()), Math.abs(divisor.max())) - 1);
+      if (myValue < 0) {
+        return LongRangeSet.range(Math.max(myValue, -max), 0).union(addend);
+      } else {
+        // 10 % [-4..7] is [0..6], but 10 % [-30..30] is [0..10]
+        return LongRangeSet.range(0, Math.min(myValue, max)).union(addend);
+      }
+    }
+
+    @Override
     public LongStream stream() {
       return LongStream.of(myValue);
     }
@@ -551,7 +602,7 @@ public abstract class LongRangeSet {
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
-      return o != null && o instanceof Point && myValue == ((Point)o).myValue;
+      return o instanceof Point && myValue == ((Point)o).myValue;
     }
 
     @Override
@@ -700,6 +751,32 @@ public abstract class LongRangeSet {
     }
 
     @Override
+    public LongRangeSet mod(LongRangeSet divisor) {
+      if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
+      if (divisor instanceof Point && ((Point)divisor).myValue == Long.MIN_VALUE) {
+        return this.contains(Long.MIN_VALUE) ? this.subtract(divisor).union(point(0)) : this;
+      }
+      if (divisor.contains(Long.MIN_VALUE)) {
+        return possibleMod();
+      }
+      long min = divisor.min();
+      long max = divisor.max();
+      long maxDivisor = Math.max(Math.abs(min), Math.abs(max));
+      long minDivisor = min > 0 ? min : max < 0 ? Math.abs(max) : 0;
+      if (!intersects(LongRangeSet.range(Long.MIN_VALUE, -minDivisor)) &&
+          !intersects(LongRangeSet.range(minDivisor, Long.MAX_VALUE))) {
+        return this;
+      }
+      return possibleMod().intersect(range(-maxDivisor + 1, maxDivisor - 1));
+    }
+
+    private LongRangeSet possibleMod() {
+      if(contains(0)) return this;
+      if(min() > 0) return range(0, max());
+      return range(min(), 0);
+    }
+
+    @Override
     public LongStream stream() {
       return LongStream.rangeClosed(myFrom, myTo);
     }
@@ -717,7 +794,7 @@ public abstract class LongRangeSet {
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
-      return o != null && o instanceof Range && myFrom == ((Range)o).myFrom && myTo == ((Range)o).myTo;
+      return o instanceof Range && myFrom == ((Range)o).myFrom && myTo == ((Range)o).myTo;
     }
 
     @Override
@@ -818,7 +895,15 @@ public abstract class LongRangeSet {
     @Override
     public boolean contains(LongRangeSet other) {
       if (other.isEmpty() || other == this) return true;
-      return other.subtract(this).isEmpty();
+      if (other instanceof Point) {
+        return contains(((Point)other).myValue);
+      }
+      LongRangeSet result = other;
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.subtract(range(myRanges[i], myRanges[i + 1]));
+        if (result.isEmpty()) return true;
+      }
+      return false;
     }
 
     @Override
@@ -828,6 +913,16 @@ public abstract class LongRangeSet {
         result = result.subtract(range(myRanges[i], myRanges[i + 1]).abs(isLong));
       }
       return all().subtract(result);
+    }
+
+    @Override
+    public LongRangeSet mod(LongRangeSet divisor) {
+      if(divisor.isEmpty()) return empty();
+      LongRangeSet result = empty();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.union(range(myRanges[i], myRanges[i + 1]).mod(divisor));
+      }
+      return result;
     }
 
     @Override
@@ -850,7 +945,7 @@ public abstract class LongRangeSet {
     @Override
     public boolean equals(Object o) {
       if (o == this) return true;
-      return o != null && o instanceof RangeSet && Arrays.equals(myRanges, ((RangeSet)o).myRanges);
+      return o instanceof RangeSet && Arrays.equals(myRanges, ((RangeSet)o).myRanges);
     }
 
     @Override

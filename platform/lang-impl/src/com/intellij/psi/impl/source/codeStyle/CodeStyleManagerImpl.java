@@ -43,7 +43,6 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
@@ -449,7 +448,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       return false;
     }
     */
-    if (getSettings().KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
+    if (getSettings().getCommonSettings(file.getLanguage()).KEEP_FIRST_COLUMN_COMMENT && isCommentToken(element)) {
       if (IndentHelper.getInstance().getIndent(myProject, file.getFileType(), element, true) == 0) {
         return false;
       }
@@ -560,7 +559,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     if (!(astNode instanceof FileElement)) {
       return new Pair<>(null, null);
     }
-    PsiElement elementAt = InjectedLanguageUtil.findInjectedElementNoCommit(file, offset);
+    PsiElement elementAt = InjectedLanguageManager.getInstance(file.getProject()).findInjectedElementAt(file, offset);
     final CharTable charTable = ((FileElement)astNode).getCharTable();
     if (elementAt == null) {
       elementAt = findElementInTreeWithFormatterEnabled(file, offset);

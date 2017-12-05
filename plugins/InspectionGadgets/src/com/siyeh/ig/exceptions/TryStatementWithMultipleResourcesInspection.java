@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,6 +64,7 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
     if (resourceList == null || resourceList.getResourceVariablesCount() <= 1) {
       return;
     }
+    CommentTracker tracker = new CommentTracker();
     final StringBuilder newTryStatementText = new StringBuilder();
     int count = 0;
     for (PsiResourceListElement resource : resourceList) {
@@ -70,25 +72,25 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
         newTryStatementText.append("{\n");
       }
       ++count;
-      newTryStatementText.append("try (").append(resource.getText()).append(")");
+      newTryStatementText.append("try (").append(tracker.markUnchanged(resource).getText()).append(")");
     }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return;
     }
-    newTryStatementText.append(tryBlock.getText());
+    newTryStatementText.append(tracker.markUnchanged(tryBlock).getText());
     for (int i = 1; i < count; i++) {
       newTryStatementText.append("\n}");
     }
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     for (PsiCatchSection catchSection : catchSections) {
-      newTryStatementText.append(catchSection.getText());
+      newTryStatementText.append(tracker.markUnchanged(catchSection).getText());
     }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      newTryStatementText.append("finally").append(finallyBlock.getText());
+      newTryStatementText.append("finally").append(tracker.markUnchanged(finallyBlock).getText());
     }
-    PsiReplacementUtil.replaceStatement(tryStatement, newTryStatementText.toString());
+    PsiReplacementUtil.replaceStatement(tryStatement, newTryStatementText.toString(), tracker);
   }
 
   private static boolean isAcceptable(PsiElement element) {

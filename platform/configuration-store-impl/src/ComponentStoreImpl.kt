@@ -44,6 +44,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.JDOMXIncluder
+import com.intellij.util.xmlb.XmlSerializerUtil
 import gnu.trove.THashMap
 import io.netty.util.internal.SystemPropertyUtil
 import org.jdom.Element
@@ -61,6 +62,14 @@ internal val deprecatedComparator = Comparator<Storage> { o1, o2 ->
   w1 - w2
 }
 
+private class PersistenceStateAdapter(val component: Any) : PersistentStateComponent<Any> {
+  override fun getState() = component
+
+  override fun loadState(state: Any) {
+    XmlSerializerUtil.copyBean(state, component)
+  }
+}
+
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
   private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
@@ -75,7 +84,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   override final fun getStateStorageManager() = storageManager
 
-  override final fun initComponent(component: Any, service: Boolean) {
+  override final fun initComponent(component: Any, isService: Boolean) {
     if (component is SettingsSavingComponent) {
       settingsSavingComponents.add(component)
     }
@@ -84,18 +93,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       @Suppress("DEPRECATION")
       if (component is PersistentStateComponent<*>) {
-        val stateSpec = StoreUtil.getStateSpec(component)
-        componentName = stateSpec.name
-        val info = doAddComponent(componentName, component)
-        if (initComponent(stateSpec, component, info, null, false) && service) {
-          // if not service, so, component manager will check it later for all components
-          project?.let {
-            val app = ApplicationManager.getApplication()
-            if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
-              notifyUnknownMacros(this, it, componentName)
-            }
-          }
-        }
+        componentName = initPersistenceStateComponent(component, StoreUtil.getStateSpec(component), isService)
       }
       else if (component is JDOMExternalizable) {
         componentName = ComponentManagerImpl.getComponentName(component)
@@ -107,9 +105,28 @@ abstract class ComponentStoreImpl : IComponentStore {
       throw e
     }
     catch (e: Exception) {
-      LOG.error("Cannot init ${componentName} component state", e)
+      LOG.error("Cannot init $componentName component state", e)
       return
     }
+  }
+
+  override fun initPersistencePlainComponent(component: Any, key: String) {
+    initPersistenceStateComponent(PersistenceStateAdapter(component), StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false)), false)
+  }
+
+  private fun initPersistenceStateComponent(component: PersistentStateComponent<*>, stateSpec: State, isService: Boolean): String {
+    val componentName = stateSpec.name
+    val info = doAddComponent(componentName, component, stateSpec)
+    if (initComponent(info, null, false) && isService) {
+      // if not service, so, component manager will check it later for all components
+      project?.let {
+        val app = ApplicationManager.getApplication()
+        if (!app.isHeadlessEnvironment && !app.isUnitTestMode && it.isInitialized) {
+          notifyUnknownMacros(this, it, componentName)
+        }
+      }
+    }
+    return componentName
   }
 
   override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
@@ -155,7 +172,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             }
           }
 
-          commitComponent(externalizationSession, info.component, name)
+          commitComponent(externalizationSession, info, name)
           info.updateModificationCount(currentModificationCount)
         }
         catch (e: Throwable) {
@@ -201,14 +218,14 @@ abstract class ComponentStoreImpl : IComponentStore {
   override @TestOnly fun saveApplicationComponent(component: PersistentStateComponent<*>) {
     val externalizationSession = storageManager.startExternalization() ?: return
 
-    commitComponent(externalizationSession, component, null)
+    val stateSpec = StoreUtil.getStateSpec(component)
+    commitComponent(externalizationSession, ComponentInfoImpl(component, stateSpec), null)
     val sessions = externalizationSession.createSaveSessions()
     if (sessions.isEmpty()) {
       return
     }
 
-    val state = StoreUtil.getStateSpec(component.javaClass) ?: throw AssertionError("${component.javaClass} doesn't have @State annotation and doesn't implement ExportableApplicationComponent")
-    val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(state.storages).path)).toAbsolutePath().toString()
+    val absolutePath = Paths.get(storageManager.expandMacros(findNonDeprecated(stateSpec.storages).path)).toAbsolutePath().toString()
     runUndoTransparentWriteAction {
       try {
         VfsRootAccess.allowRootAccess(absolutePath)
@@ -220,11 +237,12 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  private fun commitComponent(session: ExternalizationSession, component: Any, componentName: String?) {
+  private fun commitComponent(session: ExternalizationSession, info: ComponentInfo, componentName: String?) {
+    val component = info.component
     @Suppress("DEPRECATION")
     if (component is PersistentStateComponent<*>) {
       component.state?.let {
-        val stateSpec = StoreUtil.getStateSpec(component)
+        val stateSpec = info.stateSpec!!
         session.setState(getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE), component, componentName ?: stateSpec.name, it)
       }
     }
@@ -242,7 +260,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   private fun initJdomExternalizable(@Suppress("DEPRECATION") component: JDOMExternalizable, componentName: String): String? {
-    doAddComponent(componentName, component)
+    doAddComponent(componentName, component, null)
 
     if (loadPolicy != StateLoadPolicy.LOAD) {
       return null
@@ -266,11 +284,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  private fun doAddComponent(name: String, component: Any): ComponentInfo {
+  private fun doAddComponent(name: String, component: Any, stateSpec: State?): ComponentInfo {
     val newInfo = when (component) {
-      is ModificationTracker -> ComponentWithModificationTrackerInfo(component)
-      is PersistentStateComponentWithModificationTracker<*> -> ComponentWithStateModificationTrackerInfo(component)
-      else -> ComponentInfoImpl(component)
+      is ModificationTracker -> ComponentWithModificationTrackerInfo(component, stateSpec)
+      is PersistentStateComponentWithModificationTracker<*> -> ComponentWithStateModificationTrackerInfo(component, stateSpec!!)
+      else -> ComponentInfoImpl(component, stateSpec)
     }
 
     val existing = components.put(name, newInfo)
@@ -282,12 +300,13 @@ abstract class ComponentStoreImpl : IComponentStore {
     return newInfo
   }
 
-  private fun <T: Any> initComponent(stateSpec: State, component: PersistentStateComponent<T>, info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
+  private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
     if (loadPolicy == StateLoadPolicy.NOT_LOAD) {
       return false
     }
 
-    if (doInitComponent(stateSpec, component, changedStorages, reloadData)) {
+    @Suppress("UNCHECKED_CAST")
+    if (doInitComponent(info.stateSpec!!, info.component as PersistentStateComponent<Any>, changedStorages, reloadData)) {
       // if component was initialized, update lastModificationCount
       info.updateModificationCount()
       return true
@@ -295,9 +314,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     return false
   }
 
-  private fun <T: Any> doInitComponent(stateSpec: State, component: PersistentStateComponent<T>, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
+  private fun doInitComponent(stateSpec: State, component: PersistentStateComponent<Any>, changedStorages: Set<StateStorage>?, reloadData: Boolean): Boolean {
     val name = stateSpec.name
-    val stateClass = ComponentSerializationUtil.getStateClass<T>(component.javaClass)
+    @Suppress("UNCHECKED_CAST")
+    val stateClass: Class<Any> = if (component is PersistenceStateAdapter) component.component::class.java as Class<Any> else ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     if (!stateSpec.defaultStateAsResource && LOG.isDebugEnabled && getDefaultState(component, name, stateClass) != null) {
       LOG.error("$name has default state, but not marked to load it")
     }
@@ -419,15 +439,18 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = StoreUtil.getStateSpecOrError(componentClass)
     val info = components.get(stateSpec.name) ?: return
     (info.component as? PersistentStateComponent<*>)?.let {
-      initComponent(stateSpec, it, info, emptySet(), true)
+      initComponent(info, emptySet(), true)
     }
   }
 
   private fun reloadState(componentName: String, changedStorages: Set<StateStorage>): Boolean {
     val info = components.get(componentName) ?: return false
-    val component = info.component as? PersistentStateComponent<*> ?: return false
+    if (info.component !is PersistentStateComponent<*>) {
+      return false
+    }
+
     val changedStoragesEmpty = changedStorages.isEmpty()
-    initComponent(StoreUtil.getStateSpec(component), component, info, if (changedStoragesEmpty) null else changedStorages, changedStoragesEmpty)
+    initComponent(info, if (changedStoragesEmpty) null else changedStorages, changedStoragesEmpty)
     return true
   }
 
@@ -552,6 +575,8 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
 
 private interface ComponentInfo {
   val component: Any
+  val stateSpec: State?
+
   val lastModificationCount: Long
   val currentModificationCount: Long
 
@@ -561,7 +586,7 @@ private interface ComponentInfo {
   }
 }
 
-private class ComponentInfoImpl(override val component: Any) : ComponentInfo {
+private class ComponentInfoImpl(override val component: Any, override val stateSpec: State?) : ComponentInfo {
   override val isModificationTrackingSupported = false
 
   override val lastModificationCount: Long
@@ -581,14 +606,14 @@ private abstract class ModificationTrackerAwareComponentInfo : ComponentInfo {
   }
 }
 
-private class ComponentWithStateModificationTrackerInfo(override val component: PersistentStateComponentWithModificationTracker<*>) : ModificationTrackerAwareComponentInfo() {
+private class ComponentWithStateModificationTrackerInfo(override val component: PersistentStateComponentWithModificationTracker<*>, override val stateSpec: State) : ModificationTrackerAwareComponentInfo() {
   override val currentModificationCount: Long
     get() = component.stateModificationCount
 
   override var lastModificationCount = currentModificationCount
 }
 
-private class ComponentWithModificationTrackerInfo(override val component: ModificationTracker) : ModificationTrackerAwareComponentInfo() {
+private class ComponentWithModificationTrackerInfo(override val component: ModificationTracker, override val stateSpec: State?) : ModificationTrackerAwareComponentInfo() {
   override val currentModificationCount: Long
     get() = component.modificationCount
 

@@ -378,7 +378,7 @@ public class GitPushOperation {
     UpdateMethod updateMethod = mySettings.getUpdateType();
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       // deliberate limitation: we have only 2 buttons => choose method from the 1st repo if different
-      updateMethod = GitUpdater.resolveUpdateMethod(myProject, myPushSpecs.keySet().iterator().next().getRoot());
+      updateMethod = GitUpdater.resolveUpdateMethod(myPushSpecs.keySet().iterator().next());
     }
     return new PushUpdateSettings(updateAllRoots, updateMethod);
   }

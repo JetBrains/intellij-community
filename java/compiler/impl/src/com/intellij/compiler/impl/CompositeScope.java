@@ -100,6 +100,7 @@ public class CompositeScope extends ExportableUserDataHolderBase implements Comp
     return unloadedModules;
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     for (CompileScope compileScope : myScopes) {
       T userData = compileScope.getUserData(key);

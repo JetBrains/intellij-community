@@ -132,6 +132,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     psiClass = psiFile.getClasses()[0];
     pane.select(psiClass, virtualFile, true);
+    PlatformTestUtil.waitUntilBusy(tree);
     PlatformTestUtil.assertTreeEqual(tree, expected, true);
   }
 }

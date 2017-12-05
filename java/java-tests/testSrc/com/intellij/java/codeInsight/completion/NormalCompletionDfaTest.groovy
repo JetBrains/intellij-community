@@ -15,18 +15,16 @@
  */
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.JavaTestUtil
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-
+import com.intellij.testFramework.LightProjectDescriptor
 /**
  * @author peter
  */
-class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
+class NormalCompletionDfaTest extends NormalCompletionTestCase {
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8
   }
-  
+
   void testCastInstanceofedQualifier() { doTest() }
   void testCastInstanceofedQualifierInForeach() { doTest() }
   void testCastComplexInstanceofedQualifier() { doTest() }
@@ -42,7 +40,16 @@ class NormalCompletionDfaTest extends LightFixtureCompletionTestCase {
   void testQualifierCastingBeforeLt() { doTest() }
   void testCastQualifierForPrivateFieldReference() { doTest() }
   void testOrAssignmentDfa() { doTest() }
+  void testAssignmentPreciseTypeDfa() { doTest() }
+  void testDeclarationPreciseTypeDfa() { doTest() }
+  void testInstanceOfAssignmentDfa() { doTest() }
+  void testStreamDfa() { doTest() }
+  void testStreamIncompleteDfa() { doTest() }
+  void testOptionalDfa() { doTest() }
   void testFieldWithCastingCaret() { doTest() }
+  void testCastWhenMethodComesFromDfaSuperType() { doTest() }
+  void testGenericTypeDfa() { doTest() }
+  void testNoUnnecessaryCastDfa() { doTest() }
 
   void testCastTwice() {
     configureByTestName()
@@ -64,11 +71,6 @@ public class FooImpl extends Foo {
 }
 '''
     doTest()
-  }
-
-  private void doTest() throws Exception {
-    configureByTestName()
-    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void testCastInstanceofedQualifierInLambda() { doTest() }

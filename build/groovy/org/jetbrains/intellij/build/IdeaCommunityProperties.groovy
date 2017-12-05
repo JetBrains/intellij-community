@@ -32,9 +32,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
-    productLayout.platformApiJarModules = CommunityRepositoryModules.PLATFORM_API_MODULES
-    //jps modules are packed into a separate JAR to include into build process's classpath so we need to exclude them from the main platform JAR
-    productLayout.platformImplJarModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES - ["jps-model-impl", "jps-model-serialization"]
     productLayout.productApiModules = JAVA_API_MODULES
     productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
                                                  ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"]

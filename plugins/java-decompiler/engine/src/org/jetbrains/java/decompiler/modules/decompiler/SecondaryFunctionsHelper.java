@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -178,7 +164,7 @@ public class SecondaryFunctionsHelper {
                 if (index >= 0 && index <= 2) {
                   Integer destcon = destcons[index];
                   if (destcon != null) {
-                    desttype = destcon.intValue();
+                    desttype = destcon;
                   }
                 }
               }
@@ -222,10 +208,10 @@ public class SecondaryFunctionsHelper {
                 ConstExprent cexpr = (ConstExprent)operand;
                 long val;
                 if (operandtype.type == CodeConstants.TYPE_LONG) {
-                  val = ((Long)cexpr.getValue()).longValue();
+                  val = (Long)cexpr.getValue();
                 }
                 else {
-                  val = ((Integer)cexpr.getValue()).intValue();
+                  val = (Integer)cexpr.getValue();
                 }
 
                 if (val == -1) {
@@ -243,7 +229,7 @@ public class SecondaryFunctionsHelper {
               for (int i = 0; i < 2; i++) {
                 if (lstOperands.get(i).type == Exprent.EXPRENT_CONST) {
                   ConstExprent cexpr = (ConstExprent)lstOperands.get(i);
-                  int val = ((Integer)cexpr.getValue()).intValue();
+                  int val = (Integer)cexpr.getValue();
 
                   if ((fexpr.getFuncType() == FunctionExprent.FUNCTION_EQ && val == 1) ||
                       (fexpr.getFuncType() == FunctionExprent.FUNCTION_NE && val == 0)) {
@@ -262,10 +248,10 @@ public class SecondaryFunctionsHelper {
             if (lstOperands.get(0).type == Exprent.EXPRENT_CONST) {
               int val = ((ConstExprent)lstOperands.get(0)).getIntValue();
               if (val == 0) {
-                return new ConstExprent(VarType.VARTYPE_BOOLEAN, Integer.valueOf(1), fexpr.bytecode);
+                return new ConstExprent(VarType.VARTYPE_BOOLEAN, 1, fexpr.bytecode);
               }
               else {
-                return new ConstExprent(VarType.VARTYPE_BOOLEAN, Integer.valueOf(0), fexpr.bytecode);
+                return new ConstExprent(VarType.VARTYPE_BOOLEAN, 0, fexpr.bytecode);
               }
             }
             break;
@@ -300,8 +286,8 @@ public class SecondaryFunctionsHelper {
             FunctionExprent iff = new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
               new FunctionExprent(FunctionExprent.FUNCTION_LT, Arrays.asList(new VarExprent(var, type, varProc),
                 ConstExprent.getZeroConstant(type.type)), null),
-              new ConstExprent(VarType.VARTYPE_INT, Integer.valueOf(-1), null),
-              new ConstExprent(VarType.VARTYPE_INT, Integer.valueOf(1), null)), null);
+              new ConstExprent(VarType.VARTYPE_INT, -1, null),
+              new ConstExprent(VarType.VARTYPE_INT, 1, null)), null);
 
             FunctionExprent head = new FunctionExprent(FunctionExprent.FUNCTION_EQ, Arrays.asList(
               new AssignmentExprent(new VarExprent(var, type, varProc),
@@ -312,7 +298,7 @@ public class SecondaryFunctionsHelper {
             varProc.setVarType(new VarVersionPair(var, 0), type);
 
             return new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
-              head, new ConstExprent(VarType.VARTYPE_INT, Integer.valueOf(0), null), iff), fexpr.bytecode);
+              head, new ConstExprent(VarType.VARTYPE_INT, 0, null), iff), fexpr.bytecode);
         }
         break;
       case Exprent.EXPRENT_ASSIGNMENT: // check for conditional assignment

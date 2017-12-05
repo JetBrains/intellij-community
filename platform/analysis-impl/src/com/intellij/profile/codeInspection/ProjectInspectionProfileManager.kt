@@ -277,7 +277,7 @@ class ProjectInspectionProfileManager(val project: Project,
       } ?: applicationProfileManager.currentProfile)
     }
 
-    var currentScheme = schemeManager.currentScheme
+    var currentScheme = schemeManager.activeScheme
     if (currentScheme == null) {
       currentScheme = schemeManager.allSchemes.firstOrNull()
       if (currentScheme == null) {

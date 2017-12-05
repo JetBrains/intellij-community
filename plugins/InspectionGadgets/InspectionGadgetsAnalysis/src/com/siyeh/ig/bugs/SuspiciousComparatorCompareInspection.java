@@ -24,6 +24,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -95,6 +96,19 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       if (body instanceof PsiCodeBlock) {
         PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock((PsiCodeBlock)body);
         if (statement instanceof PsiReturnStatement && ExpressionUtils.isZero(((PsiReturnStatement)statement).getReturnValue())) return;
+      }
+      PsiMethodCallExpression soleCall = ObjectUtils.tryCast(LambdaUtil.extractSingleExpressionFromBody(body), PsiMethodCallExpression.class);
+      if (soleCall != null) {
+        PsiMethod method = soleCall.resolveMethod();
+        if (method != null) {
+          List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, soleCall);
+          if (contracts.size() == 1) {
+            MethodContract contract = contracts.get(0);
+            if (contract.isTrivial() && contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION) {
+              return;
+            }
+          }
+        }
       }
       PsiParameter[] parameters = parameterList.getParameters();
       checkParameterList(parameters, body);

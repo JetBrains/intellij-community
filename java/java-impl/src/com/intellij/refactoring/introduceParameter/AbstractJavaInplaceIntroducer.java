@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -40,7 +41,7 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   private static Editor getEditor(Editor editor, PsiExpression expr) {
-    return expr != null && Comparing.equal(InjectedLanguageUtil.getTopLevelFile(expr), expr.getContainingFile())
+    return expr != null && Comparing.equal(InjectedLanguageManager.getInstance(expr.getProject()).getTopLevelFile(expr), expr.getContainingFile())
            ? InjectedLanguageUtil.getTopLevelEditor(editor)
            : editor;
   }

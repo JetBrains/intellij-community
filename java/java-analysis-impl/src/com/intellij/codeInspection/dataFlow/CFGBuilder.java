@@ -498,6 +498,7 @@ public class CFGBuilder {
       JavaResolveResult resolveResult = methodRef.advancedResolve(false);
       PsiMethod method = ObjectUtils.tryCast(resolveResult.getElement(), PsiMethod.class);
       if (method != null && !method.isVarArgs()) {
+        if (processKnownMethodReference(argCount, methodRef, method)) return this;
         int expectedArgCount = method.getParameterList().getParametersCount();
         boolean pushQualifier = true;
         if (!method.hasModifierProperty(PsiModifier.STATIC) && !method.isConstructor()) {
@@ -546,6 +547,17 @@ public class CFGBuilder {
       pushUnknown();
     }
     return this;
+  }
+
+  private boolean processKnownMethodReference(int argCount, PsiMethodReferenceExpression methodRef, PsiMethod method) {
+    if (argCount != 1 || !method.getName().equals("isInstance")) return false;
+    PsiClassObjectAccessExpression qualifier = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(methodRef.getQualifierExpression()),
+                                                                   PsiClassObjectAccessExpression.class);
+    if (qualifier == null) return false;
+    PsiType type = qualifier.getOperand().getType();
+    push(getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    myAnalyzer.addInstruction(new InstanceofInstruction(methodRef, methodRef.getProject(), null, type));
+    return true;
   }
 
   /**

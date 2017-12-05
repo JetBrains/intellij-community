@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -182,7 +181,6 @@ public abstract class NewEditChangelistPanel extends JPanel {
   }
 
   private static EditorTextField createEditorField(final Project project, final int defaultLines) {
-    final EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     final EditorTextField editorField;
 
     final Set<EditorCustomization> editorFeatures = ContainerUtil.newHashSet();
@@ -196,7 +194,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
       editorFeatures.add(SoftWrapsEditorCustomization.ENABLED);
       scaleFactor = 2.1;
     }
-    editorField = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
+    editorField = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, editorFeatures);
     final int height = editorField.getFontMetrics(editorField.getFont()).getHeight();
     editorField.getComponent().setMinimumSize(new Dimension(100, (int)(height * scaleFactor)));
     editorField.addSettingsProvider(editor -> editor.getContentComponent()

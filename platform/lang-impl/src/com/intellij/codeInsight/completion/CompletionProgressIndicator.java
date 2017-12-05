@@ -231,12 +231,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
 
-    for (CompletionContributor contributor : CompletionContributor.forLanguage(initContext.getPositionLanguage())) {
+    for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(initContext.getPositionLanguage(), initContext.getProject())) {
       ProgressManager.checkCanceled();
-      if (DumbService.getInstance(initContext.getProject()).isDumb() && !DumbService.isDumbAware(contributor)) {
-        continue;
-      }
-
       contributor.duringCompletion(initContext);
     }
     if (document instanceof DocumentWindow) {

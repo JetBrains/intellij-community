@@ -217,6 +217,28 @@ public class  PyIntentionTest extends PyTestCase {
     doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
+  // PY-25035
+  public void testConvertVariadicParamNoUsages() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-25035
+  public void testConvertVariadicParamUnrelatedCaret() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  public void testConvertVariadicParamInvalidIdentifiers() {
+    doTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  public void testConvertVariadicParamPositionalContainerInPy2() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  public void testConvertVariadicParamPositionalContainerInPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
+  }
+
   public void testConvertTripleQuotedString() { //PY-2697
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }

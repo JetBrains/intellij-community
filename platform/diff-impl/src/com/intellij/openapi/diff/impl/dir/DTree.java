@@ -74,12 +74,15 @@ public class DTree {
     return myChildrenList;
   }
 
-  public DTree addChild(@NotNull DiffElement element, boolean source) {
+  public DTree addChild(@NotNull DiffElement element, boolean source, String replacementName) {
     init();
     myChildrenList = null;
     final DTree node;
     final String name = element.getName();
-    if (myChildren.containsKey(name)) {
+    if (replacementName != null && myChildren.containsKey(replacementName)) {
+      node = myChildren.get(replacementName);
+    }
+    else if (myChildren.containsKey(name)) {
       node = myChildren.get(name);
     } else {
       node = new DTree(this, name, element.isContainer());

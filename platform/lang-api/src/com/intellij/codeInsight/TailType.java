@@ -175,7 +175,7 @@ public abstract class TailType {
   public static class TailTypeEQ extends TailType {
 
     protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
-      return CodeStyleSettingsManager.getSettings(editor.getProject()).SPACE_AROUND_ASSIGNMENT_OPERATORS;
+      return getLocalCodeStyleSettings(editor, tailOffset).SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }
 
     @Override

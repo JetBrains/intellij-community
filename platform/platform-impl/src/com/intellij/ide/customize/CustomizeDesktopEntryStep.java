@@ -20,7 +20,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;

@@ -133,6 +133,7 @@ public class Descriptor {
     return myScope;
   }
 
+  @NotNull
   public ScopeToolState getState() {
     return myState;
   }

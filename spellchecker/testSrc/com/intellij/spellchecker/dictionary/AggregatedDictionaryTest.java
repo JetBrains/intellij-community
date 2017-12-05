@@ -138,4 +138,17 @@ public class AggregatedDictionaryTest extends SpellcheckerInspectionTestCase {
 
     assertEquals(traversedWords, new ArrayList<>(myAggregatedDictionary.getCachedDictionary().getWords()));
   }
+  
+  public void testGetSuggestions(){
+    final List<String> suggestions = new ArrayList<>();
+    myAggregatedDictionary.getSuggestions("AAAB", suggestions::add);
+    assert suggestions.size() == 1;
+    assert suggestions.contains("AAAA");
+  }
+
+  public void testNoSuggestions(){
+    final List<String> suggestions = new ArrayList<>();
+    myAggregatedDictionary.getSuggestions("EEEE", suggestions::add);
+    assert suggestions.isEmpty();
+  }
 }

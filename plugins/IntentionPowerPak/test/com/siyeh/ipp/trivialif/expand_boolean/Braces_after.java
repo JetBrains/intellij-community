@@ -1,6 +1,6 @@
 class Braces {
   void m() {
-    final boolean isEqualsVoorSyncResync;
+    final boolean isEqualsVoorSyncResync;//keep me
       if (this instanceof A ? isEqual2() : isEqual()) {
           isEqualsVoorSyncResync = true;
       } else {

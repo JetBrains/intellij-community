@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
@@ -25,9 +11,13 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
+import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -67,18 +57,12 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   };
 
-  public SubstitutionHandler(final String name, final boolean target, int minOccurs,
-                             int maxOccurs, boolean greedy) {
+  public SubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
     this.name = name;
     this.maxOccurs = maxOccurs;
     this.minOccurs = minOccurs;
     this.target = target;
     this.greedy = greedy;
-  }
-
-  public SubstitutionHandler(final SubstitutionHandler substitutionHandler) {
-    this(substitutionHandler.getName(),substitutionHandler.isTarget(), substitutionHandler.getMinOccurs(),
-         substitutionHandler.getMaxOccurs(), substitutionHandler.greedy);
   }
 
   public boolean isSubtype() {
@@ -103,6 +87,27 @@ public class SubstitutionHandler extends MatchingHandler {
 
   public MatchPredicate getPredicate() {
     return predicate;
+  }
+
+  @Nullable
+  public RegExpPredicate findRegExpPredicate() {
+    return findRegExpPredicate(getPredicate());
+  }
+
+  private static RegExpPredicate findRegExpPredicate(MatchPredicate start) {
+    if (start==null) return null;
+    if (start instanceof RegExpPredicate) return (RegExpPredicate)start;
+
+    if(start instanceof AndPredicate) {
+      AndPredicate binary = (AndPredicate)start;
+      final RegExpPredicate result = findRegExpPredicate(binary.getFirst());
+      if (result!=null) return result;
+
+      return findRegExpPredicate(binary.getSecond());
+    } else if (start instanceof NotPredicate) {
+      return null;
+    }
+    return null;
   }
 
   private static boolean validateOneMatch(final PsiElement match, int start, int end, final MatchResult result, final MatchContext matchContext) {
@@ -257,14 +262,9 @@ public class SubstitutionHandler extends MatchingHandler {
     MatchResult substitution = context.hasResult() ? context.getResult().findSon(name) : null;
 
     if (minOccurs >= 1 &&
-        ( substitution == null ||
-          StructuralSearchUtil.getProfileByFileType(context.getOptions().getFileType()).getElementContextByPsi(substitution.getMatch()) != elementContext
-        )
-       ) {
+        (substitution == null || StructuralSearchUtil.getElementContextByPsi(substitution.getMatch()) != elementContext)) {
       return false;
-    } else if (maxOccurs <= 1 &&
-        substitution!=null && substitution.hasSons()
-    ) {
+    } else if (maxOccurs <= 1 && substitution!=null && substitution.hasSons()) {
       return false;
     } else if (maxOccurs==0 && totalMatchedOccurs!=-1) {
       return false;
@@ -355,7 +355,7 @@ public class SubstitutionHandler extends MatchingHandler {
           if (startMatching == matchedNodes.current()) {
             final boolean result = validateSatisfactionOfHandlers(patternNodes, context) &&
                                    matchedOccurs >= minOccurs && matchedOccurs <= maxOccurs;
-            if (result && context.getMatchedElementsListener() != null) {
+            if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
               context.getMatchedElementsListener().matchedElements(matchedElements);
             }
             return result;
@@ -368,7 +368,7 @@ public class SubstitutionHandler extends MatchingHandler {
       }
 
       final boolean result = validateSatisfactionOfHandlers(patternNodes, context);
-      if (result && context.getMatchedElementsListener() != null) {
+      if (result && matchedElements != null && context.getMatchedElementsListener() != null) {
         context.getMatchedElementsListener().matchedElements(matchedElements);
       }
       return result;

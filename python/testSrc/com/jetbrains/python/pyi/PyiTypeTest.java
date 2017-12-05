@@ -91,6 +91,7 @@ public class PyiTypeTest extends PyTestCase {
     final Project project = element.getProject();
     final PsiFile containingFile = element.getContainingFile();
     assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, containingFile));
+    assertProjectFilesNotParsed(myFixture.getFile());
     assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, containingFile));
   }
 
@@ -131,5 +132,18 @@ public class PyiTypeTest extends PyTestCase {
   // PY-22808
   public void testOverloadedNotMatchedGenericType() {
     doTest("Union[Dict[str, Any], list]");
+  }
+
+  public void testGenericClassDefinitionInOtherFile() {
+    doTest("int");
+  }
+
+  // PY-27186
+  public void testGenericClassDefinitionInSameFile() {
+    doTest("int");
+  }
+
+  public void testComparisonOperatorOverloads() {
+    doTest("int");
   }
 }

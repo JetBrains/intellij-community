@@ -244,6 +244,7 @@ class StateMerger {
         for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
           DfaVariableState variableState = state.getVariableState(entry.getKey());
           LongRangeSet range = variableState.getFact(RANGE);
+          if (range != null && !range.isEmpty() && range.max() == range.min()) continue;
           LongRangeSet boundingRange = entry.getValue().get(range);
           if (boundingRange != null && !boundingRange.equals(range)) {
             state.setFact(entry.getKey(), RANGE, boundingRange);
@@ -265,8 +266,7 @@ class StateMerger {
     Map<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> ranges = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
-      variableStates.forEach((varValue, varState) -> {
+      state.forVariableStates((varValue, varState) -> {
         LongRangeSet range = varState.getFact(RANGE);
         if (range != null) {
           ranges.computeIfAbsent(varValue, k -> new HashMap<>()).put(range, range);
@@ -297,22 +297,32 @@ class StateMerger {
     class Record {
       final DfaMemoryStateImpl myState;
       final LongRangeSet myRange;
-      final boolean myMerged;
+      final Set<EqualityFact> myCommonEqualities;
 
-      Record(DfaMemoryStateImpl state, LongRangeSet range, boolean merged) {
+      Record(DfaMemoryStateImpl state, LongRangeSet range, Set<EqualityFact> commonEqualities) {
         myState = state;
         myRange = range;
-        myMerged = merged;
+        myCommonEqualities = commonEqualities;
+      }
+
+      Set<EqualityFact> getEqualityFacts() {
+        return StreamEx.of(getFacts(myState)).select(EqualityFact.class)
+          .filter(fact -> fact.myVar == var || fact.myArg == var).toSet();
       }
 
       Record union(Record other) {
-        return new Record(myState, myRange.union(other.myRange), true);
+        Set<EqualityFact> equalities = myCommonEqualities == null ? getEqualityFacts() : myCommonEqualities;
+        equalities.retainAll(other.getEqualityFacts());
+        return new Record(myState, myRange.union(other.myRange), equalities);
       }
 
       DfaMemoryStateImpl getState() {
-        if(myMerged) {
+        if(myCommonEqualities != null) {
           myState.flushVariable(var);
           myState.setFact(var, RANGE, myRange);
+          for (EqualityFact equality : myCommonEqualities) {
+            equality.applyTo(myState);
+          }
         }
         return myState;
       }
@@ -327,7 +337,7 @@ class StateMerger {
         range = LongRangeSet.fromType(var.getVariableType());
         if (range == null) return null;
       }
-      merged.merge(copyWithoutVar(state, var), new Record(state, range, false), Record::union);
+      merged.merge(copyWithoutVar(state, var), new Record(state, range, null), Record::union);
     }
     return merged.size() == states.size() ? null : StreamEx.ofValues(merged).map(Record::getState).toList();
   }
@@ -378,12 +388,12 @@ class StateMerger {
 
   @NotNull
   private Set<Fact> getFacts(@NotNull DfaMemoryStateImpl state) {
-    Set<Fact> result = myFacts.get(state);
-    if (result != null) {
-      return result;
-    }
-    
-    result = ContainerUtil.newLinkedHashSet();
+    return myFacts.computeIfAbsent(state, StateMerger::doGetFacts);
+  }
+
+  @NotNull
+  private static Set<Fact> doGetFacts(DfaMemoryStateImpl state) {
+    Set<Fact> result = ContainerUtil.newLinkedHashSet();
 
     IdentityHashMap<EqClass, EqClassInfo> classInfo = new IdentityHashMap<>();
 
@@ -426,10 +436,7 @@ class StateMerger {
       }
     }
 
-    Map<DfaVariableValue, DfaVariableState> states = state.getVariableStates();
-    for (Map.Entry<DfaVariableValue, DfaVariableState> entry : states.entrySet()) {
-      DfaVariableValue var = entry.getKey();
-      DfaVariableState variableState = entry.getValue();
+    state.forVariableStates((var, variableState) -> {
       TypeConstraint typeConstraint = variableState.getTypeConstraint();
       for (DfaPsiType type : typeConstraint.getInstanceofValues()) {
         result.add(new InstanceofFact(var, true, type));
@@ -437,9 +444,7 @@ class StateMerger {
       for (DfaPsiType type : typeConstraint.getNotInstanceofValues()) {
         result.add(new InstanceofFact(var, false, type));
       }
-    }
-
-    myFacts.put(state, result);
+    });
     return result;
   }
 
@@ -510,6 +515,10 @@ class StateMerger {
       return new EqualityFact(myVar, true, myArg);
     }
 
+    void applyTo(DfaMemoryStateImpl state) {
+      state.applyCondition(state.getFactory().createCondition(myVar, myPositive ? RelationType.EQ : RelationType.NE, myArg));
+    }
+
     @Override
     boolean invalidatesFact(@NotNull Fact another) {
       if (!(another instanceof EqualityFact)) return false;
@@ -519,9 +528,7 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
-      DfaVariableState varState = state.getVariableState(myVar);
-      state.flushVariable(myVar);
-      state.setVariableState(myVar, varState);
+      state.removeEquivalenceRelations(myVar);
     }
   }
 

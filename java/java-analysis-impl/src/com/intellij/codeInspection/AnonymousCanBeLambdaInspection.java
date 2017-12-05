@@ -149,11 +149,12 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     final PsiCall call = LambdaUtil.treeWalkUp(topExpr);
     if (call != null && call.resolveMethod() != null) {
-      final int offsetInTopCall = aClass.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
+      Object marker = new Object();
+      PsiTreeUtil.mark(aClass, marker);
       PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
       if (copyCall == null) return null;
-      final PsiAnonymousClass classArg = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiAnonymousClass.class);
-      if (classArg != null) {
+      final PsiElement classArg = PsiTreeUtil.releaseMark(copyCall, marker);
+      if (classArg instanceof PsiAnonymousClass) {
         PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
           .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
         lambda = (PsiExpression)classArg.getParent().replace(lambda);
@@ -271,7 +272,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
 
-    final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass, body);
+    final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass.getParent(), body);
     final Project project = anonymousClass.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
@@ -326,7 +327,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   }
 
   @NotNull
-  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiAnonymousClass anonymousClass, PsiCodeBlock body) {
+  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
     final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
     psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());

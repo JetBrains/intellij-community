@@ -19,12 +19,13 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
     productLayout.mainModules = ["main_pycharm_edu"]
-    productLayout.productApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
-    productLayout.productImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
+    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
+    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
       "dom-impl", "python-community", "python-community-ide-resources",
       "python-community-ide", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
+    additionalIDEPropertiesFilePaths = ["$home/community/python/educational-python/build/pycharm-edu.properties".toString()]
   }
 
   @Override
@@ -86,6 +87,10 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu128.png"
+        snapName = "pycharm-educational"
+        snapDescription =
+          "PyCharm Edu combines interactive learning with a powerful real-world professional development tool to provide " +
+          "a platform for the most effective learning and teaching experience."
       }
 
       @Override
@@ -103,6 +108,12 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
         dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
+      }
+
+      @Override
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} RC" : ""
+        "PyCharm Edu${suffix}.app"
       }
     }
   }

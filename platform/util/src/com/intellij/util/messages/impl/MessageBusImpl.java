@@ -301,7 +301,8 @@ public class MessageBusImpl implements MessageBus {
   }
 
   private boolean isDispatchingAnything() {
-    return getRootBus().myWaitingBuses.get() != null;
+    SortedMap<MessageBusImpl, Integer> waitingBuses = getRootBus().myWaitingBuses.get();
+    return waitingBuses != null && !waitingBuses.isEmpty();
   }
 
   private void checkNotDisposed() {

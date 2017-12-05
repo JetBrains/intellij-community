@@ -488,9 +488,6 @@ void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
   {
     vmOptionLines.push_back(std::string("-Didea.properties.file=") + propertiesFile);
   }
-  std::stringstream id;
-  id << "-Djbre.win.app.icon.id=" << static_cast<int>(IDI_WINLAUNCHER);
-  vmOptionLines.push_back(id.str());
 }
 
 bool LoadVMOptions()

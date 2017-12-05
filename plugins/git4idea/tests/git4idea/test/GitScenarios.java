@@ -1,14 +1,16 @@
 package git4idea.test;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.Executor;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 
-import static git4idea.test.GitExecutor.*;
+import static com.intellij.openapi.vcs.Executor.*;
+import static git4idea.test.GitExecutor.cd;
+import static git4idea.test.GitExecutor.git;
 
 /**
  * Create popular scenarios used in multiple tests, for example:
@@ -29,7 +31,7 @@ public class GitScenarios {
   public static void branchWithCommit(GitRepository repository, String name, String file, String content, boolean returnToMaster) {
     cd(repository);
     git(repository, "checkout -b " + name);
-    Executor.touch(file, content);
+    touch(file, content);
     git(repository, "add " + file);
     git(repository, "commit -m branch_content");
 
@@ -86,16 +88,16 @@ public class GitScenarios {
 
     cd(repository);
 
-    Executor.touch(file, "initial content");
+    touch(file, "initial content");
     git(repository, "add " + file);
     git(repository, "commit -m initial_content");
 
     git(repository, "checkout -b " + branch);
-    Executor.echo(file, "branch content");
+    echo(file, "branch content");
     git(repository, "commit -am branch_content");
 
     git(repository, "checkout master");
-    Executor.echo(file, "master content");
+    echo(file, "master content");
     return git(repository, "commit -am master_content");
   }
 
@@ -117,7 +119,7 @@ public class GitScenarios {
     git(repository, "checkout " + branch);
 
     for (String it : fileNames) {
-      Executor.touch(it, "branch content");
+      touch(it, "branch content");
       git(repository, "add " + it);
     }
 
@@ -126,7 +128,7 @@ public class GitScenarios {
     git(repository, "checkout master");
 
     for (String it : fileNames) {
-      Executor.touch(it, "master content");
+      touch(it, "master content");
     }
   }
 
@@ -137,11 +139,13 @@ public class GitScenarios {
    * <p/>
    * NB: the branch should not exist before this is called!
    */
-  public static void localChangesOverwrittenByWithoutConflict(GitRepository repository, String branch, Collection<String> fileNames) {
+  public static void localChangesOverwrittenByWithoutConflict(@NotNull GitRepository repository,
+                                                              @NotNull String branch,
+                                                              @NotNull Collection<String> fileNames) {
     cd(repository);
 
     for (String it : fileNames) {
-      Executor.echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.initial);
+      echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.initial);
       git(repository, "add " + it);
     }
 
@@ -157,18 +161,14 @@ public class GitScenarios {
 
     git(repository, "checkout master");
     for (String it : fileNames) {
-      append1(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine);
+      echo(it, LOCAL_CHANGES_OVERWRITTEN_BY.masterLine);
     }
   }
 
-  public static void append1(String fileName, String content) {
-    Executor.echo(fileName, content);
-  }
-
   public static void prepend(String fileName, final String content) {
-    String previousContent = Executor.cat(fileName);
+    String previousContent = cat(fileName);
     try {
-      FileUtil.writeToFile(new File(Executor.pwd(), fileName), content + previousContent);
+      FileUtil.writeToFile(new File(pwd(), fileName), content + previousContent);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -177,13 +177,9 @@ public class GitScenarios {
 
   public static String commit(GitRepository repository, String file) {
     cd(repository);
-    Executor.touch(file);
+    touch(file);
     git(repository, "add " + file);
     return git(repository, "commit -m just_a_commit");
-  }
-
-  public static String commit(GitRepository repository) {
-    return GitScenarios.commit(repository, "just_a_file_" + String.valueOf(Math.random()) + ".txt");
   }
 
   public static boolean branchExists(GitRepository repo, String branch) {

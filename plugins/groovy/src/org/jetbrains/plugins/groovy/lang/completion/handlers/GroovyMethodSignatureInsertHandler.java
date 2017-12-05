@@ -25,8 +25,8 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 
 /**
@@ -62,7 +63,8 @@ public class GroovyMethodSignatureInsertHandler implements InsertHandler<LookupE
     int signatureOffset = afterSharp;
 
     PsiElement element = context.getFile().findElementAt(signatureOffset - 1);
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(element.getProject());
+    final CommonCodeStyleSettings styleSettings =
+      CodeStyleSettingsManager.getSettings(element.getProject()).getCommonSettings(GroovyLanguage.INSTANCE);
     PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
     if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
       final PsiDocTagValue value = tag.getValueElement();
