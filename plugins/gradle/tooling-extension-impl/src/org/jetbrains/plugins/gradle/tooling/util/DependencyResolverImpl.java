@@ -227,7 +227,8 @@ public class DependencyResolverImpl implements DependencyResolver {
           }
 
           for (ProjectDependency dep : configurationProjectDependencies.values()) {
-            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, dep.resolve()));
+            Set<File> depFiles = getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
+            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, depFiles));
             if (!intersection.isEmpty()) {
               DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
               fileCollectionDependency.setScope(scope);
