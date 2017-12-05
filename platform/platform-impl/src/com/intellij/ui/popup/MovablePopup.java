@@ -165,6 +165,8 @@ public class MovablePopup {
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
+          view.setFocusable(false);
+          view.setFocusableWindowState(false);
           myView = view;
         }
         else if (owner instanceof RootPaneContainer) {
