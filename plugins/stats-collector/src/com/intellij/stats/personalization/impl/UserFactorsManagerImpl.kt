@@ -29,6 +29,9 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         register(TodayCompletionUsageCount())
         register(TotalUsageCount())
         register(WeekAverageUsageCount())
+
+        register(MostFrequentPrefixLength())
+        register(AveragePrefixLength())
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()

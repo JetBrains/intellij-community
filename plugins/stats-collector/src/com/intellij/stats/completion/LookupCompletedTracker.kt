@@ -32,16 +32,14 @@ class LookupCompletedTracker : LookupAdapter() {
         val lookup = event?.lookup as? LookupImpl ?: return
         val element = lookup.currentItem ?: return
         if (isSelectedByTyping(lookup, element)) {
-            processTypedSelect(lookup)
-            processElementSelected(lookup, element)
+            processTypedSelect(lookup, element)
         }
     }
 
     override fun itemSelected(event: LookupEvent?) {
         val lookup = event?.lookup as? LookupImpl ?: return
         val element = event.item ?: return
-        processExplicitSelect(lookup)
-        processElementSelected(lookup, element)
+        processExplicitSelect(lookup, element)
     }
 
     private fun isSelectedByTyping(lookup: LookupImpl, element: LookupElement): Boolean =
@@ -55,13 +53,22 @@ class LookupCompletedTracker : LookupAdapter() {
         relevanceMap.forEach { name, value -> userFactorsManager.getFeatureFactor(name)?.update(value) }
     }
 
-    private fun processExplicitSelect(lookup: LookupImpl) {
+    private fun processExplicitSelect(lookup: LookupImpl, element: LookupElement) {
+        processElementSelected(lookup, element)
+
         UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_FINISH_TYPE) { updater ->
             updater.fireExplicitCompletionPerformed()
         }
+
+        val prefixLength = lookup.getPrefixLength(element)
+        UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.PREFIX_LENGTH_ON_COMPLETION) { updater ->
+            updater.fireCompletionPerformed(prefixLength)
+        }
     }
 
-    private fun processTypedSelect(lookup: LookupImpl) {
+    private fun processTypedSelect(lookup: LookupImpl, element: LookupElement) {
+        processElementSelected(lookup, element)
+
         UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_FINISH_TYPE) { updater ->
             updater.fireTypedSelectPerformed()
         }
