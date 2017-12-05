@@ -870,7 +870,8 @@ public class LambdaUtil {
         return false;
       }
       PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
-      if (origType != null && !origType.equals(newType)) {
+      if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
+          ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
         return false;
       }
     }
