@@ -13,6 +13,7 @@ object UserFactorDescriptions {
     val PREFIX_LENGTH_ON_COMPLETION = Descriptor("prefixLength", ::PrefixLengthUpdater, ::PrefixLengthReader)
     val SELECTED_ITEM_POSITION = Descriptor("itemPosition", ::ItemPositionUpdater, ::ItemPositionReader)
     val TIME_BETWEEN_TYPING = Descriptor("timeBetweenTyping", ::TimeBetweenTypingUpdater, ::TimeBetweenTypingReader)
+    val MNEMONICS_USAGE = Descriptor("mnemonicsUsage", ::MnemonicsUsageUpdater, ::MnemonicsUsageReader)
 
     class Descriptor<out U : FactorUpdater, out R : FactorReader>(
             override val factorId: String,

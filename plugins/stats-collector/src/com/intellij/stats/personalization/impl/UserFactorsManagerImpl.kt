@@ -37,6 +37,8 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         register(MostFrequentSelectedItemPosition())
 
         register(AverageTimeBetweenTyping())
+
+        register(MnemonicsRatio())
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()

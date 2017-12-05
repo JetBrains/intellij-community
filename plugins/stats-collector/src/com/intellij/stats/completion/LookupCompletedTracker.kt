@@ -71,6 +71,14 @@ class LookupCompletedTracker : LookupAdapter() {
                 updater.fireCompletionPerformed(itemPosition)
             }
         }
+
+        if (prefixLength > 1) {
+            val pattern = lookup.itemPattern(element)
+            val isMmemonicsUsed = !element.lookupString.startsWith(pattern)
+            UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.MNEMONICS_USAGE) { updater ->
+                updater.fireCompletionFinished(isMmemonicsUsed)
+            }
+        }
     }
 
     private fun processTypedSelect(lookup: LookupImpl, element: LookupElement) {
