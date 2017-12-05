@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.dvcs.push.ui;
 
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -172,11 +161,29 @@ public class VcsPushDialog extends DialogWrapper {
       @Override
       public void onThrowable(@NotNull Throwable error) {
         if (error instanceof PushController.HandlerException) {
-          super.onThrowable(error.getCause());
+          PushController.HandlerException handlerException = (PushController.HandlerException)error;
+          Throwable cause = handlerException.getCause();
 
-          String handlerName = ((PushController.HandlerException)error).getHandlerName();
-          suggestToSkipOrPush(handlerName + " has failed. See log for more details.\n" +
-                              "Would you like to skip pre-push checking and continue or cancel push completely?");
+          String failedHandler = handlerException.getFailedHandlerName();
+          List<String> skippedHandlers = handlerException.getSkippedHandlers();
+
+          String suggestionMessage;
+          if (cause instanceof ProcessCanceledException) {
+            suggestionMessage = failedHandler + " has been cancelled.\n";
+          }
+          else {
+            super.onThrowable(cause);
+            suggestionMessage = failedHandler + " has failed. See log for more details.\n";
+          }
+
+          if (skippedHandlers.isEmpty()) {
+            suggestionMessage += "Would you like to push anyway or cancel the push completely?";
+          }
+          else {
+            suggestionMessage += "Would you like to skip all remaining pre-push steps and push, or cancel the push completely?";
+          }
+
+          suggestToSkipOrPush(suggestionMessage);
         } else {
           super.onThrowable(error);
         }
@@ -185,7 +192,7 @@ public class VcsPushDialog extends DialogWrapper {
       @Override
       public void onCancel() {
         super.onCancel();
-        suggestToSkipOrPush("Would you like to skip pre-push checking and continue or cancel push completely?");
+        suggestToSkipOrPush("Would you like to skip all pre-push steps and push, or cancel the push completely?");
       }
 
       private void suggestToSkipOrPush(@NotNull String message) {
