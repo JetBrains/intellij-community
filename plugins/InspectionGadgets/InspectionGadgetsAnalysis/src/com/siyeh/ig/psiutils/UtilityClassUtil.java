@@ -64,7 +64,7 @@ public class UtilityClassUtil {
       return false;
     }
     if (fullCheck) {
-      for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+      for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
         if (subclassProvider.isApplicableTo(aClass) && subclassProvider.getSubclassingInfo(aClass) != null) {
           return false;
         }

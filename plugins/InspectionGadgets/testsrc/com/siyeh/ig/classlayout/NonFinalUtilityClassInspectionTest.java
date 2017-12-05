@@ -20,7 +20,7 @@ public class NonFinalUtilityClassInspectionTest extends IGInspectionTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     PlatformTestUtil
-      .registerExtension(ImplicitSubclassProvider.Companion.getEP_NAME(), myImplicitSubclassProvider, getTestRootDisposable());
+      .registerExtension(ImplicitSubclassProvider.EP_NAME, myImplicitSubclassProvider, getTestRootDisposable());
   }
 
   private static class DedicatedClassNameImplicitSubclassProvider extends ImplicitSubclassProvider {

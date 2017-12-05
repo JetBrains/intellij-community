@@ -159,7 +159,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       if (memberClass != null && member instanceof PsiMethod) {
         // If class will be subclassed by some framework then it could apply some specific requirements for methods visibility
         // so we just skip it here (IDEA-182709, IDEA-160602)
-        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+        for (ImplicitSubclassProvider subclassProvider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
           if (!subclassProvider.isApplicableTo(memberClass)) continue;
           ImplicitSubclassProvider.SubclassingInfo info = subclassProvider.getSubclassingInfo(memberClass);
           if (info == null) continue;
