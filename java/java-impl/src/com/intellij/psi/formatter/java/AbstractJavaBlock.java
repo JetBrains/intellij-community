@@ -206,7 +206,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-        return new CStyleCommentBlock(child, indent);
+        return new CStyleCommentBlock(child, actualIndent);
       }
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
