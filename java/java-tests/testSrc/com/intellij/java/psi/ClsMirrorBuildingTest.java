@@ -196,8 +196,6 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     }
 
     assertEquals(expected, ClsFileImpl.decompile(file).toString());
-
-    ((ClsFileImpl)getPsiManager().findFile(file)).getMirror();
   }
 
   private static boolean isInner(String name) throws IOException {
