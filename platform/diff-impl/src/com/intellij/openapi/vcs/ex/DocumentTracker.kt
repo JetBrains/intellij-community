@@ -153,6 +153,12 @@ class DocumentTracker : Disposable {
     if (isDisposed || freezeHelper.isFrozen()) return
 
     LOCK.write {
+      if (!blocks.isEmpty() &&
+          StringUtil.equals(document1.immutableCharSequence, document2.immutableCharSequence)) {
+        tracker.setRanges(emptyList(), false)
+        return
+      }
+
       tracker.refreshDirty(document1.immutableCharSequence,
                            document2.immutableCharSequence,
                            document1.lineOffsets,
