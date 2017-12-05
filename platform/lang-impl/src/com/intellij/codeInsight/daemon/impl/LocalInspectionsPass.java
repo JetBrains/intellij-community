@@ -129,25 +129,25 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     result.clear();
   }
 
+  private static Set<String> ourToolsWithInformationProblems = new HashSet<>();
   public void doInspectInBatch(@NotNull final GlobalInspectionContextImpl context,
                                @NotNull final InspectionManager iManager,
                                @NotNull final List<LocalInspectionToolWrapper> toolWrappers) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<>(toolWrappers), iManager, false, false, progress);
-    boolean isSingleToolRun = context.getCurrentProfile().getSingleTool() != null;
     addDescriptorsFromInjectedResults(iManager, context);
     List<InspectionResult> resultList = result.get(getFile());
     if (resultList == null) return;
-    Set<String> toolsWithInformationInBatch = new HashSet<>();
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
       final String shortName = toolWrapper.getShortName();
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
-        if (!isSingleToolRun &&
-            descriptor.getHighlightType() == ProblemHighlightType.INFORMATION &&
-            toolsWithInformationInBatch.add(shortName)) {
-          LOG.error("Tool '" + shortName + "' registers INFORMATION level problem in batch mode, " +
-                    "though warning or level is used in user's settings");
+        if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+          if (ourToolsWithInformationProblems.add(shortName)) {
+            LOG.error("Tool '" + shortName + "' registers INFORMATION level problem in batch mode on " + getFile() + ". " +
+                      "INFORMATION level fixes could change semantics and should not be used in batch transformations");
+          }
+          continue;
         }
         addDescriptors(toolWrapper, descriptor, context);
       }
