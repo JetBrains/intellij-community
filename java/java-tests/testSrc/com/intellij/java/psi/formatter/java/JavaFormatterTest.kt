@@ -3400,4 +3400,46 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       "}\n"
     )
   }
+
+  fun testIdea183193() {
+    doTextTest(
+      "package de.tarent.bugreport;\n" +
+      "\n" +
+      "        /*-\n" +
+      "         * This is supposed\n" +
+      "         * to be a copyright comment\n" +
+      "         * and thus not wrapped.\n" +
+      "         */\n" +
+      "\n" +
+      "        /*\n" +
+      "         * This is supposed\n" +
+      "         * to be wrapped.\n" +
+      "         */\n" +
+      "\n" +
+      "/**\n" +
+      " * This is JavaDoc.\n" +
+      " */\n" +
+      "public class IndentBugReport {\n" +
+      "}",
+
+      "package de.tarent.bugreport;\n" +
+      "\n" +
+      "/*-\n" +
+      " * This is supposed\n" +
+      " * to be a copyright comment\n" +
+      " * and thus not wrapped.\n" +
+      " */\n" +
+      "\n" +
+      "/*\n" +
+      " * This is supposed\n" +
+      " * to be wrapped.\n" +
+      " */\n" +
+      "\n" +
+      "/**\n" +
+      " * This is JavaDoc.\n" +
+      " */\n" +
+      "public class IndentBugReport {\n" +
+      "}"
+    )
+  }
 }
