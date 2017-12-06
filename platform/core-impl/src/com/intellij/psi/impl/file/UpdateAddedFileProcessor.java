@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Maxim.Mossienko
- *         Date: Sep 18, 2008
- *         Time: 3:13:17 PM
  */
 public abstract class UpdateAddedFileProcessor {
   private static final ExtensionPointName<UpdateAddedFileProcessor> EP_NAME = ExtensionPointName.create("com.intellij.updateAddedFileProcessor");

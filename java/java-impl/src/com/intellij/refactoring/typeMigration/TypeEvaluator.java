@@ -29,7 +29,6 @@ import java.util.Map;
 
 /**
  * @author db
- * Date: 27.06.2003
  */
 public class TypeEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeEvaluator");

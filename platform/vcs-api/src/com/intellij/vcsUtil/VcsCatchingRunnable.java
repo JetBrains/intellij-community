@@ -23,8 +23,6 @@ import java.util.List;
 
 /**
  * @author irengrig
- *         Date: 2/25/11
- *         Time: 7:05 PM
  */
 public abstract class VcsCatchingRunnable implements Runnable, Getter<List<VcsException>> {
   private final List<VcsException> myExceptions;

@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * Date: 2/2/12
  */
 public class ConvertToNestedIfIntention extends Intention {
 

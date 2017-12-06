@@ -15,7 +15,6 @@ import java.util.List;
 
 /**
  * @author ik
- * Date: 13.02.2003
  */
 public class FilterScopeProcessor<T> implements PsiScopeProcessor {
   protected final List<T> myResults;

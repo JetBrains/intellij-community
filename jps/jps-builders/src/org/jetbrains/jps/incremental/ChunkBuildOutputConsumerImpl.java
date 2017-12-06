@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 11/16/12
 */
 class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputConsumer {
   private final CompileContext myContext;

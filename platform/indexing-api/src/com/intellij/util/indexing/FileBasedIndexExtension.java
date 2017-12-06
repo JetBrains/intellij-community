@@ -25,7 +25,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 26, 2007
  * V class MUST have equals / hashcode properly defined!!!
  */
 public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent>{

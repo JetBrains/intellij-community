@@ -45,7 +45,6 @@ import static com.intellij.tasks.jira.JiraRemoteApi.ApiType.REST_2_0_ALPHA;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 1/15/13
  */
 public class JiraIntegrationTest extends TaskManagerTestCase {
 

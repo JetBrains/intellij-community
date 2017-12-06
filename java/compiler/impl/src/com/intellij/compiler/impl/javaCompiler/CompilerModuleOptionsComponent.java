@@ -35,7 +35,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/9/12
  */
 public class CompilerModuleOptionsComponent extends JPanel {
 

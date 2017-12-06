@@ -26,7 +26,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 3/5/12
  */
 public class TestRepositoryType extends TaskRepositoryType<TestRepository> {
   @NotNull

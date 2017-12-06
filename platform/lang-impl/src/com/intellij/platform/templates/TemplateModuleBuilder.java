@@ -72,7 +72,6 @@ import java.util.zip.ZipInputStream;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 10/19/12
 */
 public class TemplateModuleBuilder extends ModuleBuilder {
 

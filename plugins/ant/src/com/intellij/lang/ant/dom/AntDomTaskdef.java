@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 8, 2010
  */
 public abstract class AntDomTaskdef extends AntDomTypeDef{
 }

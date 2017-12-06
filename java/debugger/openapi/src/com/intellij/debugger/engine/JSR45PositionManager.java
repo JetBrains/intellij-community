@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 23, 2006
  */
 public abstract class JSR45PositionManager<Scope> implements PositionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JSR45PositionManager");

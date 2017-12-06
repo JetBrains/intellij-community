@@ -21,8 +21,6 @@ import java.util.Collection;
 
 /**
  * @author irengrig
- *         Date: 2/10/11
- *         Time: 4:54 PM
  */
 public interface IgnoredFilesHolder extends FileHolder {
   void addFile(VirtualFile file);

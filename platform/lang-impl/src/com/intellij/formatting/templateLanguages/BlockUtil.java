@@ -28,8 +28,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Jul 3, 2009
- *         Time: 2:47:10 PM
  */
 class BlockUtil {
   private BlockUtil() {

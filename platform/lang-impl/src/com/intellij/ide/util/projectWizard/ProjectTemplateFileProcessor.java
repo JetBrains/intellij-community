@@ -24,7 +24,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public abstract class ProjectTemplateFileProcessor {
 

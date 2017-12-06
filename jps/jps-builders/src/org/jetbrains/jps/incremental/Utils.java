@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/20/11
  */
 public class Utils {
   public static final Key<Map<BuildTarget<?>, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");

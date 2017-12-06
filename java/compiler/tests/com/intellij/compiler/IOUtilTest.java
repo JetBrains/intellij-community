@@ -11,7 +11,6 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 3, 2006
  */
 public class IOUtilTest extends TestCase {
 

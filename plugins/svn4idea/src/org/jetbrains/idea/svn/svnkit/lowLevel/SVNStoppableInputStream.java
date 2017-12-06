@@ -29,8 +29,6 @@ import java.lang.reflect.Method;
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 6:23 PM
  *
  * SVNLogInputStream is not used, since it does not check available()
  *

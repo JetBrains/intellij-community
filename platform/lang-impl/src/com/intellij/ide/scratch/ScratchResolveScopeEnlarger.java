@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 22-Feb-16
  */
 public class ScratchResolveScopeEnlarger extends ResolveScopeEnlarger{
   @Nullable

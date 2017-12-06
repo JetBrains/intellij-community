@@ -32,7 +32,6 @@ import java.awt.event.ItemListener;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class RmicConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;

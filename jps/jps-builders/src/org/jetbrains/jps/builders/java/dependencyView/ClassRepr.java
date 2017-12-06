@@ -29,7 +29,6 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
 public class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;

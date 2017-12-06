@@ -27,7 +27,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 19, 2005
  */
 abstract class RuleAction extends ToggleAction implements DumbAware {
   private final UsageViewImpl myView;

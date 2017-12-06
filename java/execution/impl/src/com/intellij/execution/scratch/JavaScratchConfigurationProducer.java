@@ -33,7 +33,6 @@ import com.intellij.psi.PsiFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 29-Sep-15
  */
 public class JavaScratchConfigurationProducer extends AbstractApplicationConfigurationProducer<JavaScratchConfiguration> {
 

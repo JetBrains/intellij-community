@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 22.08.13
  */
 public abstract class XsdEnumerationDescriptor<T extends XmlElement> extends XmlEnumerationDescriptor<T> {
 

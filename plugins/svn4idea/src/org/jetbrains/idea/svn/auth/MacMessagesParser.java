@@ -20,8 +20,6 @@ import java.io.*;
 /**
  * to parse http://developer.apple.com/library/mac/#documentation/Security/Reference/keychainservices/Reference/reference.html
  * User: Irina.Chernushina
- * Date: 9/12/12
- * Time: 4:14 PM
  */
 public class MacMessagesParser {
   private final static String ourMapName = "macMessages";

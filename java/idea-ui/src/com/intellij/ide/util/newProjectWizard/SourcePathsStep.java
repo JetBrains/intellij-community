@@ -61,7 +61,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 6, 2004
  */
 public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSourceRoot>> {
 

@@ -24,7 +24,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public class TargetResolver extends PropertyProviderFinder {
 

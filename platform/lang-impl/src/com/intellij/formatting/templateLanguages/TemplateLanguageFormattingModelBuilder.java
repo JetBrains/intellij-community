@@ -37,8 +37,6 @@ import static com.intellij.formatting.templateLanguages.BlockUtil.filterBlocksBy
 
 /**
  * @author Alexey Chmutov
- *         Date: Jun 26, 2009
- *         Time: 4:07:09 PM
  */
 public abstract class TemplateLanguageFormattingModelBuilder implements DelegatingFormattingModelBuilder, TemplateLanguageBlockFactory {
 

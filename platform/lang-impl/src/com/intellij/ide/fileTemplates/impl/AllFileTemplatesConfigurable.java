@@ -57,8 +57,6 @@ import java.util.List;
 
 /*
  * @author: MYakovlev
- * Date: Jul 26, 2002
- * Time: 12:44:56 PM
  */
 
 public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,

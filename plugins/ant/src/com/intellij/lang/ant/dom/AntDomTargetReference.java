@@ -44,7 +44,6 @@ import java.util.*;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Aug 17, 2010
 */
 class AntDomTargetReference extends AntDomReferenceBase implements BindablePsiReference{
 

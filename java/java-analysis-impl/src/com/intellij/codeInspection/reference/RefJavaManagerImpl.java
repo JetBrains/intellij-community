@@ -38,7 +38,6 @@ import java.util.stream.Stream;
 
 /**
  * @author anna
- * Date: 20-Dec-2007
  */
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions

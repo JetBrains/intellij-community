@@ -44,7 +44,6 @@ import java.util.zip.ZipInputStream;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/14/12
  */
 public class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private final static Logger LOG = Logger.getInstance(RemoteTemplatesFactory.class);

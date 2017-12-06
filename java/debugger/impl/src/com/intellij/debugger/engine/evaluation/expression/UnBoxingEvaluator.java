@@ -31,7 +31,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 8, 2010
  */
 public class UnBoxingEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance(UnBoxingEvaluator.class);

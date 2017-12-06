@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author max
- * Date: Dec 24, 2001
  */
 public class RedundantCastInspection extends GenericsInspectionToolBase {
   private final LocalQuickFix myQuickFixAction;

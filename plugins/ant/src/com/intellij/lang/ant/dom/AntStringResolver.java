@@ -27,7 +27,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public class AntStringResolver extends PropertyProviderFinder{
   private final PropertyExpander myExpander;

@@ -30,7 +30,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 19, 2007
  */
 public class PersistentMapTest extends PersistentMapTestBase {
   public void testMap() throws IOException {

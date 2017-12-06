@@ -73,7 +73,6 @@ import static com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuic
 /**
  * Marks references that fail to resolve. Also tracks unused imports and provides "optimize imports" support.
  * User: dcheryasov
- * Date: Nov 15, 2008
  */
 public class PyUnresolvedReferencesInspection extends PyInspection {
   private static final Key<Visitor> KEY = Key.create("PyUnresolvedReferencesInspection.Visitor");

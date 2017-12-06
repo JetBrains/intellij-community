@@ -27,7 +27,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/25/13
  */
 public class LambdaSmartStepTarget extends SmartStepTarget{
   private final PsiLambdaExpression myLambda;

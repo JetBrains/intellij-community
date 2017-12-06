@@ -24,7 +24,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 08-Aug-16
  */
 public class MockAnnotationsChangeTracker extends AnnotationsChangeTracker{
   private static final String ANOTATION_NAME = MockAnnotation.class.getName().replace('.', '/');

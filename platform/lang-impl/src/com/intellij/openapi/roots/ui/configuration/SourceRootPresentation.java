@@ -26,7 +26,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 20
  * @author 2003
  */
 public class SourceRootPresentation {

@@ -26,7 +26,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/20/12
  */
 public class MavenModuleResourceConfiguration {
   @NotNull

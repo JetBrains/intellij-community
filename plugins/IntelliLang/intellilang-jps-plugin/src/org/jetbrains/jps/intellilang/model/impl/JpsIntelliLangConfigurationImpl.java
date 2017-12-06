@@ -9,7 +9,6 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLangConfigurationImpl> implements
                                                                                              JpsIntelliLangConfiguration {

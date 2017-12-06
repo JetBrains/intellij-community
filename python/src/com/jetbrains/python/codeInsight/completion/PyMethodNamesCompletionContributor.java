@@ -37,7 +37,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * Contributes method names to class
  * User: dcheryasov
  * @author Ilya.Kazakevich
- * Date: Dec 3, 2009 10:06:12 AM
  */
 public abstract class PyMethodNamesCompletionContributor extends CompletionContributor {
   @Override

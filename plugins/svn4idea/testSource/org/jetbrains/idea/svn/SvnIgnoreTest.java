@@ -34,8 +34,6 @@ import static org.tmatesoft.svn.core.SVNPropertyValue.create;
 
 /**
  * @author irengrig
- *         Date: 12/20/10
- *         Time: 5:05 PM
  */
 public class SvnIgnoreTest extends Svn17TestCase {
   private ChangeListManager clManager;

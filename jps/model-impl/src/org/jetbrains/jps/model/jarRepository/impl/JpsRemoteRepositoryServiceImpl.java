@@ -23,7 +23,6 @@ import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 25-Apr-17
  */
 public class JpsRemoteRepositoryServiceImpl extends JpsRemoteRepositoryService {
   @Nullable

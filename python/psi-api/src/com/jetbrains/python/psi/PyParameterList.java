@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents function parameter list.
- * Date: 29.05.2005
  */
 public interface PyParameterList extends PyElement, StubBasedPsiElement<PyParameterListStub> {
 

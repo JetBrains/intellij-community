@@ -46,7 +46,6 @@ import static java.awt.GridBagConstraints.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/26/12
  */
 public class SdkSettingsStep extends ModuleWizardStep {
   protected final JdkComboBox myJdkComboBox;

@@ -50,7 +50,6 @@ import static java.awt.GridBagConstraints.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 30-Sep-15
  */
 public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfiguration> implements PanelWithAnchor {
 

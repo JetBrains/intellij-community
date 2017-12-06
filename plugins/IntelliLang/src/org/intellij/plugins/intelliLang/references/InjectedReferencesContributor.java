@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 01.08.13
  */
 public class InjectedReferencesContributor extends PsiReferenceContributor {
 

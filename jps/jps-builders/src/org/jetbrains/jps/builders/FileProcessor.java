@@ -20,7 +20,6 @@ import java.io.IOException;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 9/21/11
 */
 public interface FileProcessor<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
   /**

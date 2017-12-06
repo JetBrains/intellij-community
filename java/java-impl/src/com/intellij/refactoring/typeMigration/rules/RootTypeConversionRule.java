@@ -31,7 +31,6 @@ import java.util.Arrays;
 
 /**
  * @author anna
- *         Date: 08-Aug-2008
  */
 public class RootTypeConversionRule extends TypeConversionRule {
   public TypeConversionDescriptorBase findConversion(final PsiType from,

@@ -30,7 +30,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 29-Sep-15
  */
 public class JavaScratchConfigurationType extends ApplicationConfigurationType{
   private final ConfigurationFactory myFactory;

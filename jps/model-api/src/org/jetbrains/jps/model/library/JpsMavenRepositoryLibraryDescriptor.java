@@ -22,7 +22,6 @@ import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 13-Jun-16
  */
 public class JpsMavenRepositoryLibraryDescriptor {
   private final String myMavenId;

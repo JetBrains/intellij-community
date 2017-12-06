@@ -34,7 +34,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 6, 2004
  *
  * @see PathMacrosImpl#addMacroReplacements(ReplacePathToMacroMap)
  * @see com.intellij.openapi.components.PathMacroManager

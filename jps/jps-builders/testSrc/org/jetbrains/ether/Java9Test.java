@@ -12,7 +12,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 09-Oct-17
  */
 public class Java9Test extends IncrementalTestCase {
 

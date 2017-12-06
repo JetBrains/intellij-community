@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/3/12
 */
 public class JavaSourceRootDescriptor extends BuildRootDescriptor {
   @NotNull

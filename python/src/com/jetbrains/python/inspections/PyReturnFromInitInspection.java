@@ -35,7 +35,6 @@ import java.util.Collection;
 /**
  * Checks that no value is returned from __init__().
  * User: dcheryasov
- * Date: Nov 12, 2009 10:20:49 PM
  */
 public class PyReturnFromInitInspection extends PyInspection {
   @Nls

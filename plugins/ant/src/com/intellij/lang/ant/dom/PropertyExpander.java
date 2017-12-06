@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 23, 2010
 */
 public class PropertyExpander {
   private static final Pattern $$_PATTERN = Pattern.compile("\\$\\$");

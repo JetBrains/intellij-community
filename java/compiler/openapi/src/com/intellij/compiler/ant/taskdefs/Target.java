@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Target extends Tag{
   public Target(@NonNls String name, @Nullable String depends, @Nullable String description, @Nullable String unlessCondition) {

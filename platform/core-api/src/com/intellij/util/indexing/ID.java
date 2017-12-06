@@ -28,7 +28,6 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 12, 2008
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final IntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();

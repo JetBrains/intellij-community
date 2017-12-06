@@ -25,7 +25,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
 class FieldRepr extends ProtoMember {
   public void updateClassUsages(final DependencyContext context, final int owner, final Set<UsageRepr.Usage> s) {

@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/28/12
  */
 public class PatternValidatorBuilderService extends BuilderService{
   @NotNull

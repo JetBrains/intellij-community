@@ -30,8 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 3/16/11
- *         Time: 2:41 PM
  */
 public class ShowAllAffectedGenericAction extends AnAction implements DumbAware {
 

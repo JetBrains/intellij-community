@@ -27,7 +27,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Tag extends CompositeGenerator {
   public static final Tag[] EMPTY_ARRAY = new Tag[0];

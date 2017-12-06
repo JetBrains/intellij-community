@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/28/12
  */
 public abstract class ProjectTemplatesFactory {
 

@@ -44,7 +44,6 @@ import java.util.List;
 /**
  * Tests parameter info available via ^P at call sites.
  * <br/>User: dcheryasov
- * Date: Jul 14, 2009 3:42:44 AM
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
 

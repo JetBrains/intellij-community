@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * User: anna
- * Date: 3/22/13
  * Checks that a non-public field is referenced in fx:id attribute or a non-public method is referenced as an event handler in FXML
  */
 public class JavaFxImplicitUsageProvider implements ImplicitUsageProvider {

@@ -34,7 +34,6 @@ import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/26/12
  */
 public class ProjectSettingsStep extends ModuleWizardStep implements SettingsStep {
 

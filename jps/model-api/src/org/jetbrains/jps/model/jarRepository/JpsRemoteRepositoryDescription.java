@@ -17,7 +17,6 @@ package org.jetbrains.jps.model.jarRepository;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 25-Apr-17
  */
 public class JpsRemoteRepositoryDescription {
   private final String myId;

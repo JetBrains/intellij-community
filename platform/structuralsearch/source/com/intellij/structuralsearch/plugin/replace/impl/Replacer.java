@@ -44,8 +44,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 4, 2004
- * Time: 9:19:34 PM
  */
 public class Replacer {
   private final Project project;

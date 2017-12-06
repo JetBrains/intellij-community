@@ -29,7 +29,6 @@ import java.util.Arrays;
 
 /**
  * @author anna
- * Date: 30-Apr-2008
  */
 public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   @Override

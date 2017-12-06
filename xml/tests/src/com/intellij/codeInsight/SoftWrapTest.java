@@ -21,7 +21,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 /**
  * @author Dmitry Avdeev
- *         Date: 25.11.13
  */
 public class SoftWrapTest extends LightPlatformCodeInsightFixtureTestCase {
 

@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 20, 2007
  */
 public interface SourcePathsBuilder {
   @Nullable

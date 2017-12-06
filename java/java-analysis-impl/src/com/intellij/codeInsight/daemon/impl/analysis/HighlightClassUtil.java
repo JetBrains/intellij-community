@@ -17,7 +17,6 @@
 /*
  * Checks and Highlights problems with classes
  * User: cdr
- * Date: Aug 19, 2002
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 

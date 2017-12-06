@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Sep 11, 2002
- * Time: 5:23:47 PM
  */
 package com.intellij.debugger.ui.breakpoints;
 

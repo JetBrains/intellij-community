@@ -39,7 +39,6 @@ import java.util.List;
  * Stores buildout facet config data.
  * <br/>
  * User: dcheryasov
- * Date: Jul 25, 2010
  */
 public class BuildoutFacetConfiguration implements FacetConfiguration {
 

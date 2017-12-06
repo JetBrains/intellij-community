@@ -51,7 +51,6 @@ import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/29/12
  */
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
   protected static final String DEFAULT_SDK = "default";

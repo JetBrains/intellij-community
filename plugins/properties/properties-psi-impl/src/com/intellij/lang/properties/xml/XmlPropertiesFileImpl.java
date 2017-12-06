@@ -43,7 +43,6 @@ import java.util.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/26/11
  */
 public class XmlPropertiesFileImpl extends XmlPropertiesFile {
   public static final String ENTRY_TAG_NAME = "entry";

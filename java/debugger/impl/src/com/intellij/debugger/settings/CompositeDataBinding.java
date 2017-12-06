@@ -20,7 +20,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Apr 12, 2005
  */
 public class CompositeDataBinding implements DataBinding{
   private final List<DataBinding> myBindings = new ArrayList<>();
