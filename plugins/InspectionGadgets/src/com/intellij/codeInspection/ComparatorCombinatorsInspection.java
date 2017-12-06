@@ -52,7 +52,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
         }
         String replacementText = generateSimpleCombinator(lambda, parameters[0], parameters[1]);
         if (replacementText != null) {
-          if (!isSafeReplacement(lambda, replacementText)) return;
+          if (!LambdaUtil.isSafeLambdaReplacement(lambda, replacementText)) return;
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           String methodName = StringUtil.getShortName(qualifiedName);
           holder
@@ -66,16 +66,11 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (blocks == null) return;
           String chainCombinator = generateChainCombinator(blocks, parameters[0], parameters[1]);
           if (chainCombinator == null) return;
-          if (!isSafeReplacement(lambda, chainCombinator)) return;
+          if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
           holder
             .registerProblem(lambda, "Can be replaced with Comparator chain",
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator chain"));
         }
-      }
-
-      private boolean isSafeReplacement(PsiLambdaExpression lambda, String replacementText) {
-        return LambdaUtil.isSafeLambdaReplacement(lambda, () -> JavaPsiFacade.getElementFactory(holder.getProject())
-          .createExpressionFromText(replacementText, lambda.getParent()));
       }
     };
   }

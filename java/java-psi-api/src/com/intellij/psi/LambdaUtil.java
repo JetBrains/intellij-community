@@ -850,7 +850,8 @@ public class LambdaUtil {
            ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);
   }
 
-  private static boolean isSafeLambdaReplacement(PsiLambdaExpression lambda, Function<PsiLambdaExpression, PsiExpression> replacer) {
+  private static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda,
+                                                 @NotNull Function<PsiLambdaExpression, PsiExpression> replacer) {
     PsiElement body = lambda.getBody();
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
@@ -887,11 +888,23 @@ public class LambdaUtil {
    *                            lazy computed for lambdas in invocation context only.
    *                            Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSafeLambdaReplacement(PsiLambdaExpression lambda, Supplier<PsiExpression> newFunctionSupplier) {
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiExpression> newFunctionSupplier) {
     return isSafeLambdaReplacement(lambda, l -> {
       PsiExpression replacement = newFunctionSupplier.get();
       return replacement == null ? null : (PsiExpression)l.replace(replacement);
     });
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
+   *
+   * @param lambda          a lambda whose body is going to be replaced
+   * @param replacementText a text of new expression to replace lambda
+   */
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull String replacementText) {
+    return isSafeLambdaReplacement(lambda, () -> JavaPsiFacade.getElementFactory(lambda.getProject())
+      .createExpressionFromText(replacementText, lambda.getParent()));
   }
 
   /**
@@ -913,7 +926,7 @@ public class LambdaUtil {
    *                        lazy computed for lambdas in invocation context only.
    *                        Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSafeLambdaBodyReplacement(PsiLambdaExpression lambda, Supplier<PsiElement> newBodySupplier) {
+  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiElement> newBodySupplier) {
     return isSafeLambdaReplacement(lambda, l -> {
       PsiElement oldBody = l.getBody();
       PsiElement newBody = newBodySupplier.get();
