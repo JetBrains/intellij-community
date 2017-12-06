@@ -201,12 +201,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   public static void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException{
     final PathsList classPath = javaParameters.getClassPath();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
+    String launcherVersion = ObjectUtils.notNull(getVersion(classFromCommon), "1.0.0");
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
-      
-      PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
-      String version = ObjectUtils.notNull(getVersion(classFromCommon), "1.0.0");
       downloadDependenciesWhenRequired(project, classPath,
-                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", version));
+                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
     }
 
     //add standard engines only if no engine api is present
@@ -222,7 +221,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        String version = "4.12.0"; //todo
+        String version = "4.12." + StringUtil.getShortName(launcherVersion);
         downloadDependenciesWhenRequired(project, classPath,
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
