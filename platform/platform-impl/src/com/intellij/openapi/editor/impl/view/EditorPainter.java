@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.*;
@@ -1200,7 +1202,7 @@ class EditorPainter implements TextDrawingCallback {
       @Override
       public int marginX() {
         EditorImpl editor = myView.getEditor();
-        return myView.getInsets().left + editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth();
+        return (int) (myView.getInsets().left + editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth());
       }
 
       @Override
@@ -1213,7 +1215,7 @@ class EditorPainter implements TextDrawingCallback {
         List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
         List<Integer> result = new ArrayList<>(margins.size());
         for (Integer margin : margins) {
-          result.add(myView.getInsets().left + margin * myView.getPlainSpaceWidth());
+          result.add((int)(myView.getInsets().left + margin * myView.getPlainSpaceWidth()));
         }
         return result;
       }
@@ -1274,7 +1276,8 @@ class EditorPainter implements TextDrawingCallback {
       @Override
       public int marginX() {
         EditorImpl editor = myView.getEditor();
-        return myView.getRightAlignmentMarginX() - editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth();
+        return (int) (myView.getRightAlignmentMarginX() - 
+                      editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth());
       }
 
       @Override
@@ -1287,7 +1290,7 @@ class EditorPainter implements TextDrawingCallback {
         List<Integer> margins = myView.getEditor().getSettings().getSoftMargins();
         List<Integer> result = new ArrayList<>(margins.size());
         for (Integer margin : margins) {
-          result.add(myView.getRightAlignmentMarginX() - margin * myView.getPlainSpaceWidth());
+          result.add((int)(myView.getRightAlignmentMarginX() - margin * myView.getPlainSpaceWidth()));
         }
         return result;
       }

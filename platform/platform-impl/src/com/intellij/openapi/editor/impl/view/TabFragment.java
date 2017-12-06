@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
@@ -33,7 +35,7 @@ class TabFragment implements LineFragment {
   @Override
   public int getVisualColumnCount(float startX) {
     float x = getNextTabStop(startX);
-    return EditorUtil.columnsNumber((int)(x - startX), myView.getPlainSpaceWidth());
+    return EditorUtil.columnsNumber(x - startX, myView.getPlainSpaceWidth());
   }
 
   @Override
@@ -76,17 +78,18 @@ class TabFragment implements LineFragment {
     if (x <= startX) return new int[] {0, 0};
     float nextTabStop = getNextTabStop(startX);
     if (x > nextTabStop) return new int[] {getVisualColumnCount(startX), 1};
-    int column, columnWithoutRounding;
+    int column;
+    boolean closerToLargerColumns;
     if (myEditor.getSettings().isCaretInsideTabs()) {
-      int plainSpaceWidth = myView.getPlainSpaceWidth();
-      column = ((int)(x - startX) + plainSpaceWidth / 2) / plainSpaceWidth;
-      columnWithoutRounding = ((int)(x - startX - 1)) / plainSpaceWidth;
+      float plainSpaceWidth = myView.getPlainSpaceWidth();
+      column = Math.round((x - startX)/plainSpaceWidth);
+      closerToLargerColumns = (x - startX) > (column * plainSpaceWidth);
     }
     else {
       column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
-      columnWithoutRounding = 0;
+      closerToLargerColumns = column == 0;
     }
-    return new int[] {column, column == columnWithoutRounding ? 1 : 0};
+    return new int[] {column, closerToLargerColumns ? 1 : 0};
   }
 
   @Override
@@ -102,6 +105,6 @@ class TabFragment implements LineFragment {
   
   private float getNextTabStop(float x) {
     int leftInset = myView.getInsets().left;
-    return EditorUtil.nextTabStop((int)x - leftInset, myView.getPlainSpaceWidth(), myView.getTabSize()) + leftInset;
+    return EditorUtil.nextTabStop(x - leftInset, myView.getPlainSpaceWidth(), myView.getTabSize()) + leftInset;
   }
 }
