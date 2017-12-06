@@ -203,7 +203,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
       
-      PsiClass classFromCommon = psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope);
+      PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
       String version = ObjectUtils.notNull(getVersion(classFromCommon), "1.0.0");
       downloadDependenciesWhenRequired(project, classPath,
                                        new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", version));
@@ -214,7 +214,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        PsiClass testAnnotation = psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope);
+        PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
         String version = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
         downloadDependenciesWhenRequired(project, classPath,
                                          new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", version));
