@@ -25,10 +25,10 @@ class ResolveInLibraries2Test : JavaCodeInsightFixtureTestCase() {
       zip("foo-src.zip") {
         dir("foo") {
           file("Bar.java", "package foo;\npublic class Bar {}")
-          file("Foo.java", "package foo;\n" +
-                           "public class Foo {\n" +
-                           "  private Bar bar;" +
-                           "}")
+          file("Foo.java", """package foo;
+                             |public class Foo {
+                             |  private Bar bar;
+                             |}""".trimIndent())
         }
       }
     }.generateInVirtualTempDir()
