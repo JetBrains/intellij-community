@@ -1,4 +1,4 @@
-<scheme name="VibrantInk" version="142" parent_scheme="Default">
+<scheme name="VibrantInk" version="142" parent_scheme="Darcula">
   <colors>
     <option name="CARET_COLOR" value="ffffff" />
     <option name="CARET_ROW_COLOR" value="333300" />
@@ -1869,6 +1869,29 @@
     <option name="YAML_TEXT">
       <value>
         <option name="FOREGROUND" value="66ff00" />
+      </value>
+    </option>
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
+      <value>
+        <option name="FOREGROUND" value="686a4e" />
+      </value>
+    </option>
+    <option name="OC.MACRONAME">
+      <value>
+        <option name="FOREGROUND" value="908b25" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="OC.MESSAGE_ARGUMENT" baseAttributes="DEFAULT_FUNCTION_CALL" />
+    <option name="OC.METHOD_DECLARATION" baseAttributes="DEFAULT_FUNCTION_DECLARATION" />
+    <option name="OC.STRUCT_FIELD">
+      <value>
+        <option name="FOREGROUND" value="fda5ff" />
+      </value>
+    </option>
+    <option name="OC.TYPEDEF">
+      <value>
+        <option name="FOREGROUND" value="50861a" />
       </value>
     </option>
   </attributes>
