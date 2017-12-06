@@ -25,16 +25,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.webcore.packaging.PackageVersionComparator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.RepoPackage;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.CondaPackageCache;
+import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
+import com.jetbrains.python.packaging.PyCondaPackageService;
+import com.jetbrains.python.packaging.PyPackageManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 public class PyCondaManagementService extends PyPackageManagementService {
   private static final Logger LOG = Logger.getInstance(PyCondaManagementService.class);
@@ -50,19 +51,30 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   @NotNull
   public List<RepoPackage> getAllPackagesCached() {
-    return useConda() ? versionMapToPackageList(PyCondaPackageService.getInstance().getCondaPackages()) : super.getAllPackagesCached();
+    if (useConda()) {
+      return getCachedCondaPackages();
+    }
+    return super.getAllPackagesCached();
   }
 
   @Override
   @NotNull
   public List<RepoPackage> getAllPackages() throws IOException {
-    return useConda() ? versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages(false)) : super.getAllPackages();
+    if (useConda()) {
+      PyCondaPackageService.getInstance().loadAndGetPackages(false);
+      return getAllPackagesCached();
+    }
+    return super.getAllPackages();
   }
 
   @Override
   @NotNull
   public List<RepoPackage> reloadAllPackages() throws IOException {
-    return useConda() ? versionMapToPackageList(PyCondaPackageService.getInstance().loadAndGetPackages(true)) : super.reloadAllPackages();
+    if (useConda()) {
+      PyCondaPackageService.getInstance().loadAndGetPackages(true);
+      return getAllPackagesCached();
+    }
+    return super.reloadAllPackages();
   }
 
   @Override
@@ -132,9 +144,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer) {
     if (useConda()) {
-      final List<String> versions = PyCondaPackageService.getInstance().getPackageVersions(packageName);
-      Collections.sort(versions, Collections.reverseOrder(new PackageVersionComparator()));
-      consumer.consume(versions);
+      consumer.consume(PyCondaPackageService.getInstance().getPackageVersions(packageName));
     }
     else {
       super.fetchPackageVersions(packageName, consumer);
@@ -142,13 +152,11 @@ public class PyCondaManagementService extends PyPackageManagementService {
   }
 
   @NotNull
-  protected static List<RepoPackage> versionMapToPackageList(@NotNull Map<String, String> packageToVersionMap) {
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
-    final List<RepoPackage> packages = new ArrayList<>();
-    for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
-      packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
-    }
-    return packages;
+  private static List<RepoPackage> getCachedCondaPackages() {
+    final CondaPackageCache instance = CondaPackageCache.getInstance();
+    return ContainerUtil.map(instance.getPackageNames(), name -> {
+      final String latestVersion = ContainerUtil.getFirstItem(instance.getVersions(name));
+      return new RepoPackage(name, null, latestVersion);
+    });
   }
 }
