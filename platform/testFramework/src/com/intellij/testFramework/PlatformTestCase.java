@@ -154,7 +154,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   // AndroidStudio: our classpath matches multiple platform prefixes (CidrCommon, etc), but the default should be AndroidStudio, and if
   // adt-branding is not on the classpath, then we should simply run as IDEA.
-  private static final String[] PREFIX_CANDIDATES = {"AndroidStudio", "Idea", "PlatformLangXml"};  // TODO(b/70239148): remove "PlatformLangXml"
+  private static final String[] PREFIX_CANDIDATES = {"AndroidStudio", "Idea"};
   /*
   private static final String[] PREFIX_CANDIDATES = {
     "Rider",
