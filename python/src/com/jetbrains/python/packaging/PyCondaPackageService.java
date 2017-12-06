@@ -40,10 +40,7 @@ import java.util.*;
 @State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
-  public Map<String, String> CONDA_PACKAGES = ContainerUtil.newConcurrentMap();
-  public Map<String, List<String>> PACKAGES_TO_RELEASES = new HashMap<>();
   public Set<String> CONDA_CHANNELS = ContainerUtil.newConcurrentSet();
-
   public long LAST_TIME_CHECKED = 0;
 
   @Override
@@ -60,15 +57,10 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     return ServiceManager.getService(PyCondaPackageService.class);
   }
 
-  public Map<String, String> getCondaPackages() {
-    return CONDA_PACKAGES;
-  }
-
-  public Map<String, String> loadAndGetPackages(boolean force) {
-    if (CONDA_PACKAGES.isEmpty() || force) {
+  public void loadAndGetPackages(boolean force) {
+    if (CondaPackageCache.getInstance().getPackageNames().isEmpty() || force) {
       updatePackagesCache();
     }
-    return CONDA_PACKAGES;
   }
 
   public Set<String> loadAndGetChannels() {
@@ -189,42 +181,26 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       LOG.warn(output.getStderr());
       return;
     }
-    CONDA_PACKAGES.clear();
-    PACKAGES_TO_RELEASES.clear();
-    final List<String> lines = output.getStdoutLines();
-    for (String line : lines) {
+
+    final Map<String, List<String>> nameToVersions = new HashMap<>();
+    for (String line : output.getStdoutLines()) {
       final List<String> split = StringUtil.split(line, "\t");
       if (split.size() < 2) continue;
-      final String aPackage = CONDA_PACKAGES.get(split.get(0));
-      if (aPackage != null) {
-        if (VersionComparatorUtil.compare(aPackage, split.get(1)) < 0)
-          CONDA_PACKAGES.put(split.get(0), split.get(1));
-      }
-      else {
-        CONDA_PACKAGES.put(split.get(0), split.get(1));
-      }
-
-      if (PACKAGES_TO_RELEASES.containsKey(split.get(0))) {
-        final List<String> versions = PACKAGES_TO_RELEASES.get(split.get(0));
-        if (!versions.contains(split.get(1))) {
-          versions.add(split.get(1));
-        }
-      }
-      else {
-        final ArrayList<String> versions = new ArrayList<>();
-        versions.add(split.get(1));
-        PACKAGES_TO_RELEASES.put(split.get(0), versions);
+      final String packageName = split.get(0);
+      final String packageVersion = split.get(1);
+      final List<String> versions = nameToVersions.computeIfAbsent(packageName, k -> new ArrayList<>());
+      final int sortedIndex = Collections.binarySearch(versions, packageVersion, VersionComparatorUtil.COMPARATOR.reversed());
+      if (sortedIndex < 0) {
+        versions.add(-(sortedIndex + 1), packageVersion);
       }
     }
+    CondaPackageCache.reload(nameToVersions);
     LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
   public List<String> getPackageVersions(@NotNull final String packageName) {
-    if (PACKAGES_TO_RELEASES.containsKey(packageName)) {
-      return PACKAGES_TO_RELEASES.get(packageName);
-    }
-    return Collections.emptyList();
+    return CondaPackageCache.getInstance().getVersions(packageName);
   }
 
   public void updateChannels() {
