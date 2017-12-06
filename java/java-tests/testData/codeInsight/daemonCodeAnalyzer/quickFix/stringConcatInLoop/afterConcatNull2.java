@@ -4,8 +4,9 @@ public class Main {
     String test(String[] strings) {
         StringBuilder res = null;
         for (String s : strings) {
+            if (s == null) continue;
             if(res == null) {
-                res = s == null ? null : new StringBuilder(s);
+                res = new StringBuilder(s);
             } else {
                 res.append(s);
             }
