@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.intermediaryVariable;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -13,12 +14,12 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
@@ -200,20 +201,13 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
 
   private static void deleteRedundantVariable(@NotNull ReturnContext context, Highlighter highlighter) {
     PsiExpression value = PsiUtil.skipParenthesizedExprDown(context.returnedVariable.getInitializer());
-    if (value != null && SideEffectChecker.mayHaveSideEffects(value)) {
+
+    boolean isConstant = value instanceof PsiLiteralExpression || value instanceof PsiThisExpression || PsiUtil.isConstantExpression(value);
+    boolean isSimple = isSimpleExpression(value, context.returnScope);
+    if (value != null && !isConstant && !isSimple) {
       return;
     }
-    boolean isConstant = value instanceof PsiLiteralExpression || value instanceof PsiThisExpression || PsiUtil.isConstantExpression(value);
-    boolean isSimple = isSimpleExpression(value);
 
-    if (value != null && !isConstant) {
-      List<PsiReferenceExpression> references = findAnyReferences(value);
-      for (PsiReferenceExpression reference : references) {
-        if (isModifiedInScope(reference, context.variableScope)) {
-          return;
-        }
-      }
-    }
     Query<PsiReference> query = ReferencesSearch.search(context.returnedVariable, new LocalSearchScope(context.variableScope));
     Collection<PsiReference> usages = query.findAll();
     for (PsiReference usage : usages) {
@@ -235,10 +229,12 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     }
   }
 
-  @Contract("null -> false")
-  private static boolean isSimpleExpression(PsiExpression expression) {
+  @Contract("null,_ -> false")
+  private static boolean isSimpleExpression(@Nullable PsiExpression expression, @NotNull PsiElement scope) {
     if (expression instanceof PsiReferenceExpression) {
-      return ((PsiReferenceExpression)expression).resolve() instanceof PsiVariable;
+      PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
+      return variable != null && (variable.hasModifierProperty(PsiModifier.FINAL) ||
+                                  HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null));
     }
     if (expression instanceof PsiUnaryExpression) {
       return ((PsiUnaryExpression)expression).getOperand() instanceof PsiLiteralExpression; // "-1" and "!true"
@@ -246,34 +242,6 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     return expression instanceof PsiLiteralExpression ||
            expression instanceof PsiThisExpression ||
            expression instanceof PsiClassObjectAccessExpression;
-  }
-
-  @NotNull
-  private static List<PsiReferenceExpression> findAnyReferences(@NotNull PsiElement element) {
-    List<PsiReferenceExpression> references = new ArrayList<>();
-    element.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
-        references.add(expression);
-        super.visitReferenceExpression(expression);
-      }
-    });
-    return references;
-  }
-
-  private static boolean isModifiedInScope(@NotNull PsiReferenceExpression reference, @NotNull PsiElement scope) {
-    PsiElement resolved = reference.resolve();
-    if (resolved instanceof PsiVariable) {
-      PsiVariable variable = (PsiVariable)resolved;
-      if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-        return false;
-      }
-      if (!(variable instanceof PsiLocalVariable) && !(variable instanceof PsiParameter)) {
-        return true;
-      }
-      return RefactoringUtil.isModifiedInScope(variable, scope);
-    }
-    return false;
   }
 
   private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn, Highlighter highlighter) {
