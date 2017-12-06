@@ -652,15 +652,6 @@
         <option name="BACKGROUND" value="c7c7ff" />
       </value>
     </option>
-    <option name="FOLDED_TEXT_ATTRIBUTES">
-      <value>
-        <option name="FOREGROUND" value="3c3d3c" />
-        <option name="BACKGROUND" value="101010" />
-        <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="3c3d3c" />
-      </value>
-    </option>
     <option name="FOLLOWED_HYPERLINK_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="c7c7ff" />
@@ -1003,11 +994,6 @@
         <option name="BACKGROUND" value="3a6da0" />
       </value>
     </option>
-    <option name="MESSAGE_ARGUMENT">
-      <value>
-        <option name="FOREGROUND" value="9B703F" />
-      </value>
-    </option>
     <option name="NOT_USED_ELEMENT_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="80807f" />
@@ -1039,8 +1025,6 @@
         <option name="FOREGROUND" value="7587A6" />
       </value>
     </option>
-    <option baseAttributes="DEFAULT_FUNCTION_CALL" name="OC.FUNCTION" />
-    <option baseAttributes="DEFAULT_FUNCTION_DECLARATION" name="OC.FUNCTION_DECLARATION" />
     <option name="OC.GLOBAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="7587A6" />
@@ -1060,6 +1044,16 @@
     <option name="OC.LOCAL_VARIABLE">
       <value>
         <option name="FOREGROUND" value="7587A6" />
+      </value>
+    </option>
+    <option name="OC.MESSAGE_ARGUMENT">
+      <value>
+        <option name="FOREGROUND" value="9B703F" />
+      </value>
+    </option>
+    <option name="OC.METHOD_DECLARATION">
+      <value>
+        <option name="FOREGROUND" value="9B703F" />
       </value>
     </option>
     <option name="OC.NUMBER">
