@@ -128,6 +128,7 @@ public abstract class GitHandler {
                        @NotNull GitCommand command,
                        @NotNull List<String> configParameters) {
     myProject = project;
+    myVcs = project != null ? GitVcs.getInstance(project) : null;
     myCommand = command;
 
     myCommandLine = new GeneralCommandLine()
@@ -544,6 +545,9 @@ public abstract class GitHandler {
   //endregion
 
   //region deprecated stuff
+  //Used by Gitflow in GitInitLineHandler.onTextAvailable
+  @Deprecated
+  protected final GitVcs myVcs;
   @Deprecated
   private Integer myExitCode; // exit code or null if exit code is not yet available
   @Deprecated
