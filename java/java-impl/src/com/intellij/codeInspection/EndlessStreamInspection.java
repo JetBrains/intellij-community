@@ -47,7 +47,9 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     "parallel",
     "boxed",
     "sequential",
-    "unordered"
+    "unordered",
+    "asLongStream",
+    "asDoubleStream"
   ));
 
   private static final CallMatcher INFINITE_SOURCE = CallMatcher.anyOf(
