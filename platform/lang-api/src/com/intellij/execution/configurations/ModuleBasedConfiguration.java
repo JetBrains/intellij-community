@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.configurations;
 
 import com.intellij.openapi.application.ReadAction;
@@ -25,18 +27,21 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
+  private final ConfigurationModule myModule;
+
   public ModuleBasedConfiguration(String name, @NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(configurationModule.getProject(), factory, name);
 
-    ModuleBasedConfigurationOptions<ConfigurationModule> options = getOptions();
-    options.setModule(configurationModule);
+    myModule = configurationModule;
+    ModuleBasedConfigurationOptions options = getOptions();
+    options.setModule(myModule.getModuleName());
     options.resetModificationCount();
   }
 
   @Override
-  protected ModuleBasedConfigurationOptions<ConfigurationModule> getOptions() {
+  protected ModuleBasedConfigurationOptions getOptions() {
     //noinspection unchecked
-    return (ModuleBasedConfigurationOptions<ConfigurationModule>)super.getOptions();
+    return (ModuleBasedConfigurationOptions)super.getOptions();
   }
 
   @Override
@@ -47,15 +52,16 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
     super(configurationModule.getProject(), factory, "");
 
-    ModuleBasedConfigurationOptions<ConfigurationModule> options = getOptions();
-    options.setModule(configurationModule);
+    myModule = configurationModule;
+    ModuleBasedConfigurationOptions options = getOptions();
+    options.setModule(myModule.getModuleName());
     options.resetModificationCount();
   }
 
   public abstract Collection<Module> getValidModules();
 
   public ConfigurationModule getConfigurationModule() {
-    return getOptions().getModule();
+    return myModule;
   }
 
   public void setModule(final Module module) {
@@ -93,15 +99,17 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    ConfigurationModule module = getConfigurationModule();
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
 
-    // if null after read, it means that no such field at all in the data, but our clients expect that will be some not null ConfigurationModule wrapper
-    if (getConfigurationModule() == null) {
-      module.setModule(null);
-      getOptions().setModule(module);
-    }
+    myModule.setModuleName(getOptions().getModule());
+  }
+
+  @Override
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
+    getOptions().setModule(myModule.getModuleName());
+
+    super.writeExternal(element);
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")

@@ -1,11 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.applet
 
-import com.intellij.execution.configurations.JavaRunConfigurationModule
 import com.intellij.execution.configurations.ModuleBasedConfigurationOptions
 import com.intellij.util.xmlb.annotations.OptionTag
 
-class AppletConfigurationOptions : ModuleBasedConfigurationOptions<JavaRunConfigurationModule>() {
+class AppletConfigurationOptions : ModuleBasedConfigurationOptions() {
   @get:OptionTag("MAIN_CLASS_NAME") var mainClassName by string()
   @get:OptionTag("HTML_FILE_NAME") var htmlFileName by string()
   @get:OptionTag("HTML_USED") var htmlUsed by storedProperty(false)
