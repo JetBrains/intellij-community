@@ -14,6 +14,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -35,6 +36,7 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
@@ -156,23 +158,28 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     }
 
     final PyFunctionTypeAnnotation annotation = getFunctionTypeAnnotation(func);
-    if (annotation == null) {
-      return null;
-    }
-    final PyParameterTypeList list = annotation.getParameterTypeList();
-    final List<PyExpression> paramTypes = list.getParameterTypes();
-    if (paramTypes.size() == 1) {
-      final PyNoneLiteralExpression noneExpr = as(paramTypes.get(0), PyNoneLiteralExpression.class);
-      if (noneExpr != null && noneExpr.isEllipsis()) {
-        return Ref.create();
+    if (annotation != null) {
+      PyParameterTypeList list = annotation.getParameterTypeList();
+      List<PyExpression> paramTypes = list.getParameterTypes();
+      if (paramTypes.size() == 1) {
+        final PyNoneLiteralExpression noneExpr = as(paramTypes.get(0), PyNoneLiteralExpression.class);
+        if (noneExpr != null && noneExpr.isEllipsis()) {
+          return Ref.create();
+        }
+      }
+      final int startOffset = omitFirstParamInTypeComment(func, annotation) ? 1 : 0;
+      final List<PyParameter> funcParams = Arrays.asList(func.getParameterList().getParameters());
+      final int i = funcParams.indexOf(param) - startOffset;
+      if (i >= 0 && i < paramTypes.size()) {
+        return getParameterTypeFromFunctionComment(paramTypes.get(i), context);
       }
     }
-    final int startOffset = omitFirstParamInTypeComment(func, annotation) ? 1 : 0;
-    final List<PyParameter> funcParams = Arrays.asList(func.getParameterList().getParameters());
-    final int i = funcParams.indexOf(param) - startOffset;
-    if (i >= 0 && i < paramTypes.size()) {
-      return getParameterTypeFromFunctionComment(paramTypes.get(i), context);
+
+    final Ref<PyType> typeFromAncestors = getParameterTypeFromSupertype(param, func, context);
+    if (typeFromAncestors != null) {
+      return typeFromAncestors;
     }
+
     return null;
   }
 
@@ -243,6 +250,56 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Nullable
+  private static PyFunctionType getSuperFunctionType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final Query<PsiElement> superMethodSearchQuery = PySuperMethodsSearch.search(function, context);
+    final PsiElement firstSuperMethod = superMethodSearchQuery.findFirst();
+
+    if (firstSuperMethod instanceof PyFunction) {
+      final PyFunction superFunction = (PyFunction)firstSuperMethod;
+
+      if (superFunction.getDecoratorList() != null) {
+        if (StreamEx.of(superFunction.getDecoratorList().getDecorators())
+          .map(PyDecorator::getQualifiedName)
+          .nonNull()
+          .anyMatch(decoratorName -> PyNames.OVERLOADMETHOD.equals(decoratorName.toString()))) {
+          return null;
+        }
+      }
+
+      final PyClass superClass = superFunction.getContainingClass();
+      if (superClass != null && !PyNames.OBJECT.equals(superClass.getName())) {
+        return (PyFunctionType)context.getType(superFunction);
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getParameterTypeFromSupertype(
+      @NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+    final PyFunctionType superFunctionType = getSuperFunctionType(func, context);
+
+    if (superFunctionType != null) {
+      final PyFunctionType superFunctionTypeRemovedSelf = superFunctionType.dropSelf(context);
+      final List<PyCallableParameter> parameters = superFunctionTypeRemovedSelf.getParameters(context);
+      if (parameters != null) {
+        for (PyCallableParameter parameter : parameters) {
+          final String parameterName = parameter.getName();
+          if (parameterName != null && parameterName.equals(param.getName())) {
+            final PyType pyType = parameter.getType(context);
+            if (pyType != null) {
+              return new Ref<>(pyType);
+            }
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   @NotNull
   private static PyType createTypingGenericType() {
     return new PyCustomType(GENERIC, null, false);
@@ -263,12 +320,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     if (callable instanceof PyFunction) {
       final PyFunction function = (PyFunction)callable;
-      final PyExpression value = getReturnTypeAnnotation(function, context);
-      if (value != null) {
-        final Ref<PyType> typeRef = getType(value, new Context(context));
+
+      final PyExpression returnTypeAnnotation = getReturnTypeAnnotation(function, context);
+      if (returnTypeAnnotation != null) {
+        final Ref<PyType> typeRef = getType(returnTypeAnnotation, new Context(context));
         if (typeRef != null) {
           return Ref.create(toAsyncIfNeeded(function, typeRef.get()));
         }
+      }
+
+      final Ref<PyType> typeFromSupertype = getReturnTypeFromSupertype(function, context);
+      if (typeFromSupertype != null) {
+        return Ref.create(toAsyncIfNeeded(function, typeFromSupertype.get()));
       }
     }
     return null;
@@ -284,6 +347,17 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (functionAnnotation != null) {
       return functionAnnotation.getReturnType();
     }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getReturnTypeFromSupertype(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final PyFunctionType superFunctionType = getSuperFunctionType(function, context);
+
+    if (superFunctionType != null) {
+      return new Ref<>(context.getReturnType(superFunctionType.getCallable()));
+    }
+
     return null;
   }
 
