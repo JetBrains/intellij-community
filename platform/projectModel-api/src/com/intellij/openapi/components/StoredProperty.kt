@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.components
 
 import com.intellij.openapi.diagnostic.logger
@@ -66,9 +68,10 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     val getterName = (accessor as? PropertyAccessor)?.getterName
     for (property in properties) {
       if (property.name == accessor.name || property.name == getterName) {
-        return property.value != property.defaultValue
+        return !property.isEqualToDefault(property.defaultValue)
       }
     }
+
     LOG.debug("Cannot find property by name: ${accessor.name}")
     // do not return false - maybe accessor delegates actual set to our property
     // default value in this case will be filtered by common filter (instance will be created in this case, as for non-smart state classes)
@@ -182,6 +185,10 @@ private class NormalizedStringStoredProperty(override val defaultValue: String?)
 
     value = newValue
     return true
+  }
+
+  override fun isEqualToDefault(newValue: Any?): Boolean {
+    return value == newValue || (value == null && newValue != null && newValue is String && newValue.isEmpty())
   }
 }
 
