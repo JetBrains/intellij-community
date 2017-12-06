@@ -11,8 +11,8 @@ class AppletConfigurationOptions : ModuleBasedConfigurationOptions() {
   @get:OptionTag("HTML_FILE_NAME") var htmlFileName by string()
   @get:OptionTag("HTML_USED") var htmlUsed by storedProperty(false)
 
-  @get:OptionTag("WIDTH") var width by storedProperty(300)
-  @get:OptionTag("HEIGHT") var height by storedProperty(400)
+  @get:OptionTag("WIDTH") var width by storedProperty(400)
+  @get:OptionTag("HEIGHT") var height by storedProperty(300)
 
   @get:OptionTag("POLICY_FILE") var policyFile by string()
   @get:OptionTag("VM_PARAMETERS") var vmParameters by string()
