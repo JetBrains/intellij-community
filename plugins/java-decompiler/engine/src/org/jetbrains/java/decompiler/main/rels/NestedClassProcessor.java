@@ -376,10 +376,8 @@ public class NestedClassProcessor {
         mergeListSignatures(entry.getValue(), interPairMask, false);
 
         List<VarVersionPair> mask = new ArrayList<>(entry.getValue().size());
-        boolean firstSignField = nestedNode.type != ClassNode.CLASS_ANONYMOUS;
         for (VarFieldPair pair : entry.getValue()) {
-          mask.add(pair == null || (!firstSignField && pair.fieldKey.isEmpty()) ? null : pair.varPair);
-          firstSignField = false;
+          mask.add(pair != null && !pair.fieldKey.isEmpty() ? pair.varPair : null);
         }
         nestedNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, entry.getKey()).synthParameters = mask;
       }
@@ -620,8 +618,7 @@ public class NestedClassProcessor {
             StructField fd = cl.getField(left.getName(), left.getDescriptor().descriptorString);
             if (fd != null &&
                 cl.qualifiedName.equals(left.getClassname()) &&
-                fd.hasModifier(CodeConstants.ACC_FINAL) &&
-                (fd.isSynthetic() || noSynthFlag && fd.hasModifier(CodeConstants.ACC_PRIVATE))) {
+                (fd.isSynthetic() || noSynthFlag && possiblySyntheticField(fd))) {
               // local (== not inherited) field
               field = InterpreterUtil.makeUniqueKey(left.getName(), left.getDescriptor().descriptorString);
               break;
@@ -632,6 +629,10 @@ public class NestedClassProcessor {
     }
 
     return field;
+  }
+
+  private static boolean possiblySyntheticField(StructField fd) {
+    return fd.getName().contains("$") && fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_PRIVATE);
   }
 
   private static void mergeListSignatures(List<VarFieldPair> first, List<VarFieldPair> second, boolean both) {

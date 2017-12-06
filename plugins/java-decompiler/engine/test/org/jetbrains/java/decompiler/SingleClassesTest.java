@@ -111,6 +111,7 @@ public class SingleClassesTest {
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
   //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
+  @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
 
   private void doTest(String testFile, String... companionFiles) {
