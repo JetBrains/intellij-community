@@ -227,6 +227,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   @Override
   public void setTransparencyChessboardVisible(boolean visible) {
     imageComponent.setTransparencyChessboardVisible(visible);
+    repaint();
   }
 
   @Override
@@ -244,6 +245,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   @Override
   public void setGridVisible(boolean visible) {
     imageComponent.setGridVisible(visible);
+    repaint();
   }
 
   @Override
