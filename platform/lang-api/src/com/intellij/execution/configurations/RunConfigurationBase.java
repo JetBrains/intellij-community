@@ -224,10 +224,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    writeState(element);
-  }
-
-  protected void writeState(@NotNull Element element) {
     JDOMExternalizerUtil.addChildren(element, LOG_FILE, myLogFiles);
     JDOMExternalizerUtil.addChildren(element, PREDEFINED_LOG_FILE_ELEMENT, myPredefinedLogFiles);
     XmlSerializer.serializeObjectInto(myOptions, element);

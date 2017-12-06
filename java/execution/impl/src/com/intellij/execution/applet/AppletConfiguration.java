@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.applet;
 
 import com.intellij.execution.*;
@@ -171,7 +173,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public Element getState() {
     Element element = new Element("state");
-    super.writeState(element);
+    super.writeExternal(element);
 
     if (myAppletParameters != null) {
       for (AppletParameter myAppletParameter : myAppletParameters) {
