@@ -27,7 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.RepoPackage;
-import com.jetbrains.python.packaging.CondaPackageCache;
+import com.jetbrains.python.packaging.PyCondaPackageCache;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -153,7 +153,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
 
   @NotNull
   private static List<RepoPackage> getCachedCondaPackages() {
-    final CondaPackageCache instance = CondaPackageCache.getInstance();
+    final PyCondaPackageCache instance = PyCondaPackageCache.getInstance();
     return ContainerUtil.map(instance.getPackageNames(), name -> {
       final String latestVersion = ContainerUtil.getFirstItem(instance.getVersions(name));
       return new RepoPackage(name, null, latestVersion);
