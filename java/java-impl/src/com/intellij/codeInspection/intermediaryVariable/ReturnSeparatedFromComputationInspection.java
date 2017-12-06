@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.HighlightUtils;
@@ -42,7 +43,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         super.visitReturnStatement(returnStatement);
         final ReturnContext context = createReturnContext(returnStatement);
         if (context != null && isApplicable(context)) {
-          registerProblem(holder, returnStatement, context.returnedVariable);
+          registerProblem(holder, returnStatement, context.returnedVariable, isOnTheFly);
         }
       }
     };
@@ -176,7 +177,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     return !mover.isEmpty();
   }
 
-  private static void doApply(PsiReturnStatement returnStatement) {
+  private static void doApply(PsiReturnStatement returnStatement, boolean isOnTheFly) {
     ReturnContext context = createReturnContext(returnStatement);
     if (context != null) {
       ControlFlow flow = createControlFlow(context);
@@ -184,15 +185,20 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
-          applyChanges(mover, context, removeReturn);
+          Highlighter highlighter = new Highlighter();
 
-          deleteRedundantVariable(context);
+          applyChanges(mover, context, removeReturn, highlighter);
+          deleteRedundantVariable(context, highlighter);
+
+          if (isOnTheFly) {
+            highlighter.highlight();
+          }
         }
       }
     }
   }
 
-  private static void deleteRedundantVariable(@NotNull ReturnContext context) {
+  private static void deleteRedundantVariable(@NotNull ReturnContext context, Highlighter highlighter) {
     PsiExpression value = PsiUtil.skipParenthesizedExprDown(context.returnedVariable.getInitializer());
     if (value != null && SideEffectChecker.mayHaveSideEffects(value)) {
       return;
@@ -217,18 +223,16 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         return;
       }
     }
-    List<PsiExpression> inlinedExpressions = new ArrayList<>();
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
       for (PsiReference usage : usages) {
-        PsiExpression expression = InlineUtil.inlineVariable(context.returnedVariable, value, (PsiJavaCodeReferenceElement)usage);
-        inlinedExpressions.add(expression);
+        PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, (PsiJavaCodeReferenceElement)usage);
+        highlighter.add(inlined);
       }
     }
     if (isSimple || isSingleUsage || usages.isEmpty()) {
       context.returnedVariable.delete();
     }
-    HighlightUtils.highlightElements(inlinedExpressions);
   }
 
   @Contract("null -> false")
@@ -272,14 +276,17 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     return false;
   }
 
-  private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn) {
-    mover.insertBefore.forEach(e -> e.getParent().addBefore(context.returnStatement, e));
+  private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn, Highlighter highlighter) {
+    for (PsiElement anchor : mover.insertBefore) {
+      PsiElement added = anchor.getParent().addBefore(context.returnStatement, anchor);
+      highlighter.add(added);
+    }
     mover.replaceInline.forEach(e -> {
       if (e instanceof PsiBreakStatement) {
-        replaceStatementKeepComments((PsiBreakStatement)e, context.returnStatement);
+        replaceStatementKeepComments((PsiBreakStatement)e, context.returnStatement, highlighter);
       }
       else if (e instanceof PsiAssignmentExpression) {
-        inlineAssignment((PsiAssignmentExpression)e, context.returnStatement);
+        inlineAssignment((PsiAssignmentExpression)e, context.returnStatement, highlighter);
       }
     });
     mover.removeCompletely.forEach(e -> removeElementKeepComments(e));
@@ -295,7 +302,9 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     removeElementKeepComments(context.returnStatement);
   }
 
-  private static void inlineAssignment(PsiAssignmentExpression assignmentExpression, PsiReturnStatement returnStatement) {
+  private static void inlineAssignment(PsiAssignmentExpression assignmentExpression,
+                                       PsiReturnStatement returnStatement,
+                                       Highlighter highlighter) {
     PsiElement assignmentParent = assignmentExpression.getParent();
     LOG.assertTrue(assignmentParent instanceof PsiExpressionStatement, "PsiExpressionStatement");
     PsiReturnStatement returnStatementCopy = (PsiReturnStatement)returnStatement.copy();
@@ -303,12 +312,14 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     PsiExpression returnValue = returnStatementCopy.getReturnValue();
     if (rExpression != null && returnValue != null) {
       returnValue.replace(rExpression);
-      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy);
+      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy, highlighter);
     }
   }
 
-  private static void replaceStatementKeepComments(PsiStatement replacedStatement, PsiReturnStatement returnStatement) {
-    new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement);
+  private static void replaceStatementKeepComments(PsiStatement replacedStatement,
+                                                   PsiReturnStatement returnStatement,
+                                                   Highlighter highlighter) {
+    highlighter.add(new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement));
   }
 
   private static void removeElementKeepComments(PsiElement removedElement) {
@@ -575,18 +586,20 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
 
   private static void registerProblem(@NotNull ProblemsHolder holder,
                                       @NotNull PsiReturnStatement returnStatement,
-                                      @NotNull PsiVariable variable) {
+                                      @NotNull PsiVariable variable, boolean isOnTheFly) {
     String name = variable.getName();
     holder.registerProblem(returnStatement,
                            InspectionsBundle.message("inspection.return.separated.from.computation.descriptor", name),
-                           new VariableFix(name));
+                           new VariableFix(name, isOnTheFly));
   }
 
   private static class VariableFix implements LocalQuickFix {
     private String myName;
+    private boolean myIsOnTheFly;
 
-    public VariableFix(String name) {
+    public VariableFix(String name, boolean isOnTheFly) {
       myName = name;
+      myIsOnTheFly = isOnTheFly;
     }
 
     @Nls
@@ -607,7 +620,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiReturnStatement) {
-        doApply((PsiReturnStatement)element);
+        doApply((PsiReturnStatement)element, myIsOnTheFly);
       }
     }
   }
@@ -633,6 +646,26 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
       this.refactoredStatement = refactoredStatement;
       this.returnedVariable = returnedVariable;
       this.variableScope = variableScope;
+    }
+  }
+
+  private static class Highlighter {
+    private final List<PsiElement> myElements = new ArrayList<>();
+
+    public void add(@NotNull PsiElement element) {
+      if (element instanceof PsiReturnStatement) {
+        PsiExpression value = ((PsiReturnStatement)element).getReturnValue();
+        if (value != null) {
+          myElements.add(value);
+          return;
+        }
+      }
+      myElements.add(element);
+    }
+
+    public void highlight() {
+      List<PsiElement> validElements = ContainerUtil.filter(myElements, PsiElement::isValid);
+      HighlightUtils.highlightElements(validElements);
     }
   }
 }
