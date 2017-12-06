@@ -271,6 +271,8 @@ public class PlatformTestUtil {
     TreeModel model = tree.getModel();
     if (model instanceof AsyncTreeModel) {
       AsyncTreeModel async = (AsyncTreeModel)model;
+      if (async.isProcessing()) return true;
+      UIUtil.dispatchAllInvocationEvents();
       return async.isProcessing();
     }
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
