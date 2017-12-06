@@ -11,4 +11,20 @@ class Concatenations {
     System.out.println('{' + "a" + '\'');
     String.format("aaaa%n" + "bbbb");
   }
+
+  String get(String s) {
+    return s + "serendipity";
+  }
+}
+class testclass {
+  private static final String WHITESPACE = " TEST ";
+  private String s = "";
+
+  public testclass() {
+    s = "";
+    s += WHITESPACE + "string";
+
+    s = "";
+    s += " TEST " + "string";
+  }
 }

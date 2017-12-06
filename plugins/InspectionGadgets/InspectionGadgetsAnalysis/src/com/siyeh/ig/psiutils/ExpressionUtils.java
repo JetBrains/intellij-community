@@ -186,19 +186,6 @@ public class ExpressionUtils {
   }
 
   @Nullable
-  public static String getLiteralString(@Nullable PsiExpression expression) {
-    final PsiLiteralExpression literal = getLiteral(expression);
-    if (literal == null) {
-      return null;
-    }
-    final Object value = literal.getValue();
-    if (value == null) {
-      return null;
-    }
-    return value.toString();
-  }
-
-  @Nullable
   public static PsiLiteralExpression getLiteral(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (expression instanceof PsiLiteralExpression) {
@@ -564,20 +551,14 @@ public class ExpressionUtils {
         if (expressions.length < 2 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[1]))) {
           return true;
         }
-        if (!isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer")) {
-          return true;
-        }
+        return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("append".equals(name)) {
         if (expressions.length < 1 || !expression.equals(ParenthesesUtils.stripParentheses(expressions[0]))) {
           return true;
         }
-        if (!isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer")) {
-          return true;
-        }
+        return !isCallToMethodIn(methodCallExpression, "java.lang.StringBuilder", "java.lang.StringBuffer");
       } else if ("print".equals(name) || "println".equals(name)) {
-        if (!isCallToMethodIn(methodCallExpression, "java.io.PrintStream", "java.io.PrintWriter")) {
-          return true;
-        }
+        return !isCallToMethodIn(methodCallExpression, "java.io.PrintStream", "java.io.PrintWriter");
       } else if ("trace".equals(name) || "debug".equals(name) || "info".equals(name) || "warn".equals(name) || "error".equals(name)) {
         if (!isCallToMethodIn(methodCallExpression, "org.slf4j.Logger")) {
           return true;
