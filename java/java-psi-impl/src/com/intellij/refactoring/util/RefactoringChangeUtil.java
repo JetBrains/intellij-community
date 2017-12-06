@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,9 @@ public class RefactoringChangeUtil {
     if (refClass instanceof PsiAnonymousClass) {
       type = ((PsiAnonymousClass)refClass).getBaseClassType();
     }
+    if (refClass instanceof PsiTypeParameter && !PsiTypesUtil.isAccessibleAt((PsiTypeParameter)refClass, expr)) {
+      type = ((PsiExpression)expr.copy()).getType();
+    }
 
     return GenericsUtil.getVariableTypeByExpressionType(type);
   }
@@ -92,7 +96,11 @@ public class RefactoringChangeUtil {
         }
         LOG.assertTrue(parentClass != null);
         expressionFromText = (PsiReferenceExpression)factory.createExpressionFromText("A.this." + member.getName(), null);
-        ((PsiThisExpression)expressionFromText.getQualifierExpression()).getQualifier().replace(factory.createClassReferenceElement(parentClass));
+        PsiThisExpression thisExpression = (PsiThisExpression)expressionFromText.getQualifierExpression();
+        assert thisExpression != null; // just created A.this.name expression, thus thisExpression and its qualifier are non-null
+        PsiJavaCodeReferenceElement qualifier = thisExpression.getQualifier();
+        assert qualifier != null;
+        qualifier.replace(factory.createClassReferenceElement(parentClass));
       }
       else {
         final PsiModifierListOwner staticElement = PsiUtil.getEnclosingStaticElement(referenceExpression, null);
@@ -147,10 +155,10 @@ public class RefactoringChangeUtil {
    }
 
   public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringChangeUtil.createQualifiedExpression(manager, qualifierClass, "this");
+    return createQualifiedExpression(manager, qualifierClass, "this");
   }
 
   public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringChangeUtil.createQualifiedExpression(manager, qualifierClass, "super");
+    return createQualifiedExpression(manager, qualifierClass, "super");
   }
 }
