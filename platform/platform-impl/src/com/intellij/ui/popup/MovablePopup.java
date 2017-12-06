@@ -161,13 +161,14 @@ public class MovablePopup {
       Window owner = UIUtil.getWindow(myOwner);
       if (owner != null) {
         if (myHeavyWeight) {
-          Window view = HeavyWeightPopupCache.create(owner);
+          return;
+          /*Window view = HeavyWeightPopupCache.create(owner);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
           view.setFocusable(false);
           view.setFocusableWindowState(false);
-          myView = view;
+          myView = view;*/
         }
         else if (owner instanceof RootPaneContainer) {
           JLayeredPane parent = ((RootPaneContainer)owner).getLayeredPane();
@@ -196,7 +197,7 @@ public class MovablePopup {
     }
   }
 
-  /**
+  /**al
    * Determines whether this popup should be visible.
    */
   public boolean isVisible() {
