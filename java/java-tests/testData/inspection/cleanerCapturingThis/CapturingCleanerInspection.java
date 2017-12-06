@@ -5,7 +5,7 @@ class Anonymous {
 
   static void free(int descriptor) {}
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">new Runnable() {
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">new Runnable() {
     @Override
     public void run() {
       System.out.println("adsad");
@@ -18,7 +18,7 @@ class Inner {
 
   static void free(int descriptor) {}
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">new MyRunnable()</warning>);
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, new <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">MyRunnable</warning>());
 
   private class MyRunnable implements Runnable {
     @Override
@@ -33,7 +33,7 @@ class InstanceMethodReference {
 
   static void free(int descriptor) {}
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">this::run</warning>);
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">this</warning>::run);
 
   private void run() {
     System.out.println("adsad");
@@ -46,7 +46,7 @@ class LambdaExprBodyInstanceMethod {
 
   static void free(int descriptor) {}
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">() -> run()</warning>);
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">run</warning>());
 
   private void run() {
     System.out.println("adsad");
@@ -57,10 +57,10 @@ class LambdaExprBodyInstanceMethod {
 class LambdaInstanceField {
   int fileDescriptor;
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">() -> {
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> {
     System.out.println("adsad");
-    fileDescriptor = 0;
-  }</warning>);
+    <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">fileDescriptor</warning> = 0;
+  });
 }
 
 class LambdaInstanceMethod {
@@ -68,10 +68,10 @@ class LambdaInstanceMethod {
 
   static void free(int descriptor) {}
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">() -> {
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> {
     System.out.println("adsad");
-    free(fileDescriptor);
-  }</warning>);
+    free(<warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">fileDescriptor</warning>);
+  });
 }
 
 class Base {
@@ -79,10 +79,10 @@ class Base {
 }
 
 class LambdaInstanceSuperField extends Base {
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">() -> {
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> {
     System.out.println("adsad");
-    fileDescriptor = 0;
-  }</warning>);
+    <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">fileDescriptor</warning> = 0;
+  });
 }
 
 class LambdaThis {
@@ -90,9 +90,9 @@ class LambdaThis {
 
   static void free(int descriptor) {}
 
-  Cleaner.Cleanable cleanable = Cleaner.create().register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">() -> {
-    LambdaThis o = this;
-  }</warning>);
+  Cleaner.Cleanable cleanable = Cleaner.create().register(this, () -> {
+    LambdaThis o = <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">this</warning>;
+  });
 }
 
 class StaticMethodReference {
@@ -122,6 +122,16 @@ class SafeInstanceMethodReference {
   }
 }
 
+
+class FieldMethodReference {
+  Cleaner cleaner = Cleaner.create();
+  ResourceHolder resource = new ResourceHolder();
+
+  FieldMethodReference() {
+    cleaner.register(this, resource::free);
+  }
+}
+
 // Reference as tracking target
 
 class StaticMethodFactory {
@@ -129,7 +139,7 @@ class StaticMethodFactory {
 
   static ResourceHolder create() {
     ResourceHolder holder = new ResourceHolder();
-    cleaner.register(holder, <warning descr="Runnable passed to register() captures 'holder' reference that leads to memory leak">holder::free</warning>);
+    cleaner.register(holder, <warning descr="Runnable passed to Cleaner.register() captures 'holder' reference that leads to memory leak">holder</warning>::free);
     return holder;
   }
 }
@@ -144,7 +154,7 @@ class ConstructorDelegatesToStaticMethod {
   }
 
   static void register(ConstructorDelegatesToStaticMethod holder) {
-    cleaner.register(holder, <warning descr="Runnable passed to register() captures 'holder' reference that leads to memory leak">() -> free(holder.resource)</warning>);
+    cleaner.register(holder, () -> free(<warning descr="Runnable passed to Cleaner.register() captures 'holder' reference that leads to memory leak">holder</warning>.resource));
   }
 
   static void free(int resource){}
@@ -158,7 +168,7 @@ class InnerAccesInstanceOuterMembers {
     Cleaner cleaner = Cleaner.create();
 
     public Inner() {
-      cleaner.register(this, <warning descr="Runnable passed to register() captures 'this' reference that leads to memory leak">() -> resource = -1</warning>);
+      cleaner.register(this, () -> <warning descr="Runnable passed to Cleaner.register() captures 'this' reference that leads to memory leak">resource</warning> = -1);
     }
   }
 }

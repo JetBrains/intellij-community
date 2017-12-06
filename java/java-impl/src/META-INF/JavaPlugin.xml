@@ -622,10 +622,10 @@
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CollectionAddAllCanBeReplacedWithConstructorInspection"
                      displayName="Redundant 'Collection.addAll()' call"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CleanerCapturingThis"
+    <localInspection groupPath="Java" language="JAVA" shortName="CapturingCleaner"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.CleanerCapturingThisInspection"
+                     implementationClass="com.intellij.codeInspection.CapturingCleanerInspection"
                      bundle="messages.InspectionsBundle"
                      key="inspection.cleaner.capturing.this.description"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OverwrittenKey"

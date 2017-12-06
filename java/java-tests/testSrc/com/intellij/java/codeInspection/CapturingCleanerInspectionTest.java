@@ -3,20 +3,20 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.CleanerCapturingThisInspection;
+import com.intellij.codeInspection.CapturingCleanerInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class CleanerCapturingThisInspectionTest extends LightCodeInsightFixtureTestCase {
+public class CapturingCleanerInspectionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testCleanerCapturingThisInspection() {doTest();}
+  public void testCapturingCleanerInspection() {doTest();}
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
 
-    myFixture.enableInspections(new CleanerCapturingThisInspection());
+    myFixture.enableInspections(new CapturingCleanerInspection());
   }
 
   private void doTest() {
