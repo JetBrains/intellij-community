@@ -40,7 +40,7 @@ public class FileReferenceContextUtil {
     if (element == null || element instanceof PsiCompiledElement || isBinary(element)) return map;
     element.accept(new PsiRecursiveElementWalkingVisitor(true) {
       @Override public void visitElement(PsiElement element) {
-        if (element instanceof PsiLanguageInjectionHost) {
+        if (element instanceof PsiLanguageInjectionHost && element.isValid()) {
           InjectedLanguageManager.getInstance(element.getProject()).enumerate(element, (injectedPsi, places) -> encodeFileReferences(injectedPsi));
         }
 
