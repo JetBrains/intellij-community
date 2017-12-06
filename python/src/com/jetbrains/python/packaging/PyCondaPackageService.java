@@ -58,7 +58,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   public void loadAndGetPackages(boolean force) {
-    if (CondaPackageCache.getInstance().getPackageNames().isEmpty() || force) {
+    if (PyCondaPackageCache.getInstance().getPackageNames().isEmpty() || force) {
       updatePackagesCache();
     }
   }
@@ -194,13 +194,13 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
         versions.add(-(sortedIndex + 1), packageVersion);
       }
     }
-    CondaPackageCache.reload(nameToVersions);
+    PyCondaPackageCache.reload(nameToVersions);
     LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
   public List<String> getPackageVersions(@NotNull final String packageName) {
-    return CondaPackageCache.getInstance().getVersions(packageName);
+    return ContainerUtil.notNullize(PyCondaPackageCache.getInstance().getVersions(packageName));
   }
 
   public void updateChannels() {
