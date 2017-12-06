@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PanelGridBuilder<T extends PanelBuilder> extends PanelBuilder {
   /**
-   * Adds a signle panel builder to grid.
+   * Adds a single panel builder to grid.
    * @param builder single row panel builder
    * @return <code>this</code>
    */
