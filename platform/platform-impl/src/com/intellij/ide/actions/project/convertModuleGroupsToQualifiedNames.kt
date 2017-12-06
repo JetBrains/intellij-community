@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -107,20 +108,22 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     }
   }
 
-  fun getMapping(): Map<String, String>? {
+  fun getMapping(): Map<String, String> {
     val lines = document.charsSequence.split('\n')
-    if (lines.size != modules.size) return null
 
-    return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, { lines[it.index] })
+    return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, {
+      if (it.index in lines.indices) lines[it.index] else it.value.name
+    })
   }
 
   override fun doOKAction() {
-    val mapping = getMapping()
-    if (mapping == null) {
-      Messages.showErrorDialog(project, "Incorrect mapping!", CommonBundle.getErrorTitle())
+    ModuleNamesListInspection.checkModuleNames(document.charsSequence.lines(), project) { line, message ->
+      Messages.showErrorDialog(project, ProjectBundle.message("convert.module.groups.error.text", line+1, StringUtil.decapitalize(message)),
+                               CommonBundle.getErrorTitle())
       return
     }
 
+    val mapping = getMapping()
     if (mapping.isNotEmpty()) {
       val model = ModuleManager.getInstance(project).modifiableModel
       val byName = modules.associateBy { it.name }

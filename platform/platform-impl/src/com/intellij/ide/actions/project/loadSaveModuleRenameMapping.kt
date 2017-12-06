@@ -7,8 +7,10 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ui.UIUtil
@@ -27,9 +29,27 @@ class LoadModuleNameMappingAction(private val dialog: ConvertModuleGroupsToQuali
     val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PLAIN_TEXT)
     val file = FileChooser.chooseFile(descriptor, dialog.project, toSelect) ?: return
 
+    fun showError(line: Int, message: String) {
+      Messages.showErrorDialog(dialog.project, ProjectBundle.message("convert.module.groups.error.text", line + 1, message),
+                               ProjectBundle.message("module.name.mapping.cannot.import.error.title"))
+    }
+
     val mappingText = VfsUtil.loadText(file)
-    dialog.importMapping(mappingText.lineSequence().associateBy({ it.substringBefore(OLD_NEW_SEPARATOR) }, { it.substringAfter(
-      OLD_NEW_SEPARATOR) }))
+    val lines = mappingText.lineSequence()
+    val moduleManager = ModuleManager.getInstance(dialog.project)
+    lines.forEachIndexed {line, string ->
+      if (OLD_NEW_SEPARATOR !in string) {
+        showError(line, ProjectBundle.message("module.name.mapping.delimiter.not.present.error", OLD_NEW_SEPARATOR))
+        return
+      }
+      val oldModuleName = string.substringBefore(OLD_NEW_SEPARATOR)
+      if (moduleManager.findModuleByName(oldModuleName) == null) {
+        showError(line, ProjectBundle.message("module.name.mapping.unknown.module.error", oldModuleName))
+        return
+      }
+    }
+
+    dialog.importMapping(lines.associateBy({ it.substringBefore(OLD_NEW_SEPARATOR) }, { it.substringAfter(OLD_NEW_SEPARATOR) }))
   }
 }
 
@@ -39,13 +59,12 @@ class SaveModuleNameMappingAction(private val dialog: ConvertModuleGroupsToQuali
   }
 
   override fun actionPerformed(e: ActionEvent?) {
-    ExportToTextFileAction.export(dialog.project,
-                                  ModuleNameMappingExporter(dialog))
+    ExportToTextFileAction.export(dialog.project, ModuleNameMappingExporter(dialog))
   }
 }
 
 class ModuleNameMappingExporter(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog) : ExporterToTextFile {
-  override fun getReportText() = dialog.getMapping()?.map { "${it.key}${OLD_NEW_SEPARATOR}${it.value}" }?.joinToString("\n") ?: ""
+  override fun getReportText() = dialog.getMapping().map { "${it.key}${OLD_NEW_SEPARATOR}${it.value}" }.joinToString("\n") ?: ""
 
   override fun getDefaultFilePath() = getDefaultMappingFilePath(
     dialog.project) ?: dialog.project.basePath?.let { "$it/modules-rename-mapping.txt" } ?: ""
