@@ -107,7 +107,7 @@ public class UiTestTask extends Task {
         task.setFork(true);
         task.setForkMode(new JUnitTask.ForkMode("once"));
 
-        task.setLogFailedTests(true);
+        task.setLogFailedTests(false);
         task.setShowOutput(true);
         task.setPrintsummary((JUnitTask.SummaryAttribute) EnumeratedAttribute.getInstance(JUnitTask.SummaryAttribute.class, "true"));
 
