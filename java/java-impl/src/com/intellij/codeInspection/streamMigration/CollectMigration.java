@@ -279,7 +279,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     public String generateCollector(CommentTracker ct) {
-      return getCollectionCollector(ct.markUnchanged(myInitializer), myTargetType);
+      return getCollectionCollector(ct, myInitializer, myTargetType);
     }
 
     @Override
@@ -313,7 +313,7 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   @NotNull
-  private static String getCollectionCollector(PsiExpression initializer, PsiType type) {
+  private static String getCollectionCollector(CommentTracker ct, PsiExpression initializer, PsiType type) {
     String collector;
     PsiType initializerType = initializer.getType();
     PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
@@ -332,7 +332,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
     else {
       PsiExpression copy = JavaPsiFacade.getElementFactory(initializer.getProject())
-        .createExpressionFromText(initializer.getText(), initializer);
+        .createExpressionFromText(ct.text(initializer), initializer);
       if (copy instanceof PsiNewExpression) {
         PsiExpressionList argumentList = ((PsiNewExpression)copy).getArgumentList();
         if (argumentList != null) {
@@ -865,7 +865,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     @Override
     public String generateTerminal(CommentTracker ct) {
-      return ".collect(" + getCollectionCollector(ct.markUnchanged(myCreateExpression), myResultType) + ")";
+      return ".collect(" + getCollectionCollector(ct, ct.markUnchanged(myCreateExpression), myResultType) + ")";
     }
 
     @Override
