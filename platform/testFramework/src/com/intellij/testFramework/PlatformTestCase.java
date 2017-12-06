@@ -158,13 +158,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     "PhpStorm",
     "UltimateLangXml", "Idea", "PlatformLangXml" };
 
-  /**
-   * @deprecated calling this method is no longer necessary
-   */
-  public static void autodetectPlatformPrefix() {
-    doAutodetectPlatformPrefix();
-  }
-
   public static void doAutodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
       return;
@@ -806,40 +799,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Nullable
   protected PsiFile getPsiFile(final Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
-  }
-
-  /**
-   * @deprecated calling this method is no longer necessary
-   */
-  public static void initPlatformLangPrefix() {
-  }
-
-  /**
-   * This is the main point to set up your platform prefix. This allows you to use some sub-set of
-   * core plugin descriptors to make initialization faster (e.g. for running tests in classpath of the module where the test is located).
-   * It is calculated by some marker class presence in classpath.
-   * Note that it applies NEGATIVE logic for detection: prefix will be set if only marker class
-   * is NOT present in classpath.
-   * Also, only the very FIRST call to this method will take effect.
-   *
-   * @param classToTest marker class qualified name
-   * @param prefix platform prefix to be set up if marker class not found in classpath.
-   * @deprecated calling this method is no longer necessary
-   */
-  public static void initPlatformPrefix(String classToTest, String prefix) {
-    if (!ourPlatformPrefixInitialized) {
-      ourPlatformPrefixInitialized = true;
-      boolean isUltimate = true;
-      try {
-        PlatformTestCase.class.getClassLoader().loadClass(classToTest);
-      }
-      catch (ClassNotFoundException e) {
-        isUltimate = false;
-      }
-      if (!isUltimate) {
-        setPlatformPrefix(prefix);
-      }
-    }
   }
 
   private static void setPlatformPrefix(String prefix) {

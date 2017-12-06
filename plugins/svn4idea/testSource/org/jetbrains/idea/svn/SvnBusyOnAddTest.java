@@ -43,7 +43,6 @@ public class SvnBusyOnAddTest extends TestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    //PlatformTestCase.initPlatformLangPrefix();
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
     if (!pluginRoot.isDirectory()) {
       // try standalone mode
