@@ -67,9 +67,11 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
 
   public void testProvidedScope() throws Exception {
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary(), DependencyScope.PROVIDED, false);
+    ModuleRootModificationUtil.addDependency(myModule, createAsmLibrary(), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getJDomJar());
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getJDomJar(), getAsmJar());
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
+    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), getJDomJar());
   }
 
   public void testModuleDependency() throws Exception {

@@ -58,9 +58,11 @@ public class JavaParameters extends SimpleJavaParameters {
   public static final int JDK_ONLY = 0x1;
   public static final int CLASSES_ONLY = 0x2;
   public static final int TESTS_ONLY = 0x4;
+  public static final int INCLUDE_PROVIDED = 0x8;
   public static final int JDK_AND_CLASSES = JDK_ONLY | CLASSES_ONLY;
   public static final int JDK_AND_CLASSES_AND_TESTS = JDK_ONLY | CLASSES_ONLY | TESTS_ONLY;
   public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
+  public static final int JDK_AND_CLASSES_AND_PROVIDED = JDK_ONLY | CLASSES_ONLY | INCLUDE_PROVIDED;
 
   public void configureByModule(final Module module,
                                 @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType,
@@ -77,7 +79,7 @@ public class JavaParameters extends SimpleJavaParameters {
     }
 
     setDefaultCharset(module.getProject());
-    configureEnumerator(OrderEnumerator.orderEntries(module).runtimeOnly().recursively(), classPathType, jdk).collectPaths(getClassPath());
+    configureEnumerator(OrderEnumerator.orderEntries(module).recursively(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(module).recursively());
   }
 
@@ -176,6 +178,9 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {
+    if ((classPathType & INCLUDE_PROVIDED) == 0) {
+      enumerator = enumerator.runtimeOnly();
+    }
     if ((classPathType & JDK_ONLY) == 0) {
       enumerator = enumerator.withoutSdk();
     }

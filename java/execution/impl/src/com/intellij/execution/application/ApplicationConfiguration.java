@@ -50,6 +50,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public boolean ALTERNATIVE_JRE_PATH_ENABLED;
   public String ALTERNATIVE_JRE_PATH;
   public boolean ENABLE_SWING_INSPECTOR;
+  public boolean INCLUDE_PROVIDED_SCOPE = false;
 
   private ShortenCommandLine myShortenCommandLine = null;
 
@@ -223,6 +224,14 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     ALTERNATIVE_JRE_PATH = path;
   }
 
+  public boolean isProvidedScopeIncluded() {
+    return INCLUDE_PROVIDED_SCOPE;
+  }
+
+  public void setIncludeProvidedScope(boolean value) {
+    INCLUDE_PROVIDED_SCOPE = value;
+  }
+
   @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), MAIN_CLASS_NAME);
@@ -280,7 +289,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
       final String jreHome = myConfiguration.ALTERNATIVE_JRE_PATH_ENABLED ? myConfiguration.ALTERNATIVE_JRE_PATH : null;
       if (module.getModule() != null) {
         DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false);
+          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.MAIN_CLASS_NAME, false, myConfiguration.isProvidedScopeIncluded());
           JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
         });
       }
