@@ -34,8 +34,4 @@
     <option name="HOST" value="localhost" />
     <option name="PORT" value="5005" />
   </configuration>
-
-  <configuration name="&lt;template&gt;" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" default="true" selected="false">
-    <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
-  </configuration>
 </component>
