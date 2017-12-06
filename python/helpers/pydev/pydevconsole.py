@@ -89,8 +89,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread):
-        BaseInterpreterInterface.__init__(self, mainThread)
+    def __init__(self, host, client_port, mainThread, handshake_event=None):
+        BaseInterpreterInterface.__init__(self, mainThread, handshake_event)
         self.client_port = client_port
         self.host = host
         self.namespace = {}
@@ -252,10 +252,6 @@ def do_exit(*args):
             os._exit(0)
 
 
-def handshake():
-    return "PyCharm"
-
-
 #=======================================================================================================================
 # start_console_server
 #=======================================================================================================================
@@ -289,7 +285,7 @@ def start_console_server(host, port, interpreter):
     server.register_function(interpreter.getDescription)
     server.register_function(interpreter.close)
     server.register_function(interpreter.interrupt)
-    server.register_function(handshake)
+    server.register_function(interpreter.handshake)
     server.register_function(interpreter.connectToDebugger)
     server.register_function(interpreter.hello)
     server.register_function(interpreter.getArray)
