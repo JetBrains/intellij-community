@@ -400,29 +400,31 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
     final Set<VirtualFile> refreshFiles = new HashSet<>();
     try {
-      synchronized (myDataLock) {
-        final IgnoredFilesCompositeHolder fileHolder = myComposite.getIgnoredFileHolder();
+      ReadAction.run(() -> {
+        synchronized (myDataLock) {
+          final IgnoredFilesCompositeHolder fileHolder = myComposite.getIgnoredFileHolder();
 
-        for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
-          final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope)iterator.next();
-          final VcsDirtyScopeModifier modifier = scope.getModifier();
-          if (modifier == null) continue;
+          for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
+            final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope)iterator.next();
+            final VcsDirtyScopeModifier modifier = scope.getModifier();
+            if (modifier == null) continue;
 
-          fileHolder.notifyVcsStarted(scope.getVcs());
+            fileHolder.notifyVcsStarted(scope.getVcs());
 
-          filterOutIgnoredFiles(modifier.getDirtyFilesIterator(), fileHolder, refreshFiles);
+            filterOutIgnoredFiles(modifier.getDirtyFilesIterator(), fileHolder, refreshFiles);
 
-          for (VirtualFile root : modifier.getAffectedVcsRoots()) {
-            filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(root), fileHolder, refreshFiles);
-          }
+            for (VirtualFile root : modifier.getAffectedVcsRoots()) {
+              filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(root), fileHolder, refreshFiles);
+            }
 
-          modifier.recheckDirtyKeys();
+            modifier.recheckDirtyKeys();
 
-          if (scope.isEmpty()) {
-            iterator.remove();
+            if (scope.isEmpty()) {
+              iterator.remove();
+            }
           }
         }
-      }
+      });
     }
     catch (ProcessCanceledException ignore) {
     }
@@ -735,9 +737,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public List<LocalChangeList> getChangeLists() {
-    synchronized (myDataLock) {
-      return getChangeListsCopy();
-    }
+    return getChangeListsCopy();
   }
 
   @NotNull
@@ -766,17 +766,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @NotNull
   public List<VirtualFile> getUnversionedFiles() {
-    synchronized (myDataLock) {
-      return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+      }
+    });
   }
 
   @NotNull
   @Override
   public List<VirtualFile> getModifiedWithoutEditing() {
-    synchronized (myDataLock) {
-      return myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).getFiles();
+      }
+    });
   }
 
   /**
@@ -784,58 +788,76 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    */
   @NotNull
   public List<VirtualFile> getIgnoredFiles() {
-    synchronized (myDataLock) {
-      return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return new ArrayList<>(myComposite.getIgnoredFileHolder().values());
+      }
+    });
   }
 
   boolean isIgnoredInUpdateMode() {
-    synchronized (myDataLock) {
-      return myComposite.getIgnoredFileHolder().isInUpdatingMode();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getIgnoredFileHolder().isInUpdatingMode();
+      }
+    });
   }
 
   public List<VirtualFile> getLockedFolders() {
-    synchronized (myDataLock) {
-      return myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getVFHolder(FileHolder.HolderType.LOCKED).getFiles();
+      }
+    });
   }
 
   Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
-    synchronized (myDataLock) {
-      return new HashMap<>(myComposite.getLogicallyLockedFileHolder().getMap());
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return new HashMap<>(myComposite.getLogicallyLockedFileHolder().getMap());
+      }
+    });
   }
 
   public boolean isLogicallyLocked(final VirtualFile file) {
-    synchronized (myDataLock) {
-      return myComposite.getLogicallyLockedFileHolder().containsKey(file);
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getLogicallyLockedFileHolder().containsKey(file);
+      }
+    });
   }
 
   public boolean isContainedInLocallyDeleted(final FilePath filePath) {
-    synchronized (myDataLock) {
-      return myComposite.getDeletedFileHolder().isContainedInLocallyDeleted(filePath);
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getDeletedFileHolder().isContainedInLocallyDeleted(filePath);
+      }
+    });
   }
 
   public List<LocallyDeletedChange> getDeletedFiles() {
-    synchronized (myDataLock) {
-      return myComposite.getDeletedFileHolder().getFiles();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getDeletedFileHolder().getFiles();
+      }
+    });
   }
 
   MultiMap<String, VirtualFile> getSwitchedFilesMap() {
-    synchronized (myDataLock) {
-      return myComposite.getSwitchedFileHolder().getBranchToFileMap();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getSwitchedFileHolder().getBranchToFileMap();
+      }
+    });
   }
 
   @Nullable
   Map<VirtualFile, String> getSwitchedRoots() {
-    synchronized (myDataLock) {
-      return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
+      }
+    });
   }
 
   public VcsException getUpdateException() {
@@ -986,28 +1008,32 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean isUnversioned(VirtualFile file) {
-    synchronized (myDataLock) {
-      return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file);
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file);
+      }
+    });
   }
 
   @Override
   @NotNull
   public FileStatus getStatus(@NotNull VirtualFile file) {
-    synchronized (myDataLock) {
-      if (myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file)) return FileStatus.UNKNOWN;
-      if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
-      if (myComposite.getIgnoredFileHolder().containsFile(file)) return FileStatus.IGNORED;
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        if (myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file)) return FileStatus.UNKNOWN;
+        if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
+        if (myComposite.getIgnoredFileHolder().containsFile(file)) return FileStatus.IGNORED;
 
-      final FileStatus status = ObjectUtils.notNull(myWorker.getStatus(file), FileStatus.NOT_CHANGED);
+        final FileStatus status = ObjectUtils.notNull(myWorker.getStatus(file), FileStatus.NOT_CHANGED);
 
-      if (FileStatus.NOT_CHANGED.equals(status)) {
-        boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
-        if (switched) return FileStatus.SWITCHED;
+        if (FileStatus.NOT_CHANGED.equals(status)) {
+          boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
+          if (switched) return FileStatus.SWITCHED;
+        }
+
+        return status;
       }
-
-      return status;
-    }
+    });
   }
 
   @Override
@@ -1300,12 +1326,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void scheduleUnversionedUpdate() {
-    Collection<VirtualFile> unversioned;
-    Collection<VirtualFile> ignored;
-    synchronized (myDataLock) {
-      unversioned = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
-      ignored = myComposite.getIgnoredFileHolder().values();
-    }
+    Couple<Collection<VirtualFile>> couple = ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        Collection<VirtualFile> unversioned = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+        Collection<VirtualFile> ignored = myComposite.getIgnoredFileHolder().values();
+        return Couple.of(unversioned, ignored);
+      }
+    });
+
+    Collection<VirtualFile> unversioned = couple.first;
+    Collection<VirtualFile> ignored = couple.second;
 
     VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
@@ -1377,9 +1407,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @Nullable
   public String getSwitchedBranch(@NotNull VirtualFile file) {
-    synchronized (myDataLock) {
-      return myComposite.getSwitchedFileHolder().getBranchForFile(file);
-    }
+    return ReadAction.compute(() -> {
+      synchronized (myDataLock) {
+        return myComposite.getSwitchedFileHolder().getBranchForFile(file);
+      }
+    });
   }
 
   @NotNull
