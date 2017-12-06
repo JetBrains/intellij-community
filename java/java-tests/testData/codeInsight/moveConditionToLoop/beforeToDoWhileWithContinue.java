@@ -2,9 +2,9 @@
 class Main {
   public static void main(String[] args) {
     int i = 0;
-    while(true) {
+    while<caret>((true) {
       i++;
-      if<caret>(i == 4) continue;
+      ifi == 4) continue;
       if(i >= 12) break;
     }
   }

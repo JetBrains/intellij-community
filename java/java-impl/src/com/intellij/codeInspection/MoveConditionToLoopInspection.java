@@ -50,9 +50,10 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       }
 
       private void visitLoop(@NotNull PsiLoopStatement loopStatement) {
+        PsiElement keyword = getKeyword(loopStatement);
+        if(keyword == null) return;
         Context context = Context.from(loopStatement, noConversionToDoWhile);
         if (context == null) return;
-        PsiElement highlightElement = context.myConditionStatement.getChildren()[0];
         LocalQuickFix[] fixes;
         if (context.myConditionInTheBeginning) {
           fixes = new LocalQuickFix[]{new LoopTransformationFix()};
@@ -65,24 +66,17 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
                                        true);
           fixes = new LocalQuickFix[]{new LoopTransformationFix(), setInspectionOptionFix};
         }
-        holder.registerProblem(highlightElement, InspectionsBundle.message("inspection.move.condition.to.loop.description"), fixes);
+        holder.registerProblem(keyword, InspectionsBundle.message("inspection.move.condition.to.loop.description"), fixes);
       }
     };
   }
 
   @Nullable
-  private static PsiLoopStatement getEnclosingLoop(@NotNull PsiStatement statement) {
-    PsiElement parent = statement.getParent();
-    PsiElement probablyLoop;
-    if (parent instanceof PsiCodeBlock) {
-      PsiElement grandParent = parent.getParent();
-      if (grandParent == null) return null;
-      probablyLoop = grandParent.getParent();
+  private static PsiElement getKeyword(@NotNull PsiLoopStatement loopStatement) {
+    if(loopStatement instanceof PsiWhileStatement || loopStatement instanceof PsiForStatement) {
+      return loopStatement.getFirstChild();
     }
-    else {
-      probablyLoop = parent;
-    }
-    return tryCast(probablyLoop, PsiLoopStatement.class);
+    return ((PsiDoWhileStatement)loopStatement).getWhileKeyword();
   }
 
   private static class Context {
@@ -162,9 +156,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class);
-      if (ifStatement == null) return;
-      PsiLoopStatement loop = getEnclosingLoop(ifStatement);
+      PsiLoopStatement loop = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLoopStatement.class);
       if (loop == null) return;
       Context context = Context.from(loop, false);
       if (context == null) return;
