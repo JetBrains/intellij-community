@@ -178,12 +178,13 @@ class CodeFragment:
 # BaseInterpreterInterface
 # =======================================================================================================================
 class BaseInterpreterInterface:
-    def __init__(self, mainThread):
+    def __init__(self, mainThread, handshake_event=None):
         self.mainThread = mainThread
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
         self.banner_shown = False
+        self.handshake_event = handshake_event
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
@@ -588,6 +589,11 @@ class BaseInterpreterInterface:
         self.exec_queue.put(do_connect_to_debugger)
 
         return ('connect complete',)
+
+    def handshake(self):
+        if self.handshake_event is not None:
+            self.handshake_event.set()
+        return "PyCharm"
 
     def hello(self, input_str):
         # Don't care what the input string is
