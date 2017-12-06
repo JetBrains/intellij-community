@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LineExtensionInfo
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -38,7 +39,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   private val editorArea: EditorTextField
   private val document: Document
     get() = editorArea.document
-  private val modules = ModuleManager.getInstance(project).modules
+  private lateinit var modules : List<Module>
 
   init {
     title = ProjectBundle.message("convert.module.groups.dialog.title")
@@ -57,7 +58,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
-    editorArea.text = generateInitialText()
+    importMapping(emptyMap())
     init()
   }
 
@@ -96,16 +97,13 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     return listOf(name, group)
   }
 
-  private fun generateInitialText(): String {
-    val moduleManager = ModuleManager.getInstance(project)
-    return modules.joinToString("\n") {
-      (moduleManager.getModuleGroupPath(it)?.let { it.joinToString(".") + "." } ?: "") + it.name
-    }
-  }
-
   fun importMapping(mapping: Map<String, String>) {
+    val moduleManager = ModuleManager.getInstance(project)
+    fun getDefaultName(module: Module) = (moduleManager.getModuleGroupPath(module)?.let { it.joinToString(".") + "." } ?: "") + module.name
+    val names = moduleManager.modules.associateBy({ it }, { mapping.getOrElse(it.name, {getDefaultName(it)}) })
+    modules = moduleManager.modules.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, {names[it]!!}))
     runWriteAction {
-      document.setText(modules.joinToString("\n") { mapping.getOrDefault(it.name, it.name) })
+      document.setText(modules.joinToString("\n") { names[it]!! })
     }
   }
 
