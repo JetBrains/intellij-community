@@ -49,12 +49,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     if (showLongEdges) {
       myLongEdgeSize = VERY_LONG_EDGE_SIZE
       myVisiblePartSize = VERY_LONG_EDGE_PART_SIZE
-      myEdgeWithArrowSize = if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES) {
-        LONG_EDGE_SIZE
-      }
-      else {
-        Integer.MAX_VALUE
-      }
+      myEdgeWithArrowSize = LONG_EDGE_SIZE
     }
     else {
       myLongEdgeSize = LONG_EDGE_SIZE
@@ -314,7 +309,6 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     private val LONG_EDGE_PART_SIZE = 1
 
     private val CACHE_SIZE = 100
-    private val SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true
     private val SAMPLE_SIZE = 20000
     private val K = 0.1
   }
