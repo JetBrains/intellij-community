@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 06.10.11
  */
 public class MemberChangeTest extends IncrementalTestCase {
   public MemberChangeTest() {

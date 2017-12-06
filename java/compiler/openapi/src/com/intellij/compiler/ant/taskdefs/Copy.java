@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 23, 2004
  */
 public class Copy extends Tag {
   public Copy(@NonNls String toDir) {

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl.view;
 
@@ -325,11 +313,10 @@ class EditorCoordinateMapper {
         lastColumn++;
       }
     }
-    int plainSpaceWidth = myView.getPlainSpaceWidth();
-    int remainingShift = (int)(px - x);
-    int additionalColumns = remainingShift <= 0 ? 0 : (remainingShift + plainSpaceWidth / 2) / plainSpaceWidth;
-    return new VisualPosition(visualLine, lastColumn + additionalColumns, 
-                              remainingShift > 0 && additionalColumns == (remainingShift - 1) / plainSpaceWidth);
+    float plainSpaceWidth = myView.getPlainSpaceWidth();
+    float remainingShift = px - x;
+    int additionalColumns = remainingShift <= 0 ? 0 : Math.round(remainingShift / plainSpaceWidth);
+    return new VisualPosition(visualLine, lastColumn + additionalColumns, remainingShift > additionalColumns * plainSpaceWidth);
   }
 
   @NotNull
@@ -360,7 +347,7 @@ class EditorCoordinateMapper {
         x += myView.getEditor().getSoftWrapModel().getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
       }
     }
-    int additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
+    float additionalShift = column <= lastColumn ? 0 : (column - lastColumn) * myView.getPlainSpaceWidth();
     return new Point2D.Double(x + additionalShift, y);
   }
 

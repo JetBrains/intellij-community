@@ -1,10 +1,24 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.siyeh.ig.bugs;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class StringConcatenationMissingWhitespaceInspectionTest extends IGInspectionTestCase {
+/**
+ * @author Bas Leijdekkers
+ */
+public class StringConcatenationMissingWhitespaceInspectionTest extends LightInspectionTestCase {
 
-  public void test() {
-    doTest("com/siyeh/igtest/bugs/string_concatenation_missing_whitespace", new StringConcatenationMissingWhitespaceInspection());
+  public void testConcatenations() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new StringConcatenationMissingWhitespaceInspection();
   }
 }

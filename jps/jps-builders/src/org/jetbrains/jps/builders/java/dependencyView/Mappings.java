@@ -40,7 +40,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author: db
- * Date: 28.01.11
  */
 public class Mappings {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");

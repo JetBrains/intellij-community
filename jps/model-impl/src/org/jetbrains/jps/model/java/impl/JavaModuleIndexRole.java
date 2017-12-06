@@ -9,7 +9,6 @@ import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 11-Oct-17
  */
 public class JavaModuleIndexRole extends JpsElementChildRoleBase<JavaModuleIndex> implements JpsElementParameterizedCreator<JavaModuleIndex, JpsCompilerExcludes>{
   public static final JavaModuleIndexRole INSTANCE = new JavaModuleIndexRole();

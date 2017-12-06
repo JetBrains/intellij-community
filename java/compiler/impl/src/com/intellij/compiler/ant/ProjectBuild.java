@@ -27,7 +27,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 24, 2004
  */
 public abstract class ProjectBuild extends Generator {
   protected final Project myProject;

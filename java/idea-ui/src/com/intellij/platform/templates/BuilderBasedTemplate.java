@@ -25,7 +25,6 @@ import javax.swing.*;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 11/9/12
 */
 public class BuilderBasedTemplate implements ProjectTemplate {
   private final ModuleBuilder myBuilder;

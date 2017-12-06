@@ -339,7 +339,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
 
   private static String augmentUrl(String url) {
     try {
-      return new URIBuilder(url).addParameter("fromIDE", "").build().toString();
+      ApplicationInfo info = ApplicationInfo.getInstance();
+      String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
+      return new URIBuilder(url).addParameter("utm_source", "product")
+                                .addParameter("utm_medium", "link")
+                                .addParameter("utm_campaign", info.getBuild().getProductCode())
+                                .addParameter("utm_content", productVersion)
+                                .build().toString();
     }
     catch (URISyntaxException e) {
       Logger.getInstance(UpdateInfoDialog.class).warn(url, e);

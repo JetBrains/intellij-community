@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 06-Jun-17
  */
 class ExecuteJShellAction extends AnAction{
   private static final AnAction ourInstance = new ExecuteJShellAction();

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Parameter renaming.
 * User: dcheryasov
-* Date: Nov 30, 2008 6:10:13 AM
 */
 public class RenameParameterQuickFix implements LocalQuickFix {
   private final String myNewName;

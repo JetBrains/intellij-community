@@ -653,8 +653,10 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
           final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
           if (presentation.getToolNode() == null) {
+            presentation.updateContent();
             addTool(wrapper, HighlightDisplayLevel.find(presentation.getSeverity((RefElement)refElement)),
                     uiOptions.GROUP_BY_SEVERITY, isSingleInspectionRun());
+            return;
           }
           final InspectionNode toolNode = presentation.getToolNode();
           LOG.assertTrue(toolNode != null);

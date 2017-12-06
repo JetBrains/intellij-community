@@ -31,7 +31,6 @@ import java.util.Arrays;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 12/5/12
  */
 public abstract class DependentSdkType extends SdkType {
 

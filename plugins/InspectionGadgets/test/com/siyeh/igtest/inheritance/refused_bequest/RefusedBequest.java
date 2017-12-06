@@ -47,3 +47,12 @@ class Deny extends ArrayList {
     throw new UnsupportedOperationException();
   }
 }
+interface Black {
+  void in();
+}
+class Back implements Black {
+  @Override
+  public void in() {
+    System.out.println("tumulteous");
+  }
+}

@@ -425,7 +425,9 @@ public class GitImpl extends GitImplBase {
       h.setSilent(false);
       h.setStdoutSuppressed(false);
       addListeners(h, listeners);
-      h.addProgressParameter();
+      if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(GitVcs.getInstance(repository.getProject()).getVersion())) {
+        h.addParameters("--progress");
+      }
       h.addParameters("--porcelain");
       h.addParameters(remoteName);
       h.addParameters(spec);
@@ -495,8 +497,11 @@ public class GitImpl extends GitImplBase {
       h.setUrls(remote.getUrls());
       h.addParameters(remote.getName());
       h.addParameters(params);
-      h.addProgressParameter();
-      if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(GitVcs.getInstance(repository.getProject()).getVersion())) {
+      GitVcs gitVcs = GitVcs.getInstance(repository.getProject());
+      if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(gitVcs.getVersion())) {
+        h.addParameters("--progress");
+      }
+      if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(gitVcs.getVersion())) {
         h.addParameters("--prune");
       }
       addListeners(h, listeners);

@@ -22,7 +22,6 @@ import java.lang.reflect.Field;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Apr 12, 2005
  */
 public class TextComponentBinding extends FieldDataBinding{
   private final JTextComponent myTextComponent;

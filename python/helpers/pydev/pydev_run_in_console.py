@@ -67,7 +67,8 @@ if __name__ == '__main__':
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    interpreter = InterpreterInterface(host, int(client_port), threading.currentThread())
+    handshake_event = threading.Event()
+    interpreter = InterpreterInterface(host, int(client_port), threading.currentThread(), handshake_event=handshake_event)
 
     server_thread = threading.Thread(target=start_console_server,
                                      name='ServerThread',
@@ -78,6 +79,8 @@ if __name__ == '__main__':
     sys.stdin = StdIn(interpreter, host, client_port, sys.stdin)
 
     init_mpl_in_console(interpreter)
+
+    handshake_event.wait(5)
 
     globals = run_file(file, None, None)
 

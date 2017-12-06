@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 30, 2004
  */
 public final class SimpleStackFrameContext implements StackFrameContext{
   private final StackFrameProxy myProxy;

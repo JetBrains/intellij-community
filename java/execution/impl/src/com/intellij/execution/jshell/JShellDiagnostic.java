@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 04-Jul-17
  */
 public class JShellDiagnostic {
   private static final String NOTIFICATION_GROUP = "JSHELL_NOTIFICATIONS";

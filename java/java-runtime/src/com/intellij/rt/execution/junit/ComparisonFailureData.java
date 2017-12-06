@@ -88,8 +88,7 @@ public class ComparisonFailureData {
     final int failureIdx = failureMessage != null ? trace.indexOf(failureMessage) : -1;
     final int failureMessageLength = failureMessage != null ? failureMessage.length() : 0;
     String details = failureIdx > -1 ? trace.substring(failureIdx + failureMessageLength) : trace;
-    attrs.put("details", details);
- 
+
     if (notification != null) {
       final int expectedIdx = trace.indexOf(expectedPrefix);
       final String comparisonFailureMessage;
@@ -140,6 +139,7 @@ public class ComparisonFailureData {
       attrs.put("message", failureIdx > -1 ? trace.substring(0, failureIdx + failureMessageLength)
                                            : failureMessage != null ? failureMessage : "");
     }
+    attrs.put("details", details);
   }
 
   private static void writeDiffSide(Map attrs, final String expectedOrActualPrefix, final String text, int fullLength) {

@@ -112,7 +112,7 @@ public class AccessToStaticFieldLockedOnInstanceInspectionBase extends BaseInspe
       if (!isLockedOnInstance || isLockedOnClass) {
         return;
       }
-      registerError(expression);
+      registerError(expression, expression);
     }
   }
 }

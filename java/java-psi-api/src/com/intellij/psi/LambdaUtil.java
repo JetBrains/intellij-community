@@ -12,6 +12,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -848,8 +850,66 @@ public class LambdaUtil {
            ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);
   }
 
+  private static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda,
+                                                 @NotNull Function<PsiLambdaExpression, PsiExpression> replacer) {
+    PsiElement body = lambda.getBody();
+    if (body == null) return false;
+    final PsiCall call = treeWalkUp(body);
+    PsiMethod oldTarget;
+    if (call != null && (oldTarget = call.resolveMethod()) != null) {
+      Object marker = new Object();
+      PsiTreeUtil.mark(lambda, marker);
+      PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
+      PsiCall copyCall = copyTopLevelCall(call);
+      if (copyCall == null) return false;
+      PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
+      if (lambdaCopy == null) return false;
+      PsiExpression function = replacer.apply(lambdaCopy);
+      if (function == null) return false;
+      if (copyCall.resolveMethod() != oldTarget) return false;
+      if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
+        return false;
+      }
+      PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
+      if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
+          ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
-   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else.
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
+   *
+   * @param lambda              a lambda whose body is going to be replaced
+   * @param newFunctionSupplier replacement for lambda to check,
+   *                            lazy computed for lambdas in invocation context only.
+   *                            Replacement evaluated to {@code null} is treated as invalid overload
+   */
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiExpression> newFunctionSupplier) {
+    return isSafeLambdaReplacement(lambda, l -> {
+      PsiExpression replacement = newFunctionSupplier.get();
+      return replacement == null ? null : (PsiExpression)l.replace(replacement);
+    });
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
+   *
+   * @param lambda          a lambda whose body is going to be replaced
+   * @param replacementText a text of new expression to replace lambda
+   */
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull String replacementText) {
+    return isSafeLambdaReplacement(lambda, () -> JavaPsiFacade.getElementFactory(lambda.getProject())
+      .createExpressionFromText(replacementText, lambda.getParent()));
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
    *
    * <p>
    * True will be returned for lambdas in non-invocation context as well as for lambdas in invocation context,
@@ -866,44 +926,28 @@ public class LambdaUtil {
    *                        lazy computed for lambdas in invocation context only.
    *                        Replacement evaluated to {@code null} is treated as invalid overload
    */
-  public static boolean isSameOverloadAfterReplacement(PsiLambdaExpression lambda, Supplier<PsiElement> newBodySupplier) {
-    PsiElement body = lambda.getBody();
-    if (body == null) return false;
-    final PsiCall call = treeWalkUp(body);
-    PsiMethod oldTarget;
-    if (call != null && (oldTarget = call.resolveMethod()) != null) {
-      Object marker = new Object();
-      PsiTreeUtil.mark(body, marker);
-      PsiCall copyCall = copyTopLevelCall(call);
-      if (copyCall == null) return false;
-      final PsiElement bodyCopy = PsiTreeUtil.releaseMark(copyCall, marker);
-      if (bodyCopy != null) {
-        final PsiElement parent = bodyCopy.getParent();
-        if (parent instanceof PsiLambdaExpression) {
-          PsiElement replacement = newBodySupplier.get();
-          if (replacement == null) {
-            return false;
-          }
-          bodyCopy.replace(replacement);
-          if (copyCall.resolveMethod() != oldTarget || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
-            return false;
-          }
-        }
-      }
-    }
-    return true;
+  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiElement> newBodySupplier) {
+    return isSafeLambdaReplacement(lambda, l -> {
+      PsiElement oldBody = l.getBody();
+      PsiElement newBody = newBodySupplier.get();
+      if (oldBody == null || newBody == null) return null;
+      oldBody.replace(newBody);
+      return l;
+    });
   }
 
   /**
-   * {@link #isSameOverloadAfterReplacement(PsiLambdaExpression, Supplier)} overload to test the same lambda body,
+   * {@link #isSafeLambdaBodyReplacement(PsiLambdaExpression, Supplier)} overload to test the same lambda body,
    * but with only return value {@code expression} changed to {@code replacement}
+   * @param lambdaReturnExpression a return expression inside lambda body
+   * @param replacement a replacement for return expression
    */
-  public static boolean isSameOverloadAfterReplacement(@NotNull PsiExpression lambdaReturnExpression,
-                                                       @NotNull PsiExpression replacement) {
+  public static boolean isSafeLambdaReturnValueReplacement(@NotNull PsiExpression lambdaReturnExpression,
+                                                           @NotNull PsiExpression replacement) {
     if (lambdaReturnExpression.getParent() instanceof PsiReturnStatement || lambdaReturnExpression.getParent() instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(lambdaReturnExpression, PsiLambdaExpression.class, true, PsiMethod.class);
       if (lambdaExpression != null &&
-          !isSameOverloadAfterReplacement(lambdaExpression, () -> {
+          !isSafeLambdaBodyReplacement(lambdaExpression, () -> {
             PsiLambdaExpression lambdaExpression1 = PsiTreeUtil.getParentOfType(lambdaReturnExpression, PsiLambdaExpression.class);
             if (lambdaExpression1 == null) return null;
             PsiElement body = lambdaExpression1.getBody();

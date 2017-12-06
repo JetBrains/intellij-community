@@ -24,7 +24,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 14, 2005
  */
 public abstract class JavacParserAction extends ParserAction {
   private final Matcher myMatcher;

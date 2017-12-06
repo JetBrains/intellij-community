@@ -36,7 +36,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2007
  */
 public final class AntRenameHandler extends PsiElementRenameHandler {
   

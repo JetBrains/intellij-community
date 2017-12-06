@@ -28,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;

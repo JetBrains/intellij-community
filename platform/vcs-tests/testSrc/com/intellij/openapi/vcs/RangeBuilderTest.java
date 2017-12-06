@@ -143,7 +143,7 @@ public class RangeBuilderTest extends LightPlatformTestCase {
   private static void doTest(CharSequence upToDateContent, CharSequence currentContent, Range[] expected) throws FilesTooBigForDiffException {
     List<Range> result = RangesBuilder.createRanges(EditorFactory.getInstance().createDocument(currentContent),
                                                     EditorFactory.getInstance().createDocument(upToDateContent));
-    assertEquals(Arrays.asList(expected), result);
+    BaseLineStatusTrackerTestCase.assertEqualRanges(Arrays.asList(expected), result);
   }
 
   private static String createContentOn(String[] content) {

@@ -23,7 +23,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/10/12
  */
 public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
 

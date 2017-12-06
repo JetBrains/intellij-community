@@ -80,12 +80,7 @@ public class HelpManagerImpl extends HelpManager {
 
     if (broker == null) {
       ApplicationInfoEx info = ApplicationInfoEx.getInstanceEx();
-      String minorVersion = info.getMinorVersion();
-      int dot = minorVersion.indexOf('.');
-      if (dot != -1) {
-        minorVersion = minorVersion.substring(0, dot);
-      }
-      String productVersion = info.getMajorVersion() + "." + minorVersion;
+      String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
 
       String url = info.getWebHelpUrl();
       if (!url.endsWith("/")) url += "/";

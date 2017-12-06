@@ -26,7 +26,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 29, 2005
  */
 public class ActionsBundle {
 

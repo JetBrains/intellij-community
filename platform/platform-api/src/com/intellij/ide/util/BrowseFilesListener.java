@@ -34,7 +34,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 28, 2003
  */
 public class BrowseFilesListener implements ActionListener {
   public static final FileChooserDescriptor SINGLE_DIRECTORY_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFolderDescriptor();

@@ -49,12 +49,23 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command, List<String> configParameters) {
+  protected GitTextHandler(@NotNull Project project,
+                           @NotNull VirtualFile vcsRoot,
+                           @NotNull GitCommand command,
+                           List<String> configParameters) {
     super(project, vcsRoot, command, configParameters);
+  }
+
+  public GitTextHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull String pathToExecutable,
+                        @NotNull GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, directory, pathToExecutable, command, configParameters);
   }
 
   @Nullable
@@ -84,7 +95,6 @@ public abstract class GitTextHandler extends GitHandler {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
-          cleanupEnv();
           GitTextHandler.this.processTerminated(exitCode);
         }
         finally {

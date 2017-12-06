@@ -47,7 +47,6 @@
         <include name="jna.jar"/>
         <include name="jna-platform.jar"/>
         <include name="snappy-in-java-*.jar"/>
-        <include name="nanoxml-*.jar"/>
         <include name="aether-*-all.jar"/>
         <include name="maven-aether-provider-*-all.jar"/>
         <include name="httpclient-*.jar"/>

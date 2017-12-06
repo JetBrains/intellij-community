@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 02-Oct-17
  */
 class DifferenceImpl extends Difference{
 

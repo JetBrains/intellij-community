@@ -236,6 +236,28 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  @Test
+  public void testExceptionAndLog() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyNoseTestProcessRunner createProcessRunner() {
+        return new PyNoseTestProcessRunner("exception_and_log.py", 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyNoseTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(0, runner.getPassedTestsCount());
+        assertEquals(1, runner.getFailedTestsCount());
+      }
+    });
+  }
+
   private static class SlowRunnerTask extends PyProcessWithConsoleTestTask<PyNoseTestProcessRunner> {
     @NotNull
     private final String myArguments;

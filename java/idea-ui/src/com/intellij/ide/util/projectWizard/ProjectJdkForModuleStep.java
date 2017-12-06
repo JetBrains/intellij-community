@@ -45,7 +45,6 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 21, 2004
  */
 public class ProjectJdkForModuleStep extends ModuleWizardStep {
   private final JdkChooserPanel myJdkChooser;

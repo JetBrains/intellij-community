@@ -173,15 +173,20 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     assert exeOptions != null;
     exeOptions.addParametersString(myConfig.getInterpreterOptions());
 
-    if (myConfig.isModuleMode()) {
-      exeOptions.addParameter("-m");
-    }
-
     ParamsGroup scriptParameters = parametersList.getParamsGroup(GROUP_SCRIPT);
     assert scriptParameters != null;
 
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      scriptParameters.addParameter(myConfig.getScriptName());
+    if (myConfig.isModuleMode()) {
+      ParamsGroup moduleParameters = parametersList.getParamsGroup(GROUP_MODULE);
+      assert moduleParameters != null;
+
+      moduleParameters.addParameter("-m");
+      moduleParameters.addParameters(myConfig.getScriptName());
+    }
+    else {
+      if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
+        scriptParameters.addParameter(myConfig.getScriptName());
+      }
     }
 
     final String scriptOptionsString = myConfig.getScriptParameters();

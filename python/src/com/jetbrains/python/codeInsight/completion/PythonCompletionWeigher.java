@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * Weighs down items starting with two underscores.
  * <br/>
  * User: dcheryasov
- * Date: 11/11/10 4:24 PM
  */
 public class PythonCompletionWeigher extends CompletionWeigher {
 

@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author anna
- * Date: 19-Apr-2008
  */
 public class ClassTypeArgumentMigrationProcessor {
   private static final Logger LOG = Logger.getInstance(ClassTypeArgumentMigrationProcessor.class);

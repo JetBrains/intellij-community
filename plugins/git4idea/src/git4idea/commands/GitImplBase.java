@@ -2,14 +2,27 @@
 package git4idea.commands;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import git4idea.GitVcs;
+import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Consumer;
+
+import static git4idea.commands.GitCommand.LockingPolicy.WRITE;
 
 /**
  * Basic functionality for git handler execution.
@@ -62,7 +75,7 @@ abstract class GitImplBase implements Git {
     @NotNull OutputCollector outputCollector;
     @NotNull GitCommandResultListener resultListener;
 
-    boolean authFailed;
+    Ref<Boolean> authFailedRef = Ref.create(false);
     int authAttempt = 0;
     do {
       handler = handlerConstructor.compute();
@@ -72,10 +85,17 @@ abstract class GitImplBase implements Git {
 
       handler.addLineListener(resultListener);
 
-      handler.runInCurrentThread(null);
-      authFailed = handler.hasHttpAuthFailed();
+      try (AccessToken locking = lock(handler);
+           AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
+        writeOutputToConsole(handler);
+
+        handler.runInCurrentThread();
+      }
+      catch (IOException e) {
+        resultListener.startFailed(e);
+      }
     }
-    while (authFailed && authAttempt++ < 2);
+    while (authFailedRef.get() && authAttempt++ < 2);
     return new GitCommandResult(
       !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
       resultListener.myExitCode,
@@ -136,6 +156,63 @@ abstract class GitImplBase implements Git {
     abstract void errorLineReceived(@NotNull String line);
   }
 
+  private static void writeOutputToConsole(@NotNull GitLineHandler handler) {
+    Project project = handler.project();
+    if (project != null && !project.isDefault()) {
+      GitVcsConsoleWriter vcsConsoleWriter = GitVcsConsoleWriter.getInstance(project);
+      handler.addLineListener(new GitLineHandlerAdapter() {
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          if (!handler.isSilent() && !StringUtil.isEmptyOrSpaces(line)) {
+            if (outputType == ProcessOutputTypes.STDOUT && !handler.isStdoutSuppressed()) {
+              vcsConsoleWriter.showMessage(line);
+            }
+            else if (outputType == ProcessOutputTypes.STDERR && !handler.isStderrSuppressed()) {
+              vcsConsoleWriter.showErrorMessage(line);
+            }
+          }
+        }
+      });
+      if (!handler.isSilent()) {
+        vcsConsoleWriter.showCommandLine("[" + stringifyWorkingDir(project.getBasePath(), handler.getWorkingDirectory()) + "] "
+                                         + handler.printableCommandLine());
+      }
+    }
+  }
+
+  @NotNull
+  private static AccessToken lock(@NotNull GitLineHandler handler) {
+    Project project = handler.project();
+    if (project != null && !project.isDefault() && WRITE == handler.getCommand().lockingPolicy()) {
+      ReadWriteLock executionLock = GitVcs.getInstance(project).getCommandLock();
+      executionLock.writeLock().lock();
+      return new AccessToken() {
+        @Override
+        public void finish() {
+          executionLock.writeLock().unlock();
+        }
+      };
+    }
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
+
+  @NotNull
+  private static AccessToken remoteAuth(@NotNull GitLineHandler handler, @NotNull Consumer<Boolean> authResultConsumer) throws IOException {
+    Project project = handler.project();
+    if (project != null && handler.isRemote()) {
+      GitHandlerAuthenticationManager authManager = GitHandlerAuthenticationManager.prepare(project, handler);
+      return new AccessToken() {
+        @Override
+        public void finish() {
+          authResultConsumer.accept(authManager.isHttpAuthFailed());
+          authManager.cleanup();
+        }
+      };
+    }
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
+
+
   private static boolean looksLikeError(@NotNull final String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));
   }
@@ -155,4 +232,18 @@ abstract class GitImplBase implements Git {
     "unable",
     "runnerw:"
   };
+
+  @NotNull
+  static String stringifyWorkingDir(@Nullable String basePath, @NotNull File workingDir) {
+    if (basePath != null) {
+      String relPath = FileUtil.getRelativePath(basePath, FileUtil.toSystemIndependentName(workingDir.getPath()), '/');
+      if (".".equals(relPath)) {
+        return workingDir.getName();
+      }
+      else if (relPath != null) {
+        return FileUtil.toSystemDependentName(relPath);
+      }
+    }
+    return workingDir.getPath();
+  }
 }

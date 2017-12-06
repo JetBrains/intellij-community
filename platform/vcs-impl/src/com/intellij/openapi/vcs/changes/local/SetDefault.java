@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class SetDefault implements ChangeListCommand {
   private final String myNewDefaultName;
 
-  private String myPrevious;
+  private boolean myResult;
   private LocalChangeList myOldDefaultListCopy;
   private LocalChangeList myNewDefaultListCopy;
 
@@ -36,24 +36,19 @@ public class SetDefault implements ChangeListCommand {
     LocalChangeList list = worker.getChangeListByName(myNewDefaultName);
     if (list == null || list.isDefault()) {
       myOldDefaultListCopy = null;
-      myPrevious = null;
+      myResult = false;
       myNewDefaultListCopy = null;
       return;
     }
 
-    myOldDefaultListCopy = worker.getDefaultList().copy();
-    myPrevious = worker.setDefault(myNewDefaultName);
-    myNewDefaultListCopy = worker.getDefaultList().copy();
+    myOldDefaultListCopy = worker.getDefaultList();
+    myResult = worker.setDefaultList(myNewDefaultName);
+    myNewDefaultListCopy = worker.getDefaultList();
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    if (myPrevious != null) {
+    if (myResult) {
       dispatcher.getMulticaster().defaultListChanged(myOldDefaultListCopy, myNewDefaultListCopy);
     }
-  }
-
-  @Nullable
-  public String getPrevious() {
-    return myPrevious;
   }
 }

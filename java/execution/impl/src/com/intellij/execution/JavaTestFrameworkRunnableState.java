@@ -382,7 +382,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
             final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
             return Arrays.stream(directories)
                      .map(dir -> ModuleUtilCore.findModuleForFile(dir.getVirtualFile(), project))
-                     .filter(Objects::isNull)
+                     .filter(Objects::nonNull)
                      .distinct()
                      .count() > 1;
           }

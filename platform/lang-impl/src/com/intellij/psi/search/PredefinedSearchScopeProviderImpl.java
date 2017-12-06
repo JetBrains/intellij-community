@@ -99,7 +99,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       }
 
       if (dataContextElement != null) {
-        if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.
+        if (!PlatformUtils.isCidr() && !PlatformUtils.isRider()) { // TODO: have an API to disable module scopes.
           Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);

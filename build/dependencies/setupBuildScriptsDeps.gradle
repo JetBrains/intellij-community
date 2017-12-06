@@ -31,6 +31,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("commons-codec")
   buildScriptsDeps loadLibraryMavenId("commons-logging")
   buildScriptsDeps loadLibraryMavenId("Trove4j")
+  buildScriptsDeps loadLibraryMavenId("NanoXML")
 }
 
 /**

@@ -36,7 +36,6 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  * @author evgeny.zakrevsky
- *         Date: 9/21/12
  */
 public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepository> {
   private ComboBox myProjectCombobox;

@@ -33,7 +33,6 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/18/12
  */
 public class ProblemsViewImpl extends ProblemsView{
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";

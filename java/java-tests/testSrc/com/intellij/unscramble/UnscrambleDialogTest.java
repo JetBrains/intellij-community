@@ -26,7 +26,6 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/9/12
  */
 public class UnscrambleDialogTest extends JavaCodeInsightFixtureTestCase {
   private RunContentDescriptor myContent;

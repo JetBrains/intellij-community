@@ -28,7 +28,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/11/13
  */
 public class CompilerSettingsUsageCollector extends AbstractProjectsUsagesCollector {
   public static final String GROUP_ID = "compiler";

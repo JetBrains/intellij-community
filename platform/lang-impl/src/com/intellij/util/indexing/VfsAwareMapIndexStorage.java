@@ -41,7 +41,6 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 20, 2007
  */
 public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.MapIndexStorage");

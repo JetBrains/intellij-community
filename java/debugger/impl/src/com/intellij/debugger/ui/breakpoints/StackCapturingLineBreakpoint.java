@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -10,6 +12,7 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
@@ -314,6 +317,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, Collections.singletonList(key),
                                           ObjectReference.INVOKE_SINGLE_THREADED, true);
+    DebuggerUtilsEx.keep(resArray, evaluationContext);
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());

@@ -22,7 +22,6 @@ import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public class AntDomRecursiveVisitor implements DomElementVisitor{
   public void visitDomElement(DomElement element) {

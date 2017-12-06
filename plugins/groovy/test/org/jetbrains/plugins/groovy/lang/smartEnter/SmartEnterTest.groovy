@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * User: Dmitry.Krasilschikov
- * Date: 05.08.2008
  */
 class SmartEnterTest extends LightGroovyTestCase {
 

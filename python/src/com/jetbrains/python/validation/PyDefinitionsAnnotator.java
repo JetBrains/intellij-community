@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Highlights class definitions, functrion definitions, and decorators.
  * User: dcheryasov
- * Date: Jan 9, 2009 9:53:38 AM
  */
 public class PyDefinitionsAnnotator extends PyAnnotator {
 

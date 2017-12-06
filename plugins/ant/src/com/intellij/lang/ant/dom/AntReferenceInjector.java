@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: Apr 9, 2010
 */
 class AntReferenceInjector implements DomReferenceInjector {
   @Override

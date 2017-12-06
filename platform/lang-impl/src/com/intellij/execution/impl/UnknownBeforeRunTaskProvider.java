@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 15, 2009
  */
 public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
   private final Key<UnknownTask> myId;

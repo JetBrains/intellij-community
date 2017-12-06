@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 28, 2006
  */
 class ObjectCacheBase {
 

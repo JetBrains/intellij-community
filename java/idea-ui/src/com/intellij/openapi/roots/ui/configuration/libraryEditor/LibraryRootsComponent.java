@@ -68,7 +68,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 11, 2004
  */
 public class LibraryRootsComponent implements Disposable, LibraryEditorComponent {
   static final UrlComparator ourUrlComparator = new UrlComparator();

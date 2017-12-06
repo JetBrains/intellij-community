@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 13, 2006
  */
 public class StepIntoBreakpoint extends RunToCursorBreakpoint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint");

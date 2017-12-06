@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author dsl
- * Date: 06.06.2002
  */
 public class TurnRefsToSuperDialog extends RefactoringDialog {
   private final PsiClass mySubClass;

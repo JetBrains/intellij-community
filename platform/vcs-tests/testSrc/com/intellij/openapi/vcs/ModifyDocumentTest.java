@@ -361,7 +361,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     createDocument(text);
     deleteString(part1.length(), part1.length() + part2.length());
     assertEquals(part1 + part3, myDocument.getText());
-    assertEquals(Arrays.asList(new Range(5, 5, 5, 12)), myTracker.getRanges());
+    assertEqualRanges(Arrays.asList(new Range(5, 5, 5, 12)), myTracker.getRanges());
 
     deleteString(part1.length(), part1.length() + 1);
     compareRanges();
@@ -470,5 +470,57 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
 
     ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
     assertEquals("xa\nb \nc ", myDocument.getText());
+  }
+
+  public void testInsertion1() throws Throwable {
+    createDocument("X\nX\nX\n");
+    insertString(0, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(0, 1, 0, 0)), myTracker.getRanges());
+  }
+
+  public void testInsertion2() throws Throwable {
+    createDocument("X\nX\nX\n");
+    insertString(2, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(1, 2, 1, 1)), myTracker.getRanges());
+  }
+
+  public void testInsertion3() throws Throwable {
+    createDocument("X\nX\nX\n");
+    insertString(4, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(2, 3, 2, 2)), myTracker.getRanges());
+  }
+
+  public void testInsertion4() throws Throwable {
+    createDocument("X\nX\nX\n");
+    insertString(6, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(3, 4, 3, 3)), myTracker.getRanges());
+  }
+
+  public void testInsertion5() throws Throwable {
+    createDocument("Z\nX\nX\n");
+    replaceString(0, 1, "Y");
+    insertString(2, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(0, 2, 0, 1)), myTracker.getRanges());
+  }
+
+  public void testInsertion6() throws Throwable {
+    createDocument("X\nX\nX\n");
+    replaceString(0, 1, "Y");
+    insertString(4, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(0, 1, 0, 1), new Range(2, 3, 2, 2)), myTracker.getRanges());
+  }
+
+  public void testInsertion7() throws Throwable {
+    createDocument("X\nX\nX\n");
+    replaceString(0, 1, "Y");
+    insertString(6, "X\n");
+
+    assertEqualRanges(Arrays.asList(new Range(0, 1, 0, 1), new Range(3, 4, 3, 3)), myTracker.getRanges());
   }
 }

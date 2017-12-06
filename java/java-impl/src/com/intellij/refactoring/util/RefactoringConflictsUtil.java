@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 05-Oct-2009
  */
 public class RefactoringConflictsUtil {
   private RefactoringConflictsUtil() { }

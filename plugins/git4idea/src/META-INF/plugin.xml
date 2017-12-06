@@ -191,6 +191,7 @@
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />

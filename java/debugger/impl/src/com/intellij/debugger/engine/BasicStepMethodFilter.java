@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/26/13
  */
 public class BasicStepMethodFilter implements NamedMethodFilter {
   private static final Logger LOG = Logger.getInstance(BasicStepMethodFilter.class);

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PlatformUtils
 
 fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, includeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
   var result = url
@@ -46,6 +47,9 @@ fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project
       }
     }
   }
+
+  if (PlatformUtils.isCidr() || PlatformUtils.isRider()) // see PredefinedSearchScopeProviderImpl.getPredefinedScopes for the other place to fix.
+    return result
 
   val module = ModuleUtilCore.findModuleForFile(file, project)
   return when {

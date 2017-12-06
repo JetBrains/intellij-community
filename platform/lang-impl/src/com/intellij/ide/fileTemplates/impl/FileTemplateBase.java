@@ -31,7 +31,6 @@ import java.util.Properties;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/6/11
  */
 public abstract class FileTemplateBase implements FileTemplate {
   static final boolean DEFAULT_REFORMAT_CODE_VALUE = true;

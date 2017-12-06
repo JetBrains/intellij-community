@@ -176,7 +176,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     TextRange textRange = startElement.getTextRange();
     if (startElement == endElement) {
-      if (isAfterEndOfLine()) return new TextRange(textRange.getEndOffset(), textRange.getEndOffset());
+      if (isAfterEndOfLine()) {
+        int endOffset = myTextRangeInElement != null ? textRange.getStartOffset() + myTextRangeInElement.getEndOffset()
+                                                     : textRange.getEndOffset();
+        return new TextRange(endOffset, endOffset);
+      }
       if (myTextRangeInElement != null) {
         return new TextRange(textRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
                              textRange.getStartOffset() + myTextRangeInElement.getEndOffset());

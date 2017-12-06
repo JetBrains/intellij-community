@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public interface PsiJShellSyntheticElement extends PsiElement, SyntheticElement{
 }

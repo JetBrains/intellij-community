@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 17, 2004
  */
 public class Mkdir extends Tag {
   public Mkdir(@NonNls String directory) {

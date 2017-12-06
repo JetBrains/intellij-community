@@ -132,7 +132,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       file.accept(qualificationRemover);
       if (isOnTheFly()) {
         final Collection<PsiElement> shortenedElements = qualificationRemover.getShortenedElements();
-        HighlightUtils.highlightElements(shortenedElements);
+        if (isOnTheFly()) {
+          HighlightUtils.highlightElements(shortenedElements);
+        }
         showStatusMessage(file.getProject(), shortenedElements.size());
       }
     }

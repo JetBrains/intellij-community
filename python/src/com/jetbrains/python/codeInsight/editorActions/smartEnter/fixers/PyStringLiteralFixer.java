@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   15.04.2010
- * Time:   17:17:14
  */
 public class PyStringLiteralFixer extends PyFixer<PyStringLiteralExpression> {
   public PyStringLiteralFixer() {

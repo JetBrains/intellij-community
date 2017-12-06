@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexei Orischenko
- *         Date: Dec 4, 2009
  */
 public abstract class BaseReference implements PsiReference, PyUserInitiatedResolvableReference {
   protected final PsiElement myElement;

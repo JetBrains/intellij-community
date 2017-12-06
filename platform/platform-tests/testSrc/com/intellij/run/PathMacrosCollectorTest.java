@@ -15,7 +15,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 14, 2006
  */
 public class PathMacrosCollectorTest extends TestCase {
   public void testCollectMacros() {

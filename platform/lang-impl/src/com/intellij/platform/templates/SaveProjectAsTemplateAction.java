@@ -73,7 +73,6 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/5/12
  */
 public class SaveProjectAsTemplateAction extends AnAction {
 

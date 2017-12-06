@@ -53,6 +53,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "BookmarkManager",
@@ -64,7 +65,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
-  private final List<Bookmark> myBookmarks = new ArrayList<>();
+  private final List<Bookmark> myBookmarks = new CopyOnWriteArrayList<>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
     new HashMap<>();
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();

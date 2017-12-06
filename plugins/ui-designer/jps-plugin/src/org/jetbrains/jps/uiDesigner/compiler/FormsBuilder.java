@@ -30,7 +30,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/20/12
  */
 public abstract class FormsBuilder extends ModuleLevelBuilder {
   protected static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.uiDesigner.compiler.FormsInstrumenter");

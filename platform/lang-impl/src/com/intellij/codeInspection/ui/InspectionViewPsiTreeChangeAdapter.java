@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ReadTask;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -23,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich
- */
 class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
   private final static int MAX_UPDATES_FOR_CANCELLABLE_ACTION = 100;
 
@@ -55,7 +51,6 @@ class InspectionViewPsiTreeChangeAdapter extends PsiTreeChangeAdapter {
               VirtualFile file = (VirtualFile)update.getEqualityObjects()[0];
               VfsUtilCore.iterateChildrenRecursively(file, VirtualFileFilter.ALL, files::add);
             }
-            final Project project = view.getProject();
 
             final Runnable runnable = () -> {
               if (view.isDisposed()) return;

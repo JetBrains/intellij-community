@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
- * Date: Nov 20, 2002
  */
 public class ReuseVariableDeclarationFix implements IntentionAction {
   private final PsiLocalVariable myVariable;

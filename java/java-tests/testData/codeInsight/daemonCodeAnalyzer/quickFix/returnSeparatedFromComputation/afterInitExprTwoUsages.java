@@ -3,8 +3,9 @@ import java.util.*;
 
 class T {
     List foo(boolean b) {
+        List n = new ArrayList();
         if (b)
             return new ArrayList(1);
-        return new ArrayList();
+        return n;
     }
 }

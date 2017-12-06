@@ -16,24 +16,16 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.Consumer;
 
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author irengrig
- *         Date: 2/28/11
- *         Time: 3:41 PM
- */
-public class QueueProcessorRemovePartner<Key, Task> {
+public class QueueProcessorRemovePartner<Key, Task extends Runnable> {
   private final Map<Key, Task> myMap;
   private final QueueProcessor<Key> myProcessor;
-  private final Consumer<Task> myConsumer;
   private final Object myLock;
 
-  public QueueProcessorRemovePartner(final Project project, Consumer<Task> consumer) {
-    myConsumer = consumer;
+  public QueueProcessorRemovePartner(final Project project) {
     myMap = new HashMap<>();
     myLock = new Object();
     myProcessor = new QueueProcessor<>(key -> {
@@ -42,7 +34,7 @@ public class QueueProcessorRemovePartner<Key, Task> {
         task = myMap.remove(key);
       }
       if (task != null) {
-        myConsumer.consume(task);
+        task.run();
       }
     }, project.getDisposed(), true);
   }

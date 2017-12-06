@@ -28,18 +28,18 @@ import org.jetbrains.annotations.Nullable;
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings {
 
-  @NotNull private final HgGlobalSettings myAppSettings;
   @NotNull private final Project myProject;
 
   private State myState = new State();
 
-  public HgProjectSettings(@NotNull Project project, @NotNull HgGlobalSettings appSettings) {
+  public HgProjectSettings(@NotNull Project project) {
     myProject = project;
-    myAppSettings = appSettings;
   }
 
   public static class State {
 
+    public String PATH_TO_EXECUTABLE = null;
+    public boolean OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = false;
     public boolean myCheckIncoming = true;
     public boolean myCheckOutgoing = true;
     public Boolean CHECK_INCOMING_OUTGOING = null;
@@ -67,6 +67,23 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   @Nullable
+  public String getHgExecutable() {
+    return myState.PATH_TO_EXECUTABLE;
+  }
+
+  public void setHgExecutable(@Nullable String path) {
+    myState.PATH_TO_EXECUTABLE = path;
+  }
+
+  public boolean isHgExecutableOverridden() {
+    return myState.OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE;
+  }
+
+  public void setHgExecutableOverridden(boolean overridden) {
+    myState.OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = overridden;
+  }
+
+  @Nullable
   public String getRecentRootPath() {
     return myState.RECENT_HG_ROOT_PATH;
   }
@@ -82,8 +99,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return myState.CHECK_INCOMING_OUTGOING.booleanValue();
   }
 
-  public boolean isWhitespacesIgnoredInAnnotations() {
-    return myState.myIgnoreWhitespacesInAnnotations;
+  public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
+    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
   }
 
   @NotNull
@@ -95,8 +112,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     myState.ROOT_SYNC = syncSetting;
   }
 
-  public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
-    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+  public boolean isWhitespacesIgnoredInAnnotations() {
+    return myState.myIgnoreWhitespacesInAnnotations;
   }
 
   public void setIgnoreWhitespacesInAnnotations(boolean ignoreWhitespacesInAnnotations) {
@@ -109,18 +126,5 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   @NotNull
   public DvcsBranchSettings getFavoriteBranchSettings() {
     return myState.FAVORITE_BRANCH_SETTINGS;
-  }
-
-  public String getHgExecutable() {
-    return myAppSettings.getHgExecutable();
-  }
-
-  public void setHgExecutable(String text) {
-    myAppSettings.setHgExecutable(text);
-  }
-
-  @NotNull
-  public HgGlobalSettings getGlobalSettings() {
-    return myAppSettings;
   }
 }

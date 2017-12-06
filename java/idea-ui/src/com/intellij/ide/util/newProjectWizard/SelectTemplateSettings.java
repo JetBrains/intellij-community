@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/9/12
  */
 @State(
   name = "SelectProjectTemplateSettings",

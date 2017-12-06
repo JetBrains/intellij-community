@@ -30,43 +30,48 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
   private static final Logger LOG = Logger.getInstance(LineStatusTrackerRevertAutoTest.class);
   private Random myRng;
 
+  private static final int TEST_RUNS = 100;
+  private static final int MODIFICATIONS = 10;
+  private static final int TEXT_LENGTH = 10;
+  private static final int CHANGE_LENGTH = 10;
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
   }
 
   public void testSimple() throws Throwable {
-    doTest(System.currentTimeMillis(), 100, 10, 30, 10, -1, false);
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, -1, false);
   }
 
   public void testComplex() throws Throwable {
-    doTest(System.currentTimeMillis(), 100, 10, 30, 10, 5, false);
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, 5, false);
   }
 
   public void testInitial() throws Throwable {
-    doTestInitial(System.currentTimeMillis(), 100, 10, false);
+    doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, false);
   }
 
   public void testSimpleSmart() throws Throwable {
-    doTest(System.currentTimeMillis(), 100, 10, 30, 10, -1, true);
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, -1, true);
   }
 
   public void testComplexSmart() throws Throwable {
-    doTest(System.currentTimeMillis(), 100, 10, 30, 10, 5, true);
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, 5, true);
   }
 
   public void testInitialSmart() throws Throwable {
-    doTestInitial(System.currentTimeMillis(), 100, 10, true);
+    doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, true);
   }
 
-  public void doTest(long seed, int testRuns, int modifications, int testLength, final int changeLength, int iterations, boolean smart)
+  public void doTest(long seed, int testRuns, int modifications, int textLength, final int changeLength, int iterations, boolean smart)
     throws Throwable {
     myRng = new Random(seed);
     for (int i = 0; i < testRuns; i++) {
       long currentSeed = getCurrentSeed();
       if (i % 1000 == 0) LOG.debug(String.valueOf(i));
       try {
-        String initial = generateText(testLength);
+        String initial = generateText(textLength);
         createDocument(initial, initial, smart);
         //System.out.println("Initial: " + initial.replace("\n", "\\n"));
 
@@ -98,7 +103,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
         System.out.println("Seed: " + seed);
         System.out.println("TestRuns: " + testRuns);
         System.out.println("Modifications: " + modifications);
-        System.out.println("TestLength: " + testLength);
+        System.out.println("TextLength: " + textLength);
         System.out.println("ChangeLength: " + changeLength);
         System.out.println("I: " + i);
         System.out.println("Current seed: " + currentSeed);
@@ -107,14 +112,14 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
     }
   }
 
-  public void doTestInitial(long seed, int testRuns, int testLength, boolean smart) throws Throwable {
+  public void doTestInitial(long seed, int testRuns, int textLength, boolean smart) throws Throwable {
     myRng = new Random(seed);
     for (int i = 0; i < testRuns; i++) {
       if (i % 1000 == 0) LOG.debug(String.valueOf(i));
       long currentSeed = getCurrentSeed();
       try {
-        String initial = generateText(testLength);
-        String initialVcs = generateText(testLength);
+        String initial = generateText(textLength);
+        String initialVcs = generateText(textLength);
         createDocument(initial, initialVcs, smart);
 
         checkCantTrim();
@@ -129,7 +134,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
       catch (Throwable e) {
         System.out.println("Seed: " + seed);
         System.out.println("TestRuns: " + testRuns);
-        System.out.println("TestLength: " + testLength);
+        System.out.println("TextLength: " + textLength);
         System.out.println("I: " + i);
         System.out.println("Current seed: " + currentSeed);
         throw e;
@@ -141,7 +146,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
     int count = 0;
     while (true) {
       if (count > maxIterations) throw new Exception("Revert loop detected");
-      List<Range> ranges = myTracker.getRanges();
+      List<? extends Range> ranges = myTracker.getRanges();
       if (ranges.isEmpty()) break;
       int index = myRng.nextInt(ranges.size());
       Range range = ranges.get(index);

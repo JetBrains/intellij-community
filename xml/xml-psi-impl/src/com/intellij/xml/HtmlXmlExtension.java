@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 24.10.13
  */
 public class HtmlXmlExtension extends DefaultXmlExtension {
 

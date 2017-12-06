@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 3, 2007
  */
 public class TargetActionStub extends AnAction implements Disposable {
   private final String myActionId;

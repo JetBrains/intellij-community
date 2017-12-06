@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/21/12
  */
 public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");

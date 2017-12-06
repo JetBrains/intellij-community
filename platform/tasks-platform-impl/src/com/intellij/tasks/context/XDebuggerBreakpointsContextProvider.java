@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/12/13
  */
 public class XDebuggerBreakpointsContextProvider extends WorkingContextProvider {
 

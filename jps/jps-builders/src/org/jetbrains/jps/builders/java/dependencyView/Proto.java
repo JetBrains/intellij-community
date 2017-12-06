@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.03.11
  */
 class Proto implements RW.Savable, Streamable {
   public final int access;

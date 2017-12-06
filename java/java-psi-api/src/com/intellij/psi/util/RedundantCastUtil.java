@@ -24,7 +24,6 @@ import java.util.Set;
 
 /**
  * @author max
- * Date: Mar 24, 2002
  */
 public class RedundantCastUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastUtil");

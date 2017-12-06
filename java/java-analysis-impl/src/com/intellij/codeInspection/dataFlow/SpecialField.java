@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*;
+
 /**
  * Represents a method which is handled as a field in DFA.
  *
@@ -155,9 +157,16 @@ public enum SpecialField {
    */
   public List<MethodContract> getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
-    return Arrays.asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(),
-                                                                MethodContract.ValueConstraint.TRUE_VALUE),
-                         MethodContract.trivialContract(MethodContract.ValueConstraint.FALSE_VALUE));
+    return Arrays
+      .asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), TRUE_VALUE),
+              MethodContract.trivialContract(FALSE_VALUE));
+  }
+
+  public List<MethodContract> getEqualsContracts() {
+    return Arrays.asList(new StandardMethodContract(new MethodContract.ValueConstraint[]{NULL_VALUE}, FALSE_VALUE),
+                         MethodContract.singleConditionContract(
+                           ContractValue.qualifier().specialField(this), DfaRelationValue.RelationType.NE,
+                           ContractValue.argument(0).specialField(this), FALSE_VALUE));
   }
 
   @Override

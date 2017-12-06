@@ -44,7 +44,6 @@ import java.util.Collections;
 
 /**
  * Created by Eugene Petrenko (eugene.petrenko@gmail.com)
- * Date: 28.05.12 16:07
  */
 public class RunTargetAction extends AnAction {
   public RunTargetAction() {

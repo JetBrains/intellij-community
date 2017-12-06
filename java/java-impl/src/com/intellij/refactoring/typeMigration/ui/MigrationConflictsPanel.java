@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * Date: 26-Mar-2008
  */
 public class MigrationConflictsPanel extends UsagesPanel{
   public MigrationConflictsPanel(Project project) {

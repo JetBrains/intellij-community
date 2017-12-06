@@ -43,7 +43,6 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
 public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input>{
   private static final Logger LOG = Logger.getInstance(VfsAwareMapReduceIndex.class);

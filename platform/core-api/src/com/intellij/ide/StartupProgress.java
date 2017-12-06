@@ -17,7 +17,6 @@ package com.intellij.ide;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/21/11
  */
 public interface StartupProgress {
 

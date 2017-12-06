@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   protected VirtualFile myFile;
   protected Document myDocument;
   protected Document myUpToDateDocument;
-  protected LineStatusTracker myTracker;
+  protected LineStatusTracker<?> myTracker;
 
   @Override
   public void tearDown() throws Exception {
@@ -82,9 +83,18 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void compareRanges() throws FilesTooBigForDiffException {
-    List<Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
-    List<Range> actual = myTracker.getRanges();
-    assertEquals(expected, actual);
+    List<? extends Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
+    List<? extends Range> actual = myTracker.getRanges();
+    assertEqualRanges(expected, actual);
+  }
+
+  public static void assertEqualRanges(List<? extends Range> expected, List<? extends Range> actual) {
+    UsefulTestCase.assertOrderedEquals("", actual, expected, (r1, r2) -> {
+      return r1.getLine1() == r2.getLine1() &&
+             r1.getLine2() == r2.getLine2() &&
+             r1.getVcsLine1() == r2.getVcsLine1() &&
+             r1.getVcsLine2() == r2.getVcsLine2();
+    });
   }
 
   protected void createDocument(@NotNull String text) throws FilesTooBigForDiffException {
@@ -117,7 +127,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void checkCantTrim() {
-    List<Range> ranges = myTracker.getRanges();
+    List<? extends Range> ranges = myTracker.getRanges();
     for (Range range : ranges) {
       if (range.getType() != Range.MODIFIED) continue;
 
@@ -136,27 +146,31 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void checkCantMerge() {
-    List<Range> ranges = myTracker.getRanges();
+    List<? extends Range> ranges = myTracker.getRanges();
     for (int i = 0; i < ranges.size() - 1; i++) {
       assertFalse(ranges.get(i).getLine2() == ranges.get(i + 1).getLine1());
     }
   }
 
   protected void checkInnerRanges() {
-    List<Range> ranges = myTracker.getRangesInner();
+    List<? extends Range> ranges = myTracker.getRanges();
 
     for (Range range : ranges) {
       List<Range.InnerRange> innerRanges = range.getInnerRanges();
       if (innerRanges == null) return;
+      if (range.getType() != Range.MODIFIED) {
+        assertEmpty(innerRanges);
+        continue;
+      }
 
-      int last = range.getLine1();
+      int last = 0;
       for (Range.InnerRange innerRange : innerRanges) {
         assertEquals(innerRange.getLine1() == innerRange.getLine2(), innerRange.getType() == Range.DELETED);
 
         assertEquals(last, innerRange.getLine1());
         last = innerRange.getLine2();
       }
-      assertEquals(last, range.getLine2());
+      assertEquals(last, range.getLine2() - range.getLine1());
 
       List<String> lines1 = DiffUtil.getLines(myUpToDateDocument, range.getVcsLine1(), range.getVcsLine2());
       List<String> lines2 = DiffUtil.getLines(myDocument, range.getLine1(), range.getLine2());
@@ -166,7 +180,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
         if (innerRange.getType() != Range.EQUAL) continue;
 
         for (int i = innerRange.getLine1(); i < innerRange.getLine2(); i++) {
-          String line = lines2.get(i - range.getLine1());
+          String line = lines2.get(i);
           List<String> searchSpace = lines1.subList(start, lines1.size());
           int index = ContainerUtil.<String>indexOf(searchSpace, (it) -> StringUtil.equalsIgnoreWhitespaces(it, line));
           assertTrue(index != -1);

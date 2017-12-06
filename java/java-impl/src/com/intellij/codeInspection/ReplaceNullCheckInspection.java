@@ -292,7 +292,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         nonNullDiff = qualifierDiff.getRight();
         if(!ExpressionUtils.isReferenceTo(nullDiff, variable)) return null;
       }
-      if(NullnessUtil.getExpressionNullness(nonNullDiff) != Nullness.NOT_NULL) return null;
+      if(NullnessUtil.getExpressionNullness(nonNullDiff, true) != Nullness.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nonNullDiff)) return null;
       return new NotNullContext(nonNullDiff, nullDiff, nullBranch, variable, ifStatement, toDelete, false);
     }
@@ -355,7 +355,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if(ClassUtils.isPrimitive(variable.getType())) return null;
       PsiExpression nullBranch = negated ? ternary.getThenExpression() : ternary.getElseExpression();
       if(!ExpressionUtils.isReferenceTo(nullBranch, variable)) return null;
-      if(NullnessUtil.getExpressionNullness(nonNullBranch) != Nullness.NOT_NULL) return null;
+      if(NullnessUtil.getExpressionNullness(nonNullBranch, true) != Nullness.NOT_NULL) return null;
       if(!LambdaGenerationUtil.canBeUncheckedLambda(nonNullBranch)) return null;
       return new TernaryNotNullContext(ternary, nonNullBranch, variable);
     }

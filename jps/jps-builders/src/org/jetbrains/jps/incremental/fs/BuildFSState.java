@@ -40,7 +40,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 12/16/11
  */
 public class BuildFSState {
   public static final int VERSION = 3;

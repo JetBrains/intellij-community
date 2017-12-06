@@ -72,7 +72,7 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
       PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
         if (LambdaUtil.isExpressionStatementExpression(psiExpression) &&
-            !LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)body.getParent(), () -> psiExpression)) {
+            !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)body.getParent(), () -> psiExpression)) {
           return null;
         }
         return psiExpression;

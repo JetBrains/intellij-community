@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 14.02.11
  */
 public class TypeRepr {
   private static final byte PRIMITIVE_TYPE = 0x0;

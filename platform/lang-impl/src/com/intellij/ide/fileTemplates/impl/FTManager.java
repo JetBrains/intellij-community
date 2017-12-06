@@ -33,7 +33,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 3/22/11
  */
 public class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");

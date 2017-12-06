@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 12, 2010
  */
 public abstract class AntDomTimestampTask extends AntDomPropertyDefiningElement {
   // implicit properties

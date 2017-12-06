@@ -32,7 +32,6 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProp
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 13, 2006
  */
 public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> {
   private final boolean myRestoreBreakpoints;

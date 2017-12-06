@@ -42,7 +42,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 29-Sep-15
  */
 public class JavaScratchConfiguration extends ApplicationConfiguration {
   public int SCRATCH_FILE_ID;

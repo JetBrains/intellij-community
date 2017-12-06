@@ -41,7 +41,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 20-Jun-16
  *
  * Aether-based repository manager and dependency resolver using maven implementation of this functionality.
  *

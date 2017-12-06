@@ -286,6 +286,16 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         addToRefreshQueue(projectPath, systemId, reportRefreshError);
       }
       else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
+        if (manager instanceof ExternalSystemAutoImportAware) {
+          Long lastTimestamp = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps().get(projectPath);
+          if (lastTimestamp != null) {
+            List<File> affectedFiles = ((ExternalSystemAutoImportAware)manager).getAffectedExternalProjectFiles(projectPath, myProject);
+            long currentTimeStamp = affectedFiles.stream().mapToLong(File::lastModified).sum();
+            if (lastTimestamp != currentTimeStamp) {
+              return;
+            }
+          }
+        }
         // re-schedule to wait for the active project import task end
         final ExternalSystemProgressNotificationManager progressManager =
           ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
@@ -343,9 +353,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
             scheduleUpdate(settings.getExternalProjectPath());
           }
         }
-        else {
-          modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
-        }
+        modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
 
         for (File file : files) {
           if (file == null) continue;

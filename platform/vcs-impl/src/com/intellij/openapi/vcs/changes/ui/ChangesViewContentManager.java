@@ -157,6 +157,11 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void projectClosed() {
+    for (Content content : myAddedContents) {
+      Disposer.dispose(content);
+    }
+    myAddedContents.clear();
+
     myVcsChangeAlarm.cancelAllRequests();
   }
 

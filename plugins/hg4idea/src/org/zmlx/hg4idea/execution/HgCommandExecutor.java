@@ -25,7 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgGlobalSettings;
+import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -180,7 +180,7 @@ public class HgCommandExecutor {
     logCommand(operation, arguments);
 
     final List<String> cmdLine = new LinkedList<>();
-    cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
+    cmdLine.add(HgExecutableManager.getInstance().getHgExecutable(myProject));
     if (repo != null) {
       cmdLine.add("--repository");
       cmdLine.add(repo.getPath());
@@ -208,10 +208,9 @@ public class HgCommandExecutor {
     if (myProject.isDisposed()) {
       return;
     }
-    final HgGlobalSettings settings = myVcs.getGlobalSettings();
-    String exeName;
-    final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
-    exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
+    String exeName = HgExecutableManager.getInstance().getHgExecutable(myProject);
+    final int lastSlashIndex = exeName.lastIndexOf(File.separator);
+    exeName = exeName.substring(lastSlashIndex + 1);
 
     String str = String
       .format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
@@ -227,39 +226,13 @@ public class HgCommandExecutor {
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private void logResult(@NotNull HgCommandResult result) {
-    // log output if needed
-    if (!result.getRawOutput().isEmpty()) {
-      if (!myOutputAlwaysSuppressed) {
-        if (!myIsSilent && myShowOutput) {
-          LOG.info(result.getRawOutput());
-          myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT);
-        }
-        else {
-          LOG.debug(result.getRawOutput());
-        }
-      }
-    }
-
-    // log error
-    if (!result.getRawError().isEmpty()) {
-      if (!myIsSilent) {
-        LOG.info(result.getRawError());
-        myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT);
-      }
-      else {
-        LOG.debug(result.getRawError());
-      }
-    }
-  }
-
   protected void showError(Exception e) {
     final HgVcs vcs = HgVcs.getInstance(myProject);
     if (vcs == null) return;
-    String message = HgVcsMessages.message("hg4idea.command.executable.error", vcs.getGlobalSettings().getHgExecutable()) +
-                     "\nOriginal Error:\n" +
-                     e.getMessage();
+    String message =
+      HgVcsMessages.message("hg4idea.command.executable.error", HgExecutableManager.getInstance().getHgExecutable(myProject)) +
+      "\nOriginal Error:\n" +
+      e.getMessage();
     VcsImplUtil.showErrorMessage(myProject, message, HgVcsMessages.message("hg4idea.error"));
   }
 }

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.ide.actions.project
 
 import com.intellij.CommonBundle
@@ -15,12 +17,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LineExtensionInfo
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -38,7 +42,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   private val editorArea: EditorTextField
   private val document: Document
     get() = editorArea.document
-  private val modules = ModuleManager.getInstance(project).modules
+  private lateinit var modules : List<Module>
 
   init {
     title = ProjectBundle.message("convert.module.groups.dialog.title")
@@ -57,7 +61,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
-    editorArea.text = generateInitialText()
+    importMapping(emptyMap())
     init()
   }
 
@@ -96,33 +100,32 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     return listOf(name, group)
   }
 
-  private fun generateInitialText(): String {
-    val moduleManager = ModuleManager.getInstance(project)
-    return modules.joinToString("\n") {
-      (moduleManager.getModuleGroupPath(it)?.let { it.joinToString(".") + "." } ?: "") + it.name
-    }
-  }
-
   fun importMapping(mapping: Map<String, String>) {
+    val moduleManager = ModuleManager.getInstance(project)
+    fun getDefaultName(module: Module) = (moduleManager.getModuleGroupPath(module)?.let { it.joinToString(".") + "." } ?: "") + module.name
+    val names = moduleManager.modules.associateBy({ it }, { mapping.getOrElse(it.name, {getDefaultName(it)}) })
+    modules = moduleManager.modules.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, {names[it]!!}))
     runWriteAction {
-      document.setText(modules.joinToString("\n") { mapping.getOrDefault(it.name, it.name) })
+      document.setText(modules.joinToString("\n") { names[it]!! })
     }
   }
 
-  fun getMapping(): Map<String, String>? {
+  fun getMapping(): Map<String, String> {
     val lines = document.charsSequence.split('\n')
-    if (lines.size != modules.size) return null
 
-    return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, { lines[it.index] })
+    return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, {
+      if (it.index in lines.indices) lines[it.index] else it.value.name
+    })
   }
 
   override fun doOKAction() {
-    val mapping = getMapping()
-    if (mapping == null) {
-      Messages.showErrorDialog(project, "Incorrect mapping!", CommonBundle.getErrorTitle())
+    ModuleNamesListInspection.checkModuleNames(document.charsSequence.lines(), project) { line, message ->
+      Messages.showErrorDialog(project, ProjectBundle.message("convert.module.groups.error.text", line+1, StringUtil.decapitalize(message)),
+                               CommonBundle.getErrorTitle())
       return
     }
 
+    val mapping = getMapping()
     if (mapping.isNotEmpty()) {
       val model = ModuleManager.getInstance(project).modifiableModel
       val byName = modules.associateBy { it.name }

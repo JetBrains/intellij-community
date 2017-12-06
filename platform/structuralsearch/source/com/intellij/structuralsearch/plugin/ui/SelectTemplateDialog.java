@@ -43,8 +43,6 @@ import java.util.List;
 
 /**
  * @author Maxim.Mossienko
- * Date: Apr 23, 2004
- * Time: 5:03:52 PM
  */
 public class SelectTemplateDialog extends DialogWrapper {
   private final boolean showHistory;

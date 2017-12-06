@@ -27,6 +27,9 @@ import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Map;
+
 /**
  * @author peter
  */
@@ -66,6 +69,22 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     final ExpressionTypeMemoryState copy = new ExpressionTypeMemoryState(this);
     copy.myStates.putAllValues(myStates);
     return copy;
+  }
+
+  @Override
+  public boolean isSuperStateOf(DfaMemoryStateImpl that) {
+    if (!super.isSuperStateOf(that)) {
+      return false;
+    }
+    MultiMap<PsiExpression, PsiType> thatStates = ((ExpressionTypeMemoryState)that).myStates;
+    for (Map.Entry<PsiExpression, Collection<PsiType>> entry : myStates.entrySet()) {
+      Collection<PsiType> thisTypes = entry.getValue();
+      Collection<PsiType> thatTypes = thatStates.get(entry.getKey());
+      if (!thatTypes.containsAll(thisTypes)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

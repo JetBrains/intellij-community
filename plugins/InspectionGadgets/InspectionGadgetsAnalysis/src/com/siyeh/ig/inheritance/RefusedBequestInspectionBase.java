@@ -106,13 +106,13 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod leastConcreteSuperMethod = getDirectSuperMethod(method);
-      if (leastConcreteSuperMethod == null) {
+      final PsiMethod superMethod = getDirectSuperMethod(method);
+      if (superMethod == null) {
         return;
       }
       final String methodName = method.getName();
       if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
-        final PsiClass superClass = leastConcreteSuperMethod.getContainingClass();
+        final PsiClass superClass = superMethod.getContainingClass();
         if (superClass != null) {
           final String superClassName = superClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
@@ -120,16 +120,12 @@ public class RefusedBequestInspectionBase extends BaseInspection {
           }
         }
       }
-      if (ignoreEmptySuperMethods) {
-        final PsiElement element = leastConcreteSuperMethod.getNavigationElement();
-        final PsiMethod superMethod = element instanceof PsiMethod ? (PsiMethod)element : leastConcreteSuperMethod;
-        if (MethodUtils.isTrivial(superMethod, true)) {
-          return;
-        }
+      if (ignoreEmptySuperMethods && isTrivial(superMethod)) {
+        return;
       }
       final boolean isClone = CloneUtils.isClone(method);
-      if (onlyReportWhenAnnotated && !isClone && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
-        if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations, 0)) {
+      if (onlyReportWhenAnnotated && !AnnotationUtil.isAnnotated(superMethod, annotations, 0)) {
+        if (!isClone && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method) || isTrivial(superMethod)) {
           return;
         }
       }
@@ -140,6 +136,11 @@ public class RefusedBequestInspectionBase extends BaseInspection {
         return;
       }
       registerMethodError(method);
+    }
+
+    private boolean isTrivial(PsiMethod method) {
+      final PsiElement element = method.getNavigationElement();
+      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, true);
     }
 
     private boolean isJUnitSetUpOrTearDown(PsiMethod method) {
@@ -157,14 +158,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
     @Nullable
     private PsiMethod getDirectSuperMethod(PsiMethod method) {
       final PsiMethod superMethod = MethodUtils.getSuper(method);
-      if (superMethod ==  null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return null;
-      }
-      final PsiClass containingClass = superMethod.getContainingClass();
-      if (containingClass == null || containingClass.isInterface()) {
-        return null;
-      }
-      return superMethod;
+      return superMethod == null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ? null : superMethod;
     }
   }
 }

@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 1/31/12
  */
 public interface PropertySearcher {
   

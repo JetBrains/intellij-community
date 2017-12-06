@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,7 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     rollback(tracker, editor, null);
   }
 
-  protected static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTracker tracker) {
+  private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerBase<?> tracker) {
     List<Caret> carets = editor.getCaretModel().getAllCarets();
     if (carets.size() != 1) return true;
     Caret caret = carets.get(0);
@@ -71,28 +70,16 @@ public class RollbackLineStatusAction extends DumbAwareAction {
     return tracker.getRangeForLine(caret.getLogicalPosition().line) != null;
   }
 
-  protected static void rollback(@NotNull LineStatusTracker tracker, @Nullable Editor editor, @Nullable Range range) {
+  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @Nullable Editor editor, @Nullable Range range) {
     assert editor != null || range != null;
 
     if (range != null) {
       if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
-
-      doRollback(tracker, range);
-      return;
+      tracker.rollbackChanges(range);
     }
-
-    doRollback(tracker, DiffUtil.getSelectedLines(editor));
-  }
-
-  private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final Range range) {
-    execute(tracker, () -> tracker.rollbackChanges(range));
-  }
-
-  private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final BitSet lines) {
-    execute(tracker, () -> tracker.rollbackChanges(lines));
-  }
-
-  private static void execute(@NotNull final LineStatusTracker tracker, @NotNull final Runnable task) {
-    DiffUtil.executeWriteCommand(tracker.getDocument(), tracker.getProject(), VcsBundle.message("command.name.rollback.change"), task);
+    else {
+      BitSet selectedLines = DiffUtil.getSelectedLines(editor);
+      tracker.rollbackChanges(selectedLines);
+    }
   }
 }

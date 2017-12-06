@@ -24,7 +24,6 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -32,7 +31,7 @@ import com.intellij.psi.PsiPackage;
 import java.util.*;
 
 /**
- * @author Hani Suleiman Date: Jul 20, 2005 Time: 1:11:01 PM
+ * @author Hani Suleiman
  */
 public class TestData implements Cloneable
 {

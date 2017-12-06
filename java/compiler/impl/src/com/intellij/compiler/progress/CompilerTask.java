@@ -4,8 +4,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Jan 22, 2003
- * Time: 2:25:31 PM
  */
 package com.intellij.compiler.progress;
 

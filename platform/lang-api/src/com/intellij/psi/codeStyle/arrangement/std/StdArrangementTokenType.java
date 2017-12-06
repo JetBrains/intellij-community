@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * (see {@link com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher.StdMatcherBuilderImpl}).
  *
  * @author Roman.Shein
- * Date: 31.07.13
  */
 public class StdArrangementTokenType {
   @NotNull private final StdArrangementTokenUiRole myUiRole;

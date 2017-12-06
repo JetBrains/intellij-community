@@ -94,6 +94,14 @@ fun expandBackward(text1: List<*>, text2: List<*>,
 }
 
 
+fun <T> expand(text1: List<T>, text2: List<T>,
+               start1: Int, start2: Int, end1: Int, end2: Int,
+               equals: (T, T) -> Boolean): Range {
+  return expand(start1, start2, end1, end2,
+                { index1, index2 -> equals(text1[index1], text2[index2]) })
+}
+
+
 fun expand(text1: CharSequence, text2: CharSequence,
            start1: Int, start2: Int, end1: Int, end2: Int): Range {
   return expand(start1, start2, end1, end2,

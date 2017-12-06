@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.components.ComponentSerializationUtil
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.reference.SoftReference
@@ -123,11 +108,6 @@ fun PersistentStateComponent<*>.serializeStateInto(element: Element) {
   state?.let { serializeObjectInto(it, element) }
 }
 
-@Deprecated("")
-fun <T : Any> T.serializeInto(target: Element) {
-  serializeObjectInto(this, target)
-}
-
 fun serializeObjectInto(o: Any, target: Element) {
   if (o is Element) {
     val iterator = o.children.iterator()
@@ -145,10 +125,11 @@ fun serializeObjectInto(o: Any, target: Element) {
   }
 
   val binding = serializer.getClassBinding(o.javaClass)
-  (binding as BeanBinding).serializeInto(o, target, getDefaultSerializationFilter())
+  (binding as BeanBinding).serializeInto(o, target, if (o is BaseState) null else getDefaultSerializationFilter())
 }
 
 private val serializer = object : XmlSerializerImpl.XmlSerializerBase() {
+  @Suppress("ObjectPropertyName")
   private var _bindingCache: SoftReference<MutableMap<BindingCacheKey, Binding>>? = null
 
   private val bindingCache: MutableMap<BindingCacheKey, Binding>

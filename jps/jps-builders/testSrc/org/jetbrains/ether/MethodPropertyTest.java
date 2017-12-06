@@ -19,7 +19,6 @@ import com.intellij.openapi.util.SystemInfo;
 
 /**
  * @author: db
- * Date: 05.10.11
  */
 public class MethodPropertyTest extends IncrementalTestCase {
   public MethodPropertyTest() {

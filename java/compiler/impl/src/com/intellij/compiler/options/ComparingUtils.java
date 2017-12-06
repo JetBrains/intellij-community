@@ -22,7 +22,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class ComparingUtils {
   public static boolean isModified(TextFieldWithBrowseButton field, String value) {

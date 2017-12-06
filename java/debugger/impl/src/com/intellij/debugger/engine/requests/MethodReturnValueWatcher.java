@@ -42,7 +42,6 @@ import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 23, 2006
  */
 public class MethodReturnValueWatcher implements OverheadProducer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.requests.MethodReturnValueWatcher");

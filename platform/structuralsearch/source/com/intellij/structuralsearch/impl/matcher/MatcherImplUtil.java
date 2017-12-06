@@ -26,8 +26,6 @@ import com.intellij.util.IncorrectOperationException;
 
 /**
  * @author Maxim.Mossienko
- * Date: Mar 19, 2004
- * Time: 6:56:25 PM
  */
 public class MatcherImplUtil {
 

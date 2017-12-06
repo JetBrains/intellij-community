@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 12, 2004
  */
 public class ErrorTreeNodeDescriptor extends NodeDescriptor<ErrorTreeElement>{
   private final ErrorTreeElement myElement;
