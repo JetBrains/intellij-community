@@ -65,8 +65,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
                                        true);
           fixes = new LocalQuickFix[]{new LoopTransformationFix(), setInspectionOptionFix};
         }
-        holder.registerProblem(highlightElement, InspectionsBundle.message("inspection.move.condition.to.loop.description"),
-                               ProblemHighlightType.INFORMATION, fixes);
+        holder.registerProblem(highlightElement, InspectionsBundle.message("inspection.move.condition.to.loop.description"), fixes);
       }
     };
   }
@@ -172,6 +171,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       CommentTracker ct = new CommentTracker();
       PsiExpression conditionCopy = (PsiExpression)ct.markUnchanged(context.myCondition).copy();
       ct.delete(context.myConditionStatement);
+      ct.insertCommentsBefore(loop);
       String loopText;
       if (context.myConditionInTheBeginning) {
         loopText = "while(" + BoolUtils.getNegatedExpressionText(conditionCopy) + ")" + context.myLoopBody.getText();
@@ -179,7 +179,7 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       else {
         loopText = "do" + context.myLoopBody.getText() + "while(" + BoolUtils.getNegatedExpressionText(conditionCopy) + ");";
       }
-      ct.replaceAndRestoreComments(context.myLoopStatement, loopText);
+      context.myLoopStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(loopText, context.myLoopStatement));
     }
   }
 }

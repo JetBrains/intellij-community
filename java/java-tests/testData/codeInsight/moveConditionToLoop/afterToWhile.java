@@ -2,8 +2,12 @@
 class Main {
   public static void main(String[] args) {
     int i = 0;
+      /*1*/
+      /*2*/
+      /*3*/
       while (i < 12) {
-          i++;
+          /*4*/
+          i =/*5*/ i + 1;/*6*/
       }
   }
 }
