@@ -10,27 +10,33 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;
 import org.jetbrains.idea.devkit.inspections.DescriptionType;
 import org.jetbrains.idea.devkit.inspections.InspectionDescriptionInfo;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvider {
   @NotNull
   @Override
   public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
-    PsiFile psiFile = context.getData(CommonDataKeys.PSI_FILE);
-    if (psiFile == null || psiFile.getFileType() != HtmlFileType.INSTANCE) {
+    PsiFile descriptionFile = context.getData(CommonDataKeys.PSI_FILE);
+    if (descriptionFile == null || descriptionFile.getFileType() != HtmlFileType.INSTANCE) {
       return Collections.emptyList();
     }
 
@@ -43,7 +49,7 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
       return Collections.emptyList();
     }
 
-    VirtualFile virtualFile = psiFile.getVirtualFile();
+    VirtualFile virtualFile = descriptionFile.getVirtualFile();
     if (virtualFile == null) {
       return Collections.emptyList();
     }
@@ -55,19 +61,49 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
     }
 
     PsiClass baseClass = JavaPsiFacade.getInstance(project).findClass(InspectionProfileEntry.class.getCanonicalName(),
-                                                                      GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+                                                                      GlobalSearchScope.allScope(project));
     if (baseClass == null) {
       return Collections.emptyList();
     }
 
-    Query<PsiClass> query = ClassInheritorsSearch.search(baseClass, module.getModuleWithDependenciesScope(), true, true, false);
-    for (PsiClass psiClass : query) {
-      InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
-      if (psiFile.equals(info.getDescriptionFile())) {
-        return GotoRelatedItem.createItems(Collections.singleton(psiClass));
+    // Try to find class by description name first. It may improve performance significantly.
+    PsiShortNamesCache psiShortNamesCache = PsiShortNamesCache.getInstance(project);
+    String possibleImplementationName = FileUtil.getNameWithoutExtension(descriptionFile.getName()) + "Inspection";
+    Set<PsiClass> checkedPossibleImplementation = new HashSet<>();
+    for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+      PsiClass[] possibleImplementations = psiShortNamesCache.getClassesByName(possibleImplementationName, scope);
+      for (PsiClass possibleImplementation : possibleImplementations) {
+        List<GotoRelatedItem> items = tryPsiClass(descriptionFile, possibleImplementation, module);
+        if (items != null) {
+          return items;
+        }
+        checkedPossibleImplementation.add(possibleImplementation);
+      }
+    }
+
+    for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
+      Query<PsiClass> query = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
+      for (PsiClass psiClass : query) {
+        if (checkedPossibleImplementation.contains(psiClass)) {
+          continue; // already tried this class
+        }
+
+        List<GotoRelatedItem> items = tryPsiClass(descriptionFile, psiClass, module);
+        if (items != null) {
+          return items;
+        }
       }
     }
 
     return Collections.emptyList();
+  }
+
+  @Nullable
+  private static List<GotoRelatedItem> tryPsiClass(PsiFile descriptionPsiFile, PsiClass psiClass, Module module) {
+    InspectionDescriptionInfo info = InspectionDescriptionInfo.create(module, psiClass);
+    if (descriptionPsiFile.equals(info.getDescriptionFile())) {
+      return GotoRelatedItem.createItems(Collections.singleton(psiClass));
+    }
+    return null;
   }
 }
