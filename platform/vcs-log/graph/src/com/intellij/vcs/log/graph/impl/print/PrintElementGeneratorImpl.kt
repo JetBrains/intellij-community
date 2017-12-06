@@ -78,7 +78,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
 
   fun getRecommendedWidth(): Int {
     if (myRecommendedWidth <= 0) {
-      val n = Math.min(SAMPLE_SIZE, myLinearGraph.nodesCount())
+      val n = Math.min(SAMPLE_SIZE, linearGraph.nodesCount())
 
       var sum = 0.0
       var sumSquares = 0.0
@@ -86,7 +86,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
       val currentNormalEdges = ContainerUtil.newHashSet<NormalEdge>()
 
       for (i in 0 until n) {
-        val adjacentEdges = myLinearGraph.getAdjacentEdges(i, EdgeFilter.ALL)
+        val adjacentEdges = linearGraph.getAdjacentEdges(i, EdgeFilter.ALL)
         var upArrows = 0
         var downArrows = 0
         for (e in adjacentEdges) {
@@ -157,19 +157,20 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
 
     for (startPosition in visibleElements.indices) {
       val element = visibleElements[startPosition]
-      if (element is GraphNode) {
-        val nodeIndex = element.nodeIndex
-        for (edge in myLinearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
-          if (isEdgeDown(edge, nodeIndex)) {
-            val endPos = endPosition(edge)
-            if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(edge, startPosition, endPos))
+      when (element) {
+        is GraphNode -> {
+          val nodeIndex = element.nodeIndex
+          for (edge in linearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
+            if (isEdgeDown(edge, nodeIndex)) {
+              val endPos = endPosition(edge)
+              if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(edge, startPosition, endPos))
+            }
           }
         }
-      }
-
-      if (element is GraphEdge) {
-        val endPos = endPosition(element)
-        if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(element, startPosition, endPos))
+        is GraphEdge -> {
+          val endPos = endPosition(element)
+          if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(element, startPosition, endPos))
+        }
       }
     }
 
@@ -187,8 +188,8 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     return { edge ->
       var position: Int? = toPosition[edge]
       if (position == null) {
-        val downNodeIndex = edge.getDownNodeIndex()
-        if (downNodeIndex != null) position = toPosition[myLinearGraph.getGraphNode(downNodeIndex!!)]
+        val downNodeIndex = edge.downNodeIndex
+        if (downNodeIndex != null) position = toPosition[linearGraph.getGraphNode(downNodeIndex)]
       }
       position
     }
@@ -269,13 +270,13 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
 
   private fun addSpecialEdges(result: MutableList<GraphElement>, rowIndex: Int) {
     if (rowIndex > 0) {
-      for (edge in myLinearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
+      for (edge in linearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
         assert(!edge.type.isNormalEdge)
         if (isEdgeDown(edge, rowIndex - 1)) result.add(edge)
       }
     }
-    if (rowIndex < myLinearGraph.nodesCount() - 1) {
-      for (edge in myLinearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
+    if (rowIndex < linearGraph.nodesCount() - 1) {
+      for (edge in linearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
         assert(!edge.type.isNormalEdge)
         if (isEdgeUp(edge, rowIndex + 1)) result.add(edge)
       }
@@ -289,17 +290,19 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     }
 
     val result = ArrayList<GraphElement>()
-    result.add(myLinearGraph.getGraphNode(rowIndex))
+    result.add(linearGraph.getGraphNode(rowIndex))
 
-    for (edge in myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {
-      if (isEdgeVisibleInRow(edge, rowIndex)) result.add(edge)
-    }
+    myEdgesInRowGenerator.getEdgesInRow(rowIndex).filterTo(result) { isEdgeVisibleInRow(it, rowIndex) }
 
     addSpecialEdges(result, rowIndex)
 
     Collections.sort(result, myGraphElementComparator)
     myCache.put(rowIndex, result)
     return result
+  }
+
+  private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
+    return Math.min(rowIndex - e1.up, e1.down - rowIndex)
   }
 
   companion object {
@@ -314,9 +317,5 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     private val SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true
     private val SAMPLE_SIZE = 20000
     private val K = 0.1
-
-    private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
-      return Math.min(rowIndex - e1.up, e1.down - rowIndex)
-    }
   }
 }

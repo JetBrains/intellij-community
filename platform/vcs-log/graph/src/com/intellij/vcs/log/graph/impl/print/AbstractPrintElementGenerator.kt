@@ -28,10 +28,10 @@ import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphEleme
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import java.lang.IllegalStateException
+import java.util.*
 
-import java.util.ArrayList
-
-abstract class AbstractPrintElementGenerator protected constructor(protected val myLinearGraph: LinearGraph, protected val myPrintElementManager: PrintElementManager) : PrintElementGenerator {
+abstract class AbstractPrintElementGenerator protected constructor(protected val linearGraph: LinearGraph,
+                                                                   private val printElementManager: PrintElementManager) : PrintElementGenerator {
 
   override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
     val result = ArrayList<PrintElementWithGraphElement>()
@@ -39,13 +39,11 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     val simpleRowElements = getSimpleRowElements(rowIndex)
 
     val arrows = ContainerUtil.newHashMap<GraphEdge, SimpleRowElement>()
-    for (rowElement in simpleRowElements) {
-      if (rowElement.myType != RowElementType.NODE) {
-        arrows.put(rowElement.myElement as GraphEdge, rowElement)
-      }
-    }
+    simpleRowElements
+        .filter { it.myType != RowElementType.NODE }
+        .forEach { arrows.put(it.myElement as GraphEdge, it) }
 
-    if (rowIndex < myLinearGraph.nodesCount() - 1) {
+    if (rowIndex < linearGraph.nodesCount() - 1) {
       for (shortEdge in getDownShortEdges(rowIndex)) {
         var rowElementType = RowElementType.NODE
         if (arrows[shortEdge.myEdge] != null && RowElementType.DOWN_ARROW == arrows[shortEdge.myEdge]!!.myType) {
@@ -67,25 +65,23 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
       }
     }
 
-    for (arrow in arrows.values) {
-      result.add(TerminalEdgePrintElement(rowIndex, arrow.myPosition, if (arrow.myType == RowElementType.UP_ARROW)
+    arrows.values.mapTo(result) {
+      TerminalEdgePrintElement(rowIndex, it.myPosition, if (it.myType == RowElementType.UP_ARROW)
         EdgePrintElement.Type.UP
       else
-        EdgePrintElement.Type.DOWN, arrow.myElement as GraphEdge,
-          myPrintElementManager))
+        EdgePrintElement.Type.DOWN, it.myElement as GraphEdge,
+          printElementManager)
     }
 
-    for (rowElement in simpleRowElements) {
-      if (rowElement.myType == RowElementType.NODE) {
-        result.add(createSimplePrintElement(rowIndex, rowElement))
-      }
-    }
+    simpleRowElements
+        .filter { it.myType == RowElementType.NODE }
+        .mapTo(result) { createSimplePrintElement(rowIndex, it) }
 
     return result
   }
 
   private fun createSimplePrintElement(rowIndex: Int, rowElement: SimpleRowElement): SimplePrintElementImpl {
-    return SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, myPrintElementManager)
+    return SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, printElementManager)
   }
 
   private fun createEdgePrintElement(rowIndex: Int,
@@ -103,7 +99,7 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
       positionInOtherRow = shortEdge.myUpPosition
     }
     return EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, hasArrow,
-        myPrintElementManager)
+        printElementManager)
   }
 
   override fun withGraphElement(printElement: PrintElement): PrintElementWithGraphElement {
@@ -111,11 +107,8 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
       return printElement
     }
 
-    val rowIndex = printElement.rowIndex
-    for (printElementWithGE in getPrintElements(rowIndex)) {
-      if (printElementWithGE == printElement) return printElementWithGE
-    }
-    throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
+    return getPrintElements(printElement.rowIndex).find { it == printElement } ?:
+        throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
   }
 
   // rowIndex in [0, getCountVisibleRow() - 2]
