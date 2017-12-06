@@ -122,6 +122,18 @@ public class NullnessUtil {
   }
 
   public static Nullness getExpressionNullness(@Nullable PsiExpression expression) {
+    return getExpressionNullness(expression, false);
+  }
+
+  /**
+   * Tries to determine an expression nullness
+   *
+   * @param expression an expression to check
+   * @param useDataflow whether to use dataflow (more expensive, but may produce more precise result)
+   * @return expression nullness. UNKNOWN if unable to determine;
+   * NULLABLE if known to possibly have null value; NOT_NULL if definitely never null.
+   */
+  public static Nullness getExpressionNullness(@Nullable PsiExpression expression, boolean useDataflow) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression == null) return Nullness.UNKNOWN;
     if (expression.textMatches(PsiKeyword.NULL)) return Nullness.NULLABLE;
@@ -136,13 +148,13 @@ public class NullnessUtil {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
       if (thenExpression == null || elseExpression == null) return Nullness.UNKNOWN;
-      Nullness left = getExpressionNullness(thenExpression);
+      Nullness left = getExpressionNullness(thenExpression, useDataflow);
       if (left == Nullness.UNKNOWN) return Nullness.UNKNOWN;
-      Nullness right = getExpressionNullness(elseExpression);
+      Nullness right = getExpressionNullness(elseExpression, useDataflow);
       return left == right ? left : Nullness.UNKNOWN;
     }
     if (expression instanceof PsiTypeCastExpression) {
-      return getExpressionNullness(((PsiTypeCastExpression)expression).getOperand());
+      return getExpressionNullness(((PsiTypeCastExpression)expression).getOperand(), useDataflow);
     }
     if (expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();
@@ -151,9 +163,12 @@ public class NullnessUtil {
     if (expression instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        return getExpressionNullness(assignment.getRExpression());
+        return getExpressionNullness(assignment.getRExpression(), useDataflow);
       }
       return Nullness.NOT_NULL;
+    }
+    if (useDataflow) {
+      return fromBoolean(CommonDataflow.getExpressionFact(expression, DfaFactType.CAN_BE_NULL));
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
