@@ -444,6 +444,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
 
       @Override
       public void update(AnActionEvent e) {
+        super.update(e);
         e.getPresentation().setEnabledAndVisible(getHelpId(e.getDataContext()) != null);
       }
     });
