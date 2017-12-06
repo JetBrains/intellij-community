@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -174,7 +176,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     ConfigurationState state = XmlSerializer.deserialize(element, ConfigurationState.class);
     myServerName = null;
@@ -211,7 +213,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     ConfigurationState state = new ConfigurationState();
     state.myServerName = myServerName;
     if (myDeploymentSource != null) {
