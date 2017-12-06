@@ -13,156 +13,121 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.vcs.log.graph.impl.print;
+package com.intellij.vcs.log.graph.impl.print
 
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.graph.EdgePrintElement;
-import com.intellij.vcs.log.graph.PrintElement;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
-import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl;
-import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
-import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl;
-import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.vcs.log.graph.EdgePrintElement
+import com.intellij.vcs.log.graph.PrintElement
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
+import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
+import java.lang.IllegalStateException
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.ArrayList
 
-public abstract class AbstractPrintElementGenerator implements PrintElementGenerator {
+abstract class AbstractPrintElementGenerator protected constructor(protected val myLinearGraph: LinearGraph, protected val myPrintElementManager: PrintElementManager) : PrintElementGenerator {
 
-  @NotNull protected final LinearGraph myLinearGraph;
-  @NotNull protected final PrintElementManager myPrintElementManager;
+  override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
+    val result = ArrayList<PrintElementWithGraphElement>()
 
-  protected AbstractPrintElementGenerator(@NotNull LinearGraph linearGraph, @NotNull PrintElementManager printElementManager) {
-    myLinearGraph = linearGraph;
-    myPrintElementManager = printElementManager;
-  }
+    val simpleRowElements = getSimpleRowElements(rowIndex)
 
-  @NotNull
-  public Collection<PrintElementWithGraphElement> getPrintElements(int rowIndex) {
-    Collection<PrintElementWithGraphElement> result = new ArrayList<>();
-
-    Collection<SimpleRowElement> simpleRowElements = getSimpleRowElements(rowIndex);
-
-    Map<GraphEdge, SimpleRowElement> arrows = ContainerUtil.newHashMap();
-    for (SimpleRowElement rowElement : simpleRowElements) {
-      if (!rowElement.myType.equals(RowElementType.NODE)) {
-        arrows.put((GraphEdge)rowElement.myElement, rowElement);
+    val arrows = ContainerUtil.newHashMap<GraphEdge, SimpleRowElement>()
+    for (rowElement in simpleRowElements) {
+      if (rowElement.myType != RowElementType.NODE) {
+        arrows.put(rowElement.myElement as GraphEdge, rowElement)
       }
     }
 
     if (rowIndex < myLinearGraph.nodesCount() - 1) {
-      for (ShortEdge shortEdge : getDownShortEdges(rowIndex)) {
-        RowElementType rowElementType = RowElementType.NODE;
-        if ((arrows.get(shortEdge.myEdge) != null) && RowElementType.DOWN_ARROW.equals(arrows.get(shortEdge.myEdge).myType)) {
-          rowElementType = RowElementType.DOWN_ARROW;
-          arrows.remove(shortEdge.myEdge);
+      for (shortEdge in getDownShortEdges(rowIndex)) {
+        var rowElementType = RowElementType.NODE
+        if (arrows[shortEdge.myEdge] != null && RowElementType.DOWN_ARROW == arrows[shortEdge.myEdge]!!.myType) {
+          rowElementType = RowElementType.DOWN_ARROW
+          arrows.remove(shortEdge.myEdge)
         }
-        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN, !rowElementType.equals(RowElementType.NODE)));
+        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN, rowElementType != RowElementType.NODE))
       }
     }
 
     if (rowIndex > 0) {
-      for (ShortEdge shortEdge : getDownShortEdges(rowIndex - 1)) {
-        RowElementType rowElementType = RowElementType.NODE;
-        if ((arrows.get(shortEdge.myEdge) != null) && RowElementType.UP_ARROW.equals(arrows.get(shortEdge.myEdge).myType)) {
-          rowElementType = RowElementType.UP_ARROW;
-          arrows.remove(shortEdge.myEdge);
+      for (shortEdge in getDownShortEdges(rowIndex - 1)) {
+        var rowElementType = RowElementType.NODE
+        if (arrows[shortEdge.myEdge] != null && RowElementType.UP_ARROW == arrows[shortEdge.myEdge]!!.myType) {
+          rowElementType = RowElementType.UP_ARROW
+          arrows.remove(shortEdge.myEdge)
         }
-        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP, !rowElementType.equals(RowElementType.NODE)));
+        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP, rowElementType != RowElementType.NODE))
       }
     }
 
-    for (SimpleRowElement arrow : arrows.values()) {
-      result.add(new TerminalEdgePrintElement(rowIndex, arrow.myPosition, arrow.myType == RowElementType.UP_ARROW
-                                                                          ? EdgePrintElement.Type.UP
-                                                                          : EdgePrintElement.Type.DOWN, (GraphEdge)arrow.myElement,
-                                              myPrintElementManager));
+    for (arrow in arrows.values) {
+      result.add(TerminalEdgePrintElement(rowIndex, arrow.myPosition, if (arrow.myType == RowElementType.UP_ARROW)
+        EdgePrintElement.Type.UP
+      else
+        EdgePrintElement.Type.DOWN, arrow.myElement as GraphEdge,
+          myPrintElementManager))
     }
 
-    for (SimpleRowElement rowElement : simpleRowElements) {
-      if (rowElement.myType.equals(RowElementType.NODE)) {
-        result.add(createSimplePrintElement(rowIndex, rowElement));
+    for (rowElement in simpleRowElements) {
+      if (rowElement.myType == RowElementType.NODE) {
+        result.add(createSimplePrintElement(rowIndex, rowElement))
       }
     }
 
-    return result;
+    return result
   }
 
-  @NotNull
-  private SimplePrintElementImpl createSimplePrintElement(int rowIndex, @NotNull SimpleRowElement rowElement) {
-    return new SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, myPrintElementManager);
+  private fun createSimplePrintElement(rowIndex: Int, rowElement: SimpleRowElement): SimplePrintElementImpl {
+    return SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, myPrintElementManager)
   }
 
-  @NotNull
-  private EdgePrintElementImpl createEdgePrintElement(int rowIndex,
-                                                      @NotNull ShortEdge shortEdge,
-                                                      @NotNull EdgePrintElement.Type type,
-                                                      boolean hasArrow) {
-    int positionInCurrentRow, positionInOtherRow;
+  private fun createEdgePrintElement(rowIndex: Int,
+                                     shortEdge: ShortEdge,
+                                     type: EdgePrintElement.Type,
+                                     hasArrow: Boolean): EdgePrintElementImpl {
+    val positionInCurrentRow: Int
+    val positionInOtherRow: Int
     if (type == EdgePrintElement.Type.DOWN) {
-      positionInCurrentRow = shortEdge.myUpPosition;
-      positionInOtherRow = shortEdge.myDownPosition;
+      positionInCurrentRow = shortEdge.myUpPosition
+      positionInOtherRow = shortEdge.myDownPosition
     }
     else {
-      positionInCurrentRow = shortEdge.myDownPosition;
-      positionInOtherRow = shortEdge.myUpPosition;
+      positionInCurrentRow = shortEdge.myDownPosition
+      positionInOtherRow = shortEdge.myUpPosition
     }
-    return new EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, hasArrow,
-                                    myPrintElementManager);
+    return EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, hasArrow,
+        myPrintElementManager)
   }
 
-  @NotNull
-  @Override
-  public PrintElementWithGraphElement withGraphElement(@NotNull PrintElement printElement) {
-    if (printElement instanceof PrintElementWithGraphElement) {
-      return (PrintElementWithGraphElement)printElement;
+  override fun withGraphElement(printElement: PrintElement): PrintElementWithGraphElement {
+    if (printElement is PrintElementWithGraphElement) {
+      return printElement
     }
 
-    int rowIndex = printElement.getRowIndex();
-    for (PrintElementWithGraphElement printElementWithGE : getPrintElements(rowIndex)) {
-      if (printElementWithGE.equals(printElement)) return printElementWithGE;
+    val rowIndex = printElement.rowIndex
+    for (printElementWithGE in getPrintElements(rowIndex)) {
+      if (printElementWithGE == printElement) return printElementWithGE
     }
-    throw new IllegalStateException("Not found graphElement for this printElement: " + printElement);
+    throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
   }
 
   // rowIndex in [0, getCountVisibleRow() - 2]
-  @NotNull
-  protected abstract Collection<ShortEdge> getDownShortEdges(int rowIndex);
+  protected abstract fun getDownShortEdges(rowIndex: Int): Collection<ShortEdge>
 
-  @NotNull
-  protected abstract Collection<SimpleRowElement> getSimpleRowElements(int rowIndex);
+  protected abstract fun getSimpleRowElements(rowIndex: Int): Collection<SimpleRowElement>
 
-  protected static class ShortEdge {
-    @NotNull public final GraphEdge myEdge;
-    public final int myUpPosition;
-    public final int myDownPosition;
+  protected class ShortEdge(val myEdge: GraphEdge, val myUpPosition: Int, val myDownPosition: Int)
 
-    public ShortEdge(@NotNull GraphEdge edge, int upPosition, int downPosition) {
-      myEdge = edge;
-      myUpPosition = upPosition;
-      myDownPosition = downPosition;
-    }
-  }
+  protected class SimpleRowElement(val myElement: GraphElement, val myType: RowElementType, val myPosition: Int)
 
-  protected static class SimpleRowElement {
-    @NotNull public final GraphElement myElement;
-    @NotNull public final RowElementType myType;
-    public final int myPosition;
-
-    public SimpleRowElement(@NotNull GraphElement element, @NotNull RowElementType type, int position) {
-      myElement = element;
-      myPosition = position;
-      myType = type;
-    }
-  }
-
-  enum RowElementType {
+  protected enum class RowElementType {
     NODE,
     UP_ARROW,
     DOWN_ARROW

@@ -14,333 +14,309 @@
  * limitations under the License.
  */
 
-package com.intellij.vcs.log.graph.impl.print;
+package com.intellij.vcs.log.graph.impl.print
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SLRUMap;
-import com.intellij.vcs.log.graph.api.EdgeFilter;
-import com.intellij.vcs.log.graph.api.LinearGraph;
-import com.intellij.vcs.log.graph.api.elements.GraphEdge;
-import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
-import com.intellij.vcs.log.graph.api.elements.GraphElement;
-import com.intellij.vcs.log.graph.api.elements.GraphNode;
-import com.intellij.vcs.log.graph.api.printer.PrintElementManager;
-import com.intellij.vcs.log.graph.utils.NormalEdge;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.SmartList
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.SLRUMap
+import com.intellij.vcs.log.graph.api.EdgeFilter
+import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.elements.GraphEdge
+import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
+import com.intellij.vcs.log.graph.utils.NormalEdge
+import org.jetbrains.annotations.TestOnly
+import java.util.*
 
-import java.util.*;
+class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
 
-import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.*;
+  private val myCache = SLRUMap<Int, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2)
+  private val myEdgesInRowGenerator: EdgesInRowGenerator
+  private val myGraphElementComparator: Comparator<GraphElement>
 
-public class PrintElementGeneratorImpl extends AbstractPrintElementGenerator {
-  @NotNull private static final Logger LOG = Logger.getInstance(PrintElementGeneratorImpl.class);
+  private val myLongEdgeSize: Int
+  private val myVisiblePartSize: Int
+  private val myEdgeWithArrowSize: Int
+  private var myRecommendedWidth = 0
 
-  public static final int LONG_EDGE_SIZE = 30;
-  private static final int LONG_EDGE_PART_SIZE = 1;
-
-  private static final int VERY_LONG_EDGE_SIZE = 1000;
-  private static final int VERY_LONG_EDGE_PART_SIZE = 250;
-  private static final int CACHE_SIZE = 100;
-  private static final boolean SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true;
-  private static final int SAMPLE_SIZE = 20000;
-  private static final double K = 0.1;
-
-  @NotNull private final SLRUMap<Integer, List<GraphElement>> myCache = new SLRUMap<>(CACHE_SIZE, CACHE_SIZE * 2);
-  @NotNull private final EdgesInRowGenerator myEdgesInRowGenerator;
-  @NotNull private final Comparator<GraphElement> myGraphElementComparator;
-
-  private final int myLongEdgeSize;
-  private final int myVisiblePartSize;
-  private final int myEdgeWithArrowSize;
-  private int myRecommendedWidth = 0;
-
-  public PrintElementGeneratorImpl(@NotNull LinearGraph graph, @NotNull PrintElementManager printElementManager, boolean showLongEdges) {
-    super(graph, printElementManager);
-    myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = printElementManager.getGraphElementComparator();
+  constructor(graph: LinearGraph, printElementManager: PrintElementManager, showLongEdges: Boolean) : super(graph, printElementManager) {
+    myEdgesInRowGenerator = EdgesInRowGenerator(graph)
+    myGraphElementComparator = printElementManager.graphElementComparator
     if (showLongEdges) {
-      myLongEdgeSize = VERY_LONG_EDGE_SIZE;
-      myVisiblePartSize = VERY_LONG_EDGE_PART_SIZE;
-      if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES) {
-        myEdgeWithArrowSize = LONG_EDGE_SIZE;
+      myLongEdgeSize = VERY_LONG_EDGE_SIZE
+      myVisiblePartSize = VERY_LONG_EDGE_PART_SIZE
+      myEdgeWithArrowSize = if (SHOW_ARROW_WHEN_SHOW_LONG_EDGES) {
+        LONG_EDGE_SIZE
       }
       else {
-        myEdgeWithArrowSize = Integer.MAX_VALUE;
+        Integer.MAX_VALUE
       }
     }
     else {
-      myLongEdgeSize = LONG_EDGE_SIZE;
-      myVisiblePartSize = LONG_EDGE_PART_SIZE;
-      myEdgeWithArrowSize = Integer.MAX_VALUE;
+      myLongEdgeSize = LONG_EDGE_SIZE
+      myVisiblePartSize = LONG_EDGE_PART_SIZE
+      myEdgeWithArrowSize = Integer.MAX_VALUE
     }
   }
 
   @TestOnly
-  public PrintElementGeneratorImpl(@NotNull LinearGraph graph,
-                                   @NotNull PrintElementManager printElementManager,
-                                   int longEdgeSize,
-                                   int visiblePartSize,
-                                   int edgeWithArrowSize) {
-    super(graph, printElementManager);
-    myEdgesInRowGenerator = new EdgesInRowGenerator(graph);
-    myGraphElementComparator = printElementManager.getGraphElementComparator();
-    myLongEdgeSize = longEdgeSize;
-    myVisiblePartSize = visiblePartSize;
-    myEdgeWithArrowSize = edgeWithArrowSize;
+  constructor(graph: LinearGraph,
+              printElementManager: PrintElementManager,
+              longEdgeSize: Int,
+              visiblePartSize: Int,
+              edgeWithArrowSize: Int) : super(graph, printElementManager) {
+    myEdgesInRowGenerator = EdgesInRowGenerator(graph)
+    myGraphElementComparator = printElementManager.graphElementComparator
+    myLongEdgeSize = longEdgeSize
+    myVisiblePartSize = visiblePartSize
+    myEdgeWithArrowSize = edgeWithArrowSize
   }
 
-  public int getRecommendedWidth() {
+  fun getRecommendedWidth(): Int {
     if (myRecommendedWidth <= 0) {
-      int n = Math.min(SAMPLE_SIZE, myLinearGraph.nodesCount());
+      val n = Math.min(SAMPLE_SIZE, myLinearGraph.nodesCount())
 
-      double sum = 0;
-      double sumSquares = 0;
-      int edgesCount = 0;
-      Set<NormalEdge> currentNormalEdges = ContainerUtil.newHashSet();
+      var sum = 0.0
+      var sumSquares = 0.0
+      var edgesCount = 0
+      val currentNormalEdges = ContainerUtil.newHashSet<NormalEdge>()
 
-      for (int i = 0; i < n; i++) {
-        List<GraphEdge> adjacentEdges = myLinearGraph.getAdjacentEdges(i, EdgeFilter.ALL);
-        int upArrows = 0;
-        int downArrows = 0;
-        for (GraphEdge e : adjacentEdges) {
-          NormalEdge normalEdge = asNormalEdge(e);
+      for (i in 0 until n) {
+        val adjacentEdges = myLinearGraph.getAdjacentEdges(i, EdgeFilter.ALL)
+        var upArrows = 0
+        var downArrows = 0
+        for (e in adjacentEdges) {
+          val normalEdge = asNormalEdge(e)
           if (normalEdge != null) {
             if (isEdgeUp(e, i)) {
-              currentNormalEdges.remove(normalEdge);
+              currentNormalEdges.remove(normalEdge)
             }
             else {
-              currentNormalEdges.add(normalEdge);
+              currentNormalEdges.add(normalEdge)
             }
           }
           else {
-            if (e.getType() == GraphEdgeType.DOTTED_ARROW_UP) {
-              upArrows++;
+            if (e.type == GraphEdgeType.DOTTED_ARROW_UP) {
+              upArrows++
             }
             else {
-              downArrows++;
+              downArrows++
             }
           }
         }
 
-        int newEdgesCount = 0;
-        for (NormalEdge e : currentNormalEdges) {
+        var newEdgesCount = 0
+        for (e in currentNormalEdges) {
           if (isEdgeVisibleInRow(e, i)) {
-            newEdgesCount++;
+            newEdgesCount++
           }
           else {
-            RowElementType arrow = getArrowType(e, i);
-            if (arrow == RowElementType.DOWN_ARROW) {
-              downArrows++;
+            val arrow = getArrowType(e, i)
+            if (arrow === AbstractPrintElementGenerator.RowElementType.DOWN_ARROW) {
+              downArrows++
             }
-            else if (arrow == RowElementType.UP_ARROW) {
-              upArrows++;
+            else if (arrow === AbstractPrintElementGenerator.RowElementType.UP_ARROW) {
+              upArrows++
             }
           }
         }
-
-        int width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows);
 
         /*
          * 0 <= K < 1; weight is an arithmetic progression, starting at 2 / ( n * (k + 1)) ending at k * 2 / ( n * (k + 1))
          * this formula ensures that sum of all weights is 1
          */
-        double weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1));
-        sum += width * weight;
-        sumSquares += width * width * weight;
+        val width = Math.max(edgesCount + upArrows, newEdgesCount + downArrows)
+        val weight = 2 / (n * (K + 1)) * (1 + (K - 1) * i / (n - 1))
+        sum += width * weight
+        sumSquares += width.toDouble() * width.toDouble() * weight
 
-        edgesCount = newEdgesCount;
+        edgesCount = newEdgesCount
       }
 
       /*
       weighted variance calculation described here:
       http://stackoverflow.com/questions/30383270/how-do-i-calculate-the-standard-deviation-between-weighted-measurements
-       */
-      double average = sum;
-      double deviation = Math.sqrt(sumSquares - average * average);
-      myRecommendedWidth = (int)Math.round(average + deviation);
+       s*/
+      val average = sum
+      val deviation = Math.sqrt(sumSquares - average * average)
+      myRecommendedWidth = Math.round(average + deviation).toInt()
     }
 
-    return myRecommendedWidth;
+    return myRecommendedWidth
   }
 
-  @NotNull
-  @Override
-  protected List<ShortEdge> getDownShortEdges(int rowIndex) {
-    NullableFunction<GraphEdge, Integer> endPosition = createEndPositionFunction(rowIndex);
+  override fun getDownShortEdges(rowIndex: Int): List<AbstractPrintElementGenerator.ShortEdge> {
+    val endPosition = createEndPositionFunction(rowIndex)
 
-    List<ShortEdge> result = new ArrayList<>();
-    List<GraphElement> visibleElements = getSortedVisibleElementsInRow(rowIndex);
+    val result = ArrayList<AbstractPrintElementGenerator.ShortEdge>()
+    val visibleElements = getSortedVisibleElementsInRow(rowIndex)
 
-    for (int startPosition = 0; startPosition < visibleElements.size(); startPosition++) {
-      GraphElement element = visibleElements.get(startPosition);
-      if (element instanceof GraphNode) {
-        int nodeIndex = ((GraphNode)element).getNodeIndex();
-        for (GraphEdge edge : myLinearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
+    for (startPosition in visibleElements.indices) {
+      val element = visibleElements[startPosition]
+      if (element is GraphNode) {
+        val nodeIndex = element.nodeIndex
+        for (edge in myLinearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
           if (isEdgeDown(edge, nodeIndex)) {
-            Integer endPos = endPosition.fun(edge);
-            if (endPos != null) result.add(new ShortEdge(edge, startPosition, endPos));
+            val endPos = endPosition(edge)
+            if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(edge, startPosition, endPos))
           }
         }
       }
 
-      if (element instanceof GraphEdge) {
-        GraphEdge edge = (GraphEdge)element;
-        Integer endPos = endPosition.fun(edge);
-        if (endPos != null) result.add(new ShortEdge(edge, startPosition, endPos));
+      if (element is GraphEdge) {
+        val endPos = endPosition(element)
+        if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(element, startPosition, endPos))
       }
     }
 
-    return result;
+    return result
   }
 
-  @NotNull
-  private NullableFunction<GraphEdge, Integer> createEndPositionFunction(int visibleRowIndex) {
-    List<GraphElement> visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex + 1);
+  private fun createEndPositionFunction(visibleRowIndex: Int): (GraphEdge) -> Int? {
+    val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex + 1)
 
-    final Map<GraphElement, Integer> toPosition = new HashMap<>();
-    for (int position = 0; position < visibleElementsInNextRow.size(); position++) {
-      toPosition.put(visibleElementsInNextRow.get(position), position);
+    val toPosition = HashMap<GraphElement, Int>()
+    for (position in visibleElementsInNextRow.indices) {
+      toPosition.put(visibleElementsInNextRow[position], position)
     }
 
-    return edge -> {
-      Integer position = toPosition.get(edge);
+    return { edge ->
+      var position: Int? = toPosition[edge]
       if (position == null) {
-        Integer downNodeIndex = edge.getDownNodeIndex();
-        if (downNodeIndex != null) position = toPosition.get(myLinearGraph.getGraphNode(downNodeIndex));
+        val downNodeIndex = edge.getDownNodeIndex()
+        if (downNodeIndex != null) position = toPosition[myLinearGraph.getGraphNode(downNodeIndex!!)]
       }
-      return position;
-    };
+      position
+    }
   }
 
-  @NotNull
-  @Override
-  protected List<SimpleRowElement> getSimpleRowElements(int visibleRowIndex) {
-    List<SimpleRowElement> result = new SmartList<>();
-    List<GraphElement> sortedVisibleElementsInRow = getSortedVisibleElementsInRow(visibleRowIndex);
+  override fun getSimpleRowElements(rowIndex: Int): List<AbstractPrintElementGenerator.SimpleRowElement> {
+    val result = SmartList<AbstractPrintElementGenerator.SimpleRowElement>()
+    val sortedVisibleElementsInRow = getSortedVisibleElementsInRow(rowIndex)
 
-    for (int position = 0; position < sortedVisibleElementsInRow.size(); position++) {
-      GraphElement element = sortedVisibleElementsInRow.get(position);
-      if (element instanceof GraphNode) {
-        result.add(new SimpleRowElement(element, RowElementType.NODE, position));
+    for (position in sortedVisibleElementsInRow.indices) {
+      val element = sortedVisibleElementsInRow[position]
+      if (element is GraphNode) {
+        result.add(AbstractPrintElementGenerator.SimpleRowElement(element, AbstractPrintElementGenerator.RowElementType.NODE, position))
       }
 
-      if (element instanceof GraphEdge) {
-        GraphEdge edge = (GraphEdge)element;
-        RowElementType arrowType = getArrowType(edge, visibleRowIndex);
+      if (element is GraphEdge) {
+        val arrowType = getArrowType(element, rowIndex)
         if (arrowType != null) {
-          result.add(new SimpleRowElement(edge, arrowType, position));
+          result.add(AbstractPrintElementGenerator.SimpleRowElement(element, arrowType, position))
         }
       }
     }
-    return result;
+    return result
   }
 
-  @Nullable
-  private RowElementType getArrowType(@NotNull GraphEdge edge, int rowIndex) {
-    NormalEdge normalEdge = asNormalEdge(edge);
+  private fun getArrowType(edge: GraphEdge, rowIndex: Int): AbstractPrintElementGenerator.RowElementType? {
+    val normalEdge = asNormalEdge(edge)
     if (normalEdge != null) {
-      return getArrowType(normalEdge, rowIndex);
+      return getArrowType(normalEdge, rowIndex)
     }
     else { // special edges
-      switch (edge.getType()) {
-        case DOTTED_ARROW_DOWN:
-        case NOT_LOAD_COMMIT:
-          if (intEqual(edge.getUpNodeIndex(), rowIndex - 1)) {
-            return RowElementType.DOWN_ARROW;
-          }
-          break;
-        case DOTTED_ARROW_UP:
+      when (edge.type) {
+        GraphEdgeType.DOTTED_ARROW_DOWN, GraphEdgeType.NOT_LOAD_COMMIT -> if (intEqual(edge.upNodeIndex, rowIndex - 1)) {
+          return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
+        }
+        GraphEdgeType.DOTTED_ARROW_UP ->
           // todo case 0-row arrow
-          if (intEqual(edge.getDownNodeIndex(), rowIndex + 1)) {
-            return RowElementType.UP_ARROW;
+          if (intEqual(edge.downNodeIndex, rowIndex + 1)) {
+            return AbstractPrintElementGenerator.RowElementType.UP_ARROW
           }
-          break;
-        default:
-          LOG.error("Unknown special edge type " + edge.getType() + " at row " + rowIndex);
+        else -> LOG.error("Unknown special edge type " + edge.type + " at row " + rowIndex)
       }
     }
-    return null;
+    return null
   }
 
-  @Nullable
-  private RowElementType getArrowType(@NotNull NormalEdge normalEdge, int rowIndex) {
-    int edgeSize = normalEdge.down - normalEdge.up;
-    int upOffset = rowIndex - normalEdge.up;
-    int downOffset = normalEdge.down - rowIndex;
+  private fun getArrowType(normalEdge: NormalEdge, rowIndex: Int): AbstractPrintElementGenerator.RowElementType? {
+    val edgeSize = normalEdge.down - normalEdge.up
+    val upOffset = rowIndex - normalEdge.up
+    val downOffset = normalEdge.down - rowIndex
 
     if (edgeSize >= myLongEdgeSize) {
       if (upOffset == myVisiblePartSize) {
-        LOG.assertTrue(downOffset != myVisiblePartSize, "Both up and down arrow at row " +
-                                                        rowIndex); // this can not happen due to how constants are picked out, but just in case
-        return RowElementType.DOWN_ARROW;
+        LOG.assertTrue(downOffset != myVisiblePartSize, "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
+        return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
       }
-      if (downOffset == myVisiblePartSize) return RowElementType.UP_ARROW;
+      if (downOffset == myVisiblePartSize) return AbstractPrintElementGenerator.RowElementType.UP_ARROW
     }
     if (edgeSize >= myEdgeWithArrowSize) {
       if (upOffset == 1) {
-        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex);
-        return RowElementType.DOWN_ARROW;
+        LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex)
+        return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
       }
-      if (downOffset == 1) return RowElementType.UP_ARROW;
+      if (downOffset == 1) return AbstractPrintElementGenerator.RowElementType.UP_ARROW
     }
-    return null;
+    return null
   }
 
-  private boolean isEdgeVisibleInRow(@NotNull GraphEdge edge, int visibleRowIndex) {
-    NormalEdge normalEdge = asNormalEdge(edge);
-    if (normalEdge == null) {
-      // e.d. edge is special. See addSpecialEdges
-      return false;
-    }
-    return isEdgeVisibleInRow(normalEdge, visibleRowIndex);
+  private fun isEdgeVisibleInRow(edge: GraphEdge, visibleRowIndex: Int): Boolean {
+    val normalEdge = asNormalEdge(edge) ?: // e.d. edge is special. See addSpecialEdges
+        return false
+    return isEdgeVisibleInRow(normalEdge, visibleRowIndex)
   }
 
-  private boolean isEdgeVisibleInRow(@NotNull NormalEdge normalEdge, int visibleRowIndex) {
-    return normalEdge.down - normalEdge.up < myLongEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= myVisiblePartSize;
+  private fun isEdgeVisibleInRow(normalEdge: NormalEdge, visibleRowIndex: Int): Boolean {
+    return normalEdge.down - normalEdge.up < myLongEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= myVisiblePartSize
   }
 
-  private void addSpecialEdges(@NotNull List<GraphElement> result, int rowIndex) {
+  private fun addSpecialEdges(result: MutableList<GraphElement>, rowIndex: Int) {
     if (rowIndex > 0) {
-      for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
-        assert !edge.getType().isNormalEdge();
-        if (isEdgeDown(edge, rowIndex - 1)) result.add(edge);
+      for (edge in myLinearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
+        assert(!edge.type.isNormalEdge)
+        if (isEdgeDown(edge, rowIndex - 1)) result.add(edge)
       }
     }
     if (rowIndex < myLinearGraph.nodesCount() - 1) {
-      for (GraphEdge edge : myLinearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
-        assert !edge.getType().isNormalEdge();
-        if (isEdgeUp(edge, rowIndex + 1)) result.add(edge);
+      for (edge in myLinearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
+        assert(!edge.type.isNormalEdge)
+        if (isEdgeUp(edge, rowIndex + 1)) result.add(edge)
       }
     }
   }
 
-  @NotNull
-  private List<GraphElement> getSortedVisibleElementsInRow(int rowIndex) {
-    List<GraphElement> graphElements = myCache.get(rowIndex);
+  private fun getSortedVisibleElementsInRow(rowIndex: Int): List<GraphElement> {
+    val graphElements = myCache.get(rowIndex)
     if (graphElements != null) {
-      return graphElements;
+      return graphElements
     }
 
-    List<GraphElement> result = new ArrayList<>();
-    result.add(myLinearGraph.getGraphNode(rowIndex));
+    val result = ArrayList<GraphElement>()
+    result.add(myLinearGraph.getGraphNode(rowIndex))
 
-    for (GraphEdge edge : myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {
-      if (isEdgeVisibleInRow(edge, rowIndex)) result.add(edge);
+    for (edge in myEdgesInRowGenerator.getEdgesInRow(rowIndex)) {
+      if (isEdgeVisibleInRow(edge, rowIndex)) result.add(edge)
     }
 
-    addSpecialEdges(result, rowIndex);
+    addSpecialEdges(result, rowIndex)
 
-    Collections.sort(result, myGraphElementComparator);
-    myCache.put(rowIndex, result);
-    return result;
+    Collections.sort(result, myGraphElementComparator)
+    myCache.put(rowIndex, result)
+    return result
   }
 
-  private static int getAttachmentDistance(@NotNull NormalEdge e1, int rowIndex) {
-    return Math.min(rowIndex - e1.up, e1.down - rowIndex);
+  companion object {
+    private val LOG = Logger.getInstance(PrintElementGeneratorImpl::class.java)
+
+    private val VERY_LONG_EDGE_SIZE = 1000
+    @JvmField val LONG_EDGE_SIZE = 30
+    private val VERY_LONG_EDGE_PART_SIZE = 250
+    private val LONG_EDGE_PART_SIZE = 1
+
+    private val CACHE_SIZE = 100
+    private val SHOW_ARROW_WHEN_SHOW_LONG_EDGES = true
+    private val SAMPLE_SIZE = 20000
+    private val K = 0.1
+
+    private fun getAttachmentDistance(e1: NormalEdge, rowIndex: Int): Int {
+      return Math.min(rowIndex - e1.up, e1.down - rowIndex)
+    }
   }
 }
