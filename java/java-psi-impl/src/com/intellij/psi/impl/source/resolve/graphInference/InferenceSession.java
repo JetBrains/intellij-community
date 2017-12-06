@@ -1246,7 +1246,10 @@ public class InferenceSession {
       if (type instanceof PsiIntersectionType) {
         String conflictingConjunctsMessage = ((PsiIntersectionType)type).getConflictingConjunctsMessage();
         if (conflictingConjunctsMessage == null) {
-          if (findParameterizationOfTheSameGenericClass(var.getBounds(InferenceBound.UPPER), pair -> pair.first == null || pair.second == null || pair.first.equals(pair.second)) != null) {
+          if (findParameterizationOfTheSameGenericClass(var.getBounds(InferenceBound.UPPER),
+                                                        pair -> pair.first == null || pair.second == null ||
+                                                                Comparing.equal(substituteNonProperBound(pair.first, substitutor),
+                                                                                substituteNonProperBound(pair.second, substitutor))) != null) {
             //warn if upper bounds has same generic class with different type arguments
             conflictingConjunctsMessage = type.getPresentableText(false);
           }
