@@ -283,11 +283,8 @@ public class NewExprent extends Exprent {
               Exprent expr = InvocationExprent.unboxIfNeeded(parameters.get(i));
               VarType leftType = constructor.getDescriptor().params[i];
 
-              if (i == parameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL) {
-                ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(leftType.value);
-                if (node != null && node.namelessConstructorStub) {
-                  break;  // skip last parameter of synthetic constructor call
-                }
+              if (i == parameters.size() - 1 && expr.getExprType() == VarType.VARTYPE_NULL && probablySyntheticParameter(leftType.value)) {
+                break;  // skip last parameter of synthetic constructor call
               }
 
               if (!firstParam) {
@@ -358,6 +355,11 @@ public class NewExprent extends Exprent {
     }
 
     return buf;
+  }
+
+  private static boolean probablySyntheticParameter(String className) {
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(className);
+    return node != null && node.type == ClassNode.CLASS_ANONYMOUS;
   }
 
   private static String getQualifiedNewInstance(String classname, List<Exprent> lstParams, int indent, BytecodeMappingTracer tracer) {
