@@ -59,6 +59,8 @@ public class EndlessStreamInspection extends AbstractBaseJavaLocalInspectionTool
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM, "iterate").parameterCount(2),
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "generate").parameterCount(1),
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM, "iterate").parameterCount(2),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "generate").parameterCount(1),
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "iterate").parameterCount(2),
     CallMatcher.instanceCall("java.util.Random", "ints", "longs", "doubles").parameterCount(2),
     CallMatcher.instanceCall("java.util.Random", "ints", "longs", "doubles").parameterCount(0)
   );
