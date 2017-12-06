@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -40,6 +42,8 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
   List<String> objectValues = ['new Object()', 'new Thread()', '"str"', 'null']
   List<String> listValues = ['[]', '[1]', '[0L]', '[1.1]', '[1.2f]', '["str]', 'new ArrayList<>()', '[new Object()], [new Thread()]']
 
+  List<String> voidValues = ['print("")', '(Void)null']
+
   List<String> values = booleanValues +
                         byteValues +
                         shortValues +
@@ -50,7 +54,8 @@ class GrAssignAutoTestFalsePositiveTest extends GrHighlightingTestBase {
                         doubleValues +
                         bigDecimalValues +
                         objectValues +
-                        listValues
+                        listValues +
+                        voidValues
 
   def shell = GroovyShell.newInstance()
 
