@@ -30,6 +30,8 @@
   <xi:include href="/idea/ExternalSystemActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <actions>
+    <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
+
     <action id="RerunFailedTests" class="com.intellij.execution.testframework.actions.RerunFailedTestsAction"
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 

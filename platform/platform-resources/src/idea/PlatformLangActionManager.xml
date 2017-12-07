@@ -22,7 +22,7 @@
 
     <action id="EditorLookupUp" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$UpAction"/>
     <action id="EditorLookupDown" class="com.intellij.codeInsight.lookup.impl.LookupActionHandler$DownAction"/>
-
+    <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
   </actions>
 
   <xi:include href="/idea/PlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
