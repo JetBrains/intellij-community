@@ -17,7 +17,6 @@
 package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SLRUMap
 import com.intellij.vcs.log.graph.api.EdgeFilter
@@ -144,36 +143,54 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     return myRecommendedWidth
   }
 
-  override fun getDownShortEdges(rowIndex: Int): List<AbstractPrintElementGenerator.ShortEdge> {
-    val endPosition = createEndPositionFunction(rowIndex)
-
-    val result = ArrayList<AbstractPrintElementGenerator.ShortEdge>()
+  override fun collectElements(rowIndex: Int, consumer: ElementConsumer) {
     val visibleElements = getSortedVisibleElementsInRow(rowIndex)
+    val upPosition = createEndPositionFunction(rowIndex - 1, true)
+    val downPosition = createEndPositionFunction(rowIndex + 1, false)
 
-    for (startPosition in visibleElements.indices) {
-      val element = visibleElements[startPosition]
+    for (position in visibleElements.indices) {
+      val element = visibleElements[position]
       when (element) {
         is GraphNode -> {
           val nodeIndex = element.nodeIndex
-          for (edge in linearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL)) {
-            if (isEdgeDown(edge, nodeIndex)) {
-              val endPos = endPosition(edge)
-              if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(edge, startPosition, endPos))
+          consumer.consumeNode(element, position)
+          linearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL).forEach {
+            val arrowType = getArrowType(it, rowIndex)
+            val down = downPosition(it)
+            val up = upPosition(it)
+            if (down != null) {
+              consumer.consumeDownEdge(it, position, down, arrowType == RowElementType.DOWN_ARROW)
+            }
+            if (up != null) {
+              consumer.consumeUpEdge(it, up, position, arrowType == RowElementType.UP_ARROW)
             }
           }
         }
         is GraphEdge -> {
-          val endPos = endPosition(element)
-          if (endPos != null) result.add(AbstractPrintElementGenerator.ShortEdge(element, startPosition, endPos))
+          val arrowType = getArrowType(element, rowIndex)
+          val down = downPosition(element)
+          val up = upPosition(element)
+          if (down != null) {
+            consumer.consumeDownEdge(element, position, down, arrowType == RowElementType.DOWN_ARROW)
+          }
+          else if (arrowType == RowElementType.DOWN_ARROW) {
+            consumer.consumeArrow(element, position, arrowType)
+          }
+          if (up != null) {
+            consumer.consumeUpEdge(element, up, position, arrowType == RowElementType.UP_ARROW)
+          }
+          else if (arrowType == RowElementType.UP_ARROW) {
+            consumer.consumeArrow(element, position, arrowType)
+          }
         }
       }
     }
-
-    return result
   }
 
-  private fun createEndPositionFunction(visibleRowIndex: Int): (GraphEdge) -> Int? {
-    val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex + 1)
+  private fun createEndPositionFunction(visibleRowIndex: Int, up: Boolean): (GraphEdge) -> Int? {
+    if (visibleRowIndex < 0 || visibleRowIndex >= linearGraph.nodesCount()) return { _ -> null }
+
+    val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex)
 
     val toPosition = HashMap<GraphElement, Int>()
     for (position in visibleElementsInNextRow.indices) {
@@ -183,31 +200,11 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     return { edge ->
       var position: Int? = toPosition[edge]
       if (position == null) {
-        val downNodeIndex = edge.downNodeIndex
-        if (downNodeIndex != null) position = toPosition[linearGraph.getGraphNode(downNodeIndex)]
+        val nodeIndex = if (up) edge.upNodeIndex else edge.downNodeIndex
+        if (nodeIndex != null) position = toPosition[linearGraph.getGraphNode(nodeIndex)]
       }
       position
     }
-  }
-
-  override fun getSimpleRowElements(rowIndex: Int): List<AbstractPrintElementGenerator.SimpleRowElement> {
-    val result = SmartList<AbstractPrintElementGenerator.SimpleRowElement>()
-    val sortedVisibleElementsInRow = getSortedVisibleElementsInRow(rowIndex)
-
-    for (position in sortedVisibleElementsInRow.indices) {
-      val element = sortedVisibleElementsInRow[position]
-      if (element is GraphNode) {
-        result.add(AbstractPrintElementGenerator.SimpleRowElement(element, AbstractPrintElementGenerator.RowElementType.NODE, position))
-      }
-
-      if (element is GraphEdge) {
-        val arrowType = getArrowType(element, rowIndex)
-        if (arrowType != null) {
-          result.add(AbstractPrintElementGenerator.SimpleRowElement(element, arrowType, position))
-        }
-      }
-    }
-    return result
   }
 
   private fun getArrowType(edge: GraphEdge, rowIndex: Int): AbstractPrintElementGenerator.RowElementType? {
@@ -238,7 +235,8 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
 
     if (edgeSize >= myLongEdgeSize) {
       if (upOffset == myVisiblePartSize) {
-        LOG.assertTrue(downOffset != myVisiblePartSize, "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
+        LOG.assertTrue(downOffset != myVisiblePartSize,
+                       "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
         return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
       }
       if (downOffset == myVisiblePartSize) return AbstractPrintElementGenerator.RowElementType.UP_ARROW
@@ -255,7 +253,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
 
   private fun isEdgeVisibleInRow(edge: GraphEdge, visibleRowIndex: Int): Boolean {
     val normalEdge = asNormalEdge(edge) ?: // e.d. edge is special. See addSpecialEdges
-        return false
+                     return false
     return isEdgeVisibleInRow(normalEdge, visibleRowIndex)
   }
 

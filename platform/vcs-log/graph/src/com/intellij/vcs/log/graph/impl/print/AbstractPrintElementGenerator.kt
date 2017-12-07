@@ -15,12 +15,12 @@
  */
 package com.intellij.vcs.log.graph.impl.print
 
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphElement
+import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager
 import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
@@ -35,47 +35,32 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
 
   override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
     val result = ArrayList<PrintElementWithGraphElement>()
+    val nodes = ArrayList<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
 
-    val simpleRowElements = getSimpleRowElements(rowIndex)
-
-    val arrows = ContainerUtil.newHashMap<GraphEdge, SimpleRowElement>()
-    simpleRowElements
-        .filter { it.myType != RowElementType.NODE }
-        .forEach { arrows.put(it.myElement as GraphEdge, it) }
-
-    if (rowIndex < linearGraph.nodesCount() - 1) {
-      for (shortEdge in getDownShortEdges(rowIndex)) {
-        var rowElementType = RowElementType.NODE
-        if (arrows[shortEdge.myEdge] != null && RowElementType.DOWN_ARROW == arrows[shortEdge.myEdge]!!.myType) {
-          rowElementType = RowElementType.DOWN_ARROW
-          arrows.remove(shortEdge.myEdge)
-        }
-        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.DOWN, rowElementType != RowElementType.NODE))
+    collectElements(rowIndex, object : ElementConsumer() {
+      override fun consumeNode(node: GraphNode, position: Int) {
+        nodes.add(createSimplePrintElement(rowIndex, SimpleRowElement(node, RowElementType.NODE, position)))
       }
-    }
 
-    if (rowIndex > 0) {
-      for (shortEdge in getDownShortEdges(rowIndex - 1)) {
-        var rowElementType = RowElementType.NODE
-        if (arrows[shortEdge.myEdge] != null && RowElementType.UP_ARROW == arrows[shortEdge.myEdge]!!.myType) {
-          rowElementType = RowElementType.UP_ARROW
-          arrows.remove(shortEdge.myEdge)
-        }
-        result.add(createEdgePrintElement(rowIndex, shortEdge, EdgePrintElement.Type.UP, rowElementType != RowElementType.NODE))
+      override fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
+        result.add(createEdgePrintElement(rowIndex, ShortEdge(edge, upPosition, downPosition), EdgePrintElement.Type.DOWN, hasArrow))
       }
-    }
 
-    arrows.values.mapTo(result) {
-      TerminalEdgePrintElement(rowIndex, it.myPosition, if (it.myType == RowElementType.UP_ARROW)
-        EdgePrintElement.Type.UP
-      else
-        EdgePrintElement.Type.DOWN, it.myElement as GraphEdge,
-          printElementManager)
-    }
+      override fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
+        result.add(createEdgePrintElement(rowIndex, ShortEdge(edge, upPosition, downPosition), EdgePrintElement.Type.UP, hasArrow))
+      }
 
-    simpleRowElements
-        .filter { it.myType == RowElementType.NODE }
-        .mapTo(result) { createSimplePrintElement(rowIndex, it) }
+      override fun consumeArrow(edge: GraphEdge, position: Int, arrowType: RowElementType) {
+        result.add(TerminalEdgePrintElement(rowIndex, position,
+                                            if (arrowType == RowElementType.UP_ARROW)
+                                              EdgePrintElement.Type.UP
+                                            else
+                                              EdgePrintElement.Type.DOWN, edge,
+                                            printElementManager))
+      }
+    })
+
+    result.addAll(nodes)
 
     return result
   }
@@ -99,7 +84,7 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
       positionInOtherRow = shortEdge.myUpPosition
     }
     return EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, hasArrow,
-        printElementManager)
+                                printElementManager)
   }
 
   override fun withGraphElement(printElement: PrintElement): PrintElementWithGraphElement {
@@ -108,13 +93,8 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     }
 
     return getPrintElements(printElement.rowIndex).find { it == printElement } ?:
-        throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
+           throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
   }
-
-  // rowIndex in [0, getCountVisibleRow() - 2]
-  protected abstract fun getDownShortEdges(rowIndex: Int): Collection<ShortEdge>
-
-  protected abstract fun getSimpleRowElements(rowIndex: Int): Collection<SimpleRowElement>
 
   protected class ShortEdge(val myEdge: GraphEdge, val myUpPosition: Int, val myDownPosition: Int)
 
@@ -125,4 +105,13 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     UP_ARROW,
     DOWN_ARROW
   }
+
+  protected open class ElementConsumer {
+    open fun consumeNode(node: GraphNode, position: Int) {}
+    open fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {}
+    open fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {}
+    open fun consumeArrow(edge: GraphEdge, position: Int, arrowType: RowElementType) {}
+  }
+
+  protected abstract fun collectElements(rowIndex: Int, consumer: ElementConsumer)
 }
