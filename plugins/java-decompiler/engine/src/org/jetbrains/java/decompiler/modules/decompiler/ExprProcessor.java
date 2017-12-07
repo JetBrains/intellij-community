@@ -731,8 +731,7 @@ public class ExprProcessor implements CodeConstants {
     return !(type == Exprent.EXPRENT_SWITCH ||
              type == Exprent.EXPRENT_MONITOR ||
              type == Exprent.EXPRENT_IF ||
-             (type == Exprent.EXPRENT_VAR && ((VarExprent)expr)
-               .isClassDef()));
+             (type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()));
   }
 
   private static void addDeletedGotoInstructionMapping(Statement stat, BytecodeMappingTracer tracer) {
@@ -803,7 +802,14 @@ public class ExprProcessor implements CodeConstants {
     TextBuffer buf = new TextBuffer();
 
     for (Exprent expr : lst) {
+      if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
+        // separates local class definition from previous statements
+        buf.appendLineSeparator();
+        tracer.incrementCurrentSourceLine();
+      }
+
       TextBuffer content = expr.toJava(indent, tracer);
+
       if (content.length() > 0) {
         if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassDef()) {
           buf.appendIndent(indent);

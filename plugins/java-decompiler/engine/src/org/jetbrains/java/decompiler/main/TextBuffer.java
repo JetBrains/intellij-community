@@ -10,6 +10,7 @@ import java.util.*;
  *
  * @author egor
  */
+@SuppressWarnings("UnusedReturnValue")
 public class TextBuffer {
   private final String myLineSeparator = DecompilerContext.getNewLineSeparator();
   private final String myIndent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
