@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.components.*;
@@ -35,7 +37,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 @State(name = "PyCondaPackageService", storages = @Storage(value="conda_packages.xml", roamingType = RoamingType.DISABLED))
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
@@ -182,17 +187,12 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
       return;
     }
 
-    final Map<String, List<String>> nameToVersions = new HashMap<>();
+    final Multimap<String, String> nameToVersions =
+      Multimaps.newSortedSetMultimap(new HashMap<>(), () -> new TreeSet<>(VersionComparatorUtil.COMPARATOR.reversed()));
     for (String line : output.getStdoutLines()) {
       final List<String> split = StringUtil.split(line, "\t");
       if (split.size() < 2) continue;
-      final String packageName = split.get(0);
-      final String packageVersion = split.get(1);
-      final List<String> versions = nameToVersions.computeIfAbsent(packageName, k -> new ArrayList<>());
-      final int sortedIndex = Collections.binarySearch(versions, packageVersion, VersionComparatorUtil.COMPARATOR.reversed());
-      if (sortedIndex < 0) {
-        versions.add(-(sortedIndex + 1), packageVersion);
-      }
+      nameToVersions.put(split.get(0), split.get(1));
     }
     PyCondaPackageCache.reload(nameToVersions);
     LAST_TIME_CHECKED = System.currentTimeMillis();
