@@ -236,7 +236,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
           return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
         }
       };
-      HintUpdateSupply.installDataContextHintUpdateSupply(tree);
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         DnDManager.getInstance().registerSource(new DnDSource() {
@@ -301,6 +300,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         }
       };
     }
+    HintUpdateSupply.installDataContextHintUpdateSupply(tree);
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
