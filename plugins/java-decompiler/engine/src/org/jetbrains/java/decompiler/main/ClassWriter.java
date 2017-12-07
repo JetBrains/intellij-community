@@ -654,7 +654,7 @@ public class ClassWriter {
             else if (isEnum && init) {
               actualParams -= 2;
             }
-            if (actualParams != descriptor.params.size()) {
+            if (actualParams != descriptor.parameterTypes.size()) {
               String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
               descriptor = null;
@@ -669,14 +669,14 @@ public class ClassWriter {
       if (!clinit && !dinit) {
         boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
 
-        if (descriptor != null && !descriptor.fparameters.isEmpty()) {
-          appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds);
+        if (descriptor != null && !descriptor.typeParameters.isEmpty()) {
+          appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds);
           buffer.append(' ');
         }
 
         if (!init) {
           if (descriptor != null) {
-            buffer.append(GenericMain.getGenericCastTypeName(descriptor.ret));
+            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType));
           }
           else {
             buffer.append(ExprProcessor.getCastTypeName(md.ret));
@@ -700,7 +700,7 @@ public class ClassWriter {
         int index = isEnum && init ? 3 : thisVar ? 1 : 0;
         boolean hasDescriptor = descriptor != null;
         int start = isEnum && init && !hasDescriptor ? 2 : 0;
-        int params = hasDescriptor ? descriptor.params.size() : md.params.length;
+        int params = hasDescriptor ? descriptor.parameterTypes.size() : md.params.length;
         for (int i = start; i < params; i++) {
           if (hasDescriptor || mask == null || mask.get(i) == null) {
             if (!firstParameter) {
@@ -713,45 +713,33 @@ public class ClassWriter {
               buffer.append("final ");
             }
 
-            if (descriptor != null) {
-              GenericType parameterType = descriptor.params.get(i);
+            String typeName;
+            boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
 
-              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
+            if (descriptor != null) {
+              GenericType parameterType = descriptor.parameterTypes.get(i);
+              isVarArg &= parameterType.arrayDim > 0;
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
-
-              String typeName = GenericMain.getGenericCastTypeName(parameterType);
-              if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
-                  DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-                typeName = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT);
-              }
-
-              buffer.append(typeName);
-
-              if (isVarArg) {
-                buffer.append("...");
-              }
+              typeName = GenericMain.getGenericCastTypeName(parameterType);
             }
             else {
               VarType parameterType = md.params[i];
-
-              boolean isVarArg = (i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS) && parameterType.arrayDim > 0);
+              isVarArg &= parameterType.arrayDim > 0;
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
+              typeName = ExprProcessor.getCastTypeName(parameterType);
+            }
 
-              String typeName = ExprProcessor.getCastTypeName(parameterType);
-              if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
-                  DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-                typeName = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT);
-              }
-
-              buffer.append(typeName);
-
-              if (isVarArg) {
-                buffer.append("...");
-              }
+            if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
+                DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
+              typeName = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT);
+            }
+            buffer.append(typeName);
+            if (isVarArg) {
+              buffer.append("...");
             }
 
             buffer.append(' ');
@@ -768,7 +756,7 @@ public class ClassWriter {
         buffer.append(')');
 
         StructExceptionsAttribute attr = (StructExceptionsAttribute)mt.getAttribute("Exceptions");
-        if ((descriptor != null && !descriptor.exceptions.isEmpty()) || attr != null) {
+        if ((descriptor != null && !descriptor.exceptionTypes.isEmpty()) || attr != null) {
           throwsExceptions = true;
           buffer.append(" throws ");
 
@@ -776,8 +764,8 @@ public class ClassWriter {
             if (i > 0) {
               buffer.append(", ");
             }
-            if (descriptor != null && !descriptor.exceptions.isEmpty()) {
-              GenericType type = descriptor.exceptions.get(i);
+            if (descriptor != null && !descriptor.exceptionTypes.isEmpty()) {
+              GenericType type = descriptor.exceptionTypes.get(i);
               buffer.append(GenericMain.getGenericCastTypeName(type));
             }
             else {
