@@ -241,18 +241,22 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myTreeBuilder.updateSubtree(node);
   }
 
-  public synchronized void performUpdate() {
-    if (myRunBeforeUpdate != null) {
-      myRunBeforeUpdate.run();
-      myRunBeforeUpdate = null;
+  public void performUpdate() {
+    synchronized (this) {
+      if (myRunBeforeUpdate != null) {
+        myRunBeforeUpdate.run();
+        myRunBeforeUpdate = null;
+      }
     }
 
+    while (true) {
+      final TreeUpdatePass eachPass;
+      synchronized (this) {
+        if (myNodeQueue.isEmpty()) break;
+        if (isInPostponeMode()) break;
 
-    while (!myNodeQueue.isEmpty()) {
-      if (isInPostponeMode()) break;
-
-
-      final TreeUpdatePass eachPass = myNodeQueue.removeFirst();
+        eachPass = myNodeQueue.removeFirst();
+      }
 
       beforeUpdate(eachPass).doWhenDone(new TreeRunnable("AbstractTreeUpdater.performUpdate") {
         @Override
@@ -276,27 +280,25 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
   }
 
   private void maybeRunAfterUpdate() {
-    if (myRunAfterUpdate != null) {
-      final Runnable runnable = new TreeRunnable("AbstractTreeUpdater.maybeRunAfterUpdate") {
-        @Override
-        public void perform() {
-          List<Runnable> runAfterUpdate = null;
-          synchronized (myRunAfterUpdate) {
-            if (!myRunAfterUpdate.isEmpty()) {
-              runAfterUpdate = new ArrayList<>(myRunAfterUpdate);
-              myRunAfterUpdate.clear();
-            }
-          }
-          if (runAfterUpdate != null) {
-            for (Runnable r : runAfterUpdate) {
-              r.run();
-            }
+    final Runnable runnable = new TreeRunnable("AbstractTreeUpdater.maybeRunAfterUpdate") {
+      @Override
+      public void perform() {
+        List<Runnable> runAfterUpdate = null;
+        synchronized (myRunAfterUpdate) {
+          if (!myRunAfterUpdate.isEmpty()) {
+            runAfterUpdate = new ArrayList<>(myRunAfterUpdate);
+            myRunAfterUpdate.clear();
           }
         }
-      };
+        if (runAfterUpdate != null) {
+          for (Runnable r : runAfterUpdate) {
+            r.run();
+          }
+        }
+      }
+    };
 
-      myTreeBuilder.getReady(this).doWhenDone(runnable);
-    }
+    myTreeBuilder.getReady(this).doWhenDone(runnable);
   }
 
   private boolean isReleased() {
