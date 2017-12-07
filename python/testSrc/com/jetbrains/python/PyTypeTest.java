@@ -2420,6 +2420,86 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-27143
+  public void testReplaceInstanceInClassMethod() {
+    doTest("Derived",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def instance(cls):\n" +
+           "        return cls()\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.instance()");
+
+    doTest("Derived",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def instance(cls):\n" +
+           "        return cls()\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().instance()");
+  }
+
+  // PY-27143
+  public void testReplaceInstanceInMethod() {
+    doTest("Derived",
+           "class Base:\n" +
+           "    def instance(self):\n" +
+           "        return self\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.instance(Derived())");
+
+    doTest("Derived",
+           "class Base:\n" +
+           "    def instance(self):\n" +
+           "        return self\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().instance()");
+  }
+
+  // PY-27143
+  public void testReplaceDefinitionInClassMethod() {
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def cls(cls):\n" +
+           "        return cls\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.cls()");
+
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def cls(cls):\n" +
+           "        return cls\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().cls()");
+  }
+
+  // PY-27143
+  public void testReplaceDefinitionInMethod() {
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    def cls(self):\n" +
+           "        return self.__class__\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.cls(Derived())");
+
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    def cls(self):\n" +
+           "        return self.__class__\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().cls()");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
