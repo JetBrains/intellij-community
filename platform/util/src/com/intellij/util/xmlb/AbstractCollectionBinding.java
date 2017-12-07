@@ -31,8 +31,6 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private Serializer serializer;
 
-  private boolean isItemTypePrimitive;
-
   public AbstractCollectionBinding(@NotNull Class elementType, @Nullable MutableAccessor accessor) {
     super(accessor);
 
@@ -53,17 +51,6 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   @Override
   public void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     this.serializer = serializer;
-
-    if (isSurroundWithTag()) {
-      return;
-    }
-
-    isItemTypePrimitive = XmlSerializerImpl.isPrimitive(itemType);
-
-    //noinspection ConstantConditions
-    if (isItemTypePrimitive && (newAnnotation != null || StringUtil.isEmpty(getElementName()))) {
-      throw new XmlSerializationException("If surround with tag is turned off, element tag must be specified for: " + myAccessor);
-    }
   }
 
   private boolean isSurroundWithTag() {
@@ -179,7 +166,12 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     Binding binding = serializer.getBinding(value.getClass());
     if (binding == null) {
-      Element serializedItem = new Element(getElementName());
+      String elementName = getElementName();
+      if (StringUtil.isEmpty(elementName)) {
+        throw new Error("elementName must be not empty");
+      }
+
+      Element serializedItem = new Element(elementName);
       String attributeName = getValueAttributeName();
       String serialized = XmlSerializerImpl.convertToString(value);
       if (attributeName.isEmpty()) {
@@ -279,7 +271,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
       return element.getName().equals(tagName);
     }
 
-    if (isItemTypePrimitive) {
+    if (getElementBindings().isEmpty()) {
       return element.getName().equals(getElementName());
     }
     else {

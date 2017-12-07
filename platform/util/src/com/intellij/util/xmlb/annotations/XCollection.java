@@ -47,7 +47,7 @@ public @interface XCollection {
    *   $value
    * </option>
    */
-  String valueAttributeName() default Constants.OPTION;
+  String valueAttributeName() default Constants.VALUE;
 
   enum Style {
     /**

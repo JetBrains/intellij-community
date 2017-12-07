@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
@@ -276,7 +275,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return accessors;
     }
 
-    accessors = ContainerUtil.newArrayList();
+    accessors = new ArrayList<MutableAccessor>();
 
     Map<String, Couple<Method>> nameToAccessors;
     if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
@@ -286,7 +285,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       nameToAccessors = Collections.emptyMap();
     }
 
-    int propertyAccessorCount  = accessors.size();
+    int propertyAccessorCount = accessors.size();
     collectFieldAccessors(aClass, accessors);
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
@@ -313,7 +312,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
-    final Map<String, Couple<Method>> candidates = ContainerUtilRt.newTreeMap(); // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
         continue;

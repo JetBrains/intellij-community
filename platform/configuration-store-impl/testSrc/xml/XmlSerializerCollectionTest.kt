@@ -10,13 +10,11 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SmartList
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
-import com.intellij.util.xmlb.XmlSerializationException
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.AbstractCollection
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.junit.Test
 import java.util.*
@@ -85,13 +83,15 @@ internal class XmlSerializerCollectionTest {
 </bean>""", bean)
   }
 
-  @Test fun arrayAnnotationWithoutTagNAmeGivesError() {
+  @Test fun xCollection() {
     val bean = BeanWithArrayWithoutTagName()
-    assertThatThrownBy({
-                         doSerializerTest(
-                           """<BeanWithArrayWithoutTagName><option name="V"><option value="a"/></option></BeanWithArrayWithoutTagName>""",
-                           bean)
-                       }).isInstanceOf(XmlSerializationException::class.java)
+     doSerializerTest(
+     """
+      <BeanWithArrayWithoutTagName>
+        <option name="foo">
+          <option value="a" />
+        </option>
+      </BeanWithArrayWithoutTagName>""".trimIndent(), bean)
   }
 
   @Test fun arrayAnnotationWithElementTag() {
@@ -308,6 +308,6 @@ private class Bean4 {
 }
 
 private class BeanWithArrayWithoutTagName {
-  @XCollection()
-  var V = arrayOf("a")
+  @XCollection
+  var foo = arrayOf("a")
 }
