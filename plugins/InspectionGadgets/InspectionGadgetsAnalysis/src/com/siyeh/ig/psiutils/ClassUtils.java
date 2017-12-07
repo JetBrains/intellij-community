@@ -290,11 +290,7 @@ public class ClassUtils {
   }
 
   public static boolean isSingleton(@Nullable PsiClass aClass) {
-    if (aClass == null ||
-        aClass.isInterface() ||
-        aClass.isAnnotationType() ||
-        aClass instanceof PsiTypeParameter ||
-        aClass instanceof PsiAnonymousClass) {
+    if (aClass == null || aClass.isInterface() || aClass instanceof PsiTypeParameter || aClass instanceof PsiAnonymousClass) {
       return false;
     }
     if (aClass.isEnum()) {
