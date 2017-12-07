@@ -55,8 +55,14 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest("Import this name");
   }
 
-  public void testSkeletonStdlibModule() {
+  // PY-25234
+  public void testBinarySkeletonStdlibModule() {
     doMultiFileAutoImportTest("Import 'sys'");
+  }
+
+  // PY-25234
+  public void testUserSkeletonStdlibModule() {
+    doMultiFileAutoImportTest("Import 'alembic'");
   }
 
   private void doMultiFileAutoImportTest(@NotNull String hintPrefix) {
