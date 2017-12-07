@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="aia-manifest-proto-1.0-jarjar">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../bazel-genfiles/tools/base/sdk-common/aia-manifest-jar-generator/jarjar.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
