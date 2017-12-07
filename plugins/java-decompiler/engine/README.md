@@ -52,7 +52,7 @@ The rest of options can be left as they are: they are aimed at professional reve
 - lit (0): output numeric literals "as-is"
 - asc (0): encode non-ASCII characters in string and character literals as Unicode escapes
 - bto (1): interpret int 1 as boolean true (workaround to a compiler bug)
-- nns (1): allow for not set synthetic attribute (workaround to a compiler bug)
+- nns (0): allow for not set synthetic attribute (workaround to a compiler bug)
 - uto (1): consider nameless types as java.lang.Object (workaround to a compiler architecture flaw)
 - udv (1): reconstruct variable names from debug information, if present
 - rer (1): remove empty exception ranges
