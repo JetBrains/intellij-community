@@ -8,10 +8,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <myEp8 id="id1" filetype="JAVA"/>
+    <myEp8 id="javaFiletype1" filetype="JAVA"/>
     <!--suppress PluginXmlValidity -->
-    <myEp8 id="id2"/>
-    <myEp8 id="id3" filetype="XML"/>
-    <myEp8 id="id4" filetype="JAVA" order="before <caret>"/>
+    <myEp8 id="withoutFiletype"/>
+    <myEp8 id="xmlFiletype" filetype="XML"/>
+    <myEp8 id="javaFiletype2" filetype="JAVA" order="before <caret>"/>
   </extensions>
 </idea-plugin>

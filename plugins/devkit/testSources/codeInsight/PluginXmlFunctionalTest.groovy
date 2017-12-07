@@ -406,11 +406,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testOrderAttributeCompletionLanguage() {
-    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2", "id3")
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "anyLanguage", "javaLanguage1", "withoutLanguage")
   }
 
   void testOrderAttributeCompletionFileType() {
-    myFixture.testCompletionVariants(getTestName(true) + ".xml", "id1", "id2")
+    myFixture.testCompletionVariants(getTestName(true) + ".xml", "javaFiletype1", "withoutFiletype")
   }
 
 
