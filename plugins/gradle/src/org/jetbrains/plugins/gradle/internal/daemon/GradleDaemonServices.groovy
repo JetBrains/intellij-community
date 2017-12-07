@@ -143,6 +143,9 @@ class GradleDaemonServices {
   @CompileStatic(TypeCheckingMode.SKIP)
   private static Map<ClassPath, ConsumerConnection> getConnections() {
     def registry = ConnectorServices.singletonRegistry
+    if (registry.closed) {
+      return Collections.emptyMap()
+    }
     def loader = registry.get(ToolingImplementationLoader.class) as SynchronizedToolingImplementationLoader
     def delegate = loader.delegate as CachingToolingImplementationLoader
     return delegate.connections
