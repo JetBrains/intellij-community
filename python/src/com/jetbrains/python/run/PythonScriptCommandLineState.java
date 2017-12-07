@@ -87,9 +87,9 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
               ParametersList parametersList = commandLine.getParametersList();
               boolean isModule = PyDebugRunner.patchExeParams(parametersList);
               if (isModule) {
-                ParamsGroup scriptParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-                if (scriptParams != null) {
-                  scriptParams.addParameterAt(0, PyDebugRunner.MODULE_PARAM);
+                ParamsGroup moduleParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_MODULE);
+                if (moduleParams != null) {
+                  moduleParams.addParameterAt(0, PyDebugRunner.MODULE_PARAM);
                 }
               }
             }
