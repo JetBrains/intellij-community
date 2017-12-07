@@ -37,12 +37,12 @@ import java.util.*;
 
 public class LeakHunter {
   @TestOnly
-  public static void checkProjectLeak() throws Exception {
+  public static void checkProjectLeak() {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault() && !project.isLight());
   }
 
   @TestOnly
-  public static void checkNonDefaultProjectLeak() throws Exception {
+  public static void checkNonDefaultProjectLeak() {
     checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault());
   }
 
