@@ -772,24 +772,23 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void showIndexingNotification(long time) {
-      Runnable notificationRunner = () -> {
-        Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
-                                                                   "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
-                                                                   "Indexing was taking too long (" +
-                                                                   StopWatch.formatTime(time - time % 1000) +
-                                                                   ")", NotificationType.WARNING, null);
-        notification.addAction(NotificationAction.createSimple("Resume", () -> {
-          if (myBigRepositoriesList.isBig(myRoot)) {
-            LOG.info("Resuming indexing " + myRoot.getName());
-            myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
-            myBigRepositoriesList.removeRepository(myRoot);
-            scheduleIndex(false);
-          }
-          notification.expire();
-        }));
-        VcsNotifier.getInstance(myProject).notify(notification);
-      };
-      ApplicationManager.getApplication().invokeLater(notificationRunner);
+      Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
+                                                                 "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
+                                                                 "Indexing was taking too long (" +
+                                                                 StopWatch.formatTime(time - time % 1000) +
+                                                                 ")", NotificationType.WARNING, null);
+      notification.addAction(NotificationAction.createSimple("Resume", () -> {
+        if (myBigRepositoriesList.isBig(myRoot)) {
+          LOG.info("Resuming indexing " + myRoot.getName());
+          myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
+          myBigRepositoriesList.removeRepository(myRoot);
+          scheduleIndex(false);
+        }
+        notification.expire();
+      }));
+      // if out bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
+      // so using invokeLater here
+      ApplicationManager.getApplication().invokeLater(() -> VcsNotifier.getInstance(myProject).notify(notification));
     }
   }
 }
