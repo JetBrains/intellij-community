@@ -16,13 +16,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -34,22 +33,15 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.List;
 
 public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule> implements SingleClassConfiguration, RefactoringListenerProvider,
                                                                                                          PersistentStateComponent<Element> {
-  private static final String NAME_ATTR = "name";
-  private static final String VALUE_ATTR = "value";
-  private static final String PARAMETER_ELEMENT_NAME = "parameter";
-
-  private AppletParameter[] myAppletParameters;
-
   public AppletConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(new JavaRunConfigurationModule(project, false), factory);
   }
 
   @Override
-  protected AppletConfigurationOptions getOptions() {
+  public AppletConfigurationOptions getOptions() {
     return (AppletConfigurationOptions)super.getOptions();
   }
 
@@ -129,42 +121,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     getOptions().setPolicyFile(ExternalizablePath.urlValue(localPath));
   }
 
-  public static class AppletParameter {
-    public String myName;
-    public String myValue;
-
-    public AppletParameter(@NonNls final String name, final String value) {
-      myName = name;
-      myValue = value;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public void setName(final String name) {
-      myName = name;
-    }
-
-    public String getValue() {
-      return myValue;
-    }
-
-    public void setValue(final String value) {
-      myValue = value;
-    }
-
-    public boolean equals(final Object obj) {
-      if (!(obj instanceof AppletParameter)) return false;
-      final AppletParameter second = (AppletParameter)obj;
-      return Comparing.equal(myName, second.myName) && Comparing.equal(myValue, second.myValue);
-    }
-
-    public int hashCode() {
-      return Comparing.hashcode(myName, myValue);
-    }
-  }
-
   @Override
   public Collection<Module> getValidModules() {
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getOptions().getMainClassName());
@@ -174,33 +130,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   public Element getState() {
     Element element = new Element("state");
     super.writeExternal(element);
-
-    if (myAppletParameters != null) {
-      for (AppletParameter myAppletParameter : myAppletParameters) {
-        Element parameterElement = new Element(PARAMETER_ELEMENT_NAME);
-        element.addContent(parameterElement);
-        parameterElement.setAttribute(NAME_ATTR, myAppletParameter.getName());
-        parameterElement.setAttribute(VALUE_ATTR, myAppletParameter.getValue());
-      }
-    }
     return element;
-  }
-
-  @Override
-  public void loadState(Element element) {
-    super.readExternal(element);
-
-    List<Element> paramList = element.getChildren(PARAMETER_ELEMENT_NAME);
-    if (paramList.isEmpty()) {
-      myAppletParameters = null;
-    }
-    else {
-      List<AppletParameter> parameters = new SmartList<>();
-      for (Element child : paramList) {
-        parameters.add(new AppletParameter(child.getAttributeValue(NAME_ATTR), child.getAttributeValue(VALUE_ATTR)));
-      }
-      myAppletParameters = parameters.toArray(new AppletParameter[parameters.size()]);
-    }
   }
 
   @Override
@@ -256,19 +186,6 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     throw new RuntimeConfigurationWarning("URL " + getOptions().getHtmlFileName() + " is not valid: " + ex.getLocalizedMessage());
   }
 
-  @Transient
-  public AppletParameter[] getAppletParameters() {
-    return myAppletParameters;
-  }
-
-  public void setAppletParameters(AppletParameter[] appletParameters) {
-    myAppletParameters = appletParameters;
-  }
-
-  public void setAppletParameters(final List<AppletParameter> parameters) {
-    setAppletParameters(parameters.toArray(new AppletParameter[parameters.size()]));
-  }
-
   private AppletHtmlFile getHtmlURL() throws CantRunException {
     if (getOptions().getHtmlUsed()) {
       if (getOptions().getHtmlFileName() == null) {
@@ -306,11 +223,8 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
                    "width=" + getOptions().getWidth() + "\n" +
                    "height=" + getOptions().getHeight() + "\n" +
                    "align=top>\n");
-      final AppletParameter[] appletParameters = getAppletParameters();
-      if (appletParameters != null) {
-        for (final AppletParameter parameter : appletParameters) {
-          writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
-        }
+      for (AppletParameter parameter : ContainerUtil.notNullize(getOptions().getAppletParameters())) {
+        writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
       }
       writer.write("</applet>\n</body>\n</html>\n");
     }

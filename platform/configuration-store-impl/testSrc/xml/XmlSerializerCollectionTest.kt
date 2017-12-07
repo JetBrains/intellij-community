@@ -3,13 +3,19 @@
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
+import com.intellij.ide.plugins.PluginBean
 import com.intellij.openapi.util.JDOMExternalizableStringList
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SmartList
+import com.intellij.util.loadElement
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializationException
+import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.AbstractCollection
 import com.intellij.util.xmlb.annotations.CollectionBean
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jdom.Element
 import org.junit.Test
@@ -83,7 +89,7 @@ internal class XmlSerializerCollectionTest {
     val bean = BeanWithArrayWithoutTagName()
     assertThatThrownBy({
                          doSerializerTest(
-                           "<BeanWithArrayWithoutTagName><option name=\"V\"><option value=\"a\"/></option></BeanWithArrayWithoutTagName>",
+                           """<BeanWithArrayWithoutTagName><option name="V"><option value="a"/></option></BeanWithArrayWithoutTagName>""",
                            bean)
                        }).isInstanceOf(XmlSerializationException::class.java)
   }
@@ -192,6 +198,101 @@ internal class XmlSerializerCollectionTest {
       "<BeanWithSet>\n  <option name=\"VALUES\">\n    <set>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n    </set>\n  </option>\n</BeanWithSet>",
       bean)
   }
+
+  @Test fun testPropertyAndNoSurround() {
+    val bean = XmlSerializer.deserialize<PluginBean>(loadElement("""<idea-plugin>
+          <id>com.intellij.database.ide</id>
+          <name>DataGrip Customization</name>
+          <vendor>JetBrains</vendor>
+          <category>Database</category>
+
+          <depends>com.intellij.modules.datagrip</depends>
+          <depends>com.intellij.database</depends>
+
+          <extensions defaultExtensionNs="com.intellij">
+            <projectViewPane implementation="com.intellij.database.ide.DatabaseProjectViewPane"/>
+            <directoryProjectConfigurator implementation="com.intellij.database.ide.DatabaseProjectConfigurator"/>
+            <nonProjectFileWritingAccessExtension implementation="com.intellij.database.vfs.DbNonProjectFileWritingAccessExtension"/>
+
+            <applicationService serviceInterface="com.intellij.openapi.wm.impl.FrameTitleBuilder"
+                                serviceImplementation="com.intellij.database.ide.DatabaseFrameTitleBuilder"
+                                overrides="true"/>
+            <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
+                                serviceImplementation="com.intellij.database.ide.DatabaseEditorEmptyTextPainter"
+                                overrides="true"/>
+            <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
+                                serviceImplementation="com.intellij.database.ide.DatabaseRecentProjectManager"
+                                overrides="true"/>
+            <projectService serviceInterface="com.intellij.ide.projectView.ProjectView"
+                            serviceImplementation="com.intellij.database.ide.DatabaseProjectView"
+                            overrides="true"/>
+            <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
+                            serviceImplementation="com.intellij.database.ide.DatabaseProjectScopeBuilder"
+                            overrides="true"/>
+
+            <goto.nonProjectScopeDisabler/>
+          </extensions>
+
+          <application-components>
+            <component>
+              <implementation-class>com.intellij.database.ide.DataGripInitialConfigurator</implementation-class>
+              <headless-implementation-class/>
+            </component>
+          </application-components>
+
+          <project-components>
+            <component>
+              <option name="overrides" value="true"/>
+              <interface-class>com.intellij.database.autoconfig.DatabaseConfigFileWatcher</interface-class>
+              <implementation-class/>
+            </component>
+          </project-components>
+
+          <actions>
+            <action id="DBE.AddContentRoot" class="com.intellij.database.ide.actions.AddContentRootAction" text="Attach Directory">
+              <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="WeighingNewGroup"/>
+              <add-to-group group-id="FileOpenGroup" anchor="last"/>
+            </action>
+            <group id="NewProjectOrModuleGroup">
+              <action id="NewProject" class="com.intellij.database.ide.actions.NewProjectAction" text="Project..."/>
+              <separator/>
+            </group>
+
+            <action id="NewSqlFile" class="com.intellij.database.ide.actions.NewSqlFileAction">
+              <add-to-group group-id="DBE.NewFile" anchor="first"/>
+            </action>
+
+            <action overrides="true" id="GotoClass" class="com.intellij.ide.actions.GotoClassAction" text="Table/Class..."/>
+
+            <reference id="DatabaseView.PropertiesAction">
+              <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings"/>
+            </reference>
+
+            <action overrides="true" id="DatabaseView.ImportDataSources" class="com.intellij.openapi.actionSystem.EmptyAction"
+                    text="Import from Sources..."/>
+          </actions>
+        </idea-plugin>"""), PluginBean::class.java)
+
+    assertThat(bean.actions.joinToString("\n") { JDOMUtil.writeElement(it) }).isEqualTo("""
+      <actions>
+        <action id="DBE.AddContentRoot" class="com.intellij.database.ide.actions.AddContentRootAction" text="Attach Directory">
+          <add-to-group group-id="ProjectViewPopupMenu" anchor="before" relative-to-action="WeighingNewGroup" />
+          <add-to-group group-id="FileOpenGroup" anchor="last" />
+        </action>
+        <group id="NewProjectOrModuleGroup">
+          <action id="NewProject" class="com.intellij.database.ide.actions.NewProjectAction" text="Project..." />
+          <separator />
+        </group>
+        <action id="NewSqlFile" class="com.intellij.database.ide.actions.NewSqlFileAction">
+          <add-to-group group-id="DBE.NewFile" anchor="first" />
+        </action>
+        <action overrides="true" id="GotoClass" class="com.intellij.ide.actions.GotoClassAction" text="Table/Class..." />
+        <reference id="DatabaseView.PropertiesAction">
+          <add-to-group group-id="FileMainSettingsGroup" anchor="after" relative-to-action="ShowSettings" />
+        </reference>
+        <action overrides="true" id="DatabaseView.ImportDataSources" class="com.intellij.openapi.actionSystem.EmptyAction" text="Import from Sources..." />
+      </actions>""".trimIndent())
+  }
 }
 
 @Tag("b")
@@ -207,6 +308,6 @@ private class Bean4 {
 }
 
 private class BeanWithArrayWithoutTagName {
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection()
   var V = arrayOf("a")
 }

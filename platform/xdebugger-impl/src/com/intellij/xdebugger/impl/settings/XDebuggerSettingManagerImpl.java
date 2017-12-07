@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -9,10 +11,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import gnu.trove.THashMap;
@@ -118,7 +120,7 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
 
   public static class SettingsState {
     @Tag("debuggers")
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<SpecificSettingsState> specificStates = new SmartList<>();
     private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
     private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();

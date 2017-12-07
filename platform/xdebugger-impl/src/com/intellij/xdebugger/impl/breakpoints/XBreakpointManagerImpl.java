@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
@@ -18,6 +20,7 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
@@ -513,7 +516,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     private String myDefaultGroup;
 
     @Tag("default-breakpoints")
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<BreakpointState> getDefaultBreakpoints() {
       return myDefaultBreakpoints;
     }

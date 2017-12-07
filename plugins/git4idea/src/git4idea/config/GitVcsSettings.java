@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package git4idea.config;
 
@@ -23,10 +11,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
 import git4idea.push.GitPushTagMode;
@@ -84,7 +72,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public boolean SET_USER_NAME_GLOBALLY = true;
     public boolean SWAP_SIDES_IN_COMPARE_BRANCHES = false;
 
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     @Tag("push-targets")
     public List<PushTargetInfo> PUSH_TARGETS = ContainerUtil.newArrayList();
 

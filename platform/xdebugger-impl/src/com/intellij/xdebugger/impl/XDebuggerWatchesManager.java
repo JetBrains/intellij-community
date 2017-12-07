@@ -1,12 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +66,7 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
   @Tag("watches-manager")
   public static class WatchesManagerState {
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public List<ConfigurationState> expressions = new ArrayList<>();
   }
 
@@ -74,7 +76,7 @@ public class XDebuggerWatchesManager implements PersistentStateComponent<XDebugg
     public String myName;
 
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection
     public WatchState[] myExpressionStates;
 
     public ConfigurationState() {

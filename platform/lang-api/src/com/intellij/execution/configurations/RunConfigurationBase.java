@@ -196,6 +196,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   public void customizeLogConsole(LogConsole console) {
   }
 
+  public void loadState(@NotNull Element element) {
+    readExternal(element);
+  }
+
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     myLogFiles.clear();

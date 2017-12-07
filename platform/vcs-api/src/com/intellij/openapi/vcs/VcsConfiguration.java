@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -68,7 +70,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
 
-  @AbstractCollection(surroundWithTag = false, elementTag = "path")
+  @XCollection(elementName = "path")
   @Tag("ignored-roots")
   public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
 

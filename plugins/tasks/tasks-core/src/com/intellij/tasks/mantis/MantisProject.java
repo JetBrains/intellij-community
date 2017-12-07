@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.tasks.mantis;
 
 import com.intellij.tasks.mantis.model.ProjectData;
@@ -62,7 +65,7 @@ public final class MantisProject {
   }
 
   //@OptionTag(tag = "filters", nameAttribute = "")
-  //@AbstractCollection(surroundWithTag = false)
+  //@XCollection
 
   /**
    * Filters here are used only to simplify combo boxes management and are refreshed every time when settings
