@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     if track_files_pattern:
         print("Tracking file by folder pattern: ", track_files_pattern)
-        file_changes_tracker = FileChangesTracker(os.getcwd(), track_files_pattern)
+        file_changes_tracker = FileChangesTracker(os.getcwd(), track_files_pattern.split(":"))
         run_command()
         # Report files affected/created by commands. This info is used on Java side.
         changed_files = list(file_changes_tracker.get_changed_files())
