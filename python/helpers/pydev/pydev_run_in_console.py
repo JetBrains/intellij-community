@@ -5,7 +5,7 @@ import os
 import sys
 import traceback
 from pydevconsole import do_exit, InterpreterInterface, process_exec_queue, start_console_server, init_mpl_in_console
-from _pydev_imps._pydev_saved_modules import threading
+from _pydev_imps._pydev_saved_modules import threading, _queue
 
 from _pydev_bundle import pydev_imports
 from _pydevd_bundle.pydevd_utils import save_main_module
@@ -67,8 +67,8 @@ if __name__ == '__main__':
     #note that this does not work in jython!!! (sys method can't be replaced).
     sys.exit = do_exit
 
-    handshake_event = threading.Event()
-    interpreter = InterpreterInterface(host, int(client_port), threading.currentThread(), handshake_event=handshake_event)
+    connect_status_queue = _queue.Queue()
+    interpreter = InterpreterInterface(host, int(client_port), threading.currentThread(), connect_status_queue=connect_status_queue)
 
     server_thread = threading.Thread(target=start_console_server,
                                      name='ServerThread',
@@ -80,7 +80,14 @@ if __name__ == '__main__':
 
     init_mpl_in_console(interpreter)
 
-    handshake_event.wait(5)
+    try:
+        success = connect_status_queue.get(True, 60)
+        if not success:
+            raise ValueError()
+    except:
+        sys.stderr.write("Console server didn't start\n")
+        sys.stderr.flush()
+        sys.exit(1)
 
     globals = run_file(file, None, None)
 
