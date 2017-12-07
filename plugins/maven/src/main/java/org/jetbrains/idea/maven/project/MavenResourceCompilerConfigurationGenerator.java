@@ -393,6 +393,14 @@ public class MavenResourceCompilerConfigurationGenerator {
               r.includes.add(includeText);
             }
           }
+          if (includes.getChildren("include").isEmpty()) {
+            String include = includes.getValue();
+            if (include != null) {
+              for (String i : StringUtil.split(include, ",")) {
+                r.includes.add(i.trim());
+              }
+            }
+          }
         }
 
         Element excludes = resource.getChild("excludes");
@@ -401,6 +409,14 @@ public class MavenResourceCompilerConfigurationGenerator {
             String excludeText = exclude.getTextTrim();
             if (!excludeText.isEmpty()) {
               r.excludes.add(excludeText);
+            }
+          }
+          if (excludes.getChildren("exclude").isEmpty()) {
+            String exclude = excludes.getValue();
+            if (exclude != null) {
+              for (String e : StringUtil.split(exclude, ",")) {
+                r.excludes.add(e.trim());
+              }
             }
           }
         }
