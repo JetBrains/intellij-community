@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PythonHelpersLocator
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPING
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -40,8 +41,7 @@ import java.io.File
 object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..6
-  // TODO: Warn about unresolved `import typing` but still resolve it internally for type inference
-  val WHITE_LIST = setOf("typing", "six", "__builtin__", "builtins", "exceptions", "types", "datetime")
+  val WHITE_LIST = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime")
   private val BLACK_LIST = setOf<String>()
 
   /**
@@ -56,7 +56,11 @@ object PyTypeShed {
       return false
     }
     if (isInStandardLibrary(root)) {
-      return true
+      if (ApplicationManager.getApplication().isUnitTestMode ||
+          topLevelPackage != TYPING ||
+          PythonSdkType.getLanguageLevelForSdk(sdk).isAtLeast(LanguageLevel.PYTHON35)) {
+        return true
+      }
     }
     if (isInThirdPartyLibraries(root)) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
