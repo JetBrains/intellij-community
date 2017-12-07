@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.module.Module
@@ -20,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.ThrowingDecompiler
 
 import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
 
@@ -284,6 +287,22 @@ def foo(T t) {
 
 new C().<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via implementation
 '''
+  }
+
+  void 'test do not get mirror in completion'() {
+    ThrowingDecompiler.disableDecompilers(testRootDisposable)
+    fixture.configureByText '_.groovy', '''\
+class CC implements somepackage.TT {
+  def foo() {
+    someMet<caret>
+  }
+}
+'''
+    fixture.completeBasic()
+    assertContainsElements(
+      fixture.lookupElementStrings,
+      "someMethod", "someAbstractMethod", "someStaticMethod"
+    )
   }
 
   private PsiClass configureTraitInheritor() {
