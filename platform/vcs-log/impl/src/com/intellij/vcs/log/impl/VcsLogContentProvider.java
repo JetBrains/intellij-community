@@ -99,7 +99,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @Override
   public JComponent initContent() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> myProjectLog.createLog());
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myProjectLog.createLog(true));
     return myContainer;
   }
 
