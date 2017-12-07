@@ -23,7 +23,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -46,6 +49,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
+  @NotNull private final List<Consumer<VcsLogUiImpl>> myOnCreatedListeners = ContainerUtil.newArrayList();
 
   @Nullable private volatile VcsLogUiImpl myUi;
 
@@ -82,6 +86,9 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     if (myUi == null) {
       myUi = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
       myContainer.add(new VcsLogPanel(logManager, myUi), BorderLayout.CENTER);
+
+      myOnCreatedListeners.forEach(consumer -> consumer.consume(myUi));
+      myOnCreatedListeners.clear();
     }
   }
 
@@ -90,6 +97,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     myContainer.removeAll();
+    myOnCreatedListeners.clear();
     if (myUi != null) {
       VcsLogUiImpl ui = myUi;
       myUi = null;
@@ -101,6 +109,18 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   public JComponent initContent() {
     ApplicationManager.getApplication().executeOnPooledThread(() -> myProjectLog.createLog(true));
     return myContainer;
+  }
+
+  @CalledInAwt
+  public void executeOnMainUiCreated(@NotNull Consumer<VcsLogUiImpl> consumer) {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
+    if (myUi == null) {
+      myOnCreatedListeners.add(consumer);
+    }
+    else {
+      consumer.consume(myUi);
+    }
   }
 
   @Override

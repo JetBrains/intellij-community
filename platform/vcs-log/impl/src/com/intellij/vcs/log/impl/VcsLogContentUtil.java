@@ -29,6 +29,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
@@ -116,40 +117,31 @@ public class VcsLogContentUtil {
   }
 
   public static void openMainLogAndExecute(@NotNull Project project, @NotNull Consumer<VcsLogUiImpl> consumer) {
-    VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
-    boolean logReady = projectLog.getMainLogUi() != null;
-
     ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (!selectMainLog(window)) {
+      VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log is not available", MessageType.WARNING);
+      return;
+    }
+
+    Runnable runConsumer = () -> ObjectUtils.notNull(VcsLogContentProvider.getInstance(project)).executeOnMainUiCreated(consumer);
+    if (!window.isVisible()) {
+      window.activate(runConsumer);
+    }
+    else {
+      runConsumer.run();
+    }
+  }
+
+  private static boolean selectMainLog(@NotNull ToolWindow window) {
     ContentManager cm = window.getContentManager();
     Content[] contents = cm.getContents();
     for (Content content : contents) {
       if (VcsLogContentProvider.TAB_NAME.equals(content.getDisplayName())) {
         cm.setSelectedContent(content);
-        break;
+        return true;
       }
     }
-
-    VcsLogUiImpl logUi = projectLog.getMainLogUi();
-    if (logUi == null) {
-      VcsBalloonProblemNotifier.showOverChangesView(project, "Vcs Log Not Ready", MessageType.WARNING);
-      return;
-    }
-
-    Runnable openLogAndRun = () -> {
-      if (!window.isVisible()) {
-        window.activate(() -> consumer.consume(logUi), true);
-      }
-      else {
-        consumer.consume(logUi);
-      }
-    };
-
-    if (logReady) {
-      openLogAndRun.run();
-      return;
-    }
-
-    logUi.invokeOnChange(openLogAndRun);
+    return false;
   }
 
   public static void closeLogTabs(@NotNull ToolWindow toolWindow, @NotNull Collection<String> tabs) {
