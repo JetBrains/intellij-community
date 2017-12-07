@@ -14,22 +14,22 @@ class FileChangesTracker(object):
 
     """
 
-    def __init__(self, folder, pattern="*"):
-        self.old_files = self._get_changes_from(folder, pattern)
+    def __init__(self, folder, patterns="*"):
+        self.old_files = self._get_changes_from(folder, patterns)
         self.folder = folder
-        self.pattern = pattern
+        self.patterns = patterns
 
     def get_changed_files(self):
         assert self.folder, "No changes recorded"
-        new_files = self._get_changes_from(self.folder, pattern=self.pattern)
+        new_files = self._get_changes_from(self.folder, patterns=self.patterns)
         return filter(lambda f: f not in self.old_files or self.old_files[f] != new_files[f], new_files.keys())
 
     @staticmethod
-    def _get_changes_from(folder, pattern):
+    def _get_changes_from(folder, patterns):
         result = {}
         for tmp_folder, sub_dirs, files in os.walk(folder):
             sub_dirs[:] = [s for s in sub_dirs if not s.startswith(".")]
-            if fnmatch.fnmatch(os.path.basename(tmp_folder), pattern):
+            if any([fnmatch.fnmatch(os.path.basename(tmp_folder), p) for p in patterns]):
                 for file in map(lambda f: os.path.join(tmp_folder, f), files):
                     try:
                         result.update({file: os.path.getmtime(file)})
