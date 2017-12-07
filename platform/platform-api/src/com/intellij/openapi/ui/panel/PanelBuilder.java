@@ -16,12 +16,10 @@ package com.intellij.openapi.ui.panel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 
 public interface PanelBuilder {
   /**
-   * Creates panel from the panel builder settings. <code>GridBagLayout</code> is
-   * used internally as the layout manager.
+   * Creates panel from the panel builder settings.
    *
    * @return resulting <code>JPanel</code>
    */
@@ -33,20 +31,4 @@ public interface PanelBuilder {
    * point of view for creating a panel, <code>false</code> otherwise
    */
   boolean constrainsValid();
-
-  /**
-   * Adds contents to a concrete panel with the given <code>GridBagConstraints</code>
-   * Users should not call this method directly. It is used by the <code>PanelGrid</code>
-   * implementation.
-   */
-  void addToPanel(JPanel panel, GridBagConstraints gc);
-
-  /**
-   * @return the the maximum with in columns in terms of <code>GridBagConstraints</code>
-   * of the form being created.
-   * <p>
-   * Users should not call this method directly. It is used by the <code>PanelGrid</code>
-   * implementation.
-   */
-  int gridWidth();
 }

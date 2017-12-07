@@ -4,6 +4,7 @@ package com.intellij.ui.panel;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
+import com.intellij.openapi.ui.panel.GridBagPanelBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
+public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBagPanelBuilder {
 
   private final JComponent myComponent;
 

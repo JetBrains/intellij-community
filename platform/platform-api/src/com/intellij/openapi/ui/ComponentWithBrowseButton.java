@@ -57,7 +57,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
