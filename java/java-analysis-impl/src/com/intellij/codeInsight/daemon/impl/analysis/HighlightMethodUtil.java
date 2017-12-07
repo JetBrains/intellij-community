@@ -523,7 +523,7 @@ public class HighlightMethodUtil {
       PsiType rType = methodCall.getType();
       if (rType != null && !variable.getType().isAssignableFrom(rType)) {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
-        if (expectedTypeByApplicabilityConstraints != null && !expectedTypeByApplicabilityConstraints.equals(rType)) {
+        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints)) {
           HighlightFixUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
         }
       }

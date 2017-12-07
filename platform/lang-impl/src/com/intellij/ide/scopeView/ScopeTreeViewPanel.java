@@ -116,7 +116,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     public Color getFileColorForPath(@NotNull TreePath path) {
       if (!(path.getLastPathComponent() instanceof PackageDependenciesNode)) return null;
       PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-      return ProjectViewTree.getColorForObject(node.getPsiElement(), myProject, FunctionUtil.id());
+      return ProjectViewTree.getColorForElement(node.getPsiElement());
     }
   };
   @NotNull

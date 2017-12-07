@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -33,12 +34,12 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     ModuleManager moduleManager = ModuleManager.getInstance(reloaded);
     Module module = assertOneElement(moduleManager.getModules());
     moduleManager.disposeModule(module);
-    projectManager.closeProject(reloaded);
+    closeProject(reloaded, true);
 
     reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
     disposeOnTearDown(reloaded);
     assertEmpty(ModuleManager.getInstance(reloaded).getModules());
-    projectManager.closeProject(reloaded);
+    closeProject(reloaded, false);
   }
 
   public void testRemoveFailedToLoadModule() throws IOException, JDOMException {
@@ -57,26 +58,31 @@ public class ModulesConfigurationTest extends PlatformTestCase {
     assertEmpty(moduleManager.getModules());
     ConfigurationErrorDescription error = assertOneElement(errors);
     error.ignoreInvalidElement();
-    projectManager.closeProject(reloaded);
+    closeProject(reloaded, true);
     errors.clear();
     
     reloaded = projectManager.loadAndOpenProject(projectDir.getAbsolutePath());
     disposeOnTearDown(reloaded);
     assertEmpty(errors);
-    projectManager.closeProject(reloaded);
+    closeProject(reloaded, false);
   }
 
   @NotNull
   private Pair<File, File> createProjectWithModule() throws IOException {
     File projectDir = FileUtil.createTempDirectory("project", null);
-    ProjectManager projectManager = ProjectManager.getInstance();
-    Project project = projectManager.createProject("project", projectDir.getAbsolutePath());
+    Project project = ProjectManager.getInstance().createProject("project", projectDir.getAbsolutePath());
     disposeOnTearDown(project);
     File moduleFile = new File(projectDir, "module.iml");
     WriteAction.run(() -> ModuleManager.getInstance(project).newModule(moduleFile.getPath(), EmptyModuleType.EMPTY_MODULE));
-    project.save();
-    projectManager.closeProject(project);
+    closeProject(project, true);
     return Pair.create(projectDir, moduleFile);
+  }
+
+  private static void closeProject(Project project, boolean save) {
+    if (save) {
+      project.save();
+    }
+    ((ProjectManagerImpl)ProjectManager.getInstance()).forceCloseProject(project, true);
   }
 
   @Override

@@ -70,7 +70,7 @@ public class DoubleNegationInspection extends BaseInspection {
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
-        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker));
+        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker), tracker);
       } else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         final PsiExpression[] operands = polyadicExpression.getOperands();

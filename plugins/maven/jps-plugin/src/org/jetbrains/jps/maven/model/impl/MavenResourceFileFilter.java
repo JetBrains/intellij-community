@@ -30,15 +30,22 @@ public class MavenResourceFileFilter implements FileFilter {
   private File myRoot;
   private String myRelativeDirectoryPath;
   private MavenPatternFileFilter myMavenPatternFileFilter;
+  private final boolean myAcceptWebXml;
 
   public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern) {
     this(rootFile, filePattern, null);
   }
 
   public MavenResourceFileFilter(@NotNull File rootFile, @NotNull FilePattern filePattern, @Nullable String relativeDirectoryPath) {
-    myMavenPatternFileFilter = new MavenPatternFileFilter(filePattern.includes, filePattern.excludes);
+    this(new MavenPatternFileFilter(filePattern.includes, filePattern.excludes), rootFile, relativeDirectoryPath, false);
+  }
+
+  private MavenResourceFileFilter(@NotNull MavenPatternFileFilter filter, @NotNull File rootFile, @Nullable String relativeDirectoryPath,
+                                  boolean acceptWebXml) {
+    myMavenPatternFileFilter = filter;
     myRoot = rootFile;
     myRelativeDirectoryPath = relativeDirectoryPath;
+    myAcceptWebXml = acceptWebXml;
   }
 
   @Override
@@ -47,6 +54,16 @@ public class MavenResourceFileFilter implements FileFilter {
     if (myRelativeDirectoryPath != null) {
       relativePath = myRelativeDirectoryPath + (relativePath != null ? File.separator + relativePath : "");
     }
-    return relativePath != null && myMavenPatternFileFilter.accept(relativePath);
+    if (relativePath == null) {
+      return false;
+    }
+    if (myAcceptWebXml && "WEB-INF/web.xml".equals(relativePath)) {
+      return true;
+    }
+    return myMavenPatternFileFilter.accept(relativePath);
+  }
+
+  public MavenResourceFileFilter acceptingWebXml() {
+    return new MavenResourceFileFilter(myMavenPatternFileFilter, myRoot, myRelativeDirectoryPath, true);
   }
 }

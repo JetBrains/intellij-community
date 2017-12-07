@@ -98,7 +98,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
       }

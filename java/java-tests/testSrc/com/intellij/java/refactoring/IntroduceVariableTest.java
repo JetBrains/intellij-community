@@ -238,6 +238,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.lang.String"));
   }
 
+  public void testGenericTypeMismatch1() {
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.util.List<java.lang.String>"));
+  }
+
   public void testThisQualifier() {
     doTest(new MockIntroduceVariableHandler("count", true, true, false, "int"));
   }

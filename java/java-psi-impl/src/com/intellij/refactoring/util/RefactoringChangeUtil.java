@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -66,9 +65,6 @@ public class RefactoringChangeUtil {
     PsiClass refClass = PsiUtil.resolveClassInType(type);
     if (refClass instanceof PsiAnonymousClass) {
       type = ((PsiAnonymousClass)refClass).getBaseClassType();
-    }
-    if (refClass instanceof PsiTypeParameter && !PsiTypesUtil.isAccessibleAt((PsiTypeParameter)refClass, expr)) {
-      type = ((PsiExpression)expr.copy()).getType();
     }
 
     return GenericsUtil.getVariableTypeByExpressionType(type);

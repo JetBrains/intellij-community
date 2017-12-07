@@ -90,6 +90,6 @@ public class FlipAssertLiteralIntention extends MutablyNamedIntention {
       newCall.append(BoolUtils.getNegatedExpressionText(arguments[1], tracker));
     }
     newCall.append(')');
-    PsiReplacementUtil.replaceExpressionAndShorten(call, newCall.toString());
+    PsiReplacementUtil.replaceExpressionAndShorten(call, newCall.toString(), tracker);
   }
 }
