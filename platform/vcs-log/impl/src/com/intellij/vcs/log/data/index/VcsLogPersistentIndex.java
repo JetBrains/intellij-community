@@ -592,7 +592,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       int previousPriority = Thread.currentThread().getPriority();
       try {
         Thread.currentThread().setPriority(LOW_PRIORITY);
-      } catch (SecurityException e) {
+      }
+      catch (SecurityException e) {
         LOG.debug("Could not set indexing thread priority", e);
       }
       return previousPriority;
