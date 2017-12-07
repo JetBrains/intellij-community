@@ -99,8 +99,13 @@ public class DebuggerUIUtil {
 
   @Nullable
   public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
-    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-    return editor.getScrollingModel().getVisibleArea().contains(p) ? new RelativePoint(editor.getContentComponent(), p) : null;
+    if (line > -1) {
+      Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
+      if (editor.getScrollingModel().getVisibleArea().contains(p)) {
+        return new RelativePoint(editor.getContentComponent(), p);
+      }
+    }
+    return null;
   }
 
   public static void showPopupForEditorLine(@NotNull JBPopup popup, @NotNull Editor editor, int line) {

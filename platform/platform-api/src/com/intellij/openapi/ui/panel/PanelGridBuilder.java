@@ -18,24 +18,21 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Panel grid represents a series of panels of the same type laid out according to the
  * specific design specs (usually vertically).
- *
- * @param <T> type of a single panel builder
  */
-public interface PanelGridBuilder<T extends PanelBuilder> extends PanelBuilder {
+public interface PanelGridBuilder extends PanelBuilder {
   /**
    * Adds a single panel builder to grid.
    * @param builder single row panel builder
    * @return <code>this</code>
    */
-  PanelGridBuilder<T> add(@NotNull T builder);
+  PanelGridBuilder add(@NotNull PanelBuilder builder);
 
   /**
-   * Set to <code>true</code> if grid rows should resize vertically when the panel is resized. Grid components
+   * Turns on vertical resizing of grid rows when the panel is resized. Grid components
    * don't resize, only grid cells are resized and components are centered vertically within the cells.
-   * Set to <code>false</code> if an empty space should take all free area below the grid. This is the default
-   * setting.
-   * @param expand only needed to set explicitly to <code>true</code>. <code>false</code> is default.
+   * By default empty space takes all free area below the grid.
+   *
    * @return <code>this</code>
    */
-  PanelGridBuilder<T> expandVertically(boolean expand);
+  PanelGridBuilder expandVertically();
 }

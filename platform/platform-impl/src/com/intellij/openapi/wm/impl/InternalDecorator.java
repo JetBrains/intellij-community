@@ -441,6 +441,12 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
         }
         return myToolWindow.getHelpId();
       }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setEnabledAndVisible(getHelpId(e.getDataContext()) != null);
+      }
     });
     return group;
   }

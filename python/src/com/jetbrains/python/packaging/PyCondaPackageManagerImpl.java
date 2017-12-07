@@ -172,7 +172,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.fromText(requiresSpec));
+        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, "", requirements));

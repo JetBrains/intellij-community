@@ -253,7 +253,8 @@
     <projectService serviceInterface="com.intellij.facet.impl.invalid.InvalidFacetManager"
                     serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
-                    serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"/>
+                    serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"
+                    testServiceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier"/>
     <projectService serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloader"/>
 
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"

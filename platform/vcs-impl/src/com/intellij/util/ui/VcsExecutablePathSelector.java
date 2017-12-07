@@ -44,7 +44,7 @@ public class VcsExecutablePathSelector {
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
     myProjectPathCheckbox.addActionListener(e -> handleProjectOverrideStateChanged());
 
-    myMainPanel = JBPanelFactory.componentGrid()
+    myMainPanel = JBPanelFactory.grid()
       .add(JBPanelFactory.panel(panel).withLabel(VcsBundle.getString("executable.select.label")))
       .add(JBPanelFactory.panel(myProjectPathCheckbox))
       .createPanel();

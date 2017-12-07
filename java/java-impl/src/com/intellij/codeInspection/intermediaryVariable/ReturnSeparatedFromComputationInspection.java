@@ -217,15 +217,24 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         return;
       }
     }
+    PsiExpression firstInlined = null;
     boolean isSingleUsage = value != null && usages.size() == 1;
     if (isSimple || isSingleUsage) {
       for (PsiReference usage : usages) {
         PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, (PsiJavaCodeReferenceElement)usage);
+        if (firstInlined == null) firstInlined = inlined;
         highlighter.add(inlined);
       }
     }
     if (isSimple || isSingleUsage || usages.isEmpty()) {
-      context.returnedVariable.delete();
+      CommentTracker tracker = new CommentTracker();
+      if (firstInlined != null) {
+        tracker.delete(context.returnedVariable);
+        tracker.insertCommentsBefore(firstInlined);
+      }
+      else {
+        tracker.deleteAndRestoreComments(context.returnedVariable);
+      }
     }
   }
 

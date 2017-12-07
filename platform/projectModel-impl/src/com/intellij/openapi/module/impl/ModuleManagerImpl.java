@@ -416,7 +416,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   // overridden in Upsource
   protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }
 
@@ -425,6 +425,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   public void removeFailedModulePath(@NotNull ModulePath modulePath) {
     myFailedModulePaths.remove(modulePath);
+    incModificationCount();
   }
 
   @Override

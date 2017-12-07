@@ -38,13 +38,14 @@ import javax.swing.*;
  * For more information see {@link ProgressPanelBuilder}</p>
  *
  * <p>Either of the mentioned panels can be grouped together in a grid. I.e. it's possible to create a grid of
- * component panels see {@link JBPanelFactory#componentGrid()} or progress bars see <code>{@link JBPanelFactory#progressGrid()}</code>.
+ * panels see {@link JBPanelFactory#grid()}.
  * When using grid internal implementation makes sure all labels (if the are placed on the left) are located
  * in the leftmost column and components/progress bars are in the second column expanding horizontally.
  * </p>
  *
- * <p>{@link PanelGridBuilder} has convenient {@link PanelGridBuilder#expandVertically(boolean)} method that adds an expandable area
- * below all rows in the grid making it possible to stick all rows to the top.
+ * <p>{@link PanelGridBuilder} has convenient {@link PanelGridBuilder#expandVertically()} method that allows rows to expand
+ * vertically when the grid is resized. By default all rows stick to the top of the grid and all available empty space is
+ * expanded below rows.
  * </p>
  *
  * <p>For concrete examples look <code>ComponentPanelTestAction</code> test action an class.</p>
@@ -52,8 +53,6 @@ import javax.swing.*;
 
 public abstract class JBPanelFactory {
   /**
-   * Returns the popup factory instance.
-   *
    * @return the popup factory instance.
    */
   public static JBPanelFactory getInstance() {
@@ -83,30 +82,17 @@ public abstract class JBPanelFactory {
   }
 
   /**
-   * Creates a panel grid where all labels are placed in the leftmost column and
-   * components are in the middle and expandable horizontally.
+   * Creates a panel grid. Each grid should contain panels of the same type.
    *
    * @return a newly created {@link PanelGridBuilder}
    */
-  public static PanelGridBuilder<ComponentPanelBuilder> componentGrid() {
-    return getInstance().createComponentPanelGridBuilder();
-  }
-
-  /**
-   * Creates a progress bar specific panel grid where all labels are placed in
-   * the leftmost column and progress bars are in the middle and expandable horizontally.
-   *
-   * @return a newly created {@link PanelGridBuilder}
-   */
-  public static PanelGridBuilder<ProgressPanelBuilder> progressGrid() {
-    return getInstance().createProgressPanelGridBuilder();
+  public static PanelGridBuilder grid() {
+    return getInstance().createPanelGridBuilder();
   }
 
   public abstract ComponentPanelBuilder createComponentPanelBuilder(JComponent component);
 
   public abstract ProgressPanelBuilder createProgressPanelBuilder(JProgressBar progressBar);
 
-  public abstract PanelGridBuilder<ComponentPanelBuilder> createComponentPanelGridBuilder();
-
-  public abstract PanelGridBuilder<ProgressPanelBuilder> createProgressPanelGridBuilder();
+  public abstract PanelGridBuilder createPanelGridBuilder();
 }

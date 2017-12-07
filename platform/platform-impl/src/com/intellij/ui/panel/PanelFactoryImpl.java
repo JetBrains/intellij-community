@@ -20,12 +20,7 @@ public class PanelFactoryImpl extends JBPanelFactory {
   }
 
   @Override
-  public PanelGridBuilder<ComponentPanelBuilder> createComponentPanelGridBuilder() {
-    return new PanelGridBuilderImpl<>();
-  }
-
-  @Override
-  public PanelGridBuilder<ProgressPanelBuilder> createProgressPanelGridBuilder() {
-    return new PanelGridBuilderImpl<>();
+  public PanelGridBuilder createPanelGridBuilder() {
+    return new PanelGridBuilderImpl();
   }
 }

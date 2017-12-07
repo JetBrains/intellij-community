@@ -128,7 +128,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       ComponentWithBrowseButton cbb = new ComboboxWithBrowseButton(new JComboBox<>(new String[]{"One", "Two", "Three", "Four"}));
       cbb.addActionListener((e) -> System.out.println("Browse for combobox"));
 
-      JPanel panel = JBPanelFactory.componentGrid().
+      JPanel panel = JBPanelFactory.grid().
         add(JBPanelFactory.panel(new JTextField()).
           withLabel("&Port:").withComment("Port")).
 
@@ -213,7 +213,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JProgressBar pb1 = new JProgressBar(0, 100);
       JProgressBar pb2 = new JProgressBar(0, 100);
 
-      panel.add(JBPanelFactory.progressGrid().
+      panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(pb1).
           withLabel("Label 1.1").
           withCancel(()-> System.out.println("Cancel action #1"))).
@@ -221,14 +221,14 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
-        expandVertically(false).createPanel());
+        createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb1)).setCommentText("Long long long long long long long text");
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb2)).setCommentText("Short text");
 
       JProgressBar pb3 = new JProgressBar(0, 100);
       JProgressBar pb4 = new JProgressBar(0, 100);
-      panel.add(JBPanelFactory.progressGrid().
+      panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(pb3).
           withTopSeparator().
           withLabel("Label 2.1").moveLabelLeft().
@@ -237,14 +237,14 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
           withResume(()-> System.out.println("Resume action #4"))).
-        expandVertically(false).createPanel());
+        createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb3)).setCommentText("Long long long long long long text");
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb4)).setCommentText("Short text");
 
       JProgressBar pb5 = new JProgressBar(0, 100);
       JProgressBar pb6 = new JProgressBar(0, 100);
-      panel.add(JBPanelFactory.progressGrid().
+      panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(pb5).
           withTopSeparator().withLabel("Label 3.1").
           withCancel(()-> System.out.println("Cancel action #5")).
@@ -253,13 +253,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 3.2").
           withPause(()-> System.out.println("Pause action #6")).
           withResume(()-> System.out.println("Resume action #6")).
-          andSmallIcons()).
-        expandVertically(false).createPanel());
+          andSmallIcons()).createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb5)).setCommentText("Long long long long long long text");
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb6)).setCommentText("Short text");
 
-      panel.add(JBPanelFactory.progressGrid().
+      panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(new JProgressBar(0, 100)).
           withTopSeparator().withLabel("Label 4.1").withoutComment().
           withCancel(()-> System.out.println("Cancel action #7")).
@@ -269,22 +268,22 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withPause(()-> System.out.println("Pause action #8")).
           withResume(()-> System.out.println("Resume action #8")).
           andSmallIcons()).
-        expandVertically(false).createPanel());
+        createPanel());
 
 
-      panel.add(JBPanelFactory.progressGrid().
+      panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(new JProgressBar(0, 100)).
           withTopSeparator().withoutComment().
           withCancel(()-> System.out.println("Cancel action #9")).
           andSmallIcons()).
-        expandVertically(false).createPanel());
+        createPanel());
 
-      panel.add(JBPanelFactory.progressGrid().
+      panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(new JProgressBar(0, 100)).
           withTopSeparator().withoutComment().
           andCancelAsButton().
           withCancel(()-> System.out.println("Cancel action #11"))).
-        expandVertically(false).createPanel());
+        createPanel());
 
       panel.add(Box.createVerticalBox());
       return panel;
