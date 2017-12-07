@@ -696,14 +696,11 @@ public class ClassWriter {
           }
         }
 
-        boolean firstParameter = true;
         int index = isEnum && init ? 3 : thisVar ? 1 : 0;
-        boolean hasDescriptor = descriptor != null;
-        int start = isEnum && init && !hasDescriptor ? 2 : 0;
-        int params = hasDescriptor ? descriptor.parameterTypes.size() : md.params.length;
-        for (int i = start; i < params; i++) {
-          if (hasDescriptor || mask == null || mask.get(i) == null) {
-            if (!firstParameter) {
+        int start = isEnum && init ? 2 : 0;
+        for (int i = start; i < md.params.length; i++) {
+          if (mask == null || mask.get(i) == null) {
+            if (paramCount > 0) {
               buffer.append(", ");
             }
 
@@ -717,7 +714,7 @@ public class ClassWriter {
             boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
 
             if (descriptor != null) {
-              GenericType parameterType = descriptor.parameterTypes.get(i);
+              GenericType parameterType = descriptor.parameterTypes.get(paramCount);
               isVarArg &= parameterType.arrayDim > 0;
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
@@ -746,7 +743,6 @@ public class ClassWriter {
             String parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 
-            firstParameter = false;
             paramCount++;
           }
 

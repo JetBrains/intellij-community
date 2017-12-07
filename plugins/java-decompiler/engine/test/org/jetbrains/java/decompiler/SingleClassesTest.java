@@ -113,6 +113,7 @@ public class SingleClassesTest {
 
   @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
   @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+  @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
