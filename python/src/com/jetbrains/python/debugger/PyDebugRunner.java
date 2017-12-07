@@ -242,25 +242,25 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static boolean patchExeParams(ParametersList parametersList) {
     // we should remove '-m' parameter, but notify debugger of it
     // but we can't remove one parameter from group, so we create new parameters group
-    int exeParamsIndex =
-      parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
-    ParamsGroup oldExeParams = parametersList.removeParamsGroup(exeParamsIndex);
-    if (oldExeParams == null) {
+    int moduleParamsIndex =
+      parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_MODULE));
+    ParamsGroup oldModuleParams = parametersList.removeParamsGroup(moduleParamsIndex);
+    if (oldModuleParams == null) {
       return false;
     }
     boolean isModule = false;
 
-    ParamsGroup newExeParams = new ParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
-    for (String param : oldExeParams.getParameters()) {
+    ParamsGroup newModuleParams = new ParamsGroup(PythonCommandLineState.GROUP_MODULE);
+    for (String param : oldModuleParams.getParameters()) {
       if (!param.equals("-m")) {
-        newExeParams.addParameter(param);
+        newModuleParams.addParameter(param);
       }
       else {
         isModule = true;
       }
     }
 
-    parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
+    parametersList.addParamsGroupAt(moduleParamsIndex, newModuleParams);
     return isModule;
   }
 
