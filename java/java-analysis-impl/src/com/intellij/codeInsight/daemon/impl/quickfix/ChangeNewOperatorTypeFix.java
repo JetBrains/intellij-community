@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,12 +76,13 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
     int caretOffset;
     TextRange selection;
+    CommentTracker commentTracker = new CommentTracker();
     if (toType instanceof PsiArrayType) {
       final PsiExpression[] originalExpressionArrayDimensions = originalExpression.getArrayDimensions();
       caretOffset = 0;
       @NonNls String text = "new " + toType.getDeepComponentType().getCanonicalText() + "[";
       if (originalExpressionArrayDimensions.length > 0) {
-        text += originalExpressionArrayDimensions[0].getText();
+        text += commentTracker.markUnchanged(originalExpressionArrayDimensions[0]).getText();
       }
       else {
         text += "0";
@@ -91,7 +93,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
         text += "[";
         String arrayDimension = "";
         if (originalExpressionArrayDimensions.length > i) {
-          arrayDimension = originalExpressionArrayDimensions[i].getText();
+          arrayDimension = commentTracker.markUnchanged(originalExpressionArrayDimensions[i]).getText();
           text += arrayDimension;
         }
         text += "]";
@@ -112,7 +114,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
       newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""), originalExpression);
       PsiExpressionList argumentList = originalExpression.getArgumentList();
       if (argumentList == null) return;
-      newExpression.getArgumentList().replace(argumentList);
+      newExpression.getArgumentList().replace(commentTracker.markUnchanged(argumentList));
       if (anonymousClass == null) { //just to prevent useless inference
         if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, originalExpression, toType)) {
           final PsiElement paramList = PsiDiamondTypeUtil.replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
@@ -124,13 +126,19 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
         PsiAnonymousClass newAnonymousClass = newExpression.getAnonymousClass();
         final PsiElement childInside = anonymousClass.getLBrace().getNextSibling();
         if (childInside != null) {
+          PsiElement element = childInside;
+          do {
+            commentTracker.markUnchanged(element);
+          }
+          while ((element = element.getNextSibling()) != null);
+
           newAnonymousClass.addRange(childInside, anonymousClass.getRBrace().getPrevSibling());
         }
       }
       selection = null;
       caretOffset = -1;
     }
-    PsiElement element = originalExpression.replace(newExpression);
+    PsiElement element = commentTracker.replaceAndRestoreComments(originalExpression, newExpression);
     editor.getCaretModel().moveToOffset(element.getTextRange().getEndOffset() + caretOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     if (selection != null) {
