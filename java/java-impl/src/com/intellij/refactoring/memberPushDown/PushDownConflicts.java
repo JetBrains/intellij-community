@@ -112,6 +112,7 @@ public class PushDownConflicts {
     }
     Members:
     for (PsiMember member : myMovedMembers) {
+      if (member.hasModifierProperty(PsiModifier.STATIC)) continue;
       for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiReferenceExpression) {
