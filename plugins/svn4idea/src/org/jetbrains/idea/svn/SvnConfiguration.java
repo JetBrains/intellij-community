@@ -300,7 +300,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
     boolean directoryChanged = !Comparing.equal(getConfigurationDirectory(), newConfigurationDirectory);
     if (directoryChanged) {
-      setConfigurationDirectory(newConfigurationDirectory);
+      myState.directory.path = newConfigurationDirectory;
     }
     boolean usageChanged = isUseDefaultConfiguation() != newUseDefault;
     if (usageChanged) {
@@ -312,12 +312,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
         clear();
       }
     }
-  }
-
-  private void setConfigurationDirectory(String path) {
-    myState.directory.path = path;
-    File dir = path == null ? USER_CONFIGURATION_PATH.getValue().toFile() : new File(path);
-    SVNConfigFile.createDefaultConfiguration(dir);
   }
 
   public void clear() {
@@ -372,12 +366,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
-    // created only if does not exist
-    final File dir = new File(getConfigurationDirectory());
-    if (! dir.exists()) {
-      SVNConfigFile.createDefaultConfiguration(dir);
-    }
-
     systemManager
       .set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile())));
     userManager.set(new SvnServerFileManagerImpl(getServersFile()));
