@@ -184,7 +184,7 @@ public class SvnAuthenticationManager {
   public static String getGroupForHost(final String host, final IdeaSVNConfigFile serversFile) {
     final Map<String, ProxyGroup> groups = serversFile.getAllGroups();
     for (Map.Entry<String, ProxyGroup> entry : groups.entrySet()) {
-      if (matchesGroupPattern(host, entry.getValue().getPatterns())) return entry.getKey();
+      if (matches(entry.getValue().getPatterns(), host)) return entry.getKey();
     }
     return null;
   }
@@ -194,19 +194,9 @@ public class SvnAuthenticationManager {
     for (Object o : groups.keySet()) {
       final String name = (String)o;
       final String pattern = (String)groups.get(name);
-      if (matchesGroupPattern(host, pattern)) return name;
+      if (matches(pattern, host)) return name;
     }
     return null;
-  }
-
-  private static boolean matchesGroupPattern(String host, String pattern) {
-    for (StringTokenizer tokens = new StringTokenizer(pattern, ","); tokens.hasMoreTokens(); ) {
-      String token = tokens.nextToken();
-      if (DefaultSVNOptions.matches(token, host)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   // default = yes
