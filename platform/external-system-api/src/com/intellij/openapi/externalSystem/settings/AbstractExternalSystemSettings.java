@@ -227,7 +227,7 @@ public abstract class AbstractExternalSystemSettings<
       setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
-          if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
             return;
           }
 
