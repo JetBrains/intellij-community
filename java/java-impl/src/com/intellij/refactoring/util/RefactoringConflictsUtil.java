@@ -206,7 +206,7 @@ public class RefactoringConflictsUtil {
                                         @Nullable PsiClass accessClass,
                                         PsiMember member,
                                         MultiMap<PsiElement, String> conflicts) {
-    if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
+    if (!JavaPsiFacade.getInstance(newContext.getProject()).getResolveHelper().isAccessible(refMember, refMember.getModifierList(), newContext, accessClass, newContext)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
