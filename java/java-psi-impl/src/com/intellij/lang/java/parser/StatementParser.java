@@ -347,7 +347,7 @@ public class StatementParser {
         }
       }
       else {
-        parseExpressionOrExpressionList(builder);
+        parseForUpdateExpressions(builder);
         if (!expect(builder, JavaTokenType.RPARENTH)) {
           error(builder, JavaErrorMessages.message("expected.rparen"));
           done(statement, JavaElementType.FOR_STATEMENT);
@@ -372,7 +372,7 @@ public class StatementParser {
     return token;
   }
 
-  private void parseExpressionOrExpressionList(PsiBuilder builder) {
+  private void parseForUpdateExpressions(PsiBuilder builder) {
     PsiBuilder.Marker expr = myParser.getExpressionParser().parse(builder);
     if (expr == null) return;
 
