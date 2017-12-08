@@ -11,7 +11,7 @@ PROG_DIR=$(dirname "$0")
 
 function die() {
   echo "$*" > /dev/stderr
-  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>] [--enable-uitests]" > /dev/stderr
+  echo "Usage: $0 [<out_dir> <dist_dir> <build_number>]" > /dev/stderr
   exit 1
 }
 
@@ -32,11 +32,8 @@ function set_java_home() {
     esac
 }
 
-UI_TESTS=
 while [[ -n "$1" ]]; do
-  if [[ $1 == "--enable-uitests" ]]; then
-    UI_TESTS=1
-  elif [[ -z "$OUT" ]]; then
+  if [[ -z "$OUT" ]]; then
     OUT="$1"
   elif [[ -z "$DIST" ]]; then
     DIST="$1"
@@ -68,7 +65,6 @@ echo "## Building android-studio ##"
 echo "## Dist dir : $DIST"
 echo "## Qualifier: $QUAL"
 echo "## Build Num: $BNUM"
-echo "## UI Tests : $UI_TESTS"
 echo "## Out dir  : $OUT"
 echo "## Prog dir : $PROG_DIR"
 echo
@@ -82,15 +78,14 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dout=$OUT" "-Dbuild.number=$BNUM" "-Denable.ui.tests=$UI_TESTS" -Dbundle.gradle.release.plugin=true -Dbundle.kotlin.plugin=true
+$ANT "-Dout=$OUT" "-Dbuild.number=$BNUM" -Dbundle.gradle.release.plugin=true fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
 cp -Rfv "$OUT"/studio/artifacts/android-studio* "$DIST"/
 
-# TODO: bring back custom patcher
-#cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
-#cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
+cp -Rfv "$OUT"/updater-full.jar "$DIST"/android-studio-updater.jar
+cp -Rfv "$OUT"/sdk-patcher.zip "$DIST"/sdk-patcher.zip
 
 # Artifact built with gradle. The ant build does not pass OUT_DIR or DIST_DIR
 # down to gradle, so it is relative to prog_dir.
