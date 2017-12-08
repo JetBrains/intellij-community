@@ -35,6 +35,7 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
@@ -146,7 +147,8 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
       }
     }), RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) return false;
     if (!conflicts.isEmpty()) {
-      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts);
+      ConflictsDialog conflictsDialog = new ConflictsDialog(myProject, conflicts, () ->
+        new PullUpProcessor(mySubclass, superClass, infos.toArray(new MemberInfo[infos.size()]), new DocCommentPolicy(dialog.getJavaDocPolicy())).run());
       boolean ok = conflictsDialog.showAndGet();
       if (!ok && conflictsDialog.isShowConflicts()) dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
       return ok;
