@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,6 @@ import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.DefaultProxyGroup;
 import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
 import java.io.File;
@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import static com.intellij.util.containers.ContainerUtil.union;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class IdeaSVNConfigFile {
@@ -80,6 +81,11 @@ public class IdeaSVNConfigFile {
     return mySVNConfigFile.getPropertyValue(groupName, propertyName);
   }
 
+  @NotNull
+  public Map<String, String> getValues(String groupName) {
+    return mySVNConfigFile.getProperties(groupName);
+  }
+
   public void setValue(final String groupName, final String propertyName, final String value) {
     mySVNConfigFile.setPropertyValue(groupName, propertyName, value, true);
   }
@@ -126,16 +132,16 @@ public class IdeaSVNConfigFile {
     mySVNConfigFile.save();
   }
 
-  public static String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
-    String groupName = getGroupName(serversFile.getProperties(GROUPS_GROUP_NAME), host);
+  public static String getPropertyIdea(String host, @NotNull Couple<IdeaSVNConfigFile> serversFile, final String name) {
+    String groupName = getGroupName(getValues(serversFile, GROUPS_GROUP_NAME), host);
     if (groupName != null) {
-      Map hostProps = serversFile.getProperties(groupName);
+      Map hostProps = getValues(serversFile, groupName);
       final String value = (String)hostProps.get(name);
       if (value != null) {
         return value;
       }
     }
-    Map globalProps = serversFile.getProperties("global");
+    Map globalProps = getValues(serversFile, "global");
     return (String)globalProps.get(name);
   }
 
@@ -185,5 +191,16 @@ public class IdeaSVNConfigFile {
   // default = yes
   public static boolean isTurned(final String value) {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
+  }
+
+  @Nullable
+  public static String getValue(@NotNull Couple<IdeaSVNConfigFile> files, String groupName, String propertyName) {
+    String result = files.second.getValue(groupName, propertyName);
+    return result != null ? result : files.first.getValue(groupName, propertyName);
+  }
+
+  @NotNull
+  public static Map<String, String> getValues(@NotNull Couple<IdeaSVNConfigFile> files, String groupName) {
+    return union(files.first.getValues(groupName), files.second.getValues(groupName));
   }
 }

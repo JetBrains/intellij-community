@@ -110,7 +110,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   @NotNull
   public String getSshTunnelSetting() {
-    // TODO: Check SVNCompositeConfigFile - to utilize both system and user settings
+    // TODO: Utilize both system and user settings
     return StringUtil.notNullize(getConfigFile().getValue("tunnels", "ssh"));
   }
 

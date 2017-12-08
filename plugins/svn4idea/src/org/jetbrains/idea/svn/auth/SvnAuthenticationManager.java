@@ -4,17 +4,17 @@ package org.jetbrains.idea.svn.auth;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
-import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
 import java.io.File;
 
@@ -33,22 +33,22 @@ public class SvnAuthenticationManager {
   private SvnVcs myVcs;
   private Project myProject;
   private File myConfigDirectory;
-  private final NotNullLazyValue<SVNCompositeConfigFile> myConfigFile = new NotNullLazyValue<SVNCompositeConfigFile>() {
+  private final NotNullLazyValue<Couple<IdeaSVNConfigFile>> myConfigFile = new NotNullLazyValue<Couple<IdeaSVNConfigFile>>() {
     @NotNull
     @Override
-    protected SVNCompositeConfigFile compute() {
-      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, CONFIG_FILE_NAME));
-      SVNConfigFile systemConfig = new SVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME).toFile());
-      return new SVNCompositeConfigFile(systemConfig, userConfig);
+    protected Couple<IdeaSVNConfigFile> compute() {
+      IdeaSVNConfigFile userConfig = new IdeaSVNConfigFile(new File(myConfigDirectory, CONFIG_FILE_NAME));
+      IdeaSVNConfigFile systemConfig = new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME).toFile());
+      return Couple.of(systemConfig, userConfig);
     }
   };
-  private final NotNullLazyValue<SVNCompositeConfigFile> myServersFile = new NotNullLazyValue<SVNCompositeConfigFile>() {
+  private final NotNullLazyValue<Couple<IdeaSVNConfigFile>> myServersFile = new NotNullLazyValue<Couple<IdeaSVNConfigFile>>() {
     @NotNull
     @Override
-    protected SVNCompositeConfigFile compute() {
-      SVNConfigFile userConfig = new SVNConfigFile(new File(myConfigDirectory, SERVERS_FILE_NAME));
-      SVNConfigFile systemConfig = new SVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile());
-      return new SVNCompositeConfigFile(systemConfig, userConfig);
+    protected Couple<IdeaSVNConfigFile> compute() {
+      IdeaSVNConfigFile userConfig = new IdeaSVNConfigFile(new File(myConfigDirectory, SERVERS_FILE_NAME));
+      IdeaSVNConfigFile systemConfig = new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile());
+      return Couple.of(systemConfig, userConfig);
     }
   };
   private SvnConfiguration myConfig;
@@ -150,7 +150,7 @@ public class SvnAuthenticationManager {
     public boolean isAuthStorageEnabled() {
       String perHostValue = getPropertyIdea(myUrl.getHost(), myServersFile.getValue(), "store-auth-creds");
       boolean storageEnabled =
-        perHostValue != null ? isTurned(perHostValue) : isTurned(myConfigFile.getValue().getPropertyValue("auth", "store-auth-creds"));
+        perHostValue != null ? isTurned(perHostValue) : isTurned(getValue(myConfigFile.getValue(), "auth", "store-auth-creds"));
 
       if (!storageEnabled) {
         warnOnAuthStorageDisabled();
