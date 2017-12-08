@@ -140,7 +140,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Override
-  public void runProcess(@NotNull final Runnable process, final ProgressIndicator progress) {
+  public void runProcess(@NotNull final Runnable process, @Nullable ProgressIndicator progress) {
     executeProcessUnderProgress(() -> {
       try {
         try {

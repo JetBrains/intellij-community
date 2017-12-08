@@ -48,12 +48,12 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   /**
    * Runs given process synchronously (in calling thread).
    */
-  public abstract void runProcess(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract void runProcess(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   /**
    * Runs given process synchronously (in calling thread).
    */
-  public abstract <T> T runProcess(@NotNull Computable<T> process, ProgressIndicator progress) throws ProcessCanceledException;
+  public abstract <T> T runProcess(@NotNull Computable<T> process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override
   public ProgressIndicator getProgressIndicator() {
