@@ -57,7 +57,8 @@ public class MavenResourceFileFilter implements FileFilter {
     if (relativePath == null) {
       return false;
     }
-    if (myAcceptWebXml && "WEB-INF/web.xml".equals(relativePath)) {
+    String webInfWebXml = "WEB-INF" + File.separator + "web.xml";
+    if (myAcceptWebXml && webInfWebXml.equals(relativePath)) {
       return true;
     }
     return myMavenPatternFileFilter.accept(relativePath);
