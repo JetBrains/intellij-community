@@ -575,6 +575,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "IA"));
   }
 
+  public void testTooPopularNameOfTheFollowingCall() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.List<java.lang.String>"));
+  }
+
   public void testChooseTypeExpressionWhenNotDenotable() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo")); }
   public void testChooseTypeExpressionWhenNotDenotable1() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo<?>")); }
 

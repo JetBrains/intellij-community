@@ -361,22 +361,22 @@ public class RefactoringUtil {
     PsiType typeByExpression = getTypeByExpression(expr, factory);
     PsiType type = typeByExpression;
     final boolean isFunctionalType = LambdaUtil.notInferredType(type);
-    final boolean isDenotable = PsiTypesUtil.isDenotableType(expr.getType());
-    if (type != null && !isFunctionalType && isDenotable) {
+    PsiType exprType = expr.getType();
+    final boolean detectConjunct = exprType instanceof PsiIntersectionType ||
+                                   exprType instanceof PsiWildcardType && ((PsiWildcardType)exprType).getBound() instanceof PsiIntersectionType ||
+                                   exprType instanceof PsiCapturedWildcardType && ((PsiCapturedWildcardType)exprType).getUpperBound() instanceof PsiIntersectionType;
+    if (type != null && !isFunctionalType && !detectConjunct) {
       return type;
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
-    if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
+    if (expectedTypes.length == 1 || (isFunctionalType || detectConjunct) && expectedTypes.length > 0 ) {
       if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
         return type;
       }
       type = expectedTypes[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
     }
-    if (!isDenotable) {
-      return type;
-    }
-    return null;
+    return detectConjunct ? type : null;
   }
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
