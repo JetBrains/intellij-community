@@ -26,6 +26,10 @@ import java.util.Locale;
  * @author Vladislav.Soroka
  */
 public class DaemonStatusAction extends DaemonAction {
+  public DaemonStatusAction(String serviceDirectoryPath) {
+    super(serviceDirectoryPath);
+  }
+
   public List<DaemonState> run(DaemonClientFactory daemonClientFactory) {
     ServiceRegistry daemonServices = getDaemonServices(daemonClientFactory);
     DaemonConnector daemonConnector = daemonServices.get(DaemonConnector.class);

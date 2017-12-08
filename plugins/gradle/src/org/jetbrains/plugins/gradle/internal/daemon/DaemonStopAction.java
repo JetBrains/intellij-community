@@ -24,6 +24,10 @@ import java.util.List;
  * @author Vladislav.Soroka
  */
 public class DaemonStopAction extends DaemonAction {
+  public DaemonStopAction(String serviceDirectoryPath) {
+    super(serviceDirectoryPath);
+  }
+
   public void run(DaemonClientFactory daemonClientFactory) {
     ServiceRegistry daemonServices = getDaemonServices(daemonClientFactory);
     DaemonStopClient stopClient = daemonServices.get(DaemonStopClient.class);
