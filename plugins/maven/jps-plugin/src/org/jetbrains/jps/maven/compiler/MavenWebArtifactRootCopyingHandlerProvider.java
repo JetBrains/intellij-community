@@ -88,6 +88,8 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
       }
       ResourceRootConfiguration warRootConfig = getWarRootConfig(artifactResourceConfiguration, moduleResourceConfiguration);
       warRootConfig.directory = root.getPath();
+      warRootConfig.includes.addAll(artifactResourceConfiguration.warSourceIncludes);
+      warRootConfig.excludes.addAll(artifactResourceConfiguration.warSourceExcludes);
       return new MavenWebArtifactCopyingHandler(warRootConfig, moduleResourceConfiguration, relativeDirInWar);
     }
 
