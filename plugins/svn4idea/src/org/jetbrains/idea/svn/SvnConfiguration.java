@@ -21,7 +21,6 @@ import org.jetbrains.idea.svn.config.SvnServerFileKeys;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
 import java.io.File;
 import java.util.Collections;
@@ -31,6 +30,7 @@ import java.util.TreeSet;
 
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static com.intellij.util.containers.ContainerUtil.newTreeSet;
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
@@ -57,7 +57,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
   private IdeaSVNConfigFile myServersFile;
-  private SVNConfigFile myConfigFile;
+  private IdeaSVNConfigFile myConfigFile;
 
   @Deprecated // Required for compatibility with external plugins.
   public boolean isCommandLine() {
@@ -92,7 +92,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   @NotNull
   private IdeaSVNConfigFile getServersFile() {
     if (myServersFile == null) {
-      myServersFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), IdeaSVNConfigFile.SERVERS_FILE_NAME));
+      myServersFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), SERVERS_FILE_NAME));
     }
     myServersFile.updateGroups();
 
@@ -100,9 +100,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   @NotNull
-  public SVNConfigFile getConfigFile() {
+  public IdeaSVNConfigFile getConfigFile() {
     if (myConfigFile == null) {
-      myConfigFile = new SVNConfigFile(new File(getConfigurationDirectory(), IdeaSVNConfigFile.CONFIG_FILE_NAME));
+      myConfigFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), CONFIG_FILE_NAME));
     }
     
     return myConfigFile;
@@ -111,11 +111,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   @NotNull
   public String getSshTunnelSetting() {
     // TODO: Check SVNCompositeConfigFile - to utilize both system and user settings
-    return StringUtil.notNullize(getConfigFile().getPropertyValue("tunnels", "ssh"));
+    return StringUtil.notNullize(getConfigFile().getValue("tunnels", "ssh"));
   }
 
   public void setSshTunnelSetting(@Nullable String value) {
-    getConfigFile().setPropertyValue("tunnels", "ssh", value, true);
+    getConfigFile().setValue("tunnels", "ssh", value);
   }
 
   // uses configuration directory property - it should be saved first
