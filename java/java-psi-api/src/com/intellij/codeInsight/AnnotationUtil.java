@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -233,8 +235,8 @@ public class AnnotationUtil {
   public static final int CHECK_TYPE = 0x08;
 
   @MagicConstant(flags = {CHECK_HIERARCHY, CHECK_EXTERNAL, CHECK_INFERRED, CHECK_TYPE})
-  @Target(ElementType.TYPE_USE)
-  public @interface Flags { }
+  @Target({ElementType.PARAMETER, ElementType.METHOD})
+  private @interface Flags { }
 
   public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations, @Flags int flags) {
     return annotations.stream().anyMatch(annotation -> isAnnotated(listOwner, annotation, flags, null));
