@@ -27,7 +27,9 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author anna
@@ -107,11 +109,31 @@ public class PushDownTest extends LightRefactoringTestCase {
     doTest();
   }
 
+  public void testClassShouldBeAbstractConflict() {
+    doTest(conflicts -> {
+      assertSameElements(conflicts.values(), Collections.singletonList("Non abstract class <b><code>B</code></b> will miss implementation of method <b><code>foo()</code></b>"));
+    });
+  }
+
+  public void testClassInheritsUnrelatedDefaultsConflict() {
+    doTest(conflicts -> {
+      assertSameElements(conflicts.values(), Collections.singletonList("Class <b><code>B</code></b> will inherit unrelated defaults from interface <b><code>I</code></b> and interface <b><code>A</code></b>"));
+    });
+  }
+
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(final boolean failure) {
+    doTest(conflicts -> {
+      if (failure == conflicts.isEmpty()) {
+        fail(failure ? "Conflict was not detected" : "False conflict was detected");
+      }
+    });
+  }
+
+  private void doTest(final Consumer<MultiMap<PsiElement, String>> checkConflicts) {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
 
     final PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
@@ -147,9 +169,7 @@ public class PushDownTest extends LightRefactoringTestCase {
                           new DocCommentPolicy(DocCommentPolicy.ASIS)) {
       @Override
       protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, UsageInfo[] usages) {
-        if (failure == conflicts.isEmpty()) {
-          fail(failure ? "Conflict was not detected" : "False conflict was detected");
-        }
+        checkConflicts.accept(conflicts);
         return true;
       }
     }.run();

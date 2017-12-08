@@ -16,6 +16,7 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
@@ -29,6 +30,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.containers.MultiMap;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class PushDownConflicts {
@@ -75,6 +77,26 @@ public class PushDownConflicts {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(myClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE);
     if (annotation != null && myMovedMembers.contains(LambdaUtil.getFunctionalInterfaceMethod(myClass))) {
       myConflicts.putValue(annotation, RefactoringBundle.message("functional.interface.broken"));
+    }
+    boolean isAbstract = myClass.hasModifierProperty(PsiModifier.ABSTRACT);
+    for (PsiMember member : myMovedMembers) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC) && member instanceof PsiMethod && !myAbstractMembers.contains(member)) {
+        Set<PsiClass> unrelatedDefaults = new LinkedHashSet<>();
+        for (PsiMethod superMethod : ((PsiMethod)member).findSuperMethods()) {
+          if (!isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            myConflicts.putValue(member, "Non abstract " + RefactoringUIUtil.getDescription(myClass, false) + " will miss implementation of " + RefactoringUIUtil.getDescription(superMethod, false));
+            break;
+          }
+          if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
+            unrelatedDefaults.add(superMethod.getContainingClass());
+            if (unrelatedDefaults.size() > 1) {
+              myConflicts.putValue(member, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
+                                                                            StringUtil.join(unrelatedDefaults, aClass -> RefactoringUIUtil.getDescription(aClass, false)," and ")));
+              break;
+            }
+          }
+        }
+      }
     }
   }
 
