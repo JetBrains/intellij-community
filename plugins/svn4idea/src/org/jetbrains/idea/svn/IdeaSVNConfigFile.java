@@ -4,19 +4,29 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.config.DefaultProxyGroup;
 import org.jetbrains.idea.svn.config.ProxyGroup;
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
+import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringTokenizer;
+
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class IdeaSVNConfigFile {
 
   public final static String SERVERS_FILE_NAME = "servers";
   public final static String CONFIG_FILE_NAME = "config";
+
+  public static final String DEFAULT_GROUP_NAME = "global";
+  public static final String GROUPS_GROUP_NAME = "groups";
 
   private final Map<String, String> myPatternsMap;
   private final long myLatestUpdate;
@@ -25,7 +35,6 @@ public class IdeaSVNConfigFile {
 
   private final SVNConfigFile mySVNConfigFile;
 
-  private static final String GROUPS_GROUP_NAME = "groups";
 
   public IdeaSVNConfigFile(final File file) {
     mySVNConfigFile = new SVNConfigFile(file);
@@ -49,7 +58,7 @@ public class IdeaSVNConfigFile {
       myPatternsMap.clear();
       myPatternsMap.putAll(mySVNConfigFile.getProperties(GROUPS_GROUP_NAME));
 
-      myDefaultProperties = mySVNConfigFile.getProperties(DefaultProxyGroup.DEFAULT_GROUP_NAME);
+      myDefaultProperties = mySVNConfigFile.getProperties(DEFAULT_GROUP_NAME);
     }
   }
 
@@ -81,7 +90,7 @@ public class IdeaSVNConfigFile {
     for (String propertyName : properties.keySet()) {
       mySVNConfigFile.setPropertyValue(name, propertyName, null, false);
     }
-    if (DefaultProxyGroup.DEFAULT_GROUP_NAME.equals(name)) {
+    if (DEFAULT_GROUP_NAME.equals(name)) {
       myDefaultProperties.clear();
     }
     // remove group from groups
@@ -115,5 +124,66 @@ public class IdeaSVNConfigFile {
 
   public void save() {
     mySVNConfigFile.save();
+  }
+
+  public static String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
+    String groupName = getGroupName(serversFile.getProperties(GROUPS_GROUP_NAME), host);
+    if (groupName != null) {
+      Map hostProps = serversFile.getProperties(groupName);
+      final String value = (String)hostProps.get(name);
+      if (value != null) {
+        return value;
+      }
+    }
+    Map globalProps = serversFile.getProperties("global");
+    return (String)globalProps.get(name);
+  }
+
+  public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
+    final Url svnurl;
+    try {
+      svnurl = createUrl(url);
+    }
+    catch (SvnBindException e) {
+      return false;
+    }
+
+    final String host = svnurl.getHost();
+    return matches(patterns, host) && (!matches(exceptions, host));
+  }
+
+  private static boolean matches(final String pattern, final String host) {
+    final StringTokenizer tokenizer = new StringTokenizer(pattern, ",");
+    while (tokenizer.hasMoreTokens()) {
+      String token = tokenizer.nextToken();
+      if (DefaultSVNOptions.matches(token, host)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  public static String getGroupForHost(final String host, final IdeaSVNConfigFile serversFile) {
+    final Map<String, ProxyGroup> groups = serversFile.getAllGroups();
+    for (Map.Entry<String, ProxyGroup> entry : groups.entrySet()) {
+      if (matches(entry.getValue().getPatterns(), host)) return entry.getKey();
+    }
+    return null;
+  }
+
+  // taken from default manager as is
+  private static String getGroupName(Map groups, String host) {
+    for (Object o : groups.keySet()) {
+      final String name = (String)o;
+      final String pattern = (String)groups.get(name);
+      if (matches(pattern, host)) return name;
+    }
+    return null;
+  }
+
+  // default = yes
+  public static boolean isTurned(final String value) {
+    return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 }

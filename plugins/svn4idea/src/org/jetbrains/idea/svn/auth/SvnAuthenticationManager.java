@@ -10,24 +10,16 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.config.ProxyGroup;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNCompositeConfigFile;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
 import java.io.File;
-import java.util.Map;
-import java.util.StringTokenizer;
 
-import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
-import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
+import static org.jetbrains.idea.svn.IdeaSVNConfigFile.*;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnAuthenticationManager {
 
@@ -141,67 +133,6 @@ public class SvnAuthenticationManager {
     }
 
     return HTTP.equals(protocol) || HTTPS.equals(protocol) ? DEFAULT_CONNECT_TIMEOUT : 0;
-  }
-
-  private static String getPropertyIdea(String host, SVNCompositeConfigFile serversFile, final String name) {
-    String groupName = getGroupName(serversFile.getProperties("groups"), host);
-    if (groupName != null) {
-      Map hostProps = serversFile.getProperties(groupName);
-      final String value = (String)hostProps.get(name);
-      if (value != null) {
-        return value;
-      }
-    }
-    Map globalProps = serversFile.getProperties("global");
-    return (String)globalProps.get(name);
-  }
-
-  public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
-    final Url svnurl;
-    try {
-      svnurl = createUrl(url);
-    }
-    catch (SvnBindException e) {
-      return false;
-    }
-
-    final String host = svnurl.getHost();
-    return matches(patterns, host) && (!matches(exceptions, host));
-  }
-
-  private static boolean matches(final String pattern, final String host) {
-    final StringTokenizer tokenizer = new StringTokenizer(pattern, ",");
-    while (tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
-      if (DefaultSVNOptions.matches(token, host)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @Nullable
-  public static String getGroupForHost(final String host, final IdeaSVNConfigFile serversFile) {
-    final Map<String, ProxyGroup> groups = serversFile.getAllGroups();
-    for (Map.Entry<String, ProxyGroup> entry : groups.entrySet()) {
-      if (matches(entry.getValue().getPatterns(), host)) return entry.getKey();
-    }
-    return null;
-  }
-
-  // taken from default manager as is
-  private static String getGroupName(Map groups, String host) {
-    for (Object o : groups.keySet()) {
-      final String name = (String)o;
-      final String pattern = (String)groups.get(name);
-      if (matches(pattern, host)) return name;
-    }
-    return null;
-  }
-
-  // default = yes
-  private static boolean isTurned(final String value) {
-    return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
   public void warnOnAuthStorageDisabled() {

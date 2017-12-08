@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
-import org.jetbrains.idea.svn.auth.SvnAuthenticationManager;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -45,7 +44,7 @@ public class ProxyModule extends BaseCommandRuntimeModule {
   @NotNull
   private String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
     IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthenticationService.getSpecialConfigDir());
-    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
+    String groupName = IdeaSVNConfigFile.getGroupForHost(host, configFile);
 
     if (StringUtil.isEmptyOrSpaces(groupName)) {
       groupName = IdeaSVNConfigFile.getNewGroupName(host, configFile);
