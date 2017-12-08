@@ -46,6 +46,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testFieldAndStaticReferencedClass() { doTest(); }
   public void testThisRefInAnonymous() { doTest(); }
   public void testSuperOverHierarchyConflict() { doTest(true); }
+  public void testPrivateFieldUsedFromMovedAnonymous() { doTest(true); }
   public void testSuperOverHierarchy() { doTest(); }
   public void testMethodTypeParametersList() { doTest(); }
   public void testMethodFromInterfaceToAbstractClass() { doTest(); }

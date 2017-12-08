@@ -89,7 +89,8 @@ public class PullUpMultifileTest extends MultiFileTestCase {
   }
 
   public void testAccessibleViaInheritanceInsideAnonymousClass() {
-    doTest("Method <b><code>method2Move()</code></b> uses method <b><code>A.bar()</code></b>, which is not accessible from the superclass");
+    doTest("Method <b><code>method2Move()</code></b> uses method <b><code>A.bar()</code></b>, which is not accessible from the superclass",
+           "Method <b><code>A.bar()</code></b> is protected and will not be accessible from method <b><code>method2Move()</code></b>.");
   }
 
   public void testReuseSuperMethod() {
