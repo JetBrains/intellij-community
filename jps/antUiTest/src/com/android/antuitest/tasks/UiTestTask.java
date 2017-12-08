@@ -97,7 +97,7 @@ public class UiTestTask extends Task {
   @Override
   public void execute() throws BuildException {
     try {
-      Map<String, Boolean> testTaskMapping = computeTestTasks(testGroups);
+      Map<String, TestSpecProperties> testTaskMapping = computeTestTasks(testGroups);
       for (String testSpec : testTaskMapping.keySet()) {
         JUnitTask task = new JUnitTask();
         task.init();
@@ -111,14 +111,13 @@ public class UiTestTask extends Task {
         task.setShowOutput(true);
         task.setPrintsummary((JUnitTask.SummaryAttribute) EnumeratedAttribute.getInstance(JUnitTask.SummaryAttribute.class, "true"));
 
-        if (testTaskMapping.get(testSpec)) {
+        TestSpecProperties spec = testTaskMapping.get(testSpec);
+        if (spec.isIndividualTestClass) {
           // Single test execution
-          task.createJvmarg().setValue("-Dbootstrap.testcase=" + testSpec);
-        } else {
-          // Pass the entire test group, and let the test runner sift through GuiTestSuite.
-          task.createJvmarg().setValue("-Dbootstrap.testcase=" + TEST_SUITE_CLASS_NAME);
-          task.createJvmarg().setValue("-Dui.test.group=" + testSpec);
+          task.createJvmarg().setValue("-Dui.test.class=" + testSpec);
         }
+        task.createJvmarg().setValue("-Dbootstrap.testcase=" + TEST_SUITE_CLASS_NAME);
+        task.createJvmarg().setValue("-Dui.test.group=" + spec.testGroup);
 
         Path testClasspath = task.createClasspath();
         testClasspath.add(classpath);
@@ -153,7 +152,7 @@ public class UiTestTask extends Task {
   }
 
   // Prepare the mapping for splitting up test execution: a task can be either an entire test group or an individual test.
-  private Map<String, Boolean> computeTestTasks(List<String> testGroups) throws Exception {
+  private Map<String, TestSpecProperties> computeTestTasks(List<String> testGroups) throws Exception {
     ClassLoader classLoader = createRuntimeClassLoader();
     Class<?> testGroupClass = classLoader.loadClass(TEST_GROUP_CLASS_NAME);
     Object[] testGroupValues = (Object[])testGroupClass.getMethod("values").invoke(null);
@@ -164,17 +163,17 @@ public class UiTestTask extends Task {
 
     Class<? extends Annotation> runInClass = classLoader.loadClass(RUN_IN_ANNOTATION_NAME).asSubclass(Annotation.class);
 
-    Map<String, Boolean> result = new HashMap<>();
+    Map<String, TestSpecProperties> result = new HashMap<>();
     for (Object testGroup : testGroupValues) {
       if (testGroups.isEmpty() || testGroups.contains(testGroup.toString())) {
         if ((Boolean)testGroupClass.getMethod("isForked").invoke(testGroup)) {
           for (Object testClass : testClasses) {
             if (shouldRunIn((Class<?>)testClass, runInClass, testGroup.toString())) {
-              result.put(((Class<?>)testClass).getCanonicalName(), true);
+              result.put(((Class<?>)testClass).getCanonicalName(), new TestSpecProperties(true, testGroup.toString()));
             }
           }
         } else {
-          result.put(testGroup.toString(), false);
+          result.put(testGroup.toString(), new TestSpecProperties(false, testGroup.toString()));
         }
       }
     }
@@ -212,5 +211,20 @@ public class UiTestTask extends Task {
       }
     }
     return false;
+  }
+
+  private static class TestSpecProperties {
+    final boolean isIndividualTestClass;
+    final String testGroup;
+
+    TestSpecProperties(boolean isIndividualTestClass, String testGroup) {
+      this.isIndividualTestClass = isIndividualTestClass;
+      this.testGroup = testGroup;
+    }
+
+    @Override
+    public String toString() {
+      return testGroup;
+    }
   }
 }
