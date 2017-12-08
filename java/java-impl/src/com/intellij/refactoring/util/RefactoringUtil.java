@@ -52,6 +52,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -807,6 +808,34 @@ public class RefactoringUtil {
     for (PsiElement element : replacement.keySet()) {
       if (element.isValid()) {
         element.replace(replacement.get(element));
+      }
+    }
+  }
+
+  public static void renameConflictingTypeParameters(PsiMember memberCopy, PsiClass targetClass) {
+    if (memberCopy instanceof PsiTypeParameterListOwner && !memberCopy.hasModifierProperty(PsiModifier.STATIC)) {
+      UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+      PsiUtil.typeParametersIterable(targetClass).forEach(param -> {
+        String paramName = param.getName();
+        if (paramName != null) {
+          nameGenerator.addExistingName(paramName);
+        }
+      });
+
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(memberCopy.getProject());
+      for (PsiTypeParameter parameter : ((PsiTypeParameterListOwner)memberCopy).getTypeParameters()) {
+        String parameterName = parameter.getName();
+        if (parameterName == null) continue;
+        if (!nameGenerator.isUnique(parameterName)) {
+          substitutor = substitutor.put(parameter, PsiSubstitutor.EMPTY.substitute(factory.createTypeParameter(nameGenerator.generateUniqueName(parameterName), PsiClassType.EMPTY_ARRAY)));
+        }
+      }
+      if (!PsiSubstitutor.EMPTY.equals(substitutor)) {
+        replaceMovedMemberTypeParameters(memberCopy, PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)memberCopy), substitutor, factory);//rename usages in the method
+        for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+          entry.getKey().setName(entry.getValue().getCanonicalText()); //rename declaration after all usages renamed
+        }
       }
     }
   }

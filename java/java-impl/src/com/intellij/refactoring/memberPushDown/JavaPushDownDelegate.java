@@ -209,6 +209,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       }
 
       member = (PsiMember)member.copy();
+      RefactoringUtil.renameConflictingTypeParameters(member, targetClass);
       RefactoringUtil.replaceMovedMemberTypeParameters(member, PsiUtil.typeParametersIterable(sourceClass), substitutor, factory);
       PsiMember newMember = null;
       if (member instanceof PsiField) {
