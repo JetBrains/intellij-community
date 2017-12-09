@@ -8,18 +8,18 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:xdebugger-impl",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:tasks-platform-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea/platform/xdebugger-impl",
+        "//tools/idea/platform/lvcs-impl",
+        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/configuration-store-impl",
+        "//tools/idea/platform/tasks-platform-impl",
+        "//tools/idea/json",
+        "//tools/idea/xml/relaxng",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/java/openapi[module]",
         "//tools/idea:java-impl[module]",
-        "//tools/idea:diff-impl[module]",
+        "//tools/idea/platform/diff-impl[module]",
     ],
 )

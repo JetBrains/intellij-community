@@ -6,7 +6,7 @@ iml_module(
     iml_files = ["coverage.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = ["//tools/idea:external-system-impl"],
+    test_runtime_deps = ["//tools/idea/platform/external-system-impl"],
     test_srcs = ["testSrc"],
     test_tags = ["manual"],
     visibility = ["//visibility:public"],
@@ -21,12 +21,12 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:tasks-platform-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea/platform/lvcs-impl",
+        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/configuration-store-impl",
+        "//tools/idea/platform/tasks-platform-impl",
+        "//tools/idea/json",
+        "//tools/idea/xml/relaxng",
         "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     # do not sort: must match IML order
@@ -34,7 +34,7 @@ iml_module(
         "//tools/idea/plugins/coverage-common[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/openapi[module]",
-        "//tools/idea:execution-impl[module]",
+        "//tools/idea/java/execution/impl:execution-impl[module]",
         "//tools/idea/platform/testRunner[module]",
         "//tools/idea/plugins/coverage/lib:coverage-report-idea",
         "//tools/idea/plugins/coverage/lib:coverage-report",
@@ -45,9 +45,9 @@ iml_module(
         "//tools/idea/.idea/libraries:JaCoCo",
         "//tools/idea/plugins/coverage/coverage_rt[module]",
         "//tools/idea/java/java-psi-impl[module]",
-        "//tools/idea:lang-impl[module]",
+        "//tools/idea/platform/lang-impl[module]",
         "//tools/idea:java-impl[module]",
-        "//tools/idea:testFramework[module, test]",
+        "//tools/idea/platform/testFramework[module, test]",
         "//tools/idea:jps-builders_and_others[module, test]",
     ],
 )

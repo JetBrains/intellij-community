@@ -44,10 +44,10 @@ iml_module(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:credential-store",
-        "//tools/idea:tasks-platform-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/tasks-platform-impl",
+        "//tools/idea/json",
+        "//tools/idea/xml/relaxng",
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
     ],

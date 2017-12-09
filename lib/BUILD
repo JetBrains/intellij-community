@@ -544,27 +544,6 @@ java_import(
     visibility = ["//visibility:public"],
 )
 
-java_import(
-    name = "fest-assert-1.5.0-SNAPSHOT",
-    jars = ["fest-assert-1.5.0-SNAPSHOT.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "fest-reflect-2.0-SNAPSHOT",
-    jars = ["fest-reflect-2.0-SNAPSHOT.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "fest-util-1.3.0-SNAPSHOT",
-    jars = ["fest-util-1.3.0-SNAPSHOT.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
 exports_files(["src/trove4j_src.jar"])
 
 # TODO: When using ant to package all the libraries are included, and if they are not present
@@ -635,20 +614,6 @@ java_import(
 java_import(
     name = "jshell-frontend",
     jars = ["jshell-frontend.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "MultithreadedTC-1.01",
-    jars = ["MultithreadedTC-1.01.jar"],
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "fest-swing-1.4.1-SNAPSHOT",
-    jars = ["fest-swing-1.4.1-SNAPSHOT.jar"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )

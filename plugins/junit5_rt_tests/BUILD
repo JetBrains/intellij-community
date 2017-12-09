@@ -6,9 +6,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:tasks-platform-impl",
-        "//tools/idea:credential-store",
+        "//tools/idea/json",
+        "//tools/idea/platform/tasks-platform-impl",
+        "//tools/idea/platform/credential-store",
         "//tools/idea/java/compiler/instrumentation-util-8",
     ],
     test_srcs = ["test"],
@@ -18,10 +18,10 @@ iml_module(
     deps = [
         "//tools/idea/plugins/junit5_rt[module]",
         "//tools/idea:jps-builders_and_others[module, test]",
-        "//tools/idea:execution-impl[module, test]",
+        "//tools/idea/java/execution/impl:execution-impl[module, test]",
         "//tools/idea/plugins/junit[module, test]",
         "//tools/idea:java-tests[module, test]",
-        "//tools/idea:aether-dependency-resolver[module, test]",
+        "//tools/idea/aether-dependency-resolver[module, test]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module, test]",
         "//tools/idea/.idea/libraries:JUnit5[test]",
         "//tools/idea/.idea/libraries:junit5_rt[test]",

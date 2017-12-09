@@ -11,24 +11,24 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:spellchecker",
-        "//tools/idea:images",
+        "//tools/idea/spellchecker",
+        "//tools/idea/images",
     ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:built-in-server",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea/platform/lvcs-impl",
+        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/configuration-store-impl",
+        "//tools/idea/platform/built-in-server",
+        "//tools/idea/json",
+        "//tools/idea/xml/relaxng",
+        "//tools/idea/xml/dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/plugins/tasks/tasks-core[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools/idea:lang-impl[module]",
+        "//tools/idea/platform/lang-impl[module]",
     ],
 )

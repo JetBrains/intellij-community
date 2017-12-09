@@ -11,7 +11,7 @@ iml_module(
     # do not sort: must match IML order
     exports = [
         "//tools/idea/platform/external-system-api",
-        "//tools/idea:external-system-impl",
+        "//tools/idea/platform/external-system-impl",
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
@@ -20,17 +20,17 @@ iml_module(
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:credential-store",
-        "//tools/idea:tasks-platform-impl",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
+        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/tasks-platform-impl",
+        "//tools/idea/json",
+        "//tools/idea/xml/relaxng",
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
     ],
     # do not sort: must match IML order
     deps = [
         "//tools/idea/platform/external-system-api[module]",
-        "//tools/idea:external-system-impl[module]",
+        "//tools/idea/platform/external-system-impl[module]",
         "//tools/idea/plugins/gradle/tooling-extension-api:gradle-tooling-extension-api[module]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-impl[module]",
         "//tools/idea/plugins/gradle/jps-plugin:gradle-jps-plugin[module]",
@@ -38,8 +38,8 @@ iml_module(
         "//tools/idea/platform/lang-api[module]",
         "//tools/idea/java/compiler/openapi:compiler-openapi[module]",
         "//tools/idea/plugins/groovy:jetgroovy[module]",
-        "//tools/idea:lang-impl[module]",
-        "//tools/idea:execution-impl[module]",
+        "//tools/idea/platform/lang-impl[module]",
+        "//tools/idea/java/execution/impl:execution-impl[module]",
         "//tools/idea/java/execution/openapi:execution-openapi[module]",
         "//tools/idea/java/openapi[module]",
         "//tools/idea:java-impl[module]",
@@ -81,9 +81,9 @@ iml_module(
     tags = ["managed"],
     # do not sort: must match IML order
     test_runtime_deps = [
-        "//tools/idea:json",
-        "//tools/idea:tasks-platform-impl",
-        "//tools/idea:credential-store",
+        "//tools/idea/json",
+        "//tools/idea/platform/tasks-platform-impl",
+        "//tools/idea/platform/credential-store",
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
     ],
@@ -97,7 +97,7 @@ iml_module(
     deps = [
         "//tools/idea/.idea/libraries:Mocks[test]",
         "//tools/idea/.idea/libraries:JUnit4[test]",
-        "//tools/idea:testFramework[module, test]",
+        "//tools/idea/platform/testFramework[module, test]",
         "//tools/idea:jps-builders_and_others[module, test]",
         "//tools/idea/plugins/gradle[module, test]",
         "//tools/idea/plugins/gradle/tooling-extension-impl:gradle-tooling-extension-tests[module, test]",

@@ -6,7 +6,7 @@ iml_module(
     iml_files = ["remote-servers-git.iml"],
     tags = ["managed"],
     # do not sort: must match IML order
-    test_runtime_deps = ["//tools/idea:spellchecker"],
+    test_runtime_deps = ["//tools/idea/spellchecker"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
@@ -14,18 +14,18 @@ iml_module(
         "//tools/idea/plugins/git4idea",
         "//tools/idea/platform/remote-servers/impl:remote-servers-impl",
         "//tools/idea/platform/lang-api",
-        "//tools/idea:lang-impl",
+        "//tools/idea/platform/lang-impl",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea:xml-analysis-impl",
-        "//tools/idea:lvcs-impl",
-        "//tools/idea:credential-store",
-        "//tools/idea:configuration-store-impl",
-        "//tools/idea:built-in-server",
-        "//tools/idea:json",
-        "//tools/idea:relaxng",
-        "//tools/idea:dom-impl",
+        "//tools/idea/xml/xml-analysis-impl",
+        "//tools/idea/platform/lvcs-impl",
+        "//tools/idea/platform/credential-store",
+        "//tools/idea/platform/configuration-store-impl",
+        "//tools/idea/platform/built-in-server",
+        "//tools/idea/json",
+        "//tools/idea/xml/relaxng",
+        "//tools/idea/xml/dom-impl",
     ],
     # do not sort: must match IML order
     deps = [
@@ -36,8 +36,8 @@ iml_module(
         "//tools/idea/plugins/git4idea[module]",
         "//tools/idea/platform/remote-servers/impl:remote-servers-impl[module]",
         "//tools/idea/platform/lang-api[module]",
-        "//tools/idea:lang-impl[module]",
-        "//tools/idea:vcs-impl[module]",
+        "//tools/idea/platform/lang-impl[module]",
+        "//tools/idea/platform/vcs-impl[module]",
         "//tools/idea/platform/dvcs-api[module]",
     ],
 )
