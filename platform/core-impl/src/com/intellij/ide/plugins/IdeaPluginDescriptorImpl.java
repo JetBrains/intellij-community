@@ -81,8 +81,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private File myPath;
   private PluginId[] myDependencies = PluginId.EMPTY_ARRAY;
   private PluginId[] myOptionalDependencies = PluginId.EMPTY_ARRAY;
-  private Map<PluginId, List<String>> myOptionalConfigs;
-  private Map<PluginId, List<IdeaPluginDescriptorImpl>> myOptionalDescriptors;
+  private Map<PluginId, String> myOptionalConfigs;
+  private Map<PluginId, IdeaPluginDescriptorImpl> myOptionalDescriptors;
   @Nullable private List<Element> myActionElements;
   private ComponentConfig[] myAppComponents;
   private ComponentConfig[] myProjectComponents;
@@ -260,8 +260,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           if (dependency.optional) {
             optionalDependentPlugins.add(id);
             if (!StringUtil.isEmpty(dependency.configFile)) {
-              myOptionalConfigs.putIfAbsent(id, new ArrayList<>());
-              myOptionalConfigs.get(id).add(dependency.configFile);
+              myOptionalConfigs.put(id, dependency.configFile);
             }
           }
         }
@@ -660,15 +659,15 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return myUntilBuild;
   }
 
-  Map<PluginId, List<String>> getOptionalConfigs() {
+  Map<PluginId, String> getOptionalConfigs() {
     return myOptionalConfigs;
   }
 
-  Map<PluginId, List<IdeaPluginDescriptorImpl>> getOptionalDescriptors() {
+  Map<PluginId, IdeaPluginDescriptorImpl> getOptionalDescriptors() {
     return myOptionalDescriptors;
   }
 
-  void setOptionalDescriptors(@NotNull Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors) {
+  void setOptionalDescriptors(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors) {
     myOptionalDescriptors = optionalDescriptors;
   }
 
