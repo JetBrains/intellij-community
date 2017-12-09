@@ -1,12 +1,13 @@
 <html>
 <body>
 Reports any uses of the unary <b>+</b> operator. Unary plus is usually a null operation, and
-its presence may represent a coding error, particularly in combination with the increment operator, <b>++</b>.
+its presence may represent a coding error.
+Particularly in combination with the increment operator, <b>+++</b>, or the equals operator, <b>=+</b>
 <!-- tooltip end -->
 <p>
 Use the checkbox below to only report when an unary plus is used together with a binary or another unary expression.
-This means the inspection won't warn when an unary plus expression is for example used as a variable initializer, as an argument to a method
-or as the right-hand side of an assignment. In such cases it is much less confusing.
+This means the inspection won't warn when an unary plus expression is used for example as a method argument, or in an array
+initializer expression. In such cases it is much less confusing.
 <p>
 
 </body>
