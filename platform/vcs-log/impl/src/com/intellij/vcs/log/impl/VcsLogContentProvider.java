@@ -49,7 +49,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
 
   @NotNull private final VcsProjectLog myProjectLog;
   @NotNull private final JPanel myContainer = new JBPanel(new BorderLayout());
-  @NotNull private final List<Consumer<VcsLogUiImpl>> myOnCreatedListeners = ContainerUtil.newArrayList();
+  @Nullable private Consumer<VcsLogUiImpl> myOnCreatedListener;
 
   @Nullable private volatile VcsLogUiImpl myUi;
 
@@ -87,8 +87,8 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       myUi = logManager.createLogUi(VcsLogTabsProperties.MAIN_LOG_ID, TAB_NAME);
       myContainer.add(new VcsLogPanel(logManager, myUi), BorderLayout.CENTER);
 
-      myOnCreatedListeners.forEach(consumer -> consumer.consume(myUi));
-      myOnCreatedListeners.clear();
+      if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
+      myOnCreatedListener = null;
     }
   }
 
@@ -97,7 +97,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     myContainer.removeAll();
-    myOnCreatedListeners.clear();
+    myOnCreatedListener = null;
     if (myUi != null) {
       VcsLogUiImpl ui = myUi;
       myUi = null;
@@ -111,12 +111,18 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     return myContainer;
   }
 
+  /**
+   * Executes a consumer when a main log ui is created. If main log ui already exists, executes it immediately.
+   * Overwrites any consumer that was added previously: only the last one gets executed.
+   *
+   * @param consumer consumer to execute.
+   */
   @CalledInAwt
   public void executeOnMainUiCreated(@NotNull Consumer<VcsLogUiImpl> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     if (myUi == null) {
-      myOnCreatedListeners.add(consumer);
+      myOnCreatedListener = consumer;
     }
     else {
       consumer.consume(myUi);
