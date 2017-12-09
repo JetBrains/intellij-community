@@ -27,18 +27,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EmptyConsumer;
-import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.EmptyIntHashSet;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
@@ -46,7 +42,6 @@ import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.PersistentSet;
 import com.intellij.vcs.log.util.PersistentSetImpl;
 import com.intellij.vcs.log.util.StopWatch;
@@ -57,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -268,165 +263,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     mySingleTaskController.request(new IndexingRequest(root, TroveUtil.singleton(commit), false, true));
   }
 
-  @NotNull
-  private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
-    TIntHashSet result = new TIntHashSet();
-    if (myIndexStorage == null) return result;
-    try {
-      Processor<Integer> processor = integer -> {
-        try {
-          T value = map.get(integer);
-          if (value != null) {
-            if (condition.value(value)) {
-              result.add(integer);
-            }
-          }
-        }
-        catch (IOException e) {
-          myFatalErrorsConsumer.consume(this, e);
-          return false;
-        }
-        return true;
-      };
-      if (myIndexStorage.messages instanceof PersistentHashMap) {
-        ((PersistentHashMap<Integer, T>)myIndexStorage.messages).processKeysWithExistingMapping(processor);
-      }
-      else {
-        myIndexStorage.messages.processKeys(processor);
-      }
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-
-    return result;
-  }
-
-  @NotNull
-  private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
-    if (myIndexStorage != null) {
-      try {
-        return myIndexStorage.users.getCommitsForUsers(users);
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
-      catch (RuntimeException e) {
-        processRuntimeException(e);
-      }
-    }
-    return new TIntHashSet();
-  }
-
-  @NotNull
-  private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
-    if (myIndexStorage != null) {
-      try {
-        return myIndexStorage.paths.getCommitsForPaths(paths);
-      }
-      catch (IOException | StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
-      catch (RuntimeException e) {
-        processRuntimeException(e);
-      }
-    }
-    return new TIntHashSet();
-  }
-
-  @NotNull
-  public TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter) {
-    if (myIndexStorage != null) {
-      try {
-        if (!filter.isRegex()) {
-          TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(filter.getText());
-          if (commitsForSearch != null) {
-            TIntHashSet result = new TIntHashSet();
-            commitsForSearch.forEach(commit -> {
-              try {
-                String value = myIndexStorage.messages.get(commit);
-                if (value != null) {
-                  if (VcsLogTextFilterImpl.matches(filter, value)) {
-                    result.add(commit);
-                  }
-                }
-              }
-              catch (IOException e) {
-                myFatalErrorsConsumer.consume(this, e);
-                return false;
-              }
-              return true;
-            });
-            return result;
-          }
-        }
-      }
-      catch (StorageException e) {
-        myFatalErrorsConsumer.consume(this, e);
-      }
-      catch (RuntimeException e) {
-        processRuntimeException(e);
-      }
-
-      return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
-    }
-
-    return EmptyIntHashSet.INSTANCE;
-  }
-
-  private void processRuntimeException(@NotNull RuntimeException e) {
-    if (e instanceof ProcessCanceledException) throw e;
-    if (myIndexStorage != null) myIndexStorage.markCorrupted();
-    if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    else {
-      throw new RuntimeException(e);
-    }
-  }
-
   @Override
   public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
-    if (filters.isEmpty() || myIndexStorage == null) return false;
-    for (VcsLogDetailsFilter filter : filters) {
-      if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilter ||
-          filter instanceof VcsLogStructureFilter) {
-        continue;
-      }
-      return false;
-    }
-    return true;
+    return myDataGetter != null && myDataGetter.canFilter(filters);
   }
 
-  @Override
   @NotNull
+  @Override
   public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
-    VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
-    VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
-
-    TIntHashSet filteredByMessage = null;
-    if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter);
-    }
-
-    TIntHashSet filteredByUser = null;
-    if (userFilter != null) {
-      Set<VcsUser> users = ContainerUtil.newHashSet();
-      for (VirtualFile root : myRoots) {
-        users.addAll(userFilter.getUsers(root));
-      }
-
-      filteredByUser = filterUsers(users);
-    }
-
-    TIntHashSet filteredByPath = null;
-    if (pathFilter != null) {
-      filteredByPath = filterPaths(pathFilter.getFiles());
-    }
-
-    return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
+    if (myDataGetter == null) return Collections.emptySet();
+    return myDataGetter.filter(detailsFilters);
   }
 
   @Nullable
