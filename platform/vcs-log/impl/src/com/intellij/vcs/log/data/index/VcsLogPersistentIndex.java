@@ -22,7 +22,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -398,34 +398,29 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     protected ProgressIndicator startNewBackgroundTask() {
       ProgressIndicator indicator = myProgress.createProgressIndicator(false);
       ApplicationManager.getApplication().invokeLater(() -> {
-        Task.Backgroundable task = new Task.Backgroundable(VcsLogPersistentIndex.this.myProject, "Indexing Commit Data", true,
-                                                           PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            int previousPriority = setMinimumPriority();
-            try {
-              IndexingRequest request;
-              while ((request = popRequest()) != null) {
-                try {
-                  request.run(indicator);
-                  indicator.checkCanceled();
-                }
-                catch (ProcessCanceledException reThrown) {
-                  throw reThrown;
-                }
-                catch (Throwable t) {
-                  LOG.error("Error while indexing", t);
-                }
+        Consumer<ProgressIndicator> task = progressIndicator -> {
+          int previousPriority = setMinimumPriority();
+          try {
+            IndexingRequest request;
+            while ((request = popRequest()) != null) {
+              try {
+                request.run(progressIndicator);
+                progressIndicator.checkCanceled();
+              }
+              catch (ProcessCanceledException reThrown) {
+                throw reThrown;
+              }
+              catch (Throwable t) {
+                LOG.error("Error while indexing", t);
               }
             }
-            finally {
-              taskCompleted(null);
-              resetPriority(previousPriority);
-            }
+          }
+          finally {
+            taskCompleted(null);
+            resetPriority(previousPriority);
           }
         };
-        myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, indicator);
+        myHeavyAwareExecutor.executeOutOfHeavyOrPowerSave(task, "Indexing Commit Data", indicator);
       });
       return indicator;
     }
