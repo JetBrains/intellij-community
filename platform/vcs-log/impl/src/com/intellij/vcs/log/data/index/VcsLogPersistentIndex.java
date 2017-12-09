@@ -786,7 +786,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         }
         notification.expire();
       }));
-      // if out bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
+      // if our bg thread is cancelled, calling VcsNotifier.getInstance in it will throw PCE
       // so using invokeLater here
       ApplicationManager.getApplication().invokeLater(() -> VcsNotifier.getInstance(myProject).notify(notification));
     }
