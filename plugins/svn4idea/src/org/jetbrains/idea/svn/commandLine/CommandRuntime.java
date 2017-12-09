@@ -134,7 +134,7 @@ public class CommandRuntime {
     // "infinite" times despite it was cancelled.
     if (!executor.checkCancelled() && callback != null) {
       if (callback.getCredentials(errText)) {
-        command.setConfigDir(myAuthenticationService.getSpecialConfigDir());
+        command.setConfigDir(myAuthenticationService.getSpecialConfigDir().toFile());
         callback.updateParameters(command);
         return true;
       }

@@ -12,12 +12,13 @@ import org.jetbrains.idea.svn.config.ProxyGroup;
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
 import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import static com.intellij.openapi.util.io.FileSystemUtil.lastModified;
 import static com.intellij.util.containers.ContainerUtil.union;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
@@ -31,15 +32,15 @@ public class IdeaSVNConfigFile {
 
   private final Map<String, String> myPatternsMap;
   private final long myLatestUpdate;
-  private final File myFile;
+  @NotNull private final Path myPath;
   private Map myDefaultProperties;
 
   private final SVNConfigFile mySVNConfigFile;
 
 
-  public IdeaSVNConfigFile(final File file) {
-    mySVNConfigFile = new SVNConfigFile(file);
-    myFile = file;
+  public IdeaSVNConfigFile(@NotNull Path path) {
+    mySVNConfigFile = new SVNConfigFile(path.toFile());
+    myPath = path;
     myLatestUpdate = -1;
     myPatternsMap = new HashMap<>();
   }
@@ -55,7 +56,7 @@ public class IdeaSVNConfigFile {
   }
 
   public void updateGroups() {
-    if (myLatestUpdate != myFile.lastModified()) {
+    if (myLatestUpdate != lastModified(myPath.toFile())) {
       myPatternsMap.clear();
       myPatternsMap.putAll(mySVNConfigFile.getProperties(GROUPS_GROUP_NAME));
 

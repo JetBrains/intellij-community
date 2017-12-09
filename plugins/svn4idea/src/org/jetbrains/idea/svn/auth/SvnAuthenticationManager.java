@@ -16,7 +16,7 @@ import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 
-import java.io.File;
+import java.nio.file.Path;
 
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.*;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
@@ -32,13 +32,13 @@ public class SvnAuthenticationManager {
   public static final String HTTPS = "https";
   private SvnVcs myVcs;
   private Project myProject;
-  private File myConfigDirectory;
+  @NotNull private final Path myConfigDirectory;
   private final NotNullLazyValue<Couple<IdeaSVNConfigFile>> myConfigFile = new NotNullLazyValue<Couple<IdeaSVNConfigFile>>() {
     @NotNull
     @Override
     protected Couple<IdeaSVNConfigFile> compute() {
-      IdeaSVNConfigFile userConfig = new IdeaSVNConfigFile(new File(myConfigDirectory, CONFIG_FILE_NAME));
-      IdeaSVNConfigFile systemConfig = new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME).toFile());
+      IdeaSVNConfigFile userConfig = new IdeaSVNConfigFile(myConfigDirectory.resolve(CONFIG_FILE_NAME));
+      IdeaSVNConfigFile systemConfig = new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(CONFIG_FILE_NAME));
       return Couple.of(systemConfig, userConfig);
     }
   };
@@ -46,15 +46,15 @@ public class SvnAuthenticationManager {
     @NotNull
     @Override
     protected Couple<IdeaSVNConfigFile> compute() {
-      IdeaSVNConfigFile userConfig = new IdeaSVNConfigFile(new File(myConfigDirectory, SERVERS_FILE_NAME));
-      IdeaSVNConfigFile systemConfig = new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile());
+      IdeaSVNConfigFile userConfig = new IdeaSVNConfigFile(myConfigDirectory.resolve(SERVERS_FILE_NAME));
+      IdeaSVNConfigFile systemConfig = new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME));
       return Couple.of(systemConfig, userConfig);
     }
   };
   private SvnConfiguration myConfig;
   private AuthenticationProvider myProvider;
 
-  public SvnAuthenticationManager(@NotNull SvnVcs vcs, final File configDirectory) {
+  public SvnAuthenticationManager(@NotNull SvnVcs vcs, @NotNull Path configDirectory) {
     myVcs = vcs;
     myProject = myVcs.getProject();
     myConfigDirectory = configDirectory;

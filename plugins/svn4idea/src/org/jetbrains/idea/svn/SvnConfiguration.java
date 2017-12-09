@@ -23,6 +23,8 @@ import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,7 +94,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   @NotNull
   private IdeaSVNConfigFile getServersFile() {
     if (myServersFile == null) {
-      myServersFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), SERVERS_FILE_NAME));
+      myServersFile = new IdeaSVNConfigFile(getConfigurationPath().resolve(SERVERS_FILE_NAME));
     }
     myServersFile.updateGroups();
 
@@ -102,9 +104,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   @NotNull
   public IdeaSVNConfigFile getConfigFile() {
     if (myConfigFile == null) {
-      myConfigFile = new IdeaSVNConfigFile(new File(getConfigurationDirectory(), CONFIG_FILE_NAME));
+      myConfigFile = new IdeaSVNConfigFile(getConfigurationPath().resolve(CONFIG_FILE_NAME));
     }
-    
+
     return myConfigFile;
   }
 
@@ -289,6 +291,11 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myState.directory.path;
   }
 
+  @NotNull
+  public Path getConfigurationPath() {
+    return Paths.get(getConfigurationDirectory());
+  }
+
   public boolean isUseDefaultConfiguation() {
     return myState.directory.useDefault;
   }
@@ -329,7 +336,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   public SvnAuthenticationManager getAuthenticationManager(@NotNull SvnVcs svnVcs) {
     if (myAuthManager == null) {
       // reloaded when configuration directory changes
-      myAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
+      myAuthManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
       Disposer.register(svnVcs.getProject(), () -> myAuthManager = null);
       getInteractiveManager(svnVcs);
       // to init
@@ -340,7 +347,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public SvnAuthenticationManager getPassiveAuthenticationManager(@NotNull SvnVcs svnVcs) {
     if (myPassiveAuthManager == null) {
-      myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
+      myPassiveAuthManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
       myPassiveAuthManager.setAuthenticationProvider(new AuthenticationProvider() {
         @Override
         public AuthenticationData requestClientAuthentication(String kind, Url url, String realm, boolean canCache) {
@@ -358,7 +365,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public SvnAuthenticationManager getInteractiveManager(@NotNull SvnVcs svnVcs) {
     if (myInteractiveManager == null) {
-      myInteractiveManager = new SvnAuthenticationManager(svnVcs, new File(getConfigurationDirectory()));
+      myInteractiveManager = new SvnAuthenticationManager(svnVcs, getConfigurationPath());
       myInteractiveProvider = new SvnInteractiveAuthenticationProvider(svnVcs, myInteractiveManager);
       myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);
     }
@@ -366,8 +373,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
-    systemManager
-      .set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME).toFile())));
+    systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME))));
     userManager.set(new SvnServerFileManagerImpl(getServersFile()));
   }
 

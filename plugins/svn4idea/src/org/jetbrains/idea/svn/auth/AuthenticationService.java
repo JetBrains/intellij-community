@@ -34,9 +34,9 @@ import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.TrustManager;
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
+import java.nio.file.Path;
 import java.security.KeyManagementException;
 import java.util.List;
 import java.util.Set;
@@ -338,7 +338,7 @@ public class AuthenticationService {
   }
 
   @NotNull
-  public File getSpecialConfigDir() {
-    return new File(myConfiguration.getConfigurationDirectory());
+  public Path getSpecialConfigDir() {
+    return myConfiguration.getConfigurationPath();
   }
 }
