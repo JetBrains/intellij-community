@@ -238,7 +238,6 @@ iml_project(
         "//tools/idea/platform/structuralsearch:structuralsearch-tests",
         "//tools/idea/platform/structure-view-impl",
         "//tools/idea/platform/testFramework/bootstrap:tests_bootstrap",
-        "//tools/idea/platform/testGuiFramework",
         "//tools/idea/platform/testRunner",
         "//tools/idea/platform/util",
         "//tools/idea/platform/util-rt",
@@ -2551,29 +2550,5 @@ iml_module(
         "//tools/idea/.idea/libraries:ASM",
         "//tools/idea/java/compiler/instrumentation-util[module]",
         "//tools/idea/.idea/libraries:Groovy[test]",
-    ],
-)
-
-iml_module(
-    name = "community-guitests",
-    iml_files = ["community-guitests/community-guitests.iml"],
-    tags = ["managed"],
-    test_srcs = ["community-guitests/testSrc"],
-    test_tags = ["manual"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/idea:credential-store",
-        "//tools/idea/java/compiler/instrumentation-util-8",
-        "//tools/idea/plugins/devkit/jps-plugin:devkit-jps-plugin",
-        "//tools/idea/plugins/maven:maven2-server-impl",
-        "//tools/vendor/intellij/cidr:doxygen",
-        "//tools/idea/jps/javac-ref-scanner-8",
-    ],
-    # do not sort: must match IML order
-    deps = [
-        "//tools/idea:community-main[module]",
-        "//tools/idea/platform/testGuiFramework[module]",
-        "//tools/idea:diff-impl[module, test]",
     ],
 )
