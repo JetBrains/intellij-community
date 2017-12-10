@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import static com.intellij.openapi.util.io.FileSystemUtil.lastModified;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.union;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
@@ -30,19 +31,15 @@ public class IdeaSVNConfigFile {
   public static final String DEFAULT_GROUP_NAME = "global";
   public static final String GROUPS_GROUP_NAME = "groups";
 
-  private final Map<String, String> myPatternsMap;
-  private final long myLatestUpdate;
+  @NotNull private final Map<String, String> myPatternsMap = new HashMap<>();
+  private final long myLatestUpdate = -1;
   @NotNull private final Path myPath;
-  private Map myDefaultProperties;
-
-  private final SVNConfigFile mySVNConfigFile;
-
+  @NotNull private final Map<String, String> myDefaultProperties = new HashMap<>();
+  @NotNull private final SVNConfigFile mySVNConfigFile;
 
   public IdeaSVNConfigFile(@NotNull Path path) {
     mySVNConfigFile = new SVNConfigFile(path.toFile());
     myPath = path;
-    myLatestUpdate = -1;
-    myPatternsMap = new HashMap<>();
   }
 
   @NotNull
@@ -58,68 +55,74 @@ public class IdeaSVNConfigFile {
   public void updateGroups() {
     if (myLatestUpdate != lastModified(myPath.toFile())) {
       myPatternsMap.clear();
-      myPatternsMap.putAll(mySVNConfigFile.getProperties(GROUPS_GROUP_NAME));
+      myPatternsMap.putAll(getValues(GROUPS_GROUP_NAME));
 
-      myDefaultProperties = mySVNConfigFile.getProperties(DEFAULT_GROUP_NAME);
+      myDefaultProperties.clear();
+      myDefaultProperties.putAll(getValues(DEFAULT_GROUP_NAME));
     }
   }
 
+  @NotNull
   public Map<String, ProxyGroup> getAllGroups() {
     final Map<String, ProxyGroup> result = new HashMap<>(myPatternsMap.size());
     for (Map.Entry<String, String> entry : myPatternsMap.entrySet()) {
       final String groupName = entry.getKey();
-      result.put(groupName, new ProxyGroup(groupName, entry.getValue(), mySVNConfigFile.getProperties(groupName)));
+      result.put(groupName, new ProxyGroup(groupName, entry.getValue(), getValues(groupName)));
     }
     return result;
   }
 
+  @NotNull
   public DefaultProxyGroup getDefaultGroup() {
     return new DefaultProxyGroup(myDefaultProperties);
   }
 
   @Nullable
-  public String getValue(String groupName, String propertyName) {
+  public String getValue(@NotNull String groupName, @NotNull String propertyName) {
     return mySVNConfigFile.getPropertyValue(groupName, propertyName);
   }
 
   @NotNull
-  public Map<String, String> getValues(String groupName) {
+  public Map<String, String> getValues(@NotNull String groupName) {
     return mySVNConfigFile.getProperties(groupName);
   }
 
-  public void setValue(final String groupName, final String propertyName, final String value) {
-    mySVNConfigFile.setPropertyValue(groupName, propertyName, value, true);
+  public void setValue(@NotNull String groupName, @NotNull String propertyName, @Nullable String value) {
+    mySVNConfigFile.setPropertyValue(groupName, propertyName, value, false);
   }
 
-  public void deleteGroup(final String name) {
+  public void deleteGroup(@NotNull String name) {
     // remove all properties
-    final Map<String, String> properties = mySVNConfigFile.getProperties(name);
+    final Map<String, String> properties = getValues(name);
     for (String propertyName : properties.keySet()) {
-      mySVNConfigFile.setPropertyValue(name, propertyName, null, false);
+      setValue(name, propertyName, null);
     }
     if (DEFAULT_GROUP_NAME.equals(name)) {
       myDefaultProperties.clear();
     }
     // remove group from groups
-    mySVNConfigFile.setPropertyValue(GROUPS_GROUP_NAME, name, null, false);
+    setValue(GROUPS_GROUP_NAME, name, null);
     mySVNConfigFile.deleteGroup(name, false);
   }
 
-  public void addGroup(final String name, final String patterns, final Map<String, String> properties) {
-    mySVNConfigFile.setPropertyValue(GROUPS_GROUP_NAME, name, patterns, false);
+  public void addGroup(@NotNull String name, @Nullable String patterns, @NotNull Map<String, String> properties) {
+    setValue(GROUPS_GROUP_NAME, name, patterns);
     addProperties(name, properties);
   }
 
-  private void addProperties(final String groupName, final Map<String, String> properties) {
+  private void addProperties(@NotNull String groupName, @NotNull Map<String, String> properties) {
     for (Map.Entry<String, String> entry : properties.entrySet()) {
-      mySVNConfigFile.setPropertyValue(groupName, entry.getKey(), entry.getValue(), false);
+      setValue(groupName, entry.getKey(), entry.getValue());
     }
   }
 
-  public void modifyGroup(final String name, final String patterns, final Collection<String> delete, final Map<String, String> addOrModify,
-                          final boolean isDefault) {
+  public void modifyGroup(@NotNull String name,
+                          @Nullable String patterns,
+                          @NotNull Collection<String> delete,
+                          @NotNull Map<String, String> addOrModify,
+                          boolean isDefault) {
     if (!isDefault) {
-      mySVNConfigFile.setPropertyValue(GROUPS_GROUP_NAME, name, patterns, false);
+      setValue(GROUPS_GROUP_NAME, name, patterns);
     }
     final Map<String, String> deletedPrepared = new HashMap<>(delete.size());
     for (String property : delete) {
@@ -133,20 +136,20 @@ public class IdeaSVNConfigFile {
     mySVNConfigFile.save();
   }
 
-  public static String getPropertyIdea(String host, @NotNull Couple<IdeaSVNConfigFile> serversFile, final String name) {
+  @Nullable
+  public static String getPropertyIdea(@NotNull String host, @NotNull Couple<IdeaSVNConfigFile> serversFile, @NotNull String name) {
     String groupName = getGroupName(getValues(serversFile, GROUPS_GROUP_NAME), host);
     if (groupName != null) {
-      Map hostProps = getValues(serversFile, groupName);
-      final String value = (String)hostProps.get(name);
+      Map<String, String> hostProps = getValues(serversFile, groupName);
+      final String value = hostProps.get(name);
       if (value != null) {
         return value;
       }
     }
-    Map globalProps = getValues(serversFile, "global");
-    return (String)globalProps.get(name);
+    return getValues(serversFile, DEFAULT_GROUP_NAME).get(name);
   }
 
-  public static boolean checkHostGroup(final String url, final String patterns, final String exceptions) {
+  public static boolean checkHostGroup(@NotNull String url, @Nullable String patterns, @Nullable String exceptions) {
     final Url svnurl;
     try {
       svnurl = createUrl(url);
@@ -159,8 +162,8 @@ public class IdeaSVNConfigFile {
     return matches(patterns, host) && (!matches(exceptions, host));
   }
 
-  private static boolean matches(final String pattern, final String host) {
-    final StringTokenizer tokenizer = new StringTokenizer(pattern, ",");
+  private static boolean matches(@Nullable String pattern, @NotNull String host) {
+    StringTokenizer tokenizer = new StringTokenizer(notNullize(pattern), ",");
     while (tokenizer.hasMoreTokens()) {
       String token = tokenizer.nextToken();
       if (DefaultSVNOptions.matches(token, host)) {
@@ -171,7 +174,7 @@ public class IdeaSVNConfigFile {
   }
 
   @Nullable
-  public static String getGroupForHost(final String host, final IdeaSVNConfigFile serversFile) {
+  public static String getGroupForHost(@NotNull String host, @NotNull IdeaSVNConfigFile serversFile) {
     final Map<String, ProxyGroup> groups = serversFile.getAllGroups();
     for (Map.Entry<String, ProxyGroup> entry : groups.entrySet()) {
       if (matches(entry.getValue().getPatterns(), host)) return entry.getKey();
@@ -179,29 +182,26 @@ public class IdeaSVNConfigFile {
     return null;
   }
 
-  // taken from default manager as is
-  private static String getGroupName(Map groups, String host) {
-    for (Object o : groups.keySet()) {
-      final String name = (String)o;
-      final String pattern = (String)groups.get(name);
-      if (matches(pattern, host)) return name;
+  @Nullable
+  private static String getGroupName(@NotNull Map<String, String> groups, @NotNull String host) {
+    for (Map.Entry<String, String> entry : groups.entrySet()) {
+      if (matches(entry.getValue(), host)) return entry.getKey();
     }
     return null;
   }
 
-  // default = yes
-  public static boolean isTurned(final String value) {
+  public static boolean isTurned(@Nullable String value) {
     return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
   }
 
   @Nullable
-  public static String getValue(@NotNull Couple<IdeaSVNConfigFile> files, String groupName, String propertyName) {
+  public static String getValue(@NotNull Couple<IdeaSVNConfigFile> files, @NotNull String groupName, @NotNull String propertyName) {
     String result = files.second.getValue(groupName, propertyName);
     return result != null ? result : files.first.getValue(groupName, propertyName);
   }
 
   @NotNull
-  public static Map<String, String> getValues(@NotNull Couple<IdeaSVNConfigFile> files, String groupName) {
+  public static Map<String, String> getValues(@NotNull Couple<IdeaSVNConfigFile> files, @NotNull String groupName) {
     return union(files.first.getValues(groupName), files.second.getValues(groupName));
   }
 }

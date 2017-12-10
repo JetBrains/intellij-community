@@ -118,6 +118,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
 
   public void setSshTunnelSetting(@Nullable String value) {
     getConfigFile().setValue("tunnels", "ssh", value);
+    getConfigFile().save();
   }
 
   // uses configuration directory property - it should be saved first
