@@ -17,7 +17,6 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
@@ -216,11 +215,12 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
                               myLogData.getTopCommitsCache(), dataPackConsumer, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT
       ) {
         @Override
-        protected ProgressIndicator startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
+        protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
           LOG.debug("Starting a background task...");
-          myStartedTasks.add(((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask));
+          Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask);
+          myStartedTasks.add(future);
           LOG.debug(myStartedTasks.size() + " started tasks");
-          return new EmptyProgressIndicator();
+          return new SingleTaskController.SingleTaskImpl(future, new EmptyProgressIndicator());
         }
       };
     Disposer.register(myLogData, refresher);
