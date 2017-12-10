@@ -1,207 +1,177 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn
 
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.config.DefaultProxyGroup;
-import org.jetbrains.idea.svn.config.ProxyGroup;
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions;
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile;
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.io.FileSystemUtil.lastModified
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.StringUtil.notNullize
+import com.intellij.util.containers.ContainerUtil.union
+import org.jetbrains.idea.svn.SvnUtil.createUrl
+import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.commandLine.SvnBindException
+import org.jetbrains.idea.svn.config.DefaultProxyGroup
+import org.jetbrains.idea.svn.config.ProxyGroup
+import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions
+import org.tmatesoft.svn.core.internal.wc.SVNConfigFile
+import java.nio.file.Path
+import java.util.*
 
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringTokenizer;
+class IdeaSVNConfigFile(private val myPath: Path) {
 
-import static com.intellij.openapi.util.io.FileSystemUtil.lastModified;
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
-import static com.intellij.util.containers.ContainerUtil.union;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+  private val myPatternsMap = mutableMapOf<String, String?>()
+  private val myLatestUpdate = -1L
+  private val myDefaultProperties = mutableMapOf<String, String?>()
+  private val mySVNConfigFile = SVNConfigFile(myPath.toFile())
 
-public class IdeaSVNConfigFile {
-
-  public final static String SERVERS_FILE_NAME = "servers";
-  public final static String CONFIG_FILE_NAME = "config";
-
-  public static final String DEFAULT_GROUP_NAME = "global";
-  public static final String GROUPS_GROUP_NAME = "groups";
-
-  @NotNull private final Map<String, String> myPatternsMap = new HashMap<>();
-  private final long myLatestUpdate = -1;
-  @NotNull private final Path myPath;
-  @NotNull private final Map<String, String> myDefaultProperties = new HashMap<>();
-  @NotNull private final SVNConfigFile mySVNConfigFile;
-
-  public IdeaSVNConfigFile(@NotNull Path path) {
-    mySVNConfigFile = new SVNConfigFile(path.toFile());
-    myPath = path;
-  }
-
-  @NotNull
-  public static String getNewGroupName(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
-    String groupName = host;
-    final Map<String, ProxyGroup> groups = configFile.getAllGroups();
-    while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
-      groupName += "1";
+  val allGroups: Map<String, ProxyGroup>
+    get() {
+      val result = HashMap<String, ProxyGroup>(myPatternsMap.size)
+      for ((groupName, value) in myPatternsMap) {
+        result.put(groupName, ProxyGroup(groupName, value, getValues(groupName)))
+      }
+      return result
     }
-    return groupName;
-  }
 
-  public void updateGroups() {
+  val defaultGroup get() = DefaultProxyGroup(myDefaultProperties)
+
+  fun updateGroups() {
     if (myLatestUpdate != lastModified(myPath.toFile())) {
-      myPatternsMap.clear();
-      myPatternsMap.putAll(getValues(GROUPS_GROUP_NAME));
+      myPatternsMap.clear()
+      myPatternsMap.putAll(getValues(GROUPS_GROUP_NAME))
 
-      myDefaultProperties.clear();
-      myDefaultProperties.putAll(getValues(DEFAULT_GROUP_NAME));
+      myDefaultProperties.clear()
+      myDefaultProperties.putAll(getValues(DEFAULT_GROUP_NAME))
     }
   }
 
-  @NotNull
-  public Map<String, ProxyGroup> getAllGroups() {
-    final Map<String, ProxyGroup> result = new HashMap<>(myPatternsMap.size());
-    for (Map.Entry<String, String> entry : myPatternsMap.entrySet()) {
-      final String groupName = entry.getKey();
-      result.put(groupName, new ProxyGroup(groupName, entry.getValue(), getValues(groupName)));
-    }
-    return result;
-  }
+  fun getValue(groupName: String, propertyName: String): String? = mySVNConfigFile.getPropertyValue(groupName, propertyName)
+  fun getValues(groupName: String): Map<String, String?> = mySVNConfigFile.getProperties(groupName) as Map<String, String?>
+  fun setValue(groupName: String, propertyName: String, value: String?) =
+    mySVNConfigFile.setPropertyValue(groupName, propertyName, value, false)
 
-  @NotNull
-  public DefaultProxyGroup getDefaultGroup() {
-    return new DefaultProxyGroup(myDefaultProperties);
-  }
-
-  @Nullable
-  public String getValue(@NotNull String groupName, @NotNull String propertyName) {
-    return mySVNConfigFile.getPropertyValue(groupName, propertyName);
-  }
-
-  @NotNull
-  public Map<String, String> getValues(@NotNull String groupName) {
-    return mySVNConfigFile.getProperties(groupName);
-  }
-
-  public void setValue(@NotNull String groupName, @NotNull String propertyName, @Nullable String value) {
-    mySVNConfigFile.setPropertyValue(groupName, propertyName, value, false);
-  }
-
-  public void deleteGroup(@NotNull String name) {
+  fun deleteGroup(name: String) {
     // remove all properties
-    final Map<String, String> properties = getValues(name);
-    for (String propertyName : properties.keySet()) {
-      setValue(name, propertyName, null);
+    val properties = getValues(name)
+    for (propertyName in properties.keys) {
+      setValue(name, propertyName, null)
     }
-    if (DEFAULT_GROUP_NAME.equals(name)) {
-      myDefaultProperties.clear();
+    if (DEFAULT_GROUP_NAME == name) {
+      myDefaultProperties.clear()
     }
     // remove group from groups
-    setValue(GROUPS_GROUP_NAME, name, null);
-    mySVNConfigFile.deleteGroup(name, false);
+    setValue(GROUPS_GROUP_NAME, name, null)
+    mySVNConfigFile.deleteGroup(name, false)
   }
 
-  public void addGroup(@NotNull String name, @Nullable String patterns, @NotNull Map<String, String> properties) {
-    setValue(GROUPS_GROUP_NAME, name, patterns);
-    addProperties(name, properties);
+  fun addGroup(name: String, patterns: String?, properties: Map<String, String?>) {
+    setValue(GROUPS_GROUP_NAME, name, patterns)
+    addProperties(name, properties)
   }
 
-  private void addProperties(@NotNull String groupName, @NotNull Map<String, String> properties) {
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      setValue(groupName, entry.getKey(), entry.getValue());
+  private fun addProperties(groupName: String, properties: Map<String, String?>) {
+    for ((key, value) in properties) {
+      setValue(groupName, key, value)
     }
   }
 
-  public void modifyGroup(@NotNull String name,
-                          @Nullable String patterns,
-                          @NotNull Collection<String> delete,
-                          @NotNull Map<String, String> addOrModify,
-                          boolean isDefault) {
+  fun modifyGroup(name: String, patterns: String?, delete: Collection<String>, addOrModify: Map<String, String?>, isDefault: Boolean) {
     if (!isDefault) {
-      setValue(GROUPS_GROUP_NAME, name, patterns);
+      setValue(GROUPS_GROUP_NAME, name, patterns)
     }
-    final Map<String, String> deletedPrepared = new HashMap<>(delete.size());
-    for (String property : delete) {
-      deletedPrepared.put(property, null);
+    val deletedPrepared = HashMap<String, String?>(delete.size)
+    for (property in delete) {
+      deletedPrepared.put(property, null)
     }
-    addProperties(name, deletedPrepared);
-    addProperties(name, addOrModify);
+    addProperties(name, deletedPrepared)
+    addProperties(name, addOrModify)
   }
 
-  public void save() {
-    mySVNConfigFile.save();
-  }
+  fun save() = mySVNConfigFile.save()
 
-  @Nullable
-  public static String getPropertyIdea(@NotNull String host, @NotNull Couple<IdeaSVNConfigFile> serversFile, @NotNull String name) {
-    String groupName = getGroupName(getValues(serversFile, GROUPS_GROUP_NAME), host);
-    if (groupName != null) {
-      Map<String, String> hostProps = getValues(serversFile, groupName);
-      final String value = hostProps.get(name);
-      if (value != null) {
-        return value;
+  companion object {
+    @JvmField
+    val SERVERS_FILE_NAME = "servers"
+    @JvmField
+    val CONFIG_FILE_NAME = "config"
+
+    @JvmField
+    val DEFAULT_GROUP_NAME = "global"
+    @JvmField
+    val GROUPS_GROUP_NAME = "groups"
+
+    @JvmStatic
+    fun getNewGroupName(host: String, configFile: IdeaSVNConfigFile): String {
+      var groupName = host
+      val groups = configFile.allGroups
+      while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
+        groupName += "1"
       }
-    }
-    return getValues(serversFile, DEFAULT_GROUP_NAME).get(name);
-  }
-
-  public static boolean checkHostGroup(@NotNull String url, @Nullable String patterns, @Nullable String exceptions) {
-    final Url svnurl;
-    try {
-      svnurl = createUrl(url);
-    }
-    catch (SvnBindException e) {
-      return false;
+      return groupName
     }
 
-    final String host = svnurl.getHost();
-    return matches(patterns, host) && (!matches(exceptions, host));
-  }
-
-  private static boolean matches(@Nullable String pattern, @NotNull String host) {
-    StringTokenizer tokenizer = new StringTokenizer(notNullize(pattern), ",");
-    while (tokenizer.hasMoreTokens()) {
-      String token = tokenizer.nextToken();
-      if (DefaultSVNOptions.matches(token, host)) {
-        return true;
+    @JvmStatic
+    fun getPropertyIdea(host: String, serversFile: Couple<IdeaSVNConfigFile>, name: String): String? {
+      val groupName = getGroupName(getValues(serversFile, GROUPS_GROUP_NAME), host)
+      if (groupName != null) {
+        val hostProps = getValues(serversFile, groupName)
+        val value = hostProps[name]
+        if (value != null) {
+          return value
+        }
       }
+      return getValues(serversFile, DEFAULT_GROUP_NAME)[name]
     }
-    return false;
-  }
 
-  @Nullable
-  public static String getGroupForHost(@NotNull String host, @NotNull IdeaSVNConfigFile serversFile) {
-    final Map<String, ProxyGroup> groups = serversFile.getAllGroups();
-    for (Map.Entry<String, ProxyGroup> entry : groups.entrySet()) {
-      if (matches(entry.getValue().getPatterns(), host)) return entry.getKey();
+    @JvmStatic
+    fun checkHostGroup(url: String, patterns: String?, exceptions: String?): Boolean {
+      val svnurl: Url
+      try {
+        svnurl = createUrl(url)
+      }
+      catch (e: SvnBindException) {
+        return false
+      }
+
+      val host = svnurl.host
+      return matches(patterns, host) && !matches(exceptions, host)
     }
-    return null;
-  }
 
-  @Nullable
-  private static String getGroupName(@NotNull Map<String, String> groups, @NotNull String host) {
-    for (Map.Entry<String, String> entry : groups.entrySet()) {
-      if (matches(entry.getValue(), host)) return entry.getKey();
+    private fun matches(pattern: String?, host: String): Boolean {
+      val tokenizer = StringTokenizer(notNullize(pattern), ",")
+      while (tokenizer.hasMoreTokens()) {
+        val token = tokenizer.nextToken()
+        if (DefaultSVNOptions.matches(token, host)) {
+          return true
+        }
+      }
+      return false
     }
-    return null;
-  }
 
-  public static boolean isTurned(@Nullable String value) {
-    return value == null || "yes".equalsIgnoreCase(value) || "on".equalsIgnoreCase(value) || "true".equalsIgnoreCase(value);
-  }
+    @JvmStatic
+    fun getGroupForHost(host: String, serversFile: IdeaSVNConfigFile): String? {
+      val groups = serversFile.allGroups
+      for ((key, value) in groups) {
+        if (matches(value.patterns, host)) return key
+      }
+      return null
+    }
 
-  @Nullable
-  public static String getValue(@NotNull Couple<IdeaSVNConfigFile> files, @NotNull String groupName, @NotNull String propertyName) {
-    String result = files.second.getValue(groupName, propertyName);
-    return result != null ? result : files.first.getValue(groupName, propertyName);
-  }
+    private fun getGroupName(groups: Map<String, String?>, host: String): String? {
+      for ((key, value) in groups) {
+        if (matches(value, host)) return key
+      }
+      return null
+    }
 
-  @NotNull
-  public static Map<String, String> getValues(@NotNull Couple<IdeaSVNConfigFile> files, @NotNull String groupName) {
-    return union(files.first.getValues(groupName), files.second.getValues(groupName));
+    @JvmStatic
+    fun isTurned(value: String?) = value == null || "yes".equals(value, true) || "on".equals(value, true) || "true".equals(value, true)
+
+    @JvmStatic
+    fun getValue(files: Couple<IdeaSVNConfigFile>, groupName: String, propertyName: String) =
+      files.second.getValue(groupName, propertyName) ?: files.first.getValue(groupName, propertyName)
+
+    @JvmStatic
+    fun getValues(files: Couple<IdeaSVNConfigFile>, groupName: String): Map<String, String?> =
+      union(files.first.getValues(groupName), files.second.getValues(groupName))
   }
 }
