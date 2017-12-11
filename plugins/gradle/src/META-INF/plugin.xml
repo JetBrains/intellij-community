@@ -189,6 +189,9 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
+
+    <compiler.updateResourcesBuildContributor
+        implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">

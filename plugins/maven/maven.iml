@@ -57,6 +57,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
     <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
   <component name="copyright">
     <Base>
