@@ -373,7 +373,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
                                                         @NotNull final ModalityState modalityState) {
     IndicatorDisposable indicatorDisposable;
     if (progressIndicator instanceof Disposable) {
-      // use CancelIndicatorDisposable instead of progressIndicator to
+      // use IndicatorDisposable instead of progressIndicator to
       // avoid re-registering progressIndicator if it was registered on some other parent before
       indicatorDisposable = new IndicatorDisposable(progressIndicator);
       Disposer.register(ApplicationManager.getApplication(), indicatorDisposable);
