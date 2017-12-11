@@ -229,7 +229,7 @@ class LineStatusTrackerManager(
       if (isDisposed) return
       if (trackers[document] != null) return
 
-      val tracker = LineStatusTracker.createOn(virtualFile, document, project, getTrackerMode())
+      val tracker = LineStatusTracker.createOn(virtualFile, document, project, getTrackingMode())
 
       trackers.put(document, TrackerData(tracker))
 
@@ -251,10 +251,11 @@ class LineStatusTrackerManager(
     }
   }
 
-  private fun getTrackerMode(): LineStatusTracker.Mode {
-    val vcsApplicationSettings = VcsApplicationSettings.getInstance()
-    if (!vcsApplicationSettings.SHOW_LST_GUTTER_MARKERS) return LineStatusTracker.Mode.SILENT
-    return if (vcsApplicationSettings.SHOW_WHITESPACES_IN_LST) LineStatusTracker.Mode.SMART else LineStatusTracker.Mode.DEFAULT
+  private fun getTrackingMode(): LineStatusTracker.Mode {
+    val settings = VcsApplicationSettings.getInstance()
+    if (!settings.SHOW_LST_GUTTER_MARKERS) return LineStatusTracker.Mode.SILENT
+    if (settings.SHOW_WHITESPACES_IN_LST) return LineStatusTracker.Mode.SMART
+    return LineStatusTracker.Mode.DEFAULT
   }
 
   private fun refreshTracker(tracker: LineStatusTracker<*>) {
@@ -409,7 +410,7 @@ class LineStatusTrackerManager(
   private inner class MyLineStatusTrackerSettingListener : LineStatusTrackerSettingListener {
     override fun settingsUpdated() {
       synchronized(LOCK) {
-        val mode = getTrackerMode()
+        val mode = getTrackingMode()
         for (data in trackers.values) {
           data.tracker.mode = mode
         }
