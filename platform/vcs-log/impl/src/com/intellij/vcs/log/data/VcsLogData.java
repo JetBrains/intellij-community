@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,6 +52,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static com.intellij.vcs.log.util.VcsLogUtil.registerWithParentAndProject;
 
 public class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -92,7 +93,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull private final Object myLock = new Object();
   private boolean myInitialized = false;
-  @Nullable private Pair<Future<?>, ProgressIndicator> myInitialization = null;
+  @Nullable private SingleTaskController.SingleTask myInitialization = null;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -139,6 +140,13 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 
     Disposer.register(parentDisposable, this);
+    registerWithParentAndProject(this, project, () -> {
+      synchronized (myLock) {
+        if (myInitialization != null) {
+          myInitialization.cancel();
+        }
+      }
+    });
   }
 
   @NotNull
@@ -179,7 +187,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
         };
         CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
         ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
-        myInitialization = Pair.create(manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null), indicator);
+        Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
+        myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
       }
     }
   }
@@ -304,7 +313,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public void dispose() {
-    Pair<Future<?>, ProgressIndicator> initialization;
+    SingleTaskController.SingleTask initialization;
 
     synchronized (myLock) {
       initialization = myInitialization;
@@ -313,9 +322,9 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
 
     if (initialization != null) {
-      initialization.second.cancel();
+      initialization.cancel();
       try {
-        initialization.first.get(1, TimeUnit.MINUTES);
+        initialization.waitFor(1, TimeUnit.MINUTES);
       }
       catch (InterruptedException | ExecutionException | TimeoutException e) {
         LOG.warn(e);
