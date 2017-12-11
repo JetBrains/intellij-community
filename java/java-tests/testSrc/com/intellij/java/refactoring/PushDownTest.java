@@ -27,6 +27,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -124,6 +125,16 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testStaticToLocal() {
     doTest(conflicts -> {
       assertSameElements(conflicts.values(), Collections.singletonList("Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
+    });
+  }
+
+  public void testStaticToLocalWithReferenceUpdate() {
+    doTest(conflicts -> {
+      assertSameElements(conflicts.values(),
+                         Arrays.asList("Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                       "Method <b><code>m()</code></b> uses method <b><code>foo()</code></b>, which is pushed down",
+                                       "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt1</code></b>",
+                                       "Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
     });
   }
 

@@ -192,12 +192,12 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final List<PsiReference> refsToRebind = new ArrayList<>();
       final PsiModifierList list = member.getModifierList();
       LOG.assertTrue(list != null);
-      if (list.hasModifierProperty(PsiModifier.STATIC)) {
+      if (list.hasModifierProperty(PsiModifier.STATIC) && !PsiUtil.isLocalOrAnonymousClass(targetClass)) {
         for (final PsiReference reference : ReferencesSearch.search(member)) {
           final PsiElement element = reference.getElement();
           if (element instanceof PsiReferenceExpression) {
             final PsiExpression qualifierExpression = ((PsiReferenceExpression)element).getQualifierExpression();
-            if (qualifierExpression instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass)) {
+            if (qualifierExpression instanceof PsiReferenceExpression && !(((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiClass) || qualifierExpression == null) {
               continue;
             }
           }
