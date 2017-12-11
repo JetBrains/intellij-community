@@ -39,13 +39,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** should work under _external_ lock
  * just logic here: do modifications to group of change lists
  */
 public class ChangeListWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListWorker");
-  private final Project myProject;
+  @NotNull private final Project myProject;
+  @NotNull private final DelayedNotificator myDelayedNotificator;
   private final boolean myMainWorker;
 
   private final Set<ListData> myLists = new HashSet<>();
@@ -57,10 +59,11 @@ public class ChangeListWorker {
   private final ChangeListsIndexes myIdx;
 
   @Nullable private Map<ListData, Set<Change>> myReadOnlyChangesCache = null;
-  private volatile boolean myReadOnlyChangesCacheInvalidated = false;
+  private final AtomicBoolean myReadOnlyChangesCacheInvalidated = new AtomicBoolean(false);
 
-  public ChangeListWorker(@NotNull Project project) {
+  public ChangeListWorker(@NotNull Project project, @NotNull DelayedNotificator delayedNotificator) {
     myProject = project;
+    myDelayedNotificator = delayedNotificator;
     myMainWorker = true;
 
     myIdx = new ChangeListsIndexes();
@@ -68,8 +71,9 @@ public class ChangeListWorker {
     ensureDefaultListExists();
   }
 
-  private ChangeListWorker(ChangeListWorker worker) {
+  private ChangeListWorker(@NotNull ChangeListWorker worker) {
     myProject = worker.myProject;
+    myDelayedNotificator = worker.myDelayedNotificator;
     myMainWorker = false;
 
     myIdx = new ChangeListsIndexes(worker.myIdx);
@@ -382,6 +386,7 @@ public class ChangeListWorker {
     myDefault = newDefault;
 
     fireDefaultListChanged(oldDefault.id, newDefault.id);
+    fireChangeListsChanged();
 
     return true;
   }
@@ -391,6 +396,9 @@ public class ChangeListWorker {
     if (list == null || list.isReadOnly) return false;
 
     list.isReadOnly = value;
+
+    fireChangeListsChanged();
+
     return true;
   }
 
@@ -402,6 +410,9 @@ public class ChangeListWorker {
     if (list == null || list.isReadOnly) return false;
 
     list.name = toName;
+
+    fireChangeListsChanged();
+
     return true;
   }
 
@@ -414,6 +425,9 @@ public class ChangeListWorker {
     if (!Comparing.equal(oldComment, newComment)) {
       list.comment = newComment;
     }
+
+    fireChangeListsChanged();
+
     return oldComment;
   }
 
@@ -432,6 +446,8 @@ public class ChangeListWorker {
     list.data = data;
 
     list = putNewListData(list);
+
+    fireChangeListsChanged();
 
     return toChangeList(list);
   }
@@ -453,7 +469,7 @@ public class ChangeListWorker {
     myLists.remove(removedList);
 
     fireChangeListRemoved(removedList.id);
-
+    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
 
     return true;
@@ -508,6 +524,7 @@ public class ChangeListWorker {
       }
     }
 
+    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
 
     MultiMap<LocalChangeList, Change> notifications = new MultiMap<>();
@@ -521,7 +538,9 @@ public class ChangeListWorker {
    * Called without external lock
    */
   public void notifyChangelistsChanged() {
-    myReadOnlyChangesCacheInvalidated = true;
+    if (myReadOnlyChangesCacheInvalidated.compareAndSet(false, true)) {
+      fireChangeListsChanged();
+    }
   }
 
 
@@ -546,6 +565,8 @@ public class ChangeListWorker {
     if (somethingChanged) {
       FileStatusManager.getInstance(myProject).fileStatusesChanged();
     }
+
+    fireChangeListsChanged();
   }
 
   private static boolean notifyPathsChanged(@NotNull ChangeListsIndexes was, @NotNull ChangeListsIndexes became,
@@ -587,6 +608,8 @@ public class ChangeListWorker {
         }
       }
     }
+
+    fireChangeListsChanged();
   }
 
 
@@ -606,16 +629,24 @@ public class ChangeListWorker {
     }
   }
 
+  private void fireChangeListsChanged() {
+    if (myMainWorker) {
+      myDelayedNotificator.changeListsChanged();
+    }
+  }
+
 
   @Nullable
   private ListData removeChangeMapping(@NotNull Change change) {
     ListData oldList = myChangeMappings.remove(change);
+    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
     return oldList;
   }
 
   private void putChangeMapping(@NotNull Change change, @NotNull ListData list) {
     myChangeMappings.put(change, list);
+    fireChangeListsChanged();
     myReadOnlyChangesCache = null;
   }
 
@@ -684,8 +715,8 @@ public class ChangeListWorker {
   private LocalChangeListImpl toChangeList(@Nullable ListData data) {
     if (data == null) return null;
 
-    if (myReadOnlyChangesCache == null || myReadOnlyChangesCacheInvalidated) {
-      myReadOnlyChangesCacheInvalidated = false;
+    if (myReadOnlyChangesCache == null || myReadOnlyChangesCacheInvalidated.get()) {
+      myReadOnlyChangesCacheInvalidated.set(false);
       myReadOnlyChangesCache = getChangesMapping();
     }
     Set<Change> cachedChanges = myReadOnlyChangesCache.get(data);

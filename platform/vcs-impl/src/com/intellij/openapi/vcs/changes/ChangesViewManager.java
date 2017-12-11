@@ -54,7 +54,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -361,29 +360,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
-
     @Override
-    public void changeListAdded(ChangeList list) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changeListRemoved(ChangeList list) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+    public void changeListsChanged() {
       scheduleRefresh();
     }
 

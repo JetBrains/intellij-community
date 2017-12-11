@@ -142,32 +142,8 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
       });
     }
 
-    public void changeListAdded(ChangeList list) {
-      doUpdate();
-    }
-
     @Override
-    public void changeListRemoved(ChangeList list) {
-      doUpdate();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesAdded(Collection<Change> changes, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    public void changeListsChanged() {
       doUpdate();
     }
   }
