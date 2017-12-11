@@ -17,8 +17,8 @@ package com.intellij.testGuiFramework.framework;
 
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
-import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -277,8 +277,8 @@ public final class GuiTestUtil {
   private static void acceptAgreementIfNeeded(Robot robot) {
     final String policyAgreement = "Privacy Policy Agreement";
 
-    Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
-    boolean showPrivacyPolicyAgreement = !PrivacyPolicy.isVersionAccepted(policy.getFirst());
+    EndUserAgreement.Document doc = EndUserAgreement.getLatestDocument();
+    boolean showPrivacyPolicyAgreement = !doc.isAccepted();
     if (!showPrivacyPolicyAgreement) {
       LOG.info(policyAgreement + " dialog should be skipped on this system.");
       return;
