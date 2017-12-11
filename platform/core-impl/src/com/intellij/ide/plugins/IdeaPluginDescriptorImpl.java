@@ -242,8 +242,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           if (dependency.optional) {
             optionalDependentPlugins.add(id);
             if (!StringUtil.isEmpty(dependency.configFile)) {
-              myOptionalConfigs.putIfAbsent(id, new ArrayList<>());
-              myOptionalConfigs.get(id).add(dependency.configFile);
+              myOptionalConfigs.computeIfAbsent(id, it -> new SmartList<>()).add(dependency.configFile);
             }
           }
         }

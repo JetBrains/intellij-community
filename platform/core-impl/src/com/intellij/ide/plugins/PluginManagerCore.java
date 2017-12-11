@@ -870,8 +870,7 @@ public class PluginManagerCore {
             getLogger().info("Cannot find optional descriptor " + optionalDescriptorName);
           }
           else {
-            descriptors.putIfAbsent(entry.getKey(), new ArrayList<>());
-            descriptors.get(entry.getKey()).add(optionalDescriptor);
+            descriptors.computeIfAbsent(entry.getKey(), it -> new SmartList<>()).add(optionalDescriptor);
           }
         }
       }
