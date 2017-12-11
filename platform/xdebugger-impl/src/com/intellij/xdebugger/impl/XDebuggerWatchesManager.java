@@ -52,7 +52,7 @@ public class XDebuggerWatchesManager {
 
     for (ConfigurationState expressionState : ContainerUtil.notNullize(state.getExpressions())) {
       List<WatchState> expressionStates = expressionState.getExpressionStates();
-      if (expressionStates != null) {
+      if (!ContainerUtil.isEmpty(expressionStates)) {
         watches.put(expressionState.getName(), ContainerUtil.mapNotNull(expressionStates, XExpressionState::toXExpression));
       }
     }
