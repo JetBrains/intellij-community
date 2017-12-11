@@ -174,7 +174,9 @@ class EditorPainter implements TextDrawingCallback {
   }
 
   private static boolean isMarginShown(@NotNull Editor editor) {
-    return editor.getSettings().isRightMarginShown() && editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null;
+    return editor.getSettings().isRightMarginShown() &&
+           editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
+           (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
   }
 
   private float[] paintBackground(Graphics2D g, Rectangle clip, int yShift,
