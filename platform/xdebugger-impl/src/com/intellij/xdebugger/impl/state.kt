@@ -14,7 +14,6 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState
 import com.intellij.xdebugger.impl.breakpoints.LineBreakpointState
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState
-import java.util.*
 
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
@@ -42,26 +41,14 @@ class WatchesManagerState : BaseState() {
 }
 
 @Tag("configuration")
-class ConfigurationState : BaseState {
+class ConfigurationState @JvmOverloads constructor(name: String? = null, expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
-  var name by string()
+  var name by string(name)
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressionStates by storedProperty<List<WatchState>>(SmartList())
-
-  @Suppress("unused")
-  constructor()
-
-  constructor(name: String, expressions: List<XExpression>) {
-    this.name = name
-    val list = ArrayList<WatchState>(expressions.size)
-    expressionStates = list
-    for (i in expressions.indices) {
-      list.set(i, WatchState(expressions[i]))
-    }
-  }
+  var expressionStates by storedProperty<List<WatchState>>(expressions?.mapTo(SmartList()) { WatchState(it) } ?: SmartList())
 }
 
 @Tag("watch")
