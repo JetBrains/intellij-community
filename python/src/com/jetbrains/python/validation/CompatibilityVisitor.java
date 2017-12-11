@@ -48,7 +48,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   protected List<LanguageLevel> myVersionsToProcess;
 
   static {
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON25, Sets.newHashSet("R", "U", "UR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
@@ -114,12 +113,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       PsiElement element = exceptClass.getNextSibling();
       while (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
-      }
-
-      if (element != null && "as".equals(element.getText())) {
-        registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON26),
-                                       "Python versions < 2.6 do not support this syntax.",
-                                       node);
       }
 
       if (element != null && ",".equals(element.getText())) {
@@ -579,12 +572,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
         if (keywordArgumentNames.contains(keyword)) {
           registerProblem(argument, "Keyword argument repeated", new PyRemoveArgumentQuickFix());
-        }
-        else if (seenPositionalContainer) {
-          registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON26),
-                                         "Python versions < 2.6 do not allow keyword arguments after *expression",
-                                         argument,
-                                         new PyRemoveArgumentQuickFix());
         }
         else if (seenKeywordContainer) {
           registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),

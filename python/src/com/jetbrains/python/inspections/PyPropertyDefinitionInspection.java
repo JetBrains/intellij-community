@@ -185,33 +185,31 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       super.visitPyFunction(node);
-      if (myLevel.isAtLeast(LanguageLevel.PYTHON26)) {
-        // check @foo.setter and @foo.deleter
-        PyClass cls = node.getContainingClass();
-        if (cls != null) {
-          final PyDecoratorList decos = node.getDecoratorList();
-          if (decos != null) {
-            String name = node.getName();
-            for (PyDecorator deco : decos.getDecorators()) {
-              final QualifiedName qName = deco.getQualifiedName();
-              if (qName != null) {
-                List<String> nameParts = qName.getComponents();
-                if (nameParts.size() == 2) {
-                  final int suffixIndex = SUFFIXES.indexOf(nameParts.get(1));
-                  if (suffixIndex >= 0) {
-                    if (Comparing.equal(name, nameParts.get(0))) {
-                      // names are ok, what about signatures?
-                      PsiElement markable = getFunctionMarkingElement(node);
-                      if (suffixIndex == 0) {
-                        checkSetter(node, markable);
-                      }
-                      else {
-                        checkDeleter(node, markable);
-                      }
+      // check @foo.setter and @foo.deleter
+      PyClass cls = node.getContainingClass();
+      if (cls != null) {
+        final PyDecoratorList decos = node.getDecoratorList();
+        if (decos != null) {
+          String name = node.getName();
+          for (PyDecorator deco : decos.getDecorators()) {
+            final QualifiedName qName = deco.getQualifiedName();
+            if (qName != null) {
+              List<String> nameParts = qName.getComponents();
+              if (nameParts.size() == 2) {
+                final int suffixIndex = SUFFIXES.indexOf(nameParts.get(1));
+                if (suffixIndex >= 0) {
+                  if (Comparing.equal(name, nameParts.get(0))) {
+                    // names are ok, what about signatures?
+                    PsiElement markable = getFunctionMarkingElement(node);
+                    if (suffixIndex == 0) {
+                      checkSetter(node, markable);
                     }
                     else {
-                      registerProblem(deco, PyBundle.message("INSP.func.property.name.mismatch"));
+                      checkDeleter(node, markable);
                     }
+                  }
+                  else {
+                    registerProblem(deco, PyBundle.message("INSP.func.property.name.mismatch"));
                   }
                 }
               }

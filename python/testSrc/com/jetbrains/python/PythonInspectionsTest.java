@@ -171,10 +171,6 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
-  public void testPyPropertyDefinitionInspection25() {
-    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON25);
-  }
-
   public void testPyPropertyDefinitionInspection26() {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON26);
   }

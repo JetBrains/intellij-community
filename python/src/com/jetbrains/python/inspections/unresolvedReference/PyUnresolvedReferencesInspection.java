@@ -508,11 +508,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(expr)) {
             return;
           }
-          if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON26)) {
-            if ("with".equals(refName)) {
-              actions.add(new UnresolvedRefAddFutureImportQuickFix());
-            }
-          }
           if (refText.equals("true") || refText.equals("false")) {
             actions.add(new UnresolvedRefTrueFalseQuickFix(element));
           }

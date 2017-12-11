@@ -36,6 +36,10 @@ public enum LanguageLevel {
    */
   @Deprecated
   PYTHON24(24, false, true, false, false),
+  /**
+   * @deprecated This level will be removed in 2018.2.
+   */
+  @Deprecated
   PYTHON25(25, false, true, false, false),
   PYTHON26(26, true, true, false, false),
   PYTHON27(27, true, true, true, false),
@@ -53,7 +57,7 @@ public enum LanguageLevel {
   @Deprecated
   public static final List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
 
-  public static final List<LanguageLevel> SUPPORTED_LEVELS = ImmutableList.copyOf(Stream.of(values()).filter(v -> v.myVersion >= 25).collect(
+  public static final List<LanguageLevel> SUPPORTED_LEVELS = ImmutableList.copyOf(Stream.of(values()).filter(v -> v.myVersion >= 26).collect(
     Collectors.toList())); // Python versions 2.4 and 2.5 aren't supported anymore
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
@@ -118,9 +122,6 @@ public enum LanguageLevel {
 
   public static LanguageLevel fromPythonVersion(@NotNull String pythonVersion) {
     if (pythonVersion.startsWith("2")) {
-      if (pythonVersion.startsWith("2.5")) {
-        return PYTHON25;
-      }
       if (pythonVersion.startsWith("2.6")) {
         return PYTHON26;
       }
