@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -88,7 +90,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @Override
   @NotNull
   public GrTypeDefinition[] getTypeDefinitions() {
-    final StubElement<?> stub = getStub();
+    final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
     }
@@ -99,7 +101,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @Override
   @NotNull
   public GrMethod[] getMethods() {
-    final StubElement<?> stub = getStub();
+    final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
     }
