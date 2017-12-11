@@ -277,6 +277,22 @@ public class MavenModuleImporter {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
+        if ("bundle".equals(dependencyType)) {
+          artifact = new MavenArtifact(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getVersion(),
+            artifact.getBaseVersion(),
+            "jar",
+            artifact.getClassifier(),
+            artifact.getScope(),
+            artifact.isOptional(),
+            "jar",
+            null,
+            myMavenProject.getLocalRepository(),
+            false, false
+          );
+        }
         LibraryOrderEntry libraryOrderEntry =
           myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
         myModifiableModelsProvider.trySubstitute(
