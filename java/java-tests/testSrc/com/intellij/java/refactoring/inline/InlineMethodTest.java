@@ -259,6 +259,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testSkipEmptyMethod() {
+    doTestInlineThisOnly();
+  }
+
   public void testOneLineLambdaVoidCompatibleToBlock() {
     doTestInlineThisOnly();
   }
