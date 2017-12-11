@@ -16,6 +16,7 @@
 package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -110,9 +111,13 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         throw new ExecutionException("Cannot find SDK for Run configuration " + myConfig.getName());
       }
 
+      Map<String, String> unitedEnvs = Maps.newHashMap(settingsProvider.getEnvs());
+      unitedEnvs.putAll(myConfig.getEnvs());
+      PydevConsoleRunnerFactory.putIPythonEnvFlag(project, unitedEnvs);
+
       PythonScriptWithConsoleRunner runner =
         new PythonScriptWithConsoleRunner(project, myConfig.getSdk(), PyConsoleType.PYTHON, workingDir,
-                                          myConfig.getEnvs(), patchers,
+                                          unitedEnvs, patchers,
                                           settingsProvider,
                                           setupFragment);
       runner.setEnableAfterConnection(false);
