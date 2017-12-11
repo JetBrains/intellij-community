@@ -151,8 +151,9 @@ class DocumentTracker : Disposable {
 
 
   @CalledInAwt
-  private fun refreshDirty(fastRefresh: Boolean) {
-    if (isDisposed || freezeHelper.isFrozen()) return
+  private fun refreshDirty(fastRefresh: Boolean, forceInFrozen: Boolean = false) {
+    if (isDisposed) return
+    if (!forceInFrozen && freezeHelper.isFrozen()) return
 
     LOCK.write {
       if (!blocks.isEmpty() &&
@@ -185,17 +186,31 @@ class DocumentTracker : Disposable {
     }
   }
 
+  private fun updateFrozenContentIfNeeded(side: Side) {
+    assert(LOCK.isHeldByCurrentThread)
+    if (!freezeHelper.isFrozen(side)) return
+
+    unfreeze(side, freezeHelper.getFrozenContent(side)!!)
+
+    freezeHelper.setFrozenContent(side, side[document1, document2].immutableCharSequence)
+  }
+
 
   @CalledInAwt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
     if (isDisposed) return
 
-    doFrozen(side) {
-      val otherSide = side.other()
-      val document = side[document1, document2]
-      val otherDocument = otherSide[document1, document2]
+    val otherSide = side.other()
+    val document = side[document1, document2]
+    val otherDocument = otherSide[document1, document2]
 
+    doFrozen(side) {
       val appliedBlocks = LOCK.write {
+        // ensure blocks are up to date
+        updateFrozenContentIfNeeded(Side.LEFT)
+        updateFrozenContentIfNeeded(Side.RIGHT)
+        refreshDirty(fastRefresh = false, forceInFrozen = true)
+
         tracker.partiallyApplyBlocks(side, condition)
       }
 
