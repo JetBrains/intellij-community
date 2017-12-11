@@ -149,7 +149,7 @@ class DocumentTracker : Disposable {
 
 
   @CalledInAwt
-  private fun refreshDirty(fullRefresh: Boolean) {
+  private fun refreshDirty(fastRefresh: Boolean) {
     if (isDisposed || freezeHelper.isFrozen()) return
 
     LOCK.write {
@@ -163,7 +163,7 @@ class DocumentTracker : Disposable {
                            document2.immutableCharSequence,
                            document1.lineOffsets,
                            document2.lineOffsets,
-                           fullRefresh)
+                           fastRefresh)
     }
   }
 
@@ -182,7 +182,7 @@ class DocumentTracker : Disposable {
       shift += afterLength - beforeLength
     }
 
-    refreshDirty(true)
+    refreshDirty(fastRefresh = false)
   }
 
 
@@ -228,7 +228,7 @@ class DocumentTracker : Disposable {
 
   private inner class MyApplicationListener : ApplicationAdapter() {
     override fun afterWriteActionFinished(action: Any) {
-      refreshDirty(false)
+      refreshDirty(fastRefresh = true)
     }
   }
 
@@ -423,7 +423,7 @@ private class LineTracker(private val multicaster: Listener) {
                    text2: CharSequence,
                    lineOffsets1: LineOffsets,
                    lineOffsets2: LineOffsets,
-                   fullRefresh: Boolean) {
+                   fastRefresh: Boolean) {
     if (!isDirty) return
 
     val removedBlocks = ArrayList<Block>()
@@ -433,7 +433,7 @@ private class LineTracker(private val multicaster: Listener) {
 
     for (block in blocks) {
       if (block.isDirty) {
-        val freshBlocks = refreshBlock(block, text1, text2, lineOffsets1, lineOffsets2, fullRefresh)
+        val freshBlocks = refreshBlock(block, text1, text2, lineOffsets1, lineOffsets2, fastRefresh)
 
         removedBlocks.add(block)
         addedBlocks.addAll(freshBlocks)
@@ -480,12 +480,12 @@ private class LineTracker(private val multicaster: Listener) {
                            text2: CharSequence,
                            lineOffsets1: LineOffsets,
                            lineOffsets2: LineOffsets,
-                           fullRefresh: Boolean): List<Block> {
+                           fastRefresh: Boolean): List<Block> {
     if (block.range.isEmpty) return emptyList()
 
     val iterable: FairDiffIterable
     val isTooBig: Boolean
-    if (block.isTooBig && !fullRefresh) {
+    if (block.isTooBig && fastRefresh) {
       iterable = fastCompareLines(block.range, text1, text2, lineOffsets1, lineOffsets2)
       isTooBig = true
     }
