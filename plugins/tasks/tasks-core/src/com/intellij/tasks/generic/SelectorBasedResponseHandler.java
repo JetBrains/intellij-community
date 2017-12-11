@@ -11,8 +11,6 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,9 +84,7 @@ public abstract class SelectorBasedResponseHandler extends ResponseHandler {
     ));
   }
 
-  @Tag("selectors")
-  @Property(surroundWithTag = false)
-  @XCollection
+  @XCollection(propertyElementName = "selectors")
   @NotNull
   public List<Selector> getSelectors() {
     return new ArrayList<>(mySelectors.values());

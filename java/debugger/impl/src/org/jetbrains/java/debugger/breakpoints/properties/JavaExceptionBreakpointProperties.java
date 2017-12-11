@@ -6,7 +6,6 @@ package org.jetbrains.java.debugger.breakpoints.properties;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,8 +65,7 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
     return changed;
   }
 
-  @Tag("catch-class-filters")
-  @XCollection
+  @XCollection(propertyElementName = "catch-class-filters")
   public final ClassFilter[] getCatchClassFilters() {
     return myCatchClassFilters != null ? myCatchClassFilters : ClassFilter.EMPTY_ARRAY;
   }
@@ -78,8 +76,7 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
     return changed;
   }
 
-  @Tag("catch-class-exclusion-filters")
-  @XCollection
+  @XCollection(propertyElementName = "catch-class-exclusion-filters")
   public ClassFilter[] getCatchClassExclusionFilters() {
     return myCatchClassExclusionFilters != null ? myCatchClassExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }

@@ -17,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ProjectStartupConfigurationBase implements PersistentStateComponent<ProjectStartupConfigurationBase> {
-  @Tag("configurations")
-  @XCollection
+  @XCollection(propertyElementName = "configurations")
   private final List<ConfigurationDescriptor> myList;
 
   protected ProjectStartupConfigurationBase() {

@@ -457,6 +457,11 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return new AccessorBindingWrapper(accessor, binding, inline);
     }
 
+    XCollection xCollection = accessor.getAnnotation(XCollection.class);
+    if (xCollection != null && (xCollection.propertyElementName().length() != 0 || xCollection.style() == XCollection.Style.v2)) {
+      return new TagBinding(accessor, xCollection.propertyElementName());
+    }
+
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
   }
 }

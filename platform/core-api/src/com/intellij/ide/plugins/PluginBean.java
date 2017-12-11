@@ -12,16 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PluginBean {
-  @Tag(APPLICATION_COMPONENTS)
-  @XCollection
+  @XCollection(propertyElementName = APPLICATION_COMPONENTS)
   public OldComponentConfig[] applicationComponents;
 
-  @Tag(PROJECT_COMPONENTS)
-  @XCollection
+  @XCollection(propertyElementName = PROJECT_COMPONENTS)
   public OldComponentConfig[] projectComponents;
 
-  @Tag(MODULE_COMPONENTS)
-  @XCollection
+  @XCollection(propertyElementName = MODULE_COMPONENTS)
   public OldComponentConfig[] moduleComponents;
 
   @NonNls public static final String APPLICATION_COMPONENTS = "application-components";

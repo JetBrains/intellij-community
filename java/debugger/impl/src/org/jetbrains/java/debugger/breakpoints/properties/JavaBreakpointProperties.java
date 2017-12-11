@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import org.jetbrains.annotations.Nullable;
@@ -27,8 +26,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   private boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters;
 
-  @Tag("instance-filters")
-  @XCollection
+  @XCollection(propertyElementName = "instance-filters")
   public InstanceFilter[] getInstanceFilters() {
     return myInstanceFilters != null ? myInstanceFilters : InstanceFilter.EMPTY_ARRAY;
   }
@@ -49,8 +47,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     }
   }
 
-  @Tag("class-filters")
-  @XCollection
+  @XCollection(propertyElementName = "class-filters")
   public final ClassFilter[] getClassFilters() {
     return myClassFilters != null ? myClassFilters : ClassFilter.EMPTY_ARRAY;
   }
@@ -68,8 +65,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
     return Comparing.equal(a, b);
   }
 
-  @Tag("class-exclusion-filters")
-  @XCollection
+  @XCollection(propertyElementName = "class-exclusion-filters")
   public ClassFilter[] getClassExclusionFilters() {
     return myClassExclusionFilters != null ? myClassExclusionFilters : ClassFilter.EMPTY_ARRAY;
   }

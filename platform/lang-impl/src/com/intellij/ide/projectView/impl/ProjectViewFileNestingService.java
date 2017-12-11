@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.containers.SortedList;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,8 +95,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   }
 
   public static class MyState {
-    @Tag("nesting-rules")
-    @XCollection
+    @XCollection(propertyElementName = "nesting-rules")
     public List<NestingRule> myRules = new SortedList<>(Comparator.comparing(o -> o.getParentFileSuffix()));
 
     public MyState() {

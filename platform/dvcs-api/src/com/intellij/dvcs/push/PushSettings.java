@@ -22,8 +22,7 @@ public class PushSettings implements PersistentStateComponent<PushSettings.State
   private State myState = new State();
 
   public static class State {
-    @XCollection
-    @Tag("force-push-targets")
+    @XCollection(propertyElementName = "force-push-targets")
     public List<ForcePushTargetInfo> FORCE_PUSH_TARGETS = ContainerUtil.newArrayList();
   }
 

@@ -18,7 +18,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
@@ -202,8 +201,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     return Collections.emptyList();
   }
 
-  @Tag("capture-points")
-  @XCollection
+  @XCollection(propertyElementName = "capture-points")
   public List<CapturePoint> getCapturePoints() {
     return myCapturePoints;
   }

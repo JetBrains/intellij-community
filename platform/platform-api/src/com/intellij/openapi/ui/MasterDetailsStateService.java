@@ -77,8 +77,7 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
   public static class States {
     private List<ComponentState> myStates = new ArrayList<>();
 
-    @Tag("states")
-    @XCollection
+    @XCollection(style = XCollection.Style.v2)
     public List<ComponentState> getStates() {
       return myStates;
     }

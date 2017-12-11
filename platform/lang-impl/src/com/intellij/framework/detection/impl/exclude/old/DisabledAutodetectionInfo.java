@@ -1,11 +1,9 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
 package com.intellij.framework.detection.impl.exclude.old;
 
 import com.intellij.util.containers.SortedList;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +16,7 @@ import java.util.List;
 public class DisabledAutodetectionInfo {
   private List<DisabledAutodetectionByTypeElement> myElements = new SortedList<>(DisabledAutodetectionByTypeElement.COMPARATOR);
 
-  @Tag("autodetection-disabled")
-  @XCollection
+  @XCollection(propertyElementName = "autodetection-disabled")
   public List<DisabledAutodetectionByTypeElement> getElements() {
     return myElements;
   }

@@ -1,26 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger;
 
-import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TempFiles;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
@@ -28,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.configurationStore.XmlSerializer.deserialize;
+import static com.intellij.configurationStore.XmlSerializer.serialize;
 
 /**
  * @author nik
@@ -50,11 +41,14 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   }
 
   protected void load(@Nullable Element element) {
-    myBreakpointManager.loadState(element == null ? new XBreakpointManagerImpl.BreakpointManagerState() : XmlSerializer.deserialize(element, XBreakpointManagerImpl.BreakpointManagerState.class));
+    myBreakpointManager.loadState(element == null ? new BreakpointManagerState() : deserialize(element, BreakpointManagerState.class));
   }
 
+  @Nullable
   protected Element save() {
-    return XmlSerializer.serialize(myBreakpointManager.getState());
+    BreakpointManagerState state = new BreakpointManagerState();
+    myBreakpointManager.saveState(state);
+    return serialize(state);
   }
 
   protected List<XBreakpoint<?>> getAllBreakpoints() {

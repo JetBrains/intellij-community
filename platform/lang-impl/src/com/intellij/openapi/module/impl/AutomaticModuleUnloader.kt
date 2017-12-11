@@ -13,7 +13,6 @@ import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
-import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.xml.util.XmlStringUtil
 
@@ -154,8 +153,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
 }
 
 class LoadedModulesListStorage {
-  @Tag("loaded-modules")
-  @XCollection(elementName = "module", valueAttributeName = "name")
+  @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
   var modules: MutableList<String> = ArrayList()
 }
 

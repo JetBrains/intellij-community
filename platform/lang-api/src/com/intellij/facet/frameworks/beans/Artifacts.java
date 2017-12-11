@@ -7,7 +7,6 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 
 public class Artifacts {
-
   @Property(surroundWithTag = false)
   @XCollection
   public Artifact[] myVersions;

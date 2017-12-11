@@ -24,7 +24,6 @@ public class AntArtifactExtensionProperties {
   @Attribute("enabled")
   public boolean myEnabled;
 
-  @Tag("build-properties")
-  @XCollection
+  @XCollection(propertyElementName = "build-properties")
   public List<BuildFileProperty> myUserProperties = new ArrayList<>();
 }

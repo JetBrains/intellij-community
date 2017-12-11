@@ -1,27 +1,12 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
 package com.intellij.ide.ui;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.util.xmlb.Converter;
@@ -29,7 +14,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
@@ -54,8 +38,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
       proportions.add(prop);
     }
     if (root instanceof Container) {
-      Component[] children = ((Container)root).getComponents();
-      for (Component child : children) {
+      for (Component child : ((Container)root).getComponents()) {
         doSaveSplitterProportions(child);
       }
     }
@@ -100,7 +83,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(Element element) {
     proportions.clear();
     String prop = element.getAttributeValue(ATTRIBUTE_PROPORTIONS);
     String version = element.getAttributeValue(ATTRIBUTE_VERSION);
@@ -114,7 +97,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     StringBuilder result = new StringBuilder();
     String sep = "";
     for (Float proportion : proportions) {
@@ -127,7 +110,7 @@ public class SplitterProportionsDataImpl implements SplitterProportionsData {
   }
 
   public static final class SplitterProportionsConverter extends Converter<SplitterProportionsDataImpl> {
-    @Nullable
+    @NotNull
     @Override
     public SplitterProportionsDataImpl fromString(@NotNull String value) {
       SplitterProportionsDataImpl data = new SplitterProportionsDataImpl();

@@ -37,6 +37,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
+  fun <T : Any> bean(defaultValue: T): StoredPropertyBase<T> {
+    val result = ObjectStoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
   /**
    * Empty string is always normalized to null.
    */
@@ -48,6 +54,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
   fun storedProperty(defaultValue: Int = 0): StoredPropertyBase<Int> {
     val result = IntStoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
+  fun storedProperty(defaultValue: Long = 0): StoredPropertyBase<Long> {
+    val result = LongStoredProperty(defaultValue)
     properties.add(result)
     return result
   }
@@ -212,6 +224,35 @@ private class IntStoredProperty(override val defaultValue: Int) : StoredProperty
 
   override fun setValue(other: StoredProperty): Boolean {
     val newValue = (other as IntStoredProperty).value
+    if (newValue == value) {
+      return false
+    }
+
+    value = newValue
+    return true
+  }
+}
+
+private class LongStoredProperty(override val defaultValue: Long) : StoredPropertyBase<Long>() {
+  override var value = defaultValue
+
+  override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
+
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Long) {
+    if (this.value != value) {
+      thisRef.ownModificationCount++
+      this.value = value
+    }
+  }
+
+  override fun equals(other: Any?) = this === other || (other is LongStoredProperty && value == other.value)
+
+  override fun hashCode() = value.hashCode()
+
+  override fun toString() = if (value == defaultValue) "" else value.toString()
+
+  override fun setValue(other: StoredProperty): Boolean {
+    val newValue = (other as LongStoredProperty).value
     if (newValue == value) {
       return false
     }

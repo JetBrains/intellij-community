@@ -10,38 +10,27 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
-* @author Vladislav.Soroka
-* @since 10/30/2014
-*/
 @Tag("activation")
 public class TaskActivationState {
-  @Tag("before_run")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "before_run")
   public List<String> beforeRunTasks = new ArrayList<>();
 
-  @Tag("before_sync")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "before_sync")
   public List<String> beforeSyncTasks = new ArrayList<>();
 
-  @Tag("after_sync")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "after_sync")
   public List<String> afterSyncTasks = new ArrayList<>();
 
-  @Tag("before_compile")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "before_compile")
   public List<String> beforeCompileTasks = new ArrayList<>();
 
-  @Tag("after_compile")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "after_compile")
   public List<String> afterCompileTasks = new ArrayList<>();
 
-  @Tag("after_rebuild")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "after_rebuild")
   public List<String> afterRebuildTask = new ArrayList<>();
 
-  @Tag("before_rebuild")
-  @XCollection(elementName = "task", valueAttributeName = "name")
+  @XCollection(elementName = "task", valueAttributeName = "name", propertyElementName = "before_rebuild")
   public List<String> beforeRebuildTask = new ArrayList<>();
 
   public boolean isEmpty() {

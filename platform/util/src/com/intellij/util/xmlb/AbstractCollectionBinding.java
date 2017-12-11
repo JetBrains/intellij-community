@@ -4,6 +4,7 @@
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -58,10 +59,19 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @NotNull
+  private Class<?>[] getElementTypes() {
+    if (newAnnotation != null) {
+      return newAnnotation.elementTypes();
+    }
+    return annotation == null ? ArrayUtil.EMPTY_CLASS_ARRAY : annotation.elementTypes();
+  }
+
+  @NotNull
   private synchronized List<Binding> getElementBindings() {
     if (itemBindings == null) {
       Binding binding = serializer.getBinding(itemType);
-      if (annotation == null || annotation.elementTypes().length == 0) {
+      Class<?>[] elementTypes = getElementTypes();
+      if (elementTypes.length == 0) {
         itemBindings = binding == null ? Collections.<Binding>emptyList() : Collections.singletonList(binding);
       }
       else {
@@ -70,7 +80,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
           itemBindings.add(binding);
         }
 
-        for (Class aClass : annotation.elementTypes()) {
+        for (Class<?> aClass : elementTypes) {
           Binding b = serializer.getBinding(aClass);
           if (b != null && !itemBindings.contains(b)) {
             itemBindings.add(b);

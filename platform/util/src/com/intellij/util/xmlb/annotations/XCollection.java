@@ -12,8 +12,6 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Experimental.
- *
  * ```xml
  * <option value="$value" />
  * ... n item elements
@@ -26,6 +24,12 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.METHOD})
 @ApiStatus.Experimental
 public @interface XCollection {
+  /**
+   * The property element name. Defaults to property name if `style = v2`.
+   * If not specified and `style` is not specified — property serialized using option tag.
+   */
+  String propertyElementName() default "";
+
   /**
    * Value of primitive type wrapped into element named `option`. This option allows you to customize element name.
    * For example, for `elementName = "module"`:
@@ -49,13 +53,26 @@ public @interface XCollection {
    */
   String valueAttributeName() default Constants.VALUE;
 
+  Class<?>[] elementTypes() default {};
+
   enum Style {
     /**
      * Old style as AbstractCollection(surroundWithTag = false).
-     * <p>
-     * <option value="$value" />
+     *
+     * <option name="propertyName">
+     *   <option value="$value" />
+     * </option>
      */
-    v1
+    v1,
+
+    /**
+     * Wrap not using option tag (OptionTag), but simple tag (Tag).
+     *
+     * <propertyName>
+     *   <option value="$value" />
+     * </propertyName>
+     */
+    v2,
   }
 
   Style style() default Style.v1;

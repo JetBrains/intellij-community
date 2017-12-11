@@ -119,8 +119,7 @@ public class XDebuggerSettingManagerImpl extends XDebuggerSettingsManager implem
   }
 
   public static class SettingsState {
-    @Tag("debuggers")
-    @XCollection
+    @XCollection(propertyElementName = "debuggers")
     public List<SpecificSettingsState> specificStates = new SmartList<>();
     private XDebuggerDataViewSettings myDataViewSettings = new XDebuggerDataViewSettings();
     private XDebuggerGeneralSettings myGeneralSettings = new XDebuggerGeneralSettings();

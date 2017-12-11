@@ -49,8 +49,7 @@ public class DisabledAutodetectionByTypeElement {
     return myFacetTypeId;
   }
 
-  @Tag("modules")
-  @XCollection
+  @XCollection(propertyElementName = "modules")
   public List<DisabledAutodetectionInModuleElement> getModuleElements() {
     return myModuleElements;
   }
