@@ -197,6 +197,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         };
         assert toolWindowId != null;
+        assert notification.getActions().isEmpty() : "Actions are not shown for toolwindow notifications. " +
+                                                     "Toolwindow id " + toolWindowId +
+                                                     ", group id \'" + notification.getGroupId() + "\"" +
+                                                     ", title \'" + notification.getTitle() + "\"" +
+                                                     ", content \'" + notification.getContent() + "\"";
         String msg = notification.getTitle();
         if (StringUtil.isNotEmpty(notification.getContent())) {
           if (StringUtil.isNotEmpty(msg)) {
