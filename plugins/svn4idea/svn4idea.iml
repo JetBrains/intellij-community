@@ -98,5 +98,6 @@
     <orderEntry type="module" module-name="diff-impl" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="ini4j" level="project" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
   </component>
 </module>

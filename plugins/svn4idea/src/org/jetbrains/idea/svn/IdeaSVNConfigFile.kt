@@ -5,8 +5,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.io.FileSystemUtil.lastModified
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.StringUtil.notNullize
 import com.intellij.util.containers.ContainerUtil.union
+import org.apache.oro.text.GlobCompiler
+import org.apache.oro.text.regex.MalformedPatternException
+import org.apache.oro.text.regex.Perl5Matcher
 import org.ini4j.Config
 import org.ini4j.Ini
 import org.ini4j.spi.IniBuilder
@@ -16,7 +18,6 @@ import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import org.jetbrains.idea.svn.config.DefaultProxyGroup
 import org.jetbrains.idea.svn.config.ProxyGroup
-import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.Writer
@@ -167,15 +168,13 @@ class IdeaSVNConfigFile(private val myPath: Path) {
       return matches(patterns, host) && !matches(exceptions, host)
     }
 
-    private fun matches(pattern: String?, host: String): Boolean {
-      val tokenizer = StringTokenizer(notNullize(pattern), ",")
-      while (tokenizer.hasMoreTokens()) {
-        val token = tokenizer.nextToken()
-        if (DefaultSVNOptions.matches(token, host)) {
-          return true
-        }
-      }
-      return false
+    private fun matches(patterns: String?, host: String) = patterns.orEmpty().split(',').any { matchesPattern(it.trim(), host) }
+    private fun matchesPattern(pattern: String, host: String) = try {
+      Perl5Matcher().matches(host, GlobCompiler().compile(pattern))
+    }
+    catch (e: MalformedPatternException) {
+      LOG.debug("Could not compile pattern $pattern", e)
+      false
     }
 
     @JvmStatic
