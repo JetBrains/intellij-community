@@ -7,9 +7,10 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModulePointer;
+import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -29,10 +30,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @NonNls private static final String ELEMENT = "module";
   @NonNls private static final String ATTRIBUTE = "name";
 
-  private Module myModule = null;
-
-  @Attribute("name")
-  private String myModuleName;
+  private @Nullable ModulePointer myModulePointer;
 
   private final Project myProject;
 
@@ -50,7 +48,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
       // we are unable to set 'null' module from 'not null' one
       String moduleName = modules.get(0).getAttributeValue(ATTRIBUTE);
       if (!StringUtil.isEmpty(moduleName)) {
-        myModuleName = moduleName;
+        myModulePointer = ModulePointerManager.getInstance(myProject).create(moduleName);
       }
     }
   }
@@ -82,14 +80,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
   @Nullable
   @Transient
   public Module getModule() {
-    //caching
-    if (myModuleName != null) {
-      myModule = findModule(myModuleName);
-    }
-    if (myModule != null && myModule.isDisposed()) {
-      myModule = null;
-    }
-    return myModule;
+    return myModulePointer != null ? myModulePointer.getModule() : null;
   }
 
   @Nullable
@@ -101,20 +92,19 @@ public class RunConfigurationModule implements JDOMExternalizable {
   }
 
   public void setModule(final Module module) {
-    myModule = module;
-    myModuleName = module != null ? module.getName() : null;
+    myModulePointer = module != null ? ModulePointerManager.getInstance(myProject).create(module) : null;
   }
 
   public void setModuleName(@Nullable String moduleName) {
-    if (!Comparing.equal(myModuleName, moduleName)) {
-      myModuleName = moduleName;
-      myModule = null;
+    if (myModulePointer != null && !myModulePointer.getModuleName().equals(moduleName) || myModulePointer == null && moduleName != null) {
+      myModulePointer = moduleName != null ? ModulePointerManager.getInstance(myProject).create(moduleName) : null;
     }
   }
 
+  @Attribute("name")
   @NotNull
   public String getModuleName() {
-    return StringUtil.notNullize(myModuleName);
+    return myModulePointer != null ? myModulePointer.getModuleName() : "";
   }
 
   private ModuleManager getModuleManager() {
@@ -129,11 +119,12 @@ public class RunConfigurationModule implements JDOMExternalizable {
       }
     }
     else {
-      if (myModuleName != null) {
-        if (ModuleManager.getInstance(myProject).getUnloadedModuleDescription(myModuleName) != null) {
-          throw new RuntimeConfigurationError(ExecutionBundle.message("module.is.unloaded.from.project.error.text", myModuleName));
+      if (myModulePointer != null) {
+        String moduleName = myModulePointer.getModuleName();
+        if (ModuleManager.getInstance(myProject).getUnloadedModuleDescription(moduleName) != null) {
+          throw new RuntimeConfigurationError(ExecutionBundle.message("module.is.unloaded.from.project.error.text", moduleName));
         }
-        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", myModuleName));
+        throw new RuntimeConfigurationError(ExecutionBundle.message("module.doesn.t.exist.in.project.error.text", moduleName));
       }
       throw new RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"));
     }
