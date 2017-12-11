@@ -172,12 +172,12 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    return new MyOSProcessHandler(commandLine);
+    return new MyOSProcessHandler(commandLine, true);
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {
-    MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-      super(commandLine, true);
+    protected MyOSProcessHandler(@NotNull GeneralCommandLine commandLine, boolean withMediator) throws ExecutionException {
+      super(commandLine, withMediator);
     }
 
     @NotNull
