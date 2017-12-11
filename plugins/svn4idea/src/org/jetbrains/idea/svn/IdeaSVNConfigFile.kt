@@ -1,27 +1,39 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Couple
 import com.intellij.openapi.util.io.FileSystemUtil.lastModified
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.notNullize
 import com.intellij.util.containers.ContainerUtil.union
+import org.ini4j.Ini
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import org.jetbrains.idea.svn.config.DefaultProxyGroup
 import org.jetbrains.idea.svn.config.ProxyGroup
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions
-import org.tmatesoft.svn.core.internal.wc.SVNConfigFile
+import java.io.IOException
 import java.nio.file.Path
 import java.util.*
+
+private val LOG = logger<IdeaSVNConfigFile>()
 
 class IdeaSVNConfigFile(private val myPath: Path) {
 
   private val myPatternsMap = mutableMapOf<String, String?>()
-  private val myLatestUpdate = -1L
+  private var myLatestUpdate = -1L
   private val myDefaultProperties = mutableMapOf<String, String?>()
-  private val mySVNConfigFile = SVNConfigFile(myPath.toFile())
+  private val _configFile = Ini().apply {
+    config.isTree = false
+    config.isEmptySection = true
+  }
+  private val configFile: Ini
+    get() {
+      updateGroups()
+      return _configFile
+    }
 
   val allGroups: Map<String, ProxyGroup>
     get() {
@@ -34,8 +46,20 @@ class IdeaSVNConfigFile(private val myPath: Path) {
 
   val defaultGroup get() = DefaultProxyGroup(myDefaultProperties)
 
-  fun updateGroups() {
-    if (myLatestUpdate != lastModified(myPath.toFile())) {
+  @JvmOverloads
+  fun updateGroups(force: Boolean = false) {
+    val lastModified = lastModified(myPath.toFile())
+
+    if (force || myLatestUpdate != lastModified) {
+      _configFile.clear()
+      try {
+        _configFile.load(myPath.toFile())
+      }
+      catch (e: IOException) {
+        LOG.info("Could not load $myPath", e)
+      }
+      myLatestUpdate = lastModified
+
       myPatternsMap.clear()
       myPatternsMap.putAll(getValues(GROUPS_GROUP_NAME))
 
@@ -44,23 +68,19 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     }
   }
 
-  fun getValue(groupName: String, propertyName: String): String? = mySVNConfigFile.getPropertyValue(groupName, propertyName)
-  fun getValues(groupName: String): Map<String, String?> = mySVNConfigFile.getProperties(groupName) as Map<String, String?>
-  fun setValue(groupName: String, propertyName: String, value: String?) =
-    mySVNConfigFile.setPropertyValue(groupName, propertyName, value, false)
+  fun getValue(groupName: String, propertyName: String): String? = configFile[groupName, propertyName]
+  fun getValues(groupName: String): Map<String, String?> = configFile[groupName] ?: emptyMap()
+  fun setValue(groupName: String, propertyName: String, value: String?) {
+    configFile.put(groupName, propertyName, value)
+  }
 
   fun deleteGroup(name: String) {
-    // remove all properties
-    val properties = getValues(name)
-    for (propertyName in properties.keys) {
-      setValue(name, propertyName, null)
-    }
     if (DEFAULT_GROUP_NAME == name) {
       myDefaultProperties.clear()
     }
     // remove group from groups
     setValue(GROUPS_GROUP_NAME, name, null)
-    mySVNConfigFile.deleteGroup(name, false)
+    configFile.remove(name)
   }
 
   fun addGroup(name: String, patterns: String?, properties: Map<String, String?>) {
@@ -86,7 +106,13 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     addProperties(name, addOrModify)
   }
 
-  fun save() = mySVNConfigFile.save()
+  fun save() = try {
+    _configFile.store(myPath.toFile())
+    updateGroups(true)
+  }
+  catch (e: IOException) {
+    LOG.info("Could not save $myPath", e)
+  }
 
   companion object {
     @JvmField
