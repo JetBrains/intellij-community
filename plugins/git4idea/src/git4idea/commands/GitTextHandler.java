@@ -40,7 +40,7 @@ import java.util.List;
  */
 public abstract class GitTextHandler extends GitHandler {
   private static final int WAIT_TIMEOUT_MS = 50;
-  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60 * 10;
+  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60;
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
