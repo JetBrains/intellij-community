@@ -6,9 +6,7 @@ class Foo {
         foo();
       }
 
-        public static void foo() {
-
-        }
+        public static void foo() {}
     }
 
     class FooExt1 extends Foo {
@@ -16,9 +14,7 @@ class Foo {
         foo();
       }
 
-        public static void foo() {
-
-        }
+        public static void foo() {}
     }
   }
 }

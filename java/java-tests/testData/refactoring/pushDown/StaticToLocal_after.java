@@ -1,9 +1,8 @@
 class Foo {
-  public static void f<caret>oo() {
 
-  }
-
-  void m() {
-    class FooExt extends Foo { }
+    void m() {
+    class FooExt extends Foo {
+        public static void foo() {}
+    }
   }
 }
