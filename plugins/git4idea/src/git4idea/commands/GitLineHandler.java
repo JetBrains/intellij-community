@@ -15,6 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -22,9 +25,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.io.BaseDataReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -44,22 +50,33 @@ public class GitLineHandler extends GitTextHandler {
    * Line listeners
    */
   private final EventDispatcher<GitLineHandlerListener> myLineListeners = EventDispatcher.create(GitLineHandlerListener.class);
+  private final boolean myWithMediator;
 
   public GitLineHandler(@NotNull Project project, @NotNull File directory, @NotNull GitCommand command) {
     super(project, directory, command);
+    myWithMediator = true;
   }
 
   public GitLineHandler(@NotNull final Project project,
                         @NotNull final VirtualFile vcsRoot,
                         @NotNull final GitCommand command) {
-    super(project, vcsRoot, command);
+    this(project, vcsRoot, command, Collections.emptyList());
   }
 
   public GitLineHandler(@NotNull final Project project,
                         @NotNull final VirtualFile vcsRoot,
                         @NotNull final GitCommand command,
                         @NotNull List<String> configParameters) {
+    this(project, vcsRoot, command, configParameters, true);
+  }
+
+  public GitLineHandler(@NotNull final Project project,
+                        @NotNull final VirtualFile vcsRoot,
+                        @NotNull final GitCommand command,
+                        @NotNull List<String> configParameters,
+                        boolean withMediator) {
     super(project, vcsRoot, command, configParameters);
+    myWithMediator = withMediator;
   }
 
   protected void processTerminated(final int exitCode) {
@@ -152,5 +169,11 @@ public class GitLineHandler extends GitTextHandler {
       }
     }
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
+  }
+
+  @Override
+  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    commandLine.setCharset(getCharset());
+    return new MyOSProcessHandler(commandLine, myWithMediator);
   }
 }
