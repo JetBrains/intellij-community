@@ -30,7 +30,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.regex.Pattern;
 
@@ -126,8 +125,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return builder.toString();
   }
 
-  @TestOnly
-  public static String convertToRegexp(String aspectsntx, char separator) {
+  static String convertToRegexp(String aspectsntx, char separator) {
     StringBuilder buf = new StringBuilder(aspectsntx.length());
     int cur = 0;
     boolean isAfterSeparator = false;
@@ -135,7 +133,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     while (cur < aspectsntx.length()) {
       char curChar = aspectsntx.charAt(cur);
       if (curChar != separator && isAfterSeparator) {
-        buf.append("\\" + separator);
+        buf.append("\\").append(separator);
         isAfterSeparator = false;
       }
 
@@ -148,13 +146,13 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
         if (!isAfterAsterix){
           isAfterAsterix = true;
         } else {
-          buf.append("[^\\" + separator + "]*");
+          buf.append("[^\\").append(separator).append("]*");
           isAfterAsterix = false;
         }
       }
       else if (curChar == separator) {
         if (isAfterSeparator) {
-          buf.append("\\" +separator+ "(.*\\" + separator + ")?");
+          buf.append("\\").append(separator).append("(.*\\").append(separator).append(")?");
           isAfterSeparator = false;
         }
         else {
@@ -170,7 +168,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
       cur++;
     }
     if (isAfterAsterix){
-      buf.append("[^\\" + separator + "]*");
+      buf.append("[^\\").append(separator).append("]*");
     }
 
     return buf.toString();
@@ -190,7 +188,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   @Override
   @NotNull
   public String getText() {
-    @NonNls StringBuffer buf = new StringBuffer("file");
+    @NonNls StringBuilder buf = new StringBuilder("file");
 
     if (myModulePattern != null || myModuleGroupPattern != null) {
       buf.append("[").append(myModulePatternText).append("]");
