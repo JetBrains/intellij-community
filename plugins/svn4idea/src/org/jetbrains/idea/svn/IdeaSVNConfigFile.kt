@@ -7,7 +7,10 @@ import com.intellij.openapi.util.io.FileSystemUtil.lastModified
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.notNullize
 import com.intellij.util.containers.ContainerUtil.union
+import org.ini4j.Config
 import org.ini4j.Ini
+import org.ini4j.spi.IniBuilder
+import org.ini4j.spi.IniFormatter
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
@@ -15,6 +18,8 @@ import org.jetbrains.idea.svn.config.DefaultProxyGroup
 import org.jetbrains.idea.svn.config.ProxyGroup
 import org.tmatesoft.svn.core.internal.wc.DefaultSVNOptions
 import java.io.IOException
+import java.io.PrintWriter
+import java.io.Writer
 import java.nio.file.Path
 import java.util.*
 
@@ -25,7 +30,7 @@ class IdeaSVNConfigFile(private val myPath: Path) {
   private val myPatternsMap = mutableMapOf<String, String?>()
   private var myLatestUpdate = -1L
   private val myDefaultProperties = mutableMapOf<String, String?>()
-  private val _configFile = Ini().apply {
+  private val _configFile = MyIni().apply {
     config.isTree = false
     config.isEmptySection = true
   }
@@ -199,5 +204,69 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     @JvmStatic
     fun getValues(files: Couple<IdeaSVNConfigFile>, groupName: String): Map<String, String?> =
       union(files.first.getValues(groupName), files.second.getValues(groupName))
+  }
+}
+
+private class MyIni : Ini() {
+  override fun newBuilder() = MyIniBuilder(this)
+  override fun store(output: Writer) = store(MyIniFormatter(this, config, output))
+}
+
+private class MyIniBuilder(ini: Ini) : IniBuilder() {
+  init {
+    setIni(ini)
+  }
+
+  private var isAfterComment = false;
+
+  override fun startSection(sectionName: String) {
+    super.startSection(sectionName)
+    isAfterComment = true
+  }
+
+  override fun endSection() {
+    handleAfterComment()
+    isAfterComment = false
+    super.endSection()
+  }
+
+  override fun handleComment(comment: String) {
+    handleHeaderComment()
+    handleAfterComment()
+
+    lastComment = (if (!lastComment.isNullOrEmpty()) lastComment + config.lineSeparator else "") + comment
+  }
+
+  override fun handleOption(name: String, value: String?) {
+    handleAfterComment()
+    super.handleOption(name, value)
+  }
+
+  private fun handleHeaderComment() {
+    if (isHeader && lastComment != null) {
+      profile.comment = lastComment
+      lastComment = null
+      isHeader = false
+    }
+  }
+
+  private fun handleAfterComment() {
+    if (isAfterComment && lastComment != null) {
+      (profile as Ini).putMeta("after-comment", currentSection.name, lastComment)
+      lastComment = null
+      isAfterComment = false
+    }
+  }
+}
+
+private class MyIniFormatter(private val ini: Ini, config: Config, output: Writer) : IniFormatter() {
+  init {
+    this.config = config
+    this.output = output as? PrintWriter ?: PrintWriter(output)
+  }
+
+  override fun startSection(sectionName: String) {
+    super.startSection(sectionName)
+    handleComment(ini.getMeta("after-comment", sectionName) as String?)
   }
 }
