@@ -49,7 +49,8 @@ public enum LanguageLevel {
   PYTHON33(33, true, false, true, true),
   PYTHON34(34, true, false, true, true),
   PYTHON35(35, true, false, true, true),
-  PYTHON36(36, true, false, true, true);
+  PYTHON36(36, true, false, true, true),
+  PYTHON37(37, true, false, true, true);
 
   /**
    * @deprecated This field will be removed in 2018.2.
@@ -61,7 +62,7 @@ public enum LanguageLevel {
     Collectors.toList())); // Python versions 2.4 and 2.5 aren't supported anymore
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON36;
+  private static final LanguageLevel DEFAULT3 = PYTHON37;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
@@ -151,6 +152,9 @@ public enum LanguageLevel {
       }
       if (pythonVersion.startsWith("3.6")) {
         return PYTHON36;
+      }
+      if (pythonVersion.startsWith("3.7")) {
+        return PYTHON37;
       }
       return DEFAULT3;
     }
