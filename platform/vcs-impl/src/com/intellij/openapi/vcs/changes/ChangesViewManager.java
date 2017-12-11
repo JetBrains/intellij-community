@@ -10,7 +10,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -79,7 +78,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private boolean myDisposed = false;
 
-  @NotNull private final ChangeListListener myListener = new MyChangeListListener();
   @NotNull private final Project myProject;
   @NotNull private final ChangesViewContentManager myContentManager;
 
@@ -123,14 +121,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @Override
   public void projectOpened() {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    changeListManager.addChangeListListener(myListener);
-    Disposer.register(myProject, new Disposable() {
-      @Override
-      public void dispose() {
-        changeListManager.removeChangeListListener(myListener);
-      }
-    });
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), myProject);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     myContent = new MyChangeViewContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setHelpId(ChangesListView.HELP_ID);

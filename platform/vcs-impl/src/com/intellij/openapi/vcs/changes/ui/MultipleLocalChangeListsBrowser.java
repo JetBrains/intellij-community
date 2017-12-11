@@ -27,7 +27,6 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -81,17 +80,11 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
     updateDisplayedChangeLists();
     updateSelectedChangeList(myChangeList);
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
 

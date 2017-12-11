@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -1263,10 +1264,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
+  public void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable) {
+    myListeners.addListener(listener, disposable);
+  }
+
+  @Override
   public void addChangeListListener(@NotNull ChangeListListener listener) {
     myListeners.addListener(listener);
   }
-
 
   @Override
   public void removeChangeListListener(@NotNull ChangeListListener listener) {

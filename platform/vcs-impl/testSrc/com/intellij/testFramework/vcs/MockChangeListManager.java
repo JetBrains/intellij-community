@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -225,6 +226,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @NotNull
   @Override
   public ThreeState haveChangesUnder(@NotNull VirtualFile vf) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable) {
     throw new UnsupportedOperationException();
   }
 

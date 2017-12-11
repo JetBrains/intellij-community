@@ -18,7 +18,6 @@ package git4idea.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
@@ -49,7 +48,7 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
 
     new RollbackDialogAction().registerCustomShortcutSet(this, null);
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
     myViewer.rebuildTree();
@@ -57,12 +56,6 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
 
   @Override
   public void dispose() {
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
   @NotNull

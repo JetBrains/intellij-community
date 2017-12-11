@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +43,7 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
     myToggleChangeDiffAction = new ToggleChangeDiffAction();
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
     myViewer.rebuildTree();
@@ -52,12 +51,6 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
   @Override
   public void dispose() {
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
   @NotNull
