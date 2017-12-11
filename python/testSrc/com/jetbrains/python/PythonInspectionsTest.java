@@ -85,11 +85,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyRaisingNewStyleClassInspection() {
-    LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
-    doTestWithLanguageLevel(getTestName(false), inspection, LanguageLevel.PYTHON24);
-  }
-
   public void testPyDocstringInspection() {
     LocalInspectionTool inspection = new PyMissingOrEmptyDocstringInspection();
     doTest(getTestName(false), inspection);

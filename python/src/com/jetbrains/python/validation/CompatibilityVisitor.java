@@ -48,7 +48,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   protected List<LanguageLevel> myVersionsToProcess;
 
   static {
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON24, Sets.newHashSet("R", "U", "UR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON25, Sets.newHashSet("R", "U", "UR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
@@ -297,11 +296,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
 
-    registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-
     final PyWithItem[] items = node.getWithItems();
     if (items.length > 1) {
-      registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && !level.equals(LanguageLevel.PYTHON24),
+      registerForAllMatchingVersions(level -> !level.supportsSetLiterals(),
                                      " not support multiple context managers",
                                      Arrays.asList(items).subList(1, items.length),
                                      null);
@@ -314,16 +311,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyForStatement(PyForStatement node) {
     super.visitPyForStatement(node);
     checkAsyncKeyword(node);
-  }
-
-  @Override
-  public void visitPyClass(PyClass node) {    // PY-2719
-    super.visitPyClass(node);
-
-    final PyArgumentList list = node.getSuperClassExpressionList();
-    if (list != null && list.getArguments().length == 0) {
-      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 does not support this syntax.", list);
-    }
   }
 
   @Override
@@ -340,65 +327,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      "The print statement has been replaced with a print() function",
                                      node,
                                      new CompatibilityPrintCallQuickFix());
-    }
-  }
-
-  @Override
-  public void visitPyFromImportStatement(PyFromImportStatement node) {
-    super.visitPyFromImportStatement(node);
-
-    final PyReferenceExpression importSource  = node.getImportSource();
-    if (importSource != null) {
-      final PsiElement prev = importSource.getPrevSibling();
-      if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT) { // PY-2793
-        registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-      }
-    }
-    else {
-      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-    }
-  }
-
-  @Override
-  public void visitPyAssignmentStatement(PyAssignmentStatement node) {
-    super.visitPyAssignmentStatement(node);
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
-      PyExpression assignedValue = node.getAssignedValue();
-
-      Stack<PsiElement> st = new Stack<>();           // PY-2796
-      if (assignedValue != null)
-        st.push(assignedValue);
-      while (!st.isEmpty()) {
-        PsiElement el = st.pop();
-        if (el instanceof PyYieldExpression)
-          registerProblem(node, "Python version 2.4 doesn't support this syntax. " +
-                                                    "In Python <= 2.4, yield was a statement; it didn't return any value.");
-        else {
-          for (PsiElement e : el.getChildren())
-            st.push(e);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void visitPyConditionalExpression(PyConditionalExpression node) {   //PY-4293
-    super.visitPyConditionalExpression(node);
-
-    registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-  }
-
-  @Override
-  public void visitPyTryExceptStatement(PyTryExceptStatement node) { // PY-2795
-    super.visitPyTryExceptStatement(node);
-
-    final PyExceptPart[] excepts = node.getExceptParts();
-    final PyFinallyPart finallyPart = node.getFinallyPart();
-    if (excepts.length != 0 && finallyPart != null) {
-      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals,
-                                     "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
-                                     "that code is always executed, or one or more except blocks to catch specific exceptions.",
-                                     node);
     }
   }
 
