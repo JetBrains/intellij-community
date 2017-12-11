@@ -330,6 +330,8 @@
           <action id="SelectAllOccurrences" class="com.intellij.openapi.editor.actions.SelectAllOccurrencesAction"/>
           <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
+          <action id="GotoNextMarkedOccurrence" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextMarkedOccurrenceAction"/>
+          <action id="GotoPrevMarkedOccurrence" class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevMarkedOccurrenceAction"/>
           <separator/>
           <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
           <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
