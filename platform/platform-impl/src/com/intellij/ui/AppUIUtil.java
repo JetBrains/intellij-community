@@ -16,7 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.PrivacyPolicy;
+import com.intellij.ide.gdpr.Consent;
+import com.intellij.ide.gdpr.ConsentOptions;
+import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,9 +34,12 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,8 +59,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.*;
 import java.util.List;
-import java.util.Locale;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -239,13 +244,29 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showPrivacyPolicy() {
+  public static void showEndUserAgreement() {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
-      Pair<PrivacyPolicy.Version, String> policy = PrivacyPolicy.getContent();
-      if (!PrivacyPolicy.isVersionAccepted(policy.getFirst())) {
+      EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
+      if (!agreement.isAccepted()) {
         try {
-          SwingUtilities.invokeAndWait(() -> showPrivacyPolicyAgreement(policy.getSecond()));
-          PrivacyPolicy.setVersionAccepted(policy.getFirst());
+          // todo: does not seem to request focus when shown
+          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText()));
+          EndUserAgreement.setAccepted(agreement);
+        }
+        catch (Exception e) {
+          Logger.getInstance(AppUIUtil.class).warn(e);
+        }
+      }
+      final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getConsents();
+      if (consentsToShow.second) {
+        try {
+          final Ref<Collection<Consent>> result = Ref.create(null);
+          // todo: does not seem to request focus when shown
+          SwingUtilities.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.first)));
+          final Collection<Consent> confirmed = result.get();
+          if (confirmed != null) {
+            ConsentOptions.setConsents(confirmed);
+          }
         }
         catch (Exception e) {
           Logger.getInstance(AppUIUtil.class).warn(e);
@@ -255,10 +276,12 @@ public class AppUIUtil {
   }
 
   /**
+   * todo: update to support GDPR requirements
+   *
    * @param htmlText Updated version of Privacy Policy text if any.
    *                 If it's {@code null}, the standard text from bundled resources would be used.
    */
-  public static void showPrivacyPolicyAgreement(@NotNull String htmlText) {
+  public static void showEndUserAgreementText(@NotNull String htmlText) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Override
       protected JComponent createCenterPanel() {
@@ -319,6 +342,104 @@ public class AppUIUtil {
     dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
+  }
+
+  // todo: need a separate action to view and change state of all consets on demand
+  
+  public static Collection<Consent> confirmConsentOptions(@NotNull Collection<Consent> consents) {
+    final Collection<Pair<JCheckBox, Consent>> consentMapping = new ArrayList<>();
+    final DialogWrapper dialog = new DialogWrapper(true) {
+      @Override
+      protected JComponent createCenterPanel() {
+        final JPanel mainPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
+
+        final JPanel body = new JPanel(new GridBagLayout());
+        for (Iterator<Consent> it = consents.iterator(); it.hasNext(); ) {
+          final Consent consent = it.next();
+          final JComponent comp = createConsentElement(consent);
+          boolean lastConsent = !it.hasNext();
+          if (lastConsent) {
+            body.setBackground(comp.getBackground());
+          }
+          body.add(comp, new GridBagConstraints(
+            0, GridBagConstraints.RELATIVE, 1, 1, 1.0, lastConsent ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, new Insets(10, 0, 0, 0), 0, 0)
+          );
+        }
+
+        mainPanel.add(new JLabel("Please review your options regarding the sharing your data with JetBrains"), BorderLayout.NORTH);
+        mainPanel.add(new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        return mainPanel;
+      }
+
+      @NotNull
+      private JComponent createConsentElement(Consent consent) {
+        final JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.setFocusable(false);
+        viewer.addHyperlinkListener(new HyperlinkAdapter() {
+          @Override
+          protected void hyperlinkActivated(HyperlinkEvent e) {
+            final URL url = e.getURL();
+            if (url != null) {
+              BrowserUtil.browse(url);
+            }
+          }
+        });
+        final String descr = consent.getText();
+        final String text = "<html>" + StringUtil.replace(descr, "\n", "<br>") + "</html>";
+        viewer.setText(text);
+        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(13) + "pt;}");
+        styleSheet.addRule("h2, em {margin-top:" + JBUI.scaleFontSize(20) + "pt;}");
+        styleSheet.addRule("h1, h2, h3, p, h4, em {margin-bottom:0;padding-bottom:0;}");
+        styleSheet.addRule("p, h1 {margin-top:0;padding-top:"+JBUI.scaleFontSize(6)+"pt;}");
+        styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
+        styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
+        viewer.setCaretPosition(0);
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
+
+        final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
+        cb.setBackground(viewer.getBackground());
+
+        final JPanel pane = new JPanel(new BorderLayout());
+        pane.setBackground(viewer.getBackground());
+        pane.add(cb, BorderLayout.NORTH);
+        pane.add(viewer, BorderLayout.CENTER);
+        consentMapping.add(Pair.create(cb, consent));
+        return pane;
+      }
+
+      @NotNull
+      protected Action[] createActions() {
+        return new Action[] {getOKAction()};
+      }
+
+      @Override
+      protected void createDefaultActions() {
+        super.createDefaultActions();
+        init();
+        setAutoAdjustable(false);
+      }
+
+    };
+    dialog.setModal(true);
+    dialog.setTitle("Data Sharing Options");
+    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
+    dialog.show();
+
+    final Collection<Consent> result;
+    if (dialog.isOK()) {
+      result = new ArrayList<>();
+      for (Pair<JCheckBox, Consent> pair : consentMapping) {
+        result.add(pair.second.derive(pair.first.isSelected()));
+      }
+    }
+    else {
+      // no changes were made, save as-is
+      result = consents;
+    }
+    return result;
   }
 
   /**
