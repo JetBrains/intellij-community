@@ -122,7 +122,7 @@ internal class XmlSerializerCollectionTest {
   @Test fun arrayWithoutTag() {
     @Tag("bean")
     class Bean {
-      @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+      @XCollection(elementName = "vvalue", valueAttributeName = "v")
       var v = arrayOf("a", "b")
       var INT_V = 1
     }

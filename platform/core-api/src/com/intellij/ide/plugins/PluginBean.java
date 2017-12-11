@@ -4,7 +4,10 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.components.OldComponentConfig;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -85,6 +88,6 @@ public class PluginBean {
   public boolean allowBundledUpdate;
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "module")
+  @XCollection(elementName = "module")
   public List<String> modules = new ArrayList<>();
 }

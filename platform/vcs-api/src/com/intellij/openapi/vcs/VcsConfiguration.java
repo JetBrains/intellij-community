@@ -13,7 +13,10 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -111,7 +114,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(elementTag = "MESSAGE", surroundWithTag = false)
+  @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;

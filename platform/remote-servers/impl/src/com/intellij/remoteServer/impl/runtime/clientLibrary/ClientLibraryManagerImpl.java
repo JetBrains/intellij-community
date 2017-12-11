@@ -19,8 +19,10 @@ import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.download.*;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -172,7 +174,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
     public String myId;
 
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "file", elementValueAttribute = "path")
+    @XCollection(elementName = "file", valueAttributeName = "path")
     public List<String> myPaths = new ArrayList<>();
   }
 

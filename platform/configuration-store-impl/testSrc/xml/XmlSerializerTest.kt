@@ -25,7 +25,6 @@ import com.intellij.testFramework.assertConcurrent
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.*
 import com.intellij.util.xmlb.annotations.*
-import com.intellij.util.xmlb.annotations.AbstractCollection
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.intellij.lang.annotations.Language
@@ -255,7 +254,7 @@ internal class XmlSerializerTest {
 
   @Test fun filterSerializer() {
     val bean = BeanWithPublicFields()
-    assertSerializer(bean, "<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "</BeanWithPublicFields>", SerializationFilter { accessor, bean -> accessor.name.startsWith("I") })
+    assertSerializer(bean, "<BeanWithPublicFields>\n" + "  <option name=\"INT_V\" value=\"1\" />\n" + "</BeanWithPublicFields>", SerializationFilter { accessor, _ -> accessor.name.startsWith("I") })
   }
 
   @Test fun transient() {
@@ -320,7 +319,7 @@ internal class XmlSerializerTest {
   @Tag("bean")
   private class BeanWithArrayWithoutAllTag {
     @Property(surroundWithTag = false)
-    @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v", surroundWithTag = false)
+    @XCollection(elementName = "vvalue", valueAttributeName = "v")
     var v = arrayOf("a", "b")
 
     var intV = 1
@@ -350,7 +349,7 @@ internal class XmlSerializerTest {
     @Tag("bean")
     class BeanWithArrayWithoutAllTag2 {
       @Property(surroundWithTag = false)
-      @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "", surroundWithTag = false)
+      @XCollection(elementName = "vvalue", valueAttributeName = "")
       var v = arrayOf("a", "b")
       var intV = 1
     }
