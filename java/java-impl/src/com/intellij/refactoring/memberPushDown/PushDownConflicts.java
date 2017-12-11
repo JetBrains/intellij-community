@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
@@ -202,6 +203,12 @@ public class PushDownConflicts {
           myConflicts.putValue(innerClass, message);
         }
       }
+    }
+
+    if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
+        PsiUtil.getEnclosingStaticElement(targetClass, null) == null &&
+        !(targetClass.getParent() instanceof PsiFile)) {
+      myConflicts.putValue(movedMember, "Static " + RefactoringUIUtil.getDescription(movedMember, false) + " can't be pushed to non-static " + RefactoringUIUtil.getDescription(targetClass, false));
     }
   }
 

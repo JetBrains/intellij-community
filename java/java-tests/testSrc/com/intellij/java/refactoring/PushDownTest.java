@@ -121,6 +121,12 @@ public class PushDownTest extends LightRefactoringTestCase {
     });
   }
 
+  public void testStaticToLocal() {
+    doTest(conflicts -> {
+      assertSameElements(conflicts.values(), Collections.singletonList("Static method <b><code>foo()</code></b> can't be pushed to non-static class <b><code>FooExt</code></b>"));
+    });
+  }
+
   private void doTest() {
     doTest(false);
   }
