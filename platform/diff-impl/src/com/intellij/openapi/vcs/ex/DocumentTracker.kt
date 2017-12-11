@@ -336,9 +336,10 @@ class DocumentTracker : Disposable {
       data.counter--
 
       if (data.counter == 0) {
+        setData(side, null)
+
         unfreeze(side, data.textBeforeFreeze)
 
-        setData(side, null)
         multicaster.onUnfreeze(side)
       }
     }
