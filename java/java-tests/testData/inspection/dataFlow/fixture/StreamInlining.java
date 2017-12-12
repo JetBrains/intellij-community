@@ -2,6 +2,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 public class StreamInlining {
@@ -130,5 +131,16 @@ public class StreamInlining {
     List<String> list2 = Stream.generate(() -> "xyz").limit(20).filter(<warning descr="Method reference result is always 'false'">"bar"::equals</warning>).collect(Collectors.toList());
     Stream.generate(() -> Optional.of("xyz")).filter(<warning descr="Method reference result is always 'true'">Optional::isPresent</warning>).forEach(System.out::println);
     LongStream.generate(() -> 5).limit(10).filter(x -> <warning descr="Condition 'x > 6' is always 'false'">x > 6</warning>).forEach(s -> System.out.println(s));
+  }
+
+  // IDEA-183501
+  void testFlatMapIdentity(Stream<Integer> stream) {
+    Integer res = Stream.of(stream)
+      .flatMap(Function.identity())
+      .min(Comparator.naturalOrder())
+      .orElse(null);
+    if(res == null) { // not always null
+      System.out.println("possible");
+    }
   }
 }
