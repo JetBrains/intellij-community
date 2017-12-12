@@ -10,7 +10,7 @@
 <project name="IntelliJ IDEA Community Edition" default="build">
   <property name="project.home" value="${basedir}"/>
 
-  <target name="setup">
+  <target name="init">
     <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
                else="${project.home}/build/dependencies/gradlew">
       <os family="windows"/>
@@ -26,12 +26,6 @@
       <propertyref prefix="custom.project."/>
       <propertyref name="ui.test.groups"/>
     </propertyset>
-  </target>
-
-  <target name="init" depends="setup">
-    <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild">
-      <property name="config" value="release"/>
-    </ant>
   </target>
 
   <macrodef name="call_gant">

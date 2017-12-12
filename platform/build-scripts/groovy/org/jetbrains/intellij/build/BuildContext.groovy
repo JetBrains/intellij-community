@@ -75,8 +75,6 @@ abstract class BuildContext implements CompilationContext {
 
   abstract File findFileInModuleSources(String moduleName, String relativePath)
 
-  abstract boolean hasResource(String moduleName, String relativePath)
-
   abstract void signExeFile(String path)
 
   /**
