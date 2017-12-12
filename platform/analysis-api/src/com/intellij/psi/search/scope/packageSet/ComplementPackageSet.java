@@ -47,7 +47,7 @@ public class ComplementPackageSet extends PackageSetBase {
   @Override
   @NotNull
   public String getText() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     boolean needParen = myComplementarySet.getNodePriority() > getNodePriority();
     buf.append('!');
     if (needParen) buf.append('(');
