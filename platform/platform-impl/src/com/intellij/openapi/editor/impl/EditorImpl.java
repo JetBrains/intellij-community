@@ -470,10 +470,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           if (newGuide != null) {
             final Rectangle visibleArea = getScrollingModel().getVisibleArea();
-            final int line = newGuide.startLine;
-            if (logicalLineToY(line) < visibleArea.y) {
-              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line), myDocument.getLineEndOffset(line));
-
+            final int startLine = newGuide.codeConstructStartLine;
+            final int endLine = newGuide.startLine;
+            if (logicalLineToY(startLine) < visibleArea.y) {
+              TextRange textRange = new TextRange(myDocument.getLineStartOffset(startLine), myDocument.getLineEndOffset(endLine));
               myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
             }
           }
