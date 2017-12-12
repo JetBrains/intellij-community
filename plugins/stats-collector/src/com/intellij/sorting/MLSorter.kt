@@ -34,7 +34,6 @@ import com.intellij.stats.personalization.UserFactorsManager
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import java.util.*
 
-
 @Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
     override fun newSorter() = MLSorter()
@@ -42,7 +41,6 @@ class MLSorterFactory : CompletionFinalSorter.Factory {
 
 
 class MLSorter : CompletionFinalSorter() {
-
     private val webServiceStatus = WebServiceStatus.getInstance()
     private val ranker = Ranker.getInstance()
     private val cachedScore: MutableMap<LookupElement, ItemRankInfo> = IdentityHashMap()
@@ -120,8 +118,7 @@ class MLSorter : CompletionFinalSorter() {
      */
     private fun sortByMLRanking(items: MutableIterable<LookupElement>,
                                 lookup: LookupImpl,
-                                relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
-    {
+                                relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>? {
         val prefixLength = lookup.prefixLength()
         val userFactors = lookup.getUserData(UserFactorsManager.USER_FACTORS_KEY) ?: emptyMap()
         return items
@@ -142,13 +139,11 @@ class MLSorter : CompletionFinalSorter() {
         return null
     }
 
-
     private fun calculateElementRank(element: LookupElement,
                                      position: Int,
                                      relevance: List<Pair<String, Any?>>,
                                      userFactors: Map<String, Any?>,
-                                     prefixLength: Int): Double?
-    {
+                                     prefixLength: Int): Double? {
         val cachedWeight = getCachedRankInfo(element, prefixLength, position)
         if (cachedWeight != null) {
             return cachedWeight.mlRank
@@ -175,5 +170,5 @@ private data class ItemRankInfo(val positionBefore: Int, val mlRank: Double?, va
 
 fun CompletionParameters.language(): Language? {
     val offset = editor.caretModel.offset
-    return  PsiUtilCore.getLanguageAtOffset(originalFile, offset)
+    return PsiUtilCore.getLanguageAtOffset(originalFile, offset)
 }
