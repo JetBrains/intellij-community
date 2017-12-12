@@ -81,14 +81,22 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
 
     for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
       Query<PsiClass> query = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
-      for (PsiClass psiClass : query) {
+      @SuppressWarnings("unchecked") List<GotoRelatedItem>[] resultItems = new List[]{null};
+      query.forEach(psiClass -> {
         if (checkedPossibleImplementation.contains(psiClass)) {
-          continue; // already tried this class
+          return true; // already tried this class
         }
 
         if (isTargetInspectionPsiClass(psiClass, descriptionFile, module)) {
-          return createGotoRelatedItem(psiClass);
+          resultItems[0] = createGotoRelatedItem(psiClass);
+          return false;
         }
+
+        return true;
+      });
+
+      if (resultItems[0] != null) {
+        return resultItems[0];
       }
     }
 
