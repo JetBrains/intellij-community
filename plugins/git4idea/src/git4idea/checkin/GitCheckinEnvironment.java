@@ -470,8 +470,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
     handler.addParameters("-F", messageFile.getAbsolutePath());
+    if (myNextCommitAmend) {
+      handler.addParameters("--amend");
+    }
     if (myNextCommitAuthor != null) {
       handler.addParameters("--author=" + myNextCommitAuthor);
+    }
+    if (myNextCommitAuthorDate != null) {
+      handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
     }
     if (myNextCommitSignOff) {
       handler.addParameters("--signoff");
