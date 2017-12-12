@@ -607,6 +607,12 @@
 
     <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
 
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.ProjectScopeItemPresenter" id="project_scope" order="first"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.ModuleScopeItemPresenter" id="module_scope" order="after project_scope"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.OtherScopeItemPresenter" id="other_scope" order="after vcs_scope"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.CustomScopeItemPresenter" id="custom_scope" order="after other_scope"/>
+
     <customPasteProvider implementation="com.intellij.ide.actions.PasteReferenceProvider"/>
 
     <referenceInjector implementation="com.intellij.codeInsight.daemon.impl.analysis.encoding.EncodingReferenceInjector"/>
