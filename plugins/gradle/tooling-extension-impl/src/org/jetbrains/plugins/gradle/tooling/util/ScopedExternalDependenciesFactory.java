@@ -35,7 +35,7 @@ class ScopedExternalDependenciesFactory {
   }
 
   public Collection<ExternalDependency> processUnresolvedDeps(@NotNull Iterable<UnresolvedDependencyResult> unresolvedDependencies) {
-    Collection<ExternalDependency> result = new HashSet<ExternalDependency>();
+    Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
     for (UnresolvedDependencyResult dependency : unresolvedDependencies) {
       ComponentSelector attempted = dependency.getAttempted();
       if (attempted instanceof ModuleComponentSelector) {
@@ -57,7 +57,7 @@ class ScopedExternalDependenciesFactory {
                                                                             @NotNull Map<ModuleComponentIdentifier,
                                                                               Map<Class<? extends Artifact>,
                                                                                 Set<ResolvedArtifactResult>>> sourcesAndJavadocs) {
-    Collection<ExternalDependency> result = new HashSet<ExternalDependency>();
+    Collection<ExternalDependency> result = new LinkedHashSet<ExternalDependency>();
     for (ResolvedArtifactResult artifact : artifacts) {
       ComponentIdentifier identifier = artifact.getId().getComponentIdentifier();
 

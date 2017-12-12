@@ -66,7 +66,7 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
     if (configuration == null) {
       return ExternalDepsResolutionResult.EMPTY;
     }
-    Collection<ExternalDependency> externalDeps = new HashSet<ExternalDependency>();
+    Collection<ExternalDependency> externalDeps = new LinkedHashSet<ExternalDependency>();
 
     ArtifactCollection resolvedArtifacts = configuration.getIncoming().artifactView(new Action<ArtifactView.ViewConfiguration>() {
       @Override
@@ -152,7 +152,7 @@ public class ArtifactsCollectionResolver extends DependencyResolverImpl implemen
 
   @NotNull
   private Collection<ModuleComponentIdentifier> collectModuleComponentIds(@NotNull ArtifactCollection artifacts) {
-    Collection<ModuleComponentIdentifier> moduleIds = new HashSet<ModuleComponentIdentifier>();
+    Collection<ModuleComponentIdentifier> moduleIds = new LinkedHashSet<ModuleComponentIdentifier>();
     for (ResolvedArtifactResult result : artifacts.getArtifacts()) {
       ComponentIdentifier componentIdentifier = result.getId().getComponentIdentifier();
       if (componentIdentifier instanceof ModuleComponentIdentifier) {
