@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.refactoring.lang;
@@ -100,7 +88,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     documentManager.commitDocument(document);
     CodeStyleManager.getInstance(PsiManager.getInstance(project).getProject()).reformat(file);  //TODO: adjustLineIndent
 
-    final String relativePath = PsiFileSystemItemUtil.getRelativePath(first.getContainingFile(), file);
+    final String relativePath = PsiFileSystemItemUtil.findRelativePath(first.getContainingFile(), file);
     if (relativePath == null) throw new IncorrectOperationException("Cannot extract!");
     return relativePath;
   }
@@ -236,7 +224,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       editor.getSelectionModel().removeSelection();
     }), getRefactoringName(), null);
   }
-  
+
   private static PsiDirectory ourTargetDirectory = null;
   private static String ourTargetFileName = null;
 
@@ -250,14 +238,14 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       ourTargetFileName = null;
       ourTargetDirectory = null;
     });
-  } 
-  
+  }
+
   @NotNull
   private Pair<PsiDirectory, String> getTargetDirectoryAndFileName(@NotNull PsiFile file, FileType fileType, @NotNull Pair<T, T> children) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return Pair.create(ourTargetDirectory, ourTargetFileName);
     }
-    
+
     ExtractIncludeDialog dialog = createDialog(file.getContainingDirectory(), getExtractExtension(fileType, children.first));
     dialog.show();
     if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
