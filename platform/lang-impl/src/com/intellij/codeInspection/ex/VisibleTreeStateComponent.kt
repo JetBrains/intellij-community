@@ -1,41 +1,24 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
+import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
-import java.util.*
+import gnu.trove.THashMap
 
-class VisibleTreeStateComponent {
-  @Property(surroundWithTag = false)
-  @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  var myProfileNameToState: MutableMap<String, VisibleTreeState> = HashMap()
+internal class VisibleTreeStateComponent : BaseState() {
+  @get:Property(surroundWithTag = false)
+  @get:MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+  private var profileNameToState by bean<MutableMap<String, VisibleTreeState>>(THashMap())
 
   fun copyFrom(state: VisibleTreeStateComponent) {
-    myProfileNameToState.clear()
-    myProfileNameToState.putAll(state.myProfileNameToState)
+    copyFrom(state)
+    profileNameToState.clear()
+    profileNameToState.putAll(state.profileNameToState)
   }
 
-  fun getVisibleTreeState(profile: InspectionProfile): VisibleTreeState {
-    var state: VisibleTreeState? = myProfileNameToState[profile.name]
-    if (state == null) {
-      state = VisibleTreeState()
-      myProfileNameToState.put(profile.name, state)
-    }
-    return state
-  }
+  fun getVisibleTreeState(profile: InspectionProfile) = profileNameToState.getOrPut(profile.name) { VisibleTreeState() }
 }
