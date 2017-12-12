@@ -1,150 +1,102 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.ex
 
-package com.intellij.codeInspection.ex;
-
-import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
-import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Tag;
-
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.TreeSet;
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode
+import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
+import java.util.*
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 
 @Tag("profile-state")
-public class VisibleTreeState{
-  @Tag("expanded-state")
-  @AbstractCollection(surroundWithTag = false, elementTag = "expanded", elementValueAttribute = "path", elementTypes = {State.class})
-  public TreeSet<State> myExpandedNodes = new TreeSet<>();
+internal class VisibleTreeState : BaseState() {
+  @get:XCollection(elementName = "expanded", valueAttributeName = "path", propertyElementName = "expanded-state")
+  private var expandedNodes by bean(TreeSet<State>())
 
-  @Tag("selected-state")
-  @AbstractCollection(surroundWithTag = false, elementTag = "selected", elementValueAttribute = "path", elementTypes = {State.class})
-  public TreeSet<State> mySelectedNodes = new TreeSet<>();
+  @get:XCollection(elementName = "selected", valueAttributeName = "path", propertyElementName = "selected-state")
+  private var selectedNodes by bean(TreeSet<State>())
 
-  public VisibleTreeState(VisibleTreeState src) {
-    myExpandedNodes.addAll(src.myExpandedNodes);
-    mySelectedNodes.addAll(src.mySelectedNodes);
+  fun expandNode(node: InspectionConfigTreeNode) {
+    expandedNodes.add(getState(node))
   }
 
-  public VisibleTreeState() {
-  }
-
-  public void expandNode(InspectionConfigTreeNode node) {
-    myExpandedNodes.add(getState(node));
-  }
-
-  public void collapseNode(InspectionConfigTreeNode node) {
-    myExpandedNodes.remove(getState(node));
-  }
-
-  public void restoreVisibleState(Tree tree) {
-    ArrayList<TreePath> pathsToExpand = new ArrayList<>();
-    ArrayList<TreePath> toSelect = new ArrayList<>();
-    traverseNodes((DefaultMutableTreeNode)tree.getModel().getRoot(), pathsToExpand, toSelect);
-    TreeUtil.restoreExpandedPaths(tree, pathsToExpand);
+  fun restoreVisibleState(tree: Tree) {
+    val pathsToExpand = ArrayList<TreePath>()
+    val toSelect = ArrayList<TreePath>()
+    traverseNodes(tree.model.root as DefaultMutableTreeNode, pathsToExpand, toSelect)
+    TreeUtil.restoreExpandedPaths(tree, pathsToExpand)
     if (toSelect.isEmpty()) {
-      TreeUtil.selectFirstNode(tree);
+      TreeUtil.selectFirstNode(tree)
     }
     else {
-      for (final TreePath aToSelect : toSelect) {
-        TreeUtil.selectPath(tree, aToSelect);
-      }
+      toSelect.forEach { TreeUtil.selectPath(tree, it) }
     }
   }
 
-  private void traverseNodes(final DefaultMutableTreeNode root, List<TreePath> pathsToExpand, List<TreePath> toSelect) {
-    final State state = getState((InspectionConfigTreeNode)root);
-    final TreeNode[] rootPath = root.getPath();
-    if (mySelectedNodes.contains(state)) {
-      toSelect.add(new TreePath(rootPath));
+  private fun traverseNodes(root: DefaultMutableTreeNode, pathsToExpand: MutableList<TreePath>, toSelect: MutableList<TreePath>) {
+    val state = getState(root as InspectionConfigTreeNode)
+    val rootPath = root.getPath()
+    if (selectedNodes.contains(state)) {
+      toSelect.add(TreePath(rootPath))
     }
-    if (myExpandedNodes.contains(state)) {
-      pathsToExpand.add(new TreePath(rootPath));
+    if (expandedNodes.contains(state)) {
+      pathsToExpand.add(TreePath(rootPath))
     }
-    for (int i = 0; i < root.getChildCount(); i++) {
-      traverseNodes((DefaultMutableTreeNode)root.getChildAt(i), pathsToExpand, toSelect);
+    for (i in 0 until root.getChildCount()) {
+      traverseNodes(root.getChildAt(i) as DefaultMutableTreeNode, pathsToExpand, toSelect)
     }
   }
 
-  public void saveVisibleState(Tree tree) {
-    myExpandedNodes.clear();
-    final DefaultMutableTreeNode rootNode = (DefaultMutableTreeNode)tree.getModel().getRoot();
-    Enumeration<TreePath> expanded = tree.getExpandedDescendants(new TreePath(rootNode.getPath()));
+  fun saveVisibleState(tree: Tree) {
+    expandedNodes.clear()
+    val rootNode = tree.model.root as DefaultMutableTreeNode
+    val expanded = tree.getExpandedDescendants(TreePath(rootNode.path))
     if (expanded != null) {
       while (expanded.hasMoreElements()) {
-        final TreePath treePath = expanded.nextElement();
-        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)treePath.getLastPathComponent();
-        myExpandedNodes.add(getState(node));
+        val treePath = expanded.nextElement()
+        val node = treePath.lastPathComponent as InspectionConfigTreeNode
+        expandedNodes.add(getState(node))
       }
     }
 
-    setSelectionPaths(tree.getSelectionPaths());
+    setSelectionPaths(tree.selectionPaths)
   }
 
-  private static State getState(InspectionConfigTreeNode node) {
-    final State expandedNode;
-    if (node instanceof InspectionConfigTreeNode.Tool) {
-      expandedNode = new State(((InspectionConfigTreeNode.Tool)node).getKey().toString());
+  private fun getState(_node: InspectionConfigTreeNode): State {
+    var node = _node
+    val expandedNode: State
+    if (node is InspectionConfigTreeNode.Tool) {
+      expandedNode = State(node.key.toString())
     }
     else {
-      final StringBuilder buf = new StringBuilder();
-      while (node.getParent() != null) {
-        buf.append(((InspectionConfigTreeNode.Group)node).getGroupName());
-        node = (InspectionConfigTreeNode)node.getParent();
+      val buf = StringBuilder()
+      while (node.parent != null) {
+        buf.append((node as InspectionConfigTreeNode.Group).groupName)
+        node = node.getParent() as InspectionConfigTreeNode
       }
-      expandedNode = new State(buf.toString());
+      expandedNode = State(buf.toString())
     }
-    return expandedNode;
+    return expandedNode
   }
 
-  public void setSelectionPaths(final TreePath[] selectionPaths) {
-    mySelectedNodes.clear();
+  fun setSelectionPaths(selectionPaths: Array<TreePath>?) {
+    selectedNodes.clear()
     if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        final InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
-        mySelectedNodes.add(getState(node));
+      for (selectionPath in selectionPaths) {
+        val node = selectionPath.lastPathComponent as InspectionConfigTreeNode
+        selectedNodes.add(getState(node))
       }
     }
   }
 
+  internal class State @JvmOverloads constructor(key: String? = null): Comparable<State>, BaseState() {
+    @get:Tag("id")
+    var key by string(key)
 
-  public static class State implements Comparable<State> {
-    @Tag("id")
-    public String myKey;
-
-    public State(String key) {
-      myKey = key;
-    }
-
-    //readExternal
-    public State(){
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      State state = (State)o;
-
-      if (myKey != null ? !myKey.equals(state.myKey) : state.myKey != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myKey != null ? myKey.hashCode() : 0;
-    }
-
-    @Override
-    public int compareTo(State state) {
-      return myKey.compareTo(state.myKey);
-    }
+    override fun compareTo(other: State) = StringUtil.compare(key, other.key, false)
   }
 }
