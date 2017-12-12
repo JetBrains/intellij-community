@@ -155,9 +155,16 @@ public class PersistentHashMapValueStorage {
     } else {
       mySize = myFile.length();  // volatile write
     }
+  }
 
-    if (mySize == 0 && !myOptions.myReadOnly) {
-      appendBytes(new ByteArraySequence("Header Record For PersistentHashMapValueStorage".getBytes()), 0);
+  public long appendBytes(ByteArraySequence data, long prevChunkAddress) throws IOException {
+    return appendBytes(data.getBytes(), data.getOffset(), data.getLength(), prevChunkAddress);
+  }
+
+  public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
+    if (mySize == 0) {
+      byte[] bytes = "Header Record For PersistentHashMapValueStorage".getBytes();
+      doAppendBytes(bytes, 0, bytes.length, 0);
 
       // avoid corruption issue when disk fails to write first record synchronously or unexpected first write file increase (IDEA-106306),
       // code depends on correct value of mySize
@@ -180,16 +187,14 @@ public class PersistentHashMapValueStorage {
         mySize = currentLength;  // volatile write
       }
     }
+
+    return doAppendBytes(data, offset, dataLength, prevChunkAddress);
   }
 
-  public long appendBytes(ByteArraySequence data, long prevChunkAddress) throws IOException {
-    return appendBytes(data.getBytes(), data.getOffset(), data.getLength(), prevChunkAddress);
-  }
-
-  public long appendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
+  protected long doAppendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
     assert allowedToCompactChunks();
     long result = mySize; // volatile read
-    final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null? null : ourAppendersCache.get(myPath);
+    final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null ? null : ourAppendersCache.get(myPath);
 
     DataOutputStream dataOutputStream;
     try {
