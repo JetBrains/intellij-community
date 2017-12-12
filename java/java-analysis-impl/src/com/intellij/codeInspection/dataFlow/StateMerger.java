@@ -44,28 +44,46 @@ class StateMerger {
   @Nullable
   List<DfaMemoryStateImpl> mergeByFacts(@NotNull List<DfaMemoryStateImpl> states) {
     MultiMap<Fact, DfaMemoryStateImpl> statesByFact = MultiMap.createLinked();
+    Map<DfaVariableValue, Set<DfaMemoryStateImpl>> constantVars = new HashMap<>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       for (Fact fact : getFacts(state)) {
         statesByFact.putValue(fact, state);
+        if (fact.equalToConstant()) {
+          constantVars.computeIfAbsent(fact.myVar, k -> ContainerUtil.newIdentityTroveSet()).add(state);
+        }
       }
     }
 
     for (final Fact fact : statesByFact.keySet()) {
-      if (fact.myPositive || statesByFact.get(fact).size() == states.size()) continue;
+      if (fact.myPositive) continue;
+      Collection<DfaMemoryStateImpl> negativeStates = statesByFact.get(fact);
 
-      Collection<DfaMemoryStateImpl> statesWithNegations = statesByFact.get(fact.getPositiveCounterpart());
-      if (statesWithNegations.isEmpty()) continue;
+      if (negativeStates.size() == states.size()) continue;
+      Collection<DfaMemoryStateImpl> positiveStates = statesByFact.get(fact.getPositiveCounterpart());
+      if (positiveStates.isEmpty()) continue;
 
       ProgressManager.checkCanceled();
 
-      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, statesByFact.get(fact));
-      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, statesWithNegations);
+      if (fact instanceof EqualityFact && ((EqualityFact)fact).myArg instanceof DfaVariableValue) {
+        DfaVariableValue var1 = fact.myVar;
+        DfaVariableValue var2 = (DfaVariableValue)((EqualityFact)fact).myArg;
+        Set<DfaMemoryStateImpl> states1 = constantVars.get(var1);
+        Set<DfaMemoryStateImpl> states2 = constantVars.get(var2);
+        if (states1 != null && states2 != null &&
+            states1.containsAll(negativeStates) && states1.containsAll(positiveStates) &&
+            states2.containsAll(negativeStates) && states2.containsAll(positiveStates)) {
+          continue;
+        }
+      }
+
+      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, negativeStates);
+      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, positiveStates);
 
       Replacements replacements = new Replacements(states);
-      for (Set<Fact> key : statesByUnrelatedFacts1.keySet()) {
-        final Collection<DfaMemoryStateImpl> group1 = statesByUnrelatedFacts1.get(key);
-        final Collection<DfaMemoryStateImpl> group2 = statesByUnrelatedFacts2.get(key);
+      for (Map.Entry<Set<Fact>, Collection<DfaMemoryStateImpl>> entry : statesByUnrelatedFacts1.entrySet()) {
+        final Collection<DfaMemoryStateImpl> group1 = entry.getValue();
+        final Collection<DfaMemoryStateImpl> group2 = statesByUnrelatedFacts2.get(entry.getKey());
         if (group1.isEmpty() || group2.isEmpty()) continue;
 
         final Collection<DfaMemoryStateImpl> group = ContainerUtil.newArrayList(ContainerUtil.concat(group1, group2));
@@ -89,7 +107,7 @@ class StateMerger {
   @NotNull
   private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(@NotNull Fact fact,
                                                                       @NotNull Collection<DfaMemoryStateImpl> states) {
-    MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
+    MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.create();
     for (DfaMemoryStateImpl state : states) {
       statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state), state);
     }
@@ -97,8 +115,8 @@ class StateMerger {
   }
 
   @NotNull
-  private LinkedHashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
-    final LinkedHashSet<Fact> result = new LinkedHashSet<>();
+  private HashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact, @NotNull DfaMemoryStateImpl state) {
+    final HashSet<Fact> result = new HashSet<>();
     for (Fact other : getFacts(state)) {
       if (!fact.invalidatesFact(other)) {
         result.add(other);
@@ -462,6 +480,10 @@ class StateMerger {
     @NotNull
     abstract Fact getPositiveCounterpart();
 
+    boolean equalToConstant() {
+      return false;
+    }
+
     abstract boolean invalidatesFact(@NotNull Fact another);
 
     abstract void removeFromState(@NotNull DfaMemoryStateImpl state);
@@ -502,6 +524,11 @@ class StateMerger {
     @Override
     public String toString() {
       return myVar + (myPositive ? " EQ " : " NE ") + myArg;
+    }
+
+    @Override
+    boolean equalToConstant() {
+      return myPositive && myArg instanceof DfaConstValue;
     }
 
     @Override
