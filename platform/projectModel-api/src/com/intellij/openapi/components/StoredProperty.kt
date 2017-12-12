@@ -3,10 +3,11 @@
  */
 package com.intellij.openapi.components
 
+import com.intellij.openapi.util.ModificationTracker
 import kotlin.reflect.KProperty
 
 internal class ObjectStoredProperty<T>(private val defaultValue: T) : StoredPropertyBase<T>() {
-  override var value = defaultValue
+  private var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
 
@@ -34,6 +35,11 @@ internal class ObjectStoredProperty<T>(private val defaultValue: T) : StoredProp
 
     value = newValue
     return true
+  }
+
+  override fun getModificationCount(): Long {
+    val value = value
+    return if (value is ModificationTracker) value.modificationCount else 0
   }
 }
 

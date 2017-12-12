@@ -7,14 +7,14 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 internal interface StoredProperty {
-  val value: Any?
-
   var name: String?
 
   // true if changed
   fun setValue(other: StoredProperty): Boolean
 
   fun isEqualToDefault(): Boolean
+
+  fun getModificationCount(): Long = 0
 }
 
 // type must be exposed otherwise `provideDelegate` doesn't work
@@ -28,6 +28,8 @@ abstract class StoredPropertyBase<T> : ReadWriteProperty<BaseState, T>, StoredPr
 }
 
 internal abstract class PrimitiveStoredPropertyBase<T> : StoredPropertyBase<T>() {
+  abstract val value: Any?
+
   protected abstract val defaultValue: Any?
 
   override fun isEqualToDefault() = value == defaultValue

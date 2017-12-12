@@ -39,8 +39,14 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Not-null list. Initialized as SmartList.
    */
-  fun <T : Any> list(): StoredPropertyBase<List<T>> {
+  fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
     val result = ListStoredProperty<T>()
+    properties.add(result)
+    return result
+  }
+
+  fun <K: Any, V> map(): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty<K, V>()
     properties.add(result)
     return result
   }
@@ -102,10 +108,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   override fun getModificationCount(): Long {
     var result = ownModificationCount
     for (property in properties) {
-      val value = property.value
-      if (value is ModificationTracker) {
-        result += value.modificationCount
-      }
+      result += property.getModificationCount()
     }
     return result
   }
@@ -121,7 +124,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
 
     val builder = StringBuilder()
     for (property in properties) {
-      builder.append(property.value).append(" ")
+      builder.append(property.toString()).append(" ")
     }
     builder.setLength(builder.length - 1)
     return builder.toString()
