@@ -73,22 +73,19 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     if (file == null) return false;
     boolean isSource = fileIndex.isInSourceContent(file);
     if (myScope == SCOPE_ANY) {
-      return fileIndex.isInContent(file) && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
+      return fileIndex.isInContent(file) && matchesModule(file, fileIndex);
     }
     if (myScope == SCOPE_SOURCE) {
-      return isSource && !TestSourcesFilter.isTestSources(file, project)
-             && FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
+      return isSource && !TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
     }
     if (myScope == SCOPE_LIBRARY) {
       return (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file)) && matchesLibrary(myModulePattern, file, fileIndex);
     }
     if (myScope == SCOPE_TEST) {
-      return isSource && TestSourcesFilter.isTestSources(file, project) &&
-             FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
+      return isSource && TestSourcesFilter.isTestSources(file, project) && matchesModule(file, fileIndex);
     }
     if (myScope == SCOPE_PROBLEM) {
-      return isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) &&
-             FilePatternPackageSet.matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
+      return isSource && WolfTheProblemSolver.getInstance(project).isProblemFile(file) && matchesModule(file, fileIndex);
     }
     throw new RuntimeException("Unknown scope: " + myScope);
   }

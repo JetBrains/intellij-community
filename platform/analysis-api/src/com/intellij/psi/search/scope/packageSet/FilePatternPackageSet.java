@@ -19,7 +19,6 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -54,8 +53,8 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   @Override
   public boolean contains(VirtualFile file, @NotNull Project project, @Nullable NamedScopesHolder holder) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    return file != null && fileMatcher(file, fileIndex, holder != null ? holder.getProjectBaseDir() : project.getBaseDir()) &&
-           matchesModule(myModuleGroupPattern, myModulePattern, file, fileIndex);
+    return file != null && fileMatcher(file, fileIndex, holder != null ? holder.getProjectBaseDir() : project.getBaseDir())
+           && matchesModule(file, fileIndex);
   }
 
   private boolean fileMatcher(@NotNull VirtualFile virtualFile, ProjectFileIndex fileIndex, VirtualFile projectBaseDir){
@@ -70,25 +69,6 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
       return false;
     }
     return myFilePattern.matcher(relativePath).matches();
-  }
-
-  public static boolean matchesModule(final Pattern moduleGroupPattern,
-                                      final Pattern modulePattern,
-                                      final VirtualFile file,
-                                      final ProjectFileIndex fileIndex) {
-    final Module module = fileIndex.getModuleForFile(file);
-    if (module != null) {
-      if (modulePattern != null && modulePattern.matcher(module.getName()).matches()) return true;
-      if (moduleGroupPattern != null) {
-        final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
-        if (groupPath != null) {
-          for (String node : groupPath) {
-            if (moduleGroupPattern.matcher(node).matches()) return true;
-          }
-        }
-      }
-    }
-    return modulePattern == null && moduleGroupPattern == null;
   }
 
   static String convertToRegexp(String aspectsntx, char separator) {

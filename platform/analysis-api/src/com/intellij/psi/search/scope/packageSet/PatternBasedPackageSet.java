@@ -15,6 +15,10 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +51,22 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
     }
     myModulePattern = modulePattern;
     myModuleGroupPattern = moduleGroupPattern;
+  }
+
+  protected boolean matchesModule(final VirtualFile file, final ProjectFileIndex fileIndex) {
+    final Module module = fileIndex.getModuleForFile(file);
+    if (module != null) {
+      if (myModulePattern != null && myModulePattern.matcher(module.getName()).matches()) return true;
+      if (myModuleGroupPattern != null) {
+        final String[] groupPath = ModuleManager.getInstance(module.getProject()).getModuleGroupPath(module);
+        if (groupPath != null) {
+          for (String node : groupPath) {
+            if (myModuleGroupPattern.matcher(node).matches()) return true;
+          }
+        }
+      }
+    }
+    return myModulePattern == null && myModuleGroupPattern == null;
   }
 
   public abstract String getPattern();
