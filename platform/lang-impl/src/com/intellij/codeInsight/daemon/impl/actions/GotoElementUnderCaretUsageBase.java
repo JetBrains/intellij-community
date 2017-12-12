@@ -18,15 +18,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
-public abstract class GotoMarkedOccurrenceBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
+/*package*/ abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
 
-  private final Comparator<Integer> myComparator;
+  @NotNull
+  private final Direction myDirection;
 
   /**
    * @param comparator defines ordering of occurrences.
    */
-  public GotoMarkedOccurrenceBase(Comparator<Integer> comparator) {
-    myComparator = comparator;
+  public GotoElementUnderCaretUsageBase(@NotNull Direction direction) {
+    myDirection = direction;
   }
 
   @NotNull
@@ -37,6 +38,7 @@ public abstract class GotoMarkedOccurrenceBase extends BaseCodeInsightAction imp
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    final Comparator<Integer> ordering = myDirection.ordering;
     final int caretOffset = editor.getCaretModel().getOffset();
     final int startOffset = file.getTextRange().getStartOffset();
     final int endOffset = file.getTextRange().getEndOffset();
@@ -44,12 +46,12 @@ public abstract class GotoMarkedOccurrenceBase extends BaseCodeInsightAction imp
     final Ref<Integer> next = new Ref<>();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
       if (info.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || info.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE) {
-        if (myComparator.compare(info.startOffset, caretOffset) > 0) {
-          if (next.isNull() || myComparator.compare(next.get(), info.startOffset) > 0) {
+        if (ordering.compare(info.startOffset, caretOffset) > 0) {
+          if (next.isNull() || ordering.compare(next.get(), info.startOffset) > 0) {
             next.set(info.startOffset);
           }
         }
-        if (first.isNull() || myComparator.compare(first.get(), info.startOffset) > 0) {
+        if (first.isNull() || ordering.compare(first.get(), info.startOffset) > 0) {
           first.set(info.startOffset);
         }
       }
@@ -69,4 +71,15 @@ public abstract class GotoMarkedOccurrenceBase extends BaseCodeInsightAction imp
     caret.moveToOffset(offset);
     EditorModificationUtil.scrollToCaret(editor);
   }
+
+  protected enum Direction {
+    FORWARD((l, r) -> l - r),
+    BACKWARD((l, r) -> r - l);
+
+    public final Comparator<Integer> ordering;
+
+    Direction(Comparator<Integer> ordering) {
+      this.ordering = ordering;
+    }
+  };
 }
