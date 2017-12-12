@@ -627,7 +627,7 @@
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.CapturingCleanerInspection"
                      bundle="messages.InspectionsBundle"
-                     key="inspection.cleaner.capturing.this.description"/>
+                     key="inspection.capturing.cleaner.description"/>
     <localInspection groupPath="Java" language="JAVA" shortName="OverwrittenKey"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"

@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -38,7 +37,6 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
         PsiExpression runnableExpression = ExpressionUtils.resolveExpression(expressions[1]);
         if (trackedObject == null || runnableExpression == null) return;
 
-        final String referenceName;
         final PsiElement highlightingElement;
         if (trackedObject instanceof PsiThisExpression) {
           PsiClassType classType = tryCast(trackedObject.getType(), PsiClassType.class);
@@ -47,7 +45,6 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           if (trackedClass == null) return;
           PsiElement elementCapturingThis = getElementCapturingThis(runnableExpression, trackedClass);
           if (elementCapturingThis == null) return;
-          referenceName = "this";
           highlightingElement = elementCapturingThis;
         }
         else if (trackedObject instanceof PsiReferenceExpression) {
@@ -57,17 +54,16 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           if (!VariableAccessUtils.variableIsUsed(variable, runnableExpression)) return;
           Optional<PsiElement> referenceExpression = StreamEx.ofTree(((PsiElement)runnableExpression), el -> StreamEx.of(el.getChildren()))
             .findAny(el -> el instanceof PsiReferenceExpression &&
-                           tryCast(((PsiReferenceExpression)el).resolve(), PsiVariable.class) == variable);
+                           ((PsiReferenceExpression)el).isReferenceTo(variable));
           if (!referenceExpression.isPresent()) return;
           String variableName = variable.getName();
           if (variableName == null) return;
-          referenceName = variableName;
           highlightingElement = referenceExpression.get();
         }
         else {
           return;
         }
-        holder.registerProblem(highlightingElement, InspectionsBundle.message("inspection.cleaner.capturing.this", referenceName));
+        holder.registerProblem(highlightingElement, InspectionsBundle.message("inspection.capturing.cleaner"));
       }
 
       private PsiElement getElementCapturingThis(PsiExpression runnableExpr, PsiClass trackedClass) {
@@ -77,15 +73,10 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
 
           PsiElement qualifier = methodReference.getQualifier();
           if (qualifier instanceof PsiThisExpression) {
-            PsiClass thisClass = resolveThis((PsiThisExpression)qualifier);
+            PsiClass thisClass = PsiUtil.resolveClassInType(((PsiThisExpression)qualifier).getType());
             if (thisClass != trackedClass) return null;
             return qualifier;
           }
-          //if (qualifier instanceof PsiReferenceExpression) {
-          //  PsiField field = tryCast(((PsiReferenceExpression)qualifier).resolve(), PsiField.class);
-          //  if (!memberBringsThisRef(trackedClass, field)) return null;
-          //  return qualifier;
-          //}
           return null;
         }
         if (runnableExpr instanceof PsiLambdaExpression) {
@@ -103,21 +94,12 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           PsiClass aClass = tryCast(classReference.resolve(), PsiClass.class);
           if (aClass == null) return null;
           if (aClass.getContainingClass() != trackedClass) return null;
-          if (aClass.hasModifier(JvmModifier.STATIC)) return null;
+          if (aClass.hasModifierProperty(PsiModifier.STATIC)) return null;
           return classReference;
         }
         return null;
       }
     };
-  }
-
-  @Contract("null -> null")
-  @Nullable
-  static PsiClass resolveThis(@Nullable PsiThisExpression thisExpression) {
-    if (thisExpression == null) return null;
-    PsiClassType classType = tryCast(thisExpression.getType(), PsiClassType.class);
-    if (classType == null) return null;
-    return classType.resolve();
   }
 
   private static Optional<PsiElement> getElementLambdaCapturingThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
@@ -127,7 +109,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
 
   private static boolean isThisCapturingElement(@NotNull PsiClass containingClass, PsiElement element) {
     if (element instanceof PsiThisExpression) {
-      return resolveThis((PsiThisExpression)element) == containingClass;
+      return PsiUtil.resolveClassInType(((PsiThisExpression)element).getType()) == containingClass;
     }
     else if (element instanceof PsiReferenceExpression) {
       PsiMember member = tryCast(((PsiReferenceExpression)element).resolve(), PsiMember.class);

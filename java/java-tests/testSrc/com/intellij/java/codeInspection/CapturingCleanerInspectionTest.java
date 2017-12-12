@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CapturingCleanerInspectionTest extends LightCodeInsightFixtureTestCase {
 
-  public void testCapturingCleanerInspection() {doTest();}
+  public void testCapturingCleaner() {doTest();}
 
   @Override
   protected void setUp() throws Exception {
