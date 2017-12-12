@@ -50,7 +50,7 @@ class CompletionOrderTest : LightFixtureCompletionTestCase() {
         myFixture.complete(CompletionType.BASIC, 2)
 
         val lookup = myFixture.lookup as LookupImpl
-        assertThat(lookup.items.size > 0)
+        assertThat(lookup.items.size > 0).isTrue()
 
         lookup.checkMlRanking(ranker, prefix_length = 1)
     }
@@ -62,7 +62,7 @@ class CompletionOrderTest : LightFixtureCompletionTestCase() {
         myFixture.completeBasic()
 
         val lookup = myFixture.lookup as LookupImpl
-        assertThat(lookup.items.size > 0)
+        assertThat(lookup.items.size > 0).isTrue()
 
         lookup.checkMlRanking(ranker, lookup.prefixLength())
 

@@ -136,7 +136,7 @@ class FileLoggerTest {
 
         val files = filesProvider.getDataFiles()
         val fileIndexes = files.map { it.name.substringAfter('_').toInt() }
-        assertThat(files.isNotEmpty())
+        assertThat(files.isNotEmpty()).isTrue()
         assertThat(fileIndexes).isEqualTo((0..files.size - 1).toList())
     }
 
@@ -148,7 +148,7 @@ class FileLoggerTest {
         var files = filesProvider.getDataFiles()
 
         val totalSize = files.fold(0L, { total, file -> total + file.length() })
-        assertThat(totalSize > 2 * 1024 * 1024)
+        assertThat(totalSize > 2 * 1024 * 1024).isTrue()
 
         val firstBefore = files
           .map { it.name.substringAfter('_').toInt() }
@@ -161,7 +161,7 @@ class FileLoggerTest {
         files = filesProvider.getDataFiles()
 
         val totalSizeAfterCleanup = files.fold(0L, { total, file -> total + file.length() })
-        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024)
+        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024).isTrue()
 
         val firstAfter = files
           .map { it.name.substringAfter('_').toInt() }
