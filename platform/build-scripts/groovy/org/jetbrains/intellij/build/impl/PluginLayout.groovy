@@ -153,6 +153,11 @@ class PluginLayout extends BaseLayout {
       withModule(moduleName, "jps/${moduleName}.jar")
     }
 
+    // Android Studio
+    void withTestModule (String moduleName, String jarName = "${moduleName}.jar") {
+      layout.testModuleJars.put (jarName, moduleName)
+    }
+
     /**
      * By default version of a plugin is equal to the version of the IDE it's built with. This method allows to specify custom version evaluator.
      * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.

@@ -69,9 +69,19 @@ class DistributionJARsBuilder {
     def productLayout = buildContext.productProperties.productLayout
     def enabledPluginModules = getEnabledPluginModules()
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
-      plugin.getActualModules(enabledPluginModules).values().collectMany {
+      (plugin.getActualModules(enabledPluginModules).values() + plugin.testModuleJars.values()).collectMany { // Android Studio
         def module = buildContext.findRequiredModule(it)
         JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
+          !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
+        }
+      }
+    }
+
+    // Android Studio: both production and test scope libraries for testModuleJars
+    projectLibrariesUsedByPlugins += getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
+      plugin.testModuleJars.values().collectMany {
+        def module = buildContext.findRequiredModule(it)
+        JpsJavaExtensionService.dependencies(module).libraries.findAll {
           !(it.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.contains(it.name)
         }
       }
@@ -228,7 +238,7 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("platform-resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
-    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
+    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, [], platform.moduleJars, platform.testModuleJars) // Android Studio
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -311,7 +321,8 @@ class DistributionJARsBuilder {
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
       }
-      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars, generatedResources)
+      // Android Studio
+      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", generatedResources, actualModuleJars, plugin.getTestModuleJars())
     }
   }
 
@@ -341,8 +352,9 @@ class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars,
-                             List<Pair<File, String>> additionalResources) {
+  // Android Studio: added testModuleJars parameter
+  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, List<Pair<File, String>> additionalResources,
+                             MultiValuesMap<String, String> moduleJars, MultiValuesMap<String, String> testModuleJars = new MultiValuesMap<>(true)) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
@@ -370,9 +382,48 @@ class DistributionJARsBuilder {
                 }
               }
             }
+            // Android Studio
+            if (testModuleJars.containsKey(jarPath)) {
+              testModuleJars.get(jarPath).each { testModuleName ->
+                moduleTests(testModuleName) {
+                  if (layout.packLocalizableResourcesInCommonJar(testModuleName)) {
+                    ant.patternset(refid: resourceExcluded)
+                  }
+                  layout.moduleExcludes.get(testModuleName)?.each {
+                    //noinspection GrUnresolvedAccess
+                    ant.exclude(name: it)
+                  }
+                }
+              }
+            }
             layout.projectLibrariesToUnpack.get(jarPath)?.each {
               buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
                 ant.zipfileset(src: it.absolutePath)
+              }
+            }
+          }
+        }
+        // Android Studio
+        testModuleJars.entrySet().each {
+          def modules = it.value
+          def jarPath = it.key
+          if (!moduleJars.containsKey(jarPath)) { // done above
+            jar(jarPath, true) {
+              modules.each { moduleName ->
+                moduleTests(moduleName) {
+                  if (layout.packLocalizableResourcesInCommonJar(moduleName)) {
+                    ant.patternset(refid: resourceExcluded)
+                  }
+                  layout.moduleExcludes.get(moduleName)?.each {
+                    //noinspection GrUnresolvedAccess
+                    ant.exclude(name: it)
+                  }
+                }
+              }
+              layout.projectLibrariesToUnpack.get(jarPath)?.each {
+                buildContext.project.libraryCollection.findLibrary(it)?.getFiles(JpsOrderRootType.COMPILED)?.each {
+                  ant.zipfileset(src: it.absolutePath)
+                }
               }
             }
           }
@@ -411,6 +462,16 @@ class DistributionJARsBuilder {
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
             findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false }.
+            each {
+              jpsLibrary(((JpsLibraryDependency)it).library)
+            }
+        }
+        // Android Studio
+        testModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
+          .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
+          findModule(moduleName).dependenciesList.dependencies.
+            findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
+            findAll { JpsJavaExtensionService.instance.getDependencyExtension(it)?.scope?.isIncludedIn(JpsJavaClasspathKind.TEST_RUNTIME) ?: false }.
             each {
               jpsLibrary(((JpsLibraryDependency)it).library)
             }

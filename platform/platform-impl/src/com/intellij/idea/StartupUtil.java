@@ -89,12 +89,19 @@ public class StartupUtil {
     default void beforeImportConfigs() {}
   }
 
+  // Android Studio
+  private static boolean configImportDisabled() {
+    return "true".equals(System.getProperty("disable.config.import"));
+  }
+
   static void prepareAndStart(String[] args, AppStarter appStarter) {
     boolean newConfigFolder = false;
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
-      newConfigFolder = !new File(PathManager.getConfigPath()).exists();
+      if (!configImportDisabled()) {  // Android Studio
+        newConfigFolder = !new File(PathManager.getConfigPath()).exists();
+      }
     }
 
     if (!checkJdkVersion()) {

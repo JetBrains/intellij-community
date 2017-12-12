@@ -30,7 +30,7 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 @CompileStatic
 class AndroidStudioProperties extends BaseIdeaProperties {
 
-  AndroidStudioProperties(String home) {
+  AndroidStudioProperties(String home, BuildOptions buildOptions) {
     baseFileName = "studio"
     platformPrefix = "AndroidStudio"
     productCode = "AI"
@@ -104,7 +104,26 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       androidPluginInStudio([:]),
       CommunityRepositoryModules.groovyPlugin([])
     ]
+    if (buildOptions.includeUiTests) {
+      modulesToCompileTests += ["android-uitests", "uitest-framework", "uitest-framework-gradle", "uitest-framework-bazel", "android-test-framework"]
+      productLayout.allNonTrivialPlugins.add(uitestPlugin())
+      productLayout.allNonTrivialPlugins.add(plugin("uitest-framework-bazel") { withTestModule("uitest-framework-bazel") })
+      productLayout.allNonTrivialPlugins.add(plugin("uitest-framework-gradle") { withTestModule("uitest-framework-gradle") })
+      productLayout.bundledPluginModules += ["uitest-framework", "uitest-framework-gradle", "uitest-framework-bazel"]
+    }
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
+  }
+
+  static PluginLayout uitestPlugin () {
+    plugin("uitest-framework") {
+      withTestModule("uitest-framework")
+      withTestModule("android-uitests")
+      withModule("fest-swing")
+      withModule("testutils")
+      withTestModule("android-test-framework")
+      withModule("testFramework")
+      withTestModule("observable")
+    }
   }
 
   static PluginLayout androidPluginInStudio(Map<String, String> additionalModulesToJars) {
@@ -277,6 +296,13 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb") {
       fileset(dir: "$root/prebuilts/tools/common/lldb")
+    }
+
+    // UI test data directory
+    if (buildContext.options.includeUiTests) {
+      buildContext.ant.copy(todir: "$targetDirectory/plugins/uitest-framework/testData") {
+        fileset(dir: "$root/tools/adt/idea/android-uitests/testData")
+      }
     }
   }
 

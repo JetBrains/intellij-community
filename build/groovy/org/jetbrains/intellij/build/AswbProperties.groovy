@@ -23,8 +23,8 @@ import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
 @CompileStatic
 class AswbProperties extends AndroidStudioProperties {
-  AswbProperties(String home) {
-    super(home)
+  AswbProperties(String home, BuildOptions buildOptions) {
+    super(home, buildOptions)
   }
 
   List<String> additionalIDEPropertiesFilePaths = []

@@ -38,10 +38,13 @@ function get_absolute_path() {
 
 ASWB=
 ASWB_PROPERTY=
+UITESTS=false
 while [[ -n "$1" ]]; do
   if [[ $1 == "--enable-aswb" ]]; then
       ASWB=true
       ASWB_PROPERTY="-Dinclude.aswb=true"
+  elif [[ $1 == "--uitests" ]]; then
+    UITESTS=true
   elif [[ -z "$OUT" ]]; then
     OUT="$1"
   elif [[ -z "$DIST" ]]; then
@@ -75,6 +78,7 @@ echo "## Build Num: $BNUM"
 echo "## Out dir  : $OUT"
 echo "## Prog dir : $PROG_DIR"
 echo "## ASWB?    : $ASWB"
+echo "## UITESTS? : $UITESTS"
 echo
 
 set_java_home
@@ -86,7 +90,7 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB_PROPERTY" -Dbundle.gradle.release.plugin=true fullupdater
+$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" "$ASWB_PROPERTY" "-Dbundle.ui.tests=$UITESTS" -Dbundle.gradle.release.plugin=true fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"

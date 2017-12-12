@@ -71,6 +71,10 @@ class BuildOptions {
   static final CROSS_PLATFORM_DISTRIBUTION_STEP = "cross_platform_dist"
 
   /**
+   * Android Studio: If 'true', the UI test framework plugin and UI test code will be bundled.
+   */
+  boolean includeUiTests = SystemProperties.getBooleanProperty("bundle.ui.tests", false)
+  /**
    * Pass 'true' to this system property to produce an additional .dmg archive for macOS without bundled JRE.
    */
   public static final String BUILD_DMG_WITHOUT_BUNDLED_JRE = "intellij.build.dmg.without.bundled.jre"

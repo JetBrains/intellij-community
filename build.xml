@@ -39,6 +39,9 @@
       <propertyref prefix="custom.project."/>
       <propertyref name="ui.test.groups"/>
       <propertyref name="include.aswb" />
+      <propertyref name="bundle.ui.tests"/>
+      <propertyref name="idea.debug.mode"/>
+      <propertyref prefix="idea.gui.test."/>
     </propertyset>
     <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild">
       <property name="config" value="release"/>

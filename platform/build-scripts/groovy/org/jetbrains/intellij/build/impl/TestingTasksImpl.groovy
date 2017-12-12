@@ -122,6 +122,8 @@ class TestingTasksImpl extends TestingTasks {
       "idea.system.path"                       : systemPath,
       "intellij.build.test.patterns"           : options.testPatterns,
       "intellij.build.test.groups"             : options.testGroups,
+      "idea.gui.test.debug.port"               : System.getProperty("idea.gui.test.debug.port", "5005"), /* Android Studio */
+      "idea.gui.test.remote.ide.path"          : System.getProperty("idea.gui.test.remote.ide.path", "undefined"), /* Android Studio */
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),

@@ -86,6 +86,17 @@ class PlatformLayout extends BaseLayout {
           withProjectLibrary(it.name)
         }
       }
+      // Android Studio
+      layout.testModuleJars.values().each {
+        def module = context.findRequiredModule(it)
+        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.TEST_RUNTIME).libraries.findAll {
+          !(it.createReference().parentReference instanceof JpsModuleReference) &&
+          !layout.projectLibrariesToUnpack.values().contains(it.name) &&
+          !layout.excludedProjectLibraries.contains(it.name)
+        }.each {
+          withProjectLibrary(it.name)
+        }
+      }
     }
 
     /**

@@ -21,7 +21,7 @@ import static org.jetbrains.intellij.build.LibraryLicense.jetbrainsLibrary
 
 @CompileStatic
 class AndroidStudioLibraryLicenses {
-  public static final List<LibraryLicense> LICENSES_LIST = [
+  public static final List<LibraryLicense> LICENSES_LIST = (([
     new LibraryLicense(name: "ANTLR 4 Runtime", libraryName: "antlr4-runtime-4.5.3", version: "4.5.3", license: "BSD",
                        url: "http://www.antlr.org", licenseUrl: "http://www.antlr.org/license.html"),
     new LibraryLicense(name: "Apache Commons IO", libraryName: "commons-io", version: "2.4", license: "Apache 2.0",
@@ -106,7 +106,12 @@ class AndroidStudioLibraryLicenses {
                        additionalLibraryNames: ["explainer.jar", "generator.jar", "shared.jar"],
                        license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-
     jetbrainsLibrary("uast")
-  ] as List<LibraryLicense>
+    ] as List<LibraryLicense>) + (("true" == System.getProperty("bundle.ui.tests") ? [
+    new LibraryLicense(name: "truth", libraryName: "truth", version: "0.28", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "easymock-tools", libraryName: "easymock-tools", version: "3.1", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "fest-assert", libraryName: "fest-assert-1.5.0-SNAPSHOT.jar", version: "1.5.0-SNAPSHOT", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "fest-reflect", libraryName: "fest-reflect-2.0-SNAPSHOT.jar", version: "2.0-SNAPSHOT", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
+    new LibraryLicense(name: "jcip-annotations", libraryName: "jcip-annotations-1.0-1.jar", version: "1.0-1", license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
+    ] : []) as List<LibraryLicense>)) as List<LibraryLicense>
 }
