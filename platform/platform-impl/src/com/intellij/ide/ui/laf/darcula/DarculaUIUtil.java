@@ -21,7 +21,10 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.ui.*;
+import com.intellij.ui.ComboBoxCompositeEditor;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -30,7 +33,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
@@ -74,11 +76,8 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_REGULAR_COLOR = new Color(0x80479cfc, true);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_GRAPHITE_COLOR = new Color(0x8099979d, true);
+  private static final Color REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x803d86d9, true));
+  private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0xadadad, true));
 
   public enum Outline {
     error {
@@ -104,57 +103,6 @@ public class DarculaUIUtil {
     MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
   }
 
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
-    paintSearchFocusRing(g, bounds, component, -1);
-  }
-
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
-    int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
-    final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(GLOW_COLOR, 180 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 120 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 70  - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 100 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 50  - correction)
-    };
-
-    final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    final Object oldStrokeControlValue = g.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
-
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-
-    final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
-    int arcSize = r.height - 1;
-    if (maxArcSize>0) arcSize = Math.min(maxArcSize, arcSize);
-    if (arcSize %2 == 1) arcSize--;
-
-
-    g.setColor(component.getBackground());
-    g.fillRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize - 4, arcSize - 4);
-
-    g.setColor(colors[0]);
-    g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize-4, arcSize-4);
-
-    g.setColor(colors[1]);
-    g.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, arcSize-2, arcSize-2);
-
-    g.setColor(colors[2]);
-    g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, arcSize, arcSize);
-
-
-    g.setColor(colors[3]);
-    g.drawRoundRect(r.x+3, r.y+3, r.width - 7, r.height - 7, arcSize-6, arcSize-6);
-
-    g.setColor(colors[4]);
-    g.drawRoundRect(r.x+4, r.y+4, r.width - 9, r.height - 9, arcSize-8, arcSize-8);
-
-    // restore rendering hints
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
-  }
-
   @Deprecated
   public static void paintErrorBorder(Graphics2D g, int width, int height, int arc, boolean symmetric, boolean hasFocus) {
     paintOutlineBorder(g, width, height, arc, symmetric, hasFocus, Outline.error);
@@ -170,19 +118,19 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
+    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    double bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : 0.0;
-    double lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
+    double bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
+    double lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : JBUI.scale(0.5f);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    double outerArc = arc > 0 ? arc + lw - JBUI.scale(2f) : lw;
+    double outerArc = arc > 0 ? arc + bw - JBUI.scale(2f) : bw;
     double rightOuterArc = symmetric ? outerArc : JBUI.scale(6f);
     Path2D outerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
     outerRect.moveTo(width - rightOuterArc, 0);
@@ -195,17 +143,17 @@ public class DarculaUIUtil {
     outerRect.quadTo(0, 0, outerArc, 0);
     outerRect.closePath();
 
-    lw += bw;
+    bw += lw;
     double rightInnerArc = symmetric ? outerArc : JBUI.scale(7f);
     Path2D innerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-    innerRect.moveTo(width - rightInnerArc, lw);
-    innerRect.quadTo(width - lw, lw , width - lw, rightInnerArc);
-    innerRect.lineTo(width - lw, height - rightInnerArc);
-    innerRect.quadTo(width - lw, height - lw, width - rightInnerArc, height - lw);
-    innerRect.lineTo(outerArc, height - lw);
-    innerRect.quadTo(lw, height - lw, lw, height - outerArc);
-    innerRect.lineTo(lw, outerArc);
-    innerRect.quadTo(lw, lw, outerArc, lw);
+    innerRect.moveTo(width - rightInnerArc, bw);
+    innerRect.quadTo(width - bw, bw , width - bw, rightInnerArc);
+    innerRect.lineTo(width - bw, height - rightInnerArc);
+    innerRect.quadTo(width - bw, height - bw, width - rightInnerArc, height - bw);
+    innerRect.lineTo(outerArc, height - bw);
+    innerRect.quadTo(bw, height - bw, bw, height - outerArc);
+    innerRect.lineTo(bw, outerArc);
+    innerRect.quadTo(bw, bw, outerArc, bw);
     innerRect.closePath();
 
     Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
@@ -292,7 +240,9 @@ public class DarculaUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ? new InsetsUIResource(1, 3, 2, 3) : new InsetsUIResource(6, 7, 6, 7);
+      return isComboBoxEditor(c) ?
+             JBUI.insets(1, 3, 2, 3).asUIResource() :
+             JBUI.insets(5, 8).asUIResource();
     }
   }
 
@@ -421,5 +371,20 @@ public class DarculaUIUtil {
         repaintComponent.repaint();
       }
     }
+  }
+
+  public static double lw(Graphics2D g2) {
+    return UIUtil.isJreHiDPI(g2) ? JBUI.scale(0.5f) : 1.0;
+  }
+
+  public static double bw() {
+    return JBUI.scale(2);
+  }
+
+  public static Color getOutlineColor(boolean enabled) {
+    if (UIUtil.isUnderDarcula()) {
+      return enabled ? Gray._100 : Gray._83;
+    }
+    return Gray.xBC ;
   }
 }

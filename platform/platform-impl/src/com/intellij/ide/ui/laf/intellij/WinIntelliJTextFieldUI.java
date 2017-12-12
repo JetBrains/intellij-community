@@ -39,13 +39,9 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   private MouseListener hoverListener;
 
-  public WinIntelliJTextFieldUI(JTextField textField) {
-    super(textField);
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new WinIntelliJTextFieldUI((JTextField)c);
+    return new WinIntelliJTextFieldUI();
   }
 
   @Override

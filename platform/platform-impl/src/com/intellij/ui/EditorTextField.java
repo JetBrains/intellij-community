@@ -39,6 +39,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -626,7 +627,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     }
 
 
-    Dimension size = new Dimension(100, 20);
+    Dimension size = JBUI.size(100, 20);
     if (myEditor != null) {
       final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
 
@@ -656,9 +657,15 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       return super.getMinimumSize();
     }
 
-    Dimension size = new Dimension(1, 20);
+    Dimension size = JBUI.size(1, 20);
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
+
+      if (UIUtil.isUnderDefaultMacTheme()) {
+        size.height = Math.max(size.height, JBUI.scale(18));
+      } else if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+        size.height = Math.max(size.height, JBUI.scale(16));
+      }
 
       JBInsets.addTo(size, getInsets());
       JBInsets.addTo(size, myEditor.getInsets());
