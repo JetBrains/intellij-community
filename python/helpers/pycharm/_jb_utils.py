@@ -29,7 +29,7 @@ class FileChangesTracker(object):
         result = {}
         for tmp_folder, sub_dirs, files in os.walk(folder):
             sub_dirs[:] = [s for s in sub_dirs if not s.startswith(".")]
-            if any([fnmatch.fnmatch(os.path.basename(tmp_folder), p) for p in patterns]):
+            if any(fnmatch.fnmatch(os.path.basename(tmp_folder), p) for p in patterns):
                 for file in map(lambda f: os.path.join(tmp_folder, f), files):
                     try:
                         result.update({file: os.path.getmtime(file)})
