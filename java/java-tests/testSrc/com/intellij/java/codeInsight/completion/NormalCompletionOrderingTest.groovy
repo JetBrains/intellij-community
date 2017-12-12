@@ -809,4 +809,19 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'a', 'b', 'a, b'
   }
 
+  void "test selecting static field after static method"() {
+    myFixture.configureByText 'a.java', 'class Foo { { System.<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('ex\n2);\n') // select 'exit'
+    
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'exit'
+    myFixture.type('ou\n;\n') // select 'out'
+
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'out', 'exit'    
+  }
+
 }
