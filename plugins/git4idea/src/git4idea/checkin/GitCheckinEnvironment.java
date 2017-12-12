@@ -257,6 +257,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             }
           }
         }
+
+        manager.updateRepository(root);
       }
       catch (VcsException e) {
         exceptions.add(e);
@@ -456,8 +458,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     // perform merge commit
     try {
       commitWithoutPaths(project, root, messageFile, author);
-      GitRepositoryManager manager = getRepositoryManager(project);
-      manager.updateRepository(root);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -615,10 +615,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.endOptions();
       handler.addParameters(paths);
       Git.getInstance().runCommand(handler).getOutputOrThrow();
-    }
-    if (!project.isDisposed()) {
-      GitRepositoryManager manager = getRepositoryManager(project);
-      manager.updateRepository(root);
     }
   }
 
