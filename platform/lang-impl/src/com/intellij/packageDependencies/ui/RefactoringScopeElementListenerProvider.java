@@ -146,7 +146,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
           LOG.assertTrue(newElement instanceof PsiQualifiedNamedElement || newElement instanceof PsiDirectory);
           try {
             final NamedScope[] currentScopes = descriptor.getHolder().getEditableScopes();
-            final PatternBasedPackageSet packageSet = (PatternBasedPackageSet)currentScopes[descriptor.getIdx()].getValue();
+            final PackageSet packageSet = currentScopes[descriptor.getIdx()].getValue();
             if (packageSet == null) return;
             NamedScope newScope = new NamedScope(descriptor.getScope().getName(), PackageSetFactory.getInstance().compile(text));
             currentScopes[descriptor.getIdx()] = newScope;
