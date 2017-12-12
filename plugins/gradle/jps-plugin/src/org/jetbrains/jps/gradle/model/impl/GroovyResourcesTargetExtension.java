@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,7 +10,6 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.groovy.GroovyBuilderExtension;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
-import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +35,6 @@ public class GroovyResourcesTargetExtension implements GroovyBuilderExtension {
       .flatMap(module -> module.getDependenciesList().getDependencies().stream())
       .map(dep -> {
         if (dep instanceof JpsModuleDependency) return ((JpsModuleDependency)dep).getModule();
-        if (dep instanceof JpsModuleSourceDependency) return dep.getContainingModule();
         return null;
       })
       .filter(Objects::nonNull)
