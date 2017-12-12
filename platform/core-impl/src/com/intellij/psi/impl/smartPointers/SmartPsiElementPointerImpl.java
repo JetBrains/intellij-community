@@ -40,7 +40,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
-public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
+class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx<E> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartPsiElementPointerImpl");
 
   private Reference<E> myElement;
@@ -51,8 +51,7 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
   SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile, boolean forInjected) {
     this(element, createElementInfo(project, element, containingFile, forInjected));
   }
-  SmartPsiElementPointerImpl(@NotNull E element,
-                             @NotNull SmartPointerElementInfo elementInfo) {
+  SmartPsiElementPointerImpl(@NotNull E element, @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myElementInfo = elementInfo;
     cacheElement(element);
@@ -252,7 +251,7 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
 
-  public synchronized int incrementAndGetReferenceCount(int delta) {
+  synchronized int incrementAndGetReferenceCount(int delta) {
     if (myReferenceCount == Byte.MAX_VALUE) return Byte.MAX_VALUE; // saturated
     if (myReferenceCount == 0) return -1; // disposed, not to be reused again
     return myReferenceCount += delta;
