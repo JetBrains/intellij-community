@@ -56,56 +56,56 @@ public abstract class ShowChangeMarkerAction extends DumbAwareAction {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null) return null;
 
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
     if (tracker == null) return null;
 
     return new Data(tracker, editor);
   }
 
 
-  protected void moveToRange(@NotNull LineStatusTracker tracker, @NotNull Editor editor, @NotNull Range range) {
+  protected void moveToRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor, @NotNull Range range) {
     tracker.scrollAndShowHint(range, editor);
   }
 
   @Nullable
-  private Range getTargetRange(@NotNull LineStatusTracker tracker, @NotNull Editor editor) {
+  private Range getTargetRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
     int line = editor.getCaretModel().getLogicalPosition().line;
     return getTargetRange(tracker, line);
   }
 
   @Nullable
-  protected abstract Range getTargetRange(@NotNull LineStatusTracker tracker, int line);
+  protected abstract Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line);
 
 
   public static class Next extends ShowChangeMarkerAction {
-    protected Range getTargetRange(@NotNull LineStatusTracker tracker, int line) {
+    protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getNextRange(line);
     }
   }
 
   public static class Prev extends ShowChangeMarkerAction {
-    protected Range getTargetRange(@NotNull LineStatusTracker tracker, int line) {
+    protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getPrevRange(line);
     }
   }
 
   public static class Current extends ShowChangeMarkerAction {
-    protected Range getTargetRange(@NotNull LineStatusTracker tracker, int line) {
+    protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getRangeForLine(line);
     }
 
     @Override
-    protected void moveToRange(@NotNull LineStatusTracker tracker, @NotNull Editor editor, @NotNull Range range) {
+    protected void moveToRange(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor, @NotNull Range range) {
       tracker.showHint(range, editor);
     }
   }
 
 
   private static class Data {
-    @NotNull private final LineStatusTracker tracker;
+    @NotNull private final LineStatusTracker<?> tracker;
     @NotNull private final Editor editor;
 
-    public Data(@NotNull LineStatusTracker tracker, @NotNull Editor editor) {
+    public Data(@NotNull LineStatusTracker<?> tracker, @NotNull Editor editor) {
       this.tracker = tracker;
       this.editor = editor;
     }
