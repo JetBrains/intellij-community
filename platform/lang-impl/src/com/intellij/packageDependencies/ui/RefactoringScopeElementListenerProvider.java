@@ -30,6 +30,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance(RefactoringScopeElementListenerProvider.class);
@@ -40,37 +41,34 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
 
     final PsiFile containingFile = element.getContainingFile();
 
-    RefactoringElementListenerComposite composite = null;
-    String oldName = getQualifiedName(element, false);
+    RefactoringElementListenerComposite composite = new RefactoringElementListenerComposite();
+    String oldName = getRelativePathToFile(element);
     if (oldName != null) {
-      composite = getComposite(element, containingFile, null, oldName);
+      registerListeners(element, composite, containingFile, oldName);
     }
 
     if (element instanceof PsiQualifiedNamedElement) {
-      oldName = getQualifiedName(element, true);
+      oldName = ((PsiQualifiedNamedElement)element).getQualifiedName();
       if (oldName != null) {
-        composite = getComposite(element, containingFile, composite, oldName);
+        registerListeners(element, composite, containingFile, oldName);
       }
     }
 
     return composite;
   }
 
-  private static RefactoringElementListenerComposite getComposite(PsiElement element,
-                                                                  PsiFile containingFile,
-                                                                  RefactoringElementListenerComposite composite,
-                                                                  String oldName) {
+  private static void registerListeners(PsiElement element, RefactoringElementListenerComposite result, PsiFile containingFile,
+                                        String oldName) {
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(element.getProject())) {
       final NamedScope[] scopes = holder.getEditableScopes();
       for (int i = 0; i < scopes.length; i++) {
         final NamedScope scope = scopes[i];
         final PackageSet packageSet = scope.getValue();
         if (packageSet != null && (containingFile == null || packageSet.contains(containingFile, holder))) {
-          composite = traverse(new OldScopeDescriptor(oldName, scope, i, holder), composite, packageSet);
+          registerListeners(packageSet, result, new OldScopeDescriptor(oldName, scope, i, holder));
         }
       }
     }
-    return composite;
   }
 
   private static String getQualifiedName(PsiElement element, boolean acceptQNames) {
@@ -78,49 +76,47 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
       return ((PsiQualifiedNamedElement)element).getQualifiedName();
     }
     else {
-      final Project project = element.getProject();
-      final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
-      if (virtualFile == null) {
-        return null;
-      }
-      return FilePatternPackageSet.getRelativePath(virtualFile,
-                                                   ProjectRootManager.getInstance(project).getFileIndex(),
-                                                   true,
-                                                   project.getBaseDir());
+      return getRelativePathToFile(element);
     }
   }
 
-  private static RefactoringElementListenerComposite traverse(OldScopeDescriptor scopeDescriptor,
-                                                              RefactoringElementListenerComposite composite,
-                                                              PackageSet packageSet) {
+  @Nullable
+  private static String getRelativePathToFile(PsiElement element) {
+    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+    if (virtualFile == null) {
+      return null;
+    }
+    final Project project = element.getProject();
+    return FilePatternPackageSet.getRelativePath(virtualFile, ProjectRootManager.getInstance(project).getFileIndex(), true,
+                                                 project.getBaseDir());
+  }
+
+  private static void registerListeners(PackageSet packageSet,
+                                        RefactoringElementListenerComposite result,
+                                        OldScopeDescriptor scopeDescriptor) {
     if (packageSet instanceof PatternBasedPackageSet) {
       final PackageSet value = scopeDescriptor.getScope().getValue();
       if (value != null) {
-        composite = checkPatternPackageSet(scopeDescriptor, composite, ((PatternBasedPackageSet)packageSet), value.getText());
+        registerListenersPatternPackageSet(((PatternBasedPackageSet)packageSet), result, scopeDescriptor, value.getText());
       }
     }
     else if (packageSet instanceof ComplementPackageSet) {
-      composite = traverse(scopeDescriptor, composite, ((ComplementPackageSet)packageSet).getComplementarySet());
+      registerListeners(((ComplementPackageSet)packageSet).getComplementarySet(), result, scopeDescriptor);
     }
     else if (packageSet instanceof UnionPackageSet) {
-      composite = traverse(scopeDescriptor, composite, ((UnionPackageSet)packageSet).getFirstSet());
-      composite = traverse(scopeDescriptor, composite, ((UnionPackageSet)packageSet).getSecondSet());
+      registerListeners(((UnionPackageSet)packageSet).getFirstSet(), result, scopeDescriptor);
+      registerListeners(((UnionPackageSet)packageSet).getSecondSet(), result, scopeDescriptor);
     }
     else if (packageSet instanceof IntersectionPackageSet) {
-      composite = traverse(scopeDescriptor, composite, ((IntersectionPackageSet)packageSet).getFirstSet());
-      composite = traverse(scopeDescriptor, composite, ((IntersectionPackageSet)packageSet).getSecondSet());
+      registerListeners(((IntersectionPackageSet)packageSet).getFirstSet(), result, scopeDescriptor);
+      registerListeners(((IntersectionPackageSet)packageSet).getSecondSet(), result, scopeDescriptor);
     }
-    return composite;
   }
 
-  private static RefactoringElementListenerComposite checkPatternPackageSet(final OldScopeDescriptor descriptor,
-                                                                            RefactoringElementListenerComposite composite,
-                                                                            final PatternBasedPackageSet pattern,
-                                                                            final String text) {
+  private static void registerListenersPatternPackageSet(PatternBasedPackageSet pattern, RefactoringElementListenerComposite composite,
+                                                         OldScopeDescriptor descriptor,
+                                                         String text) {
     if (pattern.isOn(descriptor.getOldQName())) {
-      if (composite == null) {
-        composite = new RefactoringElementListenerComposite();
-      }
       composite.addListener(new RefactoringElementAdapter() {
         @Override
         public void elementRenamedOrMoved(@NotNull PsiElement newElement) {
@@ -157,7 +153,6 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
         }
       });
     }
-    return composite;
   }
 
   private static class OldScopeDescriptor {
