@@ -37,37 +37,15 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   public static final String SCOPE_ANY = "";
 
   private final Pattern myPattern;
-  private final Pattern myModulePattern;
-  private final Pattern myModuleGroupPattern;
   private final String myAspectJSyntaxPattern;
   private final String myScope;
-  private final String myModulePatternText;
 
   public PatternPackageSet(@NonNls @Nullable String aspectPattern,
                            @NotNull String scope,
                            @NonNls String modulePattern) {
+    super(modulePattern);
     myAspectJSyntaxPattern = aspectPattern;
     myScope = scope;
-    myModulePatternText = modulePattern;
-    Pattern mmgp = null;
-    Pattern mmp = null;
-    if (modulePattern == null || modulePattern.isEmpty()) {
-      mmp = null;
-    }
-    else {
-      if (modulePattern.startsWith("group:")) {
-        int idx = modulePattern.indexOf(':', 6);
-        if (idx == -1) idx = modulePattern.length();
-        mmgp = Pattern.compile(StringUtil.replace(modulePattern.substring(6, idx), "*", ".*"));
-        if (idx < modulePattern.length() - 1) {
-          mmp = Pattern.compile(StringUtil.replace(modulePattern.substring(idx + 1), "*", ".*"));
-        }
-      } else {
-        mmp = Pattern.compile(StringUtil.replace(modulePattern, "*", ".*"));
-      }
-    }
-    myModulePattern = mmp;
-    myModuleGroupPattern = mmgp;
     myPattern = aspectPattern != null ? Pattern.compile(FilePatternPackageSet.convertToRegexp(aspectPattern, '.')) : null;
   }
 
@@ -153,11 +131,6 @@ public class PatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  public String getModulePattern() {
-    return myModulePatternText;
-  }
-
-  @Override
   public boolean isOn(String oldQName) {
     return Comparing.strEqual(oldQName, myAspectJSyntaxPattern) || //class qname
            Comparing.strEqual(oldQName + "..*", myAspectJSyntaxPattern) || //package req
@@ -169,7 +142,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return myAspectJSyntaxPattern;
   }
 
-  public static boolean matchesLibrary(final Pattern libPattern,
+  private static boolean matchesLibrary(final Pattern libPattern,
                                        final VirtualFile file,
                                        final ProjectFileIndex fileIndex) {
     if (libPattern != null) {
