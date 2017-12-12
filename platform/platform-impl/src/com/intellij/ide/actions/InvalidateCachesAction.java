@@ -61,6 +61,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     boolean invalidateCachesInvalidatesVfs = Registry.is("idea.invalidate.caches.invalidates.vfs");
 
     if (invalidateCachesInvalidatesVfs) descriptions.add("Local History");
+
     for (CachesInvalidator invalidater : CachesInvalidator.EP_NAME.getExtensions()) {
       ContainerUtil.addIfNotNull(descriptions, invalidater.getDescription());
     }
@@ -70,13 +71,13 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
     if (descriptions.size() == 1) {
       warnings += descriptions.get(0) + " will be also cleared.";
     }
-    else {
+    else if (!descriptions.isEmpty()) {
       warnings += "The following items will also be cleared:\n"
                   + StringUtil.join(descriptions, s -> "  " + s, "\n");
     }
     
     String message = "The caches will be invalidated and rebuilt on the next startup.\n\n" +
-                     warnings + "\n\n" +
+                     (descriptions.isEmpty() ? "" :  warnings + "\n\n") +
                      "Would you like to continue?\n";
     int result = Messages.showDialog(e.getData(CommonDataKeys.PROJECT),
                                      message,
