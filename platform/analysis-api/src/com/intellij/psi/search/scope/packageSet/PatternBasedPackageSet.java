@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,13 +36,13 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
       if (modulePatternText.startsWith("group:")) {
         int index = modulePatternText.indexOf(':', 6);
         if (index == -1) index = modulePatternText.length();
-        moduleGroupPattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePatternText.substring(6, index)), "*", ".*"));
+        moduleGroupPattern = convertToPattern(modulePatternText.substring(6, index));
         if (index < modulePatternText.length() - 1) {
-          modulePattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePatternText.substring(index + 1)), "*", ".*"));
+          modulePattern = convertToPattern(modulePatternText.substring(index + 1));
         }
       }
       else {
-        modulePattern = Pattern.compile(StringUtil.replace(escapeToRegexp(modulePatternText), "*", ".*"));
+        modulePattern = convertToPattern(modulePatternText);
       }
     }
     myModulePattern = modulePattern;
@@ -59,18 +58,21 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
   }
 
   @NotNull
-  private static String escapeToRegexp(@NotNull CharSequence text) {
+  private static Pattern convertToPattern(String text) {
     StringBuilder builder = new StringBuilder(text.length());
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
-      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_' || c == '*') {
+      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
         builder.append(c);
+      }
+      else if (c == '*') {
+        builder.append(".*");
       }
       else {
         builder.append('\\').append(c);
       }
     }
 
-    return builder.toString();
+    return Pattern.compile(builder.toString());
   }
 }
