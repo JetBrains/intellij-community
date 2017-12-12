@@ -1077,7 +1077,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               StreamEx.of(myArgs).findAny(ThreadReference.class::isInstance).ifPresent(t -> {
                 //noinspection UseOfSystemOutOrSystemErr
                 System.err.println("[JDI: workaround for invocation of " + myMethod + "]");
-                myMethod.virtualMachine().setDebugTraceMode(0);
+                myMethod.virtualMachine().setDebugTraceMode(ourTraceMask & ~VirtualMachine.TRACE_SENDS);
               });
             }
 
