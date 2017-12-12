@@ -118,6 +118,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_AMEND_WITHOUT_FILES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 11, 3));
+    }
+  },
+
   SUPPORTS_FOLLOW_TAGS {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -157,6 +164,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
+    }
+  },
+
+  KNOWS_CORE_COMMENT_CHAR {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 8, 2, 0));
     }
   },
 

@@ -56,7 +56,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -213,7 +212,6 @@ public class PyCharmEduInitialConfigurator {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         if (!propertiesComponent.isValueSet(CONFIGURED_V3)) {
-          showInitialConfigurationDialog();
           propertiesComponent.setValue(CONFIGURED_V3, "true");
         }
       }
@@ -410,13 +408,5 @@ public class PyCharmEduInitialConfigurator {
         if (droppedActions.contains(id)) keymapImpl.clearOwnActionsId(id);
       }
     }
-  }
-  private static void showInitialConfigurationDialog() {
-    DialogBuilder dialog = new DialogBuilder();
-    final CustomizeEduStepPanel panel = new CustomizeEduStepPanel();
-    dialog.setPreferredFocusComponent(panel.getStudentButton());
-    dialog.title("Are you Student or Teacher?").centerPanel(panel);
-    dialog.addOkAction().setText("Start using Pycharm Edu");
-    dialog.show();
   }
 }

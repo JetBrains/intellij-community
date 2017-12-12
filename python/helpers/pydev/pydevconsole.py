@@ -89,8 +89,8 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread, show_banner=True):
-        BaseInterpreterInterface.__init__(self, mainThread)
+    def __init__(self, host, client_port, mainThread, connect_status_queue=None):
+        BaseInterpreterInterface.__init__(self, mainThread, connect_status_queue)
         self.client_port = client_port
         self.host = host
         self.namespace = {}
@@ -252,78 +252,80 @@ def do_exit(*args):
             os._exit(0)
 
 
-def handshake():
-    return "PyCharm"
-
-
 #=======================================================================================================================
 # start_console_server
 #=======================================================================================================================
 def start_console_server(host, port, interpreter):
-    if port == 0:
-        host = ''
-
-    #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
-    from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
-
     try:
-        if IS_PY24:
-            server = XMLRPCServer((host, port), logRequests=False)
-        else:
-            server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
+        if port == 0:
+            host = ''
 
-    except:
-        sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
-        sys.stderr.flush()
-        raise
+        #I.e.: supporting the internal Jython version in PyDev to create a Jython interactive console inside Eclipse.
+        from _pydev_bundle.pydev_imports import SimpleXMLRPCServer as XMLRPCServer  #@Reimport
 
-    # Tell UMD the proper default namespace
-    _set_globals_function(interpreter.get_namespace)
-
-    server.register_function(interpreter.execLine)
-    server.register_function(interpreter.execMultipleLines)
-    server.register_function(interpreter.getCompletions)
-    server.register_function(interpreter.getFrame)
-    server.register_function(interpreter.getVariable)
-    server.register_function(interpreter.changeVariable)
-    server.register_function(interpreter.getDescription)
-    server.register_function(interpreter.close)
-    server.register_function(interpreter.interrupt)
-    server.register_function(handshake)
-    server.register_function(interpreter.connectToDebugger)
-    server.register_function(interpreter.hello)
-    server.register_function(interpreter.getArray)
-    server.register_function(interpreter.evaluate)
-    server.register_function(interpreter.ShowConsole)
-    server.register_function(interpreter.loadFullValue)
-
-    # Functions for GUI main loop integration
-    server.register_function(interpreter.enableGui)
-
-    if port == 0:
-        (h, port) = server.socket.getsockname()
-
-        print(port)
-        print(interpreter.client_port)
-
-    while True:
         try:
-            server.serve_forever()
-        except:
-            # Ugly code to be py2/3 compatible
-            # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
-            # Unhandled "interrupted system call" error in the pydevconsol.py
-            e = sys.exc_info()[1]
-            retry = False
-            try:
-                retry = e.args[0] == 4 #errno.EINTR
-            except:
-                pass
-            if not retry:
-                raise
-                # Otherwise, keep on going
-    return server
+            if IS_PY24:
+                server = XMLRPCServer((host, port), logRequests=False)
+            else:
+                server = XMLRPCServer((host, port), logRequests=False, allow_none=True)
 
+        except:
+            sys.stderr.write('Error starting server with host: "%s", port: "%s", client_port: "%s"\n' % (host, port, interpreter.client_port))
+            sys.stderr.flush()
+            raise
+
+        # Tell UMD the proper default namespace
+        _set_globals_function(interpreter.get_namespace)
+
+        server.register_function(interpreter.execLine)
+        server.register_function(interpreter.execMultipleLines)
+        server.register_function(interpreter.getCompletions)
+        server.register_function(interpreter.getFrame)
+        server.register_function(interpreter.getVariable)
+        server.register_function(interpreter.changeVariable)
+        server.register_function(interpreter.getDescription)
+        server.register_function(interpreter.close)
+        server.register_function(interpreter.interrupt)
+        server.register_function(interpreter.handshake)
+        server.register_function(interpreter.connectToDebugger)
+        server.register_function(interpreter.hello)
+        server.register_function(interpreter.getArray)
+        server.register_function(interpreter.evaluate)
+        server.register_function(interpreter.ShowConsole)
+        server.register_function(interpreter.loadFullValue)
+
+        # Functions for GUI main loop integration
+        server.register_function(interpreter.enableGui)
+
+        if port == 0:
+            (h, port) = server.socket.getsockname()
+
+            print(port)
+            print(interpreter.client_port)
+
+        while True:
+            try:
+                server.serve_forever()
+            except:
+                # Ugly code to be py2/3 compatible
+                # https://sw-brainwy.rhcloud.com/tracker/PyDev/534:
+                # Unhandled "interrupted system call" error in the pydevconsol.py
+                e = sys.exc_info()[1]
+                retry = False
+                try:
+                    retry = e.args[0] == 4 #errno.EINTR
+                except:
+                    pass
+                if not retry:
+                    raise
+                    # Otherwise, keep on going
+        return server
+    except:
+        traceback.print_exc()
+        # Notify about error to avoid long waiting
+        connection_queue = interpreter.get_connect_status_queue()
+        if connection_queue is not None:
+            connection_queue.put(False)
 
 def start_server(host, port, client_port, client_host = None):
     if not client_host:

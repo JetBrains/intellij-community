@@ -47,6 +47,14 @@ final class MarkerOptionalData extends BitSet {
     }
   }
 
+  void compact() {
+    myLeftBinders.compact();
+    myRightBinders.compact();
+    myDebugAllocationPositions.compact();
+    myCollapsed.compact();
+    myDoneErrors.compact();
+  }
+
   @Nullable
   String getDoneError(int markerId) {
     return myDoneErrors.get(markerId);

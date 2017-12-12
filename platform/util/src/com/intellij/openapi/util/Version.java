@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class Version {
+public class Version implements Comparable<Version> {
   public final int major;
   public final int minor;
   public final int bugfix;

@@ -785,9 +785,15 @@ public class AnnotationsHighlightUtil {
       return getText();
     }
 
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return myAnnotation;
+    }
+
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
+      return myAnnotation.isValid();
     }
 
     @Override

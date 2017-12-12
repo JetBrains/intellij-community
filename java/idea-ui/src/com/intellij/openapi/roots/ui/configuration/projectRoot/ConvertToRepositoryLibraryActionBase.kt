@@ -203,7 +203,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
           downloadedFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(downloadedIoFileToCompare)!!
         }
       }.execute()
-      RefreshQueue.getInstance().refresh(false, true, null, libraryFileToCompare, downloadedFileToCompare)
+      RefreshQueue.getInstance().refresh(false, false, null, libraryFileToCompare, downloadedFileToCompare)
 
       val jarFilesToRefresh = ArrayList<VirtualFile>()
       object : WriteAction<Unit>() {

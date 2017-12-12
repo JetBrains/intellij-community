@@ -832,13 +832,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
-        myStructureTreeModel.invalidate().rejected(ignore -> result.setError("rejected")).done(
-          ignore ->
+        myStructureTreeModel.invalidate(
+          () ->
             (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
               .rejected(ignore2 -> result.setError("rejected"))
               .done(p -> UIUtil.invokeLaterIfNeeded(
                 () -> {
-                  TreeUtil.expand(getTree(), 2);
+                  TreeUtil.expand(getTree(), myTreeModel instanceof StructureViewCompositeModel ? 3 : 2);
                   TreeUtil.ensureSelection(myTree);
                   mySpeedSearch.refreshSelection();
                   result.setResult(p);
@@ -846,9 +846,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidate()
-          .rejected(ignore -> result.setError("rejected"))
-          .done(ignore -> rebuildAndSelect(true, selection).notify(result));
+        myStructureTreeModel.invalidate(() -> rebuildAndSelect(true, selection).notify(result));
       }
     });
     return result;

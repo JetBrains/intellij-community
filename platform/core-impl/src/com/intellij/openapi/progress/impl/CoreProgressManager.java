@@ -327,7 +327,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       runProcessWithProgressAsynchronously(task);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(() -> runProcessWithProgressAsynchronously(task), ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Project project = task.getProject();
+        if (project != null && project.isDisposed()) {
+          LOG.info("Task canceled because of project disposal: " + task);
+          finishTask(task, true, null);
+          return;
+        }
+
+        runProcessWithProgressAsynchronously(task);
+      }, ModalityState.defaultModalityState());
     }
   }
 

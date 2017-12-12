@@ -776,10 +776,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         // the file is small, fit into the first chunk
         return firstChunk;
       }
-      byte[] buffer = bytes.length >= fileLength ? bytes : ArrayUtil.realloc(bytes, fileLength);
+      int maxBytesToBeLoaded = Math.min(fileLength, FileUtilRt.getUserContentLoadLimit());
+      byte[] buffer = bytes.length >= maxBytesToBeLoaded ? bytes : ArrayUtil.realloc(bytes, maxBytesToBeLoaded);
       int read;
       try {
-        read = readSafely(stream, buffer, n, fileLength - n);
+        read = readSafely(stream, buffer, n, maxBytesToBeLoaded - n);
       }
       catch (IOException e) {
         return null;

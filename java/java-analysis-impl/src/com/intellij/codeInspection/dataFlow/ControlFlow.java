@@ -93,11 +93,6 @@ public class ControlFlow {
       public int getInstructionOffset() {
         return myElementToStartOffsetMap.get(element);
       }
-
-      @Override
-      public String toString() {
-        return String.valueOf(myElementToStartOffsetMap.get(element));
-      }
     };
   }
 
@@ -106,11 +101,6 @@ public class ControlFlow {
       @Override
       public int getInstructionOffset() {
         return myElementToEndOffsetMap.get(element);
-      }
-
-      @Override
-      public String toString() {
-        return String.valueOf(myElementToEndOffsetMap.get(element));
       }
     };
   }
@@ -127,8 +117,13 @@ public class ControlFlow {
     return result.toString();
   }
 
-  public interface ControlFlowOffset {
-    int getInstructionOffset();
+  public abstract static class ControlFlowOffset {
+    public abstract int getInstructionOffset();
+
+    @Override
+    public String toString() {
+      return String.valueOf(getInstructionOffset());
+    }
   }
 
   static ControlFlowOffset deltaOffset(final ControlFlowOffset delegate, final int delta) {

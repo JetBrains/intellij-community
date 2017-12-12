@@ -55,6 +55,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +99,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     if (processor instanceof JavaCompletionProcessor) {
       final Map<CustomizableReferenceProvider.CustomizationKey, Object> options = getOptions();
       if (options != null &&
-          (JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(options) != null ||
+          (JavaClassReferenceProvider.SUPER_CLASSES.getValue(options) != null ||
            JavaClassReferenceProvider.NOT_INTERFACE.getBooleanValue(options) ||
            JavaClassReferenceProvider.CONCRETE.getBooleanValue(options)) ||
            JavaClassReferenceProvider.CLASS_KIND.getValue(options) != null) {
@@ -267,9 +268,17 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
   }
 
+  /** @deprecated use {@code getSuperClasses()} instead */
   @Nullable
   public String[] getExtendClassNames() {
-    return JavaClassReferenceProvider.EXTEND_CLASS_NAMES.getValue(getOptions());
+    List<String> result = getSuperClasses();
+    return result.isEmpty() ? null : ArrayUtil.toStringArray(result);
+  }
+
+  @NotNull
+  public List<String> getSuperClasses() {
+    List<String> values = JavaClassReferenceProvider.SUPER_CLASSES.getValue(getOptions());
+    return values == null ? Collections.emptyList() : values;
   }
 
   @NotNull
@@ -387,12 +396,11 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     final int startOffset = myJavaClassReferenceSet.getReference(0).getRangeInElement().getStartOffset();
     final String qName = elementText.substring(startOffset, endOffset);
     if (!qName.contains(".")) {
-      final String defaultPackage = JavaClassReferenceProvider.DEFAULT_PACKAGE.getValue(getOptions());
-      if (StringUtil.isNotEmpty(defaultPackage)) {
-        final JavaResolveResult resolveResult = advancedResolveInner(psiElement, defaultPackage + "." + qName, containingFile);
-        if (resolveResult != JavaResolveResult.EMPTY) {
-          return resolveResult;
-        }
+      JavaResolveResult viaImports = JBIterable.from(JavaClassReferenceProvider.IMPORTS.getValue(getOptions()))
+        .map(o -> o == null ? JavaResolveResult.EMPTY : advancedResolveInner(psiElement, o + "." + qName, containingFile))
+        .find(o -> o != JavaResolveResult.EMPTY);
+      if (viaImports != null) {
+        return viaImports;
       }
     }
     return advancedResolveInner(psiElement, qName, containingFile);

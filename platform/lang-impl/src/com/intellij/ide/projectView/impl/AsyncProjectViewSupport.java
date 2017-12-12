@@ -57,9 +57,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.util.ui.UIUtil.putClientProperty;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
@@ -85,7 +83,7 @@ class AsyncProjectViewSupport {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        updateAll();
+        updateAll(null);
       }
     });
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
@@ -122,7 +120,7 @@ class AsyncProjectViewSupport {
 
       @Override
       protected void addSubtreeToUpdateByRoot() {
-        updateAll();
+        updateAll(null);
       }
 
       @Override
@@ -189,9 +187,9 @@ class AsyncProjectViewSupport {
     }
   }
 
-  public void updateAll() {
+  public void updateAll(Runnable onDone) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    myStructureTreeModel.invalidate();
+    myStructureTreeModel.invalidate(onDone == null ? null : () -> myAsyncTreeModel.onValidThread(onDone));
   }
 
   public void update(@NotNull TreePath path, boolean structure) {
@@ -297,10 +295,6 @@ class AsyncProjectViewSupport {
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
     tree.setModel(model);
-    putClientProperty(tree, VISIT, visitor -> model.accept(visitor, true));
-    Disposer.register(model, () -> {
-      putClientProperty(tree, VISIT, null);
-      tree.setModel(null);
-    });
+    Disposer.register(model, () -> tree.setModel(null));
   }
 }

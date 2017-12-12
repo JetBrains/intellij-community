@@ -1,3 +1,0 @@
-include 'Edu-Python'
-include "educational-core"
-project(":educational-core").projectDir = new File(rootDir, "../educational-core")

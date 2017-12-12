@@ -76,6 +76,8 @@ public abstract class AbstractExternalSystemLocalSettings {
   private final AtomicReference<ExternalProjectsViewState> myExternalProjectsViewState = new AtomicReference<>(
     new ExternalProjectsViewState()
   );
+  private final AtomicReference<Map<String/* external project config path */, SyncType>> myProjectSyncType =
+    new AtomicReference<>(ContainerUtilRt.<String, SyncType>newHashMap());
 
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final Project         myProject;
@@ -122,6 +124,15 @@ public abstract class AbstractExternalSystemLocalSettings {
 
     for (Iterator<Map.Entry<String, ExternalProjectBuildClasspathPojo>> it = myProjectBuildClasspath.get().entrySet().iterator(); it.hasNext(); ) {
       Map.Entry<String, ExternalProjectBuildClasspathPojo> entry = it.next();
+      if (linkedProjectPathsToForget.contains(entry.getKey())
+          || linkedProjectPathsToForget.contains(ExternalSystemApiUtil.getRootProjectPath(entry.getKey(), myExternalSystemId, myProject)))
+      {
+        it.remove();
+      }
+    }
+
+    for (Iterator<Map.Entry<String, SyncType>> it = myProjectSyncType.get().entrySet().iterator(); it.hasNext(); ) {
+      Map.Entry<String, SyncType> entry = it.next();
       if (linkedProjectPathsToForget.contains(entry.getKey())
           || linkedProjectPathsToForget.contains(ExternalSystemApiUtil.getRootProjectPath(entry.getKey(), myExternalSystemId, myProject)))
       {
@@ -200,6 +211,16 @@ public abstract class AbstractExternalSystemLocalSettings {
     myExternalProjectsViewState.set(externalProjectsViewState);
   }
 
+  @NotNull
+  public Map<String, SyncType> getProjectSyncType() {
+    return myProjectSyncType.get();
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  public void setProjectSyncType(@NotNull Map<String, SyncType> projectSyncType) {
+    // Required for IJ serialization.
+    myProjectSyncType.set(projectSyncType);
+  }
   public void fillState(@NotNull State state) {
     if (PRESERVE_EXPAND_STATE) {
       state.tasksExpandState = myExpandStates.get();
@@ -213,6 +234,7 @@ public abstract class AbstractExternalSystemLocalSettings {
     state.modificationStamps = myExternalConfigModificationStamps.get();
     state.projectBuildClasspath = myProjectBuildClasspath.get();
     state.externalProjectsViewState = myExternalProjectsViewState.get();
+    state.projectSyncType = myProjectSyncType.get();
   }
 
   public void loadState(@NotNull State state) {
@@ -221,6 +243,7 @@ public abstract class AbstractExternalSystemLocalSettings {
     setIfNotNull(myAvailableTasks, state.availableTasks);
     setIfNotNull(myExternalConfigModificationStamps, state.modificationStamps);
     setIfNotNull(myProjectBuildClasspath, state.projectBuildClasspath);
+    setIfNotNull(myProjectSyncType, state.projectSyncType);
     myExternalProjectsViewState.set(state.externalProjectsViewState);
     if (state.recentTasks != null) {
       List<ExternalTaskExecutionInfo> recentTasks = myRecentTasks.get();
@@ -281,5 +304,10 @@ public abstract class AbstractExternalSystemLocalSettings {
       = ContainerUtilRt.newHashMap();
     public Map<String/* linked project path */, ExternalProjectBuildClasspathPojo> projectBuildClasspath = ContainerUtilRt.newHashMap();
     public ExternalProjectsViewState externalProjectsViewState;
+    public Map<String/* linked project path */, SyncType> projectSyncType = ContainerUtilRt.newHashMap();
+  }
+
+  public enum SyncType {
+    PREVIEW, IMPORT, RE_IMPORT
   }
 }

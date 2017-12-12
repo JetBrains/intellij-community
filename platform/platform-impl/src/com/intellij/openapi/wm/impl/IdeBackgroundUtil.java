@@ -71,6 +71,16 @@ public class IdeBackgroundUtil {
   public static final String FRAME_PROP = "idea.background.frame";
   public static final String TARGET_PROP = "idea.background.target";
 
+  public enum Fill {
+    PLAIN, SCALE, TILE
+  }
+
+  public enum Anchor {
+    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+    MIDDLE_LEFT, CENTER, MIDDLE_RIGHT,
+    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
+  }
+
   static {
     JBSwingUtilities.addGlobalCGTransform(new MyTransform());
   }
@@ -143,7 +153,7 @@ public class IdeBackgroundUtil {
     Image centerImage = url == null ? null : ImageLoader.loadFromUrl(url);
 
     if (centerImage != null) {
-      painters.addPainter(PaintersHelper.newImagePainter(centerImage, PaintersHelper.Fill.PLAIN, PaintersHelper.Place.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
+      painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
     }
     painters.addPainter(new AbstractPainter() {
       EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
@@ -161,7 +171,7 @@ public class IdeBackgroundUtil {
 
   }
 
-  @Nullable
+  @NotNull
   public static Color getIdeBackgroundColor() {
     Color result = UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
     return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(result));
@@ -170,6 +180,21 @@ public class IdeBackgroundUtil {
   public static void createTemporaryBackgroundTransform(JPanel root, String tmp, Disposable disposable) {
     PaintersHelper paintersHelper = new PaintersHelper(root);
     PaintersHelper.initWallpaperPainter(tmp, paintersHelper);
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
+      if (!UIUtil.isAncestor(root, t)) return v;
+      return MyGraphics.wrap(v, paintersHelper, t);
+    }));
+  }
+
+  public static void createTemporaryBackgroundTransform(JPanel root,
+                                                        Image image,
+                                                        Fill fill,
+                                                        Anchor anchor,
+                                                        float alpha,
+                                                        Insets insets,
+                                                        Disposable disposable) {
+    PaintersHelper paintersHelper = new PaintersHelper(root);
+    paintersHelper.addPainter(PaintersHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
     Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
       if (!UIUtil.isAncestor(root, t)) return v;
       return MyGraphics.wrap(v, paintersHelper, t);
@@ -300,21 +325,19 @@ public class IdeBackgroundUtil {
     }
 
     @Nullable
-    private Shape setTempClip(int x, int y, int width, int height, @Nullable Shape sourceShape) {
-      Shape prevClip = getClip();
-      Shape forcedClip = sourceShape != null ? sourceShape : new Rectangle(x, y, width, height);
+    private static Shape calcTempClip(@Nullable Shape prevClip, @NotNull Shape forcedClip) {
       if (prevClip == null) {
-        setClip(forcedClip);
+        return forcedClip;
       }
       else if (prevClip instanceof Rectangle2D && forcedClip instanceof Rectangle2D) {
-        setClip(((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip));
+        Rectangle2D r = ((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip);
+        return r.isEmpty() ? null : r;
       }
       else {
         Area area = new Area(prevClip);
         area.intersect(new Area(forcedClip));
-        setClip(area);
+        return area.getBounds().isEmpty() ? null : area;
       }
-      return prevClip;
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
@@ -325,12 +348,15 @@ public class IdeBackgroundUtil {
         if (!(reason instanceof BufferedImage)) return;
         if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
       }
+      Shape prevClip = getClip();
+      Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
+      if (tmpClip == null) return;
+      
       boolean preserve = preserved != null && reason instanceof Color && preserved.contains(reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-
-      Shape prevClip = setTempClip(x, y, width, height, sourceShape);
+      setClip(tmpClip);
       helper.runAllPainters(myDelegate, offsets);
       setClip(prevClip);
       if (preserve) {

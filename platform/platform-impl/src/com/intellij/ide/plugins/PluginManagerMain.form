@@ -80,7 +80,7 @@
                       </component>
                     </children>
                   </scrollpane>
-                  <grid id="a6a17" binding="myHeader" custom-create="true" layout-manager="BorderLayout" hgap="0" vgap="0">
+                  <grid id="a6a17" binding="myHeader" layout-manager="BorderLayout" hgap="0" vgap="0">
                     <constraints border-constraint="North"/>
                     <properties/>
                     <border type="empty">

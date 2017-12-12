@@ -25,6 +25,8 @@ import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,12 +44,25 @@ import java.util.Set;
 public class StructureViewCompositeModel extends StructureViewModelBase implements Disposable {
   private final StructureViewComposite.StructureViewDescriptor[] myViews;
 
-  public StructureViewCompositeModel(PsiFile file, StructureViewComposite.StructureViewDescriptor[] views) {
-    super(file, createRootNode(file, views));
+  public StructureViewCompositeModel(@NotNull PsiFile file,
+                                     @Nullable FileEditor fileEditor,
+                                     @NotNull StructureViewComposite.StructureViewDescriptor[] views) {
+    super(file, EditorUtil.getEditorEx(fileEditor), createRootNode(file, views));
     myViews = views;
   }
 
-  private static StructureViewTreeElement createRootNode(final PsiFile file, final StructureViewComposite.StructureViewDescriptor[] views) {
+  @Override
+  public Object getCurrentEditorElement() {
+    for (StructureViewComposite.StructureViewDescriptor view : myViews) {
+      Object element = view.structureView.getTreeModel().getCurrentEditorElement();
+      if (element != null) return element;
+    }
+    return null;
+  }
+
+  @NotNull
+  private static StructureViewTreeElement createRootNode(@NotNull PsiFile file, 
+                                                         @NotNull StructureViewComposite.StructureViewDescriptor[] views) {
     return new StructureViewTreeElement() {
       @Override
       public Object getValue() {

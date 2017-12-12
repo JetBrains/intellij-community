@@ -422,11 +422,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 
+  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
+                                                       final boolean debuggerInServerMode,
+                                                       int transport, final String debugPort,
+                                                       boolean checkValidity) throws ExecutionException {
+    return createDebugParameters(parameters, debuggerInServerMode, transport, debugPort, checkValidity, true);
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,
-                                                       boolean checkValidity)
+                                                       boolean checkValidity,
+                                                       boolean addAsyncDebuggerAgent)
     throws ExecutionException {
     if (checkValidity) {
       checkTargetJPDAInstalled(parameters);
@@ -467,7 +475,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
 
-      addDebuggerAgent(parameters);
+      if (addAsyncDebuggerAgent) {
+        addDebuggerAgent(parameters);
+      }
 
       final Sdk jdk = parameters.getJdk();
       final boolean forceClassicVM = shouldForceClassicVM(jdk);

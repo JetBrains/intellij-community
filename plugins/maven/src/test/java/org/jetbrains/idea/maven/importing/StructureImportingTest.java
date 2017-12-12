@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -690,6 +691,33 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     assertModules("project");
     assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForModule());
+  }
+
+  public void testLanguageLevelX() {
+    boolean oldValue = Registry.is(LanguageLevel.EXPERIMENTAL_KEY);
+    try {
+      Registry.get(LanguageLevel.EXPERIMENTAL_KEY).setValue(true);
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+                    "<build>" +
+                    "  <plugins>" +
+                    "    <plugin>" +
+                    "      <groupId>org.apache.maven.plugins</groupId>" +
+                    "      <artifactId>maven-compiler-plugin</artifactId>" +
+                    "      <configuration>" +
+                    "        <source>99</source>" +
+                    "      </configuration>" +
+                    "    </plugin>" +
+                    "  </plugins>" +
+                    "</build>");
+
+      assertModules("project");
+      assertEquals(LanguageLevel.JDK_X, getLanguageLevelForModule());
+    }
+    finally {
+      Registry.get(LanguageLevel.EXPERIMENTAL_KEY).setValue(oldValue);
+    }
   }
 
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() {

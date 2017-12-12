@@ -10,6 +10,7 @@
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
+    <applicationService serviceImplementation="com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList"/>
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogSharedSettings"/>
 
     <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsProjectLog"/>

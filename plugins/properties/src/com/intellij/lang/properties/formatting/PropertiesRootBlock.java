@@ -15,8 +15,11 @@
  */
 package com.intellij.lang.properties.formatting;
 
-import com.intellij.formatting.*;
+import com.intellij.formatting.Alignment;
+import com.intellij.formatting.Block;
+import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.parsing.PropertiesTokenTypes;
 import com.intellij.lang.properties.parsing.PropertyListStubElementType;
 import com.intellij.lang.properties.parsing.PropertyStubElementType;
@@ -88,7 +91,9 @@ public class PropertiesRootBlock extends AbstractBlock {
         collector.add(new PropertyBlock(node, null));
       }
       if (PropertiesTokenTypes.KEY_VALUE_SEPARATOR.equals(node.getElementType())) {
-        collector.add(new PropertyBlock(node, mySettings.ALIGN_GROUP_FIELD_DECLARATIONS ? mySeparatorAlignment : null));
+        collector.add(new PropertyBlock(node, mySettings.getCommonSettings(PropertiesLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS
+                                              ? mySeparatorAlignment
+                                              : null));
       }
       if (node instanceof PropertyValueImpl) {
         collector.add(new PropertyBlock(node, null));

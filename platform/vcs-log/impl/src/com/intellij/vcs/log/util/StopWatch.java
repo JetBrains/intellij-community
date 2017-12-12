@@ -91,9 +91,12 @@ public class StopWatch {
         result += quotient + (msec == 0 ? "" : "." + String.format(M_SEC_FORMAT, msec)) + UNIT_NAMES[i];
       }
       else {
-        result += quotient + UNIT_NAMES[i] + " ";
-        if (remainder == 0 && msec != 0) {
-          result += "0." + String.format(M_SEC_FORMAT, msec) + UNIT_NAMES[0];
+        result += quotient + UNIT_NAMES[i];
+        if (remainder != 0 || msec != 0) {
+          result += " ";
+          if (remainder == 0) {
+            result += "0." + String.format(M_SEC_FORMAT, msec) + UNIT_NAMES[0];
+          }
         }
       }
     }

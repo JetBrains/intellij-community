@@ -16,7 +16,6 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -24,6 +23,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -46,9 +46,7 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -61,8 +59,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -150,6 +146,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         return super.getCellRenderer(row, column);
       }
     };
+    EditSourceOnDoubleClickHandler.install(treeTable);
+    EditSourceOnEnterKeyHandler.install(treeTable, null);
 
     TreeTableTree tree = treeTable.getTree();
     final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
@@ -569,7 +567,11 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
   private void updateTimeColumnWidth(String text, boolean force) {
     int timeColumnWidth = new JLabel(text, SwingConstants.RIGHT).getPreferredSize().width;
-    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth) {
+    if (myTimeColumnWidth > timeColumnWidth) {
+      timeColumnWidth = myTimeColumnWidth;
+    }
+
+    if (force || myTimeColumn.getMaxWidth() < timeColumnWidth || myTimeColumn.getWidth() < timeColumnWidth) {
       updateTimeColumnWidth(timeColumnWidth);
     }
   }
@@ -633,19 +635,20 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       AnAction[] consoleActions = myConsole.createConsoleActions();
       consoleComponent.setFocusable(true);
       final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT | SideBorder.TOP),
+      consoleComponent.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT),
                                                     new SideBorder(editorBackground, SideBorder.LEFT)));
       myPanel.add(consoleComponent, BorderLayout.CENTER);
       final ActionToolbar toolbar = ActionManager.getInstance()
         .createActionToolbar("BuildResults", new DefaultActionGroup(consoleActions), false);
       myPanel.add(toolbar.getComponent(), BorderLayout.EAST);
       myPanel.setVisible(false);
-      tree.addTreeSelectionListener(new TreeSelectionListener() {
-        @Override
-        public void valueChanged(TreeSelectionEvent e) {
-          TreePath path = tree.getSelectionPath();
-          setNode(path != null ? (DefaultMutableTreeNode)path.getLastPathComponent() : null);
+      tree.addTreeSelectionListener(e -> {
+        TreePath path = e.getPath();
+        if (path == null || !e.isAddedPath()) {
+          return;
         }
+        TreePath selectionPath = tree.getSelectionPath();
+        setNode(selectionPath != null ? (DefaultMutableTreeNode)selectionPath.getLastPathComponent() : null);
       });
 
       Disposer.register(threeComponentsSplitter, myConsole);
@@ -666,7 +669,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
           text = failure.getError().getMessage();
         }
         if (text == null) continue;
-        printDetails((FailureImpl)failure, text);
+        printDetails(failure, text);
         hasChanged = true;
         if (iterator.hasNext()) {
           myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -686,7 +689,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    public void printDetails(FailureImpl failure, String text) {
+    public void printDetails(Failure failure, String text) {
       String content = StringUtil.convertLineSeparators(text);
       while (true) {
         Matcher tagMatcher = TAG_PATTERN.matcher(content);
@@ -705,11 +708,10 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             myConsole.printHyperlink(linkText, new HyperlinkInfo() {
               @Override
               public void navigate(Project project) {
-                NotificationData notificationData = failure.getNotificationData();
-                if (notificationData != null) {
-                  notificationData.getListener().hyperlinkUpdate(
-                    notificationData.getNotification(),
-                    IJSwingUtilities.createHyperlinkEvent(href, myConsole.getComponent()));
+                Notification notification = failure.getNotification();
+                if (notification != null && notification.getListener() != null) {
+                  notification.getListener().hyperlinkUpdate(
+                    notification, IJSwingUtilities.createHyperlinkEvent(href, myConsole.getComponent()));
                 }
               }
             });

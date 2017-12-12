@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.Weigher;
@@ -84,7 +85,8 @@ public final class CompletionServiceImpl extends CompletionService {
                                              @NotNull final CompletionContributor contributor) {
     final PsiElement position = parameters.getPosition();
     final int offset = parameters.getOffset();
-    assert position.getTextRange().containsOffset(offset) : position;
+    TextRange range = position.getTextRange();
+    assert range.containsOffset(offset) : position + "; " + offset + " not in " + range;
     //noinspection deprecation
     final String prefix = CompletionData.findPrefixStatic(position, offset);
     CamelHumpMatcher matcher = new CamelHumpMatcher(prefix);

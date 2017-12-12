@@ -105,6 +105,9 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   }
 
   protected void closeInput() {
+    if (myTask instanceof UserDataHolder) {
+      ((UserDataHolder)myTask).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
+    }
     StreamUtil.closeStream(myProcessInput);
     myProcessInput = null;
   }

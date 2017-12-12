@@ -26,13 +26,17 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Range;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicTreeUI;
@@ -42,6 +46,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -51,6 +56,13 @@ public final class TreeUtil {
   private static final JBIterable<Integer> NUMBERS = JBIterable.generate(0, i -> i + 1);
 
   private TreeUtil() {}
+
+  @NotNull
+  public static JBTreeTraverser<Object> treeTraverser(@NotNull JTree tree) {
+    TreeModel model = tree.getModel();
+    Object root = model.getRoot();
+    return JBTreeTraverser.from(node -> nodeChildren(node, model)).withRoot(root);
+  }
 
   @NotNull
   public static JBTreeTraverser<TreePath> treePathTraverser(@NotNull JTree tree) {
@@ -66,6 +78,17 @@ public final class TreeUtil {
   public static JBIterable<Object> nodeChildren(@Nullable Object node, @NotNull TreeModel model) {
     int count = model.getChildCount(node);
     return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> model.getChild(node, index));
+  }
+
+  @NotNull
+  public static JBTreeTraverser<TreeNode> treeNodeTraverser(@Nullable TreeNode treeNode) {
+    return JBTreeTraverser.<TreeNode>from(node -> nodeChildren(node)).withRoot(treeNode);
+  }
+  
+  @NotNull
+  public static JBIterable<TreeNode> nodeChildren(@Nullable TreeNode treeNode) {
+    int count = treeNode == null ? 0 : treeNode.getChildCount();
+    return count == 0 ? JBIterable.empty() : NUMBERS.take(count).map(index -> treeNode.getChildAt(index));
   }
 
   @NotNull
@@ -324,24 +347,16 @@ public final class TreeUtil {
     }
   }
 
-  /** @deprecated use TreeUtil#treePathTraverser() */
+  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
   @Deprecated
   public static boolean traverse(@NotNull TreeNode node, @NotNull Traverse traverse) {
-    final int childCount = node.getChildCount();
-    for (int i = 0; i < childCount; i++){
-      if (!traverse(node.getChildAt(i), traverse)) return false;
-    }
-    return traverse.accept(node);
+    return treeNodeTraverser(node).traverse(TreeTraversal.POST_ORDER_DFS).processEach(traverse::accept);
   }
 
-  /** @deprecated use TreeUtil#treePathTraverser() */
+  /** @deprecated use TreeUtil#treeTraverser() or TreeUtil#treeNodeTraverser() directly */
   @Deprecated
-  public static boolean traverseDepth(@NotNull final TreeNode node, @NotNull final Traverse traverse) {
-    if (!traverse.accept(node)) return false;
-    final int childCount = node.getChildCount();
-    for (int i = 0; i < childCount; i++)
-      if (!traverseDepth(node.getChildAt(i), traverse)) return false;
-    return true;
+  public static boolean traverseDepth(@NotNull TreeNode node, @NotNull Traverse traverse) {
+    return treeNodeTraverser(node).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(traverse::accept);
   }
 
   public static void selectPaths(@NotNull JTree tree, @NotNull Collection<TreePath> paths) {
@@ -791,28 +806,59 @@ public final class TreeUtil {
   }
 
   /**
+   * Expands all nodes in the specified tree and runs the specified task on done.
+   *
+   * @param tree   a tree, which nodes should be expanded
+   * @param onDone a task to run after expanding nodes
+   */
+  public static void expandAll(@NotNull JTree tree, @NotNull Runnable onDone) {
+    promiseExpandAll(tree).processed(path -> onDone.run());
+  }
+
+  /**
+   * Promises to expand all nodes in the specified tree.
+   *
+   * @param tree a tree, which nodes should be expanded
+   */
+  @NotNull
+  public static Promise<TreePath> promiseExpandAll(@NotNull JTree tree) {
+    return promiseExpand(tree, Integer.MAX_VALUE);
+  }
+
+  /**
    * Expands n levels of the tree counting from the root
    * @param tree to expand nodes of
    * @param levels depths of the expantion
    */
   public static void expand(@NotNull JTree tree, int levels) {
-    Object root = tree.getModel().getRoot();
-    if (root == null) return;
-    expand(tree, new TreePath(root), levels);
+    promiseExpand(tree, levels);
   }
 
-  private static boolean expand(@NotNull JTree tree, @NotNull TreePath path, int levels) {
-    if (levels == 0) return false;
-    tree.expandPath(path);
-    TreeNode node = (TreeNode)path.getLastPathComponent();
-    Enumeration children = node.children();
+  /**
+   * Expands some nodes in the specified tree and runs the specified task on done.
+   *
+   * @param tree   a tree, which nodes should be expanded
+   * @param depth  a depth starting from the root node
+   * @param onDone a task to run after expanding nodes
+   */
+  public static void expand(@NotNull JTree tree, int depth, @NotNull Runnable onDone) {
+    promiseExpand(tree, depth).processed(path -> onDone.run());
+  }
 
-    boolean isReady = true;
-    while (children.hasMoreElements()) {
-      if (!expand(tree, path.pathByAddingChild(children.nextElement()) , levels - 1))
-        isReady = false;
-    }
-    return isReady;
+  /**
+   * Promises to expand some nodes in the specified tree.
+   *
+   * @param tree  a tree, which nodes should be expanded
+   * @param depth a depth starting from the root node
+   */
+  @NotNull
+  public static Promise<TreePath> promiseExpand(@NotNull JTree tree, int depth) {
+    return promiseAccept(tree, path -> {
+      int count = path.getPathCount();
+      if (count > depth) return TreeVisitor.Action.SKIP_SIBLINGS;
+      tree.expandPath(path);
+      return TreeVisitor.Action.CONTINUE;
+    });
   }
 
   @NotNull
@@ -1048,5 +1094,85 @@ public final class TreeUtil {
   @NotNull
   public static Comparator<TreePath> getDisplayOrderComparator(@NotNull final JTree tree) {
     return Comparator.comparingInt(tree::getRowForPath);
+  }
+
+  /**
+   * Processes nodes in the specified tree.
+   *
+   * @param tree     a tree, which nodes should be processed
+   * @param visitor  a visitor that controls processing of tree nodes
+   * @param consumer a path consumer called on done
+   */
+  public static void accept(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+    promiseAccept(tree, visitor).processed(path -> consumer.accept(path));
+  }
+
+  /**
+   * Promises to process nodes in the specified tree.
+   *
+   * @param tree    a tree, which nodes should be processed
+   * @param visitor a visitor that controls processing of tree nodes
+   */
+  @NotNull
+  public static Promise<TreePath> promiseAccept(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+    TreeModel model = tree.getModel();
+    if (model instanceof TreeVisitor.Acceptor) {
+      TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
+      return acceptor.accept(visitor);
+    }
+    if (model == null) {
+      return Promises.rejectedPromise();
+    }
+    Object root = model.getRoot();
+    if (root == null) {
+      return Promises.resolvedPromise();
+    }
+    TreePath path = new TreePath(root);
+    switch (visitor.visit(path)) {
+      case INTERRUPT:
+        return Promises.resolvedPromise(path); // root path is found
+      case CONTINUE:
+        break; // visit children
+      default:
+        return Promises.resolvedPromise(); // skip children
+    }
+    ArrayDeque<ArrayDeque<TreePath>> stack = new ArrayDeque<>();
+    stack.push(children(model, path));
+    while (path != null) {
+      ArrayDeque<TreePath> siblings = stack.peek();
+      if (siblings == null) {
+        return Promises.resolvedPromise(); // nothing to process
+      }
+      TreePath next = siblings.poll();
+      if (next == null) {
+        assert siblings == stack.poll();
+        path = path.getParentPath();
+      }
+      else {
+        switch (visitor.visit(next)) {
+          case INTERRUPT:
+            return Promises.resolvedPromise(next); // path is found
+          case CONTINUE:
+            path = next;
+            stack.push(children(model, path));
+            break;
+          case SKIP_SIBLINGS:
+            siblings.clear();
+            break;
+          case SKIP_CHILDREN:
+            break;
+        }
+      }
+    }
+    assert stack.isEmpty();
+    return Promises.resolvedPromise();
+  }
+
+  private static ArrayDeque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
+    Object object = path.getLastPathComponent();
+    int count = model.getChildCount(object);
+    ArrayDeque<TreePath> deque = new ArrayDeque<>(count);
+    for (int i = 0; i < count; i++) deque.add(path.pathByAddingChild(model.getChild(object, i)));
+    return deque;
   }
 }

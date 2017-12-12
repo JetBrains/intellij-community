@@ -40,9 +40,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
-
+  
   private JTextField myKeepBlankLines;
   private JComboBox myWrapAttributes;
   private JCheckBox myAlignAttributes;
@@ -71,7 +72,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JBCheckBox myEnforceQuotesBox;
   private ComboBox myBeforeFirstAttributeCombo;
   private ComboBox myAfterLastAttributeCombo;
+  private JPanel mySettingsPanel;
   private RightMarginForm myRightMarginForm;
+  private final List<HtmlCodeStylePanelExtension.HtmlPanelCustomizer> myPanelCustomizers;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -105,6 +108,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
     addPanelToWatch(myPanel);
+
+    myPanelCustomizers = HtmlCodeStylePanelExtension.getCustomizers();
+    myPanelCustomizers.forEach(customizer -> customizer.customizeSettingsPanel(mySettingsPanel));
   }
 
   @Override
@@ -160,6 +166,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myBeforeFirstAttributeCombo.getSelectedItem();
     settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myAfterLastAttributeCombo.getSelectedItem();
     myRightMarginForm.apply(rootSettings);
+
+    myPanelCustomizers.forEach(el -> el.apply(rootSettings));
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -198,6 +206,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
     myBeforeFirstAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
     myAfterLastAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
+
+    myPanelCustomizers.forEach(el -> el.reset(rootSettings));
   }
 
   @Override
@@ -279,8 +289,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return myRightMarginForm.isModified(rootSettings) ||
-           myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
+    if (myRightMarginForm.isModified(rootSettings) || myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES) return true;
+    
+    return myPanelCustomizers.stream().anyMatch(el -> el.isModified(rootSettings));
   }
 
   @Override

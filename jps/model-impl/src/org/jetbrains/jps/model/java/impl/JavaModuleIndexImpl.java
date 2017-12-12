@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -131,5 +132,10 @@ public class JavaModuleIndexImpl extends JpsElementBase<JavaModuleIndexImpl> imp
       mapping.put(key, NULL_PATH.equals(path) ? null : new File(path));
     }
     return new JavaModuleIndexImpl(mapping);
+  }
+
+  @TestOnly
+  public void dropCache() {
+    myMapping.clear();
   }
 }

@@ -34,6 +34,8 @@ import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -205,8 +207,9 @@ public class GitChangeProvider implements ChangeProvider {
         FilePath filePath = VcsUtil.getFilePath(vf);
         if (myProcessedPaths.contains(filePath)) continue;
 
-        final VirtualFile root = myVcsManager.getVcsRootFor(vf);
-        if (root == null) continue;
+        GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(vf);
+        if (repository == null) continue;
+        VirtualFile root = repository.getRoot();
 
 
         GitRevisionNumber beforeRevisionNumber = baseRevisions.get(root);

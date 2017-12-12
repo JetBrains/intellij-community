@@ -26,6 +26,6 @@
     <orderEntry type="module" module-name="xml-psi-impl" />
     <orderEntry type="module" module-name="python-community-ide-resources" />
     <orderEntry type="module" module-name="python-community" />
-    <orderEntry type="module" module-name="educational-core" />
+    <orderEntry type="library" name="markdownj" level="project" />
   </component>
 </module>

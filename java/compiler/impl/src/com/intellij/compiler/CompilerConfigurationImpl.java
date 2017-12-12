@@ -693,7 +693,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   }
 
 
-  public void readExternal(Element parentNode)  {
+  public void readExternal(@NotNull Element parentNode)  {
     myState = XmlSerializer.deserialize(parentNode, State.class);
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
@@ -746,7 +746,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     catch (MalformedPatternException e) {
       LOG.error(e);
     }
-
 
     myModuleProcessorProfiles.clear();
     myProcessorsProfilesMap = null;

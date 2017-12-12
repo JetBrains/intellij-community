@@ -16,21 +16,20 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.RoundedActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBGradientPaint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -168,49 +167,10 @@ public class PluginHeaderPanel {
   }
 
   private void createUIComponents() {
-    myInstallButton = new JButton() {
-      private final int TOP_BOTTOM_BORDER = JBUI.scale(2);
-      private final int LEFT_RIGHT_BORDER = JBUI.scale(8);
-      private final int H_GAP = JBUI.scale(4);
-      private final int ICON_SIZE = getIcon().getIconWidth();
+    myInstallButton = new RoundedActionButton(2, 8) {
 
-      {
-        setOpaque(false);
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      }
-      @Override
-      public Dimension getPreferredSize() {
-        final FontMetrics metrics = getFontMetrics(getFont());
-        final int textWidth = metrics.stringWidth(getText());
-        final int width = LEFT_RIGHT_BORDER + ICON_SIZE + H_GAP + textWidth + LEFT_RIGHT_BORDER;
-        final int height = TOP_BOTTOM_BORDER + Math.max(ICON_SIZE, metrics.getHeight()) + TOP_BOTTOM_BORDER;
-        return new Dimension(width, height);
-      }
-
-      @Override
-      public void paint(Graphics g2) {
-        final Graphics2D g = (Graphics2D)g2;
-        final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-        final int w = g.getClipBounds().width;
-        final int h = g.getClipBounds().height;
-
-        int borderArc = JBUI.scale(7);
-        int border = JBUI.scale(1);
-        int buttonArc = borderArc - border;
-
-        g.setPaint(getBackgroundBorderPaint());
-        g.fillRoundRect(0, 0, w, h, borderArc, borderArc);
-
-        g.setPaint(getBackgroundPaint());
-        g.fillRoundRect(border, border, w - 2 * border, h - 2 * border, buttonArc, buttonArc);
-
-        g.setColor(getButtonForeground());
-        g.drawString(getText(), LEFT_RIGHT_BORDER + ICON_SIZE + H_GAP, getBaseline(w, h));
-        getIcon().paintIcon(this, g, LEFT_RIGHT_BORDER, (getHeight() - getIcon().getIconHeight()) / 2);
-        config.restore();
-      }
-
-      private Color getButtonForeground() {
+      @NotNull
+      protected Color getButtonForeground() {
         switch (myActionId) {
           case UPDATE: return new JBColor(Gray._240, Gray._210);
           case INSTALL: return new JBColor(Gray._240, Gray._210);
@@ -221,7 +181,8 @@ public class PluginHeaderPanel {
         return new JBColor(Gray._80, Gray._60);
       }
 
-      private Paint getBackgroundPaint() {
+      @NotNull
+      protected Paint getBackgroundPaint() {
         switch (myActionId) {
           case UPDATE: return new JBGradientPaint(this,
                                                   new JBColor(0x629ee1, 0x629ee1),
@@ -237,7 +198,8 @@ public class PluginHeaderPanel {
         return Gray._238;
       }
 
-      private Paint getBackgroundBorderPaint() {
+      @NotNull
+      protected Paint getBackgroundBorderPaint() {
         switch (myActionId) {
           case UPDATE: return new JBColor(new Color(0xa6b4cd), Gray._85);
           case INSTALL: return new JBColor(new Color(201, 223, 201), Gray._70);

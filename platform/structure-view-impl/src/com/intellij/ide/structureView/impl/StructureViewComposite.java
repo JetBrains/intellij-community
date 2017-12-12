@@ -20,6 +20,7 @@ import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,14 +29,15 @@ import javax.swing.*;
  * @author cdr
  */
 public class StructureViewComposite implements StructureView {
-  @NotNull private final StructureViewDescriptor[] myStructureViews;
-  @NotNull private final StructureViewDescriptor mySelectedViewDescriptor;
+  private final StructureViewDescriptor[] myStructureViews;
+  private final StructureViewDescriptor mySelectedViewDescriptor;
+
   public static class StructureViewDescriptor {
     public final String title;
     public final StructureView structureView;
     public final Icon icon;
 
-    public StructureViewDescriptor(final String title, @NotNull StructureView structureView, Icon icon) {
+    public StructureViewDescriptor(String title, @NotNull StructureView structureView, Icon icon) {
       this.title = title;
       this.structureView = structureView;
       this.icon = icon;
@@ -47,7 +49,7 @@ public class StructureViewComposite implements StructureView {
     for (StructureViewDescriptor descriptor : views) {
       Disposer.register(this, descriptor.structureView);
     }
-    mySelectedViewDescriptor = views[0];
+    mySelectedViewDescriptor = ObjectUtils.notNull(views[0]);
   }
 
   public StructureView getSelectedStructureView() {
@@ -107,5 +109,4 @@ public class StructureViewComposite implements StructureView {
   public StructureViewModel getTreeModel() {
     return getSelectedStructureView().getTreeModel();
   }
-
 }

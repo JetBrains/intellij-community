@@ -34,6 +34,11 @@ public class NextVariableAction extends EditorAction {
     setInjectedContext(true);
   }
 
+  @Override
+  public boolean startInTransaction() {
+    return true;
+  }
+
   private static class Handler extends EditorActionHandler {
 
     @Override

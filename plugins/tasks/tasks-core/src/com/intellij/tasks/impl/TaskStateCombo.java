@@ -9,7 +9,6 @@ import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskUiUtil.ComboBoxUpdater;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Function;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,8 +35,8 @@ public abstract class TaskStateCombo extends JPanel {
     return repository != null && repository.isSupported(TaskRepository.STATE_UPDATING);
   }
 
-  private final Project myProject;
-  private final Task myTask;
+  private Project myProject;
+  private Task myTask;
   private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
 
   // For designer only
@@ -119,6 +118,14 @@ public abstract class TaskStateCombo extends JPanel {
   @NotNull
   public JComboBox getComboBox() {
     return myKindCombo.getComboBox();
+  }
+
+  public void setProject(@NotNull Project project) {
+    myProject = project;
+  }
+
+  public void setTask(@NotNull Task task) {
+    myTask = task;
   }
 
   /**

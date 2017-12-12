@@ -311,18 +311,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Override
   public boolean isModified() {
     if (myHasDeletedItems) return true;
-    final boolean[] modified = new boolean[1];
-    TreeUtil.traverseDepth(myRoot, node -> {
-      if (node instanceof MyNode) {
-        final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
-        if (isInitialized(configurable) && configurable.isModified()) {
-          modified[0] = true;
-          return false;
-        }
-      }
-      return true;
-    });
-    return modified[0];
+    return TreeUtil.treeNodeTraverser(myRoot)
+      .traverse()
+      .filterMap(node -> node instanceof MyNode? ((MyNode)node).getConfigurable() : null)
+      .filter(configurable -> isInitialized(configurable) && configurable.isModified())
+      .isNotEmpty();
   }
 
   protected boolean isInitialized(final NamedConfigurable configurable) {
@@ -332,24 +325,11 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   @Override
   public void apply() throws ConfigurationException {
     processRemovedItems();
-    final ConfigurationException[] ex = new ConfigurationException[1];
-    TreeUtil.traverse(myRoot, node -> {
-      if (node instanceof MyNode) {
-        try {
-          final NamedConfigurable configurable = ((MyNode)node).getConfigurable();
-          if (isInitialized(configurable) && configurable.isModified()) {
-            configurable.apply();
-          }
-        }
-        catch (ConfigurationException e) {
-          ex[0] = e;
-          return false;
-        }
+    for (MyNode node : TreeUtil.treeNodeTraverser(myRoot).filter(MyNode.class)) {
+      NamedConfigurable configurable = node.getConfigurable();
+      if (isInitialized(configurable) && configurable.isModified()) {
+        configurable.apply();
       }
-      return true;
-    });
-    if (ex[0] != null) {
-      throw ex[0];
     }
     myHasDeletedItems = false;
   }
@@ -449,16 +429,12 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected void clearChildren() {
-    TreeUtil.traverseDepth(myRoot, node -> {
-      if (node instanceof MyNode) {
-        final MyNode treeNode = (MyNode)node;
-        treeNode.getConfigurable().disposeUIResources();
-        if (!(treeNode instanceof MyRootNode)) {
-          treeNode.setUserObject(null);
-        }
+    for (MyNode node : TreeUtil.treeNodeTraverser(myRoot).filter(MyNode.class)) {
+      node.getConfigurable().disposeUIResources();
+      if (!(node instanceof MyRootNode)) {
+        node.setUserObject(null);
       }
-      return true;
-    });
+    }
     myRoot.removeAllChildren();
   }
 
@@ -639,15 +615,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
-    final MyNode[] nodeToSelect = new MyNode[1];
-    TreeUtil.traverseDepth(root, node -> {
-      if (condition.value(((MyNode)node).getConfigurable())) {
-        nodeToSelect[0] = (MyNode)node;
-        return false;
-      }
-      return true;
-    });
-    return nodeToSelect[0];
+    return TreeUtil.treeNodeTraverser(root)
+      .filter(MyNode.class)
+      .filter(node -> condition.value(node.getConfigurable()))
+      .first();
   }
 
   protected void setSelectedNode(@Nullable MyNode node) {

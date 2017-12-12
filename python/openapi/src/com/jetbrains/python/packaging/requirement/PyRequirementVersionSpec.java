@@ -129,8 +129,12 @@ public class PyRequirementVersionSpec {
       case COMPATIBLE:
         Objects.requireNonNull(myParsedVersion);
 
-        return new PyRequirementVersionSpec(PyRequirementRelation.GTE, myParsedVersion).matches(version) &&
-               new PyRequirementVersionSpec(PyRequirementRelation.EQ, toEqPartOfCompatibleRelation(myParsedVersion)).matches(version);
+        return new PyRequirementVersionSpec(PyRequirementRelation.GTE, myParsedVersion)
+                 .withVersionComparator(myVersionComparator)
+                 .matches(version) &&
+               new PyRequirementVersionSpec(PyRequirementRelation.EQ, toEqPartOfCompatibleRelation(myParsedVersion))
+                 .withVersionComparator(myVersionComparator)
+                 .matches(version);
       case STR_EQ:
         return version.equals(myVersion);
       default:
@@ -159,10 +163,10 @@ public class PyRequirementVersionSpec {
   @NotNull
   private static PyRequirementVersion toEqPartOfCompatibleRelation(@NotNull PyRequirementVersion version) {
     final String release = version.getRelease();
-    final int lastPoint = release.lastIndexOf(".");
+    final int lastPoint = release.lastIndexOf('.');
 
     if (lastPoint == -1) return version;
 
-    return new PyRequirementVersion(version.getEpoch(), release.substring(0, lastPoint) + "*", null, null, null, null);
+    return new PyRequirementVersion(version.getEpoch(), release.substring(0, lastPoint + 1) + "*", null, null, null, null);
   }
 }

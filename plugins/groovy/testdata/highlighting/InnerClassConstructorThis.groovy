@@ -16,6 +16,6 @@ int <info descr="null">i</info>
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-<info descr="null">B</info>() { <info descr="null">this</info>.<info descr="null">i</info> = 42 }
+<info descr="null">B</info>() { this.<info descr="null">i</info> = 42 }
 }
 }

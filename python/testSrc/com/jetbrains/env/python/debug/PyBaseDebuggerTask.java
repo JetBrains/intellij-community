@@ -44,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -347,6 +346,19 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     }
 
     return result.first;
+  }
+
+  protected void consoleExec(String command) throws PyDebuggerException {
+    // We can't wait for result with a callback, because console just prints it to output
+    myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
+      @Override
+      public void ok(String value) {
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+      }
+    });
   }
 
   protected Variable eval(String name) throws InterruptedException {

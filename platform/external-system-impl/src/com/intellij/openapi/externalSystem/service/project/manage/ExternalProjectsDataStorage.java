@@ -19,10 +19,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
-import com.intellij.openapi.externalSystem.model.Key;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
@@ -93,7 +90,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myExternalRootProjects.clear();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
-      if(projectInfos.isEmpty()) {
+      if(projectInfos.isEmpty() && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
         markDirtyAllExternalProjects();
       }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {

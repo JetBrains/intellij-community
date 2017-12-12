@@ -18,7 +18,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -26,6 +25,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.DomCustomAnnotationChecker;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
@@ -146,21 +146,17 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
     final XmlElement valueElement = DomUtil.getValueElement(element);
     if (valueElement == null) return Collections.emptyList();
 
-    final PsiReference[] references = ourProvider.getReferencesByElement(valueElement, new ProcessingContext());
-    for (PsiReference reference : references) {
-      if (reference instanceof JavaClassReference) {
-        final PsiReferenceProvider psiReferenceProvider = ((JavaClassReference)reference).getProvider();
-        final String[] value = psiReferenceProvider instanceof JavaClassReferenceProvider ? JavaClassReferenceProvider.EXTEND_CLASS_NAMES
-          .getValue(((JavaClassReferenceProvider)psiReferenceProvider).getOptions()) : null;
-        if (value != null && value.length != 0) {
-          for (String className : value) {
-            final List<DomElementProblemDescriptor> problemDescriptors =
-              checkExtendClass(element, ((PsiClass)valueObject), className, false, false, true, false, true, true, holder);
-            if (!problemDescriptors.isEmpty()) {
-              return problemDescriptors;
-            }
-          }
-        }
+    PsiReference[] references = ourProvider.getReferencesByElement(valueElement, new ProcessingContext());
+    JBIterable<String> superClasses = JBIterable.of(references)
+      .filter(JavaClassReference.class)
+      .unique(o -> o.getProvider())
+      .flatten(o -> o.getSuperClasses())
+      .unique();
+    for (String className : superClasses) {
+      final List<DomElementProblemDescriptor> problemDescriptors =
+        checkExtendClass(element, ((PsiClass)valueObject), className, false, false, true, false, true, true, holder);
+      if (!problemDescriptors.isEmpty()) {
+        return problemDescriptors;
       }
     }
     return Collections.emptyList();

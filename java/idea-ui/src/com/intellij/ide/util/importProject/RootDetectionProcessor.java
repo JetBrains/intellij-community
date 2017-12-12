@@ -25,11 +25,13 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -92,7 +94,14 @@ public class RootDetectionProcessor {
     for (int i = 0; i < myDetectors.length; i++) {
       myDetectedRoots[i] = new ArrayList<>();
     }
-    processRecursively(myBaseDir, enabledDetectors);
+
+    Set<File> parentDirectories = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    File parent = myBaseDir.getParentFile();
+    while (parent != null) {
+      parentDirectories.add(parent);
+      parent = parent.getParentFile();
+    }
+    processRecursively(myBaseDir, enabledDetectors, parentDirectories);
 
     final Map<ProjectStructureDetector, List<DetectedProjectRoot>> result = new LinkedHashMap<>();
     for (int i = 0; i < myDetectors.length; i++) {
@@ -103,7 +112,7 @@ public class RootDetectionProcessor {
     return result;
   }
 
-  private List<Pair<File, Integer>> processRecursively(File dir, BitSet enabledDetectors) {
+  private List<Pair<File, Integer>> processRecursively(File dir, BitSet enabledDetectors, Set<File> parentDirectories) {
     List<Pair<File, Integer>> parentsToSkip = new SmartList<>();
 
     if (myTypeManager.isFileIgnored(dir.getName())) {
@@ -116,55 +125,71 @@ public class RootDetectionProcessor {
       myProgressIndicator.setText2(dir.getPath());
     }
 
-    File[] children = dir.listFiles();
-
-    if (children == null) {
-      children = ArrayUtil.EMPTY_FILE_ARRAY;
-    }
-
-    BitSet enabledForChildren = enabledDetectors;
-    for (int i = 0, detectorsLength = myDetectors.length; i < detectorsLength; i++) {
-      if (!enabledDetectors.get(i)) continue;
-
-      final ProjectStructureDetector.DirectoryProcessingResult result = myDetectors[i].detectRoots(dir, children, myBaseDir, myDetectedRoots[i]);
-
-      if (!result.isProcessChildren()) {
-        if (enabledForChildren == enabledDetectors) {
-          enabledForChildren = new BitSet();
-          enabledForChildren.or(enabledDetectors);
+    if (FileSystemUtil.isSymLink(dir)) {
+      try {
+        if (parentDirectories.contains(dir.getCanonicalFile())) {
+          return parentsToSkip;
         }
-        enabledForChildren.set(i, false);
       }
-
-      final File parentToSkip = result.getParentToSkip();
-      if (parentToSkip != null && !FileUtil.filesEqual(parentToSkip, dir)) {
-        parentsToSkip.add(Pair.create(parentToSkip, i));
+      catch (IOException ignored) {
       }
     }
 
-    if (!enabledForChildren.isEmpty()) {
-      for (File child : children) {
-        if (child.isDirectory()) {
-          final List<Pair<File, Integer>> toSkip = processRecursively(child, enabledForChildren);
-          if (!toSkip.isEmpty()) {
-            if (enabledForChildren == enabledDetectors) {
-              enabledForChildren = new BitSet();
-              enabledForChildren.or(enabledDetectors);
-            }
-            for (Pair<File, Integer> pair : toSkip) {
-              enabledForChildren.set(pair.getSecond(), false);
-              if (!FileUtil.filesEqual(pair.getFirst(), dir)) {
-                parentsToSkip.add(pair);
+    try {
+      parentDirectories.add(dir);
+      File[] children = dir.listFiles();
+
+      if (children == null) {
+        children = ArrayUtil.EMPTY_FILE_ARRAY;
+      }
+
+      BitSet enabledForChildren = enabledDetectors;
+      for (int i = 0, detectorsLength = myDetectors.length; i < detectorsLength; i++) {
+        if (!enabledDetectors.get(i)) continue;
+
+        final ProjectStructureDetector.DirectoryProcessingResult result = myDetectors[i].detectRoots(dir, children, myBaseDir, myDetectedRoots[i]);
+
+        if (!result.isProcessChildren()) {
+          if (enabledForChildren == enabledDetectors) {
+            enabledForChildren = new BitSet();
+            enabledForChildren.or(enabledDetectors);
+          }
+          enabledForChildren.set(i, false);
+        }
+
+        final File parentToSkip = result.getParentToSkip();
+        if (parentToSkip != null && !FileUtil.filesEqual(parentToSkip, dir)) {
+          parentsToSkip.add(Pair.create(parentToSkip, i));
+        }
+      }
+
+      if (!enabledForChildren.isEmpty()) {
+        for (File child : children) {
+          if (child.isDirectory()) {
+            final List<Pair<File, Integer>> toSkip = processRecursively(child, enabledForChildren, parentDirectories);
+            if (!toSkip.isEmpty()) {
+              if (enabledForChildren == enabledDetectors) {
+                enabledForChildren = new BitSet();
+                enabledForChildren.or(enabledDetectors);
               }
-            }
-            if (enabledForChildren.isEmpty()) {
-              break;
+              for (Pair<File, Integer> pair : toSkip) {
+                enabledForChildren.set(pair.getSecond(), false);
+                if (!FileUtil.filesEqual(pair.getFirst(), dir)) {
+                  parentsToSkip.add(pair);
+                }
+              }
+              if (enabledForChildren.isEmpty()) {
+                break;
+              }
             }
           }
         }
       }
+      return parentsToSkip;
     }
-    return parentsToSkip;
+    finally {
+      parentDirectories.remove(dir);
+    }
   }
 
   private static void removeIncompatibleRoots(DetectedProjectRoot root, Map<File, DetectedRootData> rootData) {

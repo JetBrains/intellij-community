@@ -1546,7 +1546,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       return;
     }
     // if tool window isn't visible or only order number is changed then just remove/add stripe button
-    if (!info.isVisible() || anchor == info.getAnchor() || info.isFloating()) {
+    if (!info.isVisible() || anchor == info.getAnchor() || info.isFloating() || info.isWindowed()) {
       appendRemoveButtonCmd(id, commandsList);
       myLayout.setAnchor(id, anchor, order);
       // update infos for all window. Actually we have to update only infos affected by
@@ -1605,10 +1605,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   void setSideToolAndAnchor(@NotNull String id, @NotNull ToolWindowAnchor anchor, int order, boolean isSide) {
+    hideToolWindow(id, false);
+    myLayout.setSplitMode(id, isSide);
     setToolWindowAnchor(id, anchor, order);
-    List<FinalizableCommand> commandList = new ArrayList<>();
-    setSplitModeImpl(id, isSide, commandList);
-    execute(commandList);
+    activateToolWindow(id, false, false);
   }
 
   private void setSplitModeImpl(@NotNull String id, final boolean isSplit, @NotNull List<FinalizableCommand> commandList) {

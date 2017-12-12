@@ -22,12 +22,14 @@ public class IdeFatalErrorsIcon extends JLabel {
 
   private final LayeredIcon myIcon;
   private final ActionListener myListener;
+  private final boolean myEnableBlink;
 
   private Future myBlinker;
   private State myState;
 
-  public IdeFatalErrorsIcon(ActionListener aListener) {
+  public IdeFatalErrorsIcon(ActionListener aListener, boolean enableBlink) {
     myListener = aListener;
+    myEnableBlink = enableBlink;
     setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
 
     new ClickListener() {
@@ -93,7 +95,7 @@ public class IdeFatalErrorsIcon extends JLabel {
   }
 
     private synchronized void startBlinker() {
-    if (myBlinker != null) {
+    if (myBlinker != null || !myEnableBlink) {
       return;
     }
 

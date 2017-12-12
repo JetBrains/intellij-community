@@ -460,9 +460,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       @Nullable
       static Context extract(@NotNull PsiMethodCallExpression orElseCall, @NotNull PsiExpression orElseArgument) {
         if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-        PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(orElseCall, PsiLocalVariable.class, true);
+        PsiLocalVariable returnVar = tryCast(orElseCall.getParent(), PsiLocalVariable.class);
         if (returnVar == null) return null;
-        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, false);
+        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
         if(statement == null) return null;
         PsiStatement nextStatement =
           tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);

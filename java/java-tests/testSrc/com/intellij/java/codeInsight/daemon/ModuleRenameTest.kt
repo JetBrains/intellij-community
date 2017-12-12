@@ -1,36 +1,37 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.refactoring.rename.RenameProcessor
-import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
+import org.assertj.core.api.Assertions.assertThat
 
 class ModuleRenameTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
-    addFile("module-info.java", "module M2 { }", M2)
+  fun testRename() {
+    val file = addFile("module-info.java", "module M2 { }", M2)
+    myFixture.configureByText("module-info.java", "module M { requires M2; }")
+    RenameProcessor(project, findModule("M2"), "M2.bis", false, false).run()
+    myFixture.checkResult("module M { requires M2.bis; }")
+    assertEquals("module M2.bis { }", fileText(file))
   }
 
-  fun testRename() {
-    myFixture.configureByText("module-info.java", "module M { requires M2; }")
-    val module = JavaFileManager.getInstance(project).findModules("M2", GlobalSearchScope.allScope(project)).first()
-    RenameProcessor(project, module, "M2.bis", false, false).run()
-    myFixture.checkResult("module M { requires M2.bis; }")
+  fun testRenameIndirectReference() {
+    val file = addFile("module-info.java", "module M2 { exports pkg.m2 to M.main; opens pkg.m2.impl to M.main; }", M2)
+    myFixture.configureByText("module-info.java", "module M.main { requires M2; }")
+    RenameProcessor(project, findModule("M.main"), "M.other", false, false).run()
+    myFixture.checkResult("module M.other { requires M2; }")
+    assertEquals("module M2 { exports pkg.m2 to M.other; opens pkg.m2.impl to M.other; }", fileText(file))
   }
+
+  private fun findModule(name: String): PsiJavaModule {
+    val modules = JavaFileManager.getInstance(project).findModules(name, GlobalSearchScope.projectScope(project))
+    assertThat(modules).hasSize(1)
+    return modules.first()
+  }
+
+  private fun fileText(file: VirtualFile) = myFixture.psiManager.findFile(file)!!.text
 }

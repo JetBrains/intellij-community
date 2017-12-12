@@ -30,6 +30,13 @@ public class Java9Test extends IncrementalTestCase {
     return super.shouldRunTest();
   }
 
+  public void testModuleInfoAdded() {
+    // expected result: the whole target is recompiled after the module-info.java file was newly added
+    // because necessary 'require' directives may be missing from the newly added module-info file
+    final BuildResult buildResult = doTest();
+    buildResult.assertSuccessful();
+  }
+
   public void testRemoveModuleRequires() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();

@@ -254,7 +254,6 @@ class ReloadClassesWorker {
 
     public RedefineProcessor(VirtualMachineProxyImpl virtualMachineProxy) {
       myVirtualMachineProxy = virtualMachineProxy;
-      myVirtualMachineProxy.clearCaches(); // to have up-to-date classByName cache
     }
 
     public void processClass(String qualifiedName, File file) throws Throwable {

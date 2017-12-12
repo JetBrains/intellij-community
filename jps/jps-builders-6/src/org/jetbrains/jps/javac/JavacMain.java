@@ -40,12 +40,16 @@ public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
   
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.asList(
+  private static final Set<String> FILTERED_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
-  ));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.asList(
+  )));
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
-  ));
+  )));
+  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Collections.singletonList(
+    "-encoding"
+  )));
+
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
 
   public static boolean compile(Collection<String> options,
@@ -91,8 +95,13 @@ public class JavacMain {
       // i.e. getJavaFileObjectsFromFiles()
       // This way the manager will be properly initialized. Namely, the encoding will be set correctly
       // Note that due to lazy initialization in various components inside javac, handleOption() should be called before setLocation() and others
+      // update: for some options their repetitive initialization would be considered as error: e.g. '--patch-module',
+      //  therefore we do the trick only for those options that may influence FileManager's state initialization before passing it to getTask() method
       for (Iterator<String> iterator = _options.iterator(); iterator.hasNext(); ) {
-        fileManager.handleOption(iterator.next(), iterator);
+        final String option = iterator.next();
+        if (FILE_MANAGER_EARLY_INIT_OPTIONS.contains(option)) {
+          fileManager.handleOption(option, iterator);
+        }
       }
 
       try {

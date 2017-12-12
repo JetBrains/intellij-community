@@ -147,9 +147,10 @@ class TeamcityServiceMessages(object):
         if not comparison_failure:
             self.message('testFailed', name=testName, message=message, details=details, flowId=flowId)
         else:
+            diff_message = u"\n{0} != {1}\n".format(comparison_failure.actual, comparison_failure.expected)
             self.message('testFailed',
                          name=testName,
-                         message=message,
+                         message=message + diff_message,
                          details=details,
                          flowId=flowId,
                          type="comparisonFailure",

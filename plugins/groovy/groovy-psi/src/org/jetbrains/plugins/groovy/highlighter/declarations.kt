@@ -14,8 +14,6 @@ import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil.isReassigned
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter.*
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kSUPER
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kTHIS
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -84,15 +82,20 @@ private fun getReferenceHighlightingAttribute(reference: GrReferenceElement<*>):
 
   val resolveResult = reference.advancedResolve()
   val resolved = resolveResult.element ?: return null
+
+  val nameElement = reference.referenceNameElement
+  if (nameElement != null && nameElement.isThisOrSuper()) {
+    if (resolved is PsiMethod && resolved.isConstructor) {
+      return null // don't highlight this() or super()
+    }
+    else if (resolved is PsiClass) {
+      return if (shouldBeErased(nameElement)) KEYWORD else null
+    }
+  }
+
   return if (resolved is PsiMethod) {
     if (resolved.isConstructor) {
-      val referenceNodeType = reference.referenceNameElement?.node?.elementType
-      if (referenceNodeType == kTHIS || referenceNodeType == kSUPER) {
-        null // don't highlight this() or super()
-      }
-      else {
-        CONSTRUCTOR_CALL
-      }
+      CONSTRUCTOR_CALL
     }
     else {
       val isStatic = resolved.hasModifierProperty(PsiModifier.STATIC)

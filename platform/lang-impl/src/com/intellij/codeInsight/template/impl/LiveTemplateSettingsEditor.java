@@ -421,6 +421,13 @@ public class LiveTemplateSettingsEditor extends JPanel {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
           context.setEnabled(type, node.isChecked());
+          if (node.isChecked()) {
+            for (TemplateContextType inheritor : hierarchy.get(type)) {
+              if (context.getOwnValue(inheritor) == null) {
+                context.setEnabled(inheritor, false);
+              }
+            }
+          }
         }
         onChange.run();
 

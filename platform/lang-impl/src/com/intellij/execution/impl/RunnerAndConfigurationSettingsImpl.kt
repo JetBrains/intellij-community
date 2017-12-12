@@ -118,7 +118,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
-      result = "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
+      result = getUniqueIDFor(configuration)
       uniqueId = result
     }
     return result
@@ -502,6 +502,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         return null
       }
     }
+  }
+  companion object {
+    @JvmStatic
+    fun getUniqueIDFor(configuration: RunConfiguration) =
+      "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
   }
 }
 

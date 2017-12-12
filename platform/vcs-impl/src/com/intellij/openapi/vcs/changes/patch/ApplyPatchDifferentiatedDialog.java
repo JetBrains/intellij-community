@@ -394,7 +394,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (author != null) {
         myChangeListChooser.setData(new ChangeListData(author));
       }
-      List<FilePatch> filePatches = myReader != null ? ContainerUtil.newArrayList(myReader.getAllPatches()) : Collections.emptyList();
+      List<FilePatch> filePatches = ContainerUtil.newArrayList();
+      if (myReader != null) {
+        filePatches.addAll(myReader.getAllPatches());
+      }
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
       }
@@ -692,7 +695,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myChangesTreeList.expandAll();
     }
     myChangesTreeList.repaint();
-    if ((!doInitCheck) && patchesToSelect != null) {
+    if (!doInitCheck) {
       final List<AbstractFilePatchInProgress.PatchChange> toSelect =
         new ArrayList<>(patchesToSelect.size());
       for (AbstractFilePatchInProgress.PatchChange change : changes) {

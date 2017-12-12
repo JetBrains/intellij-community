@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -26,12 +12,15 @@ import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -117,7 +106,14 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
           if (key == null || !profile.isToolEnabled(key, myFile)) continue; //test should register corresponding paired tool for annotator to run
         }
 
-        Object collectedInfo = editor != null ? annotator.collectInformation(psiRoot, editor, errorFound) : annotator.collectInformation(psiRoot);
+        Object collectedInfo = null;
+        try {
+          collectedInfo = editor != null ? annotator.collectInformation(psiRoot, editor, errorFound) : annotator.collectInformation(psiRoot);
+        }
+        catch (Throwable t) {
+          process(t, annotator, psiRoot);
+        }
+
         advanceProgress(1);
         if (collectedInfo != null) {
           myAnnotationData.add(new MyData(annotator, psiRoot, collectedInfo));
@@ -188,7 +184,12 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private void applyRelevant() {
     for (MyData data : myAnnotationData) {
       if (data.annotationResult != null && data.psiRoot != null && data.psiRoot.isValid()) {
-        data.annotator.apply(data.psiRoot, data.annotationResult, myAnnotationHolder);
+        try {
+          data.annotator.apply(data.psiRoot, data.annotationResult, myAnnotationHolder);
+        }
+        catch (Throwable t) {
+          process(t, data.annotator, data.psiRoot);
+        }
       }
     }
   }
@@ -209,8 +210,21 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     DumbService dumbService = DumbService.getInstance(myProject);
     for (MyData data : myAnnotationData) {
       if (!dumbService.isDumb() || DumbService.isDumbAware(data.annotator)) {
-        data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+        try {
+          data.annotationResult = data.annotator.doAnnotate(data.collectedInfo);
+        }
+        catch (Throwable t) {
+          process(t, data.annotator, data.psiRoot);
+        }
       }
     }
+  }
+
+  private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {
+    if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
+    VirtualFile file = root.getVirtualFile();
+    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + ")",
+              new Attachment("root_path.txt", file != null ? file.getPath() : root.getName()),
+              new Attachment("stack", t));
   }
 }

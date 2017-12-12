@@ -155,17 +155,26 @@ public class IndexDataGetter {
       if (!myHasRenames) {
         for (VcsLogPathsIndex.ChangeData data : changes) {
           if (data == null) continue;
-          if (data.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM) || data.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_TO)) {
+          if (data.isRename()) {
             myHasRenames = true;
             break;
           }
         }
       }
 
-      Map<Integer, VcsLogPathsIndex.ChangeData> parentToChangesMap = ContainerUtil.newHashMap();
+      Map<Integer, VcsLogPathsIndex.ChangeData> parentToChangesMap = pathToChanges.get(path);
+      if (parentToChangesMap == null) parentToChangesMap = ContainerUtil.newHashMap();
       if (!parents.isEmpty()) {
         LOG.assertTrue(parents.size() == changes.size());
         for (int i = 0; i < changes.size(); i++) {
+          VcsLogPathsIndex.ChangeData existing = parentToChangesMap.get(parents.get(i));
+          if (existing != null) {
+            // since we occasionally reindex commits with different rename limit
+            // it can happen that we have several change data for a file in a commit
+            // one with rename, other without
+            // we want to keep a renamed-one, so throwing the other one out
+            if (existing.isRename()) continue;
+          }
           parentToChangesMap.put(parents.get(i), changes.get(i));
         }
       }

@@ -275,7 +275,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       myHelpers = helpers;
 
       myInfo = FileInfoManager.getFileAdditionalInfo(file);
-      myIcon = file.getFileType().getIcon();
+      myIcon = file.getIcon(0);
 
       myFile = file;
     }
@@ -290,7 +290,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     @Override
     public Object getObject() {
       return myFile;
-    }                                                                   
+    }
 
     @Override
     @NotNull

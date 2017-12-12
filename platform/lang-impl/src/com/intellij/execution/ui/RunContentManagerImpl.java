@@ -89,6 +89,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
+    dashboardManager.updateDashboard(true);
     initToolWindow(null, dashboardManager.getToolWindowId(), dashboardManager.getToolWindowIcon(),
                    dashboardManager.getDashboardContentManager());
 

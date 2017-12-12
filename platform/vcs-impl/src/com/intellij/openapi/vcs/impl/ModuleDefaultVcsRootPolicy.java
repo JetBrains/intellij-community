@@ -110,7 +110,7 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
   @Override
   @Nullable
   public Object getMatchContext(final VirtualFile file) {
-    return ModuleUtilCore.findModuleForFile(file, myProject);
+    return ReadAction.compute(() -> myProject.isDisposed() ? null : ModuleUtilCore.findModuleForFile(file, myProject));
   }
 
   @Override

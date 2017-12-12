@@ -43,6 +43,7 @@ import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.actions.ShowVarsAction;
+import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,9 +67,8 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   @Override
   public ExecutionResult execute(Executor executor,
                                  PythonProcessStarter processStarter,
-                                 final CommandLinePatcher... patchers) throws ExecutionException {
+                                 CommandLinePatcher... patchers) throws ExecutionException {
     Project project = myConfig.getProject();
-    assert myConfig.getSdk() != null;
 
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
@@ -79,12 +79,36 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
           }
         }));
       }
+      else {
+        if (myConfig.isModuleMode()) {
+          patchers = ArrayUtil.append(patchers, new CommandLinePatcher() {
+            @Override
+            public void patchCommandLine(GeneralCommandLine commandLine) {
+              ParametersList parametersList = commandLine.getParametersList();
+              boolean isModule = PyDebugRunner.patchExeParams(parametersList);
+              if (isModule) {
+                ParamsGroup moduleParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_MODULE);
+                if (moduleParams != null) {
+                  moduleParams.addParameterAt(0, PyDebugRunner.MODULE_PARAM);
+                }
+              }
+            }
+          });
+        }
+      }
 
       Module module = myConfig.getModule();
       PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
       PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, myConfig.getSdk(), settingsProvider);
-      String workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
+      String workingDir = myConfig.getWorkingDirectory();
+      if (StringUtil.isEmptyOrSpaces(workingDir)) {
+        workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
+      }
       String[] setupFragment = PydevConsoleRunnerFactory.createSetupFragment(module, workingDir, pathMapper, settingsProvider);
+
+      if (myConfig.getSdk() == null) {
+        throw new ExecutionException("Cannot find SDK for Run configuration " + myConfig.getName());
+      }
 
       PythonScriptWithConsoleRunner runner =
         new PythonScriptWithConsoleRunner(project, myConfig.getSdk(), PyConsoleType.PYTHON, workingDir,
@@ -170,15 +194,20 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     assert exeOptions != null;
     exeOptions.addParametersString(myConfig.getInterpreterOptions());
 
-    if (myConfig.isModuleMode()) {
-      exeOptions.addParameter("-m");
-    }
-
     ParamsGroup scriptParameters = parametersList.getParamsGroup(GROUP_SCRIPT);
     assert scriptParameters != null;
 
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      scriptParameters.addParameter(myConfig.getScriptName());
+    if (myConfig.isModuleMode()) {
+      ParamsGroup moduleParameters = parametersList.getParamsGroup(GROUP_MODULE);
+      assert moduleParameters != null;
+
+      moduleParameters.addParameter("-m");
+      moduleParameters.addParameters(myConfig.getScriptName());
+    }
+    else {
+      if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
+        scriptParameters.addParameter(myConfig.getScriptName());
+      }
     }
 
     final String scriptOptionsString = myConfig.getScriptParameters();

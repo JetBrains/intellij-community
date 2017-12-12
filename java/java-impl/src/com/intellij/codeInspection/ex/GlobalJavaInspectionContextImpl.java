@@ -33,6 +33,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
@@ -118,6 +119,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
                                    CommonBundle.message("title.error"), Messages.getErrorIcon());
         final Sdk projectJdk = ProjectSettingsService.getInstance(project).chooseAndSetSdk();
         if (projectJdk == null) return false;
+        DumbService.getInstance(project).completeJustSubmittedTasks();
       }
     }
     else {

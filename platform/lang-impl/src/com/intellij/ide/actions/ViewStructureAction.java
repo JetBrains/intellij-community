@@ -124,7 +124,7 @@ public class ViewStructureAction extends DumbAwareAction {
     if (structureView instanceof StructureViewComposite && virtualFile != null) {
       StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)structureView).getStructureViews();
       PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-      treeModel = new StructureViewCompositeModel(psiFile, views);
+      treeModel = new StructureViewCompositeModel(psiFile, fileEditor, views);
       Disposer.register(structureView, (Disposable)treeModel);
     }
     else {

@@ -89,6 +89,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_DEBUGGER = "Debugger";
   public static final String GROUP_PROFILER = "Profiler";
   public static final String GROUP_COVERAGE = "Coverage";
+  /**
+   * This group is applied for Python module execution. In this case it
+   * contains two parameters: {@code -m} and the module name.
+   * <p>
+   * For Python script execution this group must be empty.
+   * <p>
+   * Note that this option <cite>terminates option list</cite> so this group
+   * must go <b>after</b> other Python interpreter options. At the same time it
+   * must go <b>before</b> <cite>arguments passed to program in
+   * sys.argv[1:]</cite>, which are stored in {@link #GROUP_SCRIPT}.
+   */
+  public static final String GROUP_MODULE = "Module";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
@@ -314,6 +326,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_DEBUGGER);
     params.addParamsGroup(GROUP_PROFILER);
     params.addParamsGroup(GROUP_COVERAGE);
+    params.addParamsGroup(GROUP_MODULE);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 

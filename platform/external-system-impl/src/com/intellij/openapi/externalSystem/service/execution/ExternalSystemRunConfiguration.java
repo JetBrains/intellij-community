@@ -46,6 +46,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -159,7 +160,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
+                    new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
     JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
@@ -251,7 +253,8 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       String jvmAgentSetup;
       if (myDebugPort > 0) {
         jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
-      } else {
+      }
+      else {
         ParametersList parametersList = extensionsJP.getVMParametersList();
         final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
         if (data != null) {
@@ -302,7 +305,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       List<BuildOutputParser> buildOutputParsers = new SmartList<>();
       for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
-        if(task.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
+        if (task.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
           buildOutputParsers.addAll(outputParserProvider.getBuildOutputParsers(task));
         }
       }
@@ -312,14 +315,15 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         progressListener == null || buildOutputParsers.isEmpty() ? null :
         new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
 
-      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+      JavaRunConfigurationExtensionManager.getInstance()
+        .attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
         final String greeting;
         if (mySettings.getTaskNames().size() > 1) {
           greeting = ExternalSystemBundle
-            .message("run.text.starting.multiple.task", startDateTime, mySettings.toString()) + "\n";
+                       .message("run.text.starting.multiple.task", startDateTime, mySettings.toString()) + "\n";
         }
         else {
           greeting =
@@ -368,8 +372,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
             if (progressListener != null) {
+              FailureResultImpl failureResult =
+                ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
               progressListener.onEvent(new FinishBuildEventImpl(
-                id, null, System.currentTimeMillis(), "failed", new FailureResultImpl(e)));
+                id, null, System.currentTimeMillis(), "failed", failureResult));
             }
             String exceptionMessage = ExceptionUtil.getMessage(e);
             String text = exceptionMessage == null ? e.toString() : exceptionMessage;
@@ -481,7 +487,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
     if (consoleViewImpl != null) {
       consoleViewImpl.performWhenNoDeferredOutput(() -> {
-        if(!ApplicationManager.getApplication().isDispatchThread()) return;
+        if (!ApplicationManager.getApplication().isDispatchThread()) return;
 
         Document document = consoleViewImpl.getEditor().getDocument();
         int line = isGreeting ? 0 : document.getLineCount() - 2;

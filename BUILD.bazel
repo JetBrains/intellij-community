@@ -1933,6 +1933,7 @@ iml_module(
         "//tools/idea:testFramework[module, test]",
         "//tools/idea:dom-openapi[module]",
         "//tools/idea:xml[module]",
+        "//tools/idea/.idea/libraries:Guava",
     ],
 )
 

@@ -64,6 +64,9 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
     if (myProject == null) return null;
     LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
     String indent = lineIndentProvider != null ? lineIndentProvider.getLineIndent(myProject, editor, language, offset) : null;
+    if (indent == LineIndentProvider.DO_NOT_ADJUST) {
+      return allowDocCommit ? null : indent;
+    }
     //noinspection deprecation
     return indent != null ? indent : (allowDocCommit ? getLineIndent(editor.getDocument(), offset) : null);
   }

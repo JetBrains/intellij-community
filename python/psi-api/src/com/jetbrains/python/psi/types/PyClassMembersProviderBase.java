@@ -15,6 +15,10 @@ import java.util.Collections;
  * @author yole
  */
 public class PyClassMembersProviderBase implements PyClassMembersProvider {
+
+  /**
+   * Get members for this class type only: no need to read its ancestors since it is duty of this method client
+   */
   @NotNull
   @Override
   public Collection<PyCustomMember> getMembers(PyClassType clazz, PsiElement location, @NotNull TypeEvalContext context) {

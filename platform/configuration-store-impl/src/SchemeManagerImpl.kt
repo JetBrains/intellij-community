@@ -52,6 +52,7 @@ import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashSet
 import org.jdom.Document
 import org.jdom.Element
+import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -482,7 +483,14 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
     if (processor is LazySchemeProcessor) {
       val bytes = input.readBytes()
       lazyPreloadScheme(bytes, isOldSchemeNaming) { name, parser ->
-        val attributeProvider = Function<String, String?> { parser.getAttributeValue(null, it) }
+        val attributeProvider = Function<String, String?> {
+          if (parser.eventType == XmlPullParser.START_TAG) {
+            parser.getAttributeValue(null, it)
+          }
+          else {
+            null
+          }
+        }
         val schemeName = name ?: processor.getSchemeKey(attributeProvider, fileNameWithoutExtension)
         if (schemeName == null) {
           throw RuntimeException("Name is missed:\n${bytes.toString(Charsets.UTF_8)}")

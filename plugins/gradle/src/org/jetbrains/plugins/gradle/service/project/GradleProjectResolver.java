@@ -92,6 +92,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
     Key.create("gradleArtifactsMap");
 
+  private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
+
   // This constructor is called by external system API, see AbstractExternalSystemFacadeImpl class constructor.
   @SuppressWarnings("UnusedDeclaration")
   public GradleProjectResolver() {
@@ -140,9 +142,37 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     );
 
     // auto-discover buildSrc project if needed
+    File gradleUserHome = resolverContext.getUserData(GRADLE_HOME_DIR);
+    String gradleHome = gradleUserHome == null ? null : gradleUserHome.getPath();
+    GradleExecutionSettings buildSrcProjectSettings;
+    if (gradleHome != null) {
+      if (settings != null) {
+        buildSrcProjectSettings = new GradleExecutionSettings(gradleHome,
+                                                              settings.getServiceDirectory(),
+                                                              DistributionType.LOCAL,
+                                                              settings.isOfflineWork());
+        buildSrcProjectSettings.setIdeProjectPath(settings.getIdeProjectPath());
+        buildSrcProjectSettings.setJavaHome(settings.getJavaHome());
+        buildSrcProjectSettings.setResolveModulePerSourceSet(settings.isResolveModulePerSourceSet());
+        buildSrcProjectSettings.setRemoteProcessIdleTtlInMs(settings.getRemoteProcessIdleTtlInMs());
+        buildSrcProjectSettings.setVerboseProcessing(settings.isVerboseProcessing());
+        buildSrcProjectSettings.setWrapperPropertyFile(settings.getWrapperPropertyFile());
+        buildSrcProjectSettings.withArguments(settings.getArguments())
+          .withEnvironmentVariables(settings.getEnv())
+          .passParentEnvs(settings.isPassParentEnvs())
+          .withVmOptions(settings.getVmOptions());
+      }
+      else {
+        buildSrcProjectSettings = new GradleExecutionSettings(gradleHome, null, DistributionType.LOCAL, false);
+      }
+    }
+    else {
+      buildSrcProjectSettings = settings;
+    }
+
     final String buildSrcProjectPath = projectPath + "/buildSrc";
     DefaultProjectResolverContext buildSrcResolverCtx =
-      new DefaultProjectResolverContext(id, buildSrcProjectPath, settings, listener, false);
+      new DefaultProjectResolverContext(id, buildSrcProjectPath, buildSrcProjectSettings, listener, false);
     resolverContext.copyUserDataTo(buildSrcResolverCtx);
     handleBuildSrcProject(resultProjectDataNode, new ProjectConnectionDataNodeFunction(buildSrcResolverCtx, projectResolverChain, true));
     return resultProjectDataNode;
@@ -389,6 +419,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
       }
     }
+    resolverCtx.putUserData(GRADLE_HOME_DIR, gradleHomeDir);
 
     for (final Pair<DataNode<ModuleData>, IdeaModule> pair : moduleMap.values()) {
       final DataNode<ModuleData> moduleDataNode = pair.first;

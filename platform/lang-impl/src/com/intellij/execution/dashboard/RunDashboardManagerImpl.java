@@ -53,6 +53,7 @@ import javax.swing.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +72,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @NotNull private final Set<String> myTypes = ContainerUtil.newHashSet();
   @NotNull private final List<RunDashboardGrouper> myGroupers;
   @NotNull private final Condition<Content> myReuseCondition;
+  @NotNull private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
   private boolean myShowConfigurations = true;
   private float myContentProportion = DEFAULT_CONTENT_PROPORTION;
 
@@ -94,18 +96,17 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
-
-    if (isDashboardEnabled()) {
-      addRunConfigurationListener();
-    }
   }
 
   private static boolean isDashboardEnabled() {
     return Registry.is("ide.run.dashboard");
   }
 
-  private void addRunConfigurationListener() {
-    myProject.getMessageBus().connect(myProject).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
+  private void initToolWindowContentListeners() {
+    if (!myListenersInitialized.compareAndSet(false, true)) return;
+
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private volatile boolean myUpdateStarted;
 
       @Override
@@ -140,10 +141,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         updateDashboard(true);
       }
     });
-  }
-
-  private void initToolWindowContentListeners() {
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
@@ -225,8 +222,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myToolWindowContentManager.addContent(myToolWindowContent);
 
     myToolWindowContentManagerListener = new ToolWindowContentManagerListener();
-
-    initToolWindowContentListeners();
   }
 
   @Override
@@ -317,6 +312,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public void setTypes(@NotNull Set<String> types) {
     myTypes.clear();
     myTypes.addAll(types);
+    if (!myTypes.isEmpty()) {
+      initToolWindowContentListeners();
+    }
     updateDashboard(true);
   }
 
@@ -363,7 +361,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
   }
 
-  private void updateDashboard(final boolean withStructure) {
+  @Override
+  public void updateDashboard(final boolean withStructure) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
     if (toolWindowManager == null) return;
 
@@ -376,8 +375,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         boolean available = hasContent();
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
+          if (!myTypes.isEmpty() || available) {
+            toolWindow = createToolWindow(toolWindowManager, available);
+          }
           if (available) {
-            createToolWindow(toolWindowManager).show(null);
+            toolWindow.show(null);
           }
           return;
         }
@@ -395,10 +397,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
   }
 
-  private ToolWindow createToolWindow(ToolWindowManager toolWindowManager) {
+  private ToolWindow createToolWindow(ToolWindowManager toolWindowManager, boolean available) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(getToolWindowId(), true, ToolWindowAnchor.BOTTOM,
                                                                  myProject, true);
     toolWindow.setIcon(getToolWindowIcon());
+    toolWindow.setAvailable(available, null);
     createToolWindowContent(toolWindow);
     return toolWindow;
   }
@@ -495,6 +498,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   public void loadState(State state) {
     myTypes.clear();
     myTypes.addAll(state.configurationTypes);
+    if (!myTypes.isEmpty()) {
+      initToolWindowContentListeners();
+    }
     state.ruleStates.forEach(ruleState -> {
       for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {

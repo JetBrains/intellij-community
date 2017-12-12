@@ -14,6 +14,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
@@ -753,6 +754,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
   }
 
+  public void testOverloadsWithOneAndNoParameters() throws Exception {
+    configureJava("class C { void method() {} void method(int a) {} void m() { m<caret> } }");
+    complete("method(int a)");
+    checkResultWithInlays("class C { void method() {} void method(int a) {} void m() { method(<HINT text=\"a:\"/><caret>); } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { void method() {} void method(int a) {} void m() { method(); } }");
+  }
+
   public void testCodeFragment() {
     PsiExpressionCodeFragment fragment =
       JavaCodeFragmentFactory.getInstance(getProject()).createExpressionCodeFragment("System.getPro<caret>", null, null, true);
@@ -760,6 +770,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("getProperty(String key, String def)");
     checkResultWithInlays("System.getProperty(<caret>)"); // At the moment, we assure that neither hints, nor comma appear.
                                                           // Later we might make it work correctly for code fragments.
+  }
+
+  public void testVarargWithNoMandatoryArgumentsDoesNotKeepHintOnCaretOut() throws Exception {
+    configureJava("class C { int vararg(int... args){ return 0; } void m() { varar<caret> } }");
+    complete();
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<HINT text=\"args:\"/><caret>) } }");
+    home();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("<caret>class C { int vararg(int... args){ return 0; } void m() { vararg() } }");
   }
 
   public void testNoLinksInParameterJavadoc() throws Exception {
@@ -841,9 +860,9 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     selectItem(element);
   }
 
-  private void waitTillAnimationCompletes() {
+  public static void waitTillAnimationCompletes(Editor editor) {
     long deadline = System.currentTimeMillis() + 60_000;
-    while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(getEditor())) {
+    while (ParameterHintsPresentationManager.getInstance().isAnimationInProgress(editor)) {
       if (System.currentTimeMillis() > deadline) fail("Too long waiting for animation to finish");
       LockSupport.parkNanos(10_000_000);
       UIUtil.dispatchAllInvocationEvents();
@@ -857,7 +876,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   private void waitForAllAsyncStuff() throws TimeoutException {
     waitForParameterInfoUpdate();
     myFixture.doHighlighting();
-    waitTillAnimationCompletes();
+    waitTillAnimationCompletes(getEditor());
     waitForAutoPopup();
   }
 }

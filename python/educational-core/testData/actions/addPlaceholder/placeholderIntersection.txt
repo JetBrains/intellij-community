@@ -1,1 +1,0 @@
-type <placeholder>h<selection>ere</selection></placeholder>

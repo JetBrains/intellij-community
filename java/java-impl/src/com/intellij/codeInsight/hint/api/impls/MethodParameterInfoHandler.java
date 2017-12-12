@@ -201,7 +201,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
               PsiMethod chosenMethod = CompletionMemory.getChosenMethod((PsiCall)parent);
               if (chosenMethod != null) {
                 int parametersCount = chosenMethod.getParameterList().getParametersCount();
-                if (parametersCount == 1 || parametersCount == 2 && chosenMethod.isVarArgs()) return false;
+                if ((parametersCount == 1 && !chosenMethod.isVarArgs() || parametersCount == 2 && chosenMethod.isVarArgs()) && 
+                                            !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) return false;
               }
             }
           }
@@ -209,6 +210,17 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
     return true;
+  }
+
+  private static boolean overloadWithNoParametersExists(PsiMethod method, Object[] candidates) {
+    String methodName = method.getName();
+    return ContainerUtil.find(candidates, c -> {
+      if (!(c instanceof CandidateInfo)) return false;
+      PsiElement e = ((CandidateInfo)c).getElement();
+      if (!(e instanceof PsiMethod)) return false;
+      PsiMethod m = (PsiMethod)e;
+      return m.getParameterList().getParametersCount() == 0 && m.getName().equals(methodName);
+    }) != null;
   }
 
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {

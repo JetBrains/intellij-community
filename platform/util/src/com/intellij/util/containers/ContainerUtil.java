@@ -1890,6 +1890,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return newHashSet(items);
   }
 
+  public static <K, V> void putIfAbsent(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
+    if (!result.containsKey(key)) {
+      result.put(key, value);
+    }
+  }
+
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
     if (value != null) {
       result.put(key, value);

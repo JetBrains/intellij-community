@@ -27,12 +27,15 @@ def patch_unittest_diff(test_filter=None):
     old = unittest.TestCase.assertEqual
 
     def _patched_equals(self, first, second, msg=None):
-        if first != second:
+        try:
+            old(self, first, second, msg)
+            return
+        except AssertionError as native_error:
             if not test_filter or test_filter(self):
                 error = EqualsAssertionError(first, second, msg)
                 if not error.is_too_big():
                     raise error
-            old(self, first, second, msg)
+            raise native_error
 
     unittest.TestCase.assertEqual = _patched_equals
 

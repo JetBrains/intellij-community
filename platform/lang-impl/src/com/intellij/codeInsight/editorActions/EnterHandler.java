@@ -44,6 +44,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdjuster;
@@ -491,9 +492,10 @@ public class EnterHandler extends BaseEnterHandler {
       int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
       String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, language, myOffset, false);
       if (newIndent == null) return myOffset;
+      myIsIndentAdjustmentNeeded = false;
+      if (newIndent == LineIndentProvider.DO_NOT_ADJUST) return myOffset;
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);
-      myIsIndentAdjustmentNeeded = false;
       return myOffset <= indentEnd ? indentStart + newIndent.length() : myOffset + delta;
     }
 

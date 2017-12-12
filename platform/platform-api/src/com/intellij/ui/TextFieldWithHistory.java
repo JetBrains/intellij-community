@@ -24,6 +24,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class TextFieldWithHistory extends ComboBox {
   private int myHistorySize = 5;
@@ -89,6 +90,7 @@ public class TextFieldWithHistory extends ComboBox {
   public void addCurrentTextToHistory() {
     final String item = getText();
     myModel.addElement(item);
+    myModel.setSelectedItem(item);
   }
 
   public void selectText() {
@@ -153,8 +155,10 @@ public class TextFieldWithHistory extends ComboBox {
 
     @Override
     public void setSelectedItem(Object anItem) {
-      mySelectedItem = anItem;
-      fireContentsChanged();
+      if (!Objects.equals(anItem, mySelectedItem)) {
+        mySelectedItem = anItem;
+        fireContentsChanged();
+      }
     }
 
     public void fireContentsChanged() {

@@ -38,6 +38,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
@@ -206,7 +207,9 @@ public class RunInspectionAction extends GotoActionBase {
           }
           @Override
           public void actionPerformed(ActionEvent e) {
-            RunInspectionIntention.rerunInspection(getToolWrapper(), managerEx, getScope(), null);
+            AnalysisScope scope = getScope();
+            InspectionToolWrapper wrapper = getToolWrapper();
+            DumbService.getInstance(project).smartInvokeLater(() -> RunInspectionIntention.rerunInspection(wrapper, managerEx, scope, null));
             close(DialogWrapper.OK_EXIT_CODE);
           }
         });

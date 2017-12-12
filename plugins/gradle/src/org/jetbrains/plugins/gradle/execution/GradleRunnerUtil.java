@@ -21,6 +21,7 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
@@ -40,23 +41,24 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.testIntegration.TestLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.execution.test.runner.GradleUrlProvider;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Iterator;
 import java.util.List;
+
+import static com.intellij.util.io.URLUtil.SCHEME_SEPARATOR;
 
 /**
  * @author Vladislav.Soroka
@@ -179,11 +181,14 @@ public class GradleRunnerUtil {
     return null;
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   @NotNull
   public static String getTestLocationUrl(@Nullable String testName, @NotNull String fqClassName) {
     return testName == null
-           ? String.format("%s://%s::%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.CLASS_PREF, fqClassName)
-           : String.format("%s://%s::%s::%s", GradleUrlProvider.PROTOCOL_ID, GradleUrlProvider.METHOD_PREF, fqClassName, testName);
+           ? JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + fqClassName
+           : JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(fqClassName, testName);
   }
 
   public static Object getData(@NotNull Project project, @NonNls String dataId, @NotNull ExecutionInfo executionInfo) {
@@ -245,15 +250,17 @@ public class GradleRunnerUtil {
     if (descriptor instanceof TestOperationDescriptor) {
       if (DumbService.isDumb(project)) return null;
 
+      String suiteName = ((TestOperationDescriptor)descriptor).getSuiteName();
+      if (StringUtil.isNotEmpty(suiteName)) {
+        return TestLocator.getLocation(JavaTestLocator.SUITE_PROTOCOL + SCHEME_SEPARATOR + suiteName, project);
+      }
+
       final String className = ((TestOperationDescriptor)descriptor).getClassName();
       if (className == null) return null;
 
       final String methodName = ((TestOperationDescriptor)descriptor).getMethodName();
-      final String testLocationUrl = VirtualFileManager.extractPath(getTestLocationUrl(methodName, className));
-
-      final List<Location> locations = GradleUrlProvider.INSTANCE.getLocation(
-        GradleUrlProvider.PROTOCOL_ID, testLocationUrl, project, GlobalSearchScope.allScope(project));
-      return ContainerUtil.getFirstItem(locations);
+      return TestLocator.getLocation(
+        JavaTestLocator.TEST_PROTOCOL + SCHEME_SEPARATOR + StringUtil.getQualifiedName(className, methodName), project);
     }
     return getTaskLocation(project, executionInfo);
   }

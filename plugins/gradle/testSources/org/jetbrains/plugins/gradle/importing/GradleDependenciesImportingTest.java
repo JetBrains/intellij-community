@@ -454,7 +454,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
     String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
     assertEquals(1, unresolvableEntryUrls.length);
-    assertTrue(unresolvableEntryUrls[0].contains("Could not find some:unresolvable-lib:0.1"));
+    assertUnresolvedEntryUrl(unresolvableEntryUrls[0], "some:unresolvable-lib:0.1");
 
     assertModuleLibDep("project_test", depName, depJar.getUrl());
     assertModuleLibDepScope("project_test", depName, DependencyScope.COMPILE);
@@ -482,6 +482,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
       unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
       assertEquals(0, unresolvableEntryUrls.length);
     }
+  }
+
+  private static void assertUnresolvedEntryUrl(String entryUrl, String artifactNotation) {
+    assertTrue(entryUrl.contains("Could not find " + artifactNotation) || entryUrl.contains("Could not resolve " + artifactNotation));
   }
 
   @Test
@@ -1243,7 +1247,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
   }
 
-  @TargetVersions("2.0+")
+  @TargetVersions("2.5+")
   @Test
   public void testJavadocAndSourcesForDependencyWithMultipleArtifacts() throws Exception {
     createProjectSubFile("repo/depGroup/depArtifact/1.0-SNAPSHOT/ivy-1.0-SNAPSHOT.xml",

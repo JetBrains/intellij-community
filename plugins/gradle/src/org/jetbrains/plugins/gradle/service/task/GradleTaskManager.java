@@ -36,7 +36,6 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -121,8 +120,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
-        ExternalSystemException friendlyError = new GradleExecutionErrorHandler(e, projectPath, null).getUserFriendlyError();
-        throw friendlyError == null ? e : friendlyError;
+        final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
+        throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
       }
     };
     myHelper.execute(projectPath, effectiveSettings, f);

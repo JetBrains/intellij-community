@@ -321,7 +321,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (buf.length() > 0) buf.append(", ");
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType bareParamType = parameter.getType();
+        if (!bareParamType.isValid()) {
+          PsiUtil.ensureValidType(bareParamType, parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid());
+        }
+        PsiType paramType = substitutor.substitute(bareParamType);
+        PsiUtil.ensureValidType(paramType);
         final String presentableText = escapePresentableType(paramType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           result.add(new ParameterInfoImpl(i, parameter.getName(), paramType));

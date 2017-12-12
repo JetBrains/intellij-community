@@ -1,1 +1,0 @@
-print("<placeholder taskText="veryverylongtextveryverylongtextveryverylongtextveryverylongtext">1</placeholder> + <placeholder taskText="test">1</placeholder> = 2")

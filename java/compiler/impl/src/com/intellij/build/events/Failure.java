@@ -15,6 +15,8 @@
  */
 package com.intellij.build.events;
 
+import com.intellij.notification.Notification;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,13 @@ public interface Failure {
   String getDescription();
 
   @Nullable
-  Throwable getError();
+  default Throwable getError() {return null;}
 
   List<? extends Failure> getCauses();
+
+  @Nullable
+  default Notification getNotification() {return null;}
+
+  @Nullable
+  default Navigatable getNavigatable() {return null;}
 }
