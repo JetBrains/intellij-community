@@ -432,7 +432,7 @@ class Intf {
 
   void "test fix keyboard layout"() {
     assert (gotoClass('Ыекштп')[0] as PsiClass).name == 'String'
-    assert (gotoSymbol('Ыекштп')[0] as PsiClass).name == 'String'
+    assert (gotoSymbol('Ыекштп').find { it instanceof PsiClass && it.name == 'String' })
     assert (gotoFile('Ыекштп')[0] as PsiFile).name == 'String.class'
     assert (gotoFile('дфтпЫекштп')[0] as PsiFile).name == 'String.class'
   }
