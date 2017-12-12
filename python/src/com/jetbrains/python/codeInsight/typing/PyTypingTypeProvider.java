@@ -362,14 +362,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         }
       }
       else {
-        final Scope scope = ControlFlowCache.getScope(scopeOwner);
-        return StreamEx.of(scope.getNamedElements(name, false))
-          .select(PyTargetExpression.class)
-          .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
-          .nonNull()
-          .map(Ref::get)
-          .findFirst()
-          .orElse(null);
+        StreamEx<PyTargetExpression> candidates = null;
+        if (context.maySwitchToAST(target)) {
+          final Scope scope = ControlFlowCache.getScope(scopeOwner);
+          candidates = StreamEx.of(scope.getNamedElements(name, false)).select(PyTargetExpression.class);
+        }
+        // Unqualified target expression in either class or module
+        else if (scopeOwner instanceof PyFile) {
+          candidates = StreamEx.of(((PyFile)scopeOwner).getTopLevelAttributes()).filter(t -> name.equals(t.getName()));
+        }
+        else if (scopeOwner instanceof PyClass) {
+          candidates = StreamEx.of(((PyClass)scopeOwner).getClassAttributes()).filter(t -> name.equals(t.getName()));
+        }
+        if (candidates != null) {
+          return candidates
+            .map(x -> getTypeFromTargetExpressionAnnotation(x, context))
+            .nonNull()
+            .map(Ref::get)
+            .findFirst()
+            .orElse(null);
+        }
       }
     }
     return null;

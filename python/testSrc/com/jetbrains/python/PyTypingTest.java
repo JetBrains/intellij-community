@@ -729,11 +729,26 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-21864
+  public void testTopLevelVariableAnnotationAheadOfTimeInAnotherFileWithTarget() {
+    doMultiFileStubAwareTest("int",
+                             "from other import x\n" +
+                             "\n" +
+                             "expr = x");
+  }
+
   public void testLocalVariableAnnotationAheadOfTimeForTarget() {
     doTest("int",
            "x: int\n" +
            "for x in foo():\n" +
            "    expr = x\n");
+  }
+
+  // PY-21864
+  public void testTopLevelVariableAnnotationAheadOfTimeInAnotherFileForTarget() {
+    doMultiFileStubAwareTest("int",
+                             "from other import x\n" +
+                             "\n" +
+                             "expr = x");
   }
 
   // PY-21864
@@ -745,6 +760,14 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-21864
+  public void testTopLevelVariableAnnotationAheadOfTimeInAnotherFileUnpackingTarget() {
+    doMultiFileStubAwareTest("int",
+                             "from other import x\n" +
+                             "\n" +
+                             "expr = x");
+  }
+
+  // PY-21864
   public void testLocalVariableAnnotationAheadOfTimeOnlyFirstHintConsidered() {
     doTest("int",
            "x: int\n" +
@@ -752,6 +775,14 @@ public class PyTypingTest extends PyTestCase {
            "x: str\n" +
            "x = baz()\n" +
            "expr = x");
+  }
+
+  // PY-21864
+  public void testClassAttributeAnnotationAheadOfTimeInAnotherFile() {
+    doMultiFileStubAwareTest("int",
+                             "from other import C\n" +
+                             "\n" +
+                             "expr = C().attr");
   }
 
   public void testInstanceAttributeAnnotation() {
@@ -1047,9 +1078,9 @@ public class PyTypingTest extends PyTestCase {
   // PY-24729
   public void testAnnotatedInstanceAttributeInOtherFile() {
     doMultiFileStubAwareTest("int",
-                    "from other import C\n" +
-                    "\n" +
-                    "expr = C().attr");
+                             "from other import C\n" +
+                             "\n" +
+                             "expr = C().attr");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {
