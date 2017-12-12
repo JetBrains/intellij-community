@@ -236,8 +236,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       try {
         if (!caseOnlyRenames.isEmpty()) {
-          List<VcsException> exs = commitWithCaseOnlyRename(myProject, root, caseOnlyRenames, added, removed,
-                                                            messageFile, myNextCommitAuthor);
+          List<VcsException> exs = commitWithCaseOnlyRename(myProject, root, caseOnlyRenames, added, removed, messageFile);
           exceptions.addAll(exs);
         }
         else {
@@ -252,7 +251,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             if (partialOperation == PartialOperation.NONE) {
               throw ex;
             }
-            if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions, partialOperation)) {
+            if (!mergeCommit(myProject, root, added, removed, messageFile, exceptions, partialOperation)) {
               throw ex;
             }
           }
@@ -287,8 +286,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                                       @NotNull Set<Change> caseOnlyRenames,
                                                       @NotNull Set<FilePath> added,
                                                       @NotNull Set<FilePath> removed,
-                                                      @NotNull File messageFile,
-                                                      @Nullable String author) {
+                                                      @NotNull File messageFile) {
     String rootPath = root.getPath();
     LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
 
@@ -328,7 +326,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       // 4. Commit the staging area
       LOG.debug("Performing commit...");
       try {
-        commitWithoutPaths(project, root, messageFile, author);
+        commitWithoutPaths(project, root, messageFile);
       }
       catch (VcsException e) {
         return Collections.singletonList(e);
@@ -380,8 +378,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                               final Set<FilePath> added,
                               final Set<FilePath> removed,
                               final File messageFile,
-                              final String author,
-                              List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
+                              List<VcsException> exceptions,
+                              @NotNull final PartialOperation partialOperation) {
     HashSet<FilePath> realAdded = new HashSet<>();
     HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
@@ -457,7 +455,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     // perform merge commit
     try {
-      commitWithoutPaths(project, root, messageFile, author);
+      commitWithoutPaths(project, root, messageFile);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -468,13 +466,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private void commitWithoutPaths(@NotNull Project project,
                                   @NotNull VirtualFile root,
-                                  @NotNull File messageFile,
-                                  @Nullable String author) throws VcsException {
+                                  @NotNull File messageFile) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
     handler.addParameters("-F", messageFile.getAbsolutePath());
-    if (author != null) {
-      handler.addParameters("--author=" + author);
+    if (myNextCommitAuthor != null) {
+      handler.addParameters("--author=" + myNextCommitAuthor);
     }
     if (myNextCommitSignOff) {
       handler.addParameters("--signoff");
