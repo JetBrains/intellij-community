@@ -102,7 +102,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
 
-    myModule.setModuleName(getOptions().getModule());
+    final String moduleName = getOptions().getModule();
+    if (moduleName != null) {
+      myModule.setModuleName(moduleName);
+    }
   }
 
   @Override
