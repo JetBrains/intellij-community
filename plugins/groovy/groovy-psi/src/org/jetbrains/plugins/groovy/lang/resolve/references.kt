@@ -8,7 +8,7 @@ import com.intellij.psi.PsiClass
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
 
-fun referenceArray(left: GroovyPolyVariantReference?, right: GroovyPolyVariantReference?): Array<out GroovyPolyVariantReference> {
+fun referenceArray(right: GroovyPolyVariantReference?, left: GroovyPolyVariantReference?): Array<out GroovyPolyVariantReference> {
   return if (left == null) {
     if (right == null) {
       GroovyPolyVariantReference.EMPTY_ARRAY

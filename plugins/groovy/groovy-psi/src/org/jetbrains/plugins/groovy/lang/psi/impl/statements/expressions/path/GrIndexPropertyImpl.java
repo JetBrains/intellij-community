@@ -37,7 +37,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   );
 
   private final NotNullLazyValue<GroovyPolyVariantReference[]> myReferences = AtomicNotNullLazyValue.createValue(
-    () -> referenceArray(getLValueReference(), getRValueReference())
+    () -> referenceArray(getRValueReference(), getLValueReference())
   );
 
   @Nullable
