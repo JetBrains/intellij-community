@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection.ex
 
-package com.intellij.codeInspection.ex;
+import com.intellij.codeInspection.InspectionProfile
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.Property
+import java.util.*
 
-import com.intellij.codeInspection.InspectionProfile;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Property;
-
-import java.util.HashMap;
-import java.util.Map;
-
-public class VisibleTreeStateComponent {
+class VisibleTreeStateComponent {
   @Property(surroundWithTag = false)
-  @MapAnnotation(surroundWithTag=false, surroundKeyWithTag = false, surroundValueWithTag = false)
-  public Map<String, VisibleTreeState> myProfileNameToState = new HashMap<>();
+  @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+  var myProfileNameToState: MutableMap<String, VisibleTreeState> = HashMap()
 
-  public void copyFrom(VisibleTreeStateComponent state) {
-    myProfileNameToState.clear();
-    myProfileNameToState.putAll(state.myProfileNameToState);
+  fun copyFrom(state: VisibleTreeStateComponent) {
+    myProfileNameToState.clear()
+    myProfileNameToState.putAll(state.myProfileNameToState)
   }
 
-  public VisibleTreeState getVisibleTreeState(InspectionProfile profile) {
-    VisibleTreeState state = myProfileNameToState.get(profile.getName());
+  fun getVisibleTreeState(profile: InspectionProfile): VisibleTreeState {
+    var state: VisibleTreeState? = myProfileNameToState[profile.name]
     if (state == null) {
-      state = new VisibleTreeState();
-      myProfileNameToState.put(profile.getName(), state);
+      state = VisibleTreeState()
+      myProfileNameToState.put(profile.name, state)
     }
-    return state;
+    return state
   }
 }
