@@ -791,4 +791,19 @@ class ContainerUtil extends ContainerUtilRt {
     checkPreferredItems 1, 'XLong', 'XLonger'
   }
 
+  void "test selecting static field after static method"() {
+    myFixture.configureByText 'a.java', 'class Foo { { System.<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('ex\n2);\n') // select 'exit'
+
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'exit'
+    myFixture.type('ou\n;\n') // select 'out'
+
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'out', 'exit'
+  }
+
 }
