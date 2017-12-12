@@ -20,7 +20,8 @@ import com.intellij.spellchecker.engine.SpellCheckerEngine;
 import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
-import com.intellij.spellchecker.state.AggregatedDictionaryState;
+import com.intellij.spellchecker.state.CachedDictionaryState;
+import com.intellij.spellchecker.state.ProjectDictionaryState;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,8 @@ public class SpellCheckerManager implements Disposable {
 
   private final Project project;
   private SpellCheckerEngine spellChecker;
-  private AggregatedDictionary userDictionary;
+  private ProjectDictionary myProjectDictionary;
+  private EditableDictionary myAppDictionary;
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
   private final SpellCheckerSettings settings;
   private final VirtualFileListener myCustomDictFileListener;
@@ -57,7 +59,7 @@ public class SpellCheckerManager implements Disposable {
     this.project = project;
     this.settings = settings;
     fullConfigurationReload();
-    
+
     Disposer.register(project, this);
 
     myCustomDictFileListener = new CustomDictFileListener(settings);
@@ -116,8 +118,19 @@ public class SpellCheckerManager implements Disposable {
     return project;
   }
 
+  @NotNull
+  public Set<String> getUserDictionaryWords(){
+    return ContainerUtil.union(myProjectDictionary.getEditableWords(), myAppDictionary.getEditableWords());
+  }
+
+
+  /**
+   * @deprecated will be removed in 2018.X, use
+   * {@link SpellCheckerManager#acceptWordAsCorrect(String, Project)} or
+   * {@link ProjectDictionaryState#getProjectDictionary() and {@link CachedDictionaryState#getDictionary()}} instead
+   */
   public EditableDictionary getUserDictionary() {
-    return userDictionary;
+    return new AggregatedDictionary(myProjectDictionary, myAppDictionary);
   }
 
   private void fillEngineDictionary() {
@@ -145,10 +158,23 @@ public class SpellCheckerManager implements Disposable {
         }
       }
     }
-    final AggregatedDictionaryState dictionaryState = ServiceManager.getService(project, AggregatedDictionaryState.class);
-    dictionaryState.addDictStateListener((dict) -> restartInspections());
-    userDictionary = dictionaryState.getDictionary();
-    spellChecker.addModifiableDictionary(userDictionary);
+    initUserDictionaries();
+  }
+
+  private void initUserDictionaries() {
+    final CachedDictionaryState cachedDictionaryState = ServiceManager.getService(project, CachedDictionaryState.class);
+    cachedDictionaryState.addCachedDictListener((dict) -> restartInspections());
+    if (cachedDictionaryState.getDictionary() == null) {
+      cachedDictionaryState.setDictionary(new UserDictionary(CachedDictionaryState.DEFAULT_NAME));
+    }
+    myAppDictionary = cachedDictionaryState.getDictionary();
+    spellChecker.addModifiableDictionary(myAppDictionary);
+    
+    final ProjectDictionaryState dictionaryState = ServiceManager.getService(project, ProjectDictionaryState.class);
+    dictionaryState.addProjectDictListener((dict) -> restartInspections());
+    myProjectDictionary = dictionaryState.getProjectDictionary();
+    myProjectDictionary.setActiveName(System.getProperty("user.name"));
+    spellChecker.addModifiableDictionary(myProjectDictionary);
   }
 
   private void loadDictionary(String path) {
@@ -169,7 +195,8 @@ public class SpellCheckerManager implements Disposable {
   public void acceptWordAsCorrect(@NotNull String word, Project project) {
     final String transformed = spellChecker.getTransformation().transform(word);
     if (transformed != null) {
-      userDictionary.addToDictionary(transformed);
+      myProjectDictionary.addToDictionary(transformed);
+      myAppDictionary.addToDictionary(transformed);
       final PsiModificationTrackerImpl modificationTracker =
         (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
       modificationTracker.incCounter();
@@ -177,7 +204,13 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void updateUserDictionary(@NotNull Collection<String> words) {
-    userDictionary.replaceAll(words);
+    // new
+    ContainerUtil.subtract(words, getUserDictionaryWords()).forEach(myProjectDictionary::addToDictionary);
+
+    // deleted
+    ContainerUtil.subtract(myProjectDictionary.getEditableWords(), words).forEach(myProjectDictionary::removeFromDictionary);
+    ContainerUtil.subtract(myAppDictionary.getEditableWords(), words).forEach(myAppDictionary::removeFromDictionary);
+
     restartInspections();
   }
 

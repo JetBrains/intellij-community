@@ -26,15 +26,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.OptionalChooserComponent;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -159,30 +158,12 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
   }
 
-  public static final class WordDescriber {
-    private final EditableDictionary dictionary;
-
-    public WordDescriber(EditableDictionary dictionary) {
-      this.dictionary = dictionary;
-    }
-
-    @NotNull
-    public List<String> process() {
-      if (this.dictionary == null) {
-        return new ArrayList<>();
-      }
-      Set<String> words = this.dictionary.getEditableWords();
-      List<String> result = new ArrayList<>(words);
-      Collections.sort(result);
-      return result;
-    }
-  }
 
   private static final class WordsPanel extends AddDeleteListPanel<String> implements Disposable {
     private final SpellCheckerManager manager;
 
     private WordsPanel(SpellCheckerManager manager) {
-      super(null, new WordDescriber(manager.getUserDictionary()).process());
+      super(null, ContainerUtil.sorted(manager.getUserDictionaryWords()));
       this.manager = manager;
       getEmptyText().setText(SpellCheckerBundle.message("no.words"));
     }
@@ -231,7 +212,7 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     public boolean isModified() {
       List<String> newWords = getWords();
-      Set<String> words = manager.getUserDictionary().getEditableWords();
+      Set<String> words = manager.getUserDictionaryWords();
       if (newWords.size() != words.size()) {
         return true;
       }
