@@ -236,6 +236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
+  private RangeMarker myTopLeftCornerMarker;
 
   @Nullable
   private final Project myProject;
@@ -1489,7 +1490,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     repaintToScreenBottom(0);
     updateCaretCursor();
 
-    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+    if (myTopLeftCornerMarker != null || !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
       restoreCaretRelativePosition();
     }
   }
@@ -1550,7 +1551,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
+    if (myTopLeftCornerMarker != null ||
+        !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
     }
@@ -1566,15 +1568,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void saveCaretRelativePosition() {
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    myCaretUpdateVShift = pos.y - visibleArea.y;
+    // if caret is not visible we try to keep displayed fragment (its top-left corner to be precise) visible
+    if (visibleArea.height > 0 && (pos.y + getLineHeight() < visibleArea.y || pos.y > (visibleArea.y + visibleArea.height))) {
+      int topLeftCornerOffset = logicalPositionToOffset(xyToLogicalPosition(visibleArea.getLocation()));
+      myTopLeftCornerMarker = myDocument.createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
+      myCaretUpdateVShift = offsetToXY(topLeftCornerOffset).y - visibleArea.y;
+    }
+    else {
+      myTopLeftCornerMarker = null;
+      myCaretUpdateVShift = pos.y - visibleArea.y;
+    }
   }
 
   private void restoreCaretRelativePosition() {
-    Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
-    int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+    Point newLocation = myTopLeftCornerMarker == null || !myTopLeftCornerMarker.isValid() 
+                        ? visualPositionToXY(getCaretModel().getVisualPosition())
+                        : offsetToXY(myTopLeftCornerMarker.getStartOffset());
     getScrollingModel().disableAnimation();
-    getScrollingModel().scrollVertically(scrollOffset);
+    getScrollingModel().scrollVertically(newLocation.y - myCaretUpdateVShift);
     getScrollingModel().enableAnimation();
+    myTopLeftCornerMarker = null;
   }
 
   public boolean isScrollToCaret() {
