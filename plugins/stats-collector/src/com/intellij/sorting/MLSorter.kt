@@ -28,11 +28,10 @@ import com.intellij.openapi.util.Pair
 import com.intellij.plugin.ManualExperimentControl
 import com.intellij.plugin.ManualMlSorting
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.completion.prefixLength
+import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorsManager
 import com.jetbrains.completion.ranker.features.FeatureUtils
-import com.jetbrains.completion.ranker.features.LookupElementInfo
 import java.util.*
 
 
@@ -56,11 +55,11 @@ class MLSorter : CompletionFinalSorter() {
         if (hasUnknownFeatures(items)) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
         }
-        
+
         if (!isCacheValid(items)) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.INVALID_CACHE as Any)) }
         }
-        
+
         return items.associate {
             val result = mutableListOf<Pair<String, Any>>()
             val cached = cachedScore[it]
@@ -71,11 +70,11 @@ class MLSorter : CompletionFinalSorter() {
             it to result
         }
     }
-    
+
     private fun isCacheValid(items: Iterable<LookupElement>): Boolean {
         return items.map { cachedScore[it]?.prefixLength }.toSet().size == 1
     }
-    
+
     private fun hasUnknownFeatures(items: Iterable<LookupElement>) = items.any {
         val score = cachedScore[it]
         score?.mlRank == null
@@ -90,10 +89,10 @@ class MLSorter : CompletionFinalSorter() {
         val startTime = System.currentTimeMillis()
         val sorted = sortByMLRanking(items, lookup, relevanceObjects) ?: return items
         val timeSpent = System.currentTimeMillis() - startTime
-        
+
         val elementsSorted = items.count()
         SortingTimeStatistics.registerSortTiming(elementsSorted, timeSpent)
-        
+
         return sorted
     }
 
@@ -148,7 +147,7 @@ class MLSorter : CompletionFinalSorter() {
                                      position: Int,
                                      relevance: List<Pair<String, Any?>>,
                                      userFactors: Map<String, Any?>,
-                                     prefixLength: Int): Double? 
+                                     prefixLength: Int): Double?
     {
         val cachedWeight = getCachedRankInfo(element, prefixLength, position)
         if (cachedWeight != null) {
@@ -157,24 +156,22 @@ class MLSorter : CompletionFinalSorter() {
 
         val elementLength = element.lookupString.length
 
-        val state = LookupElementInfo(position, query_length = prefixLength, result_length = elementLength)
+        val relevanceMap = mutableMapOf<String, Any?>()
+        relevance.forEach { p -> relevanceMap.put(p.first, p.second) }
 
-        val relevanceMap = relevance.associate { it.first to it.second }
-        val mlRank: Double? = ranker.rank(state, relevanceMap, userFactors)
+        relevanceMap.put("position", position)
+        relevanceMap.put("query_length", prefixLength)
+        relevanceMap.put("result_length", elementLength)
+
+        val mlRank: Double? = ranker.rank(relevanceMap, userFactors)
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
 
         return info.mlRank
     }
-
-
 }
 
-
 private data class ItemRankInfo(val positionBefore: Int, val mlRank: Double?, val prefixLength: Int)
-
-
-typealias WeightedElement = Pair<LookupElement, Double>
 
 fun CompletionParameters.language(): Language? {
     val offset = editor.caretModel.offset
