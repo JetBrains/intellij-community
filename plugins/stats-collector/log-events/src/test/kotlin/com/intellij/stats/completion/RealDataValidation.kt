@@ -51,7 +51,7 @@ class RealDataValidation {
         val file = file("real_data")
         val files = file.list().sortedBy { it.substringAfter("_").toInt() }
 
-        val chunkFiles = files.map { "real_data${File.separator}$it" }
+        val chunkFiles = files.map { "real_data/$it" }
         val totalLines = chunkFiles.map { file(it) }.map { it.reader().readLines() }.flatten()
 
         separator.validate(totalLines)
