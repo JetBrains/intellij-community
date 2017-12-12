@@ -88,8 +88,8 @@ class EditorPainter implements TextDrawingCallback {
     int yShift = -clip.y;
     g.translate(0, -yShift);
 
-    float[] inlaysWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData);
-    paintRightMargin(g, clip, yShift, startLine, endLine, inlaysWidths);
+    float[] marginShifts = paintBackground(g, clip, yShift, startLine, endLine, caretData);
+    paintRightMargin(g, clip, yShift, startLine, endLine, marginShifts);
     paintCustomRenderers(g, yShift, startOffset, endOffset);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
@@ -144,10 +144,10 @@ class EditorPainter implements TextDrawingCallback {
                                 int yShift,
                                 int startVisualLine,
                                 int endVisualLine,
-                                float[] inlaysWidths) {
+                                float[] marginShifts) {
     if (!isMarginShown()) return;
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
-    if (inlaysWidths == null) {
+    if (marginShifts == null) {
       int x = myCorrector.marginX();
       UIUtil.drawLine(g, x, 0, x, clip.height);
     }
@@ -155,7 +155,7 @@ class EditorPainter implements TextDrawingCallback {
       int y = myView.visualLineToY(startVisualLine) + yShift;
       int lineHeight = myView.getLineHeight();
       for(int i = startVisualLine; i <= endVisualLine; i++) {
-        int x = myCorrector.marginX(inlaysWidths[i - startVisualLine]);
+        int x = myCorrector.marginX(marginShifts[i - startVisualLine]);
         g.fillRect(x, y, 1, lineHeight);
         y += lineHeight;
       }
@@ -181,8 +181,8 @@ class EditorPainter implements TextDrawingCallback {
 
   private float[] paintBackground(Graphics2D g, Rectangle clip, int yShift,
                                int startVisualLine, int endVisualLine, IterationState.CaretData caretData) {
-    Ref<float[]> inlaysWidths = new Ref<>();
-    boolean calculateInlayWidths = Registry.is("editor.adjust.right.margin.for.inlays") && isMarginShown();
+    Ref<float[]> marginShifts = new Ref<>();
+    boolean calculateMarginShift = Registry.is("editor.adjust.right.margin") && isMarginShown();
     int lineCount = myEditor.getVisibleLineCount();
     
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
@@ -214,9 +214,12 @@ class EditorPainter implements TextDrawingCallback {
                           TextAttributes attributes, float xStart, float xEnd, int y) {
           float width = xEnd - xStart;
           paintBackground(g, attributes, xStart, y, width);
-          if (calculateInlayWidths && fragment.getCurrentInlay() != null) {
-            if (inlaysWidths.isNull()) inlaysWidths.set(new float[endVisualLine - startVisualLine + 1]);
-            inlaysWidths.get()[visualLine - startVisualLine] += width;
+          if (calculateMarginShift && (fragment.getCurrentFoldRegion() != null || fragment.getCurrentInlay() != null)) {
+            if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 1]);
+            float shift = fragment.getCurrentFoldRegion() == null 
+                          ? width 
+                          : (xEnd - myCorrector.startX(visualLine) - fragment.getEndLogicalColumn() * myView.getPlainSpaceWidth());
+            marginShifts.get()[visualLine - startVisualLine] += shift;
           }
         }
 
@@ -236,7 +239,7 @@ class EditorPainter implements TextDrawingCallback {
       });
       visLinesIterator.advance();
     }
-    return inlaysWidths.get();
+    return marginShifts.get();
   }
 
   private Map<Integer, Couple<Integer>> createVirtualSelectionMap(int startVisualLine, int endVisualLine) {
@@ -1135,7 +1138,7 @@ class EditorPainter implements TextDrawingCallback {
     float singleLineBorderStart(float x);
     float singleLineBorderEnd(float x);
     int marginX();
-    int marginX(float inlaysWidth);
+    int marginX(float shift);
     List<Integer> softMarginsX();
 
     @NotNull
@@ -1208,8 +1211,8 @@ class EditorPainter implements TextDrawingCallback {
       }
 
       @Override
-      public int marginX(float inlaysWidth) {
-        return marginX() + (int) inlaysWidth;
+      public int marginX(float shift) {
+        return marginX() + (int)shift;
       }
 
       @Override
@@ -1283,8 +1286,8 @@ class EditorPainter implements TextDrawingCallback {
       }
 
       @Override
-      public int marginX(float inlaysWidth) {
-        return marginX() - (int) inlaysWidth;
+      public int marginX(float shift) {
+        return marginX() - (int)shift;
       }
 
       @Override
