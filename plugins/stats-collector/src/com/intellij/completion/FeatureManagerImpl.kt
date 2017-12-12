@@ -7,21 +7,35 @@ import com.jetbrains.completion.ranker.features.*
  * @author Vitaliy.Bibaev
  */
 class FeatureManagerImpl : FeatureManager, ApplicationComponent {
-    override lateinit var binaryFactors: BinaryFeatureInfo private set
-    override lateinit var doubleFactors: DoubleFeatureInfo private set
-    override lateinit var categorialFactors: CategoricalFeatureInfo private set
-    override lateinit var allFeatures: CompletionFactors private set
-    override lateinit var featuresOrder: Map<String, Int> private set
+    override lateinit var binaryFactors: List<BinaryFeature> private set
+    override lateinit var doubleFactors: List<DoubleFeature> private set
+    override lateinit var categorialFactors: List<CatergorialFeature> private set
+    override lateinit var completionFactors: CompletionFactors private set
     override lateinit var ignoredFactors: Set<String> private set
+    private lateinit var allFeatures: List<Feature>
 
     override fun isUserFeature(name: String): Boolean = false
 
     override fun initComponent() {
+        val order = FeatureReader.featuresOrder()
+        val interpreter = FeatureInterpreterImpl()
+
         binaryFactors = FeatureReader.binaryFactors()
+                .map { (name, description) -> interpreter.binary(name, description, order) }
         doubleFactors = FeatureReader.doubleFactors()
-        allFeatures = FeatureReader.completionFactors()
+                .map { (name, defaultValue) -> interpreter.double(name, defaultValue, order) }
         categorialFactors = FeatureReader.categoricalFactors()
-        featuresOrder = FeatureReader.featuresOrder()
+                .map { (name, categories) -> interpreter.categorial(name, categories, order) }
+
+        completionFactors = FeatureReader.completionFactors()
+
         ignoredFactors = FeatureReader.ignoredFactors()
+
+        val features: ArrayList<Feature> = ArrayList(binaryFactors)
+        features.addAll(doubleFactors)
+        features.addAll(categorialFactors)
+        allFeatures = features
     }
+
+    override fun allFeatures(): List<Feature> = allFeatures
 }

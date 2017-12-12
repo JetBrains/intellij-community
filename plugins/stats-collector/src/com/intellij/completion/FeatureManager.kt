@@ -1,24 +1,21 @@
 package com.intellij.completion
 
 import com.intellij.openapi.application.ApplicationManager
-import com.jetbrains.completion.ranker.features.BinaryFeatureInfo
-import com.jetbrains.completion.ranker.features.CategoricalFeatureInfo
-import com.jetbrains.completion.ranker.features.CompletionFactors
-import com.jetbrains.completion.ranker.features.DoubleFeatureInfo
+import com.jetbrains.completion.ranker.features.*
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface FeatureManager {
-    val featuresOrder: Map<String, Int>
-    val binaryFactors: BinaryFeatureInfo
-    val doubleFactors: DoubleFeatureInfo
-    val categorialFactors: CategoricalFeatureInfo
+    val binaryFactors: List<BinaryFeature>
+    val doubleFactors: List<DoubleFeature>
+    val categorialFactors: List<CatergorialFeature>
     val ignoredFactors: Set<String>
 
-    val allFeatures: CompletionFactors
+    val completionFactors: CompletionFactors
 
     fun isUserFeature(name: String): Boolean
+    fun allFeatures(): List<Feature>
 
     companion object {
         fun getInstance(): FeatureManager = ApplicationManager.getApplication().getComponent(FeatureManager::class.java)
