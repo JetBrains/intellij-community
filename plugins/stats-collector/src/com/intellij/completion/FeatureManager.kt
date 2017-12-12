@@ -13,6 +13,7 @@ interface FeatureManager {
     val ignoredFactors: Set<String>
 
     val completionFactors: CompletionFactors
+    val featureArrayLength: Int
 
     fun isUserFeature(name: String): Boolean
     fun allFeatures(): List<Feature>

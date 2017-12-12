@@ -15,17 +15,11 @@
  */
 package com.intellij.sorting
 
+import com.intellij.completion.FeatureManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
-import com.jetbrains.completion.ranker.features.FeatureReader.binaryFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.categoricalFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.completionFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.doubleFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.featuresOrder
-import com.jetbrains.completion.ranker.features.FeatureReader.ignoredFactors
-import com.jetbrains.completion.ranker.features.FeatureTransformer
-import com.jetbrains.completion.ranker.features.IgnoredFactorsMatcher
+import com.jetbrains.completion.ranker.features.NewFeatureTransformer
 import com.jetbrains.completion.ranker.features.Transformer
 
 
@@ -49,26 +43,13 @@ class FeatureTransformerProvider : ApplicationComponent.Adapter() {
         private set
 
     override fun initComponent() {
-        val binary = binaryFactors()
-        val double = doubleFactors()
-        val categorical = categoricalFactors()
-        val factors = completionFactors()
-        val order = featuresOrder()
-        val ignored = ignoredFactors()
-//        featureTransformer = NewFeatureTransformer(FeatureManager.getInstance().allFeatures().associate { it.name to it })
-
-        featureTransformer = FeatureTransformer(
-                binary,
-                double,
-                categorical,
-                order,
-                factors,
-                IgnoredFactorsMatcher(ignored)
-        )
+        val featureManager = FeatureManager.getInstance()
+        val factors = featureManager.completionFactors
+        val ignored = featureManager.ignoredFactors
+        val features = featureManager.allFeatures().associate { it.name to it }
+        featureTransformer = NewFeatureTransformer(features, ignored, factors, featureManager.featureArrayLength)
     }
-
 }
-
 
 class MLRanker(val provider: FeatureTransformerProvider) : Ranker {
 
