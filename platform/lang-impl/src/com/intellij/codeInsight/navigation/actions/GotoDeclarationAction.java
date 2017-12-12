@@ -93,8 +93,6 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       PsiElement[] elements = underModalProgress(project, "Resolving Reference...", () -> findAllTargetElements(project, editor, offset));
       FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.declaration");
 
-      if (!editor.getComponent().isShowing()) return;
-
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
@@ -163,6 +161,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
+    if (!editor.getComponent().isShowing()) return;
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       gotoTargetElement(element, editor, currentFile);
       return true;
