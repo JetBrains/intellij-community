@@ -30,6 +30,6 @@ public interface InputFilter {
    * @return            <tt>null</tt>, if there was no match, otherwise, a list of pairs like ('string to use', 'content type to use')
    */
   @Nullable
-  List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull  String text, ConsoleViewContentType contentType);
+  List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull  String text, @NotNull ConsoleViewContentType contentType);
 
 }
