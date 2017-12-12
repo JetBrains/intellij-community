@@ -156,7 +156,9 @@ class EditorPainter implements TextDrawingCallback {
       int lineHeight = myView.getLineHeight();
       for(int i = startVisualLine; i <= endVisualLine; i++) {
         int x = myCorrector.marginX(marginShifts[i - startVisualLine]);
+        int nextX = myCorrector.marginX(marginShifts[i - startVisualLine + 1]);
         g.fillRect(x, y, 1, lineHeight);
+        if (nextX != x) g.fillRect(Math.min(x, nextX), y + lineHeight - 1, Math.abs(x - nextX) + 1, 1);
         y += lineHeight;
       }
     }
@@ -183,6 +185,7 @@ class EditorPainter implements TextDrawingCallback {
                                int startVisualLine, int endVisualLine, IterationState.CaretData caretData) {
     Ref<float[]> marginShifts = new Ref<>();
     boolean calculateMarginShift = Registry.is("editor.adjust.right.margin") && isMarginShown();
+    int maxVisualLine = endVisualLine + (calculateMarginShift ? 1 : 0);
     int lineCount = myEditor.getVisibleLineCount();
     
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
@@ -199,11 +202,13 @@ class EditorPainter implements TextDrawingCallback {
     VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
     while (!visLinesIterator.atEnd()) {
       int visualLine = visLinesIterator.getVisualLine();
-      if (visualLine > endVisualLine || visualLine >= lineCount) break;
+      if (visualLine > maxVisualLine || visualLine >= lineCount) break;
       int y = visLinesIterator.getY() + yShift;
+      boolean dryRun = visualLine > endVisualLine;
       paintLineFragments(g, clip, visLinesIterator, caretData, y, new LineFragmentPainter() {
         @Override
         public void paintBeforeLineStart(Graphics2D g, TextAttributes attributes, boolean hasSoftWrap, int columnEnd, float xEnd, int y) {
+          if (dryRun) return;
           paintBackground(g, attributes, myView.getInsets().left, y, xEnd);
           if (!hasSoftWrap) return;
           paintSelectionOnSecondSoftWrapLineIfNecessary(g, visualLine, columnEnd, xEnd, y, primarySelectionStart, primarySelectionEnd);
@@ -213,9 +218,9 @@ class EditorPainter implements TextDrawingCallback {
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
           float width = xEnd - xStart;
-          paintBackground(g, attributes, xStart, y, width);
+          if (!dryRun) paintBackground(g, attributes, xStart, y, width);
           if (calculateMarginShift && (fragment.getCurrentFoldRegion() != null || fragment.getCurrentInlay() != null)) {
-            if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 1]);
+            if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 2]);
             float shift = fragment.getCurrentFoldRegion() == null 
                           ? width 
                           : (xEnd - myCorrector.startX(visualLine) - fragment.getEndLogicalColumn() * myView.getPlainSpaceWidth());
@@ -225,6 +230,7 @@ class EditorPainter implements TextDrawingCallback {
 
         @Override
         public void paintAfterLineEnd(Graphics2D g, Rectangle clip, IterationState it, int columnStart, float x, int y) {
+          if (dryRun) return;
           paintBackground(g, it.getPastLineEndBackgroundAttributes(), x, y, clip.x + clip.width - x);
           int offset = it.getEndOffset();
           SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
