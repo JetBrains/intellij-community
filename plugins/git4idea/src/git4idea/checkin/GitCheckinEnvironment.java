@@ -287,60 +287,55 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                                       @NotNull Set<FilePath> added,
                                                       @NotNull Set<FilePath> removed,
                                                       @NotNull File messageFile) {
-    String rootPath = root.getPath();
-    LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
-
-    // 1. Check what is staged besides case-only renames
-    Collection<Change> stagedChanges;
-    try {
-      stagedChanges = GitChangeUtils.getStagedChanges(project, root);
-      LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
-    }
-    catch (VcsException e) {
-      return Collections.singletonList(e);
-    }
-
-    // 2. Reset staged changes which are not selected for commit
-    Collection<Change> excludedStagedChanges = filter(stagedChanges, change ->
-      !caseOnlyRenames.contains(change) && !added.contains(getAfterPath(change)) && !removed.contains(getBeforePath(change)));
-    if (!excludedStagedChanges.isEmpty()) {
-      LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
-      try {
-        reset(project, root, excludedStagedChanges);
-      }
-      catch (VcsException e) {
-        return Collections.singletonList(e);
-      }
-    }
-
     List<VcsException> exceptions = new ArrayList<>();
     try {
-      // 3. Stage what else is needed to commit
-      List<FilePath> newPathsOfCaseRenames = map(caseOnlyRenames, ChangesUtil::getAfterPath);
-      LOG.debug("Updating index for added:" + added + "\n, removed: " + removed + "\n, and case-renames: " + newPathsOfCaseRenames);
-      Set<FilePath> toAdd = new HashSet<>(added);
-      toAdd.addAll(newPathsOfCaseRenames);
-      updateIndex(project, root, toAdd, removed, exceptions);
-      if (!exceptions.isEmpty()) return exceptions;
+      String rootPath = root.getPath();
+      LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
 
-      // 4. Commit the staging area
-      LOG.debug("Performing commit...");
+      // 1. Check what is staged besides case-only renames
+      Collection<Change> stagedChanges;
       try {
-        commitWithoutPaths(project, root, messageFile);
+        stagedChanges = GitChangeUtils.getStagedChanges(project, root);
+        LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
       }
       catch (VcsException e) {
         return Collections.singletonList(e);
       }
-    }
-    finally {
-      // 5. Stage back the changes unstaged before commit
+
+      // 2. Reset staged changes which are not selected for commit
+      Collection<Change> excludedStagedChanges = filter(stagedChanges, change ->
+        !caseOnlyRenames.contains(change) && !added.contains(getAfterPath(change)) && !removed.contains(getBeforePath(change)));
       if (!excludedStagedChanges.isEmpty()) {
-        LOG.debug("Restoring changes which were unstaged before commit: " + getLogString(rootPath, excludedStagedChanges));
-        Set<FilePath> toAdd = map2SetNotNull(excludedStagedChanges, ChangesUtil::getAfterPath);
-        Condition<Change> isMovedOrDeleted = change -> change.getType() == Change.Type.MOVED || change.getType() == Change.Type.DELETED;
-        Set<FilePath> toRemove = map2SetNotNull(filter(excludedStagedChanges, isMovedOrDeleted), ChangesUtil::getBeforePath);
-        updateIndex(project, root, toAdd, toRemove, exceptions);
+        LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
+        reset(project, root, excludedStagedChanges);
       }
+
+      try {
+        // 3. Stage what else is needed to commit
+        List<FilePath> newPathsOfCaseRenames = map(caseOnlyRenames, ChangesUtil::getAfterPath);
+        LOG.debug("Updating index for added:" + added + "\n, removed: " + removed + "\n, and case-renames: " + newPathsOfCaseRenames);
+        Set<FilePath> toAdd = new HashSet<>(added);
+        toAdd.addAll(newPathsOfCaseRenames);
+        updateIndex(project, root, toAdd, removed, exceptions);
+        if (!exceptions.isEmpty()) return exceptions;
+
+        // 4. Commit the staging area
+        LOG.debug("Performing commit...");
+        commitWithoutPaths(project, root, messageFile);
+      }
+      finally {
+        // 5. Stage back the changes unstaged before commit
+        if (!excludedStagedChanges.isEmpty()) {
+          LOG.debug("Restoring changes which were unstaged before commit: " + getLogString(rootPath, excludedStagedChanges));
+          Set<FilePath> toAdd = map2SetNotNull(excludedStagedChanges, ChangesUtil::getAfterPath);
+          Condition<Change> isMovedOrDeleted = change -> change.getType() == Change.Type.MOVED || change.getType() == Change.Type.DELETED;
+          Set<FilePath> toRemove = map2SetNotNull(filter(excludedStagedChanges, isMovedOrDeleted), ChangesUtil::getBeforePath);
+          updateIndex(project, root, toAdd, toRemove, exceptions);
+        }
+      }
+    }
+    catch (VcsException e) {
+      exceptions.add(e);
     }
     return exceptions;
   }
