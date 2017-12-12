@@ -44,9 +44,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.actions.ToggleUseSoftWrapsToolbarAction;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -163,7 +161,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   protected final CompositeFilter myFilters;
 
-  @Nullable private final InputFilter myInputMessageFilter;
+  @NotNull
+  private final InputFilter myInputMessageFilter;
 
   public Editor getEditor() {
     return myEditor;
@@ -243,7 +242,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
     }
     else {
-      myInputMessageFilter = null;
+      myInputMessageFilter = (text, contentType) -> null;
     }
 
     project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
@@ -268,17 +267,14 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         });
       }
     });
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        if (isDisposed() || myEditor == null) return;
-        MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), project, false);
-        for (RangeHighlighter tokenMarker : model.getAllHighlighters()) {
-          ConsoleViewContentType contentType = tokenMarker.getUserData(CONTENT_TYPE);
-          if (contentType != null && tokenMarker instanceof RangeHighlighterEx)
-            ((RangeHighlighterEx)tokenMarker).setTextAttributes(contentType.getAttributes());
-        }
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, scheme -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      if (isDisposed() || myEditor == null) return;
+      MarkupModel model = DocumentMarkupModel.forDocument(myEditor.getDocument(), project, false);
+      for (RangeHighlighter tokenMarker : model.getAllHighlighters()) {
+        ConsoleViewContentType contentType = tokenMarker.getUserData(CONTENT_TYPE);
+        if (contentType != null && tokenMarker instanceof RangeHighlighterEx)
+          ((RangeHighlighterEx)tokenMarker).setTextAttributes(contentType.getAttributes());
       }
     });
   }
@@ -532,7 +528,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @TestOnly
   public void waitAllRequests() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       while (true) {
         try {
           myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
@@ -575,11 +571,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
-    if (myInputMessageFilter == null) {
-      print(text, contentType, null);
-      return;
-    }
-
     List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, contentType);
     if (result == null) {
       print(text, contentType, null);
@@ -615,6 +606,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
+  // send text which was typed in the console to the running process
   private void sendUserInput(@NotNull CharSequence typedText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myState.isRunning() && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
