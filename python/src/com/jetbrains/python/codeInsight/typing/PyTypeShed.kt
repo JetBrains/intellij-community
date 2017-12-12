@@ -41,7 +41,7 @@ import java.io.File
 object PyTypeShed {
   private val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..7
-  val WHITE_LIST = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools")
+  val WHITE_LIST = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil")
   private val BLACK_LIST = setOf<String>()
 
   /**
