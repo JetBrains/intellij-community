@@ -95,8 +95,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
 
       @Override
       public void onCurrentSchemeSwitched(@Nullable EditorColorsScheme oldScheme, @Nullable EditorColorsScheme newScheme) {
-        LafManager.getInstance().updateUI();
-        schemeChangedOrSwitched(newScheme);
+        ApplicationManager.getApplication().invokeLater(() -> { // don't do heavy operations right away
+          LafManager.getInstance().updateUI();
+          schemeChangedOrSwitched(newScheme);
+        });
       }
 
       @NotNull
