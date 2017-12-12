@@ -21,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -223,7 +222,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
                    "width=" + getOptions().getWidth() + "\n" +
                    "height=" + getOptions().getHeight() + "\n" +
                    "align=top>\n");
-      for (AppletParameter parameter : ContainerUtil.notNullize(getOptions().getAppletParameters())) {
+      for (AppletParameter parameter : getOptions().getAppletParameters()) {
         writer.write("<param name=\"" + parameter.getName() + "\" value=\"" + parameter.getValue() + "\">\n");
       }
       writer.write("</applet>\n</body>\n</html>\n");

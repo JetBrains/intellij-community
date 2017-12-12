@@ -38,7 +38,7 @@ class AppletConfigurationOptions : ModuleBasedConfigurationOptions() {
 
   @get:Property(surroundWithTag = false)
   @get:XCollection()
-  var appletParameters by storedProperty<List<AppletParameter>?>()
+  var appletParameters by list<AppletParameter>()
 }
 
 @Tag("parameter")

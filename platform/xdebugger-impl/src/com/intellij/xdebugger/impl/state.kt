@@ -18,13 +18,13 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionState
 @Tag("breakpoint-manager")
 class BreakpointManagerState : BaseState() {
   @get:XCollection(propertyElementName = "default-breakpoints")
-  var defaultBreakpoints by storedProperty<List<BreakpointState<*, *, *>>>(SmartList())
+  var defaultBreakpoints by list<BreakpointState<*, *, *>>()
 
   @get:XCollection(elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class), style = XCollection.Style.v2)
-  var breakpoints by storedProperty<List<BreakpointState<*, *, *>>>(SmartList())
+  var breakpoints by list<BreakpointState<*, *, *>>()
 
   @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class))
-  var breakpointsDefaults by storedProperty<List<BreakpointState<*, *, *>>>(SmartList())
+  var breakpointsDefaults by list<BreakpointState<*, *, *>>()
 
   @get:Tag("breakpoints-dialog")
   var breakpointsDialogProperties: XBreakpointsDialogState? = null
@@ -37,18 +37,28 @@ class BreakpointManagerState : BaseState() {
 class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressions by storedProperty<List<ConfigurationState>>(SmartList())
+  var expressions by list<ConfigurationState>()
 }
 
 @Tag("configuration")
 class ConfigurationState @JvmOverloads constructor(name: String? = null, expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
-  var name by string(name)
+  var name by string()
 
   @Suppress("MemberVisibilityCanPrivate")
   @get:Property(surroundWithTag = false)
   @get:XCollection
-  var expressionStates by storedProperty<List<WatchState>>(expressions?.mapTo(SmartList()) { WatchState(it) } ?: SmartList())
+  var expressionStates by list<WatchState>()
+
+  init {
+    // passed values are not default - constructor provided only for convenience
+    if (name != null) {
+      this.name = name
+    }
+    if (expressions != null) {
+      expressionStates = expressions.mapTo(SmartList()) { WatchState(it) }
+    }
+  }
 }
 
 @Tag("watch")

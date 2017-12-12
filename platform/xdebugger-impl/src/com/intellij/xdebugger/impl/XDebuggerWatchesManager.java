@@ -23,12 +23,12 @@ public class XDebuggerWatchesManager {
     return ContainerUtil.notNullize(watches.get(confName));
   }
 
-  public void setWatches(String configurationName, List<XExpression> expressions) {
-    if (expressions != null && expressions.size() > 0) {
-      watches.put(configurationName, expressions);
+  public void setWatches(@NotNull String configurationName, @NotNull List<XExpression> expressions) {
+    if (expressions.isEmpty()) {
+      watches.remove(configurationName);
     }
     else {
-      watches.remove(configurationName);
+      watches.put(configurationName, expressions);
     }
   }
 
@@ -50,7 +50,7 @@ public class XDebuggerWatchesManager {
   public void loadState(@NotNull WatchesManagerState state) {
     clearContext();
 
-    for (ConfigurationState expressionState : ContainerUtil.notNullize(state.getExpressions())) {
+    for (ConfigurationState expressionState : state.getExpressions()) {
       List<WatchState> expressionStates = expressionState.getExpressionStates();
       if (!ContainerUtil.isEmpty(expressionStates)) {
         watches.put(expressionState.getName(), ContainerUtil.mapNotNull(expressionStates, XExpressionState::toXExpression));

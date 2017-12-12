@@ -5,7 +5,7 @@ package com.intellij.openapi.components
 
 import kotlin.reflect.KProperty
 
-internal class ObjectStoredProperty<T>(override val defaultValue: T) : StoredPropertyBase<T>() {
+internal class ObjectStoredProperty<T>(private val defaultValue: T) : StoredPropertyBase<T>() {
   override var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
@@ -17,11 +17,13 @@ internal class ObjectStoredProperty<T>(override val defaultValue: T) : StoredPro
     }
   }
 
+  override fun isEqualToDefault() = defaultValue == value
+
   override fun equals(other: Any?) = this === other || (other is ObjectStoredProperty<*> && value == other.value)
 
   override fun hashCode() = value?.hashCode() ?: 0
 
-  override fun toString() = if (value == defaultValue) "" else value?.toString() ?: super.toString()
+  override fun toString() = if (isEqualToDefault()) "" else value?.toString() ?: super.toString()
 
   override fun setValue(other: StoredProperty): Boolean {
     @Suppress("UNCHECKED_CAST")
@@ -35,17 +37,13 @@ internal class ObjectStoredProperty<T>(override val defaultValue: T) : StoredPro
   }
 }
 
-internal class NormalizedStringStoredProperty(override val defaultValue: String?) : StoredPropertyBase<String?>() {
+internal class NormalizedStringStoredProperty(override val defaultValue: String?) : PrimitiveStoredPropertyBase<String?>() {
   override var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: String?) {
-    var newValue = value
-    if (newValue != null && newValue.isEmpty()) {
-      newValue = null
-    }
-
+    val newValue = if (value.isNullOrEmpty()) null else value
     if (this.value != newValue) {
       thisRef.ownModificationCount++
       this.value = newValue
@@ -56,7 +54,7 @@ internal class NormalizedStringStoredProperty(override val defaultValue: String?
 
   override fun hashCode() = value?.hashCode() ?: 0
 
-  override fun toString() = if (value == defaultValue) "" else value ?: super.toString()
+  override fun toString() = if (isEqualToDefault()) "" else value ?: super.toString()
 
   override fun setValue(other: StoredProperty): Boolean {
     val newValue = (other as NormalizedStringStoredProperty).value
@@ -66,9 +64,5 @@ internal class NormalizedStringStoredProperty(override val defaultValue: String?
 
     value = newValue
     return true
-  }
-
-  override fun isEqualToDefault(newValue: Any?): Boolean {
-    return value == newValue || (value == null && newValue != null && newValue is String && newValue.isEmpty())
   }
 }

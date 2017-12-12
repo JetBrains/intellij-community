@@ -20,7 +20,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -203,7 +202,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   public void applyEditorTo(@NotNull final AppletConfiguration configuration) {
     checkEditorData(configuration);
     myTable.stopEditing();
-    configuration.getOptions().setAppletParameters(ContainerUtil.nullize(cloneParameters(myParameters.getItems())));
+    configuration.getOptions().setAppletParameters(cloneParameters(myParameters.getItems()));
   }
 
   public void resetEditorFrom(@NotNull AppletConfiguration runConfiguration) {
@@ -222,7 +221,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     (configuration.getHtmlUsed() ? myURL : myMainClass).setSelected(true);
     changePanel();
 
-    myParameters.setItems(cloneParameters(ContainerUtil.notNullize(configuration.getAppletParameters())));
+    myParameters.setItems(cloneParameters(configuration.getAppletParameters()));
     myModuleSelector.reset(runConfiguration);
     myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.getAlternativeJrePathEnabled());
   }

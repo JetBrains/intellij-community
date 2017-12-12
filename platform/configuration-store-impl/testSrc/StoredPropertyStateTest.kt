@@ -8,7 +8,7 @@ import org.junit.Test
 
 internal class AState(languageLevel: String? = null, nestedComplex: NestedState? = null) : BaseState() {
   @get:Attribute("customName")
-  var languageLevel by storedProperty<String?>(languageLevel)
+  var languageLevel by string(languageLevel)
 
   var bar by string()
 

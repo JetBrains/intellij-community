@@ -36,6 +36,15 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
+  /**
+   * Not-null list. Initialized as SmartList.
+   */
+  fun <T : Any> list(): StoredPropertyBase<List<T>> {
+    val result = ListStoredProperty<T>()
+    properties.add(result)
+    return result
+  }
+
   fun <T : Any> bean(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
     properties.add(result)
@@ -79,7 +88,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     val getterName = (accessor as? PropertyAccessor)?.getterName
     for (property in properties) {
       if (property.name == accessor.name || property.name == getterName) {
-        return !property.isEqualToDefault(property.defaultValue)
+        return !property.isEqualToDefault()
       }
     }
 

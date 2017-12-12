@@ -5,7 +5,7 @@ package com.intellij.openapi.components
 
 import kotlin.reflect.KProperty
 
-internal class IntStoredProperty(override val defaultValue: Int) : StoredPropertyBase<Int>() {
+internal class IntStoredProperty(override val defaultValue: Int) : PrimitiveStoredPropertyBase<Int>() {
   override var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
@@ -34,7 +34,7 @@ internal class IntStoredProperty(override val defaultValue: Int) : StoredPropert
   }
 }
 
-internal class LongStoredProperty(override val defaultValue: Long) : StoredPropertyBase<Long>() {
+internal class LongStoredProperty(override val defaultValue: Long) : PrimitiveStoredPropertyBase<Long>() {
   override var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
@@ -63,7 +63,7 @@ internal class LongStoredProperty(override val defaultValue: Long) : StoredPrope
   }
 }
 
-internal class FloatStoredProperty(override val defaultValue: Float) : StoredPropertyBase<Float>() {
+internal class FloatStoredProperty(override val defaultValue: Float) : PrimitiveStoredPropertyBase<Float>() {
   override var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
