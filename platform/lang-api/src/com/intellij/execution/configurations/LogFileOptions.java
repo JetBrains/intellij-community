@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.execution.configurations
 
-package com.intellij.execution.configurations;
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.SmartList
+import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.xmlb.Converter
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Transient
 
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.SmartHashSet;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
+import java.io.File
+import java.nio.charset.Charset
+import java.util.Collections
+import java.util.regex.Pattern
 
 /**
  * The information about a single log file displayed in the console when the configuration
@@ -39,197 +35,138 @@ import java.util.regex.Pattern;
  *
  * @since 5.1
  */
-public class LogFileOptions implements JDOMExternalizable {
-  @NonNls private static final String PATH = "path";
-  @NonNls private static final String CHECKED = "checked";
-  @NonNls private static final String ALIAS = "alias";
-  @NonNls private static final String SKIPPED = "skipped";
-  @NonNls private static final String SHOW_ALL = "show_all";
-  @NonNls private static final String CHARSET = "charset";
+@Tag("log_file")
+class LogFileOptions {
+  @get:Attribute("alias")
+  var name: String? = null
+  @get:Attribute(value = "path", converter = PathConverter::class)
+  var pathPattern: String? = null
+  @get:Attribute("checked")
+  var isEnabled = true
+  @get:Attribute("skipped")
+  var isSkipContent = true
+  @get:Attribute("show_all")
+  var isShowAll = false
+  @get:Attribute(value = "charset", converter = CharsetConverter::class)
+  var charset: Charset
 
-  private String myName;
-  private String myPathPattern;
-  private boolean myEnabled;
-  private boolean mySkipContent;
-  private boolean myShowAll;
-  @NotNull
-  private Charset myCharset;
-
-  //read external
-  public LogFileOptions() {
-  }
-
-  public LogFileOptions(String name, String path, boolean enabled, boolean skipContent, final boolean showAll) {
-    this(name, path, null, enabled, skipContent, showAll);
-  }
-
-  public LogFileOptions(String name, String path, @Nullable final Charset charset, boolean enabled, boolean skipContent, final boolean showAll) {
-    myName = name;
-    myPathPattern = path;
-    myEnabled = enabled;
-    mySkipContent = skipContent;
-    myShowAll = showAll;
-    myCharset = charset != null ? charset : Charset.defaultCharset();
-  }
-
-  public String getName() {
-    return myName;
-  }
-
-  public String getPathPattern() {
-    return myPathPattern;
-  }
-
-  @NotNull
-  public Set<String> getPaths(){
-    File logFile = new File(myPathPattern);
-    if (logFile.exists()){
-      return Collections.singleton(myPathPattern);
-    }
-
-    int dirIndex = myPathPattern.lastIndexOf(File.separator);
-    if (dirIndex == -1) {
-      return Collections.emptySet();
-    }
-
-    List<File> files = new SmartList<>();
-    collectMatchedFiles(new File(myPathPattern.substring(0, dirIndex)), Pattern.compile(FileUtil.convertAntToRegexp(myPathPattern.substring(dirIndex + File.separator.length()))), files);
-    if (files.isEmpty()) {
-      return Collections.emptySet();
-    }
-
-    if (myShowAll) {
-      SmartHashSet<String> result = new SmartHashSet<>();
-      result.ensureCapacity(files.size());
-      for (File file : files) {
-        result.add(file.getPath());
+  val paths: Set<String>
+    @Transient
+    get() {
+      val logFile = File(pathPattern!!)
+      if (logFile.exists()) {
+        return setOf<String>(pathPattern)
       }
-      return result;
-    }
-    else {
-      File lastFile = null;
-      for (File file : files) {
-        if (lastFile != null) {
-          if (file.lastModified() > lastFile.lastModified()) {
-            lastFile = file;
+
+      val dirIndex = pathPattern!!.lastIndexOf(File.separator)
+      if (dirIndex == -1) {
+        return emptySet()
+      }
+
+      val files = SmartList<File>()
+      collectMatchedFiles(File(pathPattern!!.substring(0, dirIndex)),
+                          Pattern.compile(FileUtil.convertAntToRegexp(pathPattern!!.substring(dirIndex + File.separator.length))), files)
+      if (files.isEmpty()) {
+        return emptySet()
+      }
+
+      if (isShowAll) {
+        val result = SmartHashSet<String>()
+        result.ensureCapacity(files.size)
+        for (file in files) {
+          result.add(file.path)
+        }
+        return result
+      }
+      else {
+        var lastFile: File? = null
+        for (file in files) {
+          if (lastFile != null) {
+            if (file.lastModified() > lastFile.lastModified()) {
+              lastFile = file
+            }
+          }
+          else {
+            lastFile = file
           }
         }
-        else {
-          lastFile = file;
+        assert(lastFile != null)
+        return setOf(lastFile!!.path)
+      }
+    }
+
+  private class PathConverter : Converter<String>() {
+    override fun fromString(value: String): String? {
+      return FileUtilRt.toSystemDependentName(value)
+    }
+
+    override fun toString(value: String): String {
+      return FileUtilRt.toSystemIndependentName(value)
+    }
+  }
+
+  private class CharsetConverter : Converter<Charset>() {
+    override fun fromString(value: String): Charset? {
+      try {
+        return Charset.forName(value)
+      }
+      catch (ignored: Exception) {
+        return Charset.defaultCharset()
+      }
+
+    }
+
+    override fun toString(value: Charset): String {
+      return value.name()
+    }
+  }
+
+  //read external
+  constructor() {
+    charset = Charset.defaultCharset()
+  }
+
+  constructor(name: String, path: String, enabled: Boolean, skipContent: Boolean, showAll: Boolean) : this(name, path, null, enabled,
+                                                                                                           skipContent, showAll) {
+  }
+
+  constructor(name: String, path: String, enabled: Boolean) : this(name, path, null, enabled, true, false) {}
+
+  constructor(name: String, path: String, charset: Charset?, enabled: Boolean, skipContent: Boolean, showAll: Boolean) {
+    this.name = name
+    pathPattern = path
+    isEnabled = enabled
+    isSkipContent = skipContent
+    isShowAll = showAll
+    this.charset = charset ?: Charset.defaultCharset()
+  }
+
+  @Transient
+  fun setLast(last: Boolean) {
+    isShowAll = !last
+  }
+
+  companion object {
+
+    fun collectMatchedFiles(root: File, pattern: Pattern, files: MutableList<File>) {
+      val dirs = root.listFiles() ?: return
+      for (dir in dirs) {
+        if (pattern.matcher(dir.name).matches() && dir.isFile) {
+          files.add(dir)
         }
       }
-      assert lastFile != null;
-      return Collections.singleton(lastFile.getPath());
     }
-  }
 
-  public static void collectMatchedFiles(@NotNull File root, @NotNull Pattern pattern, @NotNull List<File> files) {
-    final File[] dirs = root.listFiles();
-    if (dirs == null) return;
-    for (File dir : dirs) {
-      if (pattern.matcher(dir.getName()).matches() && dir.isFile()) {
-        files.add(dir);
+    fun areEqual(options1: LogFileOptions?, options2: LogFileOptions?): Boolean {
+      return if (options1 == null || options2 == null) {
+        options1 === options2
       }
+      else options1.name == options2.name &&
+           options1.pathPattern == options2.pathPattern &&
+           !options1.isShowAll == !options2.isShowAll &&
+           options1.isEnabled == options2.isEnabled &&
+           options1.isSkipContent == options2.isSkipContent
+
     }
-  }
-
-  public boolean isEnabled() {
-    return myEnabled;
-  }
-
-  public boolean isSkipContent() {
-    return mySkipContent;
-  }
-
-  public void setEnable(boolean enable) {
-    myEnabled = enable;
-  }
-
-
-  public void setName(final String name) {
-    myName = name;
-  }
-
-  public void setPathPattern(final String pathPattern) {
-    myPathPattern = pathPattern;
-  }
-
-  public void setSkipContent(final boolean skipContent) {
-    mySkipContent = skipContent;
-  }
-
-  public void setShowAll(final boolean showAll) {
-    myShowAll = showAll;
-  }
-
-  public void setLast(final boolean last) {
-    myShowAll = !last;
-  }
-
-  public boolean isShowAll() {
-    return myShowAll;
-  }
-
-  public Charset getCharset() {
-    return myCharset;
-  }
-
-  public void setCharset(Charset charset) {
-    myCharset = charset;
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    String file = element.getAttributeValue(PATH);
-    if (file != null){
-      file = FileUtil.toSystemDependentName(file);
-    }
-    setPathPattern(file);
-
-    Boolean checked = Boolean.valueOf(element.getAttributeValue(CHECKED));
-    setEnable(checked.booleanValue());
-
-    final String skipped = element.getAttributeValue(SKIPPED);
-    Boolean skip = skipped != null ? Boolean.valueOf(skipped) : Boolean.TRUE;
-    setSkipContent(skip.booleanValue());
-
-    final String all = element.getAttributeValue(SHOW_ALL);
-    Boolean showAll = skipped != null ? Boolean.valueOf(all) : Boolean.TRUE;
-    setShowAll(showAll.booleanValue());
-
-    setName(element.getAttributeValue(ALIAS));
-
-    final String charsetStr = element.getAttributeValue(CHARSET);
-    try {
-      setCharset(Charset.forName(charsetStr));
-    }
-    catch (Exception ignored) {
-      setCharset(Charset.defaultCharset());
-    }
-  }
-
-  @Override
-  public void writeExternal(Element element) {
-    element.setAttribute(PATH, FileUtil.toSystemIndependentName(getPathPattern()));
-    element.setAttribute(CHECKED, String.valueOf(isEnabled()));
-    element.setAttribute(SKIPPED, String.valueOf(isSkipContent()));
-    element.setAttribute(SHOW_ALL, String.valueOf(isShowAll()));
-    element.setAttribute(ALIAS, getName());
-    if (!getCharset().equals(Charset.defaultCharset())) {
-      element.setAttribute(CHARSET, getCharset().name());
-    }
-  }
-
-  public static boolean areEqual(@Nullable LogFileOptions options1, @Nullable LogFileOptions options2) {
-    if (options1 == null || options2 == null) {
-      return options1 == options2;
-    }
-
-    return options1.myName.equals(options2.myName) &&
-           options1.myPathPattern.equals(options2.myPathPattern) &&
-           !options1.myShowAll == !options2.myShowAll &&
-           options1.myEnabled == options2.myEnabled &&
-           options1.mySkipContent == options2.mySkipContent;
-
   }
 }
