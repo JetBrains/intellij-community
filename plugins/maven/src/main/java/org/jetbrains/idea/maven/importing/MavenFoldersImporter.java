@@ -276,8 +276,7 @@ public class MavenFoldersImporter {
       Module module = mavenProjectsManager.findModule(containingProject);
       if (module == null) return false;
 
-      ModifiableRootModel rootModel = ModuleRootManager.getInstance(module).getModifiableModel();
-      for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+      for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
         if (contentEntry.getUrl().equals(sourceFolderUrl)) {
           return true;
         }
