@@ -65,10 +65,16 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     return null;
   }
 
-  @Override
   @NotNull
+  @Override
   public PsiElement getOperationToken() {
     return findNotNullChildByType(TokenSets.ASSIGNMENTS);
+  }
+
+  @Nullable
+  @Override
+  public IElementType getOperation() {
+    return TokenSets.ASSIGNMENTS_TO_OPERATORS.get(getOperationTokenType());
   }
 
   @Override

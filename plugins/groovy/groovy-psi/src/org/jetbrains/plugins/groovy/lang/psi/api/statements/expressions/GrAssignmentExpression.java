@@ -4,6 +4,8 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,12 @@ import org.jetbrains.annotations.Nullable;
  * @see GrTupleAssignmentExpression
  */
 public interface GrAssignmentExpression extends GrOperatorExpression {
+
+  @NotNull
+  PsiElement getOperationToken();
+
+  @NotNull
+  IElementType getOperationTokenType();
 
   @NotNull
   GrExpression getLValue();
