@@ -712,7 +712,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     }
 
     @Override
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
       final PsiBuilder builder = createBuilder(chameleon.getText());
       parse(builder);
       return builder.getTreeBuilt().getFirstChildNode();
@@ -752,7 +752,7 @@ public class PsiBuilderQuickTest extends LightPlatformTestCase {
     }
 
     @Override
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
       final PsiBuilder builder = createBuilder(chameleon.getText());
       parse(builder);
       return builder.getTreeBuilt().getFirstChildNode();

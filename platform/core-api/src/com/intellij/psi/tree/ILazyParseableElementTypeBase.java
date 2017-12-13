@@ -16,11 +16,13 @@
 package com.intellij.psi.tree;
 
 import com.intellij.lang.ASTNode;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * An additional interface to be implemented by {@link IElementType} instances for tokens which should be parsed lazily, but 
  * for some reasons extending {@link ILazyParseableElementType} is impossible.
  */
+@FunctionalInterface
 public interface ILazyParseableElementTypeBase {
   
   /**
@@ -30,5 +32,5 @@ public interface ILazyParseableElementTypeBase {
    * @param chameleon the node to parse.
    * @return the parsed contents of the node.
    */
-  ASTNode parseContents(ASTNode chameleon);
+  ASTNode parseContents(@NotNull ASTNode chameleon);
 }

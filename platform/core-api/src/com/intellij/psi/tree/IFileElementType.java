@@ -43,7 +43,7 @@ public class IFileElementType extends ILazyParseableElementType {
 
   @Nullable
   @Override
-  public ASTNode parseContents(final ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull final ASTNode chameleon) {
     final PsiElement psi = chameleon.getPsi();
     assert psi != null : "Bad chameleon: " + chameleon;
     return doParseContents(chameleon, psi);
