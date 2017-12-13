@@ -9,8 +9,4 @@ interface UserFactor {
     val id: String
 
     fun compute(storage: UserFactorStorage): String?
-
-    interface FeatureFactor : UserFactor {
-        fun update(value: Any?)
-    }
 }

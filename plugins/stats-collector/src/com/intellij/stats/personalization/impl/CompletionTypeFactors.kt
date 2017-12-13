@@ -10,9 +10,6 @@ class CompletionTypeReader(private val factor: DailyAggregatedDoubleFactor) : Fa
     fun getCompletionCountByType(type: CompletionType): Double =
             factor.aggregateSum().getOrDefault(type.toString(), 0.0)
 
-    fun getComletionCountByTypeOnToday(type: CompletionType): Double =
-            factor.onToday().getOrDefault(type.toString(), 0.0)
-
     fun getTotalCompletionCount(): Double = factor.aggregateSum().values.sum()
 }
 
@@ -31,4 +28,3 @@ class CompletionTypeRatio(private val type: CompletionType) : UserFactor {
         return if (total == 0.0) "0.0" else (reader.getCompletionCountByType(type) / total).toString()
     }
 }
-

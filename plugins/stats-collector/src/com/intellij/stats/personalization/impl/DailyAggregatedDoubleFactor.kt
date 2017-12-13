@@ -49,7 +49,7 @@ fun DailyAggregatedDoubleFactor.aggregateAverage(): Map<String, Double> {
                 if (old != null) {
                     val n = counts[key]!!.toDouble()
                     counts.computeIfPresent(key) { _, value -> value + 1 }
-                    (n / (n + 1)) * old + value / (n + 1)
+                    FactorsUtil.mergeAverage(n.toInt(), old, 1, value)
                 } else {
                     counts[key] = 1
                     value

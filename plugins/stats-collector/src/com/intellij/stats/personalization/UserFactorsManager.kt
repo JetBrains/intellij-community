@@ -16,7 +16,5 @@ interface UserFactorsManager {
 
   fun getAllFactors(): List<UserFactor>
 
-  fun getFeatureFactor(featureName: String): UserFactor.FeatureFactor?
-
   fun getFactor(id: String): UserFactor
 }

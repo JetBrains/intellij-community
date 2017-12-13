@@ -20,9 +20,9 @@ import com.intellij.codeInsight.lookup.LookupAdapter
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.FeatureManagerImpl
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
-import com.intellij.stats.personalization.UserFactorsManager
 
 /**
  * @author Vitaliy.Bibaev
@@ -49,8 +49,28 @@ class LookupCompletedTracker : LookupAdapter() {
         val relevanceObjects =
                 lookup.getRelevanceObjects(listOf(element), false)
         val relevanceMap = relevanceObjects[element]!!.associate { it.first to it.second }
-        val userFactorsManager = UserFactorsManager.getInstance(lookup.project)
-        relevanceMap.forEach { name, value -> userFactorsManager.getFeatureFactor(name)?.update(value) }
+        val project = lookup.project
+        val featureManager = FeatureManagerImpl.getInstance()
+        featureManager.binaryFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
+            UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.binaryFeatureDescriptor(feature))
+            { updater ->
+                updater.update(relevanceMap[feature.name])
+            }
+        }
+
+        featureManager.doubleFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
+            UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.doubleFeatureDescriptor(feature))
+            { updater ->
+                updater.update(relevanceMap[feature.name])
+            }
+        }
+
+        featureManager.categorialFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
+            UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.categoriealFeatureDescriptor(feature))
+            { updater ->
+                updater.update(relevanceMap[feature.name])
+            }
+        }
     }
 
     private fun processExplicitSelect(lookup: LookupImpl, element: LookupElement) {

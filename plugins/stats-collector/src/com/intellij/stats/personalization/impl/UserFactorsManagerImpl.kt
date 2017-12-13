@@ -6,6 +6,10 @@ import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.stats.personalization.UserFactor
 import com.intellij.stats.personalization.UserFactorsManager
+import com.jetbrains.completion.ranker.features.BinaryFeature
+import com.jetbrains.completion.ranker.features.CatergorialFeature
+import com.jetbrains.completion.ranker.features.DoubleFeature
+import com.jetbrains.completion.ranker.features.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev
@@ -16,9 +20,6 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     }
     private val userFactors = mutableMapOf<String, UserFactor>()
     init {
-        // TODO: register all factors here
-        FeatureManagerImpl.getInstance() // TODO: register feature-derived factors
-
         // user factors
         register(ExplicitCompletionRatio())
         register(CompletionTypeRatio(CompletionType.BASIC))
@@ -39,6 +40,30 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         register(AverageTimeBetweenTyping())
 
         register(MnemonicsRatio())
+
+        // feature-derived factors
+        val featureManager = FeatureManagerImpl.getInstance()
+        featureManager.binaryFactors.forEach(this::registerBinaryFeatureDerivedFactors)
+        featureManager.doubleFactors.forEach(this::registerDoubleFeatureDerivedFactors)
+        featureManager.categorialFactors.forEach(this::registerCategorialFeatureDerivedFactors)
+    }
+
+    private fun registerBinaryFeatureDerivedFactors(feature: BinaryFeature) {
+        register(BinaryValueRatio(feature, feature.availableValues.first))
+        register(BinaryValueRatio(feature, feature.availableValues.second))
+    }
+
+    private fun registerDoubleFeatureDerivedFactors(feature: DoubleFeature) {
+        register(MaxDoubleFeatureValue(feature))
+        register(MinDoubleFeatureValue(feature))
+        register(AverageDoubleFeatureValue(feature))
+        register(UndefinedDoubleFeatureValueRatio(feature))
+    }
+
+    private fun registerCategorialFeatureDerivedFactors(feature: CatergorialFeature) {
+        feature.categories.forEach { register(CategoryRatio(feature, it)) }
+        register(CategoryRatio(feature, FeatureUtils.OTHER))
+        register(MostFrequentCategory(feature))
     }
 
     override fun getAllFactors(): List<UserFactor> = userFactors.values.toList()
@@ -46,10 +71,6 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     override fun getAllFactorIds(): List<String> = userFactors.keys.toList()
 
     override fun getFactor(id: String): UserFactor = userFactors[id]!!
-
-    override fun getFeatureFactor(featureName: String): UserFactor.FeatureFactor? {
-        return null
-    }
 
     private fun register(factor: UserFactor) {
         val old = userFactors.put(factor.id, factor)
