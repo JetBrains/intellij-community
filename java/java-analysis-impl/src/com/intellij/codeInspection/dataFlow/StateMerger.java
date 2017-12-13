@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.LongStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,11 +56,11 @@ class StateMerger {
 
       ProgressManager.checkCanceled();
 
-      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, negativeStates, facts);
-      MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, positiveStates, facts);
+      MultiMap<CompactFactSet, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, negativeStates, facts);
+      MultiMap<CompactFactSet, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, positiveStates, facts);
 
       Replacements replacements = new Replacements(states);
-      for (Map.Entry<Set<Fact>, Collection<DfaMemoryStateImpl>> entry : statesByUnrelatedFacts1.entrySet()) {
+      for (Map.Entry<CompactFactSet, Collection<DfaMemoryStateImpl>> entry : statesByUnrelatedFacts1.entrySet()) {
         final Collection<DfaMemoryStateImpl> group1 = entry.getValue();
         final Collection<DfaMemoryStateImpl> group2 = statesByUnrelatedFacts2.get(entry.getKey());
         if (group1.isEmpty() || group2.isEmpty()) continue;
@@ -141,10 +142,10 @@ class StateMerger {
   }
 
   @NotNull
-  private MultiMap<Set<Fact>, DfaMemoryStateImpl> mapByUnrelatedFacts(@NotNull Fact fact,
+  private MultiMap<CompactFactSet, DfaMemoryStateImpl> mapByUnrelatedFacts(@NotNull Fact fact,
                                                                       @NotNull Collection<DfaMemoryStateImpl> states,
                                                                       @NotNull Set<Fact> interestingFacts) {
-    MultiMap<Set<Fact>, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
+    MultiMap<CompactFactSet, DfaMemoryStateImpl> statesByUnrelatedFacts = MultiMap.createLinked();
     for (DfaMemoryStateImpl state : states) {
       statesByUnrelatedFacts.putValue(getUnrelatedFacts(fact, state, interestingFacts), state);
     }
@@ -152,16 +153,16 @@ class StateMerger {
   }
 
   @NotNull
-  private HashSet<Fact> getUnrelatedFacts(@NotNull final Fact fact,
-                                          @NotNull DfaMemoryStateImpl state,
-                                          @NotNull Set<Fact> interestingFacts) {
-    final HashSet<Fact> result = new HashSet<>();
+  private CompactFactSet getUnrelatedFacts(@NotNull final Fact fact,
+                                           @NotNull DfaMemoryStateImpl state,
+                                           @NotNull Set<Fact> interestingFacts) {
+    final ArrayList<Fact> result = new ArrayList<>();
     for (Fact other : getFacts(state)) {
       if (!fact.invalidatesFact(other) && interestingFacts.contains(other)) {
         result.add(other);
       }
     }
-    return result;
+    return new CompactFactSet(state.getFactory(), result);
   }
 
   private void restoreOtherInequalities(@NotNull EqualityFact removedFact,
@@ -500,6 +501,37 @@ class StateMerger {
     return result;
   }
 
+  static final class CompactFactSet {
+    private final long[] myData;
+    private final int myHashCode;
+    private final DfaValueFactory myFactory;
+
+    CompactFactSet(DfaValueFactory factory, Collection<Fact> facts) {
+      myData = facts.stream().mapToLong(Fact::pack).toArray();
+      Arrays.sort(myData);
+      myHashCode = Arrays.hashCode(myData);
+      myFactory = factory;
+    }
+
+    @Override
+    public int hashCode() {
+      return myHashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (!(obj instanceof CompactFactSet)) return false;
+      CompactFactSet other = (CompactFactSet)obj;
+      return this.myHashCode == other.myHashCode && Arrays.equals(this.myData, other.myData);
+    }
+
+    @Override
+    public String toString() {
+      return LongStreamEx.of(myData).mapToObj(f -> Fact.unpack(myFactory, f)).joining(", ", "{", "}");
+    }
+  }
+
   static abstract class Fact {
     final boolean myPositive;
     @NotNull final DfaVariableValue myVar;
@@ -509,6 +541,18 @@ class StateMerger {
       myPositive = positive;
       myVar = var;
       myHash = hash;
+    }
+
+    private int packLow() {
+      return myPositive ? myVar.getID() : -myVar.getID();
+    }
+
+    abstract int packHigh();
+
+    long pack() {
+      int lo = packLow();
+      int hi = packHigh();
+      return ((long)hi << 32) | (lo & 0xFFFF_FFFFL);
     }
 
     @Override
@@ -541,6 +585,18 @@ class StateMerger {
       }
       return value;
     }
+
+    static Fact unpack(DfaValueFactory factory, long packed) {
+      int lo = (int)(packed & 0xFFFF_FFFFL);
+      int hi = (int)(packed >> 32);
+      boolean positive = lo >= 0;
+      DfaVariableValue var = (DfaVariableValue)factory.getValue(Math.abs(lo));
+      if (hi >= 0) {
+        return new EqualityFact(var, positive, factory.getValue(hi));
+      } else {
+        return new InstanceofFact(var, positive, factory.getType(-hi));
+      }
+    }
   }
 
   static final class EqualityFact extends Fact {
@@ -549,6 +605,11 @@ class StateMerger {
     private EqualityFact(@NotNull DfaVariableValue var, boolean positive, @NotNull DfaValue arg) {
       super(positive, var, (var.hashCode() * 31 + arg.hashCode()) * 31 + (positive ? 1 : 0));
       myArg = arg;
+    }
+
+    @Override
+    int packHigh() {
+      return myArg.getID();
     }
 
     @Override
@@ -597,6 +658,11 @@ class StateMerger {
     private InstanceofFact(@NotNull DfaVariableValue var, boolean positive, @NotNull DfaPsiType type) {
       super(positive, var, (var.hashCode() * 31 + type.hashCode()) * 31 + (positive ? 1 : 0));
       myType = type;
+    }
+
+    @Override
+    int packHigh() {
+      return -myType.getID();
     }
 
     @Override

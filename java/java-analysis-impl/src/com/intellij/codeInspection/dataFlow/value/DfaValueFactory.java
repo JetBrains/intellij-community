@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ public class DfaValueFactory {
   private DfaPsiType internType(@NotNull PsiType psiType) {
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
-      myDfaTypes.put(psiType, dfaType = new DfaPsiType(psiType, myAssignableCache, myConvertibleCache));
+      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, myAssignableCache, myConvertibleCache));
     }
     return dfaType;
   }
@@ -100,6 +101,11 @@ public class DfaValueFactory {
 
   public DfaValue getValue(int id) {
     return myValues.get(id);
+  }
+
+  @NotNull
+  public DfaPsiType getType(int id) {
+    return StreamEx.ofValues(myDfaTypes).findFirst(t -> t.getID() == id).orElseThrow(IllegalArgumentException::new);
   }
 
   @Nullable
