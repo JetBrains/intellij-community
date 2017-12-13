@@ -12,3 +12,10 @@ iml_module(
         "//tools/idea/java/debugger/debugger-agent-storage[module]",
     ],
 )
+
+filegroup(
+    name = "artifact_files",
+    srcs = ["META-INF/MANIFEST.MF"],
+    visibility = ["//visibility:public"],
+)
+

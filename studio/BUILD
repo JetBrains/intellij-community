@@ -36,3 +36,9 @@ java_test(
         "//tools/base/third_party:junit_junit",
     ],
 )
+
+filegroup(
+    name = "ant_prebuilts",
+    srcs = glob(["build-scripts-deps/*.jar"]),
+    visibility = ["//visibility:public"],
+)

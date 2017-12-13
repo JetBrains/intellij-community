@@ -42,6 +42,7 @@ class BazelAntLauncher {
     String tmp = null;
     String out = null;
     String moduleInfo = null;
+    String artifactInfo = null;
 
     Iterator<String> it = Arrays.asList(args).iterator();
     while (it.hasNext()) {
@@ -64,6 +65,8 @@ class BazelAntLauncher {
             tmp = it.next();
         } else if (arg.equals("--module_info") && it.hasNext()) {
             moduleInfo = it.next();
+        } else if (arg.equals("--artifact_info") && it.hasNext()) {
+          artifactInfo = it.next();
         } else if (arg.equals("--out") && it.hasNext()) {
             out = it.next();
         } else {
@@ -90,11 +93,17 @@ class BazelAntLauncher {
     Path tmpPath = Paths.get(tmp);
     Files.createDirectory(tmpPath);
 
-    Files.createSymbolicLink(Paths.get("bazel-bin"), Paths.get(binDir));
-    Files.createSymbolicLink(Paths.get("bazel-genfiles"), Paths.get(genDir));
+    Path bazelBin = Paths.get("bazel-bin");
+    Path bazelGenfiles = Paths.get("bazel-genfiles");
+
+    Files.createSymbolicLink(bazelBin, Paths.get(binDir));
+    Files.createSymbolicLink(bazelGenfiles, Paths.get(genDir));
 
     // TODO: Once we package gradle from bazel, we don't need to fake an empty directory
     Files.createDirectories(Paths.get("out/studio/repo"));
+
+    File modules = makeAbsolute(moduleInfo);
+    File artifacts = makeAbsolute(artifactInfo);
 
     // Invoke ant in a separate process as it uses System.exit
     File output = new File(out);
@@ -105,11 +114,12 @@ class BazelAntLauncher {
             Launcher.class.getCanonicalName(),
             "-f",
             build,
-            "assemble",
-            "-Dout=" + tmpPath.toAbsolutePath(),
-            "-Dcustom.project.data=" + Paths.get(moduleInfo).toAbsolutePath(),
-            "-Dcustom.project.root=" + Paths.get(".").toAbsolutePath(),
-            "-Dbundle.kotlin.plugin=true"
+            "build",
+            "-Dintellij.build.output.root=" + tmpPath.toAbsolutePath(),
+            "-Dintellij.build.compiled.modules=" + modules.getAbsolutePath(),
+            "-Dintellij.build.compiled.artifacts=" + artifacts.getAbsolutePath(),
+            "-Dbundle.kotlin.plugin=true",
+            "-Dskip.bazel.dependencies=true"
         ).inheritIO().redirectOutput(output);
     process.environment().put("ANDROID_SDK_HOME", tmpPath.toAbsolutePath().toString());
     int status = process.start().waitFor();
@@ -140,5 +150,23 @@ class BazelAntLauncher {
                 .sorted((o1, o2) -> -o1.compareTo(o2))
                 .forEach(File::delete);
     System.exit(status);
+  }
+
+  private static File makeAbsolute(String propertiesPath) throws IOException {
+    File file = new File(propertiesPath);
+    try (FileInputStream input = new FileInputStream(file)) {
+      Properties properties = new Properties();
+      properties.load(input);
+      for (String name : properties.stringPropertyNames()) {
+        String[] values = properties.getProperty(name).split(":");
+        for (int i = 0; i < values.length; i++) {
+          values[i] = new File(values[i]).getAbsolutePath();
+        }
+        properties.put(name, String.join(":", values));
+      }
+      File newFile = File.createTempFile(file.getName(), null);
+      properties.store(new FileOutputStream(newFile), "");
+      return newFile;
+    }
   }
 }

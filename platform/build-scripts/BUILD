@@ -60,7 +60,10 @@ iml_module(
 
 filegroup(
     name = "scripts",
-    srcs = glob(["groovy/**/*"]),
+    srcs = glob([
+        "groovy/**/*",
+        "resources/**/*",
+    ]),
     visibility = ["//visibility:public"],
 )
 

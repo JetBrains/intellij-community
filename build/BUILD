@@ -70,3 +70,9 @@ iml_module(
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
+
+filegroup(
+    name = "prebuilts",
+    srcs = ["dependencies/gradle.properties"],
+    visibility = ["//visibility:public"],
+)
