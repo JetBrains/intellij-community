@@ -25,7 +25,7 @@ import icons.PythonIcons
  *
  * auto-insert the obvious only case; else show other cases.
  */
-fun autocompleteObviousCase(context: AutoCompletionContext) =
+fun autoInsertSingleItem(context: AutoCompletionContext) =
   if (context.items.size == 1) {
     AutoCompletionDecision.insertItem(context.items.first())!!
   }

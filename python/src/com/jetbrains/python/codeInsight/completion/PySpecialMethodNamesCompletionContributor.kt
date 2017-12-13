@@ -4,12 +4,12 @@ package com.jetbrains.python.codeInsight.completion
 import com.intellij.codeInsight.completion.*
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
-import com.jetbrains.extensions.afterDefInMethod
+import com.jetbrains.extensions.python.afterDefInMethod
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.LanguageLevel
 
 class PySpecialMethodNamesCompletionContributor : CompletionContributor() {
-  override fun handleAutoCompletionPossibility(context: AutoCompletionContext) = autocompleteObviousCase(context)
+  override fun handleAutoCompletionPossibility(context: AutoCompletionContext) = autoInsertSingleItem(context)
 
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement().afterDefInMethod(), MyCompletionProvider)
