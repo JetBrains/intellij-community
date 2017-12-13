@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.TailType;
@@ -16,7 +18,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
@@ -314,12 +315,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     }
     else if (pparent instanceof GrAssignmentExpression) {
       GrAssignmentExpression assignment = (GrAssignmentExpression)pparent;
-      IElementType optoken = assignment.getOperationTokenType();
 
       GrExpression lvalue = assignment.getLValue();
       GrExpression rvalue = assignment.getRValue();
 
-      if (parent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+      if (parent == rvalue && !assignment.isOperatorAssignment()) {
         return lvalue.getNominalType();
       }
     }
@@ -327,12 +327,11 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       PsiElement ppparent = pparent.getParent();
       if (ppparent instanceof GrAssignmentExpression) {
         GrAssignmentExpression assignment = (GrAssignmentExpression)ppparent;
-        IElementType optoken = assignment.getOperationTokenType();
 
         GrExpression lvalue = assignment.getLValue();
         GrExpression rvalue = assignment.getRValue();
 
-        if (pparent == rvalue && optoken == GroovyTokenTypes.mASSIGN) {
+        if (pparent == rvalue && !assignment.isOperatorAssignment()) {
           return lvalue.getNominalType();
         }
       }

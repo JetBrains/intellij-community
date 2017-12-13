@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
@@ -149,7 +151,7 @@ public class PsiUtil {
   public static boolean isLValueOfOperatorAssignment(@NotNull GrReferenceExpression element) {
     PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
     return parent instanceof GrAssignmentExpression
-           && ((GrAssignmentExpression)parent).getOperationTokenType() != GroovyTokenTypes.mASSIGN
+           && ((GrAssignmentExpression)parent).isOperatorAssignment()
            && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
   }
 

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -70,6 +72,11 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   }
 
   @Override
+  public boolean isOperatorAssignment() {
+    return getOperationTokenType() != GroovyTokenTypes.mASSIGN;
+  }
+
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitAssignmentExpression(this);
   }
@@ -82,10 +89,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
 
   @Override
   public PsiReference getReference() {
-    final IElementType operationToken = getOperationTokenType();
-    if (operationToken == GroovyTokenTypes.mASSIGN) return null;
-
-    return this;
+    return isOperatorAssignment() ? this : null;
   }
 
   @Override
