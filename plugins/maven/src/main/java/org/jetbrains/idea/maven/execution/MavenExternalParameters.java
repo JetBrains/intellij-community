@@ -51,7 +51,6 @@ import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
@@ -226,7 +225,13 @@ public class MavenExternalParameters {
       marker = MavenArtifactResolvedM3RtMarker.class;
     }
     else {
-      marker = MavenArtifactResolvedM2RtMarker.class;
+      try {
+        marker = Class.forName("org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM2RtMarker");
+      }
+      catch (ClassNotFoundException e) {
+        LOG.error("Cannot find Maven2 artifact resolved, falling back to Maven3", e);
+        marker = MavenArtifactResolvedM3RtMarker.class;
+      }
     }
 
     File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
