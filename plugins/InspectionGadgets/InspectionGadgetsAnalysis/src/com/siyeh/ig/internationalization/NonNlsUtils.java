@@ -19,6 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class NonNlsUtils {
       final PsiReferenceExpression referenceExpression =
         (PsiReferenceExpression)qualifierExpression;
       final PsiElement element = referenceExpression.resolve();
-      if (element instanceof PsiModifierListOwner) {
+      if (element instanceof PsiModifierListOwner && !(element instanceof PsiClass)) {
         return (PsiModifierListOwner)element;
       }
     }
@@ -105,12 +106,22 @@ public class NonNlsUtils {
     if (value != null) {
       return value.booleanValue();
     }
-    final PsiElement element =
-      PsiTreeUtil.getParentOfType(expression,
-                                  PsiExpressionList.class,
-                                  PsiAssignmentExpression.class,
-                                  PsiVariable.class,
-                                  PsiReturnStatement.class);
+    PsiElement element = expression;
+    while(true) {
+      element = PsiTreeUtil.getParentOfType(element,
+                                            PsiFunctionalExpression.class,
+                                            PsiExpressionList.class,
+                                            PsiAssignmentExpression.class,
+                                            PsiVariable.class,
+                                            PsiReturnStatement.class);
+      if (!(element instanceof PsiFunctionalExpression)) {
+        break;
+      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+      if (parent instanceof PsiExpressionList) {
+        element = parent;
+      }
+    }
     final boolean result;
     if (element instanceof PsiExpressionList) {
       final PsiExpressionList expressionList =

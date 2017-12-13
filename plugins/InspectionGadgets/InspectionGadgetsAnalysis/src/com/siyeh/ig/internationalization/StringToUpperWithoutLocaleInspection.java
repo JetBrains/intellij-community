@@ -24,11 +24,19 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StringToUpperWithoutLocaleInspection extends BaseInspection {
+import java.util.Objects;
 
+public class StringToUpperWithoutLocaleInspection extends BaseInspection {
+  private static final CallMatcher MATCHER = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_LANG_STRING, HardcodedMethodConstants.TO_UPPER_CASE, HardcodedMethodConstants.TO_LOWER_CASE
+  ).parameterCount(0);
+
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -52,11 +60,8 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiReferenceExpression methodExpression =
-      (PsiReferenceExpression)infos[0];
-    final PsiModifierListOwner annotatableQualifier =
-      NonNlsUtils.getAnnotatableQualifier(
-        methodExpression);
+    final PsiReferenceExpression methodExpression = (PsiReferenceExpression)infos[0];
+    final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
     if (annotatableQualifier == null) {
       return null;
     }
@@ -69,45 +74,22 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
     return new StringToUpperWithoutLocaleVisitor();
   }
 
-  private static class StringToUpperWithoutLocaleVisitor
-    extends BaseInspectionVisitor {
+  private static class StringToUpperWithoutLocaleVisitor extends BaseInspectionVisitor {
+    @Override
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      if (!MATCHER.test(expression)) return;
+      final PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+      if (NonNlsUtils.isNonNlsAnnotatedUse(expression) || NonNlsUtils.isNonNlsAnnotated(qualifier)) return;
+      registerMethodCallError(expression, expression.getMethodExpression());
+    }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.TO_UPPER_CASE.equals(methodName) &&
-          !HardcodedMethodConstants.TO_LOWER_CASE.equals(methodName)) {
-        return;
-      }
-      if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() == 1) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String className = containingClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
-        return;
-      }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (NonNlsUtils.isNonNlsAnnotated(qualifier)) {
-        return;
-      }
-      registerMethodCallError(expression, methodExpression);
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      if (!MATCHER.methodReferenceMatches(expression)) return;
+      final PsiExpression qualifier = expression.getQualifierExpression();
+      if (NonNlsUtils.isNonNlsAnnotatedUse(qualifier) || NonNlsUtils.isNonNlsAnnotated(qualifier)) return;
+      PsiElement nameElement = Objects.requireNonNull(expression.getReferenceNameElement());
+      registerError(nameElement, expression);
     }
   }
 }
