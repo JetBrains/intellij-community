@@ -5,20 +5,10 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.2.11"
+    id "org.jetbrains.intellij" version "0.2.17"
 }
 
 applyKotlinJVM()
-
-// temparary hack to prevent slf4j version conflict. To be fixed as soon as Zolotov is back from vacation.
-gradle.taskGraph.whenReady { taskGraph ->
-    project.tasks.prepareSandbox.doLast {
-        def pluginName = project.intellij.pluginName
-        def toDelete = "$project.rootDir/app-idea/build/idea-sandbox/plugins/$pluginName/lib/slf4j-api-1.7.21.jar"
-        delete toDelete
-        println("delete: $toDelete")
-    }
-}
 
 dependencies {
     compile project(':runtime')
@@ -41,13 +31,6 @@ dependencies {
 
 intellij {
     version 'IC-2017.1'
-    pluginName 'Circlet Plugin'
+    pluginName 'circlet-intellij-plugin'
     updateSinceUntilBuild false
-
-    publish {
-        username 'serjic'
-        password 'password'
-        channel 'nightly'
-    }
 }
-
