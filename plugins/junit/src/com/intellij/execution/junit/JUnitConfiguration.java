@@ -416,7 +416,6 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     final Data persistentData = getPersistentData();
     DefaultJDOMExternalizer.writeExternal(persistentData, element);

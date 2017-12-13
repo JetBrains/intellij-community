@@ -54,7 +54,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   private ShortenCommandLine myShortenCommandLine = null;
 
-  public String ENV_VARIABLES;
   private final Map<String,String> myEnvs = new LinkedHashMap<>();
   public boolean PASS_PARENT_ENVS = true;
 
@@ -252,12 +251,11 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(this, element);
-    writeModule(element);
 
     Map<String, String> envs = getEnvs();
-    //if (!envs.isEmpty()) {
+    if (!envs.isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, envs);
-    //}
+    }
 
     ShortenCommandLine.writeShortenClasspathMethod(element, myShortenCommandLine);
   }

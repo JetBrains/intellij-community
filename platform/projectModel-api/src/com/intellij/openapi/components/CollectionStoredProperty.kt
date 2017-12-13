@@ -13,7 +13,7 @@ import kotlin.reflect.KProperty
 internal class ListStoredProperty<T> : StoredPropertyBase<MutableList<T>>() {
   override fun isEqualToDefault() = value.isEmpty()
 
-  private val value: MutableList<T> = SmartList()
+  private val value: SmartList<T> = SmartList()
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
@@ -42,6 +42,10 @@ internal class ListStoredProperty<T> : StoredPropertyBase<MutableList<T>>() {
   override fun setValue(other: StoredProperty): Boolean {
     @Suppress("UNCHECKED_CAST")
     return doSetValue(value, (other as ListStoredProperty<T>).value)
+  }
+
+  override fun getModificationCount(): Long {
+    return value.modificationCount.toLong()
   }
 }
 

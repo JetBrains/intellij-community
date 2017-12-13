@@ -33,7 +33,6 @@ import java.util.List;
  * Standard base class for run configuration implementations.
  */
 public abstract class RunConfigurationBase extends UserDataHolderBase implements RunConfiguration, TargetAwareRunProfile {
-  private static final String LOG_FILE = "log_file";
   private static final String PREDEFINED_LOG_FILE_ELEMENT = "predefined_log_file";
   private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
   private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
@@ -45,7 +44,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   private RunConfigurationOptions myOptions = createOptions();
 
-  private List<LogFileOptions> myLogFiles = new SmartList<>();
   private List<PredefinedLogFile> myPredefinedLogFiles = new SmartList<>();
 
   private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
@@ -129,7 +127,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   @Override
   public RunConfiguration clone() {
     final RunConfigurationBase runConfiguration = (RunConfigurationBase)super.clone();
-    runConfiguration.myLogFiles = new ArrayList<>(myLogFiles);
     runConfiguration.myPredefinedLogFiles = new ArrayList<>(myPredefinedLogFiles);
 
     runConfiguration.myOptions = createOptions();
@@ -160,7 +157,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @NotNull
   public ArrayList<LogFileOptions> getAllLogFiles() {
-    ArrayList<LogFileOptions> list = new ArrayList<>(myLogFiles);
+    ArrayList<LogFileOptions> list = new ArrayList<>(getLogFiles());
     for (PredefinedLogFile predefinedLogFile : myPredefinedLogFiles) {
       final LogFileOptions options = getOptionsForPredefinedLogFile(predefinedLogFile);
       if (options != null) {
@@ -172,20 +169,20 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @NotNull
   public List<LogFileOptions> getLogFiles() {
-    return myLogFiles;
+    return getOptions().getLogFiles();
   }
 
   @SuppressWarnings("unused")
   public void addLogFile(String file, String alias, boolean checked) {
-    myLogFiles.add(new LogFileOptions(alias, file, checked, true, false));
+    getOptions().getLogFiles().add(new LogFileOptions(alias, file, checked));
   }
 
   public void addLogFile(String file, String alias, boolean checked, boolean skipContent, final boolean showAll) {
-    myLogFiles.add(new LogFileOptions(alias, file, checked, skipContent, showAll));
+    getOptions().getLogFiles().add(new LogFileOptions(alias, file, checked, skipContent, showAll));
   }
 
   public void removeAllLogFiles() {
-    myLogFiles.clear();
+    getOptions().getLogFiles().clear();
   }
 
   //invoke before run/debug tabs are shown.
@@ -202,12 +199,6 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
-    myLogFiles.clear();
-    for (Element o : element.getChildren(LOG_FILE)) {
-      LogFileOptions logFileOptions = new LogFileOptions();
-      logFileOptions.readExternal(o);
-      myLogFiles.add(logFileOptions);
-    }
     myPredefinedLogFiles.clear();
     for (Element fileElement : element.getChildren(PREDEFINED_LOG_FILE_ELEMENT)) {
       final PredefinedLogFile logFile = new PredefinedLogFile();
@@ -228,24 +219,17 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    JDOMExternalizerUtil.addChildren(element, LOG_FILE, myLogFiles);
     JDOMExternalizerUtil.addChildren(element, PREDEFINED_LOG_FILE_ELEMENT, myPredefinedLogFiles);
     XmlSerializer.serializeObjectInto(myOptions, element);
   }
 
   @Transient
   public boolean isSaveOutputToFile() {
-    RunConfigurationOptions.OutputFileOptions fileOutput = myOptions.getFileOutput();
-    return fileOutput != null && fileOutput.isSaveOutput();
+    return myOptions.getFileOutput().isSaveOutput();
   }
 
   public void setSaveOutputToFile(boolean redirectOutput) {
-    RunConfigurationOptions.OutputFileOptions fileOutput = myOptions.getFileOutput();
-    if (fileOutput == null) {
-      fileOutput = new RunConfigurationOptions.OutputFileOptions();
-      myOptions.setFileOutput(fileOutput);
-    }
-    fileOutput.setSaveOutput(redirectOutput);
+    myOptions.getFileOutput().setSaveOutput(redirectOutput);
   }
 
   @Attribute(SHOW_CONSOLE_ON_STD_OUT)
@@ -268,17 +252,11 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   @Transient
   public String getOutputFilePath() {
-    RunConfigurationOptions.OutputFileOptions output = myOptions.getFileOutput();
-    return output == null ? null : output.getFileOutputPath();
+    return myOptions.getFileOutput().getFileOutputPath();
   }
 
   public void setFileOutputPath(String fileOutputPath) {
-    RunConfigurationOptions.OutputFileOptions fileOutput = myOptions.getFileOutput();
-    if (fileOutput == null) {
-      fileOutput = new RunConfigurationOptions.OutputFileOptions();
-      myOptions.setFileOutput(fileOutput);
-    }
-    fileOutput.setFileOutputPath(fileOutputPath);
+    myOptions.getFileOutput().setFileOutputPath(fileOutputPath);
   }
 
   public boolean collectOutputFromProcessHandler() {

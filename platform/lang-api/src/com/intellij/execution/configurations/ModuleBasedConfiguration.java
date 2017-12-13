@@ -80,6 +80,10 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     getConfigurationModule().readExternal(element);
   }
 
+  /**
+   * @deprecated Not required to be called anymore.
+   */
+  @Deprecated
   protected void writeModule(@NotNull Element element) {
     //if (myModule.getModule() != null) {
     getConfigurationModule().writeExternal(element);

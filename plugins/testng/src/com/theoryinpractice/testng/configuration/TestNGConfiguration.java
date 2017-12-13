@@ -333,7 +333,6 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
