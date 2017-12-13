@@ -3,7 +3,6 @@
  */
 package com.jetbrains.python.testing.doctest;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.RunProfileState;
@@ -31,7 +30,7 @@ public class PythonDocTestRunConfiguration extends AbstractPythonLegacyTestRunCo
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     return new PythonDocTestCommandLineState(this, env);
   }
 
