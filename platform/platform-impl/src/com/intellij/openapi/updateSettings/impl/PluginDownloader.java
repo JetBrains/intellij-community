@@ -349,7 +349,7 @@ public class PluginDownloader {
       uriBuilder.addParameter("action", "download");
       uriBuilder.addParameter("id", descriptor.getPluginId().getIdString());
       uriBuilder.addParameter("build", buildNumberAsString);
-      uriBuilder.addParameter("uuid", PermanentInstallationIDImpl.INSTALLATION_ID);
+      uriBuilder.addParameter("uuid", PermanentInstallationID.get());
       return uriBuilder.build().toString();
     }
   }
