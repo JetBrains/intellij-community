@@ -71,7 +71,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
 
   @Nullable
   @Override
-  public IElementType getOperation() {
+  public IElementType getOperator() {
     return TokenSets.ASSIGNMENTS_TO_OPERATORS.get(getOperationTokenType());
   }
 

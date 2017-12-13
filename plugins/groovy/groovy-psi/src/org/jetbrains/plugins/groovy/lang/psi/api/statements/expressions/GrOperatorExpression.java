@@ -17,5 +17,5 @@ public interface GrOperatorExpression extends GrExpression, GroovyPolyVariantRef
   PsiType getRightType();
 
   @Nullable
-  IElementType getOperation();
+  IElementType getOperator();
 }

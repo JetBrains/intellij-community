@@ -100,7 +100,7 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
 
   @Nullable
   @Override
-  public IElementType getOperation() {
+  public IElementType getOperator() {
     return getOperationTokenType();
   }
 

@@ -71,8 +71,8 @@ public class GrBinaryExpressionTypeCalculators {
 
   @Nullable
   public static PsiType computeType(@NotNull GrOperatorExpression e) {
-    final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperation());
-    assert function != null : e.getOperation();
+    final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperator());
+    assert function != null : e.getOperator();
     return function.fun(e);
   }
 }
