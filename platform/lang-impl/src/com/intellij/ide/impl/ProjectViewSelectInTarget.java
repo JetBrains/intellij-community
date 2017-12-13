@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
   private String mySubId;
@@ -77,10 +78,14 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
       return result;
     }
 
+    Supplier<Object> toSelectSupplier = toSelect instanceof PsiElement
+                                        ? PsiUtilCore.createSmartPsiElementPointer((PsiElement)toSelect)::getElement
+                                        : () -> toSelect;
+
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
     final Runnable runnable = () -> {
-      Runnable r = () -> projectView.selectCB(toSelect, virtualFile, requestFocus).notify(result);
+      Runnable r = () -> projectView.selectCB(toSelectSupplier.get(), virtualFile, requestFocus).notify(result);
       projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
     };
 

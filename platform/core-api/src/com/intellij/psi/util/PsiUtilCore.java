@@ -720,4 +720,9 @@ public class PsiUtilCore {
       return "NULL_PSI_FILE";
     }
   }
+
+  @NotNull
+  public static <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element) {
+    return SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+  }
 }
