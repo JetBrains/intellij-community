@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Bas Leijdekkers
+ * Copyright 2006-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,74 @@
  */
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.*;
+import com.intellij.psi.search.searches.MethodReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.util.Processor;
+import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUsedInOneClassInspectionBase {
+import javax.swing.*;
+import java.util.concurrent.atomic.AtomicReference;
+
+public class StaticMethodOnlyUsedInOneClassInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreTestClasses = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAnonymousClasses = true;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreOnConflicts = true;
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    final PsiNamedElement element = (PsiNamedElement)infos[0];
+    final String name = element.getName();
+    if (infos.length > 1) {
+      if (Boolean.TRUE.equals(infos[1])) {
+        return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.problem.descriptor.anonymous.extending", name);
+      }
+      return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.problem.descriptor.anonymous.implementing", name);
+    }
+    return InspectionGadgetsBundle.message("static.method.only.used.in.one.class.problem.descriptor", name);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option"), "ignoreTestClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.anonymous.option"),
+                      "ignoreAnonymousClasses");
+    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.on.conflicts"), "ignoreOnConflicts");
+    return panel;
+  }
 
   @Override
   @Nullable
@@ -63,6 +116,163 @@ public class StaticMethodOnlyUsedInOneClassInspection extends StaticMethodOnlyUs
     @Override
     public DataContext enhanceDataContext(DataContext context) {
       return SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), usageClass.getElement(), context);
+    }
+  }
+
+  static boolean areReferenceTargetsAccessible(final PsiElement elementToCheck, final PsiElement place) {
+    final AccessibleVisitor visitor = new AccessibleVisitor(elementToCheck, place);
+    elementToCheck.accept(visitor);
+    return visitor.isAccessible();
+  }
+
+  private static class AccessibleVisitor extends JavaRecursiveElementWalkingVisitor {
+    private final PsiElement myElementToCheck;
+    private final PsiElement myPlace;
+    private boolean myAccessible = true;
+
+    public AccessibleVisitor(PsiElement elementToCheck, PsiElement place) {
+      myElementToCheck = elementToCheck;
+      myPlace = place;
+    }
+
+    @Override
+    public void visitCallExpression(PsiCallExpression callExpression) {
+      if (!myAccessible) {
+        return;
+      }
+      super.visitCallExpression(callExpression);
+      final PsiMethod method = callExpression.resolveMethod();
+      if (callExpression instanceof PsiNewExpression && method == null) {
+        final PsiNewExpression newExpression = (PsiNewExpression)callExpression;
+        final PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
+        if (reference != null) {
+          checkElement(reference.resolve());
+        }
+      }
+      else {
+        checkElement(method);
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      if (!myAccessible) {
+        return;
+      }
+      super.visitReferenceExpression(expression);
+      checkElement(expression.resolve());
+    }
+
+    private void checkElement(PsiElement element) {
+      if (!(element instanceof PsiMember)) {
+        return;
+      }
+      if (PsiTreeUtil.isAncestor(myElementToCheck, element, false)) {
+        return; // internal reference
+      }
+      myAccessible =  PsiUtil.isAccessible((PsiMember)element, myPlace, null);
+    }
+
+    public boolean isAccessible() {
+      return myAccessible;
+    }
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new StaticMethodOnlyUsedInOneClassVisitor();
+  }
+
+  private class StaticMethodOnlyUsedInOneClassVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitMethod(final PsiMethod method) {
+      super.visitMethod(method);
+      if (!method.hasModifierProperty(PsiModifier.STATIC) ||
+          method.hasModifierProperty(PsiModifier.PRIVATE) ||
+          method.getNameIdentifier() == null) {
+        return;
+      }
+      if (isOnTheFly() && DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
+        return;
+      }
+      final UsageProcessor usageProcessor = new UsageProcessor();
+      final PsiClass usageClass = usageProcessor.findUsageClass(method);
+      if (usageClass == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (usageClass.equals(containingClass)) {
+        return;
+      }
+      if (ignoreOnConflicts) {
+        if (usageClass.findMethodsBySignature(method, true).length > 0 || !areReferenceTargetsAccessible(method, usageClass)) {
+          return;
+        }
+      }
+      if (ignoreTestClasses && TestUtils.isInTestCode(usageClass)) {
+        return;
+      }
+      if (usageClass instanceof PsiAnonymousClass) {
+        if (ignoreAnonymousClasses) {
+          return;
+        }
+        if (PsiTreeUtil.isAncestor(containingClass, usageClass, true)) {
+          return;
+        }
+        final PsiClass[] interfaces = usageClass.getInterfaces();
+        final PsiClass superClass;
+        if (interfaces.length == 1) {
+          superClass = interfaces[0];
+          registerMethodError(method, superClass, Boolean.FALSE);
+        }
+        else {
+          superClass = usageClass.getSuperClass();
+          if (superClass == null) {
+            return;
+          }
+          registerMethodError(method, superClass, Boolean.TRUE);
+        }
+      }
+      else {
+        registerMethodError(method, usageClass);
+      }
+    }
+  }
+
+  private static class UsageProcessor implements Processor<PsiReference> {
+
+    private final AtomicReference<PsiClass> foundClass = new AtomicReference<>();
+
+    @Override
+    public boolean process(PsiReference reference) {
+      ProgressManager.checkCanceled();
+      final PsiElement element = reference.getElement();
+      final PsiClass usageClass = ClassUtils.getContainingClass(element);
+      if (usageClass == null) {
+        return true;
+      }
+      if (foundClass.compareAndSet(null, usageClass)) {
+        return true;
+      }
+      final PsiClass aClass = foundClass.get();
+      final PsiManager manager = usageClass.getManager();
+      return manager.areElementsEquivalent(aClass, usageClass);
+    }
+
+    /**
+     * @return the class the specified method is used from, or null if it is
+     *         used from 0 or more than 1 other classes.
+     */
+    @Nullable
+    public PsiClass findUsageClass(final PsiMethod method) {
+      ProgressManager.getInstance().runProcess(() -> {
+        final Query<PsiReference> query = MethodReferencesSearch.search(method);
+        if (!query.forEach(this)) {
+          foundClass.set(null);
+        }
+      }, null);
+      return foundClass.get();
     }
   }
 }
