@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-@SuppressWarnings("WeakerAccess")
 final public class AnalysisActionUtils {
   private static AnalysisScope getFileScopeFromInspectionView(DataContext dataContext) {
     InspectionResultsView inspectionView = dataContext.getData(InspectionResultsView.DATA_KEY);
