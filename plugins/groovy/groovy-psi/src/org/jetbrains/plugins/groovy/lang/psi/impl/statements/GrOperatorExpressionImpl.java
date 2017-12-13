@@ -12,16 +12,24 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators.GrBinaryExpressionTypeCalculators;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorResolver;
 
 abstract public class GrOperatorExpressionImpl extends GrExpressionImpl implements GrOperatorExpression {
 
   protected GrOperatorExpressionImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @NotNull
+  @Override
+  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
+    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, GrOperatorResolver.INSTANCE);
   }
 
   @Nullable
