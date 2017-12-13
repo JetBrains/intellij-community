@@ -139,8 +139,8 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
         filesToCheck = new THashSet<>(myFilesToProcess);
         myFilesToProcess.clear();
       }
+      Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
       if (!filesToCheck.isEmpty()) {
-        Set<VirtualFile> unPresentFiles = new THashSet<>(filesToCheck);
         Processor<InspectionTreeNode> fileCheckProcessor = (node) -> {
           if (myView.isDisposed()) {
             return false;
@@ -166,11 +166,14 @@ class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
           return true;
         };
         nodeProcessor = CompositeProcessor.combine(fileCheckProcessor, nodeProcessor);
-        myUnPresentEditedFiles.addAll(unPresentFiles);
       }
 
       synchronized (myView.getTreeStructureUpdateLock()) {
         processNodesIfNeed(myView.getTree().getRoot(), Objects.requireNonNull(nodeProcessor));
+      }
+
+      if (!unPresentFiles.isEmpty()) {
+        myUnPresentEditedFiles.addAll(unPresentFiles);
       }
 
       if (needUpdateUI[0] && !myAlarm.isDisposed()) {
