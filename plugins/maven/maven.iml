@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="maven-jps-plugin" />
-    <orderEntry type="module" module-name="maven-artifact-resolver-m2" scope="PROVIDED" />
     <orderEntry type="module" module-name="maven-artifact-resolver-m3" scope="PROVIDED" />
     <orderEntry type="module" module-name="maven-artifact-resolver-m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="spellchecker" />
