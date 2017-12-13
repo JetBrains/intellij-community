@@ -8,7 +8,6 @@ import org.jetbrains.idea.svn.SvnUtil
 import java.text.DateFormat
 import java.text.ParseException
 import java.util.*
-import java.util.Comparator.comparingInt
 
 private val LOG = logger<Revision>()
 
@@ -58,14 +57,14 @@ class Revision private constructor(private val order: Int, val keyword: String? 
     private val ourKeywordRevisions = newHashMap<String, Revision>()
 
     @JvmField val BASE = Revision(2, "BASE")
-    @JvmField val COMMITTED = Revision(4, "COMMITTED")
+    @JvmField val COMMITTED = Revision(3, "COMMITTED")
     @JvmField val HEAD = Revision(0, "HEAD")
-    @JvmField val PREV = Revision(3, "PREV")
+    @JvmField val PREV = Revision(4, "PREV")
     // TODO: This one should likely be removed - not in the least of svn revision keywords
     @JvmField val WORKING = Revision(1, "WORKING")
     @JvmField val UNDEFINED = Revision(30, "UNDEFINED")
 
-    @JvmField val GENERAL_ORDER: Comparator<Revision> = comparingInt({ it.order })
+    @JvmField val GENERAL_ORDER: Comparator<Revision> = compareByDescending { it.order }
 
     @JvmStatic
     fun of(number: Long) = if (number < 0) UNDEFINED else Revision(10, number = number)

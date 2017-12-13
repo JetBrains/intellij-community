@@ -45,17 +45,12 @@ public class SvnRevisionNumber implements VcsRevisionNumber, LongRevisionNumber 
       return -1;
     }
     Revision rev = ((SvnRevisionNumber)vcsRevisionNumber).myRevision;
-    if (!myRevision.isValid()) {
-      return !rev.isValid() ? 0 : -1;
-    }
+
     if (myRevision.getNumber() >= 0 && rev.getNumber() >= 0) {
       return java.lang.Long.compare(myRevision.getNumber(), rev.getNumber());
     }
     else if (myRevision.getDate() != null && rev.getDate() != null) {
       return myRevision.getDate().compareTo(rev.getDate());
-    }
-    if (myRevision.equals(Revision.HEAD)) {
-      return rev.equals(Revision.HEAD) ? 0 : 1;    // HEAD is greater than a specific rev
     }
     return Revision.GENERAL_ORDER.compare(myRevision, rev);
   }
