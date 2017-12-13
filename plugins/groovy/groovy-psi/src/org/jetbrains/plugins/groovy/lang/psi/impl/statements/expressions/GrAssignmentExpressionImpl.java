@@ -11,7 +11,7 @@ import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -29,8 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
@@ -179,8 +177,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   private static final ResolveCache.PolyVariantResolver<GrAssignmentExpression> RESOLVER = new DependentResolver<GrAssignmentExpression>() {
 
     @Override
-    public Collection<PsiPolyVariantReference> collectDependencies(@NotNull GrAssignmentExpression ref) {
-      List<PsiPolyVariantReference> result = new SmartList<>();
+    protected void collectDependencies(@NotNull GrAssignmentExpression ref, @NotNull Consumer<? super PsiPolyVariantReference> consumer) {
       ref.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
@@ -196,11 +193,10 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
         @Override
         protected void elementFinished(PsiElement element) {
           if (element instanceof GrAssignmentExpression) {
-            result.add(((GrAssignmentExpression)element));
+            consumer.consume((GrAssignmentExpression)element);
           }
         }
       });
-      return result;
     }
 
     @NotNull

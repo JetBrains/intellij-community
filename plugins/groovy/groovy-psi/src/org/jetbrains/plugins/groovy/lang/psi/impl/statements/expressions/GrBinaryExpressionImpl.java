@@ -8,7 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.SmartList;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -21,9 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 
-import java.util.Collection;
-import java.util.List;
-
 /**
  * @author ilyas
  */
@@ -32,10 +29,9 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
   private static final ResolveCache.PolyVariantResolver<GrBinaryExpressionImpl> RESOLVER = new DependentResolver<GrBinaryExpressionImpl>() {
 
     @Override
-    public Collection<PsiPolyVariantReference> collectDependencies(@NotNull GrBinaryExpressionImpl expression) {
+    protected void collectDependencies(@NotNull GrBinaryExpressionImpl ref, @NotNull Consumer<? super PsiPolyVariantReference> consumer) {
       // to avoid SOE, resolve all binary sub-expressions starting from the innermost
-      final List<PsiPolyVariantReference> subExpressions = new SmartList<>();
-      expression.getLeftOperand().accept(new PsiRecursiveElementWalkingVisitor() {
+      ref.getLeftOperand().accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
         public void visitElement(PsiElement element) {
           if (element instanceof GrBinaryExpression) {
@@ -50,11 +46,10 @@ public abstract class GrBinaryExpressionImpl extends GrOperatorExpressionImpl im
         @Override
         protected void elementFinished(PsiElement element) {
           if (element instanceof GrBinaryExpressionImpl) {
-            subExpressions.add((GrBinaryExpressionImpl)element);
+            consumer.consume((GrBinaryExpressionImpl)element);
           }
         }
       });
-      return subExpressions;
     }
 
     @NotNull
