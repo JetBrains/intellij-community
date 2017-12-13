@@ -1,7 +1,6 @@
 __author__ = 'ktisha'
 import os
 import sys
-import importlib
 
 
 PYTHON_VERSION_MAJOR = sys.version_info[0]
@@ -30,9 +29,17 @@ def adjust_django_sys_path():
 def import_system_module(name):
   if sys.platform == "cli":    # hack for the ironpython
       return __import__(name)
-  module = importlib.import_module(name)
-  module.__name__ = "pycharm_" + name
-  return module
+
+  if sys.version_info >= (2, 7):
+      import importlib
+      module = importlib.import_module(name)
+      module.__name__ = "pycharm_" + name
+      return module
+  else:
+      import imp
+      f, filename, desc = imp.find_module(name)
+  return imp.load_module('pycharm_' + name, f, filename, desc)
+
 
 def getModuleName(prefix, cnt):
   return prefix + "%" + str(cnt)
