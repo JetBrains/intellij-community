@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.editor.ex.util;
 
-import com.intellij.lang.Language;
+import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -37,11 +37,19 @@ public class LexerAndelHighlighter {
     private final SyntaxHighlighter myHighlighter;
     private static final EditorColorsScheme colorScheme = EditorColorsManager.getInstance().getScheme("zenburn");
     private final String myLanguageID;
+    private final Language myLanguage;
+    private final PairedBraceMatcher myBraceMatcher;
+    private final BracePair[] myBracePairs;
 
     private TokensContainer(SyntaxHighlighter highlighter, String languageID) {
       mySegments = new SegmentArrayWithData();
       myHighlighter = highlighter;
       myLanguageID = languageID;
+      myLanguage = Language.findLanguageByID(languageID);
+
+      myBraceMatcher = LanguageBraceMatching.INSTANCE.forLanguage(myLanguage);
+      myBracePairs = myBraceMatcher.getPairs();
+
       myLexer = highlighter.getHighlightingLexer();
       myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
       myInitialState = myLexer.getState();
@@ -50,6 +58,11 @@ public class LexerAndelHighlighter {
     private TokensContainer(SyntaxHighlighter highlighter, String languageID, SegmentArrayWithData se) {
       myHighlighter = highlighter;
       myLanguageID = languageID;
+      myLanguage = Language.findLanguageByID(languageID);
+
+      myBraceMatcher = LanguageBraceMatching.INSTANCE.forLanguage(myLanguage);
+      myBracePairs = myBraceMatcher.getPairs();
+
       myLexer = highlighter.getHighlightingLexer();
       myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
       myInitialState = myLexer.getState();
@@ -81,6 +94,33 @@ public class LexerAndelHighlighter {
       return mySegments.getSegmentCount();
     }
 
+    public boolean isBraceToken(int offset) {
+      IElementType tokenType = getTokenType(getTokenIndexByOffset(offset));
+
+      for (BracePair pair : myBracePairs) {
+        if (pair.getLeftBraceType() == tokenType || pair.getRightBraceType() == tokenType) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    public IElementType getMatchingBraceType(int offset) {
+      int index = getTokenIndexByOffset(offset);
+      IElementType tokenType = getTokenType(index);
+
+      for (BracePair pair : myBracePairs) {
+        if (pair.getLeftBraceType() == tokenType) {
+          return pair.getRightBraceType();
+        } else if (pair.getRightBraceType() == tokenType) {
+          return pair.getLeftBraceType();
+        }
+      }
+
+      return null;
+    }
+
     public TextAttributes getTextAttributes(int index) {
       // TODO cache text attributes
       final TextAttributesKey[] keys = myHighlighter.getTokenHighlights(getTokenType(index));
@@ -93,8 +133,6 @@ public class LexerAndelHighlighter {
       }
       return attrs;
     }
-
-
   }
 
   private static int packData(final IElementType tokenType, final int initialState, final int state) {
