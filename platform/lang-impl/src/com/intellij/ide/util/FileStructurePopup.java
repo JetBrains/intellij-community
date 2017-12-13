@@ -788,7 +788,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           saveState(action, state);
         }
         myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter != state);
-        rebuild(action instanceof FileStructureFilter).processed(ignore -> {
+        rebuild(false).processed(ignore -> {
           if (mySpeedSearch.isPopupActive()) {
             mySpeedSearch.refreshSelection();
           }
