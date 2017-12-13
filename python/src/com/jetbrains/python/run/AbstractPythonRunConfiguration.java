@@ -59,7 +59,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    */
   protected boolean mySkipModuleSerialization;
 
-  public AbstractPythonRunConfiguration(Project project, final ConfigurationFactory factory) {
+  public AbstractPythonRunConfiguration(@NotNull Project project, @NotNull ConfigurationFactory factory) {
     super(project, factory);
     getConfigurationModule().init();
   }
