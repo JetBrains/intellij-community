@@ -55,6 +55,7 @@ csv
 ctypes
 curses
 datetime
+dataclasses
 dbhash
 dbm
 decimal

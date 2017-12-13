@@ -67,7 +67,9 @@ public class PyKnownDecoratorUtil {
 
     PYRAMID_DECORATOR_REIFY("pyramid.decorator.reify"),
     DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY("django.utils.functional.cached_property"),
-    KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property");
+    KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property"),
+
+    DATACLASSES_DATACLASS("dataclasses.dataclass");
 
     private final QualifiedName myQualifiedName;
 

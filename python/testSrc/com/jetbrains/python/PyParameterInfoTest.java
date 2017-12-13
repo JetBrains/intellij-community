@@ -707,6 +707,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(1);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.
