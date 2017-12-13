@@ -1,5 +1,4 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -753,7 +752,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      readByteTargetLevel(parentNode);
+      readByteTargetLevel(parentNode, myModuleBytecodeTarget);
     }
 
     Map<String, String> externalState = myProject.getComponent(ExternalCompilerConfigurationStorage.class).getLoadedState();
