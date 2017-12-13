@@ -66,6 +66,11 @@ import java.util.Comparator;
     }
   }
 
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   private static void moveCaret(Editor editor, Caret caret, int offset) {
     caret.removeSelection();
     caret.moveToOffset(offset);
