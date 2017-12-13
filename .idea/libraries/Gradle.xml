@@ -1,24 +1,24 @@
 <component name="libraryTable">
   <library name="Gradle">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-api-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-4.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-launcher-4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-api-4.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-wrapper-4.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-launcher-4.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/tooling-api/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/core/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/model-core/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/model-groovy/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/messaging/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/wrapper/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/base-services/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/base-services-groovy/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/process-services/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/resources/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/cli/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.0-src.zip!/gradle-4.0/subprojects/logging/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/tooling-api/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/core/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/model-core/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/model-groovy/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/messaging/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/wrapper/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/base-services/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/base-services-groovy/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/process-services/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/resources/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/cli/src/main/java" />
+      <root url="jar://$PROJECT_DIR$/plugins/gradle/lib/gradle-4.4-src.zip!/gradle-4.4/subprojects/logging/src/main/java" />
     </SOURCES>
   </library>
 </component>

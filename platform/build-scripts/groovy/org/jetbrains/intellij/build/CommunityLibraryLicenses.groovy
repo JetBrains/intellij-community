@@ -124,7 +124,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Gluegen", libraryName: "gluegen-rt", license: "Creative Commons Attribution License",
                        url: "https://jogamp.org/gluegen/www/", licenseUrl: "http://creativecommons.org/licenses/by/3.0"),
     new LibraryLicense(name: "Google Feedback", libraryName: "GoogleFeedback.jar", version: "", license: "TBD"),
-    new LibraryLicense(name: "Gradle", version: "4.0", license: "Apache 2.0", url: "http://gradle.org/",
+    new LibraryLicense(name: "Gradle", version: "4.4", license: "Apache 2.0", url: "http://gradle.org/",
                        licenseUrl: "http://gradle.org/license"),
     new LibraryLicense(name: "Groovy", version: "2.4.6", license: "Apache 2.0", url: "http://groovy-lang.org/"),
     new LibraryLicense(name: "Gson", version: "2.2.4", libraryName: "gson", license: "Apache 2.0", url: "http://code.google.com/p/google-gson/"),
