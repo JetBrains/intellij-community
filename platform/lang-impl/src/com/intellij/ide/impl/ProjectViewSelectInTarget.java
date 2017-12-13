@@ -69,13 +69,13 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
                                       @Nullable final String subviewId,
                                       final VirtualFile virtualFile,
                                       final boolean requestFocus) {
-    final ActionCallback result = new ActionCallback();
-
     final ProjectView projectView = ProjectView.getInstance(project);
+    if (projectView == null) return ActionCallback.REJECTED;
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       AbstractProjectViewPane pane = projectView.getProjectViewPaneById(ProjectViewPane.ID);
       pane.select(toSelect, virtualFile, requestFocus);
-      return result;
+      return ActionCallback.DONE;
     }
 
     Supplier<Object> toSelectSupplier = toSelect instanceof PsiElement
@@ -84,6 +84,9 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     final ToolWindow projectViewToolWindow = windowManager.getToolWindow(ToolWindowId.PROJECT_VIEW);
+    if (projectViewToolWindow == null) return ActionCallback.REJECTED;
+
+    ActionCallback result = new ActionCallback();
     final Runnable runnable = () -> {
       Runnable r = () -> projectView.selectCB(toSelectSupplier.get(), virtualFile, requestFocus).notify(result);
       projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
