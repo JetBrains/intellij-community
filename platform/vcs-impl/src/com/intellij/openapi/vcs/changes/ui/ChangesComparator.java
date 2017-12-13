@@ -26,15 +26,21 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public class ChangesComparator {
+  private static final Comparator<VirtualFile> VIRTUAL_FILE_FLAT = new VirtualFileComparator(true);
+  private static final Comparator<VirtualFile> VIRTUAL_FILE_TREE = new VirtualFileComparator(false);
+  private static final Comparator<Change> CHANGE_FLAT = new ChangeComparator(true);
+  private static final Comparator<Change> CHANGE_TREE = new ChangeComparator(false);
+
   @NotNull
   public static Comparator<Change> getInstance(boolean flattened) {
-    return (o1, o2) -> comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), flattened);
+    return flattened ? CHANGE_FLAT : CHANGE_TREE;
   }
 
   @NotNull
   public static Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
-    return (o1, o2) -> comparePaths(VcsUtil.getFilePath(o1), VcsUtil.getFilePath(o2), flattened);
+    return flattened ? VIRTUAL_FILE_FLAT : VIRTUAL_FILE_TREE;
   }
+
 
   private static int comparePaths(@NotNull FilePath filePath1, @NotNull FilePath filePath2, boolean flattened) {
     if (!flattened) {
@@ -44,6 +50,32 @@ public class ChangesComparator {
       int delta = filePath1.getName().compareToIgnoreCase(filePath2.getName());
       if (delta != 0) return delta;
       return filePath1.getPath().compareTo(filePath2.getPath());
+    }
+  }
+
+  private static class VirtualFileComparator implements Comparator<VirtualFile> {
+    private final boolean myFlattened;
+
+    public VirtualFileComparator(boolean flattened) {
+      myFlattened = flattened;
+    }
+
+    @Override
+    public int compare(VirtualFile o1, VirtualFile o2) {
+      return comparePaths(VcsUtil.getFilePath(o1), VcsUtil.getFilePath(o2), myFlattened);
+    }
+  }
+
+  private static class ChangeComparator implements Comparator<Change> {
+    private final boolean myFlattened;
+
+    public ChangeComparator(boolean flattened) {
+      myFlattened = flattened;
+    }
+
+    @Override
+    public int compare(Change o1, Change o2) {
+      return comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), myFlattened);
     }
   }
 }
