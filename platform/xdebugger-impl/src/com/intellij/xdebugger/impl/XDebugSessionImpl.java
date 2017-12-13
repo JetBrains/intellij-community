@@ -91,7 +91,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XValueMarkers<?, ?> myValueMarkers;
   private final String mySessionName;
   private @Nullable XDebugSessionTab mySessionTab;
-  private final XDebugSessionData mySessionData;
+  private @NotNull final XDebugSessionData mySessionData;
   private XBreakpoint<?> myActiveNonLineBreakpoint;
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private final Project myProject;
@@ -340,6 +340,7 @@ public class XDebugSessionImpl implements XDebugSession {
     myDebugProcess.sessionInitialized();
   }
 
+  @NotNull
   public XDebugSessionData getSessionData() {
     return mySessionData;
   }

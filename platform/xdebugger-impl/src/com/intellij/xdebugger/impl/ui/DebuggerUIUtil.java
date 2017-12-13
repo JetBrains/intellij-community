@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -468,5 +469,13 @@ public class DebuggerUIUtil {
       }
     }
     return data;
+  }
+
+  public static void repaintCurrentEditor(Project project) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor != null) {
+      editor.getContentComponent().revalidate();
+      editor.getContentComponent().repaint();
+    }
   }
 }
