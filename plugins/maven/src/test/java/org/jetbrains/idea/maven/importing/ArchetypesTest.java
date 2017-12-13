@@ -35,7 +35,7 @@ public class ArchetypesTest extends MavenTestCase {
     File dir = new File(myDir.getPath(), "generated");
     dir.mkdirs();
 
-    MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(),
+    MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(), (String)null,
                                                              Arrays.asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
                                                              Collections.emptyList());
 

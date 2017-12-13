@@ -338,11 +338,8 @@ public class StartupUtil {
   }
 
   private static void startLogging(final Logger log) {
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
-      @Override
-      public void run() {
-        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
-      }
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 

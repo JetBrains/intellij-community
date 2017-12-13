@@ -28,8 +28,10 @@ public class DfaPsiType {
   private final PsiType myPsiType;
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache;
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache;
+  private final int myID;
 
-  DfaPsiType(@NotNull PsiType psiType, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> assignableCache, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> convertibleCache) {
+  DfaPsiType(int id, @NotNull PsiType psiType, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> assignableCache, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> convertibleCache) {
+    myID = id;
     myPsiType = psiType;
     myAssignableCache = assignableCache;
     myConvertibleCache = convertibleCache;
@@ -63,5 +65,9 @@ public class DfaPsiType {
   @Override
   public String toString() {
     return myPsiType.getPresentableText();
+  }
+
+  public int getID() {
+    return myID;
   }
 }

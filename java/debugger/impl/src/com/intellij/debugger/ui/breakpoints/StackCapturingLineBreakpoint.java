@@ -272,7 +272,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           }
           catch (EvaluateException e) {
             LOG.debug(e);
-            debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+            if (!(e.getCause() instanceof IncompatibleThreadStateException)) {
+              debugProcess.printToConsole(DebuggerBundle.message("error.unable.to.evaluate.insert.expression", e.getMessage()) + "\n");
+            }
           }
         }
       }

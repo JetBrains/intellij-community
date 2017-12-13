@@ -17,7 +17,10 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.InternalModuleType;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
@@ -136,38 +139,22 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (WRAPPER_DATA_KEY.getData(dataContext) == this) return;
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
-    final VirtualFile[] files = hasFocus() ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    if (!myToolWindow.isVisible()) {
-      if (files != null && files.length > 0) {
-        myFile = files[0];
-      }
-      return;
-    }
-
+    VirtualFile[] files = insideToolwindow ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files != null && files.length == 1) {
       setFile(files[0]);
     }
     else if (files != null && files.length > 1) {
       setFile(null);
-    } else if (myFirstRun) {
-      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
-      final List<Pair<VirtualFile,EditorWindow>> history = editorManager.getSelectionHistory();
-      if (! history.isEmpty()) {
+    }
+    else if (myFirstRun) {
+      FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(myProject);
+      List<Pair<VirtualFile, EditorWindow>> history = editorManager.getSelectionHistory();
+      if (!history.isEmpty()) {
         setFile(history.get(0).getFirst());
       }
     }
 
     myFirstRun = false;
-  }
-
-  private boolean hasFocus() {
-    final JComponent tw = myToolWindow.getComponent();
-    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    while (owner != null) {
-      if (owner == tw) return true;
-      owner = owner.getParent();
-    }
-    return false;
   }
 
   private void setFile(VirtualFile file) {
@@ -176,7 +163,9 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       StructureViewModel model = myStructureView.getTreeModel();
       StructureViewTreeElement treeElement = model.getRoot();
       Object value = treeElement.getValue();
-      if (value == null || value instanceof PsiElement && !((PsiElement)value).isValid()) {
+      if (value == null || 
+          value instanceof PsiElement && !((PsiElement)value).isValid() ||
+          myStructureView instanceof StructureViewComposite && ((StructureViewComposite)myStructureView).isOutdated()) {
         forceRebuild = true;
       }
     }
@@ -227,6 +216,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   }
 
   private void scheduleRebuild() {
+    if (!myToolWindow.isVisible()) return;
     myUpdateQueue.queue(new Update("rebuild") {
       @Override
       public void run() {

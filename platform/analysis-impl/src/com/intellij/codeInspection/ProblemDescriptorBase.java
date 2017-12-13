@@ -61,11 +61,13 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     assertPhysical(startElement);
     if (startElement != endElement) assertPhysical(endElement);
 
-    final TextRange startElementRange = startElement.getTextRange();
-    LOG.assertTrue(startElementRange != null, startElement);
-    final TextRange endElementRange = endElement.getTextRange();
-    LOG.assertTrue(endElementRange != null, endElement);
-    if (startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
+    final TextRange startElementRange = getAnnotationRange(startElement);
+    LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElementRange != null, startElement);
+    final TextRange endElementRange = getAnnotationRange(endElement);
+    LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElementRange != null, endElement);
+    if (startElementRange != null
+        && endElementRange != null
+        && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
       if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
         LOG.error("Empty PSI elements should not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
       }
@@ -79,6 +81,13 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
 
     myAfterEndOfLine = isAfterEndOfLine;
     myTextRangeInElement = rangeInElement;
+  }
+
+  @Nullable
+  private static TextRange getAnnotationRange(@NotNull PsiElement startElement) {
+    return startElement instanceof ExternallyAnnotated
+           ? ((ExternallyAnnotated)startElement).getAnnotationRegion()
+           : startElement.getTextRange();
   }
 
   protected void assertPhysical(final PsiElement element) {
@@ -160,6 +169,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return myEnforcedTextAttributes;
   }
 
+  @Nullable
   public TextRange getTextRangeForNavigation() {
     TextRange textRange = getTextRange();
     if (textRange == null) return null;
@@ -167,6 +177,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return InjectedLanguageManager.getInstance(element.getProject()).injectedToHost(element, textRange);
   }
 
+  @Nullable
   public TextRange getTextRange() {
     PsiElement startElement = getStartElement();
     PsiElement endElement = myEndSmartPointer == null ? startElement : getEndElement();
@@ -174,20 +185,27 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       return null;
     }
 
-    TextRange textRange = startElement.getTextRange();
+    TextRange startRange = getAnnotationRange(startElement);
+    if (startRange == null) {
+      return null;
+    }
     if (startElement == endElement) {
       if (isAfterEndOfLine()) {
-        int endOffset = myTextRangeInElement != null ? textRange.getStartOffset() + myTextRangeInElement.getEndOffset()
-                                                     : textRange.getEndOffset();
+        int endOffset = myTextRangeInElement != null ? startRange.getStartOffset() + myTextRangeInElement.getEndOffset()
+                                                     : startRange.getEndOffset();
         return new TextRange(endOffset, endOffset);
       }
       if (myTextRangeInElement != null) {
-        return new TextRange(textRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
-                             textRange.getStartOffset() + myTextRangeInElement.getEndOffset());
+        return new TextRange(startRange.getStartOffset() + myTextRangeInElement.getStartOffset(),
+                             startRange.getStartOffset() + myTextRangeInElement.getEndOffset());
       }
-      return textRange;
+      return startRange;
     }
-    return new TextRange(textRange.getStartOffset(), endElement.getTextRange().getEndOffset());
+    TextRange endRange = getAnnotationRange(endElement);
+    if (endRange == null) {
+      return null;
+    }
+    return new TextRange(startRange.getStartOffset(), endRange.getEndOffset());
   }
 
   public Navigatable getNavigatable() {

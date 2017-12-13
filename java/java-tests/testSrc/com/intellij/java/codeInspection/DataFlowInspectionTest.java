@@ -575,4 +575,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNestedScopeComplexity() { doTest(); }
 
   public void testNullableReturn() { doTest(); }
+  public void testManyBooleans() { doTest(); }
 }

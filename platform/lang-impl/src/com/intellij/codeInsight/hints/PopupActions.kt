@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.hints
 
@@ -24,6 +12,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
@@ -88,7 +77,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
 }
 
 
-class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
+class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   companion object {
     private val presentableText = CodeInsightBundle.message("inlay.hints.blacklist.method")
     private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
@@ -160,7 +149,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
 }
 
 
-class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
+class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   companion object {
     private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
   }

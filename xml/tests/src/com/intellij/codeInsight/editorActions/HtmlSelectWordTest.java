@@ -45,11 +45,6 @@ public class HtmlSelectWordTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
-  public void testSelectFromCss() {
-    WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(true);
-    doTest();
-  }
-
   public void testSelectClassNamesWithDisabledSelectSelectorOption() {
     WebEditorOptions.getInstance().setSelectWholeCssIdentifierOnDoubleClick(false);
     doTest();

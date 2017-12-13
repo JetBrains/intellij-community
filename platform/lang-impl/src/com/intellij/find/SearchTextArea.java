@@ -21,10 +21,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -44,7 +44,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -488,24 +487,24 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       int deltaY = i.top - ei.top;
       r.y += deltaY;
       r.height = Math.max(r.height, h + i.top + i.bottom) - (i.bottom - ei.bottom) - deltaY;
-      MacIntelliJTextFieldUI.paintAquaSearchFocusRing(g, r, myTextArea);
+      MacIntelliJTextBorder.paintMacSearchArea(g, r, myTextArea, true);
     }
   }
 
   private class DefaultLafHelper extends LafHelper {
     @Override
     Border getBorder() {
-      return JBUI.Borders.empty(2);
+      return JBUI.Borders.empty(1);
     }
 
     @Override
     String getLayoutConstraints() {
-      return "flowx, ins 2 " + JBUI.scale(4) + " 2 " + (3 + JBUI.scale(1)) + ", gapx " + JBUI.scale(4);
+      return "flowx, ins 2 " + JBUI.scale(4) + " 2 " + (3 + JBUI.scale(1)) + ", gapx " + JBUI.scale(3);
     }
 
     @Override
     String getHistoryButtonConstraints() {
-      return "ay baseline";
+      return "ay baseline, gaptop " + JBUI.scale(1);
     }
 
     @Override
@@ -540,20 +539,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     void paint(Graphics2D g) {
       Rectangle r = new Rectangle(getSize());
       JBInsets.removeFrom(r, getInsets());
-      if (r.height % 2 == 1) r.height++;
-      int arcSize = JBUI.scale(26);
-
-      JBInsets.removeFrom(r, new JBInsets(1, 1, 1, 1));
-      if (myTextArea.hasFocus()) {
-        g.setColor(myTextArea.getBackground());
-        RectanglePainter.FILL.paint(g, r.x, r.y, r.width, r.height, arcSize);
-        DarculaUIUtil.paintSearchFocusRing(g, r, myTextArea, arcSize);
-      }
-      else {
-        arcSize -= JBUI.scale(5);
-        RectanglePainter
-          .paint(g, r.x, r.y, r.width, r.height, arcSize, myTextArea.getBackground(), myTextArea.isEnabled() ? Gray._100 : Gray._83);
-      }
+      DarculaTextBorder.paintDarculaSearchArea(g, r, myTextArea, true);
     }
   }
 

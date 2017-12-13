@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 /*
  * @author max
@@ -6,6 +8,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
+import com.intellij.codeInsight.highlighting.BraceMatcher;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -13,6 +16,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -31,6 +35,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.IntStack;
@@ -39,8 +45,10 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class IndentsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Key<List<RangeHighlighter>> INDENT_HIGHLIGHTERS_IN_EDITOR_KEY = Key.create("INDENT_HIGHLIGHTERS_IN_EDITOR_KEY");
@@ -313,9 +321,28 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     return descriptors;
   }
 
-  private static IndentGuideDescriptor createDescriptor(int level, int startLine, int endLine, int[] lineIndents) {
+  private IndentGuideDescriptor createDescriptor(int level, int startLine, int endLine, int[] lineIndents) {
     while (startLine > 0 && lineIndents[startLine] < 0) startLine--;
-    return new IndentGuideDescriptor(level, startLine, endLine);
+    int codeConstructStartLine = findCodeConstructStartLine(startLine);
+    return new IndentGuideDescriptor(level, codeConstructStartLine, startLine, endLine);
+  }
+
+  private int findCodeConstructStartLine(int startLine) {
+    DocumentEx document = myEditor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    int lineStartOffset = document.getLineStartOffset(startLine);
+    int firstNonWsOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");
+    FileType type = PsiUtilBase.getPsiFileAtOffset(myFile, firstNonWsOffset).getFileType();
+    Language language = PsiUtilCore.getLanguageAtOffset(myFile, firstNonWsOffset);
+    BraceMatcher braceMatcher = BraceMatchingUtil.getBraceMatcher(type, language);
+    HighlighterIterator iterator = myEditor.getHighlighter().createIterator(firstNonWsOffset);
+    if (braceMatcher.isLBraceToken(iterator, text, type)) {
+      int codeConstructStart = braceMatcher.getCodeConstructStart(myFile, firstNonWsOffset);
+      return document.getLineNumber(codeConstructStart);
+    }
+    else {
+      return startLine;
+    }
   }
 
   @NotNull

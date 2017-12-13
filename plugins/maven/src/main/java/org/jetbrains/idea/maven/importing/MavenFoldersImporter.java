@@ -102,10 +102,14 @@ public class MavenFoldersImporter {
       configOutputFolders();
     }
     configGeneratedFolders();
-    if (!updateTargetFoldersOnly
-        && !FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension())
-        && MavenUtil.streamPomFiles(myModel.getModule().getProject(), myMavenProject.getDirectoryFile()).skip(1).findAny().isPresent()) {
-      generateNewContentRoots();
+    if (!updateTargetFoldersOnly) {
+      if (!FileUtil.namesEqual("pom", myMavenProject.getFile().getNameWithoutExtension()) &&
+          MavenUtil.streamPomFiles(myModel.getModule().getProject(), myMavenProject.getDirectoryFile()).skip(1).findAny().isPresent()) {
+        generateNewContentRoots(false);
+      }
+      else {
+        generateNewContentRoots(true);
+      }
     }
     configExcludedFolders();
   }
@@ -212,7 +216,7 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void generateNewContentRoots() {
+  private void generateNewContentRoots(boolean orphansOnly) {
     Map<String, SourceFolder> sourceFoldersMap = new TreeMap<>(FileUtil::comparePaths);
     for (String sourceRootUrl : myModel.getSourceRootUrls(true)) {
       String sourceRootPath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(sourceRootUrl));
@@ -223,8 +227,16 @@ public class MavenFoldersImporter {
     }
 
     ModifiableRootModel rootModel = myModel.getRootModel();
-    for (ContentEntry contentEntry : rootModel.getContentEntries()) {
-      rootModel.removeContentEntry(contentEntry);
+
+    if (orphansOnly) {
+      for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+        sourceFoldersMap.keySet().removeIf(root -> FileUtil.isAncestor(contentEntry.getUrl(), root, false));
+      }
+    }
+    else {
+      for (ContentEntry contentEntry : rootModel.getContentEntries()) {
+        rootModel.removeContentEntry(contentEntry);
+      }
     }
 
     Set<String> topLevelSourceFolderUrls = ContainerUtil.newHashSet();

@@ -114,17 +114,15 @@ public class ExtendableTextField extends JBTextField {
   @Deprecated
   public void setUI(TextUI ui) {
     TextUI suggested = ui;
-    String name = ui == null ? null : ui.getClass().getSuperclass().getName();
-    if (!"com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI".equals(name)) {
-      try {
+    try {
+      if (ui == null || !Class.forName("com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI").isAssignableFrom(ui.getClass())) {
         ui = (TextUI)Class
           .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI")
           .getDeclaredMethod("createUI", JComponent.class)
           .invoke(null, this);
       }
-      catch (Exception ignore) {
-      }
-    }
+    } catch (Exception ignore) {}
+
     super.setUI(ui);
     if (ui != suggested) {
       try {

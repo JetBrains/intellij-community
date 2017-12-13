@@ -16,7 +16,7 @@ import os
 import sys
 
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE
+from _pydevd_bundle.pydevd_constants import INTERACTIVE_MODE_AVAILABLE, dict_keys
 
 import traceback
 from _pydev_bundle import fix_getpass
@@ -132,7 +132,15 @@ def set_debug_hook(debug_hook):
     _ProcessExecQueueHelper._debug_hook = debug_hook
 
 
-def init_mpl_in_console(interpreter):
+def activate_mpl_if_already_imported(interpreter):
+    if interpreter.mpl_modules_for_patching:
+        for module in dict_keys(interpreter.mpl_modules_for_patching):
+            if module in sys.modules:
+                activate_function = interpreter.mpl_modules_for_patching.pop(module)
+                activate_function()
+
+
+def init_set_return_control_back(interpreter):
     from pydev_ipython.inputhook import set_return_control_callback
 
     def return_control():
@@ -155,16 +163,17 @@ def init_mpl_in_console(interpreter):
 
     set_return_control_callback(return_control)
 
+
+def init_mpl_in_console(interpreter):
+    init_set_return_control_back(interpreter)
+
     if not INTERACTIVE_MODE_AVAILABLE:
         return
 
+    activate_mpl_if_already_imported(interpreter)
     from _pydev_bundle.pydev_import_hook import import_hook_manager
-    from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
-    import_hook_manager.add_module_name("matplotlib", lambda: activate_matplotlib(interpreter.enableGui))
-    # enable_gui_function in activate_matplotlib should be called in main thread. That's why we call
-    # interpreter.enableGui which put it into the interpreter's exec_queue and executes it in the main thread.
-    import_hook_manager.add_module_name("pylab", activate_pylab)
-    import_hook_manager.add_module_name("pyplot", activate_pyplot)
+    for mod in dict_keys(interpreter.mpl_modules_for_patching):
+        import_hook_manager.add_module_name(mod, interpreter.mpl_modules_for_patching.pop(mod))
 
 
 def process_exec_queue(interpreter):

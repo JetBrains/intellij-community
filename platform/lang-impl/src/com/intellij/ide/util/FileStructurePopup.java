@@ -597,8 +597,11 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-        if (path == null) return false; // user wants to expand/collapse a node
+        TreePath path = myTree.getClosestPathForLocation(e.getX(), e.getY());
+        Rectangle bounds = path == null ? null : myTree.getPathBounds(path);
+        if (bounds == null || 
+            bounds.x > e.getX() ||
+            bounds.y > e.getY() || bounds.y + bounds.height < e.getY()) return false;
         navigateSelectedElement();
         return true;
       }
@@ -788,7 +791,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           saveState(action, state);
         }
         myTreeActionsOwner.setActionIncluded(action, isRevertedStructureFilter != state);
-        rebuild(action instanceof FileStructureFilter).processed(ignore -> {
+        rebuild(false).processed(ignore -> {
           if (mySpeedSearch.isPopupActive()) {
             mySpeedSearch.refreshSelection();
           }

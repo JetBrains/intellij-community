@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.ui;
 
@@ -328,7 +330,7 @@ public class InspectionTree extends Tree {
       if (isSingleInspectionRun) {
         return getRelativeRootNode(true, errorLevel);
       }
-      group = map.computeIfAbsent(groupPath, this::insertGroupNode);
+      group = map.computeIfAbsent(groupPath, p -> insertGroupNode(p, getRelativeRootNode(groupedBySeverity, errorLevel)));
     }
     return group;
   }
@@ -453,8 +455,8 @@ public class InspectionTree extends Tree {
     return myContext;
   }
 
-  private InspectionGroupNode insertGroupNode(@NotNull String[] groupPath) {
-    InspectionTreeNode currentNode = getRoot();
+  private InspectionGroupNode insertGroupNode(@NotNull String[] groupPath, InspectionTreeNode parent) {
+    InspectionTreeNode currentNode = parent;
 
     for (int groupIdx = 0; groupIdx < groupPath.length; groupIdx++) {
       String subGroup = groupPath[groupIdx];
