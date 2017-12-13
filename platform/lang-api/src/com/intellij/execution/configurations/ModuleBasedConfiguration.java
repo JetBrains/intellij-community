@@ -127,10 +127,11 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
       // AbstractPythonRunConfiguration calls in the constructor and so, there is a chance that newly created configuration will have module, but old haven't
       // and so, on readExternal module will be lost
-      String moduleName = StringUtil.nullize(configuration.getConfigurationModule().getModuleName());
+      RunConfigurationModule configurationModule = configuration.getConfigurationModule();
+      String moduleName = StringUtil.nullize(configurationModule.getModuleName());
       configuration.readExternal(element);
-      if (moduleName != null && StringUtil.nullize(configuration.getConfigurationModule().getModuleName()) == null) {
-        configuration.getConfigurationModule().setModuleName(moduleName);
+      if (moduleName != null && StringUtil.nullize(configurationModule.getModuleName()) == null) {
+        configurationModule.setModuleName(moduleName);
       }
       return configuration;
     }
