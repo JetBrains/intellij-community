@@ -756,8 +756,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     float offset = textStart;
     if (myBorder != null) {
       offset += myBorder.getBorderInsets(this).left;
-      offset += getInsets().left;
     }
+    offset += getInsets().left;
 
     class Frag { int index; float start; float end; float baseLine; Font font; Frag next;
       public Frag(int index, float start, float end, float baseLine, Font font, Frag next) {
