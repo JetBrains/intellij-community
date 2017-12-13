@@ -103,7 +103,7 @@
 
     <component>
       <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
-      <interface-class>com.intellij.completion.FeatureManager</interface-class>
+      <interface-class>com.jetbrains.completion.ranker.features.FeatureManager</interface-class>
     </component>
   </application-components>
 

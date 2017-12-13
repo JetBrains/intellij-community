@@ -1,5 +1,6 @@
 package com.intellij.completion
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.jetbrains.completion.ranker.features.*
 
@@ -7,6 +8,10 @@ import com.jetbrains.completion.ranker.features.*
  * @author Vitaliy.Bibaev
  */
 class FeatureManagerImpl : FeatureManager, ApplicationComponent {
+    companion object {
+        fun getInstance(): FeatureManager = ApplicationManager.getApplication().getComponent(FeatureManager::class.java)
+    }
+
     private var arrayLength = 0
 
     override lateinit var binaryFactors: List<BinaryFeature> private set

@@ -15,7 +15,7 @@
  */
 package com.intellij.sorting
 
-import com.intellij.completion.FeatureManager
+import com.jetbrains.completion.ranker.features.FeatureManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker

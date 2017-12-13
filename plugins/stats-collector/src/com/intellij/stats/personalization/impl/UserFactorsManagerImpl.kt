@@ -1,7 +1,7 @@
 package com.intellij.stats.personalization.impl
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.completion.FeatureManager
+import com.intellij.completion.FeatureManagerImpl
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.stats.personalization.UserFactor
@@ -17,7 +17,7 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     private val userFactors = mutableMapOf<String, UserFactor>()
     init {
         // TODO: register all factors here
-        FeatureManager.getInstance() // TODO: register feature-derived factors
+        FeatureManagerImpl.getInstance() // TODO: register feature-derived factors
 
         // user factors
         register(ExplicitCompletionRatio())
