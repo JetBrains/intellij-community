@@ -24,7 +24,7 @@ import java.util.Comparator;
   private final Direction myDirection;
 
   /**
-   * @param comparator defines ordering of occurrences.
+   * @param direction defines direction for next usage searching.
    */
   public GotoElementUnderCaretUsageBase(@NotNull Direction direction) {
     myDirection = direction;
