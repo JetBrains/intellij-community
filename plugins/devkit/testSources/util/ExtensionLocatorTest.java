@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -23,6 +22,8 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.ExtensionPoints;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -47,29 +48,25 @@ public class ExtensionLocatorTest extends JavaCodeInsightFixtureTestCase {
     assertInstanceOf(psiFile, XmlFile.class);
 
     XmlFile xmlFile = (XmlFile)psiFile;
-    XmlTag[] epGroupTags = xmlFile.getRootTag().findSubTags("extensionPoints");
-    assertSize(1, epGroupTags);
-    XmlTag[] epTags = epGroupTags[0].findSubTags("extensionPoint");
-    assertSize(2, epTags);
-
-    XmlTag namedEpTag = epTags[0];
-    XmlTag qualifiedNamedEpTag = epTags[1];
-    assertTrue(StringUtil.isNotEmpty(namedEpTag.getAttributeValue("name")));
-    assertTrue(StringUtil.isNotEmpty(qualifiedNamedEpTag.getAttributeValue("qualifiedName")));
-
     DomManager domManager = DomManager.getDomManager(getProject());
-    DomElement namedEpDomElement = domManager.getDomElement(namedEpTag);
-    DomElement qualifiedNamedEpDomElement = domManager.getDomElement(qualifiedNamedEpTag);
-    assertInstanceOf(namedEpDomElement, ExtensionPoint.class);
-    assertInstanceOf(qualifiedNamedEpDomElement, ExtensionPoint.class);
+    IdeaPlugin ideaPlugin = assertInstanceOf(domManager.getDomElement(xmlFile.getRootTag()), IdeaPlugin.class);
+    List<ExtensionPoints> epGroups = ideaPlugin.getExtensionPoints();
+    assertSize(1, epGroups);
+    List<ExtensionPoint> extensionPoints = epGroups.get(0).getExtensionPoints();
+    assertSize(2, extensionPoints);
 
-    verifyLocator(ExtensionLocator.byExtensionPoint((ExtensionPoint)namedEpDomElement), 2);
-    verifyLocator(ExtensionLocator.byExtensionPoint((ExtensionPoint)qualifiedNamedEpDomElement), 2);
+    ExtensionPoint namedEp = extensionPoints.get(0);
+    ExtensionPoint qualifiedNamedEp = extensionPoints.get(1);
+    assertTrue(StringUtil.isNotEmpty(namedEp.getName().getStringValue()));
+    assertTrue(StringUtil.isNotEmpty(qualifiedNamedEp.getQualifiedName().getStringValue()));
+
+    verifyLocator(ExtensionLocator.byExtensionPoint(namedEp), 2);
+    verifyLocator(ExtensionLocator.byExtensionPoint(qualifiedNamedEp), 2);
   }
 
   public void testByPsiClass() {
     myFixture.copyFileToProject("pluginXml_locateByPsiClass.xml");
-    JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(getProject());
+    JavaPsiFacade javaPsiFacade = myFixture.getJavaFacade();
     PsiClass arrayListPsiClass = javaPsiFacade.findClass("java.util.ArrayList", GlobalSearchScope.allScope(getProject()));
     PsiClass linkedListPsiClass = javaPsiFacade.findClass("java.util.LinkedList", GlobalSearchScope.allScope(getProject()));
 
