@@ -307,13 +307,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return;
       }
       if(myConnection.isServerMode()) {
-        ListeningConnector connector = (ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME);
-        if (connector == null) {
-          LOG.error("Cannot find connector: " + SOCKET_LISTENING_CONNECTOR_NAME);
-        }
-        else {
-          connector.stopListening(arguments);
-        }
+        ((ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME)).stopListening(arguments);
       }
     }
     catch (IOException | IllegalConnectorArgumentsException e) {
@@ -450,11 +444,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       final String address = myConnection.getAddress();
       if (myConnection.isServerMode()) {
-        ListeningConnector connector = (ListeningConnector)findConnector(
-          myConnection.isUseSockets() ? SOCKET_LISTENING_CONNECTOR_NAME : SHMEM_LISTENING_CONNECTOR_NAME);
-        if (connector == null) {
-          throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", DebuggerBundle.getTransportName(myConnection)));
-        }
+        ListeningConnector connector = (ListeningConnector)findConnector(myConnection.isUseSockets(), true);
         myArguments = connector.defaultArguments();
         if (myArguments == null) {
           throw new CantRunException(DebuggerBundle.message("error.no.debug.listen.port"));
@@ -507,13 +497,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       }
       else { // is client mode, should attach to already running process
-        AttachingConnector connector = (AttachingConnector)findConnector(
-          myConnection.isUseSockets() ? SOCKET_ATTACHING_CONNECTOR_NAME : SHMEM_ATTACHING_CONNECTOR_NAME
-        );
-
-        if (connector == null) {
-          throw new CantRunException( DebuggerBundle.message("error.debug.connector.not.found", DebuggerBundle.getTransportName(myConnection)));
-        }
+        AttachingConnector connector = (AttachingConnector)findConnector(myConnection.isUseSockets(), false);
         myArguments = connector.defaultArguments();
         if (myConnection.isUseSockets()) {
           //noinspection HardCodedStringLiteral
@@ -573,17 +557,31 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  @Nullable
-  static Connector findConnector(String connectorName) throws ExecutionException {
+  @NotNull
+  public static Connector findConnector(boolean useSockets, boolean listen) throws ExecutionException {
+    if (listen) {
+      return findConnector(useSockets ? SOCKET_LISTENING_CONNECTOR_NAME : SHMEM_LISTENING_CONNECTOR_NAME);
+    }
+    else {
+      return findConnector(useSockets ? SOCKET_ATTACHING_CONNECTOR_NAME : SHMEM_ATTACHING_CONNECTOR_NAME);
+    }
+  }
+
+  @NotNull
+  private static Connector findConnector(String connectorName) throws ExecutionException {
     VirtualMachineManager virtualMachineManager;
     try {
       virtualMachineManager = Bootstrap.virtualMachineManager();
     }
     catch (Error e) {
-      final String error = e.getClass().getName() + " : " + e.getLocalizedMessage();
-      throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error", error));
+      throw new ExecutionException(DebuggerBundle.message("debugger.jdi.bootstrap.error",
+                                                          e.getClass().getName() + " : " + e.getLocalizedMessage()));
     }
-    return StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
+    Connector connector = StreamEx.of(virtualMachineManager.allConnectors()).findFirst(c -> connectorName.equals(c.name())).orElse(null);
+    if (connector == null) {
+      throw new CantRunException(DebuggerBundle.message("error.debug.connector.not.found", connectorName));
+    }
+    return connector;
   }
 
   private void checkVirtualMachineVersion(VirtualMachine vm) {

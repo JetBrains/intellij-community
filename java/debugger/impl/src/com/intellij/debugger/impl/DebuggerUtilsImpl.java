@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.StackFrameContext;
@@ -38,12 +39,15 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.Value;
-import com.sun.jdi.connect.spi.TransportService;
+import com.sun.jdi.connect.Connector;
+import com.sun.jdi.connect.IllegalConnectorArgumentsException;
+import com.sun.jdi.connect.ListeningConnector;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   public static final Key<PsiType> PSI_TYPE_KEY = Key.create("PSI_TYPE_KEY");
@@ -181,15 +185,15 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
       return Integer.toString(freePort);
     }
     else {
-      TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(false);
+      ListeningConnector connector = (ListeningConnector)DebugProcessImpl.findConnector(false, true);
       try {
-        return tryShmemConnect(transportService, null);
+        return tryShmemConnect(connector, "");
       }
-      catch (IOException e) {
+      catch (Exception e) {
         int tryNum = 0;
         while (true) {
           try {
-            return tryShmemConnect(transportService, "javadebug_" + (int)(Math.random() * 1000));
+            return tryShmemConnect(connector, "javadebug_" + (int)(Math.random() * 1000));
           }
           catch (Exception ex) {
             if (tryNum++ > 10) {
@@ -201,10 +205,12 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
   }
 
-  private static String tryShmemConnect(TransportServiceWrapper transportService, String address) throws IOException {
-    TransportService.ListenKey listenKey = transportService.startListening(address);
-    address = listenKey.address();
-    transportService.stopListening(listenKey);
+  private static String tryShmemConnect(ListeningConnector connector, String address)
+    throws IOException, IllegalConnectorArgumentsException {
+    Map<String, Connector.Argument> map = connector.defaultArguments();
+    map.get("name").setValue(address);
+    address = connector.startListening(map);
+    connector.stopListening(map);
     return address;
   }
 
