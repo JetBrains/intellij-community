@@ -27,13 +27,14 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
   private String myHTDescription;
   private String myHTLinkText;
   private Runnable myHTAction;
+  private boolean valid = true;
 
   ComponentPanelBuilderImpl(JComponent component) {
     myComponent = component;
   }
 
   @Override
-  public ComponentPanelBuilder withLabel(String labelText) {
+  public ComponentPanelBuilder withLabel(@NotNull String labelText) {
     myLabelText = labelText;
     return this;
   }
@@ -45,8 +46,9 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
   }
 
   @Override
-  public ComponentPanelBuilder withComment(String comment) {
+  public ComponentPanelBuilder withComment(@NotNull String comment) {
     myComment = comment;
+    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -57,13 +59,14 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
   }
 
   @Override
-  public ComponentPanelBuilder withTooltip(String description) {
+  public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
+    valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myComment);
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder withTooltipLink(String linkText, @NotNull Runnable action) {
+  public ComponentPanelBuilder withTooltipLink(@NotNull String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
     return this;
@@ -81,7 +84,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
 
   @Override
   public boolean constrainsValid() {
-    return myCommentBelow || StringUtil.isEmpty(myHTDescription);
+    return valid;
   }
 
   @Override

@@ -41,7 +41,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
   }
 
   @Override
-  public ProgressPanelBuilder withLabel(String text) {
+  public ProgressPanelBuilder withLabel(@NotNull String text) {
     initialLabelText = text;
     return this;
   }

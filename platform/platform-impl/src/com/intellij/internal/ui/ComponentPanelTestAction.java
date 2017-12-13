@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
@@ -21,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
@@ -89,14 +92,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       panel.add(JBPanelFactory.panel(text).
         withLabel("&Textfield:").
-        withComment("My short description").
+        withComment("Textfield description").
         moveCommentRight().createPanel());
 
       panel.add(JBPanelFactory.panel(new JTextField()).
         withLabel("&Path:").createPanel());
-
-      panel.add(JBPanelFactory.panel(new JTextField()).
-        withLabel("&Options:").createPanel());
 
       panel.add(JBPanelFactory.panel(new JCheckBox("This is a checkbox 1")).
         withComment("My long long long long long long long long long long comment").
@@ -106,21 +106,32 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         withTooltip("Help tooltip description").createPanel());
 
       panel.add(JBPanelFactory.panel(new JButton("Abracadabra")).
-        withComment("Do abradabra stuff").createPanel());
+        withComment("Abradabra comment").createPanel());
 
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
       panel.add(JBPanelFactory.panel(new JComboBox<>(items)).
-        withComment("Very important combobox").createPanel());
+        withComment("Combobox comment").createPanel());
 
-      panel.add(JBPanelFactory.panel(new JCheckBox("Checkbox")).
-        withTooltip("Checkbox description").withComment("Checkbox comment").createPanel());
+      String[] columns = { "First column", "Second column" };
+      String[][] data = {{"one", "1"}, {"two", "2"}, {"three", "3"}, {"four", "4"}, {"five", "5"},
+        {"six", "6"}, {"seven", "7"}, {"eight", "8"}, {"nine", "9"}, {"ten", "10"}, {"eleven", "11"},
+        {"twelve", "12"}, {"thirteen", "13"}, {"fourteen", "14"}, {"fifteen", "15"}, {"sixteen", "16"}};
 
-      panel.add(JBPanelFactory.panel(new JRadioButton("Radiobutton")).
-        withTooltip("Radiobutton description").withComment("Radiobutton comment").createPanel());
+      JBTable table = new JBTable(new AbstractTableModel() {
+        public String getColumnName(int column) { return columns[column]; }
+        public int getRowCount() { return data.length; }
+        public int getColumnCount() { return columns.length; }
+        public Object getValueAt(int row, int col) { return data[row][col]; }
+        public boolean isCellEditable(int row, int column) { return false; }
+        public void setValueAt(Object value, int row, int col) {}
+      });
 
-      panel.add(JBPanelFactory.panel(new JTextArea(3, 40)).
-        withLabel("Extra arguments:").moveLabelOnTop().createPanel());
+      JBScrollPane pane = new JBScrollPane(table);
+      pane.setPreferredSize(JBUI.size(200, 100));
+      panel.add(JBPanelFactory.panel(pane).
+        withLabel("Table label:").moveLabelOnTop().withComment("Table comment").createPanel());
 
+      panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
       return panel;
     }
 
@@ -128,32 +139,58 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       ComponentWithBrowseButton cbb = new ComboboxWithBrowseButton(new JComboBox<>(new String[]{"One", "Two", "Three", "Four"}));
       cbb.addActionListener((e) -> System.out.println("Browse for combobox"));
 
-      JPanel panel = JBPanelFactory.grid().
+      JPanel p1 = JBPanelFactory.grid().
         add(JBPanelFactory.panel(new JTextField()).
-          withLabel("&Port:").withComment("Port")).
+          withLabel("&Port:").withComment("Port comment")).
 
         add(JBPanelFactory.panel(new JTextField()).
-          withLabel("&Host:").withComment("Host")).
+          withLabel("&Host:").withComment("Host comment")).
 
         add(JBPanelFactory.panel(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
-          withLabel("P&rotocol:").withComment("Choose protocol").withTooltip("Protocol selection").
+          withLabel("P&rotocol:").withComment("Protocol comment").withTooltip("Protocol selection").
           withTooltipLink("Check here for more info", ()-> System.out.println("More info"))).
 
         add(JBPanelFactory.panel(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
-          withLabel("&Set parameters:").withComment("Runtime parameters")).
+          withLabel("&Text field:").withComment("Text field comment")).
 
         add(JBPanelFactory.panel(cbb).
-          withLabel("&Detect runlevel:")).
+          withLabel("&Combobox selection:")).
 
-        add(JBPanelFactory.panel(new JCheckBox("Run in a loop")).
-              withComment("Comment text")).
+        add(JBPanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
 
         add(JBPanelFactory.panel(new JTextArea(3, 40)).
-          withLabel("Extra arguments:").moveLabelOnTop()).
+          withLabel("Text area:").withComment("Text area comment").moveLabelOnTop()).
 
         createPanel();
 
+      ButtonGroup bg = new ButtonGroup();
+      JRadioButton rb1 = new JRadioButton("RadioButton 1");
+      JRadioButton rb2 = new JRadioButton("RadioButton 1");
+      JRadioButton rb3 = new JRadioButton("RadioButton 1");
+      bg.add(rb1);
+      bg.add(rb2);
+      bg.add(rb3);
+      rb1.setSelected(true);
+
+      JPanel p2 = JBPanelFactory.grid().
+        add(JBPanelFactory.panel(new JCheckBox("Checkbox 1")).withComment("Comment 1").moveCommentRight()).
+        add(JBPanelFactory.panel(new JCheckBox("Checkbox 2")).withComment("Comment 2")).
+        add(JBPanelFactory.panel(new JCheckBox("Checkbox 3")).withTooltip("Checkbox tooltip")).
+
+        add(JBPanelFactory.panel(rb1).withComment("Comment 1").moveCommentRight()).
+        add(JBPanelFactory.panel(rb2).withComment("Comment 2")).
+        add(JBPanelFactory.panel(rb3).withTooltip("RadioButton tooltip")).
+
+        createPanel();
+
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
       panel.setBorder(JBUI.Borders.emptyTop(5));
+      panel.add(p1);
+      panel.add(Box.createVerticalStrut(JBUI.scale(5)));
+      panel.add(p2);
+      panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
+
       return panel;
     }
 

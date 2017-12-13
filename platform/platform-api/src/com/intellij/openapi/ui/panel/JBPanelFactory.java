@@ -48,7 +48,7 @@ import javax.swing.*;
  * expanded below rows.
  * </p>
  *
- * <p>For concrete examples look <code>ComponentPanelTestAction</code> test action an class.</p>
+ * <p>For concrete examples look <code>ComponentPanelTestAction</code> test action and class.</p>
  */
 
 public abstract class JBPanelFactory {
