@@ -242,6 +242,10 @@ public final class IdeMouseEventDispatcher {
       return false; // forward mouse processing to the special shortcut panel
     }
 
+    if (doVerticalDiagramScrolling(c, e)) {
+      return true;
+    }
+
     if (isHorizontalScrolling(c, e)) {
       boolean done = doHorizontalScrolling(c, (MouseWheelEvent)e);
       if (done) return true;
@@ -310,6 +314,43 @@ public final class IdeMouseEventDispatcher {
       return true;
     }
     return false;
+  }
+
+  private static boolean doVerticalDiagramScrolling(@Nullable Component component, @NotNull MouseEvent event) {
+    if (component != null && event instanceof MouseWheelEvent && isDiagramViewComponent(component.getParent())) {
+      MouseWheelEvent mwe = (MouseWheelEvent)event;
+      if (!mwe.isShiftDown() && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && JBScrollPane.isScrollEvent(mwe)) {
+        JScrollBar scrollBar = findVerticalScrollBar(component);
+        if (scrollBar != null) {
+          scrollBar.setValue(scrollBar.getValue() + getScrollAmount(mwe, scrollBar));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static JScrollBar findVerticalScrollBar(@Nullable Component component) {
+    if (component == null) {
+      return null;
+    }
+    if (component instanceof JScrollPane) {
+      JScrollBar scrollBar = ((JScrollPane)component).getVerticalScrollBar();
+      return scrollBar != null && scrollBar.isVisible() ? scrollBar : null;
+    }
+    if (isDiagramViewComponent(component)) {
+      JComponent view = (JComponent)component;
+      for (int i = 0; i < view.getComponentCount(); i++) {
+        if (view.getComponent(i) instanceof JScrollBar) {
+          JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+          if (scrollBar.getOrientation() == Adjustable.VERTICAL) {
+            return scrollBar.isVisible() ? scrollBar : null;
+          }
+        }
+      }
+    }
+    return findVerticalScrollBar(component.getParent());
   }
 
   public void resetHorScrollingTracker() {
