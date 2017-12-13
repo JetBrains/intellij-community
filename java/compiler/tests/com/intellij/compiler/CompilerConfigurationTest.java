@@ -6,11 +6,16 @@ package com.intellij.compiler;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.PlatformTestCase;
+import org.jdom.JDOMException;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static com.intellij.util.JdomKt.loadElement;
 
 public class CompilerConfigurationTest extends PlatformTestCase {
   public void testUpdateTargetLevelOnModuleRename() {
@@ -20,6 +25,25 @@ public class CompilerConfigurationTest extends PlatformTestCase {
     ModuleGroupTestsKt.renameModule(module, "bar");
 
     assertEquals("1.6", getConfiguration().getBytecodeTargetLevel(module));
+  }
+
+  public void testLoadState() throws IOException, JDOMException {
+    Module module = createModule("foo");
+    CompilerConfigurationImpl configuration = getConfiguration();
+    configuration.setBytecodeTargetLevel(module, "1.6");
+    assertThat(configuration.getState()).isEqualTo("<state>\n" +
+                                                   "  <bytecodeTargetLevel>\n" +
+                                                   "    <module name=\"foo\" target=\"1.6\" />\n" +
+                                                   "  </bytecodeTargetLevel>\n" +
+                                                   "</state>");
+
+    configuration.loadState(loadElement("<state>\n" +
+                                        "  <bytecodeTargetLevel>\n" +
+                                        "    <module name=\"foo\" target=\"1.7\" />\n" +
+                                        "  </bytecodeTargetLevel>\n" +
+                                        "</state>"));
+
+    assertThat(configuration.getBytecodeTargetLevel(module)).isEqualTo("1.7");
   }
 
   public void testUpdateOptionsOnModuleRename() {

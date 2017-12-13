@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.compiler
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -36,7 +38,9 @@ internal class ExternalCompilerConfigurationStorage(private val project: Project
   }
 
   override fun loadState(state: Element) {
-    loadedState = readByteTargetLevel(state)
+    val result = THashMap<String, String>()
+    readByteTargetLevel(state, result)
+    loadedState = result
   }
 
   override fun getExternalSource(): ProjectModelExternalSource? {
@@ -73,13 +77,11 @@ internal fun writeBytecodeTarget(moduleNames: List<String>, map: Map<String, Str
   }
 }
 
-internal fun readByteTargetLevel(parentNode: Element): Map<String, String> {
-  val result = THashMap<String, String>()
-  val bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL) ?: return result
+internal fun readByteTargetLevel(parentNode: Element, result: MutableMap<String, String>) {
+  val bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL) ?: return
   for (element in bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
     val name = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME) ?: continue
     val target = element.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE) ?: continue
     result.put(name, target)
   }
-  return result
 }

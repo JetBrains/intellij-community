@@ -19,6 +19,7 @@
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
+    <orderEntry type="module" module-name="testExtensions" scope="TEST" />
   </component>
   <component name="copyright">
     <Base>
