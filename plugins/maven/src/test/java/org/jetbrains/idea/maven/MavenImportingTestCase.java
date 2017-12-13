@@ -543,24 +543,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected static AtomicInteger configConfirmationForYesAnswer() {
     final AtomicInteger counter = new AtomicInteger();
-    Messages.setTestDialog(new TestDialog() {
-      @Override
-      public int show(String message) {
-        counter.set(counter.get() + 1);
-        return 0;
-      }
+    Messages.setTestDialog(message -> {
+      counter.getAndIncrement();
+      return Messages.YES;
     });
     return counter;
   }
 
   protected static AtomicInteger configConfirmationForNoAnswer() {
     final AtomicInteger counter = new AtomicInteger();
-    Messages.setTestDialog(new TestDialog() {
-      @Override
-      public int show(String message) {
-        counter.set(counter.get() + 1);
-        return 1;
-      }
+    Messages.setTestDialog(message -> {
+      counter.getAndIncrement();
+      return Messages.NO;
     });
     return counter;
   }
