@@ -242,7 +242,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(this, element);
-    readModule(element);
     EnvironmentVariablesComponent.readExternal(element, getEnvs());
     setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
   }

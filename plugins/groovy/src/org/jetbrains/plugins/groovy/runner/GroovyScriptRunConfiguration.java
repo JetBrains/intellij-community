@@ -125,7 +125,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
-    readModule(element);
     scriptPath = ExternalizablePath.localPathValue(JDOMExternalizer.readString(element, "path"));
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     scriptParams = JDOMExternalizer.readString(element, "params");

@@ -72,7 +72,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     getConfigurationModule().setModuleName(moduleName);
   }
 
-  protected void readModule(final Element element) {
+  protected void readModule(@NotNull Element element) {
     getConfigurationModule().readExternal(element);
   }
 

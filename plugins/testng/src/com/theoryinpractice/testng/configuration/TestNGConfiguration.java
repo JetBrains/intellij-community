@@ -285,9 +285,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     final TestNGTestObject testObject = TestNGTestObject.fromConfig(this);
-    if (testObject != null) {
-      testObject.checkConfiguration();
-    }
+    testObject.checkConfiguration();
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), getConfigurationModule().getModule());
     JavaParametersUtil.checkAlternativeJRE(this);
@@ -298,7 +296,6 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
-    readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
     DefaultJDOMExternalizer.readExternal(getPersistantData(), element);
     EnvironmentVariablesComponent.readExternal(element, getPersistantData().getEnvs());

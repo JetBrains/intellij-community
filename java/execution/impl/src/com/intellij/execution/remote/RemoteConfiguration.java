@@ -45,7 +45,6 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public void readExternal(@NotNull final Element element) throws InvalidDataException {
     super.readExternal(element);
-    readModule(element);
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 

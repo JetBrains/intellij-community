@@ -152,7 +152,6 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
-    readModule(element);
     vmParams = JDOMExternalizer.readString(element, "vmparams");
     cmdLine = JDOMExternalizer.readString(element, "cmdLine");
 
