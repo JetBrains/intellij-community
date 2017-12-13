@@ -38,7 +38,6 @@ public class MethodReturnValueWatcher implements OverheadProducer {
   private @Nullable Method myEntryMethod;
   private @Nullable MethodExitRequest myExitRequest;
 
-  private java.lang.reflect.Method myReturnValueMethod;
   private volatile boolean myTrackingEnabled;
   private final EventRequestManager myRequestManager;
   private final DebugProcess myProcess;
