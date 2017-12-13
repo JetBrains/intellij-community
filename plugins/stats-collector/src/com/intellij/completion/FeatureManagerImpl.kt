@@ -12,41 +12,24 @@ class FeatureManagerImpl : FeatureManager, ApplicationComponent {
         fun getInstance(): FeatureManager = ApplicationManager.getApplication().getComponent(FeatureManager::class.java)
     }
 
-    private var arrayLength = 0
+    private lateinit var manager: FeatureManager
 
-    override lateinit var binaryFactors: List<BinaryFeature> private set
-    override lateinit var doubleFactors: List<DoubleFeature> private set
-    override lateinit var categorialFactors: List<CatergorialFeature> private set
-    override lateinit var completionFactors: CompletionFactors private set
-    override lateinit var ignoredFactors: Set<String> private set
-    private lateinit var allFeatures: List<Feature>
+    override val binaryFactors: List<BinaryFeature> get() = manager.binaryFactors
+    override val doubleFactors: List<DoubleFeature> get() = manager.doubleFactors
+    override val categorialFactors: List<CatergorialFeature> get() = manager.categorialFactors
+    override val ignoredFactors: Set<String> get() = manager.ignoredFactors
+    override val completionFactors: CompletionFactors get() = manager.completionFactors
+    override val featureOrder: Map<String, Int> get() = manager.featureOrder
 
-    override val featureArrayLength: Int
-        get() = arrayLength
+    override fun createTransformer(): Transformer {
+        return manager.createTransformer()
+    }
 
     override fun isUserFeature(name: String): Boolean = false
 
     override fun initComponent() {
-        val order = FeatureReader.featuresOrder()
-        val interpreter = FeatureInterpreterImpl()
-
-        binaryFactors = FeatureReader.binaryFactors()
-                .map { (name, description) -> interpreter.binary(name, description, order) }
-        doubleFactors = FeatureReader.doubleFactors()
-                .map { (name, defaultValue) -> interpreter.double(name, defaultValue, order) }
-        categorialFactors = FeatureReader.categoricalFactors()
-                .map { (name, categories) -> interpreter.categorial(name, categories, order) }
-
-        completionFactors = FeatureReader.completionFactors()
-
-        ignoredFactors = FeatureReader.ignoredFactors()
-
-        arrayLength = order.size
-        val features: ArrayList<Feature> = ArrayList(binaryFactors)
-        features.addAll(doubleFactors)
-        features.addAll(categorialFactors)
-        allFeatures = features
+        manager = FeatureManagerFactory().createFeatureManager(FeatureReader, FeatureInterpreterImpl())
     }
 
-    override fun allFeatures(): List<Feature> = allFeatures
+    override fun allFeatures(): List<Feature> = manager.allFeatures()
 }

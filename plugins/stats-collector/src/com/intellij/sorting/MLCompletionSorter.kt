@@ -38,15 +38,7 @@ interface Ranker {
 
 
 class FeatureTransformerProvider(featureManager: FeatureManager) : ApplicationComponent.Adapter() {
-
-    val featureTransformer: Transformer
-
-    init {
-        val factors = featureManager.completionFactors
-        val ignored = featureManager.ignoredFactors
-        val features = featureManager.allFeatures().associate { it.name to it }
-        featureTransformer = NewFeatureTransformer(features, ignored, factors, featureManager.featureArrayLength)
-    }
+    val featureTransformer: Transformer = featureManager.createTransformer()
 }
 
 class MLRanker(val provider: FeatureTransformerProvider) : Ranker {
