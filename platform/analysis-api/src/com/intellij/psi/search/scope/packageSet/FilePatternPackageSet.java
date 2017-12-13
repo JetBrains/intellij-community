@@ -166,6 +166,12 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
     return new FilePatternPackageSet(myModulePatternText, myPathPattern.replace(oldName, newName));
   }
 
+  @NotNull
+  @Override
+  public PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
+    return new FilePatternPackageSet(myModulePatternText.replace(oldName, newName), myPathPattern);
+  }
+
   @Nullable
   public static String getRelativePath(@NotNull VirtualFile virtualFile,
                                        @NotNull ProjectFileIndex index,

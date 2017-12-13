@@ -140,6 +140,12 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     return new PatternPackageSet(myAspectJSyntaxPattern.replace(oldName, newName), myScope, myModulePatternText);
   }
 
+  @NotNull
+  @Override
+  public PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
+    return new PatternPackageSet(myAspectJSyntaxPattern, myScope, myModulePatternText.replace(oldName, newName));
+  }
+
   @Override
   public String getPattern() {
     return myAspectJSyntaxPattern;

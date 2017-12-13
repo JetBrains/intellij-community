@@ -76,6 +76,9 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
   @NotNull
   public abstract PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName);
 
+  @NotNull
+  public abstract PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName);
+
   public String getModulePattern() {
     return myModulePatternText;
   }
