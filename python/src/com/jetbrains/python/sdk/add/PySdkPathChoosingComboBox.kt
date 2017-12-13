@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ComboboxSpeedSearch
+import com.intellij.util.PathUtil
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.PythonSdkType
@@ -43,7 +44,7 @@ class PySdkPathChoosingComboBox(sdks: List<Sdk>, suggestedFile: VirtualFile?) :
       }
       FileChooser.chooseFiles(descriptor, null, suggestedFile) {
         val virtualFile = it.firstOrNull() ?: return@chooseFiles
-        val path = virtualFile.path
+        val path = PathUtil.toSystemDependentName(virtualFile.path)
         if (!pythonSdkType.isValidSdkHome(path)) return@chooseFiles
         childComponent.selectedItem =
           items.find { it.homePath == path } ?: PyDetectedSdk(path).apply {
