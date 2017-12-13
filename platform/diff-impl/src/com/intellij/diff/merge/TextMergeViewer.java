@@ -309,7 +309,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
               return;
             }
           }
-          if (result == MergeResult.CANCEL &&
+          if (result == MergeResult.CANCEL && myContentModified &&
               !MergeUtil.showExitWithoutApplyingChangesDialog(TextMergeViewer.this, myMergeRequest, myMergeContext)) {
             return;
           }
