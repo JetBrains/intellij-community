@@ -439,8 +439,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22005
   public void testWithSpecifiedType() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -462,8 +460,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22004
   public void testMultiResolved() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -479,8 +475,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsInImportedClass() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -496,8 +490,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsInImportedModule() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -512,8 +504,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedClass() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -529,8 +519,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {

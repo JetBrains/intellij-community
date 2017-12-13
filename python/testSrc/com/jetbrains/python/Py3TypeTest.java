@@ -70,7 +70,6 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromHomogeneousTuple() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest("str",
            "import typing\n"+
            "def get_tuple() -> typing.Tuple[str, ...]:\n" +
@@ -82,7 +81,6 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromHeterogeneousTuple() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest("Union[int, str]",
            "import typing\n" +
            "def get_tuple() -> typing.Tuple[int, int, str]:\n" +

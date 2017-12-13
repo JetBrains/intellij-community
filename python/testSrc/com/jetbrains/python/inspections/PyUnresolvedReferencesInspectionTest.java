@@ -532,13 +532,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
   // PY-22620
   public void testTupleTypeCommentsUseImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest();
   }
 
