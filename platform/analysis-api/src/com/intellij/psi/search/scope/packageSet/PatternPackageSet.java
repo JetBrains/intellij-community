@@ -134,6 +134,12 @@ public class PatternPackageSet extends PatternBasedPackageSet {
            Comparing.strEqual(oldQName + ".*", myAspectJSyntaxPattern); //package
   }
 
+  @NotNull
+  @Override
+  public PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
+    return new PatternPackageSet(myAspectJSyntaxPattern.replace(oldName, newName), myScope, myModulePatternText);
+  }
+
   @Override
   public String getPattern() {
     return myAspectJSyntaxPattern;

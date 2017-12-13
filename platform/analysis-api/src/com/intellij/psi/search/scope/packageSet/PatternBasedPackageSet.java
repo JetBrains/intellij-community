@@ -73,6 +73,9 @@ public abstract class PatternBasedPackageSet extends PackageSetBase {
 
   public abstract boolean isOn(String oldQName);
 
+  @NotNull
+  public abstract PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName);
+
   public String getModulePattern() {
     return myModulePatternText;
   }

@@ -20,6 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 public class ComplementPackageSet extends PackageSetBase {
   private final PackageSet myComplementarySet;
 
@@ -59,6 +62,17 @@ public class ComplementPackageSet extends PackageSetBase {
   @Override
   public int getNodePriority() {
     return 1;
+  }
+
+  @Override
+  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
+    PackageSet updated = transformation.apply(myComplementarySet);
+    return updated != myComplementarySet ? new ComplementPackageSet(updated) : this;
+  }
+
+  @Override
+  public boolean anyMatches(Predicate<PackageSet> predicate) {
+    return predicate.test(myComplementarySet);
   }
 
   public PackageSet getComplementarySet() {

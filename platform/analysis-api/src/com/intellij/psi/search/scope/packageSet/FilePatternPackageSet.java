@@ -160,6 +160,12 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
            Comparing.strEqual(oldQName + "/*", myPathPattern);
   }
 
+  @NotNull
+  @Override
+  public PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
+    return new FilePatternPackageSet(myModulePatternText, myPathPattern.replace(oldName, newName));
+  }
+
   @Nullable
   public static String getRelativePath(@NotNull VirtualFile virtualFile,
                                        @NotNull ProjectFileIndex index,
