@@ -43,9 +43,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.SwingHelper;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +54,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
@@ -313,7 +313,19 @@ public class AppUIUtil {
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
-        centerPanel.add(new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
+        JBScrollPane myMyScrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        final JScrollBar scrollBar = myMyScrollPane.getVerticalScrollBar();
+        scrollBar.addAdjustmentListener(new AdjustmentListener() {
+          boolean wasScrolledToTheBottom = false;
+          @Override
+          public void adjustmentValueChanged(AdjustmentEvent e) {
+            if (!wasScrolledToTheBottom) {
+              wasScrolledToTheBottom = UIUtil.isScrolledToTheBottom(viewer);
+            }
+            setOKActionEnabled(wasScrolledToTheBottom);
+          }
+        });
+        centerPanel.add(myMyScrollPane, BorderLayout.CENTER);
         return centerPanel;
       }
 
@@ -322,6 +334,7 @@ public class AppUIUtil {
         super.createDefaultActions();
         init();
         setOKButtonText("Accept");
+        setOKActionEnabled(false);
         setCancelButtonText("Reject and Exit");
         setAutoAdjustable(false);
       }
@@ -339,7 +352,7 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " Privacy Policy Agreement");
+    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Licence Agreement");
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
