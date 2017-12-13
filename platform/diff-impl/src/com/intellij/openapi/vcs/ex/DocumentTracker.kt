@@ -181,8 +181,6 @@ class DocumentTracker : Disposable {
       tracker.rangeChanged(side, range.start1 + shift, beforeLength, afterLength)
       shift += afterLength - beforeLength
     }
-
-    refreshDirty(fastRefresh = false)
   }
 
 
@@ -336,10 +334,10 @@ class DocumentTracker : Disposable {
       data.counter--
 
       if (data.counter == 0) {
-        setData(side, null)
-
         unfreeze(side, data.textBeforeFreeze)
 
+        setData(side, null)
+        refreshDirty(fastRefresh = false)
         multicaster.onUnfreeze(side)
       }
     }
