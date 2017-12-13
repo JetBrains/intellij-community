@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -33,6 +34,18 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     super(configurationModule.getProject(), factory, name);
 
     myModule = configurationModule;
+    setInitialModuleName();
+  }
+
+  public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
+    super(configurationModule.getProject(), factory, "");
+
+    myModule = configurationModule;
+    setInitialModuleName();
+  }
+
+  private void setInitialModuleName() {
+    // to ensure that newly created RC will have modification counter 0
     ModuleBasedConfigurationOptions options = getOptions();
     options.setModule(myModule.getModuleName());
     options.resetModificationCount();
@@ -47,15 +60,6 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @Override
   protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
     return ModuleBasedConfigurationOptions.class;
-  }
-
-  public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
-    super(configurationModule.getProject(), factory, "");
-
-    myModule = configurationModule;
-    ModuleBasedConfigurationOptions options = getOptions();
-    options.setModule(myModule.getModuleName());
-    options.resetModificationCount();
   }
 
   public abstract Collection<Module> getValidModules();
@@ -118,10 +122,17 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     final Element element = new Element(TO_CLONE_ELEMENT_NAME);
     try {
       writeExternal(element);
-      RunConfiguration configuration = getFactory().createTemplateConfiguration(getProject());
+      ModuleBasedConfiguration configuration = (ModuleBasedConfiguration)getFactory().createTemplateConfiguration(getProject());
       configuration.setName(getName());
+
+      // AbstractPythonRunConfiguration calls in the constructor and so, there is a chance that newly created configuration will have module, but old haven't
+      // and so, on readExternal module will be lost
+      String moduleName = StringUtil.nullize(configuration.getConfigurationModule().getModuleName());
       configuration.readExternal(element);
-      return (ModuleBasedConfiguration)configuration;
+      if (moduleName != null && StringUtil.nullize(configuration.getConfigurationModule().getModuleName()) == null) {
+        configuration.getConfigurationModule().setModuleName(moduleName);
+      }
+      return configuration;
     }
     catch (InvalidDataException | WriteExternalException e) {
       LOG.error(e);
@@ -133,7 +144,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   @NotNull
   public Module[] getModules() {
     Module module = ReadAction.compute(() -> getConfigurationModule().getModule());
-    return module == null ? Module.EMPTY_ARRAY : new Module[] {module};
+    return module == null ? Module.EMPTY_ARRAY : new Module[]{module};
   }
 
   public void restoreOriginalModule(final Module originalModule) {
