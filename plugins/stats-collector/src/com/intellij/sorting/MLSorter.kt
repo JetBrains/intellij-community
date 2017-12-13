@@ -31,7 +31,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.prefixLength
 import com.intellij.stats.experiment.WebServiceStatus
 import com.intellij.stats.personalization.UserFactorsManager
-import com.jetbrains.completion.ranker.features.FeatureUtils
+import com.jetbrains.completion.ranker.features.impl.FeatureUtils
 import java.util.*
 
 @Suppress("DEPRECATION")
