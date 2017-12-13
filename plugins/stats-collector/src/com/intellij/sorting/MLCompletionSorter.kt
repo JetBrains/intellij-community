@@ -37,13 +37,11 @@ interface Ranker {
 }
 
 
-class FeatureTransformerProvider : ApplicationComponent.Adapter() {
+class FeatureTransformerProvider(featureManager: FeatureManager) : ApplicationComponent.Adapter() {
 
-    lateinit var featureTransformer: Transformer
-        private set
+    val featureTransformer: Transformer
 
-    override fun initComponent() {
-        val featureManager = FeatureManager.getInstance()
+    init {
         val factors = featureManager.completionFactors
         val ignored = featureManager.ignoredFactors
         val features = featureManager.allFeatures().associate { it.name to it }
