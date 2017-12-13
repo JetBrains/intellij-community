@@ -349,9 +349,18 @@ idea.fatal.error.notification=disabled
   }
 
   private def copyDependenciesFile() {
-    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+    def inputFile = null
+    if (buildContext.options.dependenciesFile == null) {
+      if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+        inputFile = "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties"
+      }
+    } else {
+      inputFile = "$buildContext.paths.communityHome/$buildContext.options.dependenciesFile"
+    }
+
+    if (inputFile != null) {
       def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
-      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
+      buildContext.ant.copy(file: inputFile, tofile: outputFile)
       buildContext.notifyArtifactBuilt(outputFile)
     }
   }
@@ -462,7 +471,7 @@ idea.fatal.error.notification=disabled
 
   private void checkPluginModules(List<String> pluginModules, String fieldName, Set<String> optionalModules) {
     checkModules(pluginModules, fieldName)
-    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && buildContext.findFileInModuleSources(it, "META-INF/plugin.xml") == null }
+    def unknownBundledPluginModules = pluginModules.findAll { !optionalModules.contains(it) && !buildContext.hasResource(it, "META-INF/plugin.xml") }
     if (!unknownBundledPluginModules.empty) {
       buildContext.messages.error(
         "The following modules from $fieldName don't contain META-INF/plugin.xml file and aren't specified as optional plugin modules " +

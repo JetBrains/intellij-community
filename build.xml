@@ -11,15 +11,6 @@
   <property name="project.home" value="${basedir}"/>
 
   <target name="init">
-    <condition property="gradle.executable" value="${project.home}/build/dependencies/gradlew.bat"
-               else="${project.home}/build/dependencies/gradlew">
-      <os family="windows"/>
-    </condition>
-    <exec executable="${gradle.executable}" dir="${project.home}/build/dependencies" failonerror="true">
-      <env key="JAVA_HOME" value="${java.home}"/>
-      <arg value="--no-daemon"/>
-      <arg value="setupKotlinPlugin"/>
-    </exec>
     <propertyset id="intellij.build.properties">
       <propertyref name="build.number"/>
       <propertyref prefix="intellij.build."/>
@@ -40,6 +31,9 @@
         <sysproperty key="java.awt.headless" value="true"/>
         <sysproperty key="compile.parallel" value="true" />
         <sysproperty key="gant.script" value="@{script}"/>
+        <sysproperty key="intellij.build.kotlin.plugin" value ="../../prebuilts/tools/common/kotlin-plugin-ij/Kotlin"/>
+        <sysproperty key="intellij.build.dependencies.file" value ="build/dependencies/gradle.properties"/>
+        <sysproperty key="intellij.build.scripts.deps" value ="studio/build-scripts-deps"/>
         <syspropertyset refid="intellij.build.properties"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>

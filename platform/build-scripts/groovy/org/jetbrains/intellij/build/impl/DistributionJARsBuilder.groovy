@@ -5,6 +5,7 @@ import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import org.apache.tools.ant.types.FileSet
+import org.apache.tools.ant.types.ZipFileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -474,9 +475,13 @@ class DistributionJARsBuilder {
   }
 
   private FileSet createFileSet(String pattern, File baseDir) {
-    def fileSet = new FileSet()
+    def fileSet = new ZipFileSet()
+    if (baseDir.getName().endsWith(".jar")) {
+      fileSet.setSrc(baseDir)
+    } else {
+      fileSet.setDir(baseDir)
+    }
     fileSet.setProject(buildContext.ant.antProject)
-    fileSet.setDir(baseDir)
     fileSet.createInclude().setName(pattern)
     return fileSet
   }

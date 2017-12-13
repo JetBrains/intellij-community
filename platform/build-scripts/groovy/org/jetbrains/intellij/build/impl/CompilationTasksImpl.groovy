@@ -41,6 +41,11 @@ class CompilationTasksImpl extends CompilationTasks {
       resolveProjectDependencies()
       return
     }
+    if (context.options.compiledModules != null) {
+      context.messages.info("Compilation skipped, modules and their dependencies are described in the file '${context.options.compiledModules}'")
+      resolveProjectDependencies()
+      return
+    }
 
     CompilationContextImpl.setupCompilationDependencies(context.gradle)
 
@@ -76,6 +81,11 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void buildProjectArtifacts(Collection<String> artifactNames) {
+    if (context.options.compiledArtifacts != null) {
+      context.messages.info("Artifact build skipped, the prebuilt artifacts from '${context.options.compiledArtifacts}' will be used")
+      return
+    }
+
     if (!artifactNames.isEmpty()) {
       try {
         new JpsCompilationRunner(context).buildArtifacts(artifactNames)

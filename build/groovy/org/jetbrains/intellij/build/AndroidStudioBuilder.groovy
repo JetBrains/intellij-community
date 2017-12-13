@@ -16,9 +16,6 @@
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
-import org.jetbrains.jps.gant.JpsGantProjectBuilder
-import org.jetbrains.jps.model.JpsGlobal
-import org.jetbrains.jps.model.JpsProject
 
 /**
  * Based on IdeaCommunityBuilder, but simplified a bit since we build fewer things
@@ -44,10 +41,6 @@ class AndroidStudioBuilder {
   void buildDistributions() {
     def tasks = BuildTasks.create(buildContext)
     tasks.buildDistributions()
-    buildContext.messages.block("Build standalone JPS") {
-      String jpsArtifactDir = "$buildContext.paths.artifacts/jps"
-      new CommunityStandaloneJpsBuilder(buildContext).layoutJps(jpsArtifactDir, buildContext.fullBuildNumber, {})
-    }
     tasks.buildUpdaterJar()
   }
 

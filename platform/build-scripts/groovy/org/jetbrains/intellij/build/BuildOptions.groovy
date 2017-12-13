@@ -88,6 +88,26 @@ class BuildOptions {
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
 
   /**
+   * Path to a property file containing the paths of precompiled artifacts
+   */
+  String compiledArtifacts = System.getProperty("intellij.build.compiled.artifacts")
+
+  /**
+   * Path to a property file containing the module outputs as .jars and their runtime dependencies
+   */
+  String compiledModules = System.getProperty("intellij.build.compiled.modules")
+
+  /**
+   * Path to a pre-generated dependencies file
+   */
+  String dependenciesFile = System.getProperty("intellij.build.dependencies.file")
+
+  /**
+   * Path to the kotlin plugin to use
+   */
+  String kotlinPlugin = System.getProperty("intellij.build.kotlin.plugin")
+
+  /**
    * If {@code true} the project modules will be compiled incrementally
    */
   boolean incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)

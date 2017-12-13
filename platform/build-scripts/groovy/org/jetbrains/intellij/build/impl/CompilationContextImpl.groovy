@@ -70,16 +70,22 @@ class CompilationContextImpl implements CompilationContext {
 
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     GradleRunner gradle = new GradleRunner(dependenciesProjectDir, messages, SystemProperties.getJavaHome())
-    if (!options.isInDevelopmentMode) {
-      setupCompilationDependencies(gradle)
-    }
-    else {
-      gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+
+    def kotlinHome
+    if (options.kotlinPlugin == null) {
+      if (!options.isInDevelopmentMode) {
+        setupCompilationDependencies(gradle)
+      }
+      else {
+        gradle.run('Setting up Kotlin plugin', 'setupKotlinPlugin')
+      }
+      kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
+    } else {
+      kotlinHome = toCanonicalPath("$communityHome/${options.kotlinPlugin}")
     }
 
     projectHome = toCanonicalPath(projectHome)
     def jdk8Home = toCanonicalPath(JdkUtils.computeJdkHome(messages, "jdk8Home", "$projectHome/build/jdk/1.8", "JDK_18_x64"))
-    def kotlinHome = toCanonicalPath("$communityHome/../../prebuilts/tools/common/kotlin-plugin-ij/Kotlin")
     gradle = new GradleRunner(dependenciesProjectDir, messages, jdk8Home)
 
     def model = loadProject(projectHome, jdk8Home, kotlinHome, messages, ant)
@@ -88,6 +94,12 @@ class CompilationContextImpl implements CompilationContext {
     context.prepareForBuild()
     return context
   }
+
+  // A cache for the output of modules
+  private Map<String, String> myOutputCache = new HashMap<>()
+
+  // A cache for the runtime class paths of modules
+  private Map<String, List<String>> myRuntimeClasspathCache = new HashMap<>()
 
   private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
                                  String projectHome, String jdk8Home, String kotlinHome, BuildMessages messages,
@@ -178,6 +190,21 @@ class CompilationContextImpl implements CompilationContext {
     JpsArtifactService.instance.getArtifacts(project).each {
       it.outputPath = "$baseArtifactsOutput/$it.name"
     }
+    if (options.compiledArtifacts != null) {
+      copyArtifacts(messages, ant, project, options)
+      outputDirectoriesToKeep.add(projectArtifactsDirName)
+    }
+
+    if (options.compiledModules) {
+      // Parse the external information
+      Properties properties = new Properties()
+      properties.load(new FileInputStream(options.compiledModules))
+      for (String name : properties.stringPropertyNames()) {
+        String[] values = properties.getProperty(name).split(":")
+        myOutputCache.put(name + ":main", values[0])
+        myRuntimeClasspathCache.put(name + ":main", values[0..values.size() - 1])
+      }
+    }
 
     messages.info("Incremental compilation: " + options.incrementalCompilation)
     if (options.incrementalCompilation) {
@@ -244,6 +271,24 @@ class CompilationContextImpl implements CompilationContext {
     }
   }
 
+
+
+  @CompileDynamic
+  private void copyArtifacts(BuildMessages messages, AntBuilder ant, JpsProject project, BuildOptions options) {
+    messages.block("Copy precompiled artifacts") {
+      Properties properties = new Properties()
+      properties.load(new FileInputStream(options.compiledArtifacts))
+      JpsArtifactService.instance.getArtifacts(project).each {
+        def jar = properties.get(it.name)
+        if (jar == null) {
+          messages.info("No jar provided for artifact: ${it.name}")
+        } else {
+          ant.copy(file: jar, tofile: it.outputFilePath)
+        }
+      }
+    }
+  }
+
   private void checkCompilationOptions() {
     if (options.useCompiledClassesFromProjectOutput && options.incrementalCompilation) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so 'incremental compilation' option will be ignored")
@@ -290,17 +335,29 @@ class CompilationContextImpl implements CompilationContext {
   }
 
   private String getOutputPath(JpsModule module, boolean forTests) {
-    File outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(module, forTests)
-    if (outputDirectory == null) {
-      messages.error("Output directory for '$module.name' isn't set")
+    def key = module.name + ":" + (forTests ? "test" : "main")
+    def out = myOutputCache.get(key)
+    if (out == null) {
+      File outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(module, forTests)
+      if (outputDirectory == null) {
+        messages.error("Output directory for '$module.name' isn't set")
+      }
+      out = outputDirectory.absolutePath
+      myOutputCache.put(key, out)
     }
-    return outputDirectory.absolutePath
+    return out
   }
 
   @Override
   List<String> getModuleRuntimeClasspath(JpsModule module, boolean forTests) {
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests))
-    return enumerator.classes().roots.collect { it.absolutePath }
+    def key = module.name + ":" + (forTests ? "test" : "main")
+    def classpath = myRuntimeClasspathCache.get(key)
+    if (classpath == null) {
+      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests))
+      classpath = enumerator.classes().roots.collect { it.absolutePath }
+      myRuntimeClasspathCache.put(key, classpath)
+    }
+    return classpath
   }
 
   @Override
