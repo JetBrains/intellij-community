@@ -186,8 +186,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
 
-      PsiDirectory memberDirectory = memberFile.getContainingDirectory();
-      final PsiPackage memberPackage = memberDirectory == null ? null : JavaDirectoryService.getInstance().getPackage(memberDirectory);
+      final PsiPackage memberPackage = getPackage(memberFile);
       log(member.getName()+ ": checking effective level for "+member);
 
       AtomicInteger maxLevel = new AtomicInteger(minLevel);
@@ -272,25 +271,22 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         return !isAbstractMember && (myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
                !isInnerClass(memberClass)) ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
-      //if (file == memberFile) {
-      //  return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
-      //}
-      PsiExpression qualifier = null;
-      if (element instanceof PsiReferenceExpression) {
-        qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
-      }
-      else if (element instanceof PsiMethodCallExpression) {
-        qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
-      }
 
-      if (qualifier != null && !(qualifier instanceof PsiThisExpression) && !(qualifier instanceof PsiSuperExpression)) {
-        return PsiUtil.ACCESS_LEVEL_PUBLIC;
+      PsiExpression qualifier = getQualifier(element);
+      PsiElement resolvedQualifier = qualifier instanceof PsiReference ? ((PsiReference)qualifier).resolve() : null;
+      if (resolvedQualifier instanceof PsiVariable) {
+        resolvedQualifier = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)resolvedQualifier).getType());
       }
-      PsiDirectory directory = file.getContainingDirectory();
-      PsiPackage aPackage = directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
-      if (aPackage == memberPackage || aPackage != null && memberPackage != null && Comparing.strEqual(aPackage.getQualifiedName(), memberPackage.getQualifiedName())) {
+      PsiPackage qualifierPackage = resolvedQualifier == null ? null : getPackage(resolvedQualifier);
+      PsiPackage aPackage = getPackage(file);
+
+      if (samePackages(memberPackage, aPackage) && (qualifierPackage == null || samePackages(qualifierPackage, aPackage))) {
         return suggestPackageLocal(member);
       }
+
+      // can't access protected members via "qualifier.protectedMember = 0;"
+      if (qualifier != null) return PsiUtil.ACCESS_LEVEL_PUBLIC;
+
       if (innerClass != null && memberClass != null && innerClass.isInheritor(memberClass, true)) {
         //access from subclass can be via protected, except for constructors
         PsiElement resolved = element instanceof PsiReference ? ((PsiReference)element).resolve() : null;
@@ -302,6 +298,30 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
     }
+  }
+
+  @Nullable
+  private static PsiPackage getPackage(@NotNull PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    PsiDirectory directory = file.getContainingDirectory();
+    return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
+  }
+
+  private static boolean samePackages(PsiPackage package1, PsiPackage package2) {
+    return package2 == package1 ||
+        package2 != null && package1 != null && Comparing.strEqual(package2.getQualifiedName(), package1.getQualifiedName());
+  }
+
+  private static PsiExpression getQualifier(@NotNull PsiElement element) {
+    PsiExpression qualifier = null;
+    if (element instanceof PsiReferenceExpression) {
+      qualifier = ((PsiReferenceExpression)element).getQualifierExpression();
+    }
+    else if (element instanceof PsiMethodCallExpression) {
+      qualifier = ((PsiMethodCallExpression)element).getMethodExpression().getQualifierExpression();
+    }
+
+    return qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression ? null : qualifier;
   }
 
   private static boolean isInnerClass(@NotNull PsiClass memberClass) {
