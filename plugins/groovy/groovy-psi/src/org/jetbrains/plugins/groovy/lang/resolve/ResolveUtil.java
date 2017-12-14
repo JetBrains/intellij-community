@@ -709,14 +709,13 @@ public class ResolveUtil {
                                                           @Nullable String methodName,
                                                           @NotNull PsiElement place,
                                                           @Nullable PsiType... argumentTypes) {
-    return getMethodCandidates(thisType, methodName, place, true, false, argumentTypes);
+    return getMethodCandidates(thisType, methodName, place, false, argumentTypes);
   }
 
   @NotNull
   public static GroovyResolveResult[] getMethodCandidates(@NotNull PsiType thisType,
                                                           @Nullable String methodName,
                                                           @NotNull PsiElement place,
-                                                          boolean resolveClosures,
                                                           boolean allVariants,
                                                           @Nullable PsiType... argumentTypes) {
     if (methodName == null) return GroovyResolveResult.EMPTY_ARRAY;
@@ -729,15 +728,9 @@ public class ResolveUtil {
     final GroovyResolveResult[] methodCandidates = processor.getCandidates();
     if (hasApplicableMethods && methodCandidates.length == 1) return methodCandidates;
 
-    final GroovyResolveResult[] allPropertyCandidates;
-    if (resolveClosures) {
-      PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(methodName, place);
-      processAllDeclarations(thisType, propertyResolver, state, place);
-      allPropertyCandidates = propertyResolver.getCandidates();
-    }
-    else {
-      allPropertyCandidates = GroovyResolveResult.EMPTY_ARRAY;
-    }
+    PropertyResolverProcessor propertyResolver = new PropertyResolverProcessor(methodName, place);
+    processAllDeclarations(thisType, propertyResolver, state, place);
+    final GroovyResolveResult[] allPropertyCandidates = propertyResolver.getCandidates();
 
     List<GroovyResolveResult> propertyCandidates = new ArrayList<>(allPropertyCandidates.length);
     for (GroovyResolveResult candidate : allPropertyCandidates) {
