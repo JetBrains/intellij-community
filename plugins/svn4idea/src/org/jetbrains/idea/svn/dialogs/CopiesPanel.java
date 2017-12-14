@@ -74,7 +74,7 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
-import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.util.containers.ContainerUtil.map;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.idea.svn.SvnUtil.append;
@@ -354,7 +354,7 @@ public class CopiesPanel {
   private static SVNURL getCorrespondingUrlInOtherBranch(@NotNull SvnBranchConfigurationNew configuration,
                                                          @NotNull SVNURL url,
                                                          @NotNull String otherBranchUrl) throws SvnBindException {
-    return append(createUrl(otherBranchUrl), notNull(configuration.getRelativeUrl(url.toDecodedString())));
+    return append(createUrl(otherBranchUrl), notNullize(configuration.getRelativeUrl(url.toDecodedString())));
   }
 
   @SuppressWarnings("MethodMayBeStatic")
