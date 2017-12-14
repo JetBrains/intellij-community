@@ -397,17 +397,8 @@ public final class IdeMouseEventDispatcher {
   }
 
   private static boolean isDiagramViewComponent(@Nullable Component component) {
-    if (component == null) {
-      return false;
-    }
-    if ("y.view.Graph2DView".equals(component.getClass().getName())) {
-      return true;
-    }
     // in production yfiles classes is obfuscated
-    if (component instanceof JComponent) {
-      return Boolean.TRUE.equals(((JComponent)component).getClientProperty("y.view.Graph2DView"));
-    }
-    return false;
+    return UIUtil.isClientPropertyTrue(component, "y.view.Graph2DView");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {
