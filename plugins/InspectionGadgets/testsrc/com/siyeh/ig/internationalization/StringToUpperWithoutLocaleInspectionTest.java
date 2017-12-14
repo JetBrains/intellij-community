@@ -9,9 +9,6 @@ import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Bas Leijdekkers
- */
 public class StringToUpperWithoutLocaleInspectionTest extends LightInspectionTestCase {
 
   public void testStringToUpperWithoutLocale() {
