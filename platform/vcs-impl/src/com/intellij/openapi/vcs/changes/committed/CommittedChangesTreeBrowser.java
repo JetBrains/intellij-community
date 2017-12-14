@@ -474,9 +474,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   public void reportLoadedLists(final CommittedChangeListsListener listener) {
+    List<CommittedChangeList> lists = new ArrayList<>(myChangeLists);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       listener.onBeforeStartReport();
-      for (CommittedChangeList list : myChangeLists) {
+      for (CommittedChangeList list : lists) {
         listener.report(list);
       }
       listener.onAfterEndReport();
