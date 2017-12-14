@@ -35,6 +35,12 @@ object Fixtures {
             LookupEntryInfo(2, 7, relevance)
     )
 
+    val userFactors: Map<String, String> = mapOf(
+            "avgTimeToType" to "0.6",
+            "maxSelecterItem" to "10",
+            "explicitSelectCountToday" to "100"
+    )
+
     val history = mapOf(10 to ElementPositionHistory(listOf(StagePosition(0, 1))))
     
 }
@@ -49,7 +55,9 @@ class EventSerializeDeserializeTest {
 
     @Test
     fun `completion started event`() {
-        val event = CompletionStartedEvent("", "", "", Fixtures.userId, "xx", "Java", true, 1, Fixtures.lookupList, 0)
+        val event = CompletionStartedEvent("", "", "", Fixtures.userId,
+                "xx", "Java", true, 1, Fixtures.lookupList,
+                Fixtures.userFactors, 0)
         serializeDeserializeAndCheck(event)
     }
 

@@ -15,29 +15,20 @@
  */
 package com.intellij.sorting
 
-import com.intellij.ide.util.PropertiesComponent
+import com.jetbrains.completion.ranker.features.FeatureManager
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
-import com.jetbrains.completion.ranker.features.LookupElementInfo
-import com.jetbrains.completion.ranker.features.FeatureReader.binaryFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.categoricalFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.completionFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.doubleFactors
-import com.jetbrains.completion.ranker.features.FeatureReader.featuresOrder
-import com.jetbrains.completion.ranker.features.FeatureReader.ignoredFactors
-import com.jetbrains.completion.ranker.features.FeatureTransformer
-import com.jetbrains.completion.ranker.features.IgnoredFactorsMatcher
+import com.jetbrains.completion.ranker.features.Transformer
 
 
 interface Ranker {
 
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
-     * @param state
      * @param relevance map from LookupArranger.getRelevanceObjects
      */
-    fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double?
+    fun rank(relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double?
 
     companion object {
         fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
@@ -45,40 +36,17 @@ interface Ranker {
 }
 
 
-class FeatureTransformerProvider: ApplicationComponent.Adapter() {
-
-    lateinit var featureTransformer: FeatureTransformer
-        private set
-    
-    override fun initComponent() {
-        val binary = binaryFactors()
-        val double = doubleFactors()
-        val categorical = categoricalFactors()
-        val factors = completionFactors()
-        val order = featuresOrder()
-        val ignored = ignoredFactors()
-        
-        featureTransformer = FeatureTransformer(
-                binary, 
-                double, 
-                categorical, 
-                order, 
-                factors,
-                IgnoredFactorsMatcher(ignored)
-        )
-    }
-    
+class FeatureTransformerProvider(featureManager: FeatureManager) : ApplicationComponent.Adapter() {
+    val featureTransformer: Transformer = featureManager.createTransformer()
 }
 
-
-
-class MLRanker(val provider: FeatureTransformerProvider): Ranker {
+class MLRanker(val provider: FeatureTransformerProvider) : Ranker {
 
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
-    
-    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double? {
-        val featureArray = featureTransformer.featureArray(state, relevance)
+
+    override fun rank(relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double? {
+        val featureArray = featureTransformer.featureArray(relevance, userFactors)
         if (featureArray != null) {
             return ranker.rank(featureArray)
         }

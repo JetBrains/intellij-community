@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>com.intellij.stats.completion</id>
   <name>Completion Stats Collector</name>
-  <version>0.0.537</version>
+  <version>0.0.538</version>
   <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -94,6 +94,28 @@
     <component>
       <implementation-class>com.intellij.sorting.FeatureTransformerProvider</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>
+        com.intellij.stats.personalization.impl.ApplicationUserFactorStorage
+      </implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
+      <interface-class>com.jetbrains.completion.ranker.features.FeatureManager</interface-class>
+    </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.stats.personalization.impl.ProjectUserFactorStorage</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.stats.personalization.UserFactorsManager</interface-class>
+      <implementation-class>com.intellij.stats.personalization.impl.UserFactorsManagerImpl</implementation-class>
+    </component>
+  </project-components>
 
 </idea-plugin>

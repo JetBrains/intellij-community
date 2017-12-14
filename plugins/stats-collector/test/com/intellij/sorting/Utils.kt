@@ -19,8 +19,7 @@ package com.intellij.sorting
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.Pair
-import com.jetbrains.completion.ranker.features.FeatureUtils
-import com.jetbrains.completion.ranker.features.LookupElementInfo
+import com.jetbrains.completion.ranker.features.impl.FeatureUtils
 import org.assertj.core.api.Assertions
 
 
@@ -29,19 +28,21 @@ internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
     val lookupElements = getRelevanceObjects(items, false)
 
     lookupElements.forEach { element, relevance ->
-        val weights: Map<String, Any?> = relevance.associate { it.first to it.second }
-        val ml_rank = weights["ml_rank"]?.toString()
-        if (ml_rank == "UNDEFINED" || weights["before_rerank_order"] == null) {
+        val weights: MutableMap<String, Any?> = relevance.associate { it.first to it.second }.toMutableMap()
+        val mlRank = weights["ml_rank"]?.toString()
+        if (mlRank == "UNDEFINED" || weights["before_rerank_order"] == null) {
             throw UnsupportedOperationException("Ranking failed")
         }
 
-        val old_order = weights["before_rerank_order"].toString().toInt()
+        val oldOrder = weights["before_rerank_order"].toString().toInt()
 
-        val state = LookupElementInfo(old_order, prefix_length, element.lookupString.length)
+        weights.put("position", oldOrder)
+        weights.put("query_length", prefix_length)
+        weights.put("result_length", element.lookupString.length)
 
-        val calculated_ml_rank = ranker.rank(state, weights)
-        Assertions.assertThat(calculated_ml_rank).isEqualTo(ml_rank?.toDouble())
-                .withFailMessage("Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}")
+        val calculatedMlRank = ranker.rank(weights, emptyMap())
+        Assertions.assertThat(calculatedMlRank).isEqualTo(mlRank?.toDouble())
+                .withFailMessage("Calculated: $calculatedMlRank Regular: ${mlRank?.toDouble()}")
     }
 }
 
@@ -56,10 +57,6 @@ internal fun LookupImpl.assertEachItemHasMlValue(value: String) {
     Assertions.assertThat(ranks.size).withFailMessage("Ranks size: ${ranks.size} expected: 1\nRanks $ranks").isEqualTo(1)
     Assertions.assertThat(ranks.first()).isEqualTo(value)
 }
-
-
-
-
 
 
 internal object Samples {

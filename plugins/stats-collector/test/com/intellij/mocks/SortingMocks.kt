@@ -21,18 +21,17 @@ import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.PsiMethod
 import com.intellij.sorting.Ranker
-import com.jetbrains.completion.ranker.features.LookupElementInfo
 
 
-internal class FakeRanker: Ranker {
+internal class FakeRanker : Ranker {
 
     var isShortFirst = true
 
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
      */
-    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double? {
-        val lookupElementLength = state.result_length!!.toDouble()
+    override fun rank(relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double? {
+        val lookupElementLength = relevance["result_length"]!!.toString().toDouble()
         return if (isShortFirst) -lookupElementLength else lookupElementLength
     }
 
