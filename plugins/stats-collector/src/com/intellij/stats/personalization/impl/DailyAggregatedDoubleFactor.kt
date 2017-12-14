@@ -14,7 +14,6 @@ interface DailyAggregatedDoubleFactor {
 }
 
 interface MutableDoubleFactor : DailyAggregatedDoubleFactor {
-    fun updateOnToday(key: String, value: Double)
     fun incrementOnToday(key: String)
 
     fun setOnDate(date: Day, key: String, value: Double)

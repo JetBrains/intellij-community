@@ -59,7 +59,9 @@ abstract class UserFactorStorageBase
         }
     }
 
-    private class DailyAggregateFactor(private val aggregates: SortedMap<Day, DailyData> = sortedMapOf()) : MutableDoubleFactor {
+    class DailyAggregateFactor private constructor(private val aggregates: SortedMap<Day, DailyData>) : MutableDoubleFactor {
+        constructor() : this(sortedMapOf())
+
         companion object {
             fun restore(element: Element): DailyAggregateFactor? {
                 val data = sortedMapOf<Day, DailyData>()
@@ -87,10 +89,6 @@ abstract class UserFactorStorageBase
         }
 
         override fun availableDays(): List<Day> = aggregates.keys.toList()
-
-        override fun updateOnToday(key: String, value: Double) {
-            aggregates.onToday()[key] = value
-        }
 
         override fun incrementOnToday(key: String) {
             aggregates.onToday().compute(key, { _, oldValue -> if (oldValue == null) 1.0 else oldValue + 1.0 })
