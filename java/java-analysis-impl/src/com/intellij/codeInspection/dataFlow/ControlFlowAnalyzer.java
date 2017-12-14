@@ -1759,7 +1759,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitSuperExpression(PsiSuperExpression expression) {
     startElement(expression);
-    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), null));
+    addInstruction(new PushInstruction(myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL), expression));
     finishElement(expression);
   }
 
@@ -1769,7 +1769,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (myThisReadOnly) {
       value = myFactory.withFact(value, DfaFactType.MUTABLE, false);
     }
-    addInstruction(new PushInstruction(value, null));
+    addInstruction(new PushInstruction(value, expression));
     finishElement(expression);
   }
 

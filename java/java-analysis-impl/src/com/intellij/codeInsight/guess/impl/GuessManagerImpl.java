@@ -36,6 +36,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,12 +131,12 @@ public class GuessManagerImpl extends GuessManager {
   @NotNull
   @Override
   public MultiMap<PsiExpression, PsiType> getControlFlowExpressionTypes(@NotNull final PsiExpression forPlace) {
-    MultiMap<PsiExpression, PsiType> typeMap = buildDataflowTypeMap(forPlace);
+    MultiMap<PsiExpression, PsiType> typeMap = buildDataflowTypeMap(forPlace, false);
     return typeMap != null ? typeMap : MultiMap.empty();
   }
 
   @Nullable
-  private static MultiMap<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace) {
+  private static MultiMap<PsiExpression, PsiType> buildDataflowTypeMap(PsiExpression forPlace, boolean place) {
     PsiElement scope = DfaPsiUtil.getTopmostBlockInSameClass(forPlace);
     if (scope == null) {
       PsiFile file = forPlace.getContainingFile();
@@ -154,7 +155,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace);
+    final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, place);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
     }
@@ -406,7 +407,7 @@ public class GuessManagerImpl extends GuessManager {
       return Collections.emptyList(); //optimization
     }
 
-    MultiMap<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr);
+    MultiMap<PsiExpression, PsiType> fromDfa = buildDataflowTypeMap(expr, true);
     if (fromDfa != null) {
       Collection<PsiType> conjuncts = fromDfa.get(expr);
       if (!conjuncts.isEmpty()) {
@@ -437,14 +438,11 @@ public class GuessManagerImpl extends GuessManager {
     private MultiMap<PsiExpression, PsiType> myResult;
     private final PsiElement myForPlace;
     private TypeConstraint myConstraint = null;
+    private final boolean myOnlyForPlace;
 
-    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace) {
-      PsiElement parent = PsiUtil.skipParenthesizedExprUp(forPlace.getParent());
-      if (forPlace instanceof PsiThisExpression && parent instanceof PsiReferenceExpression) {
-        myForPlace = parent.getParent() instanceof PsiMethodCallExpression ? parent.getParent() : parent;
-      } else {
-        myForPlace = forPlace;
-      }
+    private ExpressionTypeInstructionVisitor(@NotNull PsiElement forPlace, boolean onlyForPlace) {
+      myOnlyForPlace = onlyForPlace;
+      myForPlace = PsiUtil.skipParenthesizedExprUp(forPlace);
     }
 
     MultiMap<PsiExpression, PsiType> getResult() {
@@ -460,21 +458,33 @@ public class GuessManagerImpl extends GuessManager {
       return myResult;
     }
 
+    @Contract("null -> false")
+    private boolean isInteresting(PsiExpression expression) {
+      if (expression == null) return false;
+      return !myOnlyForPlace ||
+             (myForPlace instanceof PsiExpression &&
+              ExpressionTypeMemoryState.EXPRESSION_HASHING_STRATEGY.equals((PsiExpression)myForPlace, expression));
+    }
+
     @Override
     public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      if (instruction.getLeft() == null) {
+      PsiExpression psiOperand = instruction.getLeft();
+      if (!isInteresting(psiOperand)) {
         return super.visitInstanceof(instruction, runner, memState);
       }
       DfaValue type = memState.pop();
       DfaValue operand = memState.pop();
       DfaValue relation = runner.getFactory().createCondition(operand, DfaRelationValue.RelationType.IS, type);
-      memState.push(new DfaInstanceofValue(runner.getFactory(), instruction.getLeft(), instruction.getCastType(), relation, false));
+      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, instruction.getCastType(), relation, false));
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 
     @Override
     public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      ((ExpressionTypeMemoryState) memState).setExpressionType(instruction.getCasted(), instruction.getCastTo());
+      PsiExpression psiOperand = instruction.getCasted();
+      if (isInteresting(psiOperand)) {
+        ((ExpressionTypeMemoryState)memState).setExpressionType(psiOperand, instruction.getCastTo());
+      }
       return super.visitTypeCast(instruction, runner, memState);
     }
 
@@ -483,8 +493,7 @@ public class GuessManagerImpl extends GuessManager {
       PsiExpression left = instruction.getLExpression();
       PsiExpression right = instruction.getRExpression();
       if (left != null && right != null) {
-        MultiMap<PsiExpression, PsiType> states = ((ExpressionTypeMemoryState)memState).getStates();
-        states.remove(left);
+        ((ExpressionTypeMemoryState)memState).removeExpressionType(left);
       }
       return super.visitAssign(instruction, runner, memState);
     }
