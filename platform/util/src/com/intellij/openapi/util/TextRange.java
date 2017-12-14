@@ -120,8 +120,8 @@ public class TextRange implements Segment, Serializable {
 
   @NotNull
   public TextRange cutOut(@NotNull TextRange subRange) {
-    assert subRange.getStartOffset() <= getLength() : subRange + "; this="+this;
-    assert subRange.getEndOffset() <= getLength() : subRange + "; this="+this;
+    assert subRange.getStartOffset() <= getLength() : "SubRange: " + subRange + "; this=" + this;
+    assert subRange.getEndOffset() <= getLength() : "SubRange: " + subRange + "; this=" + this;
     assertProperRange(subRange);
     return new TextRange(myStartOffset + subRange.getStartOffset(),
                          Math.min(myEndOffset, myStartOffset + subRange.getEndOffset()));
