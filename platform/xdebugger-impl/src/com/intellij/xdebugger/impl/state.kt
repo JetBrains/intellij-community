@@ -71,8 +71,8 @@ class WatchState : XExpressionState {
 
 internal class XDebuggerState : BaseState() {
   @get:Property(surroundWithTag = false)
-  var breakpointManagerState by bean(BreakpointManagerState())
+  var breakpointManagerState by property(BreakpointManagerState())
 
   @get:Property(surroundWithTag = false)
-  var watchesManagerState by bean(WatchesManagerState())
+  var watchesManagerState by property(WatchesManagerState())
 }

@@ -17,7 +17,7 @@ open class RunConfigurationOptions : BaseState() {
 
   // we use object instead of 2 fields because XML serializer cannot reuse tag for several fields
   @get:Property(surroundWithTag = false)
-  var fileOutput by bean(OutputFileOptions())
+  var fileOutput by property(OutputFileOptions())
 
   @get:Attribute("show_console_on_std_out")
   var isShowConsoleOnStdOut by property(false)

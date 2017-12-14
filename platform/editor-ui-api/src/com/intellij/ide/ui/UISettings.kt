@@ -337,7 +337,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
     @JvmStatic
     fun setupEditorAntialiasing(component: JComponent) {
-      instance.editorAAType?.let { GraphicsUtil.setAntialiasingType(component, it.textInfo) }
+      GraphicsUtil.setAntialiasingType(component, instance.editorAAType.textInfo)
     }
 
     /**

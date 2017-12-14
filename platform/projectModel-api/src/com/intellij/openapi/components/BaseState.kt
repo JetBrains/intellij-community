@@ -57,12 +57,6 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  fun <T : Any> bean(defaultValue: T): StoredPropertyBase<T> {
-    val result = ObjectStoredProperty(defaultValue)
-    properties.add(result)
-    return result
-  }
-
   /**
    * Empty string is always normalized to null.
    */
