@@ -19,6 +19,11 @@ import com.intellij.util.io.PagePool;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 class RefCountingRecordsTable extends AbstractRecordsTable {
   private static final int VERSION = 1;
@@ -51,21 +56,59 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
     markDirty();
 
     int offset = getOffset(record, REF_COUNT_OFFSET);
-    myStorage.putInt(offset, myStorage.getInt(offset) + 1);
+    final int currentRefCount = myStorage.getInt(offset);
+    addDebugHistoryEntry(record, "incRefCount: " + currentRefCount + " -> " + (currentRefCount + 1));
+    myStorage.putInt(offset, currentRefCount + 1);
   }
+
+  private Map<Integer, List<Throwable>> myDebugHistory = new ConcurrentHashMap<Integer, List<Throwable>>();
 
   public boolean decRefCount(int record) {
     markDirty();
 
     int offset = getOffset(record, REF_COUNT_OFFSET);
     int count = myStorage.getInt(offset);
-    assert count > 0;
-    count--;
-    myStorage.putInt(offset, count);
+    addDebugHistoryEntry(record, "decRefCount: " + count + " -> " + (count - 1));
+    //assert count > 0; // TODO: Re-enable the assert and remove debug code: b/70639656
+    if (count <= 0) {
+      dumpObjectDebugHistory(record);
+    } else {
+      count--;
+      myStorage.putInt(offset, count);
+    }
     return count == 0;
+  }
+
+  private void dumpObjectDebugHistory(int recordId) {
+    System.out.println("Illegal reference count for record: " + recordId);
+    if (myStorage != null) {
+      System.out.println("myStorage.isDisposed() = " + myStorage.isDisposed());
+      if (!myStorage.isDisposed()) {
+        System.out.println("myStorage.getFile() = " + myStorage.getFile());
+      }
+    }
+    System.out.println("Reference counting history:");
+    for (Throwable entry : myDebugHistory.get(recordId)) {
+      entry.printStackTrace();
+    }
   }
 
   public int getRefCount(int record) {
     return myStorage.getInt(getOffset(record, REF_COUNT_OFFSET));
+  }
+
+  private void addDebugHistoryEntry(int recordId, String message) {
+    List<Throwable> history = myDebugHistory.get(recordId);
+    if (history == null) {
+      history = new ArrayList<Throwable>();
+      myDebugHistory.put(recordId, history);
+    }
+    history.add(new DebugEntryException(message));
+  }
+
+  private static class DebugEntryException extends Exception {
+    public DebugEntryException(String message) {
+      super(message);
+    }
   }
 }
