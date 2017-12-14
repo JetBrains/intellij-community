@@ -58,6 +58,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
           if (thenElse == null) {
             ElseIf elseIf = ElseIf.from(ifStatement, thenStatements);
             if (elseIf == null) return;
+            if (!isOnTheFly) return;
             String message = InspectionsBundle.message("inspection.common.if.parts.family.else.if");
             holder.registerProblem(ifStatement.getChildren()[0], message, ProblemHighlightType.INFORMATION, new MergeElseIfsFix());
             return;
