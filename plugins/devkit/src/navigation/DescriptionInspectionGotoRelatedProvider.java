@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -81,22 +82,22 @@ public class DescriptionInspectionGotoRelatedProvider extends GotoRelatedProvide
 
     for (GlobalSearchScope scope : DescriptionCheckerUtil.searchScopes(module)) {
       Query<PsiClass> query = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
-      @SuppressWarnings("unchecked") List<GotoRelatedItem>[] resultItems = new List[]{null};
+      Ref<List<GotoRelatedItem>> resultItems = new Ref<>();
       query.forEach(psiClass -> {
         if (checkedPossibleImplementation.contains(psiClass)) {
           return true; // already tried this class
         }
 
         if (isTargetInspectionPsiClass(psiClass, descriptionFile, module)) {
-          resultItems[0] = createGotoRelatedItem(psiClass);
+          resultItems.set(createGotoRelatedItem(psiClass));
           return false;
         }
 
         return true;
       });
 
-      if (resultItems[0] != null) {
-        return resultItems[0];
+      if (!resultItems.isNull()) {
+        return resultItems.get();
       }
     }
 
