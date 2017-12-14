@@ -407,25 +407,12 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       sourceName = getFileName();
     }
 
-    if (Registry.is("debugger.breakpoint.message.full.trace")) {
-      StringBuilder builder = new StringBuilder(
-        DebuggerBundle.message("status.line.breakpoint.reached.full.trace", DebuggerUtilsEx.getLocationMethodQName(location)));
-      try {
-        event.thread().frames().forEach(f -> builder.append("\n\t  ").append(ThreadDumpAction.renderLocation(f.location())));
-      }
-      catch (IncompatibleThreadStateException e) {
-        builder.append("Stacktrace not available: ").append(e.getMessage());
-      }
-      return builder.toString();
-    }
-    else {
-      return DebuggerBundle.message(
-        "status.line.breakpoint.reached",
-        DebuggerUtilsEx.getLocationMethodQName(location),
-        sourceName,
-        getLineIndex() + 1
-      );
-    }
+    return DebuggerBundle.message(
+      "status.line.breakpoint.reached",
+      DebuggerUtilsEx.getLocationMethodQName(location),
+      sourceName,
+      getLineIndex() + 1
+    );
   }
 
   @Override

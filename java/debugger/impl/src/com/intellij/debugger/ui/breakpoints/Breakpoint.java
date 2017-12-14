@@ -9,6 +9,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
+import com.intellij.debugger.actions.ThreadDumpAction;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
@@ -186,6 +188,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   public abstract String getEventMessage(LocatableEvent event);
 
+  protected String getStackTrace(LocatableEvent event) {
+    StringBuilder builder = new StringBuilder(
+      DebuggerBundle.message("status.line.breakpoint.reached.full.trace"));
+    try {
+      event.thread().frames().forEach(f -> builder.append("\n\t  ").append(ThreadDumpAction.renderLocation(f.location())));
+    }
+    catch (IncompatibleThreadStateException e) {
+      builder.append("Stacktrace not available: ").append(e.getMessage());
+    }
+    return builder.toString();
+  }
+
   public abstract boolean isValid();
 
   public abstract Key<? extends Breakpoint> getCategory();
@@ -260,11 +274,16 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   private void runAction(EvaluationContextImpl context, LocatableEvent event) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    if (isLogEnabled() || isLogExpressionEnabled()) {
+    if (isLogEnabled() || isLogExpressionEnabled() || isLogStack()) {
       StringBuilder buf = new StringBuilder();
       if (myXBreakpoint.isLogMessage()) {
         buf.append(getEventMessage(event)).append("\n");
       }
+
+      if (isLogStack() || Registry.is("debugger.breakpoint.message.full.trace")) {
+        buf.append(getStackTrace(event)).append("\n");
+      }
+
       if (isLogExpressionEnabled()) {
         if (!debugProcess.isAttached()) {
           return;
@@ -541,6 +560,10 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   public void setLogEnabled(boolean logEnabled) {
     myXBreakpoint.setLogMessage(logEnabled);
+  }
+
+  protected boolean isLogStack() {
+    return myXBreakpoint.isLogStack();
   }
 
   protected boolean isLogExpressionEnabled() {

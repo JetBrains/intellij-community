@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -154,6 +156,19 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   public void setLogMessage(final boolean logMessage) {
     if (logMessage != isLogMessage()) {
       myState.setLogMessage(logMessage);
+      fireBreakpointChanged();
+    }
+  }
+
+  @Override
+  public boolean isLogStack() {
+    return myState.isLogStack();
+  }
+
+  @Override
+  public void setLogStack(final boolean logStack) {
+    if (logStack != isLogStack()) {
+      myState.setLogStack(logStack);
       fireBreakpointChanged();
     }
   }
@@ -365,6 +380,10 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     if (isLogMessage()) {
       builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.message"));
+    }
+
+    if (isLogStack()) {
+      builder.append(BR_NBSP).append(XDebuggerBundle.message("xbreakpoint.tooltip.log.stack"));
     }
 
     String logExpression = getLogExpression();

@@ -688,6 +688,10 @@ public class XDebugSessionImpl implements XDebugSession {
         printMessage(XDebuggerBundle.message("xbreakpoint.reached.text") + " ", XBreakpointUtil.getShortText(breakpoint), hyperlinkInfo);
       }
 
+      if (breakpoint.isLogStack()) {
+        myDebugProcess.logStack(suspendContext, this);
+      }
+
       if (evaluatedLogExpression != null) {
         printMessage(evaluatedLogExpression, null, null);
       }
