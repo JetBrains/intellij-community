@@ -113,7 +113,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
     myProject = project;
     myDecorators = new LinkedList<>();
-    myChangeLists = changeLists;
+    myChangeLists = new ArrayList<>(changeLists);
     myChangesTree = new ChangesBrowserTree();
     myChangesTree.setRootVisible(false);
     myChangesTree.setShowsRootHandles(true);
@@ -241,7 +241,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
 
   public void setItems(@NotNull List<CommittedChangeList> items, final CommittedChangesBrowserUseCase useCase) {
     myDetailsView.setUseCase(useCase);
-    myChangeLists = items;
+    myChangeLists = new ArrayList<>(items);
     myFilteringStrategy.setFilterBase(items);
     BackgroundTaskUtil.syncPublisher(myProject, ITEMS_RELOADED).itemsReloaded();
     updateModel();
