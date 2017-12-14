@@ -217,15 +217,8 @@ class EditorPainter implements TextDrawingCallback {
         @Override
         public void paint(Graphics2D g, VisualLineFragmentsIterator.Fragment fragment, int start, int end, 
                           TextAttributes attributes, float xStart, float xEnd, int y) {
-          float width = xEnd - xStart;
-          if (!dryRun) paintBackground(g, attributes, xStart, y, width);
-          if (calculateMarginShift && (fragment.getCurrentFoldRegion() != null || fragment.getCurrentInlay() != null)) {
-            if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 2]);
-            float shift = fragment.getCurrentFoldRegion() == null 
-                          ? width 
-                          : (xEnd - myCorrector.startX(visualLine) - fragment.getEndLogicalColumn() * myView.getPlainSpaceWidth());
-            marginShifts.get()[visualLine - startVisualLine] += shift;
-          }
+          if (dryRun) return;
+          paintBackground(g, attributes, xStart, y, xEnd - xStart);
         }
 
         @Override
@@ -242,7 +235,10 @@ class EditorPainter implements TextDrawingCallback {
                                                          primarySelectionStart, primarySelectionEnd);
           }
         }
-      });
+      }, calculateMarginShift ? shift -> {
+        if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 2]);
+        marginShifts.get()[visualLine - startVisualLine] += shift;
+      } : null);
       visLinesIterator.advance();
     }
     return marginShifts.get();
@@ -458,7 +454,7 @@ class EditorPainter implements TextDrawingCallback {
                                   (int)x, y - myView.getAscent(), myView.getLineHeight());
           }
         }
-      });
+      }, null);
       visLinesIterator.advance();
     }
     ComplexTextFragment.flushDrawingCache(g);
@@ -944,8 +940,12 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
 
+  private interface MarginShiftConsumer {
+    void process(float shift);
+  }
+
   private void paintLineFragments(Graphics2D g, Rectangle clip, VisualLinesIterator visLineIterator, IterationState.CaretData caretData,
-                                  int y, LineFragmentPainter painter) {
+                                  int y, LineFragmentPainter painter, MarginShiftConsumer marginShiftConsumer) {
     int visualLine = visLineIterator.getVisualLine();
     float x = myCorrector.startX(visualLine) + (visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0);
     int offset = visLineIterator.getVisualLineStartOffset();
@@ -977,6 +977,7 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       }
+      float marginShift = 0;
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
       if (foldRegion == null) {
         if (start != prevEndOffset) {
@@ -994,6 +995,7 @@ class EditorPainter implements TextDrawingCallback {
           if (xNew >= clip.getMinX()) {
             painter.paint(g, fragment, 0, 0, attributes, x, xNew, y);
           }
+          if (marginShiftConsumer != null) marginShift = xNew - x;
           x = xNew;
         }
         else {
@@ -1024,7 +1026,10 @@ class EditorPainter implements TextDrawingCallback {
         x = xNew;
         prevEndOffset = -1;
         it = null;
+        if (marginShiftConsumer != null) marginShift = x - myCorrector.startX(visualLine) 
+                                                       - fragment.getEndLogicalColumn() * myView.getPlainSpaceWidth();
       }
+      if (marginShift != 0) marginShiftConsumer.process(marginShift);
       if (x > clip.getMaxX()) return;
       maxColumn = fragment.getEndVisualColumn();
     }
