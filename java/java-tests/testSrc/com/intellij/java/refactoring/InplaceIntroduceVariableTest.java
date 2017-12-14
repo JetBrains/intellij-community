@@ -23,7 +23,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -139,6 +142,15 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
       @Override
       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
         type("smth");
+      }
+    });
+  }
+
+  public void testReplaceAllWithScopeInvalidation() {
+    doTestReplaceChoice(IntroduceVariableBase.JavaReplaceChoice.ALL, new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("newType");
       }
     });
   }

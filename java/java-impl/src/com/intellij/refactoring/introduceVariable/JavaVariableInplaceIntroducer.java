@@ -109,13 +109,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         myEditor.getCaretModel().moveToOffset(typeElement.getTextOffset());
       }
     }
-    super.beforeTemplateStart();
-  }
-
-  @Override
-  protected void onRenameTemplateStarted() {
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    super.beforeTemplateStart();
   }
 
   @Nullable
