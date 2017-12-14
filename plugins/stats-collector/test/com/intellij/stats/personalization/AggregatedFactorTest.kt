@@ -15,7 +15,6 @@ class AggregatedFactorTest : UsefulTestCase() {
         val DATE_2 = DATE_1.update(1)
         val DATE_3 = DATE_1.update(2)
         val DATE_4 = DATE_1.update(3)
-        val DATE_5 = DATE_1.update(4)
 
         fun Day.update(count: Int): Day {
             return Calendar.getInstance().let {
@@ -31,7 +30,7 @@ class AggregatedFactorTest : UsefulTestCase() {
 
         aggregateFactor.setOnDate(DATE_1, "count", 10.0)
         aggregateFactor.setOnDate(DATE_3, "count", 20.0)
-        aggregateFactor.setOnDate(DATE_5, "delay", 1000.0)
+        aggregateFactor.setOnDate(DATE_4, "delay", 1000.0)
 
         val mins = createFactorForTests().aggregateMin()
         TestCase.assertEquals(2, mins.size)
@@ -88,18 +87,12 @@ class AggregatedFactorTest : UsefulTestCase() {
         TestCase.assertEquals(46.0, factor.aggregateSum()[fieldName]!!, 1e-10)
     }
 
-    fun `test order on days is correct`() {
-        TestCase.assertTrue(DATE_1 < DATE_2)
-        TestCase.assertTrue(DATE_3 > DATE_2)
-
-    }
-
     private fun createFactorForTests(): DailyAggregatedDoubleFactor {
         val aggregateFactor: MutableDoubleFactor = UserFactorStorageBase.DailyAggregateFactor()
 
         aggregateFactor.setOnDate(DATE_1, "count", 10.0)
         aggregateFactor.setOnDate(DATE_3, "count", 20.0)
-        aggregateFactor.setOnDate(DATE_5, "delay", 1000.0)
+        aggregateFactor.setOnDate(DATE_4, "delay", 1000.0)
 
         return aggregateFactor
     }
