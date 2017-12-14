@@ -6,46 +6,49 @@ package com.intellij.openapi.components
 import com.intellij.openapi.util.ModificationTracker
 import kotlin.reflect.KProperty
 
-internal class ObjectStoredProperty<T>(private val defaultValue: T) : StoredPropertyBase<T>() {
-  private var value = defaultValue
-
+internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T) : StoredPropertyBase<T>() {
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>): T = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: T) {
-    if (this.value != value) {
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
+    if (value != newValue) {
       thisRef.ownModificationCount++
-      this.value = value
+      value = newValue
     }
   }
 
-  override fun isEqualToDefault(): Boolean {
-    val value = value
-    return when {
-      defaultValue == value -> true
-      value == null -> defaultValue is BaseState && defaultValue.isEqualToDefault()
-      else -> defaultValue == null && value is BaseState && value.isEqualToDefault()
+  override fun setValue(other: StoredProperty): Boolean {
+    @Suppress("UNCHECKED_CAST")
+    val newValue = (other as ObjectStateStoredPropertyBase<T>).value
+    return if (newValue == value) {
+      false
+    }
+    else {
+      value = newValue
+      true
     }
   }
 
-  override fun equals(other: Any?) = this === other || (other is ObjectStoredProperty<*> && value == other.value)
+  override fun equals(other: Any?) = this === other || (other is ObjectStateStoredPropertyBase<*> && value == other.value)
 
   override fun hashCode() = value?.hashCode() ?: 0
 
   override fun toString() = if (isEqualToDefault()) "" else value?.toString() ?: super.toString()
+}
 
-  override fun setValue(other: StoredProperty): Boolean {
-    @Suppress("UNCHECKED_CAST")
-    val newValue = (other as ObjectStoredProperty<T>).value
-    if (newValue == value) {
-      return false
-    }
-
-    value = newValue
-    return true
-  }
-
-  override fun getModificationCount(): Long {
+internal open class ObjectStoredProperty<T>(private val defaultValue: T) : ObjectStateStoredPropertyBase<T>(defaultValue) {
+  override fun isEqualToDefault(): Boolean {
     val value = value
-    return if (value is ModificationTracker) value.modificationCount else 0
+    return defaultValue == value || (value as? BaseState)?.isEqualToDefault() ?: false
   }
+
+  override fun getModificationCount() = (value as? ModificationTracker)?.modificationCount ?: 0
+}
+
+internal class StateObjectStoredProperty<T : BaseState?>(initialValue: T) : ObjectStateStoredPropertyBase<T>(initialValue) {
+  override fun isEqualToDefault(): Boolean {
+    val value = value
+    return value == null || value.isEqualToDefault()
+  }
+
+  override fun getModificationCount() = value?.modificationCount ?: 0
 }

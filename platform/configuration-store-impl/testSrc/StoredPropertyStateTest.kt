@@ -14,7 +14,7 @@ internal class AState(languageLevel: String? = null, nestedComplex: NestedState?
 
   var property2 by property(0)
 
-  var floatProperty by property(0.3)
+  var floatProperty by property(0.3f)
 
   var nestedComplex by property(nestedComplex)
 }
@@ -29,7 +29,7 @@ class StoredPropertyStateTest {
   }
 
   private class Foo2 : BaseState() {
-    var bar by property<AState?>(AState())
+    var bar: AState? by property(AState())
   }
 
   @Test

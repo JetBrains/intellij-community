@@ -41,7 +41,7 @@ class KotlinXmlSerializerTest {
 
   @Test fun floatProperty() {
     val state = AState()
-    state.floatProperty = 3.4
+    state.floatProperty = 3.4f
     doSerializerTest("""
     <AState>
       <option name="floatProperty" value="3.4" />

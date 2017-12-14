@@ -60,7 +60,7 @@ class LogFileOptions : BaseState {
   var isShowAll by property(false)
 
   @get:Attribute(value = "charset", converter = CharsetConverter::class)
-  var charset by property<Charset>(Charset.defaultCharset())
+  var charset: Charset by property(Charset.defaultCharset())
 
   fun getPaths(): Set<String> {
     val logFile = File(pathPattern!!)
