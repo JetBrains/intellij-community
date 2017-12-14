@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyClassType
 
 class PyDataclassInspection : PyInspection() {
@@ -35,10 +36,32 @@ class PyDataclassInspection : PyInspection() {
 
       if (node != null) {
         val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
-        if (dataclassParameters != null && !dataclassParameters.eq && dataclassParameters.order) {
-          val eqArgument = dataclassParameters.eqArgument
-          if (eqArgument != null) {
-            registerProblem(eqArgument, "eq must be true if order is true", ProblemHighlightType.GENERIC_ERROR)
+
+        if (dataclassParameters != null) {
+          if (!dataclassParameters.eq && dataclassParameters.order) {
+            val eqArgument = dataclassParameters.eqArgument
+            if (eqArgument != null) {
+              registerProblem(eqArgument, "eq must be true if order is true", ProblemHighlightType.GENERIC_ERROR)
+            }
+          }
+
+          node.processClassLevelDeclarations { element, _ ->
+            if (element is PyTargetExpression && element.annotationValue != null) {
+              val value = element.findAssignedValue()
+              val cls = getPyClass(value)
+
+              if (cls != null) {
+                val builtinCache = PyBuiltinCache.getInstance(node)
+
+                if (cls == builtinCache.listType?.pyClass ||
+                    cls == builtinCache.setType?.pyClass ||
+                    cls == builtinCache.tupleType?.pyClass) {
+                  registerProblem(value, "mutable default '${cls.name}' is not allowed", ProblemHighlightType.GENERIC_ERROR)
+                }
+              }
+            }
+
+            true
           }
         }
       }
