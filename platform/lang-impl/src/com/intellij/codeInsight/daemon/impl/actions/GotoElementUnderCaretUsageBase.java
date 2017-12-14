@@ -7,15 +7,13 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Comparator;
 
 /*package*/ abstract class GotoElementUnderCaretUsageBase extends BaseCodeInsightAction implements CodeInsightActionHandler {
@@ -58,9 +56,9 @@ import java.util.Comparator;
       return true;
     });
     if (!next.isNull()) {
-      moveCaret(editor, editor.getCaretModel().getCurrentCaret(), next.get());
+      moveCaret(editor, next.get());
     } else if (!first.isNull()) {
-      moveCaret(editor, editor.getCaretModel().getCurrentCaret(), first.get());
+      moveCaret(editor, first.get());
     } else {
       // It's ok, do nothing.
     }
@@ -71,10 +69,13 @@ import java.util.Comparator;
     return false;
   }
 
-  private static void moveCaret(Editor editor, Caret caret, int offset) {
+  private static void moveCaret(Editor editor, int toOffset) {
+    Caret caret = editor.getCaretModel().getCurrentCaret();
     caret.removeSelection();
-    caret.moveToOffset(offset);
-    EditorModificationUtil.scrollToCaret(editor);
+    caret.moveToOffset(toOffset);
+    if (caret == editor.getCaretModel().getPrimaryCaret()) {
+      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    }
   }
 
   protected enum Direction {
