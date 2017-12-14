@@ -78,7 +78,7 @@ echo "## JAVA_HOME: $JAVA_HOME"
 
 export PATH=$JDK_18_x64/bin:$PATH
 
-$ANT "-Dintellij.build.output.root=$OUT" "-Dbuild.number=$BNUM" -Dbundle.gradle.release.plugin=true fullupdater
+$ANT "-Dout=$OUT" "-Dbuild.number=$BNUM" -Dbundle.gradle.release.plugin=true fullupdater
 
 echo "## Copying android-studio distribution files"
 mkdir -p "$DIST"
