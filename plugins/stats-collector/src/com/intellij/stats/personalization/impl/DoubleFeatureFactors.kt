@@ -51,7 +51,7 @@ class DoubleFeatureUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(
 }
 
 abstract class DoubleFeatureUserFactorBase(prefix: String, feature: DoubleFeature) :
-        UserFactorBase<DoubleFeatureReader>("${prefix}DoubleFeature${feature.name}$",
+        UserFactorBase<DoubleFeatureReader>("${prefix}DoubleFeature:${feature.name}$",
                 UserFactorDescriptions.doubleFeatureDescriptor(feature))
 
 class AverageDoubleFeatureValue(feature: DoubleFeature) : DoubleFeatureUserFactorBase("avg", feature) {
