@@ -99,6 +99,7 @@ abstract class GitImplBase implements Git {
     return new GitCommandResult(
       !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
       resultListener.myExitCode,
+      authFailedRef.get(),
       outputCollector.myErrorOutput,
       outputCollector.myOutput);
   }

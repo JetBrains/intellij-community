@@ -35,12 +35,18 @@ public class GitCommandResult {
 
   private final boolean mySuccess;
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
+  private final boolean myAuthenticationFailed;
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
 
-  public GitCommandResult(boolean success, int exitCode, @NotNull List<String> errorOutput, @NotNull List<String> output) {
+  public GitCommandResult(boolean success,
+                          int exitCode,
+                          boolean authenticationFailed,
+                          @NotNull List<String> errorOutput,
+                          @NotNull List<String> output) {
     myExitCode = exitCode;
     mySuccess = success;
+    myAuthenticationFailed = authenticationFailed;
     myErrorOutput = errorOutput;
     myOutput = output;
   }
@@ -60,6 +66,7 @@ public class GitCommandResult {
       mergedExitCode = second.myExitCode; // take exit code of the latest command
     }
     return new GitCommandResult(first.success() && second.success(), mergedExitCode,
+                                first.myAuthenticationFailed && second.myAuthenticationFailed,
                                 ContainerUtil.concat(first.myErrorOutput, second.myErrorOutput),
                                 ContainerUtil.concat(first.myOutput, second.myOutput));
   }
@@ -78,6 +85,10 @@ public class GitCommandResult {
 
   public int getExitCode() {
     return myExitCode;
+  }
+
+  public boolean isAuthenticationFailed() {
+    return myAuthenticationFailed;
   }
 
   @NotNull
@@ -135,7 +146,7 @@ public class GitCommandResult {
 
   @NotNull
   public static GitCommandResult error(@NotNull String error) {
-    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
+    return new GitCommandResult(false, 1, false, Collections.singletonList(error), Collections.emptyList());
   }
 
   public boolean cancelled() {
