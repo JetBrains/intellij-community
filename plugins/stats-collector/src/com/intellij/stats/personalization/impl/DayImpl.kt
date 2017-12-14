@@ -33,8 +33,8 @@ class DayImpl(date: Date) : Day {
     }
 
     override fun compareTo(other: Day): Int {
-        if (year == year) {
-            if (month == month) {
+        if (year == other.year) {
+            if (month == other.month) {
                 return dayOfMonth.compareTo(other.dayOfMonth)
             }
             return month.compareTo(other.month)
