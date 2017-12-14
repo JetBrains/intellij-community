@@ -66,9 +66,4 @@ public class ImportTestsGroup extends ActionGroup {
     actions[historySize + 1] = new ImportTestsFromFileAction(myProperties); 
     return actions;
   }
-
-  @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
-  }
 }
