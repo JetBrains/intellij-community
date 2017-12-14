@@ -313,8 +313,8 @@ public class AppUIUtil {
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
         centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
-        JBScrollPane myMyScrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
-        final JScrollBar scrollBar = myMyScrollPane.getVerticalScrollBar();
+        JBScrollPane scrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        final JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
         scrollBar.addAdjustmentListener(new AdjustmentListener() {
           boolean wasScrolledToTheBottom = false;
           @Override
@@ -325,7 +325,7 @@ public class AppUIUtil {
             setOKActionEnabled(wasScrolledToTheBottom);
           }
         });
-        centerPanel.add(myMyScrollPane, BorderLayout.CENTER);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
         return centerPanel;
       }
 
