@@ -26,6 +26,9 @@
       <propertyref prefix="custom.project."/>
       <propertyref name="ui.test.groups"/>
     </propertyset>
+    <ant antfile="${project.home}/../adt/idea/android/build.xml" target="preBuild">
+      <property name="config" value="release"/>
+    </ant>
   </target>
 
   <macrodef name="call_gant">
