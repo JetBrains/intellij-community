@@ -23,7 +23,7 @@ object UserFactorDescriptions {
     }
 
     fun doubleFeatureDescriptor(feature: DoubleFeature): Descriptor<DoubleFeatureUpdater, DoubleFeatureReader> {
-        return Descriptor("doudleFeature:${feature.name}", ::DoubleFeatureUpdater, ::DoubleFeatureReader)
+        return Descriptor("doubleFeature:${feature.name}", ::DoubleFeatureUpdater, ::DoubleFeatureReader)
     }
 
     fun categoriealFeatureDescriptor(feature: CatergorialFeature): Descriptor<CategoryFeatureUpdater, CategoryFeatureReader> {
