@@ -271,7 +271,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       fileset(dir: "$root/bazel-bin/tools/base/profiler/native/perfa/android")
     }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/simpleperf") {
-      fileset(dir: "$root/prebuilts/tools/common/simpleperf")
+      fileset(dir: "$root/prebuilts/tools/common/simpleperf") {
+        exclude(name: "BUILD")
+      }
     }
 
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/shared") {
