@@ -16,13 +16,13 @@ class AppletConfigurationOptions : ModuleBasedConfigurationOptions() {
   var htmlFileName by string()
 
   @get:OptionTag("HTML_USED")
-  var htmlUsed by storedProperty(false)
+  var htmlUsed by property(false)
 
   @get:OptionTag("WIDTH")
-  var width by storedProperty(400)
+  var width by property(400)
 
   @get:OptionTag("HEIGHT")
-  var height by storedProperty(300)
+  var height by property(300)
 
   @get:OptionTag("POLICY_FILE")
   var policyFile by string(ExternalizablePath.urlValue("${PathManager.getHomePath()}/bin/appletviewer.policy"))
@@ -31,7 +31,7 @@ class AppletConfigurationOptions : ModuleBasedConfigurationOptions() {
   var vmParameters by string()
 
   @get:OptionTag("ALTERNATIVE_JRE_PATH_ENABLED")
-  var alternativeJrePathEnabled by storedProperty(false)
+  var alternativeJrePathEnabled by property(false)
 
   @get:OptionTag("ALTERNATIVE_JRE_PATH")
   var alternativeJrePath by string()

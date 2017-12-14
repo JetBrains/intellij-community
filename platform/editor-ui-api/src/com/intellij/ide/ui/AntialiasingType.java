@@ -19,7 +19,7 @@ public enum AntialiasingType {
     UISettings uiSettings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
     if (uiSettings != null) {
       AntialiasingType type = uiSettings.getIdeAAType();
-      if (type != null) return type.getTextInfo();
+      return type.getTextInfo();
     }
     return GREYSCALE.getTextInfo();
   }
@@ -28,7 +28,7 @@ public enum AntialiasingType {
     UISettings uiSettings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
     if (uiSettings != null) {
       AntialiasingType type = inEditor ? uiSettings.getEditorAAType() : uiSettings.getIdeAAType();
-      if (type != null) return type.myHint;
+      return type.myHint;
     }
     return RenderingHints.VALUE_TEXT_ANTIALIAS_ON;
   }

@@ -27,11 +27,7 @@ class LogFileOptions : BaseState {
     @JvmStatic
     fun collectMatchedFiles(root: File, pattern: Pattern, files: MutableList<File>) {
       val dirs = root.listFiles() ?: return
-      for (dir in dirs) {
-        if (pattern.matcher(dir.name).matches() && dir.isFile) {
-          files.add(dir)
-        }
-      }
+      dirs.filterTo(files) { pattern.matcher(it.name).matches() && it.isFile }
     }
 
     @JvmStatic
@@ -55,16 +51,16 @@ class LogFileOptions : BaseState {
   var pathPattern by string()
 
   @get:Attribute("checked")
-  var isEnabled by storedProperty(true)
+  var isEnabled by property(true)
 
   @get:Attribute("skipped")
-  var isSkipContent by storedProperty(true)
+  var isSkipContent by property(true)
 
   @get:Attribute("show_all")
-  var isShowAll by storedProperty(false)
+  var isShowAll by property(false)
 
   @get:Attribute(value = "charset", converter = CharsetConverter::class)
-  var charset by storedProperty(Charset.defaultCharset())
+  var charset by property<Charset>(Charset.defaultCharset())
 
   fun getPaths(): Set<String> {
     val logFile = File(pathPattern!!)
@@ -108,8 +104,7 @@ class LogFileOptions : BaseState {
   }
 
   //read external
-  constructor() {
-  }
+  constructor()
 
   @JvmOverloads
   constructor(name: String?, path: String?, enabled: Boolean = true, skipContent: Boolean = true, showAll: Boolean = false) : this(name, path, null, enabled, skipContent, showAll)

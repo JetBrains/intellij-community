@@ -29,7 +29,7 @@ class BreakpointManagerState : BaseState() {
   @get:Tag("breakpoints-dialog")
   var breakpointsDialogProperties: XBreakpointsDialogState? = null
 
-  var time by storedProperty(0L)
+  var time by property(0L)
   var defaultGroup by string()
 }
 

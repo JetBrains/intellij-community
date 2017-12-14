@@ -18,7 +18,14 @@ internal class ObjectStoredProperty<T>(private val defaultValue: T) : StoredProp
     }
   }
 
-  override fun isEqualToDefault() = defaultValue == value
+  override fun isEqualToDefault(): Boolean {
+    val value = value
+    return when {
+      defaultValue == value -> true
+      value == null -> defaultValue is BaseState && defaultValue.isEqualToDefault()
+      else -> defaultValue == null && value is BaseState && value.isEqualToDefault()
+    }
+  }
 
   override fun equals(other: Any?) = this === other || (other is ObjectStoredProperty<*> && value == other.value)
 

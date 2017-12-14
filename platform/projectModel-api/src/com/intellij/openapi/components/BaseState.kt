@@ -30,8 +30,14 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     ownModificationCount++
   }
 
-  fun <T> storedProperty(defaultValue: T? = null): StoredPropertyBase<T?> {
+  fun <T> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
+    properties.add(result)
+    return result
+  }
+
+  fun <T> property(): StoredPropertyBase<T?> {
+    val result = ObjectStoredProperty<T?>(null)
     properties.add(result)
     return result
   }
@@ -66,25 +72,25 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  fun storedProperty(defaultValue: Int = 0): StoredPropertyBase<Int> {
+  fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
     val result = IntStoredProperty(defaultValue)
     properties.add(result)
     return result
   }
 
-  fun storedProperty(defaultValue: Long = 0): StoredPropertyBase<Long> {
+  fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
     val result = LongStoredProperty(defaultValue)
     properties.add(result)
     return result
   }
 
-  fun storedProperty(defaultValue: Float = 0f): StoredPropertyBase<Float> {
+  fun property(defaultValue: Float = 0f): StoredPropertyBase<Float> {
     val result = FloatStoredProperty(defaultValue)
     properties.add(result)
     return result
   }
 
-  fun storedProperty(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
+  fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
     val result = ObjectStoredProperty(defaultValue)
     properties.add(result)
     return result
@@ -103,6 +109,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     // default value in this case will be filtered by common filter (instance will be created in this case, as for non-smart state classes)
     return true
   }
+
+  internal fun isEqualToDefault() = properties.all { it.isEqualToDefault() }
 
   @Transient
   override fun getModificationCount(): Long {
