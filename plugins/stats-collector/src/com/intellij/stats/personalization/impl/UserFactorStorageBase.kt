@@ -112,7 +112,7 @@ abstract class UserFactorStorageBase
                 return true
             }
 
-            if (aggregates.size < DAYS_LIMIT || date < aggregates.lastKey()) {
+            if (aggregates.size < DAYS_LIMIT || aggregates.firstKey() < date) {
                 val data = DailyData()
                 updater.invoke(data.data)
                 aggregates.put(date, data)
@@ -125,7 +125,7 @@ abstract class UserFactorStorageBase
 
         private fun ensureLimit() {
             while (aggregates.size > DAYS_LIMIT) {
-                aggregates.remove(aggregates.lastKey())
+                aggregates.remove(aggregates.firstKey())
             }
         }
     }
