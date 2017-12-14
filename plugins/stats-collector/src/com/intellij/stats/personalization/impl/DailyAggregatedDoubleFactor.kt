@@ -1,28 +1,29 @@
 package com.intellij.stats.personalization.impl
 
 import com.intellij.stats.personalization.DateUtil
+import com.intellij.stats.personalization.Day
 
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface DailyAggregatedDoubleFactor {
-    fun availableDates(): List<String>
+    fun availableDays(): List<Day>
 
-    fun onDate(date: String): Map<String, Double>?
+    fun onDate(date: Day): Map<String, Double>?
 }
 
 interface MutableDoubleFactor : DailyAggregatedDoubleFactor {
     fun updateOnToday(key: String, value: Double)
     fun incrementOnToday(key: String)
 
-    fun setOnDate(date: String, key: String, value: Double)
-    fun updateOnDate(date: String, updater: MutableMap<String, Double>.() -> Unit)
+    fun setOnDate(date: Day, key: String, value: Double)
+    fun updateOnDate(date: Day, updater: MutableMap<String, Double>.() -> Unit)
 }
 
 private fun DailyAggregatedDoubleFactor.aggregateBy(reduce: (Double, Double) -> Double): Map<String, Double> {
     val result = mutableMapOf<String, Double>()
-    for (onDate in availableDates().mapNotNull(this::onDate)) {
+    for (onDate in availableDays().mapNotNull(this::onDate)) {
         for ((key, value) in onDate) {
             result.compute(key, { _, old -> if (old == null) value else reduce(old, value) })
         }
@@ -42,7 +43,7 @@ fun DailyAggregatedDoubleFactor.aggregateSum(): Map<String, Double> = aggregateB
 fun DailyAggregatedDoubleFactor.aggregateAverage(): Map<String, Double> {
     val result = mutableMapOf<String, Double>()
     val counts = mutableMapOf<String, Int>()
-    for (onDate in availableDates().mapNotNull(this::onDate)) {
+    for (onDate in availableDays().mapNotNull(this::onDate)) {
         for ((key, value) in onDate) {
             result.compute(key) { _, old ->
                 if (old != null) {

@@ -2,14 +2,14 @@ package com.intellij.stats.personalization.impl
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.stats.personalization.*
-import com.intellij.util.xmlb.annotations.MapAnnotation
-import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.attribute
+import org.jdom.Element
 import java.util.*
 
 abstract class UserFactorStorageBase
-    : UserFactorStorage, PersistentStateComponent<UserFactorStorageBase.CollectorState> {
+    : UserFactorStorage, PersistentStateComponent<Element> {
 
-    private var state = CollectorState()
+    private val state = CollectorState()
 
     override fun <U : FactorUpdater> getFactorUpdater(description: UserFactorDescription<U, *>): U =
             description.updaterFactory.invoke(getAggregateFactor(description.factorId))
@@ -17,31 +17,76 @@ abstract class UserFactorStorageBase
     override fun <R : FactorReader> getFactorReader(description: UserFactorDescription<*, R>): R =
             description.readerFactory.invoke(getAggregateFactor(description.factorId))
 
-    override fun getState(): CollectorState {
-        // TODO[bibaev]: return only actual data for aggregates
-        return state
+    override fun getState(): Element {
+        val element = Element("component")
+        val start = System.currentTimeMillis()
+        state.writeState(element)
+        val end = System.currentTimeMillis()
+        println("saving of user factors took it in ${end - start}ms")
+        return element
     }
 
-    override fun loadState(newState: CollectorState) {
-        state = newState
+    override fun loadState(newState: Element) {
+        state.applyState(newState)
     }
 
     private fun getAggregateFactor(factorId: String): MutableDoubleFactor =
             state.aggregateFactors.computeIfAbsent(factorId, { DailyAggregateFactor() })
 
-    class CollectorState {
-        @MapAnnotation(surroundValueWithTag = false, keyAttributeName = "name", sortBeforeSave = true, surroundWithTag = false)
-        var aggregateFactors: MutableMap<String, DailyAggregateFactor> = HashMap()
+    private class CollectorState {
+        val aggregateFactors: MutableMap<String, DailyAggregateFactor> = HashMap()
+
+        fun applyState(element: Element) {
+            aggregateFactors.clear()
+            if (element.name == "userFactors") {
+                for (child in element.children) {
+                    val factorId = child.getAttributeValue("id")
+                    if (child.name == "factor" && factorId != null) {
+                        val factor = DailyAggregateFactor.restore(child)
+                        if (factor != null) aggregateFactors[factorId] = factor
+                    }
+                }
+            }
+        }
+
+        fun writeState(element: Element) {
+            for ((id, factor) in aggregateFactors) {
+                val factorElement = Element("factor")
+                factorElement.attribute("id", id)
+                factor.writeState(factorElement)
+                element.addContent(factorElement)
+            }
+        }
     }
 
-    @Tag("AggregateFactor")
-    class DailyAggregateFactor : MutableDoubleFactor {
-        // todo[bibaev]: avoid using String to store date
-        @MapAnnotation(surroundValueWithTag = false, surroundWithTag = false, keyAttributeName = "date", sortBeforeSave = true)
-        var aggregates: SortedMap<String, DailyData> = sortedMapOf()
+    private class DailyAggregateFactor(private val aggregates: SortedMap<Day, DailyData> = sortedMapOf()) : MutableDoubleFactor {
+        companion object {
+            fun restore(element: Element): DailyAggregateFactor? {
+                val data = sortedMapOf<Day, DailyData>()
+                for (child in element.children) {
+                    val date = child.getAttributeValue("date")
+                    val day = DayImpl.fromString(date)
+                    if (child.name == "dailyData" && day != null) {
+                        val dailyData = DailyData.restore(child)
+                        if (dailyData != null) data.put(day, dailyData)
+                    }
+                }
 
-        override fun availableDates(): List<String> =
-                aggregates.keys.map { DateUtil.parse(it) }.sorted().map { DateUtil.byDate(it) }
+                if (data.isEmpty()) return null
+                return DailyAggregateFactor(data)
+            }
+        }
+
+        fun writeState(element: Element) {
+            for ((day, data) in aggregates) {
+                val dailyDataElement = Element("dailyData")
+                dailyDataElement.attribute("date", day.toString())
+                data.writeState(dailyDataElement)
+                element.addContent(dailyDataElement)
+            }
+        }
+
+        override fun availableDays(): List<Day> = aggregates.keys.toList()
 
         override fun updateOnToday(key: String, value: Double) {
             aggregates.onToday()[key] = value
@@ -51,11 +96,11 @@ abstract class UserFactorStorageBase
             aggregates.onToday().compute(key, { _, oldValue -> if (oldValue == null) 1.0 else oldValue + 1.0 })
         }
 
-        override fun onDate(date: String): Map<String, Double>? = aggregates[date]?.data
+        override fun onDate(date: Day): Map<String, Double>? = aggregates[date]?.data
 
-        override fun setOnDate(date: String, key: String, value: Double) = aggregates.onDate(date).set(key, value)
+        override fun setOnDate(date: Day, key: String, value: Double) = aggregates.onDate(date).set(key, value)
 
-        override fun updateOnDate(date: String, updater: MutableMap<String, Double>.() -> Unit) {
+        override fun updateOnDate(date: Day, updater: MutableMap<String, Double>.() -> Unit) {
             aggregates.compute(date) { _, data ->
                 if (data == null) {
                     val dailyData = DailyData()
@@ -68,16 +113,40 @@ abstract class UserFactorStorageBase
             }
         }
 
-        private fun MutableMap<String, DailyData>.onDate(date: String): MutableMap<String, Double> =
+        private fun SortedMap<Day, DailyData>.onDate(date: Day): MutableMap<String, Double> =
                 this.computeIfAbsent(date, { DailyData() }).data
 
-        private fun MutableMap<String, DailyData>.onToday(): MutableMap<String, Double> =
+        private fun SortedMap<Day, DailyData>.onToday(): MutableMap<String, Double> =
                 this.onDate(DateUtil.today())
     }
 
-    @Tag("DailyCollectedData")
-    class DailyData {
-        @MapAnnotation(surroundWithTag = false, keyAttributeName = "key", valueAttributeName = "value", entryTagName = "observation", sortBeforeSave = true)
-        var data: MutableMap<String, Double> = HashMap()
+    private class DailyData(val data: MutableMap<String, Double> = HashMap()) {
+        companion object {
+            fun restore(element: Element): DailyData? {
+                val data = mutableMapOf<String, Double>()
+                for (child in element.children) {
+                    if (child.name == "observation") {
+                        val dataKey = child.getAttributeValue("name")
+                        val dataValue = child.getAttributeValue("value")
+
+                        // skip all if any observation is inconsistent
+                        val value = dataValue.toDoubleOrNull() ?: return null
+                        data[dataKey] = value
+                    }
+                }
+
+                if (data.isEmpty()) return null
+                return DailyData(data)
+            }
+        }
+
+        fun writeState(element: Element) {
+            for ((key, value) in data) {
+                val observation = Element("observation")
+                observation.attribute("name", key)
+                observation.attribute("value", value.toString())
+                element.addContent(observation)
+            }
+        }
     }
 }

@@ -25,7 +25,7 @@ object FactorsUtil {
         var totalCount = 0
         var average = 0.0
         var present = false
-        for (onDate in factor.availableDates().mapNotNull { factor.onDate(it) }) {
+        for (onDate in factor.availableDays().mapNotNull { factor.onDate(it) }) {
             val avg = onDate["average"]
             val count = onDate["count"]?.toInt()
             if (avg != null && count != null && count > 0) {
