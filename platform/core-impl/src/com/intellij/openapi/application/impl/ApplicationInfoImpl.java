@@ -18,6 +18,7 @@ package com.intellij.openapi.application.impl;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.BuildNumber;
@@ -28,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -331,7 +331,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getCompanyURL() {
-    return myCompanyUrl;
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(myCompanyUrl);
   }
 
   @Nullable

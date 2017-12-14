@@ -152,6 +152,8 @@
     <applicationService serviceInterface="com.intellij.ide.externalComponents.ExternalComponentManager"
                         serviceImplementation="com.intellij.ide.externalComponents.ExternalComponentManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"/>
+
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
     <applicationService serviceInterface="com.intellij.reporting.FreezeLogger"

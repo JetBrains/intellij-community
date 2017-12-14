@@ -2,7 +2,7 @@
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
   <version major="2018" minor="1" eap="true"/>
-  <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
+  <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/idea_community_logo.png" textcolor="e5e5e5" progressColor="ed566a" progressX="117" progressY="280" progressHeight="3" />
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>

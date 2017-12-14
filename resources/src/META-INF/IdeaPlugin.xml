@@ -143,6 +143,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
