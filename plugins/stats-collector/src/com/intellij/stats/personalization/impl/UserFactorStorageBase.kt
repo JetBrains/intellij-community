@@ -59,10 +59,17 @@ abstract class UserFactorStorageBase
         }
     }
 
-    class DailyAggregateFactor private constructor(private val aggregates: SortedMap<Day, DailyData>) : MutableDoubleFactor {
+    class DailyAggregateFactor private constructor(private val aggregates: SortedMap<Day, DailyData> = sortedMapOf())
+        : MutableDoubleFactor {
         constructor() : this(sortedMapOf())
 
+        init {
+            ensureLimit()
+        }
+
         companion object {
+            val DAYS_LIMIT = 10
+
             fun restore(element: Element): DailyAggregateFactor? {
                 val data = sortedMapOf<Day, DailyData>()
                 for (child in element.children) {
@@ -90,32 +97,37 @@ abstract class UserFactorStorageBase
 
         override fun availableDays(): List<Day> = aggregates.keys.toList()
 
-        override fun incrementOnToday(key: String) {
-            aggregates.onToday().compute(key, { _, oldValue -> if (oldValue == null) 1.0 else oldValue + 1.0 })
+        override fun incrementOnToday(key: String): Boolean {
+            return updateOnDate(DateUtil.today()) {
+                compute(key, { _, oldValue -> if (oldValue == null) 1.0 else oldValue + 1.0 })
+            }
         }
 
         override fun onDate(date: Day): Map<String, Double>? = aggregates[date]?.data
 
-        override fun setOnDate(date: Day, key: String, value: Double) = aggregates.onDate(date).set(key, value)
-
-        override fun updateOnDate(date: Day, updater: MutableMap<String, Double>.() -> Unit) {
-            aggregates.compute(date) { _, data ->
-                if (data == null) {
-                    val dailyData = DailyData()
-                    updater.invoke(dailyData.data)
-                    dailyData
-                } else {
-                    updater.invoke(data.data)
-                    data
-                }
+        override fun updateOnDate(date: Day, updater: MutableMap<String, Double>.() -> Unit): Boolean {
+            val old = aggregates[date]
+            if (old != null) {
+                updater.invoke(old.data)
+                return true
             }
+
+            if (aggregates.size < DAYS_LIMIT || date < aggregates.lastKey()) {
+                val data = DailyData()
+                updater.invoke(data.data)
+                aggregates.put(date, data)
+                ensureLimit()
+                return true
+            }
+
+            return false
         }
 
-        private fun SortedMap<Day, DailyData>.onDate(date: Day): MutableMap<String, Double> =
-                this.computeIfAbsent(date, { DailyData() }).data
-
-        private fun SortedMap<Day, DailyData>.onToday(): MutableMap<String, Double> =
-                this.onDate(DateUtil.today())
+        private fun ensureLimit() {
+            while (aggregates.size > DAYS_LIMIT) {
+                aggregates.remove(aggregates.lastKey())
+            }
+        }
     }
 
     private class DailyData(val data: MutableMap<String, Double> = HashMap()) {

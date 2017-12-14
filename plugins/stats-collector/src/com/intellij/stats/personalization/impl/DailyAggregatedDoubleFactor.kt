@@ -14,10 +14,9 @@ interface DailyAggregatedDoubleFactor {
 }
 
 interface MutableDoubleFactor : DailyAggregatedDoubleFactor {
-    fun incrementOnToday(key: String)
+    fun incrementOnToday(key: String): Boolean
 
-    fun setOnDate(date: Day, key: String, value: Double)
-    fun updateOnDate(date: Day, updater: MutableMap<String, Double>.() -> Unit)
+    fun updateOnDate(date: Day, updater: MutableMap<String, Double>.() -> Unit): Boolean
 }
 
 private fun DailyAggregatedDoubleFactor.aggregateBy(reduce: (Double, Double) -> Double): Map<String, Double> {
@@ -30,6 +29,9 @@ private fun DailyAggregatedDoubleFactor.aggregateBy(reduce: (Double, Double) -> 
 
     return result
 }
+
+fun MutableDoubleFactor.setOnDate(date: Day, key: String, value: Double): Boolean =
+        updateOnDate(date) { put(key, value) }
 
 fun DailyAggregatedDoubleFactor.onToday(): Map<String, Double> = onDate(DateUtil.today()) ?: emptyMap()
 
