@@ -60,12 +60,13 @@ public class LeakHunter {
                                    @Nullable final Condition<? super T> isReallyLeak) throws AssertionError {
     processLeaks(roots, suspectClass, isReallyLeak, (leaked, backLink)->{
       String place = leaked instanceof Project ? PlatformTestCase.getCreationPlace((Project)leaked) : "";
-      System.out.println("Found leaked "+leaked.getClass() + ": "+leaked +
-                         "; hash: " + System.identityHashCode(leaked) + "; place: " + place);
-      System.out.println(backLink);
+      String message ="Found leaked "+leaked.getClass() + ": "+leaked +
+                      "; hash: " + System.identityHashCode(leaked) + "; place: " + place + "\n" +
+                      backLink;
+      System.out.println(message);
       System.out.println(";-----");
 
-      throw new AssertionError();
+      throw new AssertionError(message);
     });
   }
 
