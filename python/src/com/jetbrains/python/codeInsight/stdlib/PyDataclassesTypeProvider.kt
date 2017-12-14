@@ -28,7 +28,8 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
   }
 
   private fun getDataclassTypeForClass(cls: PyClass, context: TypeEvalContext): PyCallableType? {
-    if (!PyKnownDecoratorUtil.getKnownDecorators(cls, context).contains(PyKnownDecoratorUtil.KnownDecorator.DATACLASSES_DATACLASS)) {
+    val dataclassParameters = parseDataclassParameters(cls, context)
+    if (dataclassParameters == null || !dataclassParameters.init) {
       return null
     }
 
