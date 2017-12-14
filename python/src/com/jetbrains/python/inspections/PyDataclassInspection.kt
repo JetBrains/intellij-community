@@ -30,6 +30,20 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
+    override fun visitPyClass(node: PyClass?) {
+      super.visitPyClass(node)
+
+      if (node != null) {
+        val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
+        if (dataclassParameters != null && !dataclassParameters.eq && dataclassParameters.order) {
+          val eqArgument = dataclassParameters.eqArgument
+          if (eqArgument != null) {
+            registerProblem(eqArgument, "eq must be true if order is true", ProblemHighlightType.GENERIC_ERROR)
+          }
+        }
+      }
+    }
+
     private fun getPyClass(element: PyTypedElement?): PyClass? {
       return (element?.let { myTypeEvalContext.getType(it) } as? PyClassType)?.pyClass
     }
