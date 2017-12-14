@@ -50,7 +50,7 @@ abstract class UserFactorStorageBase
         }
 
         fun writeState(element: Element) {
-            for ((id, factor) in aggregateFactors) {
+            for ((id, factor) in aggregateFactors.asSequence().sortedBy { it.key }) {
                 val factorElement = Element("factor")
                 factorElement.attribute("id", id)
                 factor.writeState(factorElement)
@@ -151,7 +151,7 @@ abstract class UserFactorStorageBase
         }
 
         fun writeState(element: Element) {
-            for ((key, value) in data) {
+            for ((key, value) in data.asSequence().sortedBy { it.key }) {
                 val observation = Element("observation")
                 observation.attribute("name", key)
                 observation.attribute("value", value.toString())
