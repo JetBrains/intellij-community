@@ -50,6 +50,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.intellij.psi.SmartPointerManager.createPointer;
+
 public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper implements CompositeSelectInTarget {
   private String mySubId;
 
@@ -79,7 +81,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     }
 
     Supplier<Object> toSelectSupplier = toSelect instanceof PsiElement
-                                        ? PsiUtilCore.createSmartPsiElementPointer((PsiElement)toSelect)::getElement
+                                        ? createPointer((PsiElement)toSelect)::getElement
                                         : () -> toSelect;
 
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
