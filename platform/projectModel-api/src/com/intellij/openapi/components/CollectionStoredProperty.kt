@@ -4,7 +4,6 @@
 package com.intellij.openapi.components
 
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
 import kotlin.reflect.KProperty
 
 /**
@@ -47,7 +46,7 @@ internal class ListStoredProperty<T> : CollectionStoredProperty<T, SmartList<T>>
   override fun getModificationCount() = value.modificationCount.toLong()
 }
 
-internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V> = THashMap()) : StoredPropertyBase<MutableMap<K, V>>() {
+internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
   override fun isEqualToDefault() = value.isEmpty()
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value

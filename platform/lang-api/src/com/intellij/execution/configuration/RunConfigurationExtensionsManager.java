@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -77,7 +77,7 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   }
 
   public void writeExternal(@NotNull U configuration, @NotNull Element parentNode) {
-    Map<String, Element> map = ContainerUtil.newTreeMap();
+    Map<String, Element> map = new TreeMap<>();
     final List<Element> elements = configuration.getCopyableUserData(RUN_EXTENSIONS);
     if (elements != null) {
       for (Element element : elements) {

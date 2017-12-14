@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
+import gnu.trove.THashMap
 import java.nio.charset.Charset
 
 private val LOG = logger<BaseState>()
@@ -88,8 +89,12 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result as StoredPropertyBase<MutableList<T>>
   }
 
-  fun <K : Any, V> map(): StoredPropertyBase<MutableMap<K, V>> {
-    val result = MapStoredProperty<K, V>()
+  fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
+    return map(value)
+  }
+
+  fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty(value)
     properties.add(result)
     return result
   }

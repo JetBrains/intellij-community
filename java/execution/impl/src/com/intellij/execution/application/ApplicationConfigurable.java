@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.application;
 
@@ -80,10 +68,11 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myModuleSelector.applyTo(configuration);
     final String className = getMainClassField().getText();
     final PsiClass aClass = myModuleSelector.findClass(className);
-    configuration.MAIN_CLASS_NAME = aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className;
-    configuration.ALTERNATIVE_JRE_PATH = myJrePathEditor.getJrePathOrName();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myJrePathEditor.isAlternativeJreSelected();
-    configuration.ENABLE_SWING_INSPECTOR = (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected();
+    ApplicationConfigurationOptions options = configuration.getOptions();
+    options.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+    options.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    options.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
+    options.setSwingInspectorEnabled((myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected());
     configuration.setShortenCommandLine((ShortenCommandLine)myShortenClasspathModeCombo.getComponent().getSelectedItem());
     configuration.setIncludeProvidedScope(myIncludeProvidedDeps.getComponent().isSelected());
 
@@ -93,8 +82,10 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   public void resetEditorFrom(@NotNull final ApplicationConfiguration configuration) {
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
-    getMainClassField().setText(configuration.MAIN_CLASS_NAME != null ? configuration.MAIN_CLASS_NAME.replaceAll("\\$", "\\.") : "");
-    myJrePathEditor.setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+
+    ApplicationConfigurationOptions options = configuration.getOptions();
+    getMainClassField().setText(options.getMainClassName() != null ? options.getMainClassName().replaceAll("\\$", "\\.") : "");
+    myJrePathEditor.setPathOrName(options.getAlternativeJrePath(), options.isAlternativeJrePathEnabled());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
 
@@ -104,7 +95,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private void updateShowSwingInspector(final ApplicationConfiguration configuration) {
     if (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) {
       myShowSwingInspectorCheckbox.setEnabled(true);
-      myShowSwingInspectorCheckbox.setSelected(configuration.ENABLE_SWING_INSPECTOR);
+      myShowSwingInspectorCheckbox.setSelected(configuration.getOptions().isSwingInspectorEnabled());
       myShowSwingInspectorCheckbox.setText(ExecutionBundle.message("show.swing.inspector"));
     }
     else {
