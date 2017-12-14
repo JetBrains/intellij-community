@@ -61,7 +61,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public String toString() {
-      return "MovedFileInfo{myNewPath=" + myNewPath + ", myFile=" + myFile + '}';
+      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);
     }
   }
 
@@ -298,6 +298,7 @@ public abstract class VcsVFSListener implements Disposable {
     myMovedFiles.clear();
     performMoveRename(ContainerUtil.filter(movedFiles, info -> {
       FileStatus status = FileStatusManager.getInstance(myProject).getStatus(info.myFile);
+      LOG.debug("File " + info.myNewPath + " has status " + status);
       return !(status == FileStatus.UNKNOWN && filterOutUnknownFiles()) && status != FileStatus.IGNORED;
     }));
   }
