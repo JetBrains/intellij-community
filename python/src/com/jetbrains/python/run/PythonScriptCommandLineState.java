@@ -26,6 +26,7 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -72,6 +73,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     Project project = myConfig.getProject();
 
     if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
+      if (executor.getId() != DefaultDebugExecutor.EXECUTOR_ID && executor.getId() != DefaultRunExecutor.EXECUTOR_ID) {
+        // disable "Show command line" for all executors except of Run and Debug, because it's useless
+        return super.execute(executor, processStarter, patchers);
+      }
+
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
           @Override
