@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,10 @@ import static java.util.Collections.singletonList;
  * The handler that is based on per-line processing of the text.
  */
 public class GitLineHandler extends GitTextHandler {
+
+  public static final Topic<GitAuthenticationListener>
+    GIT_AUTHENTICATION_SUCCESS = Topic.create("Authentication succeeded", GitAuthenticationListener.class);
+    
   /**
    * Line listeners
    */
