@@ -361,59 +361,324 @@
   <item name="java.util.Arrays short[] copyOfRange(short[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(boolean[], boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(boolean[], boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(boolean[], int, int, boolean)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(boolean[], int, int, boolean) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(byte[], byte)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(byte[], byte) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(byte[], int, int, byte)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(byte[], int, int, byte) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(char[], char)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(char[], char) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(char[], int, int, char)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(char[], int, int, char) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(double[], double)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(double[], double) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(double[], int, int, double)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(double[], int, int, double) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(float[], float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(float[], float) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(float[], int, int, float)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(float[], int, int, float) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(int[], int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(int[], int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(int[], int, int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(int[], int, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(java.lang.Object[], int, int, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(java.lang.Object[], int, int, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(java.lang.Object[], java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(java.lang.Object[], java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(long[], int, int, long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(long[], int, int, long) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void fill(long[], long)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void fill(long[], long) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(short[], int, int, short)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(short[], int, int, short) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void fill(short[], short)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void fill(short[], short) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(T[], int, int, java.util.function.BinaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(T[], java.util.function.BinaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(double[], int, int, java.util.function.DoubleBinaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(double[], java.util.function.DoubleBinaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(int[], int, int, java.util.function.IntBinaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(int[], java.util.function.IntBinaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(long[], int, int, java.util.function.LongBinaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelPrefix(long[], java.util.function.LongBinaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSetAll(T[], java.util.function.IntFunction&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSetAll(double[], java.util.function.IntToDoubleFunction)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSetAll(int[], java.util.function.IntUnaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSetAll(long[], java.util.function.IntToLongFunction)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(T[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(T[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(T[], int, int, java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(T[], java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(byte[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(byte[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(char[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(char[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(double[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(double[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(float[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(float[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(int[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(int[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(long[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(long[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(short[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void parallelSort(short[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void setAll(T[], java.util.function.IntFunction&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void setAll(double[], java.util.function.IntToDoubleFunction)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void setAll(int[], java.util.function.IntUnaryOperator)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void setAll(long[], java.util.function.IntToLongFunction)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -421,56 +686,141 @@
   <item name="java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 3">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
+  <item name='java.util.Arrays void sort(T[], java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name='java.util.Arrays void sort(T[], java.util.Comparator&lt;? super T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.util.Arrays void sort(T[], java.util.Comparator&lt;? super T&gt;) 1">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
+  <item name='java.util.Arrays void sort(byte[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(byte[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(char[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(char[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(char[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(double[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(double[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(double[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(double[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(float[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(float[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(float[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(float[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(int[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(int[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(int[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(int[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(java.lang.Object[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(java.lang.Object[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(java.lang.Object[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(java.lang.Object[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(long[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(long[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(long[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(long[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Arrays void sort(short[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
+  </item>
   <item name="java.util.Arrays void sort(short[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.Arrays void sort(short[], int, int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;arg1&quot;"/>
+    </annotation>
   </item>
   <item name="java.util.Arrays void sort(short[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -600,9 +950,6 @@
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>
       <val name="targetIsContainer" val="true"/>
-    </annotation>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;arg1&quot;"/>
     </annotation>
   </item>
   <item name="java.util.Collection T[] toArray(T[]) 0">
@@ -1130,9 +1477,6 @@
   </item>
   <item name="java.util.List T[] toArray(T[])">
     <annotation name="org.jetbrains.annotations.NotNull" />
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;arg1&quot;"/>
-    </annotation>
   </item>
   <item name="java.util.List T[] toArray(T[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
