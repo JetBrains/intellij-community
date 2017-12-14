@@ -368,7 +368,7 @@ public class RedundantCastUtil {
               if (call != null) {
                 Object marker = new Object();
                 PsiTreeUtil.mark(argumentList, marker);
-                final PsiCall callCopy = (PsiCall)call.copy();
+                final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
                 newCall = PsiTreeUtil.getParentOfType(PsiTreeUtil.releaseMark(callCopy, marker), expression.getClass(), false);
               }
               else {

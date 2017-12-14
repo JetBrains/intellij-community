@@ -761,7 +761,6 @@ public class LambdaUtil {
   }
 
   public static PsiCall copyTopLevelCall(@NotNull PsiCall call) {
-    PsiCall copyCall = (PsiCall)call.copy();
     if (call instanceof PsiEnumConstant) {
       PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
       if (containingClass == null) {
@@ -779,7 +778,7 @@ public class LambdaUtil {
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }
-    return copyCall;
+    return (PsiCall)call.copy();
   }
 
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
