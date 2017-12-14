@@ -44,6 +44,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return name.substring(name.lastIndexOf('.') + 1) + ": " + getText();
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement psiElement, final PsiElement anchor) throws IncorrectOperationException {
     final ASTNode node = getNode();
     final ASTNode child = psiElement.getNode();
@@ -52,6 +53,7 @@ public class XPathElementImpl extends ASTWrapperPsiElement implements XPathEleme
     return node.getPsi();
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement psiElement, final PsiElement anchor) throws IncorrectOperationException {
     final ASTNode astNode = anchor.getNode();
     assert astNode != null;

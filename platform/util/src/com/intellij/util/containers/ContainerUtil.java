@@ -1431,7 +1431,7 @@ public class ContainerUtil extends ContainerUtilRt {
             throw new ConcurrentModificationException("The list has changed. Its size was " + finalSize + "; now it's " + from);
           }
         }
-        throw new IndexOutOfBoundsException("index: " + index + "size: " + size());
+        throw new IndexOutOfBoundsException("index: " + index + "; size: " + size());
       }
 
       @Override

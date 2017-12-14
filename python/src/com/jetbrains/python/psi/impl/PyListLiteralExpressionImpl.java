@@ -50,12 +50,14 @@ public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implem
     }
   }
 
+  @Override
   public PsiElement addAfter(@NotNull PsiElement psiElement, PsiElement afterThis) throws IncorrectOperationException {
     checkPyExpression(psiElement);
     checkPyExpression(afterThis);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, (PyExpression)afterThis, (PyExpression)psiElement);
   }
 
+  @Override
   public PsiElement addBefore(@NotNull PsiElement psiElement, PsiElement beforeThis) throws IncorrectOperationException {
     checkPyExpression(psiElement);
     return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, null, (PyExpression)psiElement);

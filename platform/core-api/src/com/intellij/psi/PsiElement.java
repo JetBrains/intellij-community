@@ -50,8 +50,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the project to which the PSI element belongs.
    *
    * @return the project instance.
-   * @throws PsiInvalidElementAccessException
-   *          if this element is invalid
+   * @throws PsiInvalidElementAccessException if this element is invalid
    */
   @NotNull
   @Contract(pure=true)

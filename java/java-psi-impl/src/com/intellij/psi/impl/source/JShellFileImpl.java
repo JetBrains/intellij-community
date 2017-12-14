@@ -53,6 +53,7 @@ public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile
     return JShellFileType.INSTANCE;
   }
 
+  @Override
   public boolean isPhysical() {
     return getViewProvider().isPhysical();
   }
