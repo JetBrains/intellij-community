@@ -52,4 +52,4 @@ class B2:
 
 B2(<warning descr="Parameter 'x' unfilled">)</warning>
 B2(1)
-B2<warning descr="Unexpected argument(s)">(1, <warning descr="Unexpected argument">2</warning>)</warning>
+B2(1, <warning descr="Unexpected argument">2</warning>)
