@@ -60,6 +60,11 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Empty string is always normalized to null.
    */
+  fun property(defaultValue: String) = string(defaultValue)
+
+  /**
+   * Empty string is always normalized to null.
+   */
   fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
     val result = NormalizedStringStoredProperty(defaultValue)
     properties.add(result)

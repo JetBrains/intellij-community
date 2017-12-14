@@ -25,8 +25,8 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
   @get:OptionTag("myName")
   var profileName by string()
 
-  var notice by string(DEFAULT_COPYRIGHT_NOTICE)
-  var keyword by string(EntityUtil.encode("Copyright"))
+  var notice by property(DEFAULT_COPYRIGHT_NOTICE)
+  var keyword by property(EntityUtil.encode("Copyright"))
   var allowReplaceRegexp by string()
 
   @Deprecated("use allowReplaceRegexp instead", ReplaceWith(""))
