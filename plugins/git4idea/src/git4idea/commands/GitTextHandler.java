@@ -161,19 +161,12 @@ public abstract class GitTextHandler extends GitHandler {
   }
 
   protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    commandLine.setCharset(getCharset());
     return new MyOSProcessHandler(commandLine);
   }
 
   protected static class MyOSProcessHandler extends KillableProcessHandler {
     MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
       super(commandLine, true);
-    }
-
-    @NotNull
-    @Override
-    public Charset getCharset() {
-      return myCharset;
     }
 
     @NotNull

@@ -67,11 +67,6 @@ public abstract class GitHandler {
 
   @Nullable private ThrowableConsumer<OutputStream, IOException> myInputProcessor; // The processor for stdin
 
-  @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
-  @NonNls
-  @NotNull
-  private Charset myCharset = CharsetToolkit.UTF8_CHARSET; // Character set to use for IO
-
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"})
   protected boolean mySilent; // if true, the command execution is not logged in version control view
@@ -133,7 +128,8 @@ public abstract class GitHandler {
 
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
-      .withExePath(pathToExecutable);
+      .withExePath(pathToExecutable)
+      .withCharset(CharsetToolkit.UTF8_CHARSET);
     for (String parameter : getConfigParameters(project, configParameters)) {
       myCommandLine.addParameters("-c", parameter);
     }
@@ -321,7 +317,7 @@ public abstract class GitHandler {
    */
   @NotNull
   public Charset getCharset() {
-    return myCharset;
+    return myCommandLine.getCharset();
   }
 
   /**
@@ -331,7 +327,7 @@ public abstract class GitHandler {
    */
   @SuppressWarnings({"SameParameterValue"})
   public void setCharset(@NotNull Charset charset) {
-    myCharset = charset;
+    myCommandLine.setCharset(charset);
   }
 
   /**
