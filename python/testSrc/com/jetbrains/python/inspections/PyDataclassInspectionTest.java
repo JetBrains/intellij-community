@@ -26,6 +26,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27398
+  public void testFieldsOrder() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(
