@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 @file:JvmName("GroovyUnusedImportUtil")
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports
@@ -27,7 +29,7 @@ fun usedImports(file: GroovyFile): Set<GrImportStatement> {
   }
 
   val usedStatements = HashSet(referencedStatements)
-  usedStatements -= imports.findUnneecessaryStatements()
+  usedStatements -= imports.findUnnecessaryStatements()
   usedStatements += imports.findUnresolvedStatements(unresolvedReferenceNames)
   return usedStatements
 }

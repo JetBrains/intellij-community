@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 @file:Suppress("UseExpressionBody")
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
@@ -65,7 +67,7 @@ internal class GroovyFileImportsImpl(
 
   override fun isImplicit(import: GroovyImport): Boolean = !importToStatement.containsKey(import)
 
-  override fun findUnneecessaryStatements(): Collection<GrImportStatement> {
+  override fun findUnnecessaryStatements(): Collection<GrImportStatement> {
     return statementToImport.filterValues { it.isUnnecessary(this) }.keys
   }
 
