@@ -38,9 +38,11 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
+import org.jetbrains.annotations.NotNull
 
 class NormalCompletionTest extends NormalCompletionTestCase {
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_9

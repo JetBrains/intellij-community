@@ -21,6 +21,8 @@ import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -37,6 +39,12 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_1_6;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable());
   }
 
   @Override
@@ -98,7 +106,9 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
     assertOrderedEquals(strings.subList(0, Math.min(items.length, strings.size())), items);
   }
   protected void assertStringItems(String... items) {
-    assertOrderedEquals(myFixture.getLookupElementStrings(), items);
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertOrderedEquals(strings, items);
   }
 
   protected void type(String s) {

@@ -16,10 +16,13 @@
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.annotations.NotNull
+
 /**
  * @author peter
  */
 class NormalCompletionDfaTest extends NormalCompletionTestCase {
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8
