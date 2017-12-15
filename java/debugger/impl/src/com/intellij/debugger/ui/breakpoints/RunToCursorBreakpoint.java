@@ -5,7 +5,6 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -16,22 +15,18 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProperties> {
+public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
   private final boolean myRestoreBreakpoints;
   @NotNull
   protected final SourcePosition myCustomPosition;
-  private String mySuspendPolicy;
-  private final JavaLineBreakpointProperties myProperties = new JavaLineBreakpointProperties();
 
   protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
-    super(project, null);
+    super(project);
     myCustomPosition = pos;
-    setVisible(false);
     myRestoreBreakpoints = restoreBreakpoints;
   }
 
@@ -50,46 +45,6 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   public void reload() {
   }
 
-  @Override
-  public String getSuspendPolicy() {
-    return mySuspendPolicy;
-  }
-
-  public void setSuspendPolicy(String policy) {
-    mySuspendPolicy = policy;
-  }
-
-  protected boolean isLogEnabled() {
-    return false;
-  }
-
-  protected boolean isLogStack() {
-    return false;
-  }
-
-  @Override
-  protected boolean isLogExpressionEnabled() {
-    return false;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return true;
-  }
-
-  public boolean isCountFilterEnabled() {
-    return false;
-  }
-
-  public boolean isClassFiltersEnabled() {
-    return false;
-  }
-
-  @Override
-  public boolean isConditionEnabled() {
-    return false;
-  }
-
   public boolean isRestoreBreakpoints() {
     return myRestoreBreakpoints;
   }
@@ -97,31 +52,6 @@ public class RunToCursorBreakpoint extends LineBreakpoint<JavaLineBreakpointProp
   @Override
   public String getEventMessage(LocatableEvent event) {
     return DebuggerBundle.message("status.stopped.at.cursor");
-  }
-
-  @Override
-  protected boolean isVisible() {
-    return false;
-  }
-
-  @Override
-  public boolean isValid() {
-    return true;
-  }
-
-  @NotNull
-  @Override
-  protected JavaLineBreakpointProperties getProperties() {
-    return myProperties;
-  }
-
-  @Override
-  protected void fireBreakpointChanged() {
-  }
-
-  @Override
-  protected boolean isMuted(@NotNull final DebugProcessImpl debugProcess) {
-    return false;  // always enabled
   }
 
   @Nullable
