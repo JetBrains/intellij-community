@@ -25,10 +25,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.fixes.AddArgumentFix;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class StringToUpperWithoutLocaleInspection extends BaseInspection {
@@ -57,16 +59,18 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
       "string.touppercase.tolowercase.without.locale.problem.descriptor");
   }
 
+  @NotNull
   @Override
-  @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)infos[0];
+    List<InspectionGadgetsFix> fixes = new ArrayList<>(2);
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
-    if (annotatableQualifier == null) {
-      return null;
+    fixes.add(new AddArgumentFix("java.util.Locale.ENGLISH", "Locale.ENGLISH"));
+    if (annotatableQualifier != null) {
+      fixes.add(new DelegatingFix(new AddAnnotationPsiFix(
+        AnnotationUtil.NON_NLS, annotatableQualifier,PsiNameValuePair.EMPTY_ARRAY)));
     }
-    return new DelegatingFix(new AddAnnotationPsiFix(
-      AnnotationUtil.NON_NLS, annotatableQualifier,PsiNameValuePair.EMPTY_ARRAY));
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override
