@@ -89,6 +89,8 @@ task gradleApiImplDepJar(type: Zip, dependsOn: expandGradleApiJar) {
 }
 
 apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
 publishing {
   publications {
     gradleApi(MavenPublication) {
@@ -148,3 +150,22 @@ task publishGradleApiToMavenLocal
 publishGradleApiToMavenLocal.dependsOn tasks.withType(PublishToMavenLocal).matching { it.name.startsWith('publishGradle') }
 task publishGradleApiToMavenRepository
 publishGradleApiToMavenRepository.dependsOn tasks.withType(PublishToMavenRepository).matching { it.name.startsWith('publishGradle') }
+
+bintray {
+  user = System.getenv('BINTRAY_USER')
+  key = System.getenv('BINTRAY_KEY')
+
+  publish = true
+
+  pkg {
+    repo = 'intellij-third-party-dependencies'
+    name = 'gradle-api'
+    userOrg = 'jetbrains'
+
+    version {
+      name = gradleApiVersion
+    }
+  }
+
+  publications = ['gradleApi', 'gradleApiImplDep', 'gradleWrapper', 'gradleLauncher']
+}

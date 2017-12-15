@@ -24,6 +24,9 @@ buildscript {
     classpath "de.undercouch:gradle-download-task:3.2.0"
   }
 }
+plugins {
+  id "com.jfrog.bintray" version "1.7.3" apply false
+}
 
 apply plugin: 'idea'
 idea {
