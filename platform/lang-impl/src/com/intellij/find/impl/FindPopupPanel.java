@@ -1059,7 +1059,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
         return new Continuation(() -> {
           if (!isCancelled()) {
-            if (resultsCount.get() == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+            if (resultsCount.get() == 0) {
+              showEmptyText(null);
+            }
           }
           onStop(hash);
         }, state);
@@ -1078,6 +1080,23 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
   }
 
+  protected void showEmptyText(@Nullable String message) {
+    myResultsPreviewTable.getEmptyText().clear();
+    myResultsPreviewTable.getEmptyText().setText(message != null ? UIBundle.message("message.nothingToShow.with.problem", message)
+                                                                 : UIBundle.message("message.nothingToShow"));
+    if (mySelectedScope == FindPopupScopeUIImpl.DIRECTORY && !myHelper.getModel().isWithSubdirectories()) {
+      myResultsPreviewTable.getEmptyText().appendSecondaryText(FindBundle.message("find.recursively.hint"),
+                                                               SimpleTextAttributes.LINK_ATTRIBUTES,
+                                                               new ActionListener() {
+                                                                 @Override
+                                                                 public void actionPerformed(ActionEvent e) {
+                                                                   myHelper.getModel().setWithSubdirectories(true);
+                                                                   scheduleResultsUpdate();
+                                                                 }
+                                                               });
+    }
+  }
+
   private void onStart(int hash) {
     myLoadingHash = hash;
     myLoadingDecorator.startLoading(false);
@@ -1094,8 +1113,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       return;
     }
     UIUtil.invokeLaterIfNeeded(() -> {
-      myResultsPreviewTable.getEmptyText().setText(message != null ? UIBundle.message("message.nothingToShow.with.problem", message)
-                                                                   : UIBundle.message("message.nothingToShow"));
+      showEmptyText(message);
       myLoadingDecorator.stopLoading();
     });
   }
