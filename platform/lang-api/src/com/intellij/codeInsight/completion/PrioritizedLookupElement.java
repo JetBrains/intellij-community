@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.completion;
@@ -28,20 +16,18 @@ import com.intellij.openapi.util.ClassConditionKey;
  * @author peter
  */
 public class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> {
-  public static final ClassConditionKey<PrioritizedLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(PrioritizedLookupElement.class);
+  public static final ClassConditionKey<PrioritizedLookupElement> CLASS_CONDITION_KEY =
+    ClassConditionKey.create(PrioritizedLookupElement.class);
+
   private final double myPriority;
-  private final int myGrouping;
   private final int myExplicitProximity;
+  private final int myGrouping;
 
-  private PrioritizedLookupElement(T delegate, double priority, int grouping) {
-    this(delegate, priority, grouping, 0);
-  }
-
-  private PrioritizedLookupElement(T delegate, double priority, int grouping, int explicitProximity) {
+  private PrioritizedLookupElement(T delegate, double priority, int explicitProximity, int grouping) {
     super(delegate);
     myPriority = priority;
-    myGrouping = grouping;
     myExplicitProximity = explicitProximity;
+    myGrouping = grouping;
   }
 
   public double getPriority() {
@@ -59,15 +45,17 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
   public static LookupElement withPriority(LookupElement element, double priority) {
     final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     final LookupElement finalElement = prioritized == null ? element : prioritized.getDelegate();
+    final int proximity = prioritized == null ? 0 : prioritized.getExplicitProximity();
     final int grouping = prioritized == null ? 0 : prioritized.getGrouping();
-    return new PrioritizedLookupElement<>(finalElement, priority, grouping);
+    return new PrioritizedLookupElement<>(finalElement, priority, proximity, grouping);
   }
 
   public static LookupElement withGrouping(LookupElement element, int grouping) {
     final PrioritizedLookupElement prioritized = element.as(CLASS_CONDITION_KEY);
     LookupElement finalElement = prioritized == null ? element : prioritized.getDelegate();
     final double priority = prioritized == null ? 0 : prioritized.getPriority();
-    return new PrioritizedLookupElement<>(finalElement, priority, grouping);
+    final int proximity = prioritized == null ? 0 : prioritized.getExplicitProximity();
+    return new PrioritizedLookupElement<>(finalElement, priority, proximity, grouping);
   }
 
   public static LookupElement withExplicitProximity(LookupElement element, int explicitProximity) {
@@ -75,6 +63,6 @@ public class PrioritizedLookupElement<T extends LookupElement> extends LookupEle
     final double priority = prioritized == null ? 0 : prioritized.getPriority();
     final int grouping = prioritized == null ? 0 : prioritized.getGrouping();
     final LookupElement finalElement = prioritized == null ? element : prioritized.getDelegate();
-    return new PrioritizedLookupElement<>(finalElement, priority, grouping, explicitProximity);
+    return new PrioritizedLookupElement<>(finalElement, priority, explicitProximity, grouping);
   }
 }
