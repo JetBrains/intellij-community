@@ -16,7 +16,10 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -199,11 +202,8 @@ public class DfaExpressionFactory {
           return sf.getCanonicalOwner(null, ((PsiMethod)target).getContainingClass());
         }
       }
-      if (method.getParameterList().getParametersCount() == 0) {
-        if (ControlFlowAnalyzer.isPure(method) ||
-            AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
-          return method;
-        }
+      if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
+        return method;
       }
     }
     return null;
