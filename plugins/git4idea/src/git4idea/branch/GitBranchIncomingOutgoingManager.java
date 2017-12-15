@@ -9,14 +9,12 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitVcs;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
@@ -35,7 +33,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static one.util.streamex.StreamEx.of;
 
-public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener {
+public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
 
   //store map from local branch to related cached remote branch hash per repository
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPull = newConcurrentMap();
@@ -66,7 +64,9 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
 
   @CalledInAwt
   public void startScheduling() {
-    myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
+    connection.subscribe(GitLineHandler.GIT_AUTHENTICATION_SUCCESS, this);
     forceUpdateBranches();
     if (myPeriodicalUpdater == null && !myProject.isDisposed()) {
       int updateTime = GitVcsSettings.getInstance(myProject).getBranchInfoUpdateTime();
@@ -220,6 +220,29 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     myLocalBranchesToPush.put(repository, calculateBranchesToPush(repository));
     if (shouldUpdateBranchesToPull(repository)) {
       myLocalBranchesToPull.put(repository, calculateBranchesToPull(repository));
+    }
+  }
+
+  @Override
+  public void authenticationSucceeded(@NotNull GitRepository repository, @NotNull GitRemote remote) {
+    // don't need to recalculate info if force authentication is already in use
+    if (myUseForceAuthentication) return;
+
+    Set<GitRemote> remotes = myAuthErrorMap.get(repository);
+    if (remotes.contains(remote)) {
+      Map<GitRemote, List<GitBranchTrackInfo>> trackInfoByRemotes = groupTrackInfoByRemotes(repository);
+      if (trackInfoByRemotes.containsKey(remote)) {
+        final Map<GitLocalBranch, Hash> newBranchMap = calcBranchesToPullForRemote(repository, remote, trackInfoByRemotes.get(remote));
+        myLocalBranchesToPull.compute(repository, (r, branchHashMap) -> {
+          if (branchHashMap == null) {
+            return newHashMap(newBranchMap);
+          }
+          else {
+            branchHashMap.putAll(newBranchMap);
+            return branchHashMap;
+          }
+        });
+      }
     }
   }
 
