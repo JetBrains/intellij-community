@@ -64,20 +64,19 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
       onSelection(myGraphTable.getSelectedRows());
       startLoading();
 
-      final EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+      EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       myLastRequest = indicator;
 
       List<Integer> selectionToLoad = getSelectionToLoad();
-      myLogData.getCommitDetailsGetter()
-        .loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
-          if (myLastRequest == indicator && !(indicator.isCanceled())) {
-            LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
-                           "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
-            myLastRequest = null;
-            onDetailsLoaded(detailsList);
-            stopLoading();
-          }
-        }, indicator);
+      myLogData.getCommitDetailsGetter().loadCommitsData(myGraphTable.getModel().convertToCommitIds(selectionToLoad), detailsList -> {
+        if (myLastRequest == indicator && !(indicator.isCanceled())) {
+          LOG.assertTrue(selectionToLoad.size() == detailsList.size(),
+                         "Loaded incorrect number of details " + detailsList + " for selection " + selectionToLoad);
+          myLastRequest = null;
+          onDetailsLoaded(detailsList);
+          stopLoading();
+        }
+      }, indicator);
     }
   }
 
