@@ -29,6 +29,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 abstract class BaseShowDiffAction extends AnAction implements DumbAware {
+  public BaseShowDiffAction() {
+    setEnabledInModalContext(true);
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
