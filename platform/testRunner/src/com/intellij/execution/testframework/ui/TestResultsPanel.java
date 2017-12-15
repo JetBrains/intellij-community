@@ -42,7 +42,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public abstract class TestResultsPanel extends NonOpaquePanel implements Disposable, DataProvider  {
+public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
   private JScrollPane myLeftPane;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
