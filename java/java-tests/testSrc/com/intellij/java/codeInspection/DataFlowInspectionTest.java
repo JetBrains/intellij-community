@@ -576,4 +576,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testNullableReturn() { doTest(); }
   public void testManyBooleans() { doTest(); }
+  public void testPureNoArgMethodAsVariable() { doTest(); }
 }
