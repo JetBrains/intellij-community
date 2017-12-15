@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
@@ -15,6 +16,10 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyClassType
 
 class PyDataclassInspection : PyInspection() {
+
+  companion object {
+    private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
+  }
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -65,6 +70,31 @@ class PyDataclassInspection : PyInspection() {
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(node, this::registerProblem)
+        }
+      }
+    }
+
+    override fun visitPyBinaryExpression(node: PyBinaryExpression?) {
+      super.visitPyBinaryExpression(node)
+
+      if (node != null && ORDER_OPERATORS.contains(node.referencedName)) {
+        val leftClass = getPyClass(node.leftExpression) ?: return
+        val rightClass = getPyClass(node.rightExpression) ?: return
+
+        val leftDataclassParameters = parseDataclassParameters(leftClass, myTypeEvalContext)
+
+        if (leftClass != rightClass &&
+            leftDataclassParameters != null &&
+            parseDataclassParameters(rightClass, myTypeEvalContext) != null) {
+          registerProblem(node.psiOperator,
+                          "${node.referencedName} not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
+                          ProblemHighlightType.GENERIC_ERROR)
+        }
+
+        if (leftClass == rightClass && leftDataclassParameters?.order == false) {
+          registerProblem(node.psiOperator,
+                          "${node.referencedName} not supported between instances of '${leftClass.name}'",
+                          ProblemHighlightType.GENERIC_ERROR)
         }
       }
     }

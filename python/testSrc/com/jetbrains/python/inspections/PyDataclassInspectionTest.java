@@ -31,6 +31,21 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27398
+  public void testComparisonForOrdered() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testComparisonForUnordered() {
+    doTest();
+  }
+
+  // PY-27398
+  public void testComparisonForOrderedAndUnordered() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(
