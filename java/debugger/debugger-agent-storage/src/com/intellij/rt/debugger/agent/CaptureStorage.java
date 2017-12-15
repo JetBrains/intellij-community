@@ -38,11 +38,12 @@ public class CaptureStorage {
       return;
     }
     try {
+      Throwable exception = new Throwable();
       if (DEBUG) {
-        System.out.println("capture - " + key);
+        System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
       }
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-      CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
+      CapturedStack stack = createCapturedStack(exception, currentStacks.isEmpty() ? null : currentStacks.getLast());
       WeakKey keyRef = new WeakKey(key);
       synchronized (HISTORY) {
         CapturedStack old = STORAGE.put(keyRef, stack);
@@ -71,15 +72,17 @@ public class CaptureStorage {
       CapturedStack stack = STORAGE.get(new WeakKey(key));
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       if (stack != null) {
-        currentStacks.add(new InsertMatch(stack, getStackTraceDepth(new Throwable())));
+        Throwable exception = new Throwable();
+        currentStacks.add(new InsertMatch(stack, getStackTraceDepth(exception)));
         if (DEBUG) {
-          System.out.println("insert -> " + key + ", stack saved (" + currentStacks.size() + ")");
+          System.out.println("insert " + getCallerDescriptor(exception) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
         }
       }
       else {
         currentStacks.add(InsertMatch.EMPTY);
         if (DEBUG) {
-          System.out.println("insert -> " + key + ", no stack found (" + currentStacks.size() + ")");
+          System.out.println(
+            "insert " + getCallerDescriptor(new Throwable()) + " -> " + key + ", no stack found (" + currentStacks.size() + ")");
         }
       }
     }
@@ -97,7 +100,8 @@ public class CaptureStorage {
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       currentStacks.removeLast();
       if (DEBUG) {
-        System.out.println("insert <- " + key + ", stack removed (" + currentStacks.size() + ")");
+        System.out.println(
+          "insert " + getCallerDescriptor(new Throwable()) + " <- " + key + ", stack removed (" + currentStacks.size() + ")");
       }
     }
     catch (Exception e) {
@@ -233,5 +237,11 @@ public class CaptureStorage {
     System.err.println("Critical error in IDEA Async Stacktraces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
     //noinspection CallToPrintStackTrace
     e.printStackTrace();
+  }
+
+  private static String getCallerDescriptor(Throwable e) {
+    StackTraceElement[] stackTrace = e.getStackTrace();
+    StackTraceElement caller = stackTrace[stackTrace.length - 2];
+    return caller.getClassName() + "." + caller.getMethodName();
   }
 }
