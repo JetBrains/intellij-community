@@ -394,13 +394,12 @@ public class GitRebaseProcess {
 
   private void notifyNotAllConflictsResolved(@NotNull GitRepository conflictingRepository,
                                              MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
-    String description = "" +
-                         GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
+    String description = GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("Rebase Stopped Due to Conflicts", description, NotificationType.WARNING, new RebaseNotificationListener(skippedCommits));
     notification.addAction(new ResolveAction(conflictingRepository));
     notification.addAction(CONTINUE_ACTION);
     notification.addAction(ABORT_ACTION);
-    if (mySaver != null && mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
+    if (mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
     myNotifier.notify(notification);
   }
 
@@ -435,7 +434,7 @@ public class GitRebaseProcess {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description, NotificationType.ERROR, new RebaseNotificationListener(skippedCommits));
     notification.addAction(RETRY_ACTION);
     if (somethingWasRebased || !successful.isEmpty()) notification.addAction(ABORT_ACTION);
-    if (mySaver != null && mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
+    if (mySaver.wereChangesSaved()) notification.addAction(VIEW_STASH_ACTION);
     myNotifier.notify(notification);
   }
 
@@ -449,7 +448,7 @@ public class GitRebaseProcess {
     List<NotificationAction> actions = new ArrayList<>();
     actions.add(RETRY_ACTION);
     if (somethingWasRebased || !successful.isEmpty()) actions.add(ABORT_ACTION);
-    if (mySaver != null && mySaver.wereChangesSaved()) actions.add(VIEW_STASH_ACTION);
+    if (mySaver.wereChangesSaved()) actions.add(VIEW_STASH_ACTION);
     GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, currentRepository.getRoot(), untrackedPaths,
                                                               "rebase", message, new RebaseNotificationListener(skippedCommits), actions.toArray(new NotificationAction[actions.size()]));
   }
