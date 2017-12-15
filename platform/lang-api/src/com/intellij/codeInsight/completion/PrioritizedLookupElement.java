@@ -9,11 +9,25 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.openapi.util.ClassConditionKey;
 
 /**
- * Use only when you want to control lookup sorting & preference in simple cases when you have control over ALL the items in lookup.
- * When this is not the case, or sorting is too complex to be handled by single scalar,
- * please use relevance ({@link CompletionService#RELEVANCE_KEY}) & sorting ({@link CompletionService#SORTING_KEY}) weighers.
+ * Using <code>PrioritizedLookupElement</code> allows to plug into 3 {@link CompletionWeigher}s: "priority", "explicitProximity" and
+ * "grouping". Standard weigher list includes the following ones in the specified order:
+ * <ul>
+ * <li>"priority", (see <code>PriorityWeigher</code> class) based on the value passed via {@link PrioritizedLookupElement#withPriority(LookupElement, double)}</li>
+ * <li>"prefix", (see <code>PrefixMatchingWeigher</code> class) checks prefix matching</li>
+ * <li>"stats", (see <code>StatisticsWeigher</code> class) bubbles up the most frequently used items</li>
+ * <li>"explicitProximity", (see <code>ExplicitProximityWeigher</code> class) based on the value passed via {@link PrioritizedLookupElement#withExplicitProximity(LookupElement, int)}</li>
+ * <li>"proximity", (see <code>LookupElementProximityWeigher</code> class)</li>
+ * <li>"grouping", (see <code>GroupingWeigher</code> class) based on the value passed via {@link PrioritizedLookupElement#withGrouping(LookupElement, int)}</li>
+ * </ul>
+ * <code>PrioritizedLookupElement</code> is normally used when you want to control lookup sorting in simple cases, like when you have
+ * control over ALL the items in lookup. Be especially careful with using {@link PrioritizedLookupElement#withPriority(LookupElement, double)}
+ * as the corresponding weigher has the top precedence. Other way to control completion items order is implementing a custom {@link CompletionWeigher},
+ * (see {@link CompletionService#RELEVANCE_KEY}).<br><br>
+ * To debug the order of the completion items use '<code>Dump lookup element weights to log</code>' action when the completion lookup is
+ * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the Clipboard.
  *
  * @author peter
+ * @see CompletionContributor
  */
 public class PrioritizedLookupElement<T extends LookupElement> extends LookupElementDecorator<T> {
   public static final ClassConditionKey<PrioritizedLookupElement> CLASS_CONDITION_KEY =
