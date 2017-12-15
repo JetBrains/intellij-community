@@ -229,35 +229,28 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   // todo make final (go plugin compatibility)
   override fun checkCanInitBreakpoints(): Boolean {
     if (connection.state.status == ConnectionStatus.CONNECTED) {
-      // breakpointsInitiated could be set in another thread and at this point work (init breakpoints) could be not yet performed
-      return initBreakpoints(false)
+      return true
     }
 
     if (connectedListenerAdded.compareAndSet(false, true)) {
       connection.stateChanged {
         if (it.status == ConnectionStatus.CONNECTED) {
-          initBreakpoints(true)
+          initBreakpoints()
         }
       }
     }
     return false
   }
 
-  protected fun initBreakpoints(setBreakpoints: Boolean): Boolean {
+  protected fun initBreakpoints() {
     if (breakpointsInitiated.compareAndSet(false, true)) {
-      doInitBreakpoints(setBreakpoints)
-      return true
-    }
-    else {
-      return false
+      doInitBreakpoints()
     }
   }
 
-  protected open fun doInitBreakpoints(setBreakpoints: Boolean) {
-    if (setBreakpoints) {
-      beforeInitBreakpoints(mainVm!!)
-      runReadAction { session.initBreakpoints() }
-    }
+  protected open fun doInitBreakpoints() {
+    beforeInitBreakpoints(mainVm!!)
+    runReadAction { session.initBreakpoints() }
   }
 
   protected open fun beforeInitBreakpoints(vm: Vm) {
