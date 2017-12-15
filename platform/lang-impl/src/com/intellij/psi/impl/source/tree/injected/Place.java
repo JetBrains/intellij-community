@@ -26,7 +26,7 @@ public class Place extends SmartList<PsiLanguageInjectionHost.Shred> {
   }
 
   @NotNull
-  SmartPsiElementPointer<PsiLanguageInjectionHost> getHostPointer() {
+  public SmartPsiElementPointer<PsiLanguageInjectionHost> getHostPointer() {
     return ((ShredImpl)get(0)).getSmartPointer();
   }
 
