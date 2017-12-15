@@ -91,6 +91,16 @@ public class Patches {
   public static final boolean JDK_BUG_ID_6822627 = true;
 
   /**
+   * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.StringReference}
+   */
+  public static final boolean JDK_BUG_ID_21275177 = true;
+
+  /**
+   * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.ThreadReference}
+   */
+  public static final boolean JDK_BUG_WITH_TRACE_SEND = true;
+
+  /**
    * JDK on Mac detects font style for system fonts based only on their name (PostScript name).
    * This doesn't work for some fonts which don't use recognizable style suffixes in their names.
    * Corresponding JDK request for enhancement - <a href="https://bugs.openjdk.java.net/browse/JDK-8139151">JDK-8139151</a>.
