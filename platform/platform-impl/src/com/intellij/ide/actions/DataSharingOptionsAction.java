@@ -19,11 +19,6 @@ public class DataSharingOptionsAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(!ConsentOptions.getConsents().first.isEmpty());
-  }
-
-  @Override
   public void actionPerformed(AnActionEvent e) {
     final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getConsents();
     try {
