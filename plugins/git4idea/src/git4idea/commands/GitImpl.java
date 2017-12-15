@@ -265,7 +265,7 @@ public class GitImpl extends GitImplBase {
   @Override
   public GitCommandResult checkoutNewBranch(@NotNull GitRepository repository, @NotNull String branchName,
                                             @Nullable GitLineHandlerListener listener) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT.readLockingCommand());
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECKOUT);
     h.setSilent(false);
     h.setStdoutSuppressed(false);
     h.addParameters("-b");
