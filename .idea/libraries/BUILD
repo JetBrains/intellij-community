@@ -1096,13 +1096,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.51:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.2.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.2.10:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.1.51:jar",
-        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.1.51:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre7/1.2.10:jar",
+        "//prebuilts/tools/common/m2/repository/org/jetbrains/kotlin/kotlin-stdlib-jre8/1.2.10:jar",
     ],
 )
 
