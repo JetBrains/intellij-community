@@ -257,9 +257,9 @@ public class JdkBundle {
       outputLines = ExecUtil.execAndGetOutput(commandLine).getStderrLines();
     }
     catch (ExecutionException e) {
-      // Checking for jdk 6 on mac
+      // Checking for custom jdk layout on mac
       if (SystemInfo.isMac) {
-        commandLine.setExePath(new File(jvm,  homeSubPath + File.separator +  "bin" + File.separator + "java").getAbsolutePath());
+        commandLine.setExePath(new File(jvm,"bin" + File.separator + "java").getAbsolutePath());
         try {
           outputLines = ExecUtil.execAndGetOutput(commandLine).getStderrLines();
         }
