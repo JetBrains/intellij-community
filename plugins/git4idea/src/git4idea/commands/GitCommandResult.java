@@ -52,26 +52,6 @@ public class GitCommandResult {
     myOutput = output;
   }
 
-  @NotNull
-  public static GitCommandResult merge(@Nullable GitCommandResult first, @NotNull GitCommandResult second) {
-    if (first == null) return second;
-
-    int mergedExitCode;
-    if (first.myExitCode == 0) {
-      mergedExitCode = second.myExitCode;
-    }
-    else if (second.myExitCode == 0) {
-      mergedExitCode = first.myExitCode;
-    }
-    else {
-      mergedExitCode = second.myExitCode; // take exit code of the latest command
-    }
-    return new GitCommandResult(first.myStartFailed || second.myStartFailed, mergedExitCode,
-                                first.myAuthenticationFailed && second.myAuthenticationFailed,
-                                ContainerUtil.concat(first.myErrorOutput, second.myErrorOutput),
-                                ContainerUtil.concat(first.myOutput, second.myOutput));
-  }
-
   /**
    * To retain binary compatibility
    *

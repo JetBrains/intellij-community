@@ -18,12 +18,10 @@ package git4idea.commands;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
@@ -40,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.OutputStreamWriter;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static git4idea.GitUtil.COMMENT_CHAR;
@@ -182,14 +182,22 @@ public class GitImpl extends GitImplBase {
   public GitCommandResult checkAttr(@NotNull final GitRepository repository,
                                     @NotNull final Collection<String> attributes,
                                     @NotNull Collection<VirtualFile> files) {
-    List<List<String>> listOfPaths = VcsFileUtil.chunkFiles(repository.getRoot(), files);
-    return runAll(ContainerUtil.map(listOfPaths, relativePaths -> () -> {
-      final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
-      h.addParameters(new ArrayList<>(attributes));
-      h.endOptions();
-      h.addParameters(relativePaths);
-      return runCommand(h);
-    }));
+    List<String> relativeFilePaths = ContainerUtil.map(files, file -> VcsFileUtil.relativePath(repository.getRoot(), file));
+
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
+    h.addParameters("--stdin");
+    h.addParameters(new ArrayList<>(attributes));
+    h.endOptions();
+    h.setInputProcessor((outputStream) -> {
+      try (OutputStreamWriter writer = new OutputStreamWriter(outputStream, h.getCharset())) {
+        for (String path : relativeFilePaths) {
+          writer.write(path);
+          writer.write("\n");
+        }
+        writer.flush();
+      }
+    });
+    return runCommand(h);
   }
 
   @NotNull
@@ -700,18 +708,5 @@ public class GitImpl extends GitImplBase {
     for (GitLineHandlerListener listener : listeners) {
       handler.addLineListener(listener);
     }
-  }
-
-  @NotNull
-  private static GitCommandResult runAll(@NotNull List<Computable<GitCommandResult>> commands) {
-    if (commands.isEmpty()) {
-      LOG.error("List of commands should not be empty", new Exception());
-      return GitCommandResult.error("Internal error");
-    }
-    GitCommandResult compoundResult = null;
-    for (Computable<GitCommandResult> command : commands) {
-      compoundResult = GitCommandResult.merge(compoundResult, command.compute());
-    }
-    return ObjectUtils.assertNotNull(compoundResult);
   }
 }
