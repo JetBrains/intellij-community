@@ -58,12 +58,16 @@ envs {
         if (createLink) {
           String linkName = "python${version.split(/\./)[0..1].join(".")}"
 
+          Closure createLinkClosure = { java.nio.file.Path link, java.nio.file.Path existing ->
+            if (!link.toFile().exists()) Files.createLink(link, existing)
+          }
+
           if (Os.isFamily(Os.FAMILY_UNIX) && !shouldUseCondaInterpreters) {
-            Files.createLink(Paths.get(pythonDirectory.toString(), linkName),
-                             Paths.get(pythonDirectory.toString(), "bin/$linkName"))
+            createLinkClosure(Paths.get(pythonDirectory.toString(), linkName),
+                              Paths.get(pythonDirectory.toString(), "bin/$linkName"))
           } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-            Files.createLink(Paths.get(pythonDirectory.toString(), "${linkName}.exe"),
-                             Paths.get(pythonDirectory.toString(), "python.exe"))
+            createLinkClosure(Paths.get(pythonDirectory.toString(), "${linkName}.exe"),
+                              Paths.get(pythonDirectory.toString(), "python.exe"))
           }
         }
       }
