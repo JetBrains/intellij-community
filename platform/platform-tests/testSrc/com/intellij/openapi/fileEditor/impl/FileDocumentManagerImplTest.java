@@ -663,7 +663,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
 
     List<Future> futures = new ArrayList<>();
     for (VirtualFile file : files) {
-      if (fdm.getCachedDocument(file) == null) {
+      if (fdm.getCachedDocument(file) != null) {
         MemoryDumpHelper.captureMemoryDumpZipped("fileDocTest.hprof.zip");
         fail("Document not gc-ed: " + file);
       }
