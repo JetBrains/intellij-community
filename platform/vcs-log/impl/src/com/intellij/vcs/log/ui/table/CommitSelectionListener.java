@@ -76,6 +76,11 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
           onDetailsLoaded(detailsList);
           stopLoading();
         }
+      }, t -> {
+        if (myLastRequest == indicator && !(indicator.isCanceled())) {
+          myLastRequest = null;
+          stopLoading();
+        }
       }, indicator);
     }
   }
