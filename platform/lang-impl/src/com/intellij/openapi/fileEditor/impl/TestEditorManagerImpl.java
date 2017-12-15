@@ -33,8 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -47,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -75,6 +73,17 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
         }
       }
     });
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+      @Override
+      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
+        for (VirtualFile file : getOpenFiles()) {
+          if (VfsUtilCore.isAncestor(event.getFile(), file, false)) {
+            closeFile(file);
+          }
+        }
+      }
+    }, myProject);
+
   }
 
   @Override
@@ -108,6 +117,8 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   private void modifyTabWell(Runnable tabWellModification) {
+    if (myProject.isDisposed()) return;
+    
     FileEditor lastFocusedEditor = myTestEditorSplitter.getFocusedFileEditor();
     VirtualFile lastFocusedFile  = myTestEditorSplitter.getFocusedFile();
     FileEditorProvider oldProvider = myTestEditorSplitter.getProviderFromFocused();
@@ -230,7 +241,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    for (VirtualFile file : new LinkedList<>(myVirtualFile2Editor.keySet())) {
+    for (VirtualFile file : getOpenFiles()) {
       closeFile(file);
     }
   }
