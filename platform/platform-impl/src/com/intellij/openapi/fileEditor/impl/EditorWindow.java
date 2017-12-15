@@ -575,9 +575,17 @@ public class EditorWindow {
   }
 
   public EditorWithProviderComposite getSelectedEditor() {
+    return getSelectedEditor(false);
+  }
+
+  /**
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab, 
+   *                    editor for which menu is invoked will be returned
+   */
+  public EditorWithProviderComposite getSelectedEditor(boolean ignorePopup) {
     final TComp comp;
     if (myTabbedPane != null) {
-      comp = (TComp)myTabbedPane.getSelectedComponent();
+      comp = (TComp)myTabbedPane.getSelectedComponent(ignorePopup);
     }
     else if (myPanel.getComponentCount() != 0) {
       final Component component = myPanel.getComponent(0);
