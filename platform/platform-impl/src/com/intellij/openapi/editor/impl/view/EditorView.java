@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
@@ -485,7 +484,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private void initMetricsIfNeeded() {
     if (myPlainSpaceWidth >= 0) return;
 
-    FontMetrics fm = FontDesignMetrics.getMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN), myFontRenderContext);
+    FontMetrics fm = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN), myFontRenderContext);
 
     float width = FontLayoutService.getInstance().charWidth2D(fm, ' ');
     myPlainSpaceWidth = width > 0 ? width : 1;
@@ -503,7 +502,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myBottomOverhang = descent - myDescent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
-    FontMetrics fmBI = FontDesignMetrics.getMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC), myFontRenderContext);
+    FontMetrics fmBI = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC), myFontRenderContext);
     myMaxCharWidth = FontLayoutService.getInstance().charWidth(fmBI, 'W');
   }
   
