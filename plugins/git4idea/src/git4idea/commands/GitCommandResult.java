@@ -22,6 +22,7 @@ import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -33,19 +34,19 @@ import java.util.List;
  */
 public class GitCommandResult {
 
-  private final boolean mySuccess;
+  private final boolean myStartFailed;
   private final int myExitCode;               // non-zero exit code doesn't necessarily mean an error
   private final boolean myAuthenticationFailed;
   private final List<String> myErrorOutput;
   private final List<String> myOutput;
 
-  public GitCommandResult(boolean success,
+  public GitCommandResult(boolean startFailed,
                           int exitCode,
                           boolean authenticationFailed,
                           @NotNull List<String> errorOutput,
                           @NotNull List<String> output) {
     myExitCode = exitCode;
-    mySuccess = success;
+    myStartFailed = startFailed;
     myAuthenticationFailed = authenticationFailed;
     myErrorOutput = errorOutput;
     myOutput = output;
@@ -65,17 +66,27 @@ public class GitCommandResult {
     else {
       mergedExitCode = second.myExitCode; // take exit code of the latest command
     }
-    return new GitCommandResult(first.success() && second.success(), mergedExitCode,
+    return new GitCommandResult(first.myStartFailed || second.myStartFailed, mergedExitCode,
                                 first.myAuthenticationFailed && second.myAuthenticationFailed,
                                 ContainerUtil.concat(first.myErrorOutput, second.myErrorOutput),
                                 ContainerUtil.concat(first.myOutput, second.myOutput));
   }
 
   /**
+   * To retain binary compatibility
+   *
    * @return we think that the operation succeeded
    */
   public boolean success() {
-    return mySuccess;
+    return success(new int[]{});
+  }
+
+  /**
+   * @param ignoredErrorCodes list of non-zero exit codes the are considered success exit codes
+   * @return we think that the operation succeeded
+   */
+  public boolean success(int... ignoredErrorCodes) {
+    return !myStartFailed && (Arrays.stream(ignoredErrorCodes).anyMatch(i -> i == myExitCode) || myExitCode == 0);
   }
 
   @NotNull
@@ -125,12 +136,13 @@ public class GitCommandResult {
   /**
    * Check if execution was successful and return textual result or throw exception
    *
+   * @param ignoredErrorCodes list of non-zero exit codes the are considered success exit codes
    * @return result of {@link #getOutputAsJoinedString()}
    * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
    */
   @NotNull
-  public String getOutputOrThrow() throws VcsException {
-    if (!success()) throw new VcsException(getErrorOutputAsJoinedString());
+  public String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
+    if (!success(ignoredErrorCodes)) throw new VcsException(getErrorOutputAsJoinedString());
     return getOutputAsJoinedString();
   }
 

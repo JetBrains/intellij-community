@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
@@ -71,37 +72,39 @@ abstract class GitImplBase implements Git {
   @NotNull
   private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
                                       @NotNull Computable<OutputCollector> outputCollectorConstructor) {
-    @NotNull GitLineHandler handler;
-    @NotNull OutputCollector outputCollector;
-    @NotNull GitCommandResultListener resultListener;
+    @NotNull GitCommandResult result;
 
     Ref<Boolean> authFailedRef = Ref.create(false);
     int authAttempt = 0;
     do {
-      handler = handlerConstructor.compute();
-
-      outputCollector = outputCollectorConstructor.compute();
-      resultListener = new GitCommandResultListener(outputCollector);
-
-      handler.addLineListener(resultListener);
+      GitLineHandler handler = handlerConstructor.compute();
 
       try (AccessToken locking = lock(handler);
            AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
+        OutputCollector outputCollector = outputCollectorConstructor.compute();
+        GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
+        handler.addLineListener(resultListener);
+
         writeOutputToConsole(handler);
 
         handler.runInCurrentThread();
+
+        result = new GitCommandResult(resultListener.myStartFailed,
+                                      resultListener.myExitCode,
+                                      authFailedRef.get(),
+                                      outputCollector.myErrorOutput,
+                                      outputCollector.myOutput);
       }
       catch (IOException e) {
-        resultListener.startFailed(e);
+        result = new GitCommandResult(true,
+                                      0,
+                                      false,
+                                      Collections.singletonList("Failed to start Git process " + e.getLocalizedMessage()),
+                                      Collections.emptyList());
       }
     }
     while (authFailedRef.get() && authAttempt++ < 2);
-    return new GitCommandResult(
-      !resultListener.myStartFailed && (handler.isIgnoredErrorCode(resultListener.myExitCode) || resultListener.myExitCode == 0),
-      resultListener.myExitCode,
-      authFailedRef.get(),
-      outputCollector.myErrorOutput,
-      outputCollector.myOutput);
+    return result;
   }
 
   private static class GitCommandResultListener implements GitLineHandlerListener {

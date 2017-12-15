@@ -35,8 +35,6 @@ import java.io.File
  */
 val UNKNOWN_ERROR_TEXT: String = "unknown error"
 
-val SUCCESS_RESULT = GitCommandResult(true, 0, false, emptyList(), emptyList())
-
 class TestGitImpl : GitImpl() {
   private val LOG = Logger.getInstance(TestGitImpl::class.java)
 
