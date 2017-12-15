@@ -21,11 +21,12 @@ public class QuickFixesViewActionGroup extends ActionGroup {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    final InspectionResultsView view = getView(e);
+    InspectionResultsView view = getView(e);
     if (view == null || InvokeQuickFixAction.cantApplyFixes(view)) return AnAction.EMPTY_ARRAY;
     InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(true);
     if (toolWrapper == null) return AnAction.EMPTY_ARRAY;
-    final QuickFixAction[] quickFixes = view.getProvider().getCommonQuickFixes(toolWrapper, view.getTree());
-    return quickFixes.length == 0 ? AnAction.EMPTY_ARRAY : quickFixes;
+    QuickFixAction[] quickFixes = view.getProvider().getCommonQuickFixes(toolWrapper, view.getTree());
+    if (quickFixes.length != 0) return quickFixes;
+    return view.getProvider().getPartialQuickFixes(toolWrapper, view.getTree());
   }
 }
