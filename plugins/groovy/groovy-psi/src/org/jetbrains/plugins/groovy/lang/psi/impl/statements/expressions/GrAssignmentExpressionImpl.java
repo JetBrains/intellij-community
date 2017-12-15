@@ -134,10 +134,9 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     final ConcurrentMap<String, GrBindingVariable> bindings = file.getBindings();
     GrBindingVariable variable = bindings.get(name);
     if (variable == null) {
-      variable = ConcurrencyUtil.cacheOrGet(bindings, name, new GrBindingVariable(file, name, true));
+      variable = ConcurrencyUtil.cacheOrGet(bindings, name, new GrBindingVariable(file, name));
     }
 
-    if (!variable.hasWriteAccess()) return true;
     return processor.execute(variable, state);
   }
 
