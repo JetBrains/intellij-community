@@ -3,6 +3,9 @@ package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.find.editorHeaderActions.ShowMoreOptions;
@@ -30,7 +33,10 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.LoadingDecorator;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -43,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.ui.*;
@@ -187,7 +194,9 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           }
           DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
           DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
-          ((FindManagerImpl)FindManager.getInstance(myProject)).changeGlobalSettings(myHelper.getModel());
+          FindSettings findSettings = FindSettings.getInstance();
+          myScopeUI.applyTo(findSettings, mySelectedScope);
+          myHelper.updateFindSettings();
           applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
           return true;
         })
@@ -301,7 +310,17 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     });
     myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
     myFileMaskField =
-      new TextFieldWithAutoCompletion<String>(myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(myFileMasks, null),
+      new TextFieldWithAutoCompletion<String>(myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(myFileMasks, null) {
+        @Override
+        public void fillCompletionVariants(@NotNull CompletionParameters parameters,
+                                           @NotNull String prefix,
+                                           @NotNull CompletionResultSet result) {
+          for (String s : myVariants) {
+            result.addElement(new MyLookupElement(s));
+          }
+          result.stopHere();
+        }
+      },
                                               true, null) {
         @Override
         public void setEnabled(boolean enabled) {
@@ -717,7 +736,6 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     if (validationInfo == null) {
       myHelper.getModel().copyFrom(validateModel);
       myHelper.getModel().setPromptOnReplace(promptOnReplace);
-      myHelper.updateFindSettings();
       myHelper.doOKAction();
     }
     else {
@@ -894,15 +912,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     finishPreviousPreviewSearch();
     mySearchRescheduleOnCancellationsAlarm.cancelAllRequests();
     applyTo(myHelper.getModel(), false);
-    myHelper.updateFindSettings();
-    FindModel findInProjectModel = FindManager.getInstance(myProject).getFindInProjectModel();
-    FindModel copy = new FindModel();
-    copy.copyFrom(findInProjectModel);
-
-    findInProjectModel.copyFrom(myHelper.getModel());
-    FindSettings findSettings = FindSettings.getInstance();
-    myScopeUI.applyTo(findSettings, mySelectedScope);
-    findSettings.setFileMask(myHelper.getModel().getFileFilter());
+    FindModel findModel = new FindModel();
+    findModel.copyFrom(myHelper.getModel());
 
     ValidationInfo result = getValidationInfo(myHelper.getModel());
 
@@ -960,7 +971,8 @@ public class FindPopupPanel extends JBPanel implements FindUI {
 
     final AtomicInteger resultsCount = new AtomicInteger();
     final AtomicInteger resultsFilesCount = new AtomicInteger();
-    FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findSettings.isShowResultsInSeparateView(), findInProjectModel);
+    FindSettings findSettings = FindSettings.getInstance();
+    FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findSettings.isShowResultsInSeparateView(), findModel);
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
@@ -972,7 +984,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
-        FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
+        FindInProjectUtil.findUsages(findModel, myProject, info -> {
           if(isCancelled()) {
             onStop(hash);
             return false;
@@ -1321,4 +1333,30 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       listPopup.showUnderneathOf(myFilterContextButton);
     }
   }
+
+  private class MyLookupElement extends LookupElement {
+    private final String myValue;
+
+    public MyLookupElement(String value) {
+      myValue = value;
+    }
+
+    @NotNull
+    @Override
+    public String getLookupString() {
+      return myValue;
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getPsiElement() {
+      return null;
+    }
+
+    @Override
+    public boolean isValid() {
+      return true;
+    }
+  }
+
 }
