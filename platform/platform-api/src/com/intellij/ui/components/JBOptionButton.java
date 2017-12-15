@@ -50,8 +50,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   private Rectangle myMoreRecMouse;
   private Action[] myOptions;
 
-  private JPopupMenu myUnderPopup;
-  private JPopupMenu myAbovePopup;
+  private JPopupMenu myPopup;
   private boolean myPopupIsShowing;
 
   private String myOptionTooltipText;
@@ -112,9 +111,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
       showPopup(null, false);
     } else if (myPopupIsShowing && !insideRec) {
       final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-      JPopupMenu popup = myUnderPopup.isShowing() ? myUnderPopup : myAbovePopup;
-      if (over != null && popup.isShowing()) {
-        final Rectangle rec = new Rectangle(popup.getLocationOnScreen(), popup.getSize());
+      if (over != null && myPopup.isShowing()) {
+        final Rectangle rec = new Rectangle(myPopup.getLocationOnScreen(), myPopup.getSize());
         int delta = 15;
         rec.x -= delta;
         rec.width += delta * 2;
@@ -189,12 +187,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
     myPopupIsShowing = true;
     final Point loc = getLocationOnScreen();
     final Rectangle screen = ScreenUtil.getScreenRectangle(loc);
-    final Dimension popupSize = myUnderPopup.getPreferredSize();
+    final Dimension popupSize = myPopup.getPreferredSize();
     final Rectangle intersection = screen.intersection(new Rectangle(new Point(loc.x, loc.y + getHeight()), popupSize));
     final boolean above = intersection.height < popupSize.height;
     int y = above ? getY() - popupSize.height : getY() + getHeight();
-
-    final JPopupMenu popup = above ? myAbovePopup : myUnderPopup;
+    final JPopupMenu popup = myPopup;
 
     final Ref<PopupMenuListener> listener = new Ref<>();
     listener.set(new PopupMenuListener() {
@@ -245,8 +242,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
   public void closePopup() {
-    myUnderPopup.setVisible(false);
-    myAbovePopup.setVisible(false);
+    myPopup.setVisible(false);
   }
 
   public void updateOptions(@Nullable Action[] options) {
@@ -259,8 +255,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
   private void applyOptions() {
-    myUnderPopup = fillMenu(true);
-    myAbovePopup = fillMenu(false);
+    myPopup = fillMenu();
     enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
@@ -269,18 +264,11 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
 
-  private JPopupMenu fillMenu(boolean under) {
+  private JPopupMenu fillMenu() {
     final JPopupMenu result = new JBPopupMenu();
     if (isSimpleButton()) {
       myOptionInfos.clear();
       return result;
-    }
-
-    if (under && myOptions.length > 0) {
-      final JMenuItem mainAction = new JBMenuItem(getAction());
-      configureItem(getMenuInfo(getAction()), mainAction);
-      result.add(mainAction);
-      result.addSeparator();
     }
 
     for (Action each : myOptions) {
@@ -290,13 +278,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
       configureItem(info, eachItem);
       result.add(eachItem);
-    }
-
-    if (!under && myOptions.length > 0) {
-      result.addSeparator();
-      final JMenuItem mainAction = new JBMenuItem(getAction());
-      configureItem(getMenuInfo(getAction()), mainAction);
-      result.add(mainAction);
     }
 
     return result;
