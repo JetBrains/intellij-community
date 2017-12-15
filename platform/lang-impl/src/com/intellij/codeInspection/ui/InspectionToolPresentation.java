@@ -24,7 +24,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public interface InspectionToolPresentation extends ProblemDescriptionsProcessor {
@@ -78,7 +77,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   HTMLComposerImpl getComposer();
   void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity, Predicate<CommonProblemDescriptor> isDescriptorExcluded);
   @NotNull
-  QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree);
+  QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements);
   @NotNull
   SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> getProblemElements();
   @NotNull
@@ -87,10 +86,7 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
 
   @NotNull
   GlobalInspectionContextImpl getContext();
-  @NotNull
-  QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
-                                      @NotNull Function<RefEntity, CommonProblemDescriptor[]> descriptorMap,
-                                      @Nullable CommonProblemDescriptor[] allowedDescriptors);
+
   void exportResults(@NotNull Element parentNode,
                      @NotNull Predicate<RefEntity> isEntityExcluded,
                      @NotNull Predicate<CommonProblemDescriptor> isProblemExcluded);

@@ -34,7 +34,6 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
 import org.jdom.Element;
@@ -45,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class DefaultInspectionToolPresentation implements InspectionToolPresentation {
@@ -464,70 +462,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   @NotNull
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
-    return extractActiveFixes(refElements, getProblemElements()::get, tree != null ? tree.getSelectedDescriptors() : null);
-  }
-
-  @Override
-  @NotNull
-  public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
-                                             @NotNull Function<RefEntity, CommonProblemDescriptor[]> descriptorMap,
-                                             @Nullable CommonProblemDescriptor[] allowedDescriptors) {
-    final Set<CommonProblemDescriptor> allowedDescriptorSet = allowedDescriptors == null ? null : ContainerUtil.newHashSet(allowedDescriptors);
-    Map<String, LocalQuickFixWrapper> result = null;
-    for (RefEntity refElement : refElements) {
-      final CommonProblemDescriptor[] descriptors = descriptorMap.apply(refElement);
-      if (descriptors == null) continue;
-      for (CommonProblemDescriptor d : descriptors) {
-        if (allowedDescriptorSet != null && !allowedDescriptorSet.contains(d)) {
-          continue;
-        }
-        QuickFix[] fixes = d.getFixes();
-        if (fixes == null || fixes.length == 0) continue;
-        if (result == null) {
-          result = new HashMap<>();
-          for (QuickFix fix : fixes) {
-            if (fix == null) continue;
-            result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, myToolWrapper));
-          }
-        }
-        else {
-          for (String familyName : new ArrayList<>(result.keySet())) {
-            boolean isFound = false;
-            for (QuickFix fix : fixes) {
-              if (fix == null) continue;
-              if (familyName.equals(fix.getFamilyName())) {
-                isFound = true;
-                final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
-                LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
-                               "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
-                               "Please assign reported exception for the inspection \"" + myToolWrapper.getTool().getClass() + "\" (\"" +
-                               myToolWrapper.getShortName() + "\") developer");
-                try {
-                  quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
-                }
-                catch (AbstractMethodError e) {
-                  //for plugin compatibility
-                  quickFixAction.setText("Name is not available");
-                }
-                break;
-              }
-            }
-            if (!isFound) {
-              result.remove(familyName);
-              if (result.isEmpty()) {
-                return QuickFixAction.EMPTY;
-              }
-            }
-          }
-        }
-      }
-    }
-    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
-  }
-
-  private static Class getFixClass(QuickFix fix) {
-    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+    return QuickFixAction.EMPTY;
   }
 
   @Override

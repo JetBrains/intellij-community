@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -135,7 +137,7 @@ class OfflineDescriptorResolveResult {
     final int startOffset = textRange.getStartOffset();
     final int endOffset = textRange.getEndOffset();
     LocalInspectionToolSession session = new LocalInspectionToolSession(containingFile, startOffset, endOffset);
-    final PsiElementVisitor visitor = localTool.buildVisitor(holder, false, session);
+    final PsiElementVisitor visitor = localTool.buildVisitor(holder, true, session);
     localTool.inspectionStarted(session, false);
     final PsiElement[] elementsInRange = getElementsIntersectingRange(containingFile, startOffset, endOffset);
     for (PsiElement element : elementsInRange) {
