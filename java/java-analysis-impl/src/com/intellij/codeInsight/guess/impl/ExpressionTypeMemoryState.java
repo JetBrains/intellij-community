@@ -22,6 +22,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectHashingStrategy;
@@ -29,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -38,6 +41,12 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
   public static final TObjectHashingStrategy<PsiExpression> EXPRESSION_HASHING_STRATEGY = new TObjectHashingStrategy<PsiExpression>() {
     @Override
     public int computeHashCode(PsiExpression object) {
+      if (object instanceof PsiReferenceExpression) {
+        return Objects.hashCode(((PsiReferenceExpression)object).getReferenceName()) * 31 + 1;
+      }
+      else if (object instanceof PsiMethodCallExpression) {
+        return Objects.hashCode(((PsiMethodCallExpression)object).getMethodExpression().getReferenceName()) * 31 + 2;
+      }
       return object.getNode().getElementType().hashCode();
     }
 
