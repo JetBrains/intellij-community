@@ -1068,10 +1068,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
             }
 
-            // workaround for jdi hang in trace mode, see IDEA-183387
-            if ((ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
+            if (Patches.JDK_BUG_ID_21275177 && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               //noinspection ResultOfMethodCallIgnored
               myArgs.forEach(Object::toString);
+            }
+
+            // workaround for jdi hang in trace mode, see IDEA-183387
+            if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               StreamEx.of(myArgs).findAny(ThreadReference.class::isInstance).ifPresent(t -> {
                 //noinspection UseOfSystemOutOrSystemErr
                 System.err.println("[JDI: workaround for invocation of " + myMethod + "]");
@@ -1082,7 +1085,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             result[0] = invokeMethod(invokePolicy, myMethod, myArgs);
           }
           finally {
-            if ((ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
+            if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               myMethod.virtualMachine().setDebugTraceMode(ourTraceMask);
             }
             //  assertThreadSuspended(thread, context);
