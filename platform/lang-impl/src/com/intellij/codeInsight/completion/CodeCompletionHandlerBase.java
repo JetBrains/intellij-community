@@ -680,7 +680,7 @@ public class CodeCompletionHandlerBase {
     if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
       Language language = PsiUtilBase.getLanguageInEditor(editor, indicator.getProject());
       if (language != null) {
-        for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.forKey(language)) {
+        for (SmartEnterProcessor processor : SmartEnterProcessors.INSTANCE.allForLanguage(language)) {
           if (processor.processAfterCompletion(editor, indicator.getParameters().getOriginalFile())) break;
         }
       }
