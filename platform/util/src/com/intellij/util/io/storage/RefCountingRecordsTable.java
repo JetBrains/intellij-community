@@ -62,6 +62,8 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
   }
 
   private Map<Integer, List<Throwable>> myDebugHistory = new ConcurrentHashMap<Integer, List<Throwable>>();
+  // Report debug info only once to limit log size.
+  private static boolean ourWasObjectHistoryReported = false;
 
   public boolean decRefCount(int record) {
     markDirty();
@@ -71,7 +73,10 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
     addDebugHistoryEntry(record, "decRefCount: " + count + " -> " + (count - 1));
     //assert count > 0; // TODO: Re-enable the assert and remove debug code: b/70639656
     if (count <= 0) {
-      dumpObjectDebugHistory(record);
+      if (!ourWasObjectHistoryReported) {
+        ourWasObjectHistoryReported = true;
+        dumpObjectDebugHistory(record);
+      }
     } else {
       count--;
       myStorage.putInt(offset, count);
@@ -88,8 +93,11 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
       }
     }
     System.out.println("Reference counting history:");
-    for (Throwable entry : myDebugHistory.get(recordId)) {
-      entry.printStackTrace();
+    final List<Throwable> throwableList = myDebugHistory.get(recordId);
+    synchronized (throwableList) {
+      for (Throwable entry : throwableList) {
+        entry.printStackTrace(System.out);
+      }
     }
   }
 
@@ -103,7 +111,9 @@ class RefCountingRecordsTable extends AbstractRecordsTable {
       history = new ArrayList<Throwable>();
       myDebugHistory.put(recordId, history);
     }
-    history.add(new DebugEntryException(message));
+    synchronized (history) {
+      history.add(new DebugEntryException(message));
+    }
   }
 
   private static class DebugEntryException extends Exception {
