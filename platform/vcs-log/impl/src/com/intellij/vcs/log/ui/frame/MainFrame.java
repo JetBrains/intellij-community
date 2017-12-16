@@ -286,6 +286,12 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     protected void stopLoading() {
       myChangesLoadingPane.stopLoading();
     }
+
+    @Override
+    protected void onError(@NotNull Throwable error) {
+      myChangesBrowser.setSelectedDetails(Collections.emptyList());
+      myChangesBrowser.getViewer().setEmptyText("Error loading commits");
+    }
   }
 
   private class MyFocusPolicy extends ComponentsListFocusTraversalPolicy {

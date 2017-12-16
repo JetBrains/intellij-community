@@ -79,6 +79,7 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
       }, t -> {
         if (myLastRequest == indicator && !(indicator.isCanceled())) {
           myLastRequest = null;
+          onError(t);
           stopLoading();
         }
       }, indicator);
@@ -90,9 +91,14 @@ public abstract class CommitSelectionListener implements ListSelectionListener {
     return Ints.asList(myGraphTable.getSelectedRows());
   }
 
+  @CalledInAwt
   protected abstract void startLoading();
 
+  @CalledInAwt
   protected abstract void stopLoading();
+
+  @CalledInAwt
+  protected abstract void onError(@NotNull Throwable error);
 
   @CalledInAwt
   protected abstract void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList);
