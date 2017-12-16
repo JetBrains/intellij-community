@@ -247,7 +247,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected void fileAdded(VirtualFileEvent event, VirtualFile file) {
     if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
-      LOG.debug("Adding [", file.getPresentableUrl(), "] to added files");
+      LOG.debug("Adding [", file, "] to added files");
       myAddedFiles.add(event.getFile());
     }
   }
@@ -332,7 +332,7 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
-      LOG.debug("fileCreated: ", file.getPresentableUrl());
+      LOG.debug("fileCreated: ", file);
       if (isUnderMyVcs(file)) {
         fileAdded(event, file);
       }
