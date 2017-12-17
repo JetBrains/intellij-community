@@ -45,8 +45,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 
 import java.util.concurrent.ConcurrentMap;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPackages;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -187,16 +186,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
       return true; // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
     }
 
-    PsiElement run = lastParent == null ? getLastChild() : lastParent.getPrevSibling();
-    while (run != null) {
-      if (shouldProcess(lastParent, run) &&
-          !run.processDeclarations(processor, state, null, place)) {
-        return false;
-      }
-      run = run.getPrevSibling();
-    }
-
-    return true;
+    return processStatements(
+      this, lastParent,
+      statement -> !shouldProcess(lastParent, statement) ||
+                   statement.processDeclarations(processor, state, null, place)
+    );
   }
 
   private static boolean shouldProcess(@Nullable PsiElement lastParent, @NotNull PsiElement run) {
