@@ -18,28 +18,22 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.UI;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RectanglePainter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,18 +46,16 @@ import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
+import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;
 
 public class CommitPanel extends JBPanel {
   public static final int BOTTOM_BORDER = 2;
   private static final int REFERENCES_BORDER = 12;
   private static final int TOP_BORDER = 4;
-  private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
   @NotNull private final VcsLogData myLogData;
 
@@ -183,13 +175,7 @@ public class CommitPanel extends JBPanel {
     return UIUtil.getTableBackground();
   }
 
-  @NotNull
-  public static String formatDateTime(long time) {
-    return " on " + DateFormatUtil.formatDate(time) + " at " + DateFormatUtil.formatTime(time);
-  }
-
   private class DataPanel extends HtmlPanel {
-    private static final String GO_TO_HASH = "go-to-hash:";
     @NotNull private final Project myProject;
     @Nullable private String myMainText;
 
@@ -212,7 +198,8 @@ public class CommitPanel extends JBPanel {
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
         myNavigate.consume(e.getDescription().substring(GO_TO_HASH.length()));
-      } else {
+      }
+      else {
         BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);
       }
     }
@@ -222,10 +209,7 @@ public class CommitPanel extends JBPanel {
         myMainText = null;
       }
       else {
-        String hash = commit.getId().toShortString();
-        String hashAndAuthor = getHtmlWithFonts(hash + " " + getAuthorText(commit, hash.length() + 1));
-        String messageText = getMessageText(commit);
-        myMainText = messageText + "<br/><br/>" + hashAndAuthor;
+        myMainText = CommitPresentationUtil.getText(myProject, commit);
       }
     }
 
@@ -236,16 +220,6 @@ public class CommitPanel extends JBPanel {
         String linkColor = "#" + ColorUtil.toHex(UI.getColor("link.foreground"));
         styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
       }
-    }
-
-    @NotNull
-    private String getHtmlWithFonts(@NotNull String input) {
-      return getHtmlWithFonts(input, getCommitDetailsFont().getStyle());
-    }
-
-    @NotNull
-    private String getHtmlWithFonts(@NotNull String input, int style) {
-      return FontUtil.getHtmlWithFonts(input, style, getCommitDetailsFont());
     }
 
     void update() {
@@ -265,112 +239,13 @@ public class CommitPanel extends JBPanel {
       repaint();
     }
 
-    @NotNull
-    private String getMessageText(@NotNull VcsFullCommitDetails commit) {
-      String fullMessage = commit.getFullMessage();
-      int separator = fullMessage.indexOf("\n\n");
-      String subject = separator > 0 ? fullMessage.substring(0, separator) : fullMessage;
-      String description = fullMessage.substring(subject.length());
-      return "<b>" +
-             getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(myProject, subject, this::replaceHashes)), Font.BOLD) +
-             "</b>" +
-             getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(myProject, description, this::replaceHashes)));
-    }
-
-    @NotNull
-    private String escapeMultipleSpaces(@NotNull String text) {
-      StringBuilder result = new StringBuilder();
-      for (int i = 0; i < text.length(); i++) {
-        if (text.charAt(i) == ' ') {
-          if (i == text.length() - 1 || text.charAt(i + 1) != ' ') {
-            result.append(' ');
-          }
-          else {
-            result.append("&nbsp;");
-          }
-        }
-        else {
-          result.append(text.charAt(i));
-        }
-      }
-      return result.toString();
-    }
-
-    @NotNull
-    private String getAuthorText(@NotNull VcsFullCommitDetails commit, int offset) {
-      long authorTime = commit.getAuthorTime();
-      long commitTime = commit.getCommitTime();
-
-      String authorText = getAuthorName(commit.getAuthor()) + formatDateTime(authorTime);
-      if (!VcsUserUtil.isSamePerson(commit.getAuthor(), commit.getCommitter())) {
-        String commitTimeText;
-        if (authorTime != commitTime) {
-          commitTimeText = formatDateTime(commitTime);
-        }
-        else {
-          commitTimeText = "";
-        }
-        authorText += getCommitterText(commit.getCommitter(), commitTimeText, offset);
-      }
-      else if (authorTime != commitTime) {
-        authorText += getCommitterText(null, formatDateTime(commitTime), offset);
-      }
-      return authorText;
-    }
-
-    @NotNull
-    private String getCommitterText(@Nullable VcsUser committer, @NotNull String commitTimeText, int offset) {
-      String alignment = "<br/>" + StringUtil.repeat("&nbsp;", offset);
-      String gray = ColorUtil.toHex(JBColor.GRAY);
-
-      String graySpan = "<span style='color:#" + gray + "'>";
-
-      String text = alignment + graySpan + "committed";
-      if (committer != null) {
-        text += " by " + VcsUserUtil.getShortPresentation(committer);
-        if (!committer.getEmail().isEmpty()) {
-          text += "</span>" + getEmailText(committer) + graySpan;
-        }
-      }
-      text += commitTimeText + "</span>";
-      return text;
-    }
-
-    @NotNull
-    private String getAuthorName(@NotNull VcsUser user) {
-      String username = VcsUserUtil.getShortPresentation(user);
-      return user.getEmail().isEmpty() ? username : username + getEmailText(user);
-    }
-
-    @NotNull
-    private String getEmailText(@NotNull VcsUser user) {
-      return " <a href='mailto:" + user.getEmail() + "'>&lt;" + user.getEmail() + "&gt;</a>";
-    }
-
     @Override
     public Color getBackground() {
       return getCommitDetailsBackground();
     }
-
-    @NotNull
-    private String replaceHashes(@NotNull String s) {
-      Matcher matcher = HASH_PATTERN.matcher(s);
-      StringBuffer result = new StringBuffer();
-
-      while (matcher.find()) {
-        String hash = matcher.group();
-        matcher.appendReplacement(result, "<a href=\"" + GO_TO_HASH + hash + "\">" + hash + "</a>");
-      }
-      matcher.appendTail(result);
-
-      return result.toString();
-    }
   }
 
   private static class BranchesPanel extends HtmlPanel {
-    private static final int PER_ROW = 2;
-    private static final String LINK_HREF = "show-hide-branches";
-
     @Nullable private List<String> myBranches;
     private boolean myExpanded = false;
 
@@ -383,7 +258,7 @@ public class CommitPanel extends JBPanel {
 
     @Override
     public void hyperlinkUpdate(HyperlinkEvent e) {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && LINK_HREF.equals(e.getDescription())) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && SHOW_HIDE_BRANCHES.equals(e.getDescription())) {
         myExpanded = !myExpanded;
         update();
       }
@@ -409,89 +284,10 @@ public class CommitPanel extends JBPanel {
       setText("<html><head>" +
               UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
               "</head><body>" +
-              getBranchesText() +
+              CommitPresentationUtil.getBranchesText(myBranches, myExpanded) +
               "</body></html>");
       revalidate();
       repaint();
-    }
-
-    @NotNull
-    private String getBranchesText() {
-      if (myBranches == null) {
-        return "<i>In branches: loading...</i>";
-      }
-      if (myBranches.isEmpty()) return "<i>Not in any branch</i>";
-
-      if (myExpanded) {
-        int rowCount = (int)Math.ceil((double)myBranches.size() / PER_ROW);
-
-        int[] means = new int[PER_ROW - 1];
-        int[] max = new int[PER_ROW - 1];
-
-        for (int i = 0; i < rowCount; i++) {
-          for (int j = 0; j < PER_ROW - 1; j++) {
-            int index = rowCount * j + i;
-            if (index < myBranches.size()) {
-              means[j] += myBranches.get(index).length();
-              max[j] = Math.max(myBranches.get(index).length(), max[j]);
-            }
-          }
-        }
-        for (int j = 0; j < PER_ROW - 1; j++) {
-          means[j] /= rowCount;
-        }
-
-        HtmlTableBuilder builder = new HtmlTableBuilder();
-        for (int i = 0; i < rowCount; i++) {
-          builder.startRow();
-          for (int j = 0; j < PER_ROW; j++) {
-            int index = rowCount * j + i;
-            if (index >= myBranches.size()) {
-              builder.append("");
-            }
-            else {
-              String branch = myBranches.get(index);
-              if (index != myBranches.size() - 1) {
-                int space = 0;
-                if (j < PER_ROW - 1 && branch.length() == max[j]) {
-                  space = Math.max(means[j] + 20 - max[j], 5);
-                }
-                builder.append(branch + StringUtil.repeat("&nbsp;", space), "left");
-              }
-              else {
-                builder.append(branch, "left");
-              }
-            }
-          }
-
-          builder.endRow();
-        }
-
-        return "<i>In " + myBranches.size() + " branches:</i> " +
-               "<a href=\"" + LINK_HREF + "\"><i>(click to hide)</i></a><br>" +
-               builder.build();
-      }
-      else {
-        int totalMax = 0;
-        int charCount = 0;
-        for (String b : myBranches) {
-          totalMax++;
-          charCount += b.length();
-          if (charCount >= 50) break;
-        }
-
-        String branchText;
-        if (myBranches.size() <= totalMax) {
-          branchText = StringUtil.join(myBranches, ", ");
-        }
-        else {
-          branchText = StringUtil.join(ContainerUtil.getFirstItems(myBranches, totalMax), ", ") +
-                       "… <a href=\"" +
-                       LINK_HREF +
-                       "\"><i>(click to show all)</i></a>";
-        }
-        return "<i>In " + myBranches.size() + StringUtil.pluralize(" branch", myBranches.size()) + ":</i> " + branchText;
-      }
     }
 
     @Override
