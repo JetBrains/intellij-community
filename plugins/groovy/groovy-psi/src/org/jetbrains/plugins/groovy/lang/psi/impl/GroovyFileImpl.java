@@ -109,8 +109,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
                                      @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    if (ResolveUtil.shouldProcessProperties(classHint) || shouldProcessLocals(processor)) {
-      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
+    if (getStub() == null) {
+      if (!(lastParent instanceof GrMember)) {
+        // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
+        if (!processLocals(this, processor, state, lastParent, place)) return false;
+      }
+      if (ResolveUtil.shouldProcessProperties(classHint)) {
+        if (!processBindings(processor, state, lastParent, place)) return false;
+      }
     }
 
     if (myContext != null) {
@@ -165,25 +171,14 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return true;
   }
 
-  private boolean processChildrenScopes(@NotNull PsiScopeProcessor processor,
-                                        @NotNull ResolveState state,
-                                        @Nullable PsiElement lastParent,
-                                        @NotNull PsiElement place) {
-    final StubElement<?> stub = getStub();
-    if (stub != null) {
-      return true; // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
-    }
-
-    return processStatements(
-      this, lastParent,
-      statement -> !shouldProcess(lastParent, statement) ||
-                   statement.processDeclarations(processor, state, null, place)
-    );
-  }
-
-  private static boolean shouldProcess(@Nullable PsiElement lastParent, @NotNull PsiElement run) {
-    return run instanceof GrAssignmentExpression || run instanceof GrTupleAssignmentExpression || // binding variables
-           run instanceof GrVariableDeclaration && !(lastParent instanceof GrMember);             // local variables
+  private boolean processBindings(@NotNull PsiScopeProcessor processor,
+                                  @NotNull ResolveState state,
+                                  @Nullable PsiElement lastParent,
+                                  @NotNull PsiElement place) {
+    return processStatements(this, lastParent, statement -> {
+      if (!(statement instanceof GrAssignmentExpression) && !(statement instanceof GrTupleAssignmentExpression)) return true;
+      return statement.processDeclarations(processor, state, null, place);
+    });
   }
 
   @Override
