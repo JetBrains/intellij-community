@@ -12,7 +12,6 @@ import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -27,9 +26,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Objects;
-import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessDynamicProperties;
+import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.getBinding;
 
 /**
  * @author ilyas
@@ -131,13 +130,7 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
     if (hintName != null && !name.equals(hintName)) return true;
 
     if (lReference != place && lReference.resolve() != null && !(lReference.resolve() instanceof GrBindingVariable)) return true;
-    final ConcurrentMap<String, GrBindingVariable> bindings = file.getBindings();
-    GrBindingVariable variable = bindings.get(name);
-    if (variable == null) {
-      variable = ConcurrencyUtil.cacheOrGet(bindings, name, new GrBindingVariable(file, name));
-    }
-
-    return processor.execute(variable, state);
+    return processor.execute(getBinding(file, name), state);
   }
 
   @Nullable

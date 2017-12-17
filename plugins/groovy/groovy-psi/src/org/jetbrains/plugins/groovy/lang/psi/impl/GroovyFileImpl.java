@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -15,7 +17,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -33,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
@@ -42,8 +42,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
-
-import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
@@ -57,11 +55,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
-
-  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = () -> {
-    final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
-    return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-  };
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
@@ -165,11 +158,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return isScript() &&
            !(lastParent instanceof GrTypeDefinition) &&
            PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
-  }
-
-  @NotNull
-  public ConcurrentMap<String, GrBindingVariable> getBindings() {
-    return CachedValuesManager.getCachedValue(this, BINDING_PROVIDER);
   }
 
   @Override
