@@ -60,6 +60,10 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
   }
 
   @Override
+  public void reload() {
+  }
+
+  @Override
   protected boolean isVisible() {
     return false;
   }

@@ -41,10 +41,6 @@ public class RunToCursorBreakpoint extends SyntheticLineBreakpoint {
     return myCustomPosition.getLine();
   }
 
-  @Override
-  public void reload() {
-  }
-
   public boolean isRestoreBreakpoints() {
     return myRestoreBreakpoints;
   }
