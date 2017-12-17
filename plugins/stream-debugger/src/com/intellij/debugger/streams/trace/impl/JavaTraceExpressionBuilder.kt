@@ -41,7 +41,7 @@ class JavaTraceExpressionBuilder(private val project: Project, handlerFactory: H
                      "${block.text} \n" +
                      resultVariableName
 
-        LOG.info("trace expression: \n$result")
+        LOG.debug("trace expression: \n$result")
         result
       })
   }
