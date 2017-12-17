@@ -34,6 +34,7 @@ import com.intellij.debugger.memory.utils.LowestPriorityCommand;
 import com.intellij.debugger.memory.utils.SingleAlarmWithMutableDelay;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.icons.AllIcons;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -48,6 +49,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
@@ -325,6 +327,13 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private void handleClassSelection(@Nullable ReferenceType ref) {
     final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
+      if (ref.virtualMachine().canGetInstanceInfo()) {
+        XDebuggerManagerImpl.NOTIFICATION_GROUP
+          .createNotification("The virtual machine implementation does not provide an ability to get instances",
+                              NotificationType.INFORMATION).notify(debugSession.getProject());
+        return;
+      }
+
       new InstancesWindow(debugSession, limit -> {
         final List<ObjectReference> instances = ref.instances(limit);
         return instances == null ? Collections.emptyList() : instances;
