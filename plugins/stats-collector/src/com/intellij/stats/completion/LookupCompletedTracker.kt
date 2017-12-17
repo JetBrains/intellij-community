@@ -48,7 +48,7 @@ class LookupCompletedTracker : LookupAdapter() {
     private fun processElementSelected(lookup: LookupImpl, element: LookupElement) {
         val relevanceObjects =
                 lookup.getRelevanceObjects(listOf(element), false)
-        val relevanceMap = relevanceObjects[element]!!.associate { it.first to it.second }
+        val relevanceMap = relevanceObjects[element]?.associate { it.first to it.second } ?: return
         val project = lookup.project
         val featureManager = FeatureManagerImpl.getInstance()
         featureManager.binaryFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
