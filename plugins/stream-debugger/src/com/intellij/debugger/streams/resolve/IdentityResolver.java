@@ -17,6 +17,8 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class IdentityResolver implements ValuesOrderResolver {
+  private static final Object NULL_MARKER = new Object();
+
   @NotNull
   @Override
   public Result resolve(@NotNull TraceInfo info) {
@@ -30,10 +32,10 @@ public class IdentityResolver implements ValuesOrderResolver {
       .of(after.keySet())
       .sorted()
       .map(after::get)
-      .groupingBy(TraceUtil::extractKey);
+      .groupingBy(IdentityResolver::extractKey);
 
     for (final TraceElement element : before.values()) {
-      final Object value = TraceUtil.extractKey(element);
+      final Object value = extractKey(element);
 
       final List<TraceElement> elements = grouped.get(value);
       if (elements == null || elements.isEmpty()) {
@@ -50,5 +52,11 @@ public class IdentityResolver implements ValuesOrderResolver {
     }
 
     return Result.of(direct, reverse);
+  }
+
+  @NotNull
+  private static Object extractKey(@NotNull TraceElement element) {
+    final Object key = TraceUtil.extractKey(element);
+    return key == null ? NULL_MARKER : key;
   }
 }
