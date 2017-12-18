@@ -450,7 +450,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       if (containingFile instanceof StubBasedPsiElement) {
         assert ((StubBasedPsiElement)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
       }
-      final TypeEvalContext context = TypeEvalContext.codeAnalysis(containingFile.getProject(), containingFile);
+      final TypeEvalContext context = TypeEvalContext.userInitiated(containingFile.getProject(), containingFile);
       resolveContext = resolveContext.withTypeEvalContext(context);
     }
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&

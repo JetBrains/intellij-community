@@ -70,7 +70,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public PsiPolyVariantReference getReference() {
     //noinspection InstanceofIncompatibleInterface
     assert !(this instanceof StubBasedPsiElement);
-    final TypeEvalContext context = TypeEvalContext.codeAnalysis(getProject(), getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(getProject(), getContainingFile());
     return getReference(PyResolveContext.defaultContext().withTypeEvalContext(context));
   }
 

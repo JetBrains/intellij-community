@@ -5,6 +5,8 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageTargetUtil;
+import com.jetbrains.python.findUsages.PyUsageTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -188,6 +190,25 @@ public class PyFindUsagesTest extends PyTestCase {
   // PY-26006
   public void testFunctionUsagesWithSameNameDecorator() {
     assertEmpty(myFixture.testFindUsages("findUsages/FunctionUsagesWithSameNameDecorator.py"));
+  }
+
+  // PY-26077
+  public void testFunctionUsageInferredTypes() {
+    final String testName = getTestName(false);
+    final Collection<UsageInfo> usages = myFixture.testFindUsages(String.format("findUsages/%s1.py", testName),
+                                                                  String.format("findUsages/%s2.py", testName));
+
+    final PyUsageTypeProvider usageTypeProvider = new PyUsageTypeProvider();
+    long unclassifiedUsagesCount = usages.stream()
+      .map(UsageInfo::getElement)
+      .filter(Objects::nonNull)
+      .map(element -> usageTypeProvider.getUsageType(element,
+                                                     UsageTargetUtil.findUsageTargets(element)))
+      // Get unclassified usages
+      .filter(Objects::isNull)
+      .count();
+
+    assertEquals(1, unclassifiedUsagesCount);
   }
 
   private Collection<UsageInfo> findMultiFileUsages(String filename) {
