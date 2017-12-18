@@ -42,14 +42,33 @@ public class GitCommandResult {
 
   public GitCommandResult(boolean startFailed,
                           int exitCode,
-                          boolean authenticationFailed,
                           @NotNull List<String> errorOutput,
                           @NotNull List<String> output) {
+    this(startFailed, exitCode, false, errorOutput, output);
+  }
+
+  private GitCommandResult(boolean startFailed,
+                           int exitCode,
+                           boolean authenticationFailed,
+                           @NotNull List<String> errorOutput,
+                           @NotNull List<String> output) {
     myExitCode = exitCode;
     myStartFailed = startFailed;
     myAuthenticationFailed = authenticationFailed;
     myErrorOutput = errorOutput;
     myOutput = output;
+  }
+
+  /**
+   * @return result with specified value for authentication failure
+   */
+  @NotNull
+  static GitCommandResult withAuthentication(@NotNull GitCommandResult result, boolean authenticationFailed) {
+    return new GitCommandResult(result.myStartFailed,
+                                result.myExitCode,
+                                authenticationFailed,
+                                result.myErrorOutput,
+                                result.myOutput);
   }
 
   /**
@@ -138,7 +157,7 @@ public class GitCommandResult {
 
   @NotNull
   public static GitCommandResult error(@NotNull String error) {
-    return new GitCommandResult(false, 1, false, Collections.singletonList(error), Collections.emptyList());
+    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
 
   public boolean cancelled() {

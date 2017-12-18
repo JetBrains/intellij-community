@@ -69,6 +69,13 @@ abstract class GitImplBase implements Git {
     });
   }
 
+  /**
+   * Run handler with output collection and authentication
+   *
+   * @param handlerConstructor
+   * @param outputCollectorConstructor
+   * @return result with proper authentication failure flag
+   */
   @NotNull
   private static GitCommandResult run(@NotNull Computable<GitLineHandler> handlerConstructor,
                                       @NotNull Computable<OutputCollector> outputCollectorConstructor) {
@@ -78,33 +85,44 @@ abstract class GitImplBase implements Git {
     int authAttempt = 0;
     do {
       GitLineHandler handler = handlerConstructor.compute();
+      OutputCollector outputCollector = outputCollectorConstructor.compute();
 
-      try (AccessToken locking = lock(handler);
-           AccessToken auth = remoteAuth(handler, authFailedRef::set)) {
-        OutputCollector outputCollector = outputCollectorConstructor.compute();
-        GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
-        handler.addLineListener(resultListener);
-
-        writeOutputToConsole(handler);
-
-        handler.runInCurrentThread();
-
-        result = new GitCommandResult(resultListener.myStartFailed,
-                                      resultListener.myExitCode,
-                                      authFailedRef.get(),
-                                      outputCollector.myErrorOutput,
-                                      outputCollector.myOutput);
+      try (AccessToken ignored = remoteAuth(handler, authFailedRef::set)) {
+        result = run(handler, outputCollector);
       }
       catch (IOException e) {
         result = new GitCommandResult(true,
                                       0,
-                                      false,
                                       Collections.singletonList("Failed to start Git process " + e.getLocalizedMessage()),
                                       Collections.emptyList());
       }
     }
     while (authFailedRef.get() && authAttempt++ < 2);
-    return result;
+    return GitCommandResult.withAuthentication(result, authFailedRef.get());
+  }
+
+  /**
+   * Run handler with output collection
+   *
+   * @param handlerConstructor
+   * @param outputCollectorConstructor
+   * @return run result
+   */
+  @NotNull
+  private static GitCommandResult run(@NotNull GitLineHandler handler,
+                                      @NotNull OutputCollector outputCollector) {
+    try (AccessToken ignored = lock(handler)) {
+      GitCommandResultListener resultListener = new GitCommandResultListener(outputCollector);
+      handler.addLineListener(resultListener);
+
+      writeOutputToConsole(handler);
+
+      handler.runInCurrentThread();
+      return new GitCommandResult(resultListener.myStartFailed,
+                                  resultListener.myExitCode,
+                                  outputCollector.myErrorOutput,
+                                  outputCollector.myOutput);
+    }
   }
 
   private static class GitCommandResultListener implements GitLineHandlerListener {

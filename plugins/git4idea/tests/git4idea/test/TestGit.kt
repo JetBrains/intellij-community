@@ -169,7 +169,7 @@ class TestGitImpl : GitImpl() {
     }
   }
 
-  private fun fatalResult() = GitCommandResult(false, 128, false, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>())
+  private fun fatalResult() = GitCommandResult(false, 128, listOf("fatal: error: $UNKNOWN_ERROR_TEXT"), emptyList<String>())
 }
 
 
