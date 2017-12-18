@@ -20,11 +20,11 @@ public class DataSharingOptionsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getConsents();
+    final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     try {
       final Collection<Consent> result = AppUIUtil.confirmConsentOptions(consentsToShow.first);
       if (result != null) {
-        ConsentOptions.setConsents(result);
+        ConsentOptions.getInstance().setConsents(result);
       }
     }
     catch (Exception ex) {
