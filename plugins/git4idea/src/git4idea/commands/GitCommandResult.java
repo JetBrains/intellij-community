@@ -156,6 +156,11 @@ public class GitCommandResult {
   }
 
   @NotNull
+  static GitCommandResult startError(@NotNull String error) {
+    return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList());
+  }
+
+  @NotNull
   public static GitCommandResult error(@NotNull String error) {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
