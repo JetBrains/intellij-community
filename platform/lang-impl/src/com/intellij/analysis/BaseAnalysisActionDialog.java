@@ -16,7 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.TitledSeparator;
-import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,9 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,7 +41,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final String myAnalysisNoon;
   private final Project myProject;
   private final ButtonGroup myGroup = new ButtonGroup();
-  private final JBCheckBox myInspectTestSource = new JBCheckBox();
+  private final JCheckBox myInspectTestSource = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
 
   // backward compatibility
@@ -109,6 +111,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     int gridY = 0;
     JRadioButton[] buttons = new JRadioButton[myViewItems.size()];
+    GridBagConstraints gbc = new GridBagConstraints();
     for (ModelScopeItemView x: myViewItems) {
       JRadioButton button = x.button;
       List<JComponent> components = x.additionalComponents;
@@ -117,37 +120,29 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       buttons[gridY] = button;
       myGroup.add(button);
       int countExtraColumns = components.size();
-      if (countExtraColumns == 0) {
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridy = gridY;
-        constraints.gridx = gridX;
-        constraints.gridwidth = maxColumns;
-        constraints.anchor = GridBagConstraints.WEST;
-        scopesPanel.add(button, constraints);
-        gridX++;
-      }
-      else {
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridy = gridY;
-        constraints.gridx = gridX;
-        constraints.gridwidth = 1;
-        constraints.anchor = GridBagConstraints.WEST;
-        scopesPanel.add(button, constraints);
-        gridX++;
-      }
+
+      gbc.gridy = gridY;
+      gbc.gridx = gridX;
+      gbc.gridwidth = countExtraColumns == 0 ? maxColumns : 1;
+      gbc.weightx = 0.0D;
+      gbc.fill = 0;
+      gbc.anchor = GridBagConstraints.WEST;
+      gbc.insets = JBUI.insetsLeft(10);
+      scopesPanel.add(button, gbc);
+      gridX++;
 
       for (JComponent c : components) {
         if (c instanceof Disposable) {
           Disposer.register(myDisposable, (Disposable)c);
         }
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridy = gridY;
-        constraints.gridx = gridX;
-        constraints.gridwidth = 1;
-        constraints.weightx = 1.0;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.anchor = GridBagConstraints.EAST;
-        scopesPanel.add(c, constraints);
+        gbc.gridy = gridY;
+        gbc.gridx = gridX;
+        gbc.gridwidth = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = JBUI.insetsLeft(5);
+        scopesPanel.add(c, gbc);
         gridX++;
       }
       gridY++;
@@ -156,13 +151,14 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     myInspectTestSource.setText(AnalysisScopeBundle.message("scope.option.include.test.sources"));
     myInspectTestSource.setSelected(myOptions.ANALYZE_TEST_SOURCES);
     myInspectTestSource.setVisible(myShowInspectTestSource);
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridy = gridY;
-    constraints.gridx = 0;
-    constraints.gridwidth = maxColumns;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.WEST;
-    scopesPanel.add(myInspectTestSource, constraints);
+    gbc.gridy = gridY;
+    gbc.gridx = 0;
+    gbc.gridwidth = maxColumns;
+    gbc.weightx = 1.0;
+    gbc.fill = 0;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.insets = JBUI.insetsLeft(10);
+    scopesPanel.add(myInspectTestSource, gbc);
 
     preselectButton();
 
@@ -170,12 +166,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     wholePanel.addToTop(panel);
     final JComponent additionalPanel = getAdditionalActionSettings(myProject);
     if (additionalPanel != null) {
-      wholePanel.addToBottom(additionalPanel);
+      wholePanel.addToCenter(additionalPanel);
     }
     new RadioUpDownListener(buttons);
 
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> getWindow().pack());
     return wholePanel;
   }
 
