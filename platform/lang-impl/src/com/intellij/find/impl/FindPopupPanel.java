@@ -178,27 +178,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         .setRequestFocus(true)
         .setCancelKeyEnabled(false)
         .setCancelCallback(() -> {
-          if (!myCanClose.get()) return false;
-          if (myIsPinned.get()) return false;
-          if (!ApplicationManager.getApplication().isActive()) return false;
-          if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
-          List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
-          if (!popups.isEmpty()) {
-            for (JBPopup popup : popups) {
-              popup.cancel();
-            }
-            return false;
+          boolean canBeClosed = canBeClosed();
+          if (canBeClosed) {
+            saveSettings();
           }
-          if (myScopeUI.hideAllPopups()) {
-            return false;
-          }
-          DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
-          DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
-          FindSettings findSettings = FindSettings.getInstance();
-          myScopeUI.applyTo(findSettings, mySelectedScope);
-          myHelper.updateFindSettings();
-          applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
-          return true;
+          return canBeClosed;
         })
         .createPopup();
       Disposer.register(myBalloon, myDisposable);
@@ -248,6 +232,33 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         myBalloon.showCenteredInCurrentWindow(myProject);
       }
     }
+  }
+
+  protected boolean canBeClosed() {
+    if (!myCanClose.get()) return false;
+    if (myIsPinned.get()) return false;
+    if (!ApplicationManager.getApplication().isActive()) return false;
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
+    List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
+    if (!popups.isEmpty()) {
+      for (JBPopup popup : popups) {
+        popup.cancel();
+      }
+      return false;
+    }
+    if (myScopeUI.hideAllPopups()) {
+      return false;
+    }
+    return true;
+  }
+
+  protected void saveSettings() {
+    DimensionService.getInstance().setSize(SERVICE_KEY, myBalloon.getSize(), myHelper.getProject() );
+    DimensionService.getInstance().setLocation(SERVICE_KEY, myBalloon.getLocationOnScreen(), myHelper.getProject() );
+    FindSettings findSettings = FindSettings.getInstance();
+    myScopeUI.applyTo(findSettings, mySelectedScope);
+    myHelper.updateFindSettings();
+    applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
   }
 
   @NotNull
@@ -717,7 +728,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myIsPinned.set(false);
     try {
       //Here we actually close popups
-      return myBalloon != null && myBalloon.canClose();
+      return myBalloon != null && canBeClosed();
     } finally {
       myIsPinned.set(state);
     }
