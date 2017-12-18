@@ -26,53 +26,39 @@ import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
+import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager
+import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
+import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
+import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
+import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
 import com.intellij.vcs.log.graph.utils.NormalEdge
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 
-class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
+class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
+                                                      private val printElementManager: PrintElementManager,
+                                                      private val longEdgeSize: Int,
+                                                      private val visiblePartSize: Int,
+                                                      private val edgeWithArrowSize: Int) : PrintElementGenerator {
+  private val cache = SLRUMap<Int, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2)
+  private val edgesInRowGenerator = EdgesInRowGenerator(linearGraph)
+  private val elementComparator: Comparator<GraphElement>
+    get() = printElementManager.graphElementComparator
 
-  private val myCache = SLRUMap<Int, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2)
-  private val myEdgesInRowGenerator: EdgesInRowGenerator
-  private val myGraphElementComparator: Comparator<GraphElement>
+  private var recommendedWidth = 0
 
-  private val myLongEdgeSize: Int
-  private val myVisiblePartSize: Int
-  private val myEdgeWithArrowSize: Int
-  private var myRecommendedWidth = 0
-
-  constructor(graph: LinearGraph, printElementManager: PrintElementManager, showLongEdges: Boolean) : super(graph, printElementManager) {
-    myEdgesInRowGenerator = EdgesInRowGenerator(graph)
-    myGraphElementComparator = printElementManager.graphElementComparator
-    if (showLongEdges) {
-      myLongEdgeSize = VERY_LONG_EDGE_SIZE
-      myVisiblePartSize = VERY_LONG_EDGE_PART_SIZE
-      myEdgeWithArrowSize = LONG_EDGE_SIZE
-    }
-    else {
-      myLongEdgeSize = LONG_EDGE_SIZE
-      myVisiblePartSize = LONG_EDGE_PART_SIZE
-      myEdgeWithArrowSize = Integer.MAX_VALUE
-    }
-  }
-
-  @TestOnly
   constructor(graph: LinearGraph,
               printElementManager: PrintElementManager,
-              longEdgeSize: Int,
-              visiblePartSize: Int,
-              edgeWithArrowSize: Int) : super(graph, printElementManager) {
-    myEdgesInRowGenerator = EdgesInRowGenerator(graph)
-    myGraphElementComparator = printElementManager.graphElementComparator
-    myLongEdgeSize = longEdgeSize
-    myVisiblePartSize = visiblePartSize
-    myEdgeWithArrowSize = edgeWithArrowSize
-  }
+              showLongEdges: Boolean) :
+    this(graph, printElementManager,
+         if (showLongEdges) VERY_LONG_EDGE_SIZE else LONG_EDGE_SIZE,
+         if (showLongEdges) VERY_LONG_EDGE_PART_SIZE else LONG_EDGE_PART_SIZE,
+         if (showLongEdges) LONG_EDGE_SIZE else Integer.MAX_VALUE)
 
   fun getRecommendedWidth(): Int {
-    if (myRecommendedWidth <= 0) {
+    if (recommendedWidth <= 0) {
       val n = Math.min(SAMPLE_SIZE, linearGraph.nodesCount())
 
       var sum = 0.0
@@ -138,13 +124,13 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
        s*/
       val average = sum
       val deviation = Math.sqrt(sumSquares - average * average)
-      myRecommendedWidth = Math.round(average + deviation).toInt()
+      recommendedWidth = Math.round(average + deviation).toInt()
     }
 
-    return myRecommendedWidth
+    return recommendedWidth
   }
 
-  override fun collectElements(rowIndex: Int, consumer: ElementConsumer) {
+  private fun collectElements(rowIndex: Int, consumer: ElementConsumer) {
     val visibleElements = getSortedVisibleElementsInRow(rowIndex)
     val upPosition = createEndPositionFunction(rowIndex - 1, true)
     val downPosition = createEndPositionFunction(rowIndex + 1, false)
@@ -234,15 +220,15 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     val upOffset = rowIndex - normalEdge.up
     val downOffset = normalEdge.down - rowIndex
 
-    if (edgeSize >= myLongEdgeSize) {
-      if (upOffset == myVisiblePartSize) {
-        LOG.assertTrue(downOffset != myVisiblePartSize,
+    if (edgeSize >= longEdgeSize) {
+      if (upOffset == visiblePartSize) {
+        LOG.assertTrue(downOffset != visiblePartSize,
                        "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
         return EdgePrintElement.Type.DOWN
       }
-      if (downOffset == myVisiblePartSize) return EdgePrintElement.Type.UP
+      if (downOffset == visiblePartSize) return EdgePrintElement.Type.UP
     }
-    if (edgeSize >= myEdgeWithArrowSize) {
+    if (edgeSize >= edgeWithArrowSize) {
       if (upOffset == 1) {
         LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex)
         return EdgePrintElement.Type.DOWN
@@ -259,7 +245,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
   }
 
   private fun isEdgeVisibleInRow(normalEdge: NormalEdge, visibleRowIndex: Int): Boolean {
-    return normalEdge.down - normalEdge.up < myLongEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= myVisiblePartSize
+    return normalEdge.down - normalEdge.up < longEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= visiblePartSize
   }
 
   private fun addSpecialEdges(result: MutableList<GraphElement>, rowIndex: Int) {
@@ -278,7 +264,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
   }
 
   private fun getSortedVisibleElementsInRow(rowIndex: Int): List<GraphElement> {
-    val graphElements = myCache.get(rowIndex)
+    val graphElements = cache.get(rowIndex)
     if (graphElements != null) {
       return graphElements
     }
@@ -286,12 +272,43 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     val result = ArrayList<GraphElement>()
     result.add(linearGraph.getGraphNode(rowIndex))
 
-    myEdgesInRowGenerator.getEdgesInRow(rowIndex).filterTo(result) { isEdgeVisibleInRow(it, rowIndex) }
+    edgesInRowGenerator.getEdgesInRow(rowIndex).filterTo(result) { isEdgeVisibleInRow(it, rowIndex) }
 
     addSpecialEdges(result, rowIndex)
 
-    Collections.sort(result, myGraphElementComparator)
-    myCache.put(rowIndex, result)
+    Collections.sort(result, elementComparator)
+    cache.put(rowIndex, result)
+    return result
+  }
+
+  override fun getPrintElements(rowIndex: Int): Collection<PrintElementWithGraphElement> {
+    val result = ArrayList<PrintElementWithGraphElement>()
+    val nodes = ArrayList<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
+
+    collectElements(rowIndex, object : ElementConsumer() {
+      override fun consumeNode(node: GraphNode, position: Int) {
+        nodes.add(SimplePrintElementImpl(rowIndex, position, node, printElementManager))
+      }
+
+      override fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
+        result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow,
+                                        printElementManager))
+      }
+
+      override fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
+        result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow,
+                                        printElementManager))
+      }
+
+      override fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {
+        result.add(TerminalEdgePrintElement(rowIndex, position,
+                                            arrowType, edge,
+                                            printElementManager))
+      }
+    })
+
+    result.addAll(nodes)
+
     return result
   }
 
@@ -310,5 +327,12 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     private val CACHE_SIZE = 100
     private val SAMPLE_SIZE = 20000
     private val K = 0.1
+  }
+
+  private open class ElementConsumer {
+    open fun consumeNode(node: GraphNode, position: Int) {}
+    open fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {}
+    open fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {}
+    open fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {}
   }
 }
