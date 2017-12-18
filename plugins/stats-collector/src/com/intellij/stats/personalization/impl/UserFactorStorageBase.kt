@@ -35,10 +35,7 @@ abstract class UserFactorStorageBase
 
     override fun getState(): Element {
         val element = Element("component")
-        val start = System.currentTimeMillis()
         state.writeState(element)
-        val end = System.currentTimeMillis()
-        println("saving of user factors took it in ${end - start}ms")
         return element
     }
 
