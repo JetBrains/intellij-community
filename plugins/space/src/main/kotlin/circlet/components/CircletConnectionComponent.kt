@@ -11,30 +11,29 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
 import io.ktor.application.*
-import io.ktor.server.jetty.*
 import io.ktor.http.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
+import io.ktor.server.jetty.*
 import runtime.async.*
-import runtime.net.*
 import runtime.reactive.*
 import java.awt.*
 import java.net.*
 import java.util.concurrent.*
 
-class CircletConnectionComponent(val project: Project) :
+class CircletConnectionComponent(private val project: Project) :
     AbstractProjectComponent(project),
     ILifetimedComponent by LifetimedComponent(project) {
 
-    // val endpoint = "http://latest.n.circlet.labs.intellij.net"
+    private val endpoint = "http://localhost:8000"
 
-    val endpoint = "http://localhost:8000"
+    private val loginDataComponent = component<CircletLoginComponent>()
 
-    val loginDataComponent = component<CircletLoginComponent>()
-
-    val loginModel = LoginModel(IdeaPersistence, endpoint, ApiScheme(emptyArray()) /*TODO*/, EmptyLoggedStateWatcher, { authCheckFailedNotification() }, NotificationSettingKind.Ide) {
-        // authCheckFailedNotification()
+    private val loginModel = LoginModel(
+        IdeaPersistence, endpoint, ApiScheme(emptyArray()) /*TODO*/, EmptyLoggedStateWatcher,
+        { authCheckFailedNotification() }, NotificationSettingKind.Ide
+    ) {
         // TODO: NOTIFY
     }
 
@@ -56,6 +55,8 @@ class CircletConnectionComponent(val project: Project) :
                                         }
                                         ConnectionStatus.CONNECTING -> {
                                             notifyReconnect(stateLt)
+                                        }
+                                        else -> {
                                         }
                                     }
                                 }
@@ -89,27 +90,27 @@ class CircletConnectionComponent(val project: Project) :
             "Circlet",
             XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"update\">Switch off</a>"),
             NotificationType.INFORMATION,
-            { a, b -> disable() })
+            { _, _ -> disable() })
         notification.notify(lt, project)
     }
 
-    fun notifyDisconnected(lt: Lifetime) {
+    private fun notifyDisconnected(lt: Lifetime) {
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
             XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"update\">Switch on</a>"),
             NotificationType.INFORMATION,
-            { a, b -> enable() })
+            { _, _ -> enable() })
         notification.notify(lt, project)
     }
 
-    fun notifyConnected() {
+    private fun notifyConnected() {
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
             XmlStringUtil.wrapInHtml("Signed in"),
             NotificationType.INFORMATION,
-            { a, b -> enable() })
+            { _, _ -> enable() })
         notification.notify(project)
     }
 
@@ -117,33 +118,41 @@ class CircletConnectionComponent(val project: Project) :
         Notification(
             "IdePLuginClient.authCheckFailedNotification",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"update\">Sign in with JBA</a>"),
+            XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"update\">Sign in</a>"),
             NotificationType.INFORMATION,
-            { a, b -> authenticate() })
+            { _, _ -> authenticate() })
             .notify(project)
     }
 
-    val seq = SequentialLifetimes(componentLifetime)
+    private val seq = SequentialLifetimes(componentLifetime)
 
     fun authenticate() {
         val lt = seq.next()
-        val ser = embeddedServer(Jetty, 8080) {
+        val server = embeddedServer(Jetty, 8080) {
             routing {
                 get("auth") {
-                    val jwt = call.parameters["jwt"]!!
-                    loginModel.signIn(jwt, "jwt", "")
-                    call.respondText("Hello, world!", ContentType.Text.Html)
+                    val token = call.parameters[TOKEN_PARAMETER]!!
+
+                    loginModel.signIn(token, "")
+
+                    call.respondText(
+                        "Authorization successful! Now you can close this page and return to the IDE.",
+                        ContentType.Text.Html
+                    )
+
                     lt.terminate()
                 }
             }
         }.start(wait = false)
 
         lt.add {
-            ser.stop(100, 5000, TimeUnit.MILLISECONDS)
+            server.stop(100, 5000, TimeUnit.MILLISECONDS)
         }
-        Desktop.getDesktop().browse(URI("http://intdevsrv.labs.intellij.net:8081/profile/jwt-auth/circlet?auth_url=${urlEncode("http://localhost:8080/auth")}"))
+
+        Desktop.getDesktop().browse(URI(
+            Navigator.login("http://localhost:8080/auth").absoluteHref(endpoint)
+        ))
 
         // TODO:
     }
 }
-
