@@ -149,6 +149,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
+  @NotNull
   @Override
   public final List<PsiFile> getCachedPsiFiles() {
     return ContainerUtil.createMaybeSingletonList(getCachedPsi(getBaseLanguage()));
@@ -219,7 +220,6 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
   }
 
-  @SuppressWarnings("UnusedParameters")
   public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile, final long contentSize) {
     return contentSize > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
   }

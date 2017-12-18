@@ -193,8 +193,9 @@ public class TextRange implements Segment, Serializable {
 
   @Nullable
   public TextRange intersection(@NotNull TextRange range) {
-    if (!intersects(range)) return null;
-    return new TextRange(Math.max(myStartOffset, range.getStartOffset()), Math.min(myEndOffset, range.getEndOffset()));
+    int newStart = Math.max(myStartOffset, range.getStartOffset());
+    int newEnd = Math.min(myEndOffset, range.getEndOffset());
+    return isProperRange(newStart, newEnd) ? new TextRange(newStart, newEnd) : null;
   }
 
   public boolean isEmpty() {
@@ -224,8 +225,12 @@ public class TextRange implements Segment, Serializable {
   }
 
   public static void assertProperRange(int startOffset, int endOffset, @NotNull Object message) {
-    if (startOffset > endOffset || startOffset < 0) {
+    if (!isProperRange(startOffset, endOffset)) {
       LOG.error("Invalid range specified: (" + startOffset + "," + endOffset + "); " + message);
     }
+  }
+
+  private static boolean isProperRange(int startOffset, int endOffset) {
+    return startOffset <= endOffset && startOffset >= 0;
   }
 }
