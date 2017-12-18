@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownRunConfiguration;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.extensions.Extensions;
@@ -31,6 +32,8 @@ import javax.swing.event.ListDataListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -48,6 +51,7 @@ class BeforeRunStepsPanel extends JPanel {
   private final List<BeforeRunTask> originalTasks = new ArrayList<>();
   private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
+  private final ToolbarDecorator myDecorator;
 
   BeforeRunStepsPanel(StepsBeforeRunListener listener) {
     myListener = listener;
@@ -56,6 +60,16 @@ class BeforeRunStepsPanel extends JPanel {
     myList.getEmptyText().setText(ExecutionBundle.message("before.launch.panel.empty"));
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(new MyListCellRenderer());
+    myList.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (e.getClickCount() == 2) {
+          handleDoubleClickOnBeforeRunTask();
+        } else {
+          super.mouseClicked(e);
+        }
+      }
+    });
 
     myModel.addListDataListener(new ListDataListener() {
       @Override
@@ -79,7 +93,7 @@ class BeforeRunStepsPanel extends JPanel {
       }
     });
 
-    ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
+    myDecorator = ToolbarDecorator.createDecorator(myList);
     if (!SystemInfo.isMac) {
       myDecorator.setAsUsualTopToolbar();
     }
@@ -94,7 +108,7 @@ class BeforeRunStepsPanel extends JPanel {
           return;
         BeforeRunTask task = selection.getFirst();
         BeforeRunTaskProvider<BeforeRunTask> provider = selection.getSecond();
-        
+
         provider.configureTask(button.getDataContext(), myRunConfiguration, task).done(changed -> {
           if (changed) {
             myModel.setElementAt(task, index);
@@ -146,6 +160,25 @@ class BeforeRunStepsPanel extends JPanel {
     checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
     checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
     add(checkboxPanel, BorderLayout.SOUTH);
+  }
+
+  private void handleDoubleClickOnBeforeRunTask() {
+    Pair<BeforeRunTask, BeforeRunTaskProvider<BeforeRunTask>> selection = getSelection();
+
+    if (selection == null) return;
+
+    DataContext context = myDecorator.getActionsPanel()
+      .getAnActionButton(CommonActionsPanel.Buttons.EDIT)
+      .getDataContext();
+
+    BeforeRunTask task = selection.getFirst();
+
+    selection.getSecond().configureTask(context, myRunConfiguration, task).done(changed -> {
+      if (changed) {
+        myModel.setElementAt(task, myList.getSelectedIndex());
+        updateText();
+      }
+    });
   }
 
   @Nullable
