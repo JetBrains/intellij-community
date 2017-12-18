@@ -1353,7 +1353,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     }
   }
 
-  private class MyLookupElement extends LookupElement {
+  private static class MyLookupElement extends LookupElement {
     private final String myValue;
 
     public MyLookupElement(String value) {
