@@ -1,5 +1,11 @@
 import org.gradle.tooling.GradleConnector
 
+plugins {
+  id "base"
+  id "maven-publish"
+  id "com.jfrog.bintray" version "1.7.3"
+}
+
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
 def gradleApiArtifactId = 'gradle-api'
 def gradleApiImplDepArtifactId = 'gradle-api-impldep'
@@ -87,9 +93,6 @@ task gradleApiImplDepJar(type: Zip, dependsOn: expandGradleApiJar) {
   from gradleApiDepsDir
   include 'org/gradle/internal/impldep/**'
 }
-
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
 
 publishing {
   publications {
