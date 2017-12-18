@@ -38,5 +38,9 @@ target("default": "Run tests") {
   options.suspendDebugProcess = true
   */
 
-  TestingTasks.create(context, options).runTests([], "community-main", null)
+  def jvmArgs = [
+    "-Dplugin.path=${home}/../../prebuilts/tools/common/kotlin-plugin/Kotlin",
+  ]
+
+  TestingTasks.create(context, options).runTests(jvmArgs, "community-main", null)
 }
