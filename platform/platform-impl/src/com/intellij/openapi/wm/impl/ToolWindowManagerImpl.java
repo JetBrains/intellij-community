@@ -452,6 +452,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     appendUpdateToolWindowsPaneCmd(commandsList);
 
     JComponent editorComponent = createEditorComponent(myProject);
+    editorComponent.setFocusable(false);
 
     appendSetEditorComponentCmd(editorComponent, commandsList);
   }

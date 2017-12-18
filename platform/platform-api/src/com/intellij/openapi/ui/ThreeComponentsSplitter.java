@@ -168,7 +168,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setFocusable(false);
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
