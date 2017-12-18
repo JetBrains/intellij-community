@@ -10,7 +10,7 @@ import com.intellij.lang.properties.projectView.ResourceBundleAwareNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,9 @@ public class AddNewPropertyFileAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     final ResourceBundle resourceBundle = getResourceBundle(e);
     if (resourceBundle == null) return;
-    new CreateResourceBundleDialogComponent.Dialog(e.getProject(), null, resourceBundle).show();
+    Project project = e.getProject();
+    if (project == null) return;
+    new CreateResourceBundleDialogComponent.Dialog(project, null, resourceBundle).show();
   }
 
   @Nullable
