@@ -389,30 +389,20 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     createDocument("\n\n00\n556\n");
 
     deleteString(3, 6);
-    checkCantTrim();
     deleteString(1, 4);
-    checkCantTrim();
     deleteString(0, 2);
-    checkCantTrim();
     insertString(0, "\n\n32\n");
-    checkCantTrim();
     deleteString(1, 4);
-    checkCantTrim();
   }
 
   public void testBug4() throws Throwable {
     createDocument("\n5\n30\n5240\n32\n46\n\n\n\n51530\n\n");
 
     insertString(3, "40\n1\n2");
-    checkCantTrim();
     deleteString(10, 25);
-    checkCantTrim();
     deleteString(1, 5);
-    checkCantTrim();
     insertString(9, "30\n\n23");
-    checkCantTrim();
     deleteString(2, 11);
-    checkCantTrim();
   }
 
   public void testBug5() throws Throwable {
@@ -434,7 +424,6 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     deleteString(2, 3);
     deleteString(8, 10);
     insertString(1, "051");
-    checkCantTrim();
   }
 
   public void testTrimSpaces1() throws Throwable {

@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -39,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 import java.util.List;
 
+import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
+
 /**
  * author: lesya
  */
@@ -60,6 +64,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
 
   protected void runCommand(@NotNull final Runnable task) {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(task), "", null);
+    verify();
   }
 
   protected void replaceString(final int startOffset, final int endOffset, @NotNull final String s) {
@@ -126,7 +131,32 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     }
   }
 
-  protected void checkCantTrim() {
+
+  public void verify() {
+    checkValid();
+    checkCantTrim();
+    checkCantMerge();
+    checkInnerRanges();
+  }
+
+  private void checkValid() {
+    List<Range> ranges = myTracker.getRanges();
+    List<com.intellij.diff.util.Range> diffRanges = ContainerUtil.map(ranges, it -> {
+      return new com.intellij.diff.util.Range(it.getVcsLine1(), it.getVcsLine2(), it.getLine1(), it.getLine2());
+    });
+
+    int lineCount1 = DiffUtil.getLineCount(myUpToDateDocument);
+    int lineCount2 = DiffUtil.getLineCount(myDocument);
+    DiffIterable iterable = fair(DiffIterableUtil.create(diffRanges, lineCount1, lineCount2));
+
+    for (com.intellij.diff.util.Range range : iterable.iterateUnchanged()) {
+      List<String> lines1 = DiffUtil.getLines(myUpToDateDocument, range.start1, range.end1);
+      List<String> lines2 = DiffUtil.getLines(myDocument, range.start2, range.end2);
+      assertOrderedEquals(lines1, lines2);
+    }
+  }
+
+  private void checkCantTrim() {
     List<? extends Range> ranges = myTracker.getRanges();
     for (Range range : ranges) {
       if (range.getType() != Range.MODIFIED) continue;
@@ -145,19 +175,19 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     }
   }
 
-  protected void checkCantMerge() {
+  private void checkCantMerge() {
     List<? extends Range> ranges = myTracker.getRanges();
     for (int i = 0; i < ranges.size() - 1; i++) {
       assertFalse(ranges.get(i).getLine2() == ranges.get(i + 1).getLine1());
     }
   }
 
-  protected void checkInnerRanges() {
+  private void checkInnerRanges() {
     List<? extends Range> ranges = myTracker.getRanges();
 
     for (Range range : ranges) {
       List<Range.InnerRange> innerRanges = range.getInnerRanges();
-      if (innerRanges == null) return;
+      if (innerRanges == null) continue;
       if (range.getType() != Range.MODIFIED) {
         assertEmpty(innerRanges);
         continue;

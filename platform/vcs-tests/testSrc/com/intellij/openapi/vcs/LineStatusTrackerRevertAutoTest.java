@@ -84,9 +84,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
             }
           });
 
-          checkCantTrim();
-          checkCantMerge();
-          checkInnerRanges();
+          verify();
         }
 
         if (iterations > 0) {
@@ -122,9 +120,7 @@ public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCa
         String initialVcs = generateText(textLength);
         createDocument(initial, initialVcs, smart);
 
-        checkCantTrim();
-        checkCantMerge();
-        checkInnerRanges();
+        verify();
 
         checkRevert(myTracker.getRanges().size() * 2);
 
