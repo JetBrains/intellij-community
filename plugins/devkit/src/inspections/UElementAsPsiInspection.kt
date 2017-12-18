@@ -53,7 +53,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
       for ((i, valueArgument) in node.valueArguments.withIndex()) {
         if (isUElementType(valueArgument.getExpressionType()) &&
             isPsiElementType(node.resolve()?.parameterList?.parameters?.getOrNull(i)?.type)) {
-          reportedElements.add(valueArgument.sourcePsiElement ?: continue)
+          valueArgument.sourcePsiElement?.let { reportedElements.add(it) }
         }
       }
     }
@@ -62,21 +62,21 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
       if (!isUElementType(node.receiverType)) return
       val psiMethod = node.resolve() ?: return
       if (isPsiElementClass(psiMethod.containingClass) || psiMethod.findSuperMethods().any { isPsiElementClass(it.containingClass) }) {
-        node.sourcePsiElement.let { reportedElements.add(it) }
+        node.sourcePsiElement?.let { reportedElements.add(it) }
       }
     }
 
     override fun visitBinaryExpression(node: UBinaryExpression): Boolean {
       if (node.operator != UastBinaryOperator.ASSIGN) return false
       if (isUElementType(node.rightOperand.getExpressionType()) && isPsiElementType(node.leftOperand.getExpressionType())) {
-        reportedElements.add(node.rightOperand.sourcePsiElement ?: return false)
+        node.rightOperand.sourcePsiElement?.let { reportedElements.add(it) }
       }
       return false;
     }
 
     override fun visitVariable(node: UVariable): Boolean {
       if (isUElementType(node.uastInitializer?.getExpressionType()) && isPsiElementType(node.type)) {
-        reportedElements.add(node.uastInitializer.sourcePsiElement ?: return false)
+        node.uastInitializer.sourcePsiElement?.let { reportedElements.add(it) }
       }
       return false
     }
