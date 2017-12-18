@@ -61,6 +61,7 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         FigureCanvasAgg.__init__(self, figure)
 
     def show(self):
+        self.figure.tight_layout()
         FigureCanvasAgg.draw(self)
         if PORT is None:
             return
