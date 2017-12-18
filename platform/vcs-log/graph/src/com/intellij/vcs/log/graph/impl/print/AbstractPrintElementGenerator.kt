@@ -66,15 +66,6 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     return result
   }
 
-  override fun withGraphElement(printElement: PrintElement): PrintElementWithGraphElement {
-    if (printElement is PrintElementWithGraphElement) {
-      return printElement
-    }
-
-    return getPrintElements(printElement.rowIndex).find { it == printElement } ?:
-           throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
-  }
-
   protected enum class RowElementType {
     NODE,
     UP_ARROW,
