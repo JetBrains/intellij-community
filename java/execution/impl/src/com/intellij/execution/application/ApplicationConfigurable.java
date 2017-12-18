@@ -68,11 +68,10 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myModuleSelector.applyTo(configuration);
     final String className = getMainClassField().getText();
     final PsiClass aClass = myModuleSelector.findClass(className);
-    ApplicationConfigurationOptions options = configuration.getOptions();
-    options.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
-    options.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
-    options.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
-    options.setSwingInspectorEnabled((myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected());
+    configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
+    configuration.getOptions().setSwingInspectorEnabled((myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected());
     configuration.setShortenCommandLine((ShortenCommandLine)myShortenClasspathModeCombo.getComponent().getSelectedItem());
     configuration.setIncludeProvidedScope(myIncludeProvidedDeps.getComponent().isSelected());
 

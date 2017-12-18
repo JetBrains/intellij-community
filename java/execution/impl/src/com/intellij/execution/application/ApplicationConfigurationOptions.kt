@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
 import java.util.*
 
-class ApplicationConfigurationOptions : JvmConfigurationOptions() {
+open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PROGRAM_PARAMETERS")
   var programParameters by string()
 

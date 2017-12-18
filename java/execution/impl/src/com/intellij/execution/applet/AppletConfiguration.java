@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -155,7 +156,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
-  public void setMainClassName(final String qualifiedName) {
+  public void setMainClassName(@Nullable String qualifiedName) {
     getOptions().setMainClassName(qualifiedName);
   }
 

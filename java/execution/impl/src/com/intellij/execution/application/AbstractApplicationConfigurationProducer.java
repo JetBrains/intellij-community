@@ -60,7 +60,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   }
 
   private void setupConfiguration(T configuration, final PsiClass aClass, final ConfigurationContext context) {
-    configuration.getOptions().setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
+    configuration.setMainClassName(JavaExecutionUtil.getRuntimeQualifiedName(aClass));
     configuration.setGeneratedName();
     setupConfigurationModule(context, configuration);
   }

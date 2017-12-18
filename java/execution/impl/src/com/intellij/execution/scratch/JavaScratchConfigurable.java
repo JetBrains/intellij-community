@@ -106,10 +106,9 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myCommonProgramParameters.applyTo(configuration);
     myModuleSelector.applyTo(configuration);
 
-    ApplicationConfigurationOptions options = configuration.getOptions();
-    options.setMainClassName(myMainClass.getComponent().getText().trim());
-    options.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
-    options.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
+    configuration.setMainClassName(myMainClass.getComponent().getText().trim());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
 
     final VirtualFile vFile = getVFileFromEditor();
     configuration.SCRATCH_FILE_ID = vFile instanceof VirtualFileWithId ? ((VirtualFileWithId)vFile).getId() : 0;

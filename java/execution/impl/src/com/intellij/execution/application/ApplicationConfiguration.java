@@ -136,6 +136,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   public void setMainClassName(@Nullable String qualifiedName) {
     getOptions().setMainClassName(qualifiedName);
+    //noinspection deprecation
+    MAIN_CLASS_NAME = qualifiedName;
   }
 
   @Override
@@ -221,6 +223,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
+    //noinspection deprecation
+    ALTERNATIVE_JRE_PATH_ENABLED = enabled;
     getOptions().setAlternativeJrePathEnabled(enabled);
   }
 
@@ -231,7 +235,9 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   }
 
   @Override
-  public void setAlternativeJrePath(String path) {
+  public void setAlternativeJrePath(@Nullable String path) {
+    //noinspection deprecation
+    ALTERNATIVE_JRE_PATH = path;
     getOptions().setAlternativeJrePath(path);
   }
 
@@ -248,11 +254,21 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return JavaRunConfigurationModule.getModulesForClass(getProject(), getOptions().getMainClassName());
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void readExternal(@NotNull final Element element) {
     super.readExternal(element);
+
     JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
     setShortenCommandLine(ShortenCommandLine.readShortenClasspathMethod(element));
+
+    ApplicationConfigurationOptions options = getOptions();
+    MAIN_CLASS_NAME = options.getMainClassName();
+    PROGRAM_PARAMETERS = options.getProgramParameters();
+    WORKING_DIRECTORY = options.getWorkingDirectory();
+    ALTERNATIVE_JRE_PATH = options.getAlternativeJrePath();
+    ALTERNATIVE_JRE_PATH_ENABLED = options.isAlternativeJrePathEnabled();
+    ENABLE_SWING_INSPECTOR = options.isSwingInspectorEnabled();
   }
 
   @Override
