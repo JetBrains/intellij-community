@@ -5,6 +5,8 @@ package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
 public class ModuleScopeItem implements ModelScopeItem {
@@ -12,8 +14,11 @@ public class ModuleScopeItem implements ModelScopeItem {
 
   @Nullable
   public static ModelScopeItem tryCreate(@Nullable Module module) {
-    if (module != null)
-      return new ModuleScopeItem(module);
+    if (module != null) {
+      Project project = module.getProject();
+      if (ModuleManager.getInstance(project).getModules().length > 1)
+        return new ModuleScopeItem(module);
+    }
     return null;
   }
 

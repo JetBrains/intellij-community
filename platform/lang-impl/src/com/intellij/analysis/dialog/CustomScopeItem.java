@@ -17,11 +17,13 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public class CustomScopeItem implements ModelScopeItem {
   private final Project myProject;
   private boolean mySearchInLib;
   private String myPreselect;
-  private SearchScope myScope;
+  private Supplier<SearchScope> mySupplierScope;
 
   public CustomScopeItem(Project project, @Nullable PsiElement context) {
     myProject = project;
@@ -55,12 +57,12 @@ public class CustomScopeItem implements ModelScopeItem {
 
   @Override
   public AnalysisScope getScope() {
-    if (myScope != null)
-      return new AnalysisScope(myScope, myProject);
+    if (mySupplierScope != null)
+      return new AnalysisScope(mySupplierScope.get(), myProject);
     return null;
   }
 
-  public void setSearchScope(SearchScope scope) {
-    myScope = scope;
+  public void setSearchScopeSupplier(Supplier<SearchScope> supplier) {
+    mySupplierScope = supplier;
   }
 }

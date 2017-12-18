@@ -35,11 +35,8 @@ public class CustomScopeItemPresenter implements ModelScopeItemPresenter {
     scopeCombo.init(model.getProject(), model.getSearchInLibFlag(), true, model.getPreselectedCustomScope());
     scopeCombo.setCurrentSelection(false);
     scopeCombo.setEnabled(button.isSelected());
-    button.addItemListener(e -> {
-      scopeCombo.setEnabled(button.isSelected());
-      model.setSearchScope(scopeCombo.getSelectedScope());
-    });
-    scopeCombo.getComboBox().addActionListener(e -> model.setSearchScope(scopeCombo.getSelectedScope()));
+    model.setSearchScopeSupplier(() -> scopeCombo.getSelectedScope());
+    button.addItemListener(e -> scopeCombo.setEnabled(button.isSelected()));
     ArrayList<JComponent> components = new ArrayList<>();
     components.add(scopeCombo);
     return components;
