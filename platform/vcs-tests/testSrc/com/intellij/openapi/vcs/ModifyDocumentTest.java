@@ -27,14 +27,6 @@ import java.util.BitSet;
  * author: lesya
  */
 public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
-
-  public void testInit() {
-    DiffManager instance = DiffManager.getInstance();
-    assertNotNull(instance);
-    MarkupEditorFilterFactory.createNotFilter(instance.getDiffEditorFilter());
-    MarkupEditorFilterFactory.createIsNotDiffFilter();
-  }
-
   public void testSimpleInsert() {
     createDocument("1234\n2345\n3456");
     insertString(2, "a");
