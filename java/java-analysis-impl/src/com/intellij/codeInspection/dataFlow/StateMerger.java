@@ -39,6 +39,7 @@ import static com.intellij.codeInspection.dataFlow.DfaFactType.RANGE;
  */
 class StateMerger {
   public static final int MAX_RANGE_STATES = 100;
+  private static final int COMPLEXITY_LIMIT = 250000;
   private final Map<DfaMemoryStateImpl, Set<Fact>> myFacts = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
@@ -46,6 +47,8 @@ class StateMerger {
   List<DfaMemoryStateImpl> mergeByFacts(@NotNull List<DfaMemoryStateImpl> states) {
     MultiMap<Fact, DfaMemoryStateImpl> statesByFact = createFactToStateMap(states);
     Set<Fact> facts = statesByFact.keySet();
+
+    int complexity = 0;
 
     for (final Fact fact : facts) {
       if (fact.myPositive) continue;
@@ -58,6 +61,10 @@ class StateMerger {
 
       MultiMap<CompactFactSet, DfaMemoryStateImpl> statesByUnrelatedFacts1 = mapByUnrelatedFacts(fact, negativeStates, facts);
       MultiMap<CompactFactSet, DfaMemoryStateImpl> statesByUnrelatedFacts2 = mapByUnrelatedFacts(fact, positiveStates, facts);
+
+      complexity += StreamEx.of(statesByUnrelatedFacts1, statesByUnrelatedFacts2).flatCollection(MultiMap::keySet)
+        .mapToInt(CompactFactSet::size).sum();
+      if (complexity > COMPLEXITY_LIMIT) return null;
 
       Replacements replacements = new Replacements(states);
       for (Map.Entry<CompactFactSet, Collection<DfaMemoryStateImpl>> entry : statesByUnrelatedFacts1.entrySet()) {
@@ -511,6 +518,10 @@ class StateMerger {
       Arrays.sort(myData);
       myHashCode = Arrays.hashCode(myData);
       myFactory = factory;
+    }
+
+    public int size() {
+      return myData.length;
     }
 
     @Override
