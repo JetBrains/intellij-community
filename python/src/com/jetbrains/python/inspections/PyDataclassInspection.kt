@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
@@ -52,16 +53,22 @@ class PyDataclassInspection : PyInspection() {
 
           node.processClassLevelDeclarations { element, _ ->
             if (element is PyTargetExpression && element.annotationValue != null) {
-              val value = element.findAssignedValue()
-              val cls = getPyClass(value)
+              val annotation = element.annotation
 
-              if (cls != null) {
-                val builtinCache = PyBuiltinCache.getInstance(node)
+              if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, myTypeEvalContext)) {
+                val value = element.findAssignedValue()
+                val cls = getPyClass(value)
 
-                if (cls == builtinCache.listType?.pyClass ||
-                    cls == builtinCache.setType?.pyClass ||
-                    cls == builtinCache.tupleType?.pyClass) {
-                  registerProblem(value, "mutable default '${cls.name}' is not allowed", ProblemHighlightType.GENERIC_ERROR)
+                if (cls != null) {
+                  val builtinCache = PyBuiltinCache.getInstance(node)
+
+                  if (cls == builtinCache.listType?.pyClass ||
+                      cls == builtinCache.setType?.pyClass ||
+                      cls == builtinCache.tupleType?.pyClass) {
+                    registerProblem(value,
+                                    "mutable default '${cls.name}' is not allowed",
+                                    ProblemHighlightType.GENERIC_ERROR)
+                  }
                 }
               }
             }

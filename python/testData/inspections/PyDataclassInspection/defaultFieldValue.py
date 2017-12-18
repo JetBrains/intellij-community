@@ -1,5 +1,5 @@
 import dataclasses
-from typing import List, Set, Tuple
+from typing import ClassVar, List, Set, Tuple
 
 
 @dataclasses.dataclass
@@ -10,3 +10,5 @@ class A:
     d: Set[int] = <error descr="mutable default 'set' is not allowed">set()</error>
     e: Tuple[int, ...] = <error descr="mutable default 'tuple' is not allowed">()</error>
     f: Tuple[int, ...] = <error descr="mutable default 'tuple' is not allowed">tuple()</error>
+    g: ClassVar[List[int]] = []
+    h: ClassVar = []
