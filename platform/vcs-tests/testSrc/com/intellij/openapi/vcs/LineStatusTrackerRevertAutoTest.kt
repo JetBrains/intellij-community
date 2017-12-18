@@ -13,212 +13,198 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
+package com.intellij.openapi.vcs
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.ui.UIUtil
+import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 
-import java.lang.reflect.Field;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicLong;
+class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
+  companion object {
+    private val LOG = Logger.getInstance(LineStatusTrackerRevertAutoTest::class.java)
 
-public class LineStatusTrackerRevertAutoTest extends BaseLineStatusTrackerTestCase {
-  private static final Logger LOG = Logger.getInstance(LineStatusTrackerRevertAutoTest.class);
-  private Random myRng;
-
-  private static final int TEST_RUNS = 100;
-  private static final int MODIFICATIONS = 10;
-  private static final int TEXT_LENGTH = 10;
-  private static final int CHANGE_LENGTH = 10;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+    private val TEST_RUNS = 100
+    private val MODIFICATIONS = 10
+    private val TEXT_LENGTH = 10
+    private val CHANGE_LENGTH = 10
   }
 
-  public void testSimple() throws Throwable {
-    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, -1, false);
+  private lateinit var myRng: Random
+
+  fun testSimple() {
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, -1, false)
   }
 
-  public void testComplex() throws Throwable {
-    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, 5, false);
+  fun testComplex() {
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, 5, false)
   }
 
-  public void testInitial() throws Throwable {
-    doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, false);
+  fun testInitial() {
+    doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, false)
   }
 
-  public void testSimpleSmart() throws Throwable {
-    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, -1, true);
+  fun testSimpleSmart() {
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, -1, true)
   }
 
-  public void testComplexSmart() throws Throwable {
-    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, 5, true);
+  fun testComplexSmart() {
+    doTest(System.currentTimeMillis(), TEST_RUNS, MODIFICATIONS, TEXT_LENGTH, CHANGE_LENGTH, 5, true)
   }
 
-  public void testInitialSmart() throws Throwable {
-    doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, true);
+  fun testInitialSmart() {
+    doTestInitial(System.currentTimeMillis(), TEST_RUNS, TEXT_LENGTH, true)
   }
 
-  public void doTest(long seed, int testRuns, int modifications, int textLength, final int changeLength, int iterations, boolean smart)
-    throws Throwable {
-    myRng = new Random(seed);
-    for (int i = 0; i < testRuns; i++) {
-      long currentSeed = getCurrentSeed();
-      if (i % 1000 == 0) LOG.debug(String.valueOf(i));
+  fun doTest(seed: Long, testRuns: Int, modifications: Int, textLength: Int, changeLength: Int, iterations: Int, smart: Boolean) {
+    myRng = Random(seed)
+    for (i in 0 until testRuns) {
+      val currentSeed = getCurrentSeed()
+      if (i % 1000 == 0) LOG.debug(i.toString())
       try {
-        String initial = generateText(textLength);
-        createDocument(initial, initial, smart);
-        //System.out.println("Initial: " + initial.replace("\n", "\\n"));
+        val initial = generateText(textLength)
+        createDocument(initial, initial, smart)
+        // println("Initial: " + initial.replace("\n", "\\n"));
 
-        int count = myRng.nextInt(modifications);
-        for (int j = 0; j < count; j++) {
-          final int writeChanges = myRng.nextInt(4) + 1;
-          runCommand(() -> {
-            for (int k = 0; k < writeChanges; k++) {
-              applyRandomChange(changeLength);
+        val count = myRng.nextInt(modifications)
+        for (j in 0 until count) {
+          val writeChanges = myRng.nextInt(4) + 1
+          runCommand {
+            for (k in 0 until writeChanges) {
+              applyRandomChange(changeLength)
             }
-          });
+          }
 
-          verify();
+          verify()
         }
 
         if (iterations > 0) {
-          checkRevertComplex(iterations);
+          checkRevertComplex(iterations)
         }
         else {
-          checkRevert(myTracker.getRanges().size() * 2);
+          checkRevert(myTracker.getRanges()!!.size * 2)
         }
 
-        releaseTracker();
-        UIUtil.dispatchAllInvocationEvents();
+        releaseTracker()
+        UIUtil.dispatchAllInvocationEvents()
       }
-      catch (Throwable e) {
-        System.out.println("Seed: " + seed);
-        System.out.println("TestRuns: " + testRuns);
-        System.out.println("Modifications: " + modifications);
-        System.out.println("TextLength: " + textLength);
-        System.out.println("ChangeLength: " + changeLength);
-        System.out.println("I: " + i);
-        System.out.println("Current seed: " + currentSeed);
-        throw e;
+      catch (e: Throwable) {
+        println("Seed: " + seed)
+        println("TestRuns: " + testRuns)
+        println("Modifications: " + modifications)
+        println("TextLength: " + textLength)
+        println("ChangeLength: " + changeLength)
+        println("I: " + i)
+        println("Current seed: " + currentSeed)
+        throw e
       }
+
     }
   }
 
-  public void doTestInitial(long seed, int testRuns, int textLength, boolean smart) throws Throwable {
-    myRng = new Random(seed);
-    for (int i = 0; i < testRuns; i++) {
-      if (i % 1000 == 0) LOG.debug(String.valueOf(i));
-      long currentSeed = getCurrentSeed();
+  fun doTestInitial(seed: Long, testRuns: Int, textLength: Int, smart: Boolean) {
+    myRng = Random(seed)
+    for (i in 0 until testRuns) {
+      if (i % 1000 == 0) LOG.debug(i.toString())
+      val currentSeed = getCurrentSeed()
       try {
-        String initial = generateText(textLength);
-        String initialVcs = generateText(textLength);
-        createDocument(initial, initialVcs, smart);
+        val initial = generateText(textLength)
+        val initialVcs = generateText(textLength)
+        createDocument(initial, initialVcs, smart)
 
-        verify();
+        verify()
 
-        checkRevert(myTracker.getRanges().size() * 2);
+        checkRevert(myTracker.getRanges()!!.size * 2)
 
-        releaseTracker();
-        UIUtil.dispatchAllInvocationEvents();
+        releaseTracker()
+        UIUtil.dispatchAllInvocationEvents()
       }
-      catch (Throwable e) {
-        System.out.println("Seed: " + seed);
-        System.out.println("TestRuns: " + testRuns);
-        System.out.println("TextLength: " + textLength);
-        System.out.println("I: " + i);
-        System.out.println("Current seed: " + currentSeed);
-        throw e;
+      catch (e: Throwable) {
+        println("Seed: " + seed)
+        println("TestRuns: " + testRuns)
+        println("TextLength: " + textLength)
+        println("I: " + i)
+        println("Current seed: " + currentSeed)
+        throw e
       }
+
     }
   }
 
-  private void checkRevert(int maxIterations) throws Exception {
-    int count = 0;
+  private fun checkRevert(maxIterations: Int) {
+    var count = 0
     while (true) {
-      if (count > maxIterations) throw new Exception("Revert loop detected");
-      List<? extends Range> ranges = myTracker.getRanges();
-      if (ranges.isEmpty()) break;
-      int index = myRng.nextInt(ranges.size());
-      Range range = ranges.get(index);
+      if (count > maxIterations) throw Exception("Revert loop detected")
+      val ranges = myTracker.getRanges()
+      if (ranges!!.isEmpty()) break
+      val index = myRng.nextInt(ranges.size)
+      val range = ranges[index]
 
-      rollback(range);
-      count++;
+      rollback(range)
+      count++
     }
-    assertEquals(myDocument.getText(), myUpToDateDocument.getText());
+    assertEquals(myDocument.text, myUpToDateDocument.text)
   }
 
-  private void checkRevertComplex(int iterations) {
-    BitSet lines = new BitSet();
+  private fun checkRevertComplex(iterations: Int) {
+    val lines = BitSet()
 
-    for (int i = 0; i < iterations; i++) {
-      lines.clear();
+    for (i in 0 until iterations) {
+      lines.clear()
 
-      for (int j = 0; j < myDocument.getLineCount() + 2; j++) {
+      for (j in 0 until myDocument.lineCount + 2) {
         if (myRng.nextInt(10) < 3) {
-          lines.set(j);
+          lines.set(j)
         }
       }
 
-      rollback(lines);
+      rollback(lines)
     }
 
-    lines.set(0, myDocument.getLineCount() + 2);
-    rollback(lines);
+    lines.set(0, myDocument.lineCount + 2)
+    rollback(lines)
 
-    assertEquals(myDocument.getText(), myUpToDateDocument.getText());
+    assertEquals(myDocument.text, myUpToDateDocument.text)
   }
 
-  private void applyRandomChange(int changeLength) {
-    int textLength = myDocument.getTextLength();
-    int type = myRng.nextInt(3);
-    int offset = textLength != 0 ? myRng.nextInt(textLength) : 0;
-    int length = textLength - offset != 0 ? myRng.nextInt(textLength - offset) : offset;
-    String data = generateText(changeLength);
-    //System.out.println("Change: " + type + " - " + offset + " - " + length + " - " + data.replace("\n", "\\n"));
-    switch (type) {
-      case 0: // insert
-        myDocument.insertString(offset, data);
-        break;
-      case 1: // delete
-        myDocument.deleteString(offset, offset + length);
-        break;
-      case 2: // modify
-        myDocument.replaceString(offset, offset + length, data);
-        break;
+  private fun applyRandomChange(changeLength: Int) {
+    val textLength = myDocument.textLength
+    val type = myRng.nextInt(3)
+    val offset = if (textLength != 0) myRng.nextInt(textLength) else 0
+    val length = if (textLength - offset != 0) myRng.nextInt(textLength - offset) else offset
+    val data = generateText(changeLength)
+    // println("Change: " + type + " - " + offset + " - " + length + " - " + data.replace("\n", "\\n"));
+    when (type) {
+      0 -> myDocument.insertString(offset, data)
+      1 -> myDocument.deleteString(offset, offset + length)
+      2 -> myDocument.replaceString(offset, offset + length, data)
     }
   }
 
-  @NotNull
-  private String generateText(int textLength) {
-    int length = myRng.nextInt(textLength);
-    StringBuilder builder = new StringBuilder(length);
+  private fun generateText(textLength: Int): String {
+    val length = myRng.nextInt(textLength)
+    val builder = StringBuilder(length)
 
-    for (int i = 0; i < length; i++) {
-      int rnd = myRng.nextInt(10);
+    for (i in 0 until length) {
+      val rnd = myRng.nextInt(10)
       if (rnd == 0) {
-        builder.append(' ');
+        builder.append(' ')
       }
       else if (rnd < 7) {
-        builder.append(String.valueOf(rnd));
+        builder.append(rnd.toString())
       }
       else {
-        builder.append('\n');
+        builder.append('\n')
       }
     }
 
-    return builder.toString();
+    return builder.toString()
   }
 
-  private long getCurrentSeed() throws Exception {
-    Field seedField = myRng.getClass().getDeclaredField("seed");
-    seedField.setAccessible(true);
-    AtomicLong seedFieldValue = (AtomicLong) seedField.get(myRng);
-    return seedFieldValue.get() ^ 0x5DEECE66DL;
+  private fun getCurrentSeed(): Long {
+    val seedField = myRng.javaClass.getDeclaredField("seed")
+    seedField.isAccessible = true
+    val seedFieldValue = seedField.get(myRng) as AtomicLong
+    return seedFieldValue.get() xor 0x5DEECE66DL
   }
 }

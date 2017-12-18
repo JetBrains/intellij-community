@@ -13,216 +13,198 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
+package com.intellij.openapi.vcs
 
-import com.intellij.diff.comparison.iterables.DiffIterable;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.LineStatusTracker;
-import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode;
-import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.openapi.vcs.ex.RangesBuilder;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil
+import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
+import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
+import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.createRanges
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.LightPlatformTestCase.assertOrderedEquals
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.containers.ContainerUtil
+import java.util.*
 
-import java.util.BitSet;
-import java.util.List;
+abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
+  protected lateinit var myTracker: LineStatusTracker<*>
 
-import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
+  protected val myDocument: Document get() = myTracker.document
+  protected val myUpToDateDocument: Document get() = myTracker.vcsDocument
 
-/**
- * author: lesya
- */
-public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCase {
-  protected Document myDocument;
-  protected Document myUpToDateDocument;
-  protected LineStatusTracker<?> myTracker;
-
-  @Override
-  public void tearDown() throws Exception {
+  public override fun tearDown() {
     try {
-      releaseTracker();
+      releaseTracker()
     }
     finally {
-      super.tearDown();
+      super.tearDown()
     }
   }
 
-  protected void runCommand(@NotNull final Runnable task) {
-    CommandProcessor.getInstance().executeCommand(getProject(), () -> ApplicationManager.getApplication().runWriteAction(task), "", null);
-    verify();
+  protected fun runCommand(task: () -> Unit) {
+    CommandProcessor.getInstance().executeCommand(getProject(),
+                                                  { ApplicationManager.getApplication().runWriteAction(task) }, "", null)
+    verify()
   }
 
-  protected void replaceString(final int startOffset, final int endOffset, @NotNull final String s) {
-    runCommand(() -> myDocument.replaceString(startOffset, endOffset, s));
+  protected fun replaceString(startOffset: Int, endOffset: Int, s: String) {
+    runCommand { myDocument.replaceString(startOffset, endOffset, s) }
   }
 
-  protected void insertString(final int offset, @NotNull final String s) {
-    runCommand(() -> myDocument.insertString(offset, s));
+  protected fun insertString(offset: Int, s: String) {
+    runCommand { myDocument.insertString(offset, s) }
   }
 
-  protected void deleteString(final int startOffset, final int endOffset) {
-    runCommand(() -> myDocument.deleteString(startOffset, endOffset));
+  protected fun deleteString(startOffset: Int, endOffset: Int) {
+    runCommand { myDocument.deleteString(startOffset, endOffset) }
   }
 
-  protected void rollback(@NotNull final Range range) {
-    runCommand(() -> myTracker.rollbackChanges(range));
+  protected fun rollback(range: Range) {
+    runCommand { myTracker.rollbackChanges(range) }
   }
 
-  protected void rollback(@NotNull final BitSet lines) {
-    runCommand(() -> myTracker.rollbackChanges(lines));
+  protected fun rollback(lines: BitSet) {
+    runCommand { myTracker.rollbackChanges(lines) }
   }
 
-  protected void compareRanges() {
-    List<? extends Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
-    List<? extends Range> actual = myTracker.getRanges();
-    assertEqualRanges(expected, actual);
+  protected fun compareRanges() {
+    val expected = createRanges(myDocument, myUpToDateDocument)
+    val actual = myTracker.getRanges()
+    assertEqualRanges(expected, actual)
   }
 
-  public static void assertEqualRanges(List<? extends Range> expected, List<? extends Range> actual) {
-    UsefulTestCase.assertOrderedEquals("", actual, expected, (r1, r2) -> {
-      return r1.getLine1() == r2.getLine1() &&
-             r1.getLine2() == r2.getLine2() &&
-             r1.getVcsLine1() == r2.getVcsLine1() &&
-             r1.getVcsLine2() == r2.getVcsLine2();
-    });
+  fun stripTrailingSpaces() {
+    (myDocument as DocumentImpl).stripTrailingSpaces(null, true)
   }
 
-  public void stripTrailingSpaces() {
-    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
+  fun assertTextContentIs(expected: String) {
+    assertEquals(expected, myDocument.text)
   }
 
-  public void assertTextContentIs(String expected) {
-    assertEquals(expected, myDocument.getText());
+  protected fun createDocument(text: String) {
+    createDocument(text, text)
+    compareRanges()
+    assertEquals(0, DocumentMarkupModel.forDocument(myDocument, getProject(), true).allHighlighters.size)
   }
 
-  protected void createDocument(@NotNull String text) {
-    createDocument(text, text);
-    compareRanges();
-    assertEquals(0, DocumentMarkupModel.forDocument(myDocument, getProject(), true).getAllHighlighters().length);
-  }
-
-  protected void createDocument(@NotNull String text, @NotNull final String upToDateDocument) {
-    createDocument(text, upToDateDocument, false);
-  }
-
-  protected void createDocument(@NotNull String text, @NotNull final String upToDateDocument, boolean smart) {
-    VirtualFile file = new LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, text);
-    myDocument = FileDocumentManager.getInstance().getDocument(file);
-    assertNotNull(myDocument);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      assert myTracker == null;
-      myTracker = LineStatusTracker.createOn(file, myDocument, getProject(), smart ? Mode.SMART : Mode.DEFAULT);
-      myTracker.setBaseRevision(upToDateDocument);
-    });
-    myUpToDateDocument = myTracker.getVcsDocument();
-  }
-
-  protected void releaseTracker() {
-    if (myTracker != null) {
-      myTracker.release();
-      myTracker = null;
+  protected fun createDocument(text: String, upToDateDocument: String, smart: Boolean = false) {
+    val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, text)
+    val document = FileDocumentManager.getInstance().getDocument(file)!!
+    ApplicationManager.getApplication().runWriteAction {
+      myTracker = LineStatusTracker.createOn(file, document, getProject(), if (smart) Mode.SMART else Mode.DEFAULT)
+      myTracker.setBaseRevision(upToDateDocument)
     }
   }
 
-
-  public void verify() {
-    checkValid();
-    checkCantTrim();
-    checkCantMerge();
-    checkInnerRanges();
+  protected fun releaseTracker() {
+    myTracker.release()
   }
 
-  private void checkValid() {
-    List<Range> ranges = myTracker.getRanges();
-    List<com.intellij.diff.util.Range> diffRanges = ContainerUtil.map(ranges, it -> {
-      return new com.intellij.diff.util.Range(it.getVcsLine1(), it.getVcsLine2(), it.getLine1(), it.getLine2());
-    });
 
-    int lineCount1 = DiffUtil.getLineCount(myUpToDateDocument);
-    int lineCount2 = DiffUtil.getLineCount(myDocument);
-    DiffIterable iterable = fair(DiffIterableUtil.create(diffRanges, lineCount1, lineCount2));
+  fun verify() {
+    checkValid()
+    checkCantTrim()
+    checkCantMerge()
+    checkInnerRanges()
+  }
 
-    for (com.intellij.diff.util.Range range : iterable.iterateUnchanged()) {
-      List<String> lines1 = DiffUtil.getLines(myUpToDateDocument, range.start1, range.end1);
-      List<String> lines2 = DiffUtil.getLines(myDocument, range.start2, range.end2);
-      assertOrderedEquals(lines1, lines2);
+  private fun checkValid() {
+    val ranges = myTracker.getRanges()!!
+    val diffRanges = ContainerUtil.map(ranges) { it -> com.intellij.diff.util.Range(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
+
+    val lineCount1 = DiffUtil.getLineCount(myUpToDateDocument)
+    val lineCount2 = DiffUtil.getLineCount(myDocument)
+    val iterable = fair(DiffIterableUtil.create(diffRanges, lineCount1, lineCount2))
+
+    for (range in iterable.iterateUnchanged()) {
+      val lines1 = DiffUtil.getLines(myUpToDateDocument, range.start1, range.end1)
+      val lines2 = DiffUtil.getLines(myDocument, range.start2, range.end2)
+      assertOrderedEquals(lines1, lines2)
     }
   }
 
-  private void checkCantTrim() {
-    List<? extends Range> ranges = myTracker.getRanges();
-    for (Range range : ranges) {
-      if (range.getType() != Range.MODIFIED) continue;
+  private fun checkCantTrim() {
+    val ranges = myTracker.getRanges()!!
+    for (range in ranges) {
+      if (range.type != Range.MODIFIED) continue
 
-      List<String> lines1 = DiffUtil.getLines(myUpToDateDocument, range.getVcsLine1(), range.getVcsLine2());
-      List<String> lines2 = DiffUtil.getLines(myDocument, range.getLine1(), range.getLine2());
+      val lines1 = DiffUtil.getLines(myUpToDateDocument, range.vcsLine1, range.vcsLine2)
+      val lines2 = DiffUtil.getLines(myDocument, range.line1, range.line2)
 
-      String f1 = ContainerUtil.getFirstItem(lines1);
-      String f2 = ContainerUtil.getFirstItem(lines2);
+      val f1 = ContainerUtil.getFirstItem(lines1)
+      val f2 = ContainerUtil.getFirstItem(lines2)
 
-      String l1 = ContainerUtil.getLastItem(lines1);
-      String l2 = ContainerUtil.getLastItem(lines2);
+      val l1 = ContainerUtil.getLastItem(lines1)
+      val l2 = ContainerUtil.getLastItem(lines2)
 
-      assertFalse(Comparing.equal(f1, f2));
-      assertFalse(Comparing.equal(l1, l2));
+      assertFalse(Comparing.equal(f1, f2))
+      assertFalse(Comparing.equal(l1, l2))
     }
   }
 
-  private void checkCantMerge() {
-    List<? extends Range> ranges = myTracker.getRanges();
-    for (int i = 0; i < ranges.size() - 1; i++) {
-      assertFalse(ranges.get(i).getLine2() == ranges.get(i + 1).getLine1());
+  private fun checkCantMerge() {
+    val ranges = myTracker.getRanges()!!
+    for (i in 0 until ranges.size - 1) {
+      assertFalse(ranges[i].line2 == ranges[i + 1].line1)
     }
   }
 
-  private void checkInnerRanges() {
-    List<? extends Range> ranges = myTracker.getRanges();
+  private fun checkInnerRanges() {
+    val ranges = myTracker.getRanges()!!
 
-    for (Range range : ranges) {
-      List<Range.InnerRange> innerRanges = range.getInnerRanges();
-      if (innerRanges == null) continue;
-      if (range.getType() != Range.MODIFIED) {
-        assertEmpty(innerRanges);
-        continue;
+    for (range in ranges) {
+      val innerRanges = range.innerRanges ?: continue
+      if (range.type != Range.MODIFIED) {
+        assertEmpty(innerRanges)
+        continue
       }
 
-      int last = 0;
-      for (Range.InnerRange innerRange : innerRanges) {
-        assertEquals(innerRange.getLine1() == innerRange.getLine2(), innerRange.getType() == Range.DELETED);
+      var last = 0
+      for (innerRange in innerRanges) {
+        assertEquals(innerRange.line1 == innerRange.line2, innerRange.type == Range.DELETED)
 
-        assertEquals(last, innerRange.getLine1());
-        last = innerRange.getLine2();
+        assertEquals(last, innerRange.line1)
+        last = innerRange.line2
       }
-      assertEquals(last, range.getLine2() - range.getLine1());
+      assertEquals(last, range.line2 - range.line1)
 
-      List<String> lines1 = DiffUtil.getLines(myUpToDateDocument, range.getVcsLine1(), range.getVcsLine2());
-      List<String> lines2 = DiffUtil.getLines(myDocument, range.getLine1(), range.getLine2());
+      val lines1 = DiffUtil.getLines(myUpToDateDocument, range.vcsLine1, range.vcsLine2)
+      val lines2 = DiffUtil.getLines(myDocument, range.line1, range.line2)
 
-      int start = 0;
-      for (Range.InnerRange innerRange : innerRanges) {
-        if (innerRange.getType() != Range.EQUAL) continue;
+      var start = 0
+      for (innerRange in innerRanges) {
+        if (innerRange.type != Range.EQUAL) continue
 
-        for (int i = innerRange.getLine1(); i < innerRange.getLine2(); i++) {
-          String line = lines2.get(i);
-          List<String> searchSpace = lines1.subList(start, lines1.size());
-          int index = ContainerUtil.<String>indexOf(searchSpace, (it) -> StringUtil.equalsIgnoreWhitespaces(it, line));
-          assertTrue(index != -1);
-          start += index + 1;
+        for (i in innerRange.line1 until innerRange.line2) {
+          val line = lines2[i]
+          val searchSpace = lines1.subList(start, lines1.size)
+          val index = ContainerUtil.indexOf(searchSpace) { it -> StringUtil.equalsIgnoreWhitespaces(it, line) }
+          assertTrue(index != -1)
+          start += index + 1
         }
+      }
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun assertEqualRanges(expected: List<Range>, actual: List<Range>?) {
+      assertOrderedEquals("", actual!!, expected) { r1, r2 ->
+        r1.line1 == r2.line1 &&
+        r1.line2 == r2.line2 &&
+        r1.vcsLine1 == r2.vcsLine1 &&
+        r1.vcsLine2 == r2.vcsLine2
       }
     }
   }

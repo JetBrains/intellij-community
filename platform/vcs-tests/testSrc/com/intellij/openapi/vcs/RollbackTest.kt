@@ -13,162 +13,156 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs;
+package com.intellij.openapi.vcs
 
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.vcs.ex.Range;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.vcs.ex.Range
 
-/**
- * author: lesya
- */
-public class RollbackTest extends BaseLineStatusTrackerTestCase{
+class RollbackTest : BaseLineStatusTrackerTestCase() {
 
-  public void testUpToDateContent1() {
-    createDocument("\n1\n2\n3\n4\n5\n6\n7");
-    deleteString(0, 4);
-    assertEquals("1\n2", getVcsContent(getFirstRange()).toString());
+  fun testUpToDateContent1() {
+    createDocument("\n1\n2\n3\n4\n5\n6\n7")
+    deleteString(0, 4)
+    assertEquals("1\n2", getVcsContent(getFirstRange()).toString())
   }
 
-  public void testUpToDateContent2() {
-    createDocument("\n1\n2\n3\n4\n5\n6\n7");
-    deleteString(3, 5);
-    assertEquals("2", getVcsContent(getFirstRange()).toString());
+  fun testUpToDateContent2() {
+    createDocument("\n1\n2\n3\n4\n5\n6\n7")
+    deleteString(3, 5)
+    assertEquals("2", getVcsContent(getFirstRange()).toString())
   }
 
-  public void testRollbackInserted1() {
-    String initialContent = "1\n2\n3\n4";
-    createDocument(initialContent);
-    insertString(7, "\n5\n6");
-    compareRanges();
-    rollbackFirstChange(Range.INSERTED);
-    assertTextContentIs(initialContent);
-    compareRanges();
-    insertString(7, "\5\n6\n7\n");
-    compareRanges();
-    rollbackFirstChange(Range.MODIFIED);
-    compareRanges();
+  fun testRollbackInserted1() {
+    val initialContent = "1\n2\n3\n4"
+    createDocument(initialContent)
+    insertString(7, "\n5\n6")
+    compareRanges()
+    rollbackFirstChange(Range.INSERTED)
+    assertTextContentIs(initialContent)
+    compareRanges()
+    insertString(7, "\u0005\n6\n7\n")
+    compareRanges()
+    rollbackFirstChange(Range.MODIFIED)
+    compareRanges()
   }
 
-  public void testRollbackInserted2() {
+  fun testRollbackInserted2() {
 
-    doTestRollback("1\n2\n3\n4", () -> insertString(0, "\n0\n"), Range.INSERTED);
+    doTestRollback("1\n2\n3\n4", { insertString(0, "\n0\n") }, Range.INSERTED)
   }
 
-  public void testRollbackInserted3() {
-    doTestRollback("1\n2\n3\n4\n5\n6", () -> insertString(5, "\n0\n"), Range.INSERTED);
+  fun testRollbackInserted3() {
+    doTestRollback("1\n2\n3\n4\n5\n6", { insertString(5, "\n0\n") }, Range.INSERTED)
   }
 
-  public void testRollbackInserted4() {
-    doTestRollback("1\n2\n3\n4\n5", () -> insertString(myDocument.getTextLength(), "\n"), Range.INSERTED);
+  fun testRollbackInserted4() {
+    doTestRollback("1\n2\n3\n4\n5", { insertString(myDocument.textLength, "\n") }, Range.INSERTED)
   }
 
-  public void testRollbackModified4() {
-    doTestRollback("1\n2\n3\n4", () -> insertString(0, "\n0\n0"), Range.MODIFIED);
+  fun testRollbackModified4() {
+    doTestRollback("1\n2\n3\n4", { insertString(0, "\n0\n0") }, Range.MODIFIED)
 
   }
 
-  public void testRollbackModified1() {
-    doTestRollback("1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 3), Range.MODIFIED);
+  fun testRollbackModified1() {
+    doTestRollback("1\n2\n3\n4\n5\n6\n7", { deleteString(0, 3) }, Range.MODIFIED)
   }
 
-  public void testRollbackDeleted2() {
-    doTestRollback("1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 4), Range.DELETED);
+  fun testRollbackDeleted2() {
+    doTestRollback("1\n2\n3\n4\n5\n6\n7", { deleteString(0, 4) }, Range.DELETED)
   }
 
-  public void testRollbackDeleted3() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 3), Range.DELETED);
+  fun testRollbackDeleted3() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(0, 3) }, Range.DELETED)
   }
 
-  public void testRollbackDeleted4() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 4), Range.DELETED);
+  fun testRollbackDeleted4() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(0, 4) }, Range.DELETED)
   }
 
-  public void testRollbackModified5() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(2, 5), Range.MODIFIED);
+  fun testRollbackModified5() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(2, 5) }, Range.MODIFIED)
   }
 
-  public void testRollbackDeleted6() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(3, 5), Range.DELETED);
+  fun testRollbackDeleted6() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(3, 5) }, Range.DELETED)
   }
 
-  public void testRollbackModified7() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(3, 6), Range.MODIFIED);
+  fun testRollbackModified7() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(3, 6) }, Range.MODIFIED)
   }
 
-  public void testRollbackDeleted8() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(3, 7), Range.DELETED);
+  fun testRollbackDeleted8() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(3, 7) }, Range.DELETED)
   }
 
-  public void testRollbackDeleted9() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(5, 13), Range.DELETED);
+  fun testRollbackDeleted9() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(5, 13) }, Range.DELETED)
   }
 
-  public void testRollbackEmptyLastLineDeletion() {
-    String text1 = "1\n2\n3\n\n";
-    String text2 = "1\n2\n3\n";
-    createDocument(text2, text1);
-    rollback(myTracker.getRanges().get(0));
+  fun testRollbackEmptyLastLineDeletion() {
+    val text1 = "1\n2\n3\n\n"
+    val text2 = "1\n2\n3\n"
+    createDocument(text2, text1)
+    rollback(myTracker.getRanges()!![0])
 
-    assertTextContentIs(text1);
-    assertEmpty(myTracker.getRanges());
+    assertTextContentIs(text1)
+    assertEmpty(myTracker.getRanges()!!)
   }
 
-  public void testSRC27943() {
-    String initialContent = "<%@ taglib uri=\"/WEB-INF/sigpath.tld\" prefix=\"sigpath\" %>\n" +
-                       "<%@ taglib uri=\"/WEB-INF/struts-html.tld\" prefix=\"html\" %>\n" +
-                       "<%@ taglib uri=\"/WEB-INF/struts-bean.tld\" prefix=\"bean\" %>\n" +
-                       "<%@ taglib uri=\"/WEB-INF/string.tld\" prefix=\"str\" %>\n" +
-                       "<%@ taglib uri=\"/WEB-INF/regexp.tld\" prefix=\"rx\" %>";
+  fun testSRC27943() {
+    val initialContent = "<%@ taglib uri=\"/WEB-INF/sigpath.tld\" prefix=\"sigpath\" %>\n" +
+                         "<%@ taglib uri=\"/WEB-INF/struts-html.tld\" prefix=\"html\" %>\n" +
+                         "<%@ taglib uri=\"/WEB-INF/struts-bean.tld\" prefix=\"bean\" %>\n" +
+                         "<%@ taglib uri=\"/WEB-INF/string.tld\" prefix=\"str\" %>\n" +
+                         "<%@ taglib uri=\"/WEB-INF/regexp.tld\" prefix=\"rx\" %>"
 
-    String newContent = "<%@ taglib uri=\"/tag_lib/sigpath.tld\" prefix=\"sigpath\" %>\n" +
-                       "<%@ taglib uri=\"/tag_lib/struts-html.tld\" prefix=\"html\" %>\n" +
-                       "<%@ taglib uri=\"/tag_lib/struts-bean.tld\" prefix=\"bean\" %>\n" +
-                       "<%@ taglib uri=\"/tag_lib/string.tld\" prefix=\"str\" %>\n" +
-                       "<%@ taglib uri=\"/tag_lib/regexp.tld\" prefix=\"rx\" %>";
+    val newContent = "<%@ taglib uri=\"/tag_lib/sigpath.tld\" prefix=\"sigpath\" %>\n" +
+                     "<%@ taglib uri=\"/tag_lib/struts-html.tld\" prefix=\"html\" %>\n" +
+                     "<%@ taglib uri=\"/tag_lib/struts-bean.tld\" prefix=\"bean\" %>\n" +
+                     "<%@ taglib uri=\"/tag_lib/string.tld\" prefix=\"str\" %>\n" +
+                     "<%@ taglib uri=\"/tag_lib/regexp.tld\" prefix=\"rx\" %>"
 
-    createDocument(initialContent);
-    replaceString(0, initialContent.length(), newContent);
-    compareRanges();
-    rollbackFirstChange(Range.MODIFIED);
-    assertTextContentIs(initialContent);
-    compareRanges();
+    createDocument(initialContent)
+    replaceString(0, initialContent.length, newContent)
+    compareRanges()
+    rollbackFirstChange(Range.MODIFIED)
+    assertTextContentIs(initialContent)
+    compareRanges()
   }
 
-  public void testRollbackModified10() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(6, 13), Range.MODIFIED);
+  fun testRollbackModified10() {
+    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(6, 13) }, Range.MODIFIED)
   }
 
-  public void testEmptyDocumentBug() {
-    createDocument("");
+  fun testEmptyDocumentBug() {
+    createDocument("")
 
-    insertString(0, "adsf");
-    rollbackFirstChange(Range.MODIFIED);
-    compareRanges();
+    insertString(0, "adsf")
+    rollbackFirstChange(Range.MODIFIED)
+    compareRanges()
   }
 
-  private void doTestRollback(String initialContent, Runnable modifyAction, byte expectedRangeType) {
-    createDocument(initialContent);
-    modifyAction.run();
-    compareRanges();
-    rollbackFirstChange(expectedRangeType);
-    assertTextContentIs(initialContent);
-    compareRanges();
+  private fun doTestRollback(initialContent: String, modifyAction: () -> Unit, expectedRangeType: Byte) {
+    createDocument(initialContent)
+    modifyAction()
+    compareRanges()
+    rollbackFirstChange(expectedRangeType)
+    assertTextContentIs(initialContent)
+    compareRanges()
+  }
+  private fun rollbackFirstChange(expectedRangeType: Byte) {
+    val range = getFirstRange()
+    assertEquals(expectedRangeType, range.type)
+    rollback(range)
   }
 
-  private void rollbackFirstChange(byte expectedRangeType) {
-    final Range range = getFirstRange();
-    assertEquals(expectedRangeType, range.getType());
-    rollback(range);
+  private fun getFirstRange(): Range {
+    assertEquals(1, myTracker.getRanges()!!.size)
+    return myTracker.getRanges()!![0]
   }
 
-  private Range getFirstRange() {
-    assertEquals(1, myTracker.getRanges().size());
-    return myTracker.getRanges().get(0);
-  }
-
-  @NotNull
-  private CharSequence getVcsContent(Range range) {
-    return DiffUtil.getLinesContent(myTracker.getVcsDocument(), range.getVcsLine1(), range.getVcsLine2());
+  private fun getVcsContent(range: Range): CharSequence {
+    return DiffUtil.getLinesContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
   }
 }
