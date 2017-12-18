@@ -19,7 +19,6 @@ import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
-import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.elements.GraphNode
 import com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
 import com.intellij.vcs.log.graph.api.printer.PrintElementManager
@@ -39,15 +38,17 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
 
     collectElements(rowIndex, object : ElementConsumer() {
       override fun consumeNode(node: GraphNode, position: Int) {
-        nodes.add(createSimplePrintElement(rowIndex, node, position))
+        nodes.add(SimplePrintElementImpl(rowIndex, position, node, printElementManager))
       }
 
       override fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-        result.add(createEdgePrintElement(rowIndex, edge, upPosition, downPosition, EdgePrintElement.Type.DOWN, hasArrow))
+        result.add(EdgePrintElementImpl(rowIndex, upPosition, downPosition, EdgePrintElement.Type.DOWN, edge, hasArrow,
+                                        printElementManager))
       }
 
       override fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-        result.add(createEdgePrintElement(rowIndex, edge, upPosition, downPosition, EdgePrintElement.Type.UP, hasArrow))
+        result.add(EdgePrintElementImpl(rowIndex, downPosition, upPosition, EdgePrintElement.Type.UP, edge, hasArrow,
+                                        printElementManager))
       }
 
       override fun consumeArrow(edge: GraphEdge, position: Int, arrowType: RowElementType) {
@@ -63,30 +64,6 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     result.addAll(nodes)
 
     return result
-  }
-
-  private fun createSimplePrintElement(rowIndex: Int, node: GraphNode, position: Int): SimplePrintElementImpl {
-    return SimplePrintElementImpl(rowIndex, position, node, printElementManager)
-  }
-
-  private fun createEdgePrintElement(rowIndex: Int,
-                                     edge: GraphEdge,
-                                     upPosition: Int,
-                                     downPosition: Int,
-                                     type: EdgePrintElement.Type,
-                                     hasArrow: Boolean): EdgePrintElementImpl {
-    val positionInCurrentRow: Int
-    val positionInOtherRow: Int
-    if (type == EdgePrintElement.Type.DOWN) {
-      positionInCurrentRow = upPosition
-      positionInOtherRow = downPosition
-    }
-    else {
-      positionInCurrentRow = downPosition
-      positionInOtherRow = upPosition
-    }
-    return EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, edge, hasArrow,
-                                printElementManager)
   }
 
   override fun withGraphElement(printElement: PrintElement): PrintElementWithGraphElement {
