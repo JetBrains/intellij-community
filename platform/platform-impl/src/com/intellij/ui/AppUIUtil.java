@@ -58,6 +58,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
+import javax.swing.plaf.synth.SynthCheckBoxUI;
+import javax.swing.plaf.synth.SynthContext;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -422,20 +424,25 @@ public class AppUIUtil {
         final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
         cb.setBackground(viewer.getBackground());
         cb.setFont(cb.getFont().deriveFont(Font.BOLD));
-        int leftInset;
+        int leftInset = 0;
+        Insets margin = cb.getMargin();
+        if (margin != null) leftInset += margin.left;
+        Border border = cb.getBorder();
+        if (border != null) leftInset += border.getBorderInsets(cb).left;
         ButtonUI ui = cb.getUI();
+        Icon icon = null;
         if (ui instanceof BasicRadioButtonUI) {
-          Icon icon = ((BasicRadioButtonUI)ui).getDefaultIcon();
-          if (icon != null) {
-            leftInset = icon.getIconWidth() + cb.getIconTextGap();
-            Insets margin = cb.getMargin();
-            if (margin != null) leftInset += margin.left;
-            Border border = cb.getBorder();
-            if (border != null) leftInset += border.getBorderInsets(cb).left;
-            //noinspection UseDPIAwareBorders
-            viewer.setBorder(new EmptyBorder(JBUI.scale(5), leftInset, JBUI.scale(15), JBUI.scale(5)));
-          }
+          icon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+        } else if (ui instanceof SynthCheckBoxUI){
+          SynthCheckBoxUI sui = (SynthCheckBoxUI)ui;
+          SynthContext context = sui.getContext(cb);
+          icon = context.getStyle().getIcon(context, "CheckBox.icon");
         }
+        if (icon != null) {
+          leftInset += icon.getIconWidth() + cb.getIconTextGap();
+          //noinspection UseDPIAwareBorders
+        }
+        viewer.setBorder(new EmptyBorder(JBUI.scale(5), leftInset, JBUI.scale(15), JBUI.scale(5)));
 
         final JPanel pane = new JPanel(new BorderLayout());
         pane.setBackground(viewer.getBackground());
