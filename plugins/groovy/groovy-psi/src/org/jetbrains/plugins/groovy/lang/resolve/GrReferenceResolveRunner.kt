@@ -3,22 +3,18 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTraitType
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGet
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
@@ -43,13 +39,16 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
     else {
       val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
-        return processSpread(qualifier.type, state)
+        return qualifier.type.processSpread(processor, state, place)
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
         if (!processJavaLangClass(qualifier, initialState)) return false
         if (!processQualifier(qualifier, initialState)) return false
       }
+    }
+    if (processNonCode) {
+      if (!ResolveUtil.processCategoryMembers(place, processor, initialState)) return false
     }
     return true
   }
@@ -60,10 +59,8 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
     //optimization: only 'class' or 'this' in static context can be an alias of java.lang.Class
     if ("class" != qualifier.referenceName && !PsiUtil.isThisReference(qualifier) && qualifier.resolve() !is PsiClass) return true
 
-    val classType = ResolveUtil.unwrapClassType(qualifier.getType())
-    return classType?.let {
-      processQualifierType(classType, initialState)
-    } ?: true
+    val classType = ResolveUtil.unwrapClassType(qualifier.type)
+    return classType.processReceiverType(processor, initialState, place)
   }
 
   private fun processQualifier(qualifier: GrExpression, state: ResolveState): Boolean {
@@ -77,73 +74,17 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
         else if (resolved != null && !resolved.processDeclarations(processor, state, null, place)) return false
         if (resolved !is PsiPackage) {
           val objectQualifier = TypesUtil.getJavaLangObject(place)
-          if (!processQualifierType(objectQualifier, state)) return false
+          if (!objectQualifier.processReceiverType(processor, state, place)) return false
         }
       }
     }
     else {
-      if (!processQualifierType(qualifierType, state)) return false
+      if (!qualifierType.processReceiverType(processor, state, place)) return false
+      if (place.parent !is GrMethodCall && isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        return qualifierType.processSpread(processor, state, place)
+      }
     }
     return true
-  }
-
-  private fun processQualifierType(qualifierType: PsiType, state: ResolveState): Boolean {
-    val type = (qualifierType as? PsiDisjunctionType)?.leastUpperBound ?: qualifierType
-    return doProcessQualifierType(type, state)
-  }
-
-  private fun doProcessQualifierType(qualifierType: PsiType, state: ResolveState): Boolean {
-    if (qualifierType is PsiIntersectionType) {
-      return qualifierType.conjuncts.find { !processQualifierType(it, state) } == null
-    }
-
-    if (qualifierType is PsiCapturedWildcardType) {
-      val wildcard = qualifierType.wildcard
-      if (wildcard.isExtends) {
-        return processQualifierType(wildcard.extendsBound, state)
-      }
-    }
-    if (qualifierType is PsiWildcardType) {
-      if (qualifierType.isExtends) {
-        return processQualifierType(qualifierType.extendsBound, state)
-      }
-    }
-
-    // Process trait type conjuncts in reversed order because last applied trait matters.
-    if (qualifierType is GrTraitType) return qualifierType.conjuncts.findLast { !processQualifierType(it, state) } == null
-
-    if (qualifierType is PsiClassType) {
-      val qualifierResult = qualifierType.resolveGenerics()
-      qualifierResult.element?.let {
-        val resolveState = state.put(PsiSubstitutor.KEY, qualifierResult.substitutor)
-        if (!ResolveUtil.processClassDeclarations(it, processor, resolveState, null, place)) return false
-      }
-    }
-    else if (qualifierType is PsiPrimitiveType) {
-      val boxedType = qualifierType.getBoxedType(place) ?: return true
-      return processQualifierType(boxedType, state)
-    }
-    else if (qualifierType is PsiArrayType) {
-      GroovyPsiManager.getInstance(place.project).getArrayClass(qualifierType.componentType)?.let {
-        if (!ResolveUtil.processClassDeclarations(it, processor, state, null, place)) return false
-      }
-    }
-
-    if (place.parent !is GrMethodCall && InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-      if (!processSpread(qualifierType, state)) return false
-    }
-
-    if (state.processNonCodeMembers()) {
-      if (!ResolveUtil.processCategoryMembers(place, processor, state)) return false
-      if (!ResolveUtil.processNonCodeMembers(qualifierType, processor, place, state)) return false
-    }
-    return true
-  }
-
-  private fun processSpread(qualifierType: PsiType?, state: ResolveState): Boolean {
-    val componentType = ClosureParameterEnhancer.findTypeForIteration(qualifierType, place) ?: return true
-    val spreadState = SpreadState.create(qualifierType, state.get(SpreadState.SPREAD_STATE))
-    return processQualifierType(componentType, state.put(SpreadState.SPREAD_STATE, spreadState))
   }
 }
 
