@@ -63,29 +63,29 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
       if (i % 1000 == 0) LOG.debug(i.toString())
       try {
         val initial = generateText(textLength)
-        createDocument(initial, initial, smart)
-        // println("Initial: " + initial.replace("\n", "\\n"));
+        test(initial, initial, smart) {
+          // println("Initial: " + initial.replace("\n", "\\n"));
 
-        val count = myRng.nextInt(modifications)
-        for (j in 0 until count) {
-          val writeChanges = myRng.nextInt(4) + 1
-          runCommand {
-            for (k in 0 until writeChanges) {
-              applyRandomChange(changeLength)
+          val count = myRng.nextInt(modifications)
+          for (j in 0 until count) {
+            val writeChanges = myRng.nextInt(4) + 1
+            runCommand {
+              for (k in 0 until writeChanges) {
+                applyRandomChange(changeLength)
+              }
             }
+
+            verify()
           }
 
-          verify()
+          if (iterations > 0) {
+            checkRevertComplex(iterations)
+          }
+          else {
+            checkRevert(tracker.getRanges()!!.size * 2)
+          }
         }
 
-        if (iterations > 0) {
-          checkRevertComplex(iterations)
-        }
-        else {
-          checkRevert(myTracker.getRanges()!!.size * 2)
-        }
-
-        releaseTracker()
         UIUtil.dispatchAllInvocationEvents()
       }
       catch (e: Throwable) {
@@ -110,13 +110,10 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
       try {
         val initial = generateText(textLength)
         val initialVcs = generateText(textLength)
-        createDocument(initial, initialVcs, smart)
+        test(initial, initialVcs, smart) {
+          checkRevert(tracker.getRanges()!!.size * 2)
+        }
 
-        verify()
-
-        checkRevert(myTracker.getRanges()!!.size * 2)
-
-        releaseTracker()
         UIUtil.dispatchAllInvocationEvents()
       }
       catch (e: Throwable) {
@@ -131,53 +128,53 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
-  private fun checkRevert(maxIterations: Int) {
+  private fun Test.checkRevert(maxIterations: Int) {
     var count = 0
     while (true) {
       if (count > maxIterations) throw Exception("Revert loop detected")
-      val ranges = myTracker.getRanges()
-      if (ranges!!.isEmpty()) break
+      val ranges = tracker.getRanges()!!
+      if (ranges.isEmpty()) break
       val index = myRng.nextInt(ranges.size)
       val range = ranges[index]
 
-      rollback(range)
+      range.rollback()
       count++
     }
-    assertEquals(myDocument.text, myUpToDateDocument.text)
+    assertEquals(document.text, vcsDocument.text)
   }
 
-  private fun checkRevertComplex(iterations: Int) {
+  private fun Test.checkRevertComplex(iterations: Int) {
     val lines = BitSet()
 
     for (i in 0 until iterations) {
       lines.clear()
 
-      for (j in 0 until myDocument.lineCount + 2) {
+      for (j in 0 until document.lineCount + 2) {
         if (myRng.nextInt(10) < 3) {
           lines.set(j)
         }
       }
 
-      rollback(lines)
+      rollbackLines(lines)
     }
 
-    lines.set(0, myDocument.lineCount + 2)
-    rollback(lines)
+    lines.set(0, document.lineCount + 2)
+    rollbackLines(lines)
 
-    assertEquals(myDocument.text, myUpToDateDocument.text)
+    assertEquals(document.text, vcsDocument.text)
   }
 
-  private fun applyRandomChange(changeLength: Int) {
-    val textLength = myDocument.textLength
+  private fun Test.applyRandomChange(changeLength: Int) {
+    val textLength = document.textLength
     val type = myRng.nextInt(3)
     val offset = if (textLength != 0) myRng.nextInt(textLength) else 0
     val length = if (textLength - offset != 0) myRng.nextInt(textLength - offset) else offset
     val data = generateText(changeLength)
     // println("Change: " + type + " - " + offset + " - " + length + " - " + data.replace("\n", "\\n"));
     when (type) {
-      0 -> myDocument.insertString(offset, data)
-      1 -> myDocument.deleteString(offset, offset + length)
-      2 -> myDocument.replaceString(offset, offset + length, data)
+      0 -> document.insertString(offset, data)
+      1 -> document.deleteString(offset, offset + length)
+      2 -> document.replaceString(offset, offset + length, data)
     }
   }
 

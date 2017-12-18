@@ -16,481 +16,584 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vcs.ex.Range
-import java.util.*
 
 class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
   fun testSimpleInsert() {
-    createDocument("1234\n2345\n3456")
-    insertString(2, "a")
-    compareRanges()
+    test("1234_2345_3456") {
+      "12".insertAfter("a")
+      assertRanges(Range(0, 1, 0, 1))
+      compareRanges()
+    }
   }
 
   fun testUndo() {
-    createDocument("1234\n2345\n3456")
-    insertString(7, "a")
-    compareRanges()
-    deleteString(7, 8)
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234_23".insertAfter("a")
+      assertRanges(Range(1, 2, 1, 2))
+      compareRanges()
+
+      "a".delete()
+      compareRanges()
+    }
   }
 
   fun testLineEndBeforeModification() {
-    createDocument("1234\n2345\n3456")
-    insertString(6, "a")
-    compareRanges()
-    insertString(5, "\n")
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234_2".insertAfter("a")
+      assertRanges(Range(1, 2, 1, 2))
+      compareRanges()
+
+      "1234_".insertAfter("_")
+      assertRanges(Range(1, 3, 1, 2))
+      compareRanges()
+    }
   }
 
   fun testLineEndBeforeModification2() {
-    createDocument("1234\n2345\n3456")
-    insertString(6, "a")
-    compareRanges()
-    insertString(4, "\n")
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234_2".insertAfter("a")
+      compareRanges()
+
+      "1234".insertAfter("_")
+      compareRanges()
+    }
   }
 
   fun testInsertDoubleEnterAtEnd() {
-    createDocument("1")
-    insertString(1, "\n")
-    compareRanges()
-    insertString(2, "\n")
-    compareRanges()
+    test("1") {
+      "1".insertAfter("_")
+      compareRanges()
+
+      "1_".insertAfter("_")
+      compareRanges()
+    }
   }
 
   fun testSimpleInsertAndWholeReplace() {
-    createDocument("1234\n2345\n3456")
-    insertString(2, "a")
-    compareRanges()
-    replaceString(0, myDocument.textLength, " ")
-    compareRanges()
+    test("1234_2345_3456") {
+      "12".insertAfter("a")
+      compareRanges()
+
+      replaceWholeText(" ")
+      compareRanges()
+    }
   }
 
   fun testSimpleInsert2() {
-    createDocument("1\n2\n3\n4\n5")
-    insertString(4, "a")
-    compareRanges()
+    test("1_2_3_4_5") {
+      "2_".insertAfter("a")
+      compareRanges()
+    }
   }
 
   fun testSimpleInsertToEmpty() {
-    createDocument("")
-    insertString(0, "a")
-    compareRanges()
+    test("") {
+      insertAtStart("a")
+      compareRanges()
+    }
   }
 
   fun testDoubleSimpleInsert() {
-    createDocument("1234\n2345\n3456")
-    insertString(2, "a")
-    compareRanges()
-    insertString(2, "a")
-    compareRanges()
+    test("1234_2345_3456") {
+      "12".insertAfter("a")
+      compareRanges()
+
+      "12".insertAfter("a")
+      compareRanges()
+    }
   }
 
   fun testInsertEnter() {
-    createDocument("1234\n2345\n3456")
-    insertString(2, "\n")
-    compareRanges()
+    test("1234_2345_3456") {
+      "12".insertAfter("_")
+      compareRanges()
+    }
   }
 
   fun testSimpleInsertAndEnterToEmpty() {
-    createDocument("")
-    insertString(0, "a")
-    compareRanges()
-    insertString(1, "\n")
-    compareRanges()
+    test("") {
+      insertAtStart("a")
+      compareRanges()
+
+      "a".insertAfter("_")
+      compareRanges()
+    }
   }
 
   fun testInsertEnterAtEnter() {
-    createDocument("1234\n2345\n3456")
-    insertString(4, "\n")
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234".insertAfter("_")
+      compareRanges()
+    }
   }
 
+
   fun testInsertEnterAtEnterAndSimpleInsert() {
-    createDocument("1234\n2345\n3456")
-    insertString(4, "\n")
-    compareRanges()
-    insertString(5, "a")
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234".insertAfter("_")
+      compareRanges()
+
+      "1234_".insertAfter("a")
+      compareRanges()
+    }
   }
 
   fun testInsertDoubleEnterAtEnters() {
-    createDocument("1234\n2345\n3456")
-    insertString(4, "\n")
-    compareRanges()
-    insertString(10, "\n")
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234".insertAfter("_")
+      compareRanges()
 
+      "2345".insertAfter("_")
+      compareRanges()
+    }
   }
 
   fun testInsertEnterAndSpaceAfterEnter() {
-    createDocument("12345\n12345\n12345")
-    insertString(5, "\n ")
-    compareRanges()
+    test("12345_12345_12345") {
+      (1 th "12345").insertAfter("_ ")
+      compareRanges()
+    }
   }
 
   fun testInsertEnterAndDeleteEnter1() {
-    createDocument("12345\n12345\n12345")
-    insertString(5, "\n")
-    compareRanges()
-    deleteString(5, 6)
-    compareRanges()
+    test("12345_12345_12345") {
+      (1 th "12345").insertAfter("_")
+      compareRanges()
+
+      (1 th "_").delete()
+      compareRanges()
+    }
   }
 
   fun testInsertEnterAndDeleteEnter2() {
-    createDocument("12345\n12345\n12345")
-    insertString(5, "\n")
-    compareRanges()
-    deleteString(6, 7)
-    compareRanges()
+    test("12345_12345_12345") {
+      (1 th "12345").insertAfter("_")
+      compareRanges()
+
+      (2 th "_").delete()
+      compareRanges()
+    }
   }
 
   fun testSimpleDelete() {
-    createDocument("1234\n2345\n3456")
-    deleteString(2, 3)
-    compareRanges()
+    test("1234_2345_3456") {
+      (1 th "3").delete()
+      compareRanges()
+    }
   }
 
   fun testDeleteLine() {
-    createDocument("1234\n2345\n3456")
-    deleteString(0, 5)
-    compareRanges()
+    test("1234_2345_3456") {
+      "1234_".delete()
+      compareRanges()
+    }
   }
 
   fun testDoubleDelete() {
-    createDocument("1234\n2345\n3456")
-    deleteString(2, 3)
-    deleteString(2, 3)
-    compareRanges()
+    test("1234_2345_3456") {
+      (1 th "3").delete()
+      compareRanges()
+
+      (1 th "4").delete()
+      compareRanges()
+    }
   }
 
   fun testDeleteEnter() {
-    createDocument("12345\n23456\n34567")
-    deleteString(5, 6)
-    compareRanges()
+    test("12345_23456_34567") {
+      (1 th "_").delete()
+      compareRanges()
+    }
   }
 
   fun testDeleteDoubleEnter() {
-    createDocument("12345\n\n23456\n34567")
-    deleteString(5, 6)
-    compareRanges()
+    test("12345__23456_34567") {
+      (1 th "_").delete()
+      compareRanges()
+    }
   }
 
-  //
   fun testDoubleInsertToClass() {
-    createDocument("class A{\n\n}")
-    insertString(9, "a")
-    compareRanges()
-    insertString(10, "a")
-    compareRanges()
+    test("class A{__}") {
+      "class A{_".insertAfter("a")
+      compareRanges()
+
+      "class A{_a".insertAfter("a")
+      compareRanges()
+    }
   }
 
   fun testInsertSymbolAndEnterToClass() {
-    createDocument("class A{\n\n}")
-    insertString(9, "a")
-    compareRanges()
-    insertString(10, "\n")
-    compareRanges()
+    test("class A{__}") {
+      "class A{_".insertAfter("a")
+      compareRanges()
+
+      "class A{_a".insertAfter("_")
+      compareRanges()
+    }
   }
 
   fun testMultiLineReplace2() {
-    createDocument("012a\n012b\n012c")
-    replaceString(4, 9, "\nx\ny\nz")
-    compareRanges()
+    test("012a_012b_012c") {
+      "_012b".replace("_x_y_z")
+      compareRanges()
+    }
   }
 
   fun testChangedLines1() {
-    createDocument("class A{\nx\na\nb\nc\n}", "class A{\n1\nx\n2\n}")
-    compareRanges()
+    test("class A{_x_a_b_c_}",
+         "class A{_1_x_2_}") {
+      compareRanges()
+    }
   }
 
   fun testMultiLineReplace1() {
-    createDocument("012a\n012b\n012c\n012d\n012e")
-    replaceString(5, 6, "a")
-    compareRanges()
-    replaceString(4, 14, "\nx")
-    compareRanges()
+    test("012a_012b_012c_012d_012e") {
+      (2 th "0").replace("a")
+      compareRanges()
+
+      "_a12b_012c".replace("_x")
+      compareRanges()
+    }
   }
 
   fun testInsertAndModify() {
-    createDocument("a\nb\nc\nd")
-    insertString(3, "\n")
-    compareRanges()
-    insertString(4, "\n")
-    compareRanges()
-    insertString(6, " ")
-    compareRanges()
+    test("a_b_c_d") {
+      "a_b".insertAfter("_")
+      compareRanges()
+
+      "a_b_".insertAfter("_")
+      compareRanges()
+
+      "a_b___".insertAfter(" ")
+      compareRanges()
+    }
   }
 
   fun testRangesShouldMerge() {
-    createDocument("1\n2\n3\n4")
-    insertString(1, "1")
-    compareRanges()
-    insertString(6, "3")
-    compareRanges()
-    insertString(3, "2")
-    compareRanges()
+    test("1_2_3_4") {
+      "1".insertAfter("1")
+      compareRanges()
+
+      "3".insertAfter("3")
+      compareRanges()
+
+      "11_".insertAfter("2")
+      compareRanges()
+    }
   }
 
   fun testShiftRangesAfterChange() {
-    createDocument("1\n2\n3\n4")
-    insertString(7, "4")
-    compareRanges()
-    insertString(0, "\n")
-    compareRanges()
-    insertString(0, "\n")
-    compareRanges()
-    insertString(0, "\n")
-    compareRanges()
+    test("1_2_3_4") {
+      "4".insertAfter("4")
+      compareRanges()
+
+      insertAtStart("_")
+      compareRanges()
+
+      insertAtStart("_")
+      compareRanges()
+
+      insertAtStart("_")
+      compareRanges()
+    }
   }
 
   fun testInsertBeforeChange() {
-    createDocument("   11\n   3 \n   44\n   55\n   6\n   7\n   88\n   ", "   1\n   2\n   3 \n   4\n   5\n   6\n   7\n   8\n   ")
-    insertString(9, "3")
-    compareRanges()
-    assertTextContentIs("   11\n   33 \n   44\n   55\n   6\n   7\n   88\n   ")
-    insertString(9, "aaa\nbbbbbbbb\ncccc\ndddd")
-    compareRanges()
+    test("   11_   3 _   44_   55_   6_   7_   88_   ",
+         "   1_   2_   3 _   4_   5_   6_   7_   8_   ") {
+      "11_   ".insertAfter("3")
+      assertTextContentIs("   11_   33 _   44_   55_   6_   7_   88_   ")
+      compareRanges()
+
+      "11_   ".insertAfter("aaa_bbbbbbbb_cccc_dddd")
+      compareRanges()
+    }
   }
 
-
   fun testUndoDeletion() {
-    createDocument("1\n2\n3\n4\n5\n6\n7\n")
-    deleteString(4, 6)
-    assertTextContentIs("1\n2\n4\n5\n6\n7\n")
-    compareRanges()
-    insertString(4, "3\n")
-    compareRanges()
+    test("1_2_3_4_5_6_7_") {
+      "3_".delete()
+      assertTextContentIs("1_2_4_5_6_7_")
+      compareRanges()
+
+      "2_".insertAfter("3_")
+      compareRanges()
+    }
   }
 
   fun testUndoDeletion2() {
-    createDocument("1\n2\n3\n4\n5\n6\n7\n")
-    deleteString(3, 5)
-    assertTextContentIs("1\n2\n4\n5\n6\n7\n")
-    compareRanges()
-    insertString(4, "\n3")
-    compareRanges()
+    test("1_2_3_4_5_6_7_") {
+      "_3".delete()
+      assertTextContentIs("1_2_4_5_6_7_")
+      compareRanges()
+
+      "2_".insertAfter("_3")
+      compareRanges()
+    }
   }
 
   fun testSRC17123() {
-    createDocument("package package;\n" + "\n" + "public class Class3 {\n" + "    public int i1;\n" + "    public int i2;\n" +
-                   "    public int i3;\n" + "    public int i4;\n" + "\n" + "    public static void main(String[] args) {\n" + "\n" +
-                   "    }\n" + "}")
-    deleteString(39, 58)
-    compareRanges()
-    assertTextContentIs("package package;\n" + "\n" + "public class Class3 {\n" + "    public int i2;\n" + "    public int i3;\n" +
-                        "    public int i4;\n" + "\n" + "    public static void main(String[] args) {\n" + "\n" + "    }\n" + "}")
+    test(
+      "package package;_" +
+      "_" +
+      "public class Class3 {_" +
+      "    public int i1;_" +
+      "    public int i2;_" +
+      "    public int i3;_" +
+      "    public int i4;_" +
+      "_" +
+      "    public static void main(String[] args) {_" +
+      "_" +
+      "    }_" +
+      "}"
+    ) {
+      "_    public int i1;".delete()
+      compareRanges()
 
-    deleteString(39, myDocument.textLength)
-    compareRanges()
-    deleteString(myDocument.textLength - 1, myDocument.textLength)
+      assertTextContentIs(
+        "package package;_" +
+        "_" +
+        "public class Class3 {_" +
+        "    public int i2;_" +
+        "    public int i3;_" +
+        "    public int i4;_" +
+        "_" +
+        "    public static void main(String[] args) {_" +
+        "_" +
+        "    }_" +
+        "}")
+
+      ("_" +
+       "    public int i2;_" +
+       "    public int i3;_" +
+       "    public int i4;_" +
+       "_" +
+       "    public static void main(String[] args) {_" +
+       "_" +
+       "    }_" +
+       "}").delete()
+      compareRanges()
+
+      "{".delete()
+      compareRanges()
+    }
   }
 
   fun testUnexpetedDeletedRange() {
-    createDocument("    public class\n    bbb\n")
-    insertString(17, "    \n")
-    assertTextContentIs("    public class\n    \n    bbb\n")
-    compareRanges()
-    deleteString(17, 21)
-    assertTextContentIs("    public class\n\n    bbb\n")
-    compareRanges()
-    insertString(18, "    \n")
-    assertTextContentIs("    public class\n\n    \n    bbb\n")
-    compareRanges()
-    deleteString(18, 22)
-    assertTextContentIs("    public class\n\n\n    bbb\n")
-    compareRanges()
-    deleteString(4, 10)
-    assertTextContentIs("     class\n\n\n    bbb\n")
-    compareRanges()
-    insertString(4, "p")
-    assertTextContentIs("    p class\n\n\n    bbb\n")
-    compareRanges()
-    insertString(5, "r")
-    assertTextContentIs("    pr class\n\n\n    bbb\n")
-    compareRanges()
-    insertString(6, "i")
-    assertTextContentIs("    pri class\n\n\n    bbb\n")
-    compareRanges()
+    test("    public class_    bbb_") {
+      "    public class_".insertAfter("    _")
+      assertTextContentIs("    public class_    _    bbb_")
+      compareRanges()
+
+      ("    " at !17 - 21).delete()
+      assertTextContentIs("    public class__    bbb_")
+      compareRanges()
+
+      "    public class__".insertAfter("    _")
+      assertTextContentIs("    public class__    _    bbb_")
+      compareRanges()
+
+      ("    " at !18 - 22).delete()
+      assertTextContentIs("    public class___    bbb_")
+      compareRanges()
+
+      "public".delete()
+      assertTextContentIs("     class___    bbb_")
+      compareRanges()
+
+      ("    " at !0 - 4).insertAfter("p")
+      assertTextContentIs("    p class___    bbb_")
+      compareRanges()
+
+      "    p".insertAfter("r")
+      assertTextContentIs("    pr class___    bbb_")
+      compareRanges()
+
+      "    pr".insertAfter("i")
+      assertTextContentIs("    pri class___    bbb_")
+      compareRanges()
+    }
   }
 
   fun testSrc29814() {
-    val text = "111\n" + "222\n" + "333\n"
+    test("111_222_333_") {
+      "111_222_333_".delete()
+      assertTextContentIs("")
+      compareRanges()
 
-    createDocument(text)
-    deleteString(0, text.length)
-    compareRanges()
-    assertTextContentIs("")
-    insertString(0, "222\n")
-    compareRanges()
-    deleteString(0, 4)
-    compareRanges()
-    insertString(0, text)
-    compareRanges()
+      insertAtStart("222_")
+      compareRanges()
+
+      "222_".delete()
+      compareRanges()
+
+      insertAtStart("111_222_333_")
+      compareRanges()
+    }
   }
 
   fun testDeletingTwoMethods() {
+    val part1 = "class Foo {_  public void method1() {_    // something_  }__"
+    val part2 = "  public void method2() {_    // something_  }__  public void method3() {_    // something_  }_"
+    val part3 = "_  public void method4() {_    // something_  }_}"
 
-    val part1 = "class Foo {\n" + "  public void method1() {\n" + "    // something\n" + "  }\n" + "\n"
+    test(part1 + part2 + part3) {
+      (part2).delete()
+      assertTextContentIs(part1 + part3)
+      assertRanges(Range(5, 5, 5, 12))
 
-    val part2 = "  public void method2() {\n" + "    // something\n" + "  }\n" + "\n" + "  public void method3() {\n" +
-                "    // something\n" + "  }\n"
-
-    val part3 = "\n" + "  public void method4() {\n" + "    // something\n" + "  }\n" + "}"
-
-    val text = part1 + part2 + part3
-
-    createDocument(text)
-    deleteString(part1.length, part1.length + part2.length)
-    assertTextContentIs(part1 + part3)
-    assertEqualRanges(Arrays.asList(Range(5, 5, 5, 12)), myTracker.getRanges())
-
-    deleteString(part1.length, part1.length + 1)
-    compareRanges()
+      ("_" at !part1.length - (part1.length + 1)).delete()
+      compareRanges()
+    }
   }
 
   fun testBug1() {
-    createDocument("1\n2\n3\n4\n")
-    deleteString(4, 6)
-    compareRanges()
-    insertString(3, "X")
-    compareRanges()
+    test("1_2_3_4_") {
+      "3_".delete()
+      compareRanges()
+
+      "1_2".insertAfter("X")
+      compareRanges()
+    }
   }
 
   fun testBug2() {
-    createDocument("1\n2\n3\n4\n5\n6\n")
-    deleteString(4, 6)
-    compareRanges()
-    deleteString(8, 10)
-    compareRanges()
-    insertString(4, "3\n8\n")
-    compareRanges()
+    test("1_2_3_4_5_6_") {
+      "3_".delete()
+      compareRanges()
+
+      "6_".delete()
+      compareRanges()
+
+      "1_2_".insertAfter("3_8_")
+      compareRanges()
+    }
   }
 
   fun testBug3() {
-    createDocument("\n\n00\n556\n")
-
-    deleteString(3, 6)
-    deleteString(1, 4)
-    deleteString(0, 2)
-    insertString(0, "\n\n32\n")
-    deleteString(1, 4)
+    test("__00_556_") {
+      "0_5".delete()
+      "_05".delete()
+      "_6".delete()
+      insertAtStart("__32_")
+      "_32".delete()
+    }
   }
 
   fun testBug4() {
-    createDocument("\n5\n30\n5240\n32\n46\n\n\n\n51530\n\n")
-
-    insertString(3, "40\n1\n2")
-    deleteString(10, 25)
-    deleteString(1, 5)
-    insertString(9, "30\n\n23")
-    deleteString(2, 11)
+    test("_5_30_5240_32_46____51530__") {
+      "_5_".insertAfter("40_1_2")
+      "0_5240_32_46___".delete()
+      "5_40".delete()
+      "__1_23_51".insertAfter("30__23")
+      "1_23_5130".delete()
+    }
   }
 
   fun testBug5() {
-    createDocument("\n")
-
-    replaceString(0, 0, "\n\n6406")
-    deleteString(1, 2)
-    insertString(1, "\n11\n5")
-    insertString(3, "130")
-    replaceString(8, 8, "3")
-    replaceString(9, 14, "4\n\n56\n21\n")
-    replaceString(3, 17, " 60246")
-    insertString(7, "01511")
-    insertString(9, "2633\n33")
-    deleteString(16, 17)
-    deleteString(15, 19)
-    deleteString(4, 15)
-    replaceString(2, 3, "\n34\n\n310\n")
-    deleteString(2, 3)
-    deleteString(8, 10)
-    insertString(1, "051")
+    test("_") {
+      ("" at !0 - 0).replace("__6406")
+      ("_" at !1 - 2).delete()
+      ("_" at !0 - 1).insertAfter("_11_5")
+      "__1".insertAfter("130")
+      ("" at !8 - 8).replace("3")
+      "56406".replace("4__56_21_")
+      "1301_34__56_21".replace(" 60246")
+      "__1 602".insertAfter("01511")
+      "__1 60201".insertAfter("2633_33")
+      "5".delete()
+      "3114".delete()
+      "602012633_3".delete()
+      ("1" at !2 - 3).replace("_34__310_")
+      ("_" at !2 - 3).delete()
+      "0_".delete()
+      ("_" at !0 - 1).insertAfter("051")
+    }
   }
 
   fun testTrimSpaces1() {
-    createDocument("a \nb \nc ")
-    insertString(0, "x")
-    stripTrailingSpaces()
+    test("a _b _c ") {
+      insertAtStart("x")
+      stripTrailingSpaces()
 
-    val lines = BitSet()
-    lines.set(0)
-    rollback(lines)
+      rollbackLine(0)
 
-    stripTrailingSpaces()
-    assertTextContentIs("a \nb \nc ")
+      stripTrailingSpaces()
+      assertTextContentIs("a _b _c ")
+    }
   }
 
   fun testTrimSpaces2() {
-    createDocument("a \nb \nc ")
-    insertString(0, "x")
-    stripTrailingSpaces()
-
-    assertTextContentIs("xa\nb \nc ")
+    test("a _b _c ") {
+      insertAtStart("x")
+      stripTrailingSpaces()
+      assertTextContentIs("xa_b _c ")
+    }
   }
 
   fun testTrimSpaces3() {
-    createDocument("a \nb \nc ")
-    insertString(6, "x")
-    insertString(0, "x")
-    stripTrailingSpaces()
+    test("a _b _c ") {
+      "a _b _".insertAfter("x")
+      insertAtStart("x")
+      stripTrailingSpaces()
 
-    val lines = BitSet()
-    lines.set(2)
-    rollback(lines)
+      rollbackLine(2)
 
-    stripTrailingSpaces()
-    assertTextContentIs("xa\nb \nc ")
+      stripTrailingSpaces()
+      assertTextContentIs("xa_b _c ")
+    }
   }
 
   fun testInsertion1() {
-    createDocument("X\nX\nX\n")
-    insertString(0, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(0, 1, 0, 0)), myTracker.getRanges())
+    test("X_X_X_") {
+      insertAtStart("X_")
+      assertRanges(Range(0, 1, 0, 0))
+    }
   }
 
   fun testInsertion2() {
-    createDocument("X\nX\nX\n")
-    insertString(2, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(1, 2, 1, 1)), myTracker.getRanges())
+    test("X_X_X_") {
+      (1 th "X_").insertAfter("X_")
+      assertRanges(Range(1, 2, 1, 1))
+    }
   }
 
   fun testInsertion3() {
-    createDocument("X\nX\nX\n")
-    insertString(4, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(2, 3, 2, 2)), myTracker.getRanges())
+    test("X_X_X_") {
+      (2 th "X_").insertAfter("X_")
+      assertRanges(Range(2, 3, 2, 2))
+    }
   }
 
   fun testInsertion4() {
-    createDocument("X\nX\nX\n")
-    insertString(6, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(3, 4, 3, 3)), myTracker.getRanges())
+    test("X_X_X_") {
+      (3 th "X_").insertAfter("X_")
+      assertRanges(Range(3, 4, 3, 3))
+    }
   }
 
   fun testInsertion5() {
-    createDocument("Z\nX\nX\n")
-    replaceString(0, 1, "Y")
-    insertString(2, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(0, 2, 0, 1)), myTracker.getRanges())
+    test("Z_X_X_") {
+      "Z".replace("Y")
+      "Y_".insertAfter("X_")
+      assertRanges(Range(0, 2, 0, 1))
+    }
   }
 
   fun testInsertion6() {
-    createDocument("X\nX\nX\n")
-    replaceString(0, 1, "Y")
-    insertString(4, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(0, 1, 0, 1), Range(2, 3, 2, 2)), myTracker.getRanges())
+    test("X_X_X_") {
+      (1 th "X").replace("Y")
+      "Y_X_".insertAfter("X_")
+      assertRanges(Range(0, 1, 0, 1), Range(2, 3, 2, 2))
+    }
   }
 
   fun testInsertion7() {
-    createDocument("X\nX\nX\n")
-    replaceString(0, 1, "Y")
-    insertString(6, "X\n")
-
-    assertEqualRanges(Arrays.asList(Range(0, 1, 0, 1), Range(3, 4, 3, 3)), myTracker.getRanges())
+    test("X_X_X_") {
+      (1 th "X").replace("Y")
+      "Y_X_X_".insertAfter("X_")
+      assertRanges(Range(0, 1, 0, 1), Range(3, 4, 3, 3))
+    }
   }
 }

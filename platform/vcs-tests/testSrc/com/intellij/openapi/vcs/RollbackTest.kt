@@ -15,154 +15,154 @@
  */
 package com.intellij.openapi.vcs
 
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.vcs.ex.Range
 
 class RollbackTest : BaseLineStatusTrackerTestCase() {
-
   fun testUpToDateContent1() {
-    createDocument("\n1\n2\n3\n4\n5\n6\n7")
-    deleteString(0, 4)
-    assertEquals("1\n2", getVcsContent(getFirstRange()).toString())
+    test("_1_2_3_4_5_6_7") {
+      "_1_2".delete()
+
+      range().assertVcsContent("1_2")
+    }
   }
 
   fun testUpToDateContent2() {
-    createDocument("\n1\n2\n3\n4\n5\n6\n7")
-    deleteString(3, 5)
-    assertEquals("2", getVcsContent(getFirstRange()).toString())
+    test("_1_2_3_4_5_6_7") {
+      "2_".delete()
+
+      range().assertVcsContent("2")
+    }
   }
 
   fun testRollbackInserted1() {
-    val initialContent = "1\n2\n3\n4"
-    createDocument(initialContent)
-    insertString(7, "\n5\n6")
-    compareRanges()
-    rollbackFirstChange(Range.INSERTED)
-    assertTextContentIs(initialContent)
-    compareRanges()
-    insertString(7, "\u0005\n6\n7\n")
-    compareRanges()
-    rollbackFirstChange(Range.MODIFIED)
-    compareRanges()
+    test("1_2_3_4") {
+      "4".insertAfter("_5_6")
+      compareRanges()
+
+      range().assertType(Range.INSERTED)
+      range().rollback()
+      assertTextContentIs("1_2_3_4")
+      compareRanges()
+
+      "4".insertAfter("\u0005_6_7_")
+      compareRanges()
+
+      range().assertType(Range.MODIFIED)
+      range().rollback()
+      compareRanges()
+    }
   }
 
   fun testRollbackInserted2() {
-
-    doTestRollback("1\n2\n3\n4", { insertString(0, "\n0\n") }, Range.INSERTED)
+    doTestRollback("1_2_3_4", { insertAtStart("_0_") }, Range.INSERTED)
   }
 
   fun testRollbackInserted3() {
-    doTestRollback("1\n2\n3\n4\n5\n6", { insertString(5, "\n0\n") }, Range.INSERTED)
+    doTestRollback("1_2_3_4_5_6", { "3".insertAfter("_0_") }, Range.INSERTED)
   }
 
   fun testRollbackInserted4() {
-    doTestRollback("1\n2\n3\n4\n5", { insertString(myDocument.textLength, "\n") }, Range.INSERTED)
+    doTestRollback("1_2_3_4_5", { "5".insertAfter("_") }, Range.INSERTED)
   }
 
   fun testRollbackModified4() {
-    doTestRollback("1\n2\n3\n4", { insertString(0, "\n0\n0") }, Range.MODIFIED)
-
+    doTestRollback("1_2_3_4", { insertAtStart("_0_0") }, Range.MODIFIED)
   }
 
   fun testRollbackModified1() {
-    doTestRollback("1\n2\n3\n4\n5\n6\n7", { deleteString(0, 3) }, Range.MODIFIED)
+    doTestRollback("1_2_3_4_5_6_7", { "1_2".delete() }, Range.MODIFIED)
   }
 
   fun testRollbackDeleted2() {
-    doTestRollback("1\n2\n3\n4\n5\n6\n7", { deleteString(0, 4) }, Range.DELETED)
+    doTestRollback("1_2_3_4_5_6_7", { "1_2_".delete() }, Range.DELETED)
   }
 
   fun testRollbackDeleted3() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(0, 3) }, Range.DELETED)
+    doTestRollback("_1_2_3_4_5_6_7", { "_1_".delete() }, Range.DELETED)
   }
 
   fun testRollbackDeleted4() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(0, 4) }, Range.DELETED)
+    doTestRollback("_1_2_3_4_5_6_7", { "_1_2".delete() }, Range.DELETED)
   }
 
   fun testRollbackModified5() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(2, 5) }, Range.MODIFIED)
+    doTestRollback("_1_2_3_4_5_6_7", { "_2_".delete() }, Range.MODIFIED)
   }
 
   fun testRollbackDeleted6() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(3, 5) }, Range.DELETED)
+    doTestRollback("_1_2_3_4_5_6_7", { "2_".delete() }, Range.DELETED)
   }
 
   fun testRollbackModified7() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(3, 6) }, Range.MODIFIED)
+    doTestRollback("_1_2_3_4_5_6_7", { "2_3".delete() }, Range.MODIFIED)
   }
 
   fun testRollbackDeleted8() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(3, 7) }, Range.DELETED)
+    doTestRollback("_1_2_3_4_5_6_7", { "2_3_".delete() }, Range.DELETED)
   }
 
   fun testRollbackDeleted9() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(5, 13) }, Range.DELETED)
+    doTestRollback("_1_2_3_4_5_6_7", { "3_4_5_6_".delete() }, Range.DELETED)
   }
 
   fun testRollbackEmptyLastLineDeletion() {
-    val text1 = "1\n2\n3\n\n"
-    val text2 = "1\n2\n3\n"
-    createDocument(text2, text1)
-    rollback(myTracker.getRanges()!![0])
+    val text1 = "1_2_3__"
+    val text2 = "1_2_3_"
+    test(text2, text1) {
+      range(0).rollback()
 
-    assertTextContentIs(text1)
-    assertEmpty(myTracker.getRanges()!!)
+      assertTextContentIs(text1)
+      assertRangesEmpty()
+    }
   }
 
   fun testSRC27943() {
-    val initialContent = "<%@ taglib uri=\"/WEB-INF/sigpath.tld\" prefix=\"sigpath\" %>\n" +
-                         "<%@ taglib uri=\"/WEB-INF/struts-html.tld\" prefix=\"html\" %>\n" +
-                         "<%@ taglib uri=\"/WEB-INF/struts-bean.tld\" prefix=\"bean\" %>\n" +
-                         "<%@ taglib uri=\"/WEB-INF/string.tld\" prefix=\"str\" %>\n" +
+    val initialContent = "<%@ taglib uri=\"/WEB-INF/sigpath.tld\" prefix=\"sigpath\" %>_" +
+                         "<%@ taglib uri=\"/WEB-INF/struts-html.tld\" prefix=\"html\" %>_" +
+                         "<%@ taglib uri=\"/WEB-INF/struts-bean.tld\" prefix=\"bean\" %>_" +
+                         "<%@ taglib uri=\"/WEB-INF/string.tld\" prefix=\"str\" %>_" +
                          "<%@ taglib uri=\"/WEB-INF/regexp.tld\" prefix=\"rx\" %>"
 
-    val newContent = "<%@ taglib uri=\"/tag_lib/sigpath.tld\" prefix=\"sigpath\" %>\n" +
-                     "<%@ taglib uri=\"/tag_lib/struts-html.tld\" prefix=\"html\" %>\n" +
-                     "<%@ taglib uri=\"/tag_lib/struts-bean.tld\" prefix=\"bean\" %>\n" +
-                     "<%@ taglib uri=\"/tag_lib/string.tld\" prefix=\"str\" %>\n" +
+    val newContent = "<%@ taglib uri=\"/tag_lib/sigpath.tld\" prefix=\"sigpath\" %>_" +
+                     "<%@ taglib uri=\"/tag_lib/struts-html.tld\" prefix=\"html\" %>_" +
+                     "<%@ taglib uri=\"/tag_lib/struts-bean.tld\" prefix=\"bean\" %>_" +
+                     "<%@ taglib uri=\"/tag_lib/string.tld\" prefix=\"str\" %>_" +
                      "<%@ taglib uri=\"/tag_lib/regexp.tld\" prefix=\"rx\" %>"
 
-    createDocument(initialContent)
-    replaceString(0, initialContent.length, newContent)
-    compareRanges()
-    rollbackFirstChange(Range.MODIFIED)
-    assertTextContentIs(initialContent)
-    compareRanges()
+    test(initialContent) {
+      replaceWholeText(newContent)
+      compareRanges()
+
+      range().assertType(Range.MODIFIED)
+      range().rollback()
+      assertTextContentIs(initialContent)
+      compareRanges()
+    }
   }
 
   fun testRollbackModified10() {
-    doTestRollback("\n1\n2\n3\n4\n5\n6\n7", { deleteString(6, 13) }, Range.MODIFIED)
+    doTestRollback("_1_2_3_4_5_6_7", { "_4_5_6_".delete() }, Range.MODIFIED)
   }
 
   fun testEmptyDocumentBug() {
-    createDocument("")
-
-    insertString(0, "adsf")
-    rollbackFirstChange(Range.MODIFIED)
-    compareRanges()
+    test("") {
+      insertAtStart("adsf")
+      range().assertType(Range.MODIFIED)
+      range().rollback()
+      compareRanges()
+    }
   }
 
-  private fun doTestRollback(initialContent: String, modifyAction: () -> Unit, expectedRangeType: Byte) {
-    createDocument(initialContent)
-    modifyAction()
-    compareRanges()
-    rollbackFirstChange(expectedRangeType)
-    assertTextContentIs(initialContent)
-    compareRanges()
-  }
-  private fun rollbackFirstChange(expectedRangeType: Byte) {
-    val range = getFirstRange()
-    assertEquals(expectedRangeType, range.type)
-    rollback(range)
-  }
+  private fun doTestRollback(initialContent: String, modifyAction: Test.() -> Unit, expectedRangeType: Byte) {
+    test(initialContent) {
+      modifyAction()
+      compareRanges()
 
-  private fun getFirstRange(): Range {
-    assertEquals(1, myTracker.getRanges()!!.size)
-    return myTracker.getRanges()!![0]
-  }
+      range().assertType(expectedRangeType)
+      range().rollback()
 
-  private fun getVcsContent(range: Range): CharSequence {
-    return DiffUtil.getLinesContent(myTracker.vcsDocument, range.vcsLine1, range.vcsLine2)
+      assertTextContentIs(initialContent)
+      compareRanges()
+    }
   }
 }
