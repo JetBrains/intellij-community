@@ -143,13 +143,17 @@ public class AnimatedIcon implements Icon {
     time = current;
   }
 
+  private Icon getUpdatedIcon() {
+    long current = System.currentTimeMillis();
+    if (frame.getDelay() <= (current - time)) updateFrameAt(current);
+    return frame.getIcon();
+  }
+
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
-    int delay = frame.getDelay();
-    long current = System.currentTimeMillis();
-    if (delay <= (current - time)) updateFrameAt(current);
-
+    Icon icon = getUpdatedIcon();
     if (!requested && canRefresh(c)) {
+      int delay = frame.getDelay();
       if (delay > 0) {
         requested = true;
         Timer timer = new Timer(delay, event -> {
@@ -165,17 +169,17 @@ public class AnimatedIcon implements Icon {
         doRefresh(c);
       }
     }
-    frame.getIcon().paintIcon(c, g, x, y);
+    icon.paintIcon(c, g, x, y);
   }
 
   @Override
   public final int getIconWidth() {
-    return frame.getIcon().getIconWidth();
+    return getUpdatedIcon().getIconWidth();
   }
 
   @Override
   public final int getIconHeight() {
-    return frame.getIcon().getIconHeight();
+    return getUpdatedIcon().getIconHeight();
   }
 
   protected boolean canRefresh(Component component) {
