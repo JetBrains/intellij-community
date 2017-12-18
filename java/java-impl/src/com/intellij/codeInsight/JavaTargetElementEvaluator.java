@@ -26,6 +26,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.BitUtil;
@@ -97,6 +98,9 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     if (!(reference instanceof PsiReferenceExpression) || !reference.isReferenceTo(method)) return null;
     PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
     if (qualifier == null) return null;
+    if (DirectClassInheritorsSearch.search(qualifierClass, qualifier.getResolveScope(), false).findFirst() == null) {
+      return null;
+    }
     TypeConstraint constraint = CommonDataflow.getExpressionFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
     if (constraint == null) return null;
     PsiClass specificQualifierClass = PsiUtil.resolveClassInClassTypeOnly(constraint.getPsiType());
