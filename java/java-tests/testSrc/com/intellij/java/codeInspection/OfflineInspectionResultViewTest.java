@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.java.codeInspection;
 
@@ -9,11 +11,11 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.offline.OfflineProblemDescriptor;
-import com.intellij.codeInspection.offlineViewer.OfflineProblemDescriptorNode;
 import com.intellij.codeInspection.offlineViewer.OfflineViewParseUtil;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.Comparing;
@@ -161,7 +163,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
                                            "       '()' called on itself\n"
                                           );
     tree.setSelectionRow(28);
-    final OfflineProblemDescriptorNode node = (OfflineProblemDescriptorNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
+    final ProblemDescriptionNode node = (ProblemDescriptionNode)tree.getSelectionModel().getSelectionPath().getLastPathComponent();
     assertFalse(node.isValid());
   }
 
@@ -239,9 +241,6 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
       assertTrue(((InspectionTreeNode)node).isExcluded());
       return true;
     });
-    myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = true;
-    tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, getProject() + "\n");
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
     PlatformTestUtil.assertTreeEqual(tree, "-" + getProject() + "\n"
