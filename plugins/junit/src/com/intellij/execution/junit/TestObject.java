@@ -286,14 +286,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
-    final String repeatMode = getConfiguration().getRepeatMode();
-    if (!RepeatCount.ONCE.equals(repeatMode)) {
-      final int repeatCount = getConfiguration().getRepeatCount();
-      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
-                                 ? RepeatCount.getCountString(repeatCount)
-                                 : repeatMode;
-      getJavaParameters().getProgramParametersList().add(countString);
-    }
+    appendRepeatMode();
 
     final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
     ProcessTerminatedListener.attach(processHandler);
@@ -302,6 +295,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
+  }
+
+  public void appendRepeatMode() throws ExecutionException {
+    final String repeatMode = getConfiguration().getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      final int repeatCount = getConfiguration().getRepeatCount();
+      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
+                                 ? RepeatCount.getCountString(repeatCount)
+                                 : repeatMode;
+      getJavaParameters().getProgramParametersList().add(countString);
+    }
   }
 
   @Override
