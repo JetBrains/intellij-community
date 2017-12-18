@@ -1,412 +1,386 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.wm.*;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.JDOMExternalizable
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.wm.*
+import org.jdom.Element
+import org.jetbrains.annotations.NonNls
+import java.awt.Rectangle
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, WindowInfo {
-  /**
-   * XML tag.
-   */
-  @NonNls static final String TAG = "window_info";
-  /**
-   * Default window weight.
-   */
-  static final float DEFAULT_WEIGHT = 0.33f;
-  private static final float DEFAULT_SIDE_WEIGHT = 0.5f;
+class WindowInfoImpl
+/**
+ * Creates `WindowInfo` for tool window with specified `ID`.
+ */
+internal constructor(id: String) : Cloneable, JDOMExternalizable, WindowInfo {
 
-  private boolean myActive;
-  @NotNull
-  private ToolWindowAnchor myAnchor = ToolWindowAnchor.LEFT;
-  private boolean myAutoHide;
+  private var myActive: Boolean = false
+  private var myAnchor = ToolWindowAnchor.LEFT
+  private var myAutoHide: Boolean = false
   /**
-   * Bounds of window in "floating" mode. It equals to {@code null} if
+   * Bounds of window in "floating" mode. It equals to `null` if
    * floating bounds are undefined.
    */
-  private Rectangle myFloatingBounds;
-  private String myId;
-  private ToolWindowType myInternalType;
-  private ToolWindowType myType;
-  private boolean myVisible;
-  private boolean myShowStripeButton = true;
-  private float myWeight = DEFAULT_WEIGHT;
-  private float mySideWeight = DEFAULT_SIDE_WEIGHT;
-  private boolean mySplitMode;
-
-  @NotNull private ToolWindowContentUiType myContentUiType = ToolWindowContentUiType.TABBED;
+  private var myFloatingBounds: Rectangle? = null
   /**
-   * Defines order of tool window button inside the stripe.
-   * The default value is {@code -1}.
+   * @return `ID` of the tool window.
    */
-  private int myOrder = -1;
-  @NonNls private static final String ID_ATTR = "id";
-  @NonNls private static final String ACTIVE_ATTR = "active";
-  @NonNls private static final String ANCHOR_ATTR = "anchor";
-  @NonNls private static final String AUTOHIDE_ATTR = "auto_hide";
-  @NonNls private static final String INTERNAL_TYPE_ATTR = "internal_type";
-  @NonNls private static final String TYPE_ATTR = "type";
-  @NonNls private static final String VISIBLE_ATTR = "visible";
-  @NonNls private static final String WEIGHT_ATTR = "weight";
-  @NonNls private static final String SIDE_WEIGHT_ATTR = "sideWeight";
-  @NonNls private static final String ORDER_ATTR = "order";
-  @NonNls private static final String SIDE_TOOL_ATTR = "side_tool";
-  @NonNls private static final String CONTENT_UI_ATTR = "content_ui";
-  @NonNls private static final String SHOW_STRIPE_BUTTON = "show_stripe_button";
-
-
-  private boolean myWasRead;
-
-  /**
-   * Creates {@code WindowInfo} for tool window with specified {@code ID}.
-   */
-  WindowInfoImpl(@NotNull String id) {
-    myId = id;
-    setType(ToolWindowType.DOCKED);
-  }
-
-  /**
-   * Creates copy of {@code WindowInfo} object.
-   */
-  @NotNull
-  public WindowInfoImpl copy() {
-    try {
-      WindowInfoImpl info = (WindowInfoImpl)clone();
-      if (myFloatingBounds != null) {
-        info.myFloatingBounds = (Rectangle)myFloatingBounds.clone();
-      }
-      return info;
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Copies all data from the passed {@code WindowInfo} into itself.
-   */
-  void copyFrom(@NotNull WindowInfoImpl info){
-    myActive = info.myActive;
-    myAnchor = info.myAnchor;
-    myAutoHide = info.myAutoHide;
-    myFloatingBounds = info.myFloatingBounds == null ? null : (Rectangle)info.myFloatingBounds.clone();
-    myId = info.myId;
-    setTypeAndCheck(info.myType);
-    myInternalType = info.myInternalType;
-    myVisible = info.myVisible;
-    myWeight = info.myWeight;
-    mySideWeight = info.mySideWeight;
-    myOrder = info.myOrder;
-    mySplitMode = info.mySplitMode;
-    myContentUiType = info.myContentUiType;
-  }
-
-  /**
-   * @return tool window's anchor in internal mode.
-   */
-  @NotNull
-  @Override
-  public ToolWindowAnchor getAnchor(){
-    return myAnchor;
-  }
-
-  @NotNull
-  @Override
-  public ToolWindowContentUiType getContentUiType() {
-    return myContentUiType;
-  }
-
-  void setContentUiType(@NotNull ToolWindowContentUiType type) {
-    myContentUiType = type;
-  }
-
-  /**
-   * @return bound of tool window in floating mode.
-   */
-  @Override
-  public Rectangle getFloatingBounds(){
-    return myFloatingBounds != null ? new Rectangle(myFloatingBounds) : null;
-  }
-
-  /**
-   * @return {@code ID} of the tool window.
-   */
-  @NotNull
-  String getId(){
-    return myId;
-  }
-
+  internal var id: String? = null
+    private set
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
    * window can be in floating mode, but this method has sense if you want to know what type
-   * tool window had when it was internal one. The method never returns {@code null}.
+   * tool window had when it was internal one. The method never returns `null`.
    */
-  @NotNull
-  ToolWindowType getInternalType(){
-    return myInternalType;
-  }
+  internal var internalType: ToolWindowType? = null
+    private set
+  private var myType: ToolWindowType? = null
+  internal var isVisible: Boolean = false
+  private var myShowStripeButton = true
+  private var myWeight = DEFAULT_WEIGHT
+  private var mySideWeight = DEFAULT_SIDE_WEIGHT
+  private var mySplitMode: Boolean = false
 
+  private var myContentUiType = ToolWindowContentUiType.TABBED
   /**
-   * @return current type of tool window.
-   * @see ToolWindowType#DOCKED
-   * @see ToolWindowType#FLOATING
-   * @see ToolWindowType#SLIDING
+   * Defines order of tool window button inside the stripe.
+   * The default value is `-1`.
    */
-  @Override
-  public ToolWindowType getType(){
-    return myType;
-  }
+  var order = -1
+
+
+  private var myWasRead: Boolean = false
 
   /**
    * @return internal weight of tool window. "weigth" means how much of internal desktop
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
-  float getWeight(){
-    return myWeight;
+  /**
+   * Sets window weight and adjust it to [0..1] range if necessary.
+   */
+  internal var weight: Float
+    get() = myWeight
+    set(weight) {
+      myWeight = Math.max(0f, Math.min(1f, weight))
+    }
+
+  internal var sideWeight: Float
+    get() = mySideWeight
+    set(weight) {
+      mySideWeight = Math.max(0f, Math.min(1f, weight))
+    }
+
+  init {
+    this.id = id
+    setType(ToolWindowType.DOCKED)
   }
 
-  float getSideWeight() {
-    return mySideWeight;
-  }
-
-  public int getOrder(){
-    return myOrder;
-  }
-
-  public void setOrder(final int order){
-    myOrder=order;
-  }
-
-  @Override
-  public boolean isActive(){
-    return myActive;
-  }
-
-  @Override
-  public boolean isAutoHide(){
-    return myAutoHide;
-  }
-
-  @Override
-  public boolean isDocked(){
-    return ToolWindowType.DOCKED==myType;
-  }
-
-  @Override
-  public boolean isFloating(){
-    return ToolWindowType.FLOATING==myType;
-  }
-
-  @Override
-  public boolean isWindowed(){
-    return ToolWindowType.WINDOWED==myType;
-  }
-
-  @Override
-  public boolean isSliding(){
-    return ToolWindowType.SLIDING==myType;
-  }
-
-  boolean isVisible(){
-    return myVisible;
-  }
-
-  @Override
-  public boolean isShowStripeButton() {
-    return myShowStripeButton;
-  }
-
-  void setShowStripeButton(boolean showStripeButton) {
-    myShowStripeButton = showStripeButton;
-  }
-
-  @Override
-  public boolean isSplit() {
-    return mySplitMode;
-  }
-
-  public void setSplit(final boolean sideTool) {
-    mySplitMode =sideTool;
-  }
-
-  @Override
-  @SuppressWarnings("EmptyCatchBlock")
-  public void readExternal(final Element element) {
-    myId = element.getAttributeValue(ID_ATTR);
-    myWasRead = true;
-    myActive = Boolean.parseBoolean(element.getAttributeValue(ACTIVE_ATTR)) && canActivateOnStart(myId);
+  /**
+   * Creates copy of `WindowInfo` object.
+   */
+  fun copy(): WindowInfoImpl {
     try {
-      myAnchor = ToolWindowAnchor.fromText(element.getAttributeValue(ANCHOR_ATTR));
+      val info = clone() as WindowInfoImpl
+      if (myFloatingBounds != null) {
+        info.myFloatingBounds = myFloatingBounds!!.clone() as Rectangle
+      }
+      return info
     }
-    catch (IllegalArgumentException ignored) {
+    catch (e: CloneNotSupportedException) {
+      throw RuntimeException(e)
     }
-    myAutoHide = Boolean.parseBoolean(element.getAttributeValue(AUTOHIDE_ATTR));
+
+  }
+
+  /**
+   * Copies all data from the passed `WindowInfo` into itself.
+   */
+  internal fun copyFrom(info: WindowInfoImpl) {
+    myActive = info.myActive
+    myAnchor = info.myAnchor
+    myAutoHide = info.myAutoHide
+    myFloatingBounds = if (info.myFloatingBounds == null) null else info.myFloatingBounds!!.clone() as Rectangle
+    id = info.id
+    setTypeAndCheck(info.myType!!)
+    internalType = info.internalType
+    isVisible = info.isVisible
+    myWeight = info.myWeight
+    mySideWeight = info.mySideWeight
+    order = info.order
+    mySplitMode = info.mySplitMode
+    myContentUiType = info.myContentUiType
+  }
+
+  /**
+   * @return tool window's anchor in internal mode.
+   */
+  override fun getAnchor(): ToolWindowAnchor {
+    return myAnchor
+  }
+
+  override fun getContentUiType(): ToolWindowContentUiType {
+    return myContentUiType
+  }
+
+  internal fun setContentUiType(type: ToolWindowContentUiType) {
+    myContentUiType = type
+  }
+
+  /**
+   * @return bound of tool window in floating mode.
+   */
+  override fun getFloatingBounds(): Rectangle? {
+    return if (myFloatingBounds != null) Rectangle(myFloatingBounds!!) else null
+  }
+
+  /**
+   * @return current type of tool window.
+   * @see ToolWindowType.DOCKED
+   *
+   * @see ToolWindowType.FLOATING
+   *
+   * @see ToolWindowType.SLIDING
+   */
+  override fun getType(): ToolWindowType? {
+    return myType
+  }
+
+  override fun isActive(): Boolean {
+    return myActive
+  }
+
+  override fun isAutoHide(): Boolean {
+    return myAutoHide
+  }
+
+  override fun isDocked(): Boolean {
+    return ToolWindowType.DOCKED == myType
+  }
+
+  override fun isFloating(): Boolean {
+    return ToolWindowType.FLOATING == myType
+  }
+
+  override fun isWindowed(): Boolean {
+    return ToolWindowType.WINDOWED == myType
+  }
+
+  override fun isSliding(): Boolean {
+    return ToolWindowType.SLIDING == myType
+  }
+
+  override fun isShowStripeButton(): Boolean {
+    return myShowStripeButton
+  }
+
+  internal fun setShowStripeButton(showStripeButton: Boolean) {
+    myShowStripeButton = showStripeButton
+  }
+
+  override fun isSplit(): Boolean {
+    return mySplitMode
+  }
+
+  fun setSplit(sideTool: Boolean) {
+    mySplitMode = sideTool
+  }
+
+  override fun readExternal(element: Element) {
+    id = element.getAttributeValue(ID_ATTR)
+    myWasRead = true
+    myActive = java.lang.Boolean.parseBoolean(element.getAttributeValue(ACTIVE_ATTR)) && canActivateOnStart(id)
     try {
-      myInternalType = ToolWindowType.valueOf(element.getAttributeValue(INTERNAL_TYPE_ATTR));
+      myAnchor = ToolWindowAnchor.fromText(element.getAttributeValue(ANCHOR_ATTR))
     }
-    catch (IllegalArgumentException ignored) {
+    catch (ignored: IllegalArgumentException) {
     }
+
+    myAutoHide = java.lang.Boolean.parseBoolean(element.getAttributeValue(AUTOHIDE_ATTR))
     try {
-      setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue(TYPE_ATTR)));
+      internalType = ToolWindowType.valueOf(element.getAttributeValue(INTERNAL_TYPE_ATTR))
     }
-    catch (IllegalArgumentException ignored) {
+    catch (ignored: IllegalArgumentException) {
     }
-    myVisible = Boolean.parseBoolean(element.getAttributeValue(VISIBLE_ATTR)) && canActivateOnStart(myId);
-    if (element.getAttributeValue(SHOW_STRIPE_BUTTON) != null) {
-      myShowStripeButton = Boolean.parseBoolean(element.getAttributeValue(SHOW_STRIPE_BUTTON));
-    }
+
     try {
-      myWeight = Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
+      setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue(TYPE_ATTR)))
     }
-    catch (NumberFormatException ignored) {
+    catch (ignored: IllegalArgumentException) {
     }
+
+    isVisible = java.lang.Boolean.parseBoolean(element.getAttributeValue(VISIBLE_ATTR)) && canActivateOnStart(id)
+    myShowStripeButton = java.lang.Boolean.parseBoolean(element.getAttributeValue(SHOW_STRIPE_BUTTON, "true"))
     try {
-      String value = element.getAttributeValue(SIDE_WEIGHT_ATTR);
+      myWeight = java.lang.Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR)!!)
+    }
+    catch (ignored: NumberFormatException) {
+    }
+
+    try {
+      val value = element.getAttributeValue(SIDE_WEIGHT_ATTR)
       if (value != null) {
-        mySideWeight = Float.parseFloat(value);
+        mySideWeight = java.lang.Float.parseFloat(value)
       }
     }
-    catch (NumberFormatException ignored) {
+    catch (ignored: NumberFormatException) {
+      mySideWeight = DEFAULT_SIDE_WEIGHT
     }
-    myOrder = StringUtilRt.parseInt(element.getAttributeValue(ORDER_ATTR), myOrder);
-    myFloatingBounds = ProjectFrameBoundsKt.deserializeBounds(element);
-    mySplitMode = Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
 
-    myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR));
-  }
+    order = StringUtilRt.parseInt(element.getAttributeValue(ORDER_ATTR), order)
+    myFloatingBounds = deserializeBounds(element)
+    mySplitMode = java.lang.Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR))
 
-  private static boolean canActivateOnStart(String id) {
-    for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
-      if (id.equals(ep.id)) {
-        ToolWindowFactory factory = ep.getToolWindowFactory();
-        return !factory.isDoNotActivateOnStart();
-      }
-    }
-    return true;
+    myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR))
   }
 
   /**
    * Sets new anchor.
    */
-  void setAnchor(@NotNull final ToolWindowAnchor anchor){
-    myAnchor=anchor;
+  internal fun setAnchor(anchor: ToolWindowAnchor) {
+    myAnchor = anchor
   }
 
-  void setActive(final boolean active){
-    myActive=active;
+  internal fun setActive(active: Boolean) {
+    myActive = active
   }
 
-  void setAutoHide(final boolean autoHide){
-    myAutoHide=autoHide;
+  internal fun setAutoHide(autoHide: Boolean) {
+    myAutoHide = autoHide
   }
 
-  void setFloatingBounds(final Rectangle floatingBounds){
-    myFloatingBounds=floatingBounds;
+  internal fun setFloatingBounds(floatingBounds: Rectangle) {
+    myFloatingBounds = floatingBounds
   }
 
-  void setType(@NotNull final ToolWindowType type){
-    if(ToolWindowType.DOCKED==type||ToolWindowType.SLIDING==type){
-      myInternalType=type;
+  internal fun setType(type: ToolWindowType) {
+    if (ToolWindowType.DOCKED == type || ToolWindowType.SLIDING == type) {
+      internalType = type
     }
-    setTypeAndCheck(type);
+    setTypeAndCheck(type)
   }
+
   //Hardcoded to avoid single-usage-API
-  private void setTypeAndCheck(@NotNull ToolWindowType type) {
-    myType = ToolWindowId.PREVIEW == myId && type == ToolWindowType.DOCKED ? ToolWindowType.SLIDING : type;
+  private fun setTypeAndCheck(type: ToolWindowType) {
+    myType = if (ToolWindowId.PREVIEW === id && type == ToolWindowType.DOCKED) ToolWindowType.SLIDING else type
   }
 
-  void setVisible(final boolean visible){
-    myVisible=visible;
-  }
+  override fun writeExternal(element: Element) {
+    element.setAttribute(ID_ATTR, id!!)
 
-  /**
-   * Sets window weight and adjust it to [0..1] range if necessary.
-   */
-  void setWeight(float weight){
-    myWeight = Math.max(0, Math.min(1, weight));
-  }
+    if (myActive) {
+      element.setAttribute(ACTIVE_ATTR, java.lang.Boolean.toString(true))
+    }
 
-  void setSideWeight(float weight){
-    mySideWeight = Math.max(0, Math.min(1, weight));
-  }
+    element.setAttribute(ANCHOR_ATTR, myAnchor.toString())
+    if (myAutoHide) {
+      element.setAttribute(AUTOHIDE_ATTR, java.lang.Boolean.toString(true))
+    }
+    element.setAttribute(INTERNAL_TYPE_ATTR, internalType!!.toString())
+    element.setAttribute(TYPE_ATTR, myType!!.toString())
+    element.setAttribute(VISIBLE_ATTR, java.lang.Boolean.toString(isVisible))
+    if (!myShowStripeButton) {
+      element.setAttribute(SHOW_STRIPE_BUTTON, java.lang.Boolean.toString(false))
+    }
+    element.setAttribute(WEIGHT_ATTR, java.lang.Float.toString(myWeight))
 
-  @Override
-  public void writeExternal(final Element element){
-    element.setAttribute(ID_ATTR,myId);
-    element.setAttribute(ACTIVE_ATTR, Boolean.toString(myActive));
-    element.setAttribute(ANCHOR_ATTR,myAnchor.toString());
-    element.setAttribute(AUTOHIDE_ATTR, Boolean.toString(myAutoHide));
-    element.setAttribute(INTERNAL_TYPE_ATTR,myInternalType.toString());
-    element.setAttribute(TYPE_ATTR,myType.toString());
-    element.setAttribute(VISIBLE_ATTR, Boolean.toString(myVisible));
-    element.setAttribute(SHOW_STRIPE_BUTTON, Boolean.toString(myShowStripeButton));
-    element.setAttribute(WEIGHT_ATTR,Float.toString(myWeight));
-    element.setAttribute(SIDE_WEIGHT_ATTR, Float.toString(mySideWeight));
-    element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
-    element.setAttribute(SIDE_TOOL_ATTR, Boolean.toString(mySplitMode));
-    element.setAttribute(CONTENT_UI_ATTR, myContentUiType.getName());
+    if (mySideWeight != DEFAULT_SIDE_WEIGHT) {
+      element.setAttribute(SIDE_WEIGHT_ATTR, java.lang.Float.toString(mySideWeight))
+    }
+    element.setAttribute(ORDER_ATTR, Integer.toString(order))
+    element.setAttribute(SIDE_TOOL_ATTR, java.lang.Boolean.toString(mySplitMode))
+    element.setAttribute(CONTENT_UI_ATTR, myContentUiType.name)
 
     if (myFloatingBounds != null) {
-      ProjectFrameBoundsKt.serializeBounds(myFloatingBounds, element);
+      serializeBounds(myFloatingBounds!!, element)
     }
   }
 
-  public boolean equals(final Object obj){
-    if(!(obj instanceof WindowInfoImpl)){
-      return false;
+  override fun equals(obj: Any?): Boolean {
+    if (obj !is WindowInfoImpl) {
+      return false
     }
-    final WindowInfoImpl info=(WindowInfoImpl)obj;
-    return myActive == info.myActive &&
+
+    val info = obj as WindowInfoImpl?
+    return myActive == info!!.myActive &&
            myAnchor == info.myAnchor &&
-           myId.equals(info.myId) &&
+           id == info.id &&
            myAutoHide == info.myAutoHide &&
            Comparing.equal(myFloatingBounds, info.myFloatingBounds) &&
-           myInternalType == info.myInternalType &&
+           internalType == info.internalType &&
            myType == info.myType &&
-           myVisible == info.myVisible &&
+           isVisible == info.isVisible &&
            myShowStripeButton == info.myShowStripeButton &&
            myWeight == info.myWeight &&
            mySideWeight == info.mySideWeight &&
-           myOrder == info.myOrder &&
+           order == info.order &&
            mySplitMode == info.mySplitMode &&
-          myContentUiType == info.myContentUiType;
+           myContentUiType === info.myContentUiType
   }
 
-  public int hashCode(){
-    return myAnchor.hashCode()+myId.hashCode()+myType.hashCode()+myOrder;
+  override fun hashCode(): Int {
+    return myAnchor.hashCode() + id!!.hashCode() + myType!!.hashCode() + order
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
-  public String toString(){
-    return getClass().getName() + "[myId=" + myId
-           + "; myVisible=" + myVisible
-           + "; myShowStripeButton=" + myShowStripeButton
-           + "; myActive=" + myActive
-           + "; myAnchor=" + myAnchor
-           + "; myOrder=" + myOrder
-           + "; myAutoHide=" + myAutoHide
-           + "; myWeight=" + myWeight
-           + "; mySideWeight=" + mySideWeight
-           + "; myType=" + myType
-           + "; myInternalType=" + myInternalType
-           + "; myFloatingBounds=" + myFloatingBounds
-           + "; mySplitMode=" + mySplitMode
-           + "; myContentUiType=" + myContentUiType.getName() +
-           ']';
+  override fun toString(): String {
+    return (javaClass.name + "[myId=" + id
+            + "; myVisible=" + isVisible
+            + "; myShowStripeButton=" + myShowStripeButton
+            + "; myActive=" + myActive
+            + "; myAnchor=" + myAnchor
+            + "; myOrder=" + order
+            + "; myAutoHide=" + myAutoHide
+            + "; myWeight=" + myWeight
+            + "; mySideWeight=" + mySideWeight
+            + "; myType=" + myType
+            + "; myInternalType=" + internalType
+            + "; myFloatingBounds=" + myFloatingBounds
+            + "; mySplitMode=" + mySplitMode
+            + "; myContentUiType=" + myContentUiType.name +
+            ']')
   }
 
-  boolean wasRead() {
-    return myWasRead;
+  internal fun wasRead(): Boolean {
+    return myWasRead
+  }
+
+  companion object {
+    /**
+     * XML tag.
+     */
+    @NonNls internal val TAG = "window_info"
+    /**
+     * Default window weight.
+     */
+    internal val DEFAULT_WEIGHT = 0.33f
+    private val DEFAULT_SIDE_WEIGHT = 0.5f
+    @NonNls private val ID_ATTR = "id"
+    @NonNls private val ACTIVE_ATTR = "active"
+    @NonNls private val ANCHOR_ATTR = "anchor"
+    @NonNls private val AUTOHIDE_ATTR = "auto_hide"
+    @NonNls private val INTERNAL_TYPE_ATTR = "internal_type"
+    @NonNls private val TYPE_ATTR = "type"
+    @NonNls private val VISIBLE_ATTR = "visible"
+    @NonNls private val WEIGHT_ATTR = "weight"
+    @NonNls private val SIDE_WEIGHT_ATTR = "sideWeight"
+    @NonNls private val ORDER_ATTR = "order"
+    @NonNls private val SIDE_TOOL_ATTR = "side_tool"
+    @NonNls private val CONTENT_UI_ATTR = "content_ui"
+    @NonNls private val SHOW_STRIPE_BUTTON = "show_stripe_button"
+
+    private fun canActivateOnStart(id: String?): Boolean {
+      for (ep in ToolWindowEP.EP_NAME.extensions) {
+        if (id == ep.id) {
+          val factory = ep.toolWindowFactory
+          return !factory!!.isDoNotActivateOnStart
+        }
+      }
+      return true
+    }
   }
 }
