@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.lang.properties.create;
 
 import com.intellij.icons.AllIcons;
@@ -18,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Batkovich
  */
 public class AddNewPropertyFileAction extends AnAction {
-  private final static Logger LOG = Logger.getInstance(AddNewPropertyFileAction.class);
-
   protected AddNewPropertyFileAction() {
     super(PropertiesBundle.message("add.property.files.to.resource.bundle.dialog.action.title"), null, AllIcons.FileTypes.Properties);
   }
