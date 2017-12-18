@@ -8,6 +8,7 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -68,6 +69,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String TYPE = "typing.Type";
   public static final String ANY = "typing.Any";
   private static final String CALLABLE = "typing.Callable";
+  private static final String CLASSVAR = "typing.ClassVar";
 
   public static final String NAMEDTUPLE_SIMPLE = "NamedTuple";
   public static final String SUPPORTS_INT_SIMPLE = "SupportsInt";
@@ -124,6 +126,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     .add("typing.Dict")
     .add("typing.DefaultDict")
     .add("typing.Set")
+    .add(CLASSVAR)
     .build();
 
   @Nullable
@@ -1195,6 +1198,20 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         : PY3_TEXT_FILE_TYPE;
 
     return Ref.create(PyTypeParser.getTypeByName(call, type, context));
+  }
+
+  public static boolean isClassVarAnnotation(@NotNull PyAnnotation annotation, @NotNull TypeEvalContext context) {
+    final PyExpression value = annotation.getValue();
+
+    if (value instanceof PySubscriptionExpression) {
+      final PyExpression operand = ((PySubscriptionExpression)value).getOperand();
+      return operand instanceof PyReferenceExpression && resolveToQualifiedNames(operand, context).contains(CLASSVAR);
+    }
+    else if (value instanceof PyReferenceExpression) {
+      return resolveToQualifiedNames(value, context).contains(CLASSVAR);
+    }
+
+    return false;
   }
 
   @NotNull

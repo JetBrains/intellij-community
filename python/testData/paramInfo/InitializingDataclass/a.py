@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 @dataclasses.dataclass
 class A:
@@ -39,3 +40,19 @@ class B2:
         self.z = 0.0
 
 B2(<arg4>)
+
+
+@dataclasses.dataclass
+class C1:
+    a: typing.ClassVar[int]
+    b: int
+
+C1(<arg5>)
+
+
+@dataclasses.dataclass
+class C2:
+    a: typing.ClassVar
+    b: int
+
+C2(<arg6>)

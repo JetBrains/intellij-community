@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 @dataclasses.dataclass
 class A:
@@ -53,3 +54,23 @@ class B2:
 B2(<warning descr="Parameter 'x' unfilled">)</warning>
 B2(1)
 B2(1, <warning descr="Unexpected argument">2</warning>)
+
+
+@dataclasses.dataclass
+class C1:
+    a: typing.ClassVar[int]
+    b: int
+
+C1(<warning descr="Parameter 'b' unfilled">)</warning>
+C1(1)
+C1(1, <warning descr="Unexpected argument">2</warning>)
+
+
+@dataclasses.dataclass
+class C2:
+    a: typing.ClassVar
+    b: int
+
+C2(<warning descr="Parameter 'b' unfilled">)</warning>
+C2(1)
+C2(1, <warning descr="Unexpected argument">2</warning>)

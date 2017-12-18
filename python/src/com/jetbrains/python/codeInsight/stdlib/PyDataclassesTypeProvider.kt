@@ -3,6 +3,7 @@
  */
 package com.jetbrains.python.codeInsight.stdlib
 
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -37,8 +38,13 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
 
     cls.processClassLevelDeclarations { element, _ ->
       if (element is PyTargetExpression && element.annotationValue != null) {
-        parameters.add(PyCallableParameterImpl.nonPsi(element.name, context.getType(element), element.findAssignedValue()))
+        val annotation = element.annotation
+
+        if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
+          parameters.add(PyCallableParameterImpl.nonPsi(element.name, context.getType(element), element.findAssignedValue()))
+        }
       }
+
       true
     }
 

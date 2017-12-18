@@ -1,4 +1,5 @@
 import dataclasses
+import typing
 
 @dataclasses.dataclass
 class A:
@@ -55,3 +56,21 @@ class B2:
 
 B2(1)
 B2(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
+
+
+@dataclasses.dataclass
+class C1:
+    a: typing.ClassVar[int]
+    b: int
+
+C1(1)
+C1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
+
+
+@dataclasses.dataclass
+class C2:
+    a: typing.ClassVar
+    b: int
+
+C2(1)
+C2(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
