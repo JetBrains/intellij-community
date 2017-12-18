@@ -74,3 +74,12 @@ class C2:
 
 C2(1)
 C2(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
+
+
+@dataclasses.dataclass
+class D1:
+    a: dataclasses.InitVar[int]
+    b: int
+
+D1(1, 2)
+D1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'int', got 'str' instead">"2"</warning>)

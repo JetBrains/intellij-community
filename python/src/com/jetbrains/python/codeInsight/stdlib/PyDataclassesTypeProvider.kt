@@ -4,7 +4,10 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
@@ -41,7 +44,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
         val annotation = element.annotation
 
         if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
-          parameters.add(PyCallableParameterImpl.nonPsi(element.name, context.getType(element), element.findAssignedValue()))
+          parameters.add(PyCallableParameterImpl.nonPsi(element.name, getTypeForParameter(element, context), element.findAssignedValue()))
         }
       }
 
@@ -49,5 +52,13 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
     }
 
     return PyCallableTypeImpl(parameters, context.getType(cls))
+  }
+
+  private fun getTypeForParameter(element: PyTargetExpression, context: TypeEvalContext): PyType? {
+    val type = context.getType(element)
+    if (type is PyCollectionType && type is PyClassType && type.classQName == "dataclasses.InitVar") {
+      return type.elementTypes.firstOrNull()
+    }
+    return type
   }
 }

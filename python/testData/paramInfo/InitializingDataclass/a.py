@@ -56,3 +56,11 @@ class C2:
     b: int
 
 C2(<arg6>)
+
+
+@dataclasses.dataclass
+class D1:
+    a: dataclasses.InitVar[int]
+    b: int
+
+D1(<arg7>)

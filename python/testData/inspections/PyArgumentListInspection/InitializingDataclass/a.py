@@ -74,3 +74,14 @@ class C2:
 C2(<warning descr="Parameter 'b' unfilled">)</warning>
 C2(1)
 C2(1, <warning descr="Unexpected argument">2</warning>)
+
+
+@dataclasses.dataclass
+class D1:
+    a: dataclasses.InitVar[int]
+    b: int
+
+D1(<warning descr="Parameter 'a' unfilled"><warning descr="Parameter 'b' unfilled">)</warning></warning>
+D1(1<warning descr="Parameter 'b' unfilled">)</warning>
+D1(1, 2)
+D1(1, 2, <warning descr="Unexpected argument">3</warning>)
