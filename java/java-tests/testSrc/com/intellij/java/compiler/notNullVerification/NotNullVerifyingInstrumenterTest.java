@@ -207,6 +207,12 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));
   }
 
+  public void testEnclosingClass() throws Exception {
+    Class<?> testClass = prepareTest();
+    Object obj = testClass.getMethod("main").invoke(null);
+    assertEquals(testClass, obj.getClass().getEnclosingClass());
+  }
+
   public void testLocalClassImplicitParameters() throws Exception {
     Class<?> test = prepareTest(true, "NotNull");
     Object instance = test.newInstance();
