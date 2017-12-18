@@ -43,7 +43,10 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.SwingHelper;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,7 +260,7 @@ public class AppUIUtil {
           Logger.getInstance(AppUIUtil.class).warn(e);
         }
       }
-      final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getConsents();
+      final Pair<Collection<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
       if (consentsToShow.second) {
         try {
           final Ref<Collection<Consent>> result = Ref.create(null);
@@ -265,7 +268,7 @@ public class AppUIUtil {
           SwingUtilities.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.first)));
           final Collection<Consent> confirmed = result.get();
           if (confirmed != null) {
-            ConsentOptions.setConsents(confirmed);
+            ConsentOptions.getInstance().setConsents(confirmed);
           }
         }
         catch (Exception e) {

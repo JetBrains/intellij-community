@@ -23,27 +23,83 @@ import java.util.stream.Stream;
  * @author Eugene Zhuravlev
  * Date: 05-Dec-17
  */
-public class ConsentOptions {
+public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.gdpr.ConsentOptions");
   
   private static final String BUNDLED_RESOURCE_PATH = "/consents.json";
-  private static final String DEFAULTS_PATH = ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached";
-  private static final String CONFIRMED_PATH = "/consentOptions/accepted";
-
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
+
+  private static final class InstanceHolder {
+    static final ConsentOptions ourInstance = new ConsentOptions(new IOBackend() {
+      private final File DEFAULT_CONSENTS_FILE = new File(Locations.getDataRoot(), ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached");
+      private final File CONFIRMED_CONSENTS_FILE = new File(Locations.getDataRoot(), "/consentOptions/accepted");
+
+      public void writeDefaultConsents(@NotNull String data) throws IOException {
+        FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
+      }
+
+      @NotNull
+      public String readDefaultConsents() throws IOException {
+        return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
+      }
+
+      @NotNull
+      public String readBundledConsents() {
+        return loadText(ConsentOptions.class.getResourceAsStream(BUNDLED_RESOURCE_PATH));
+      }
+
+      public void writeConfirmedConsents(@NotNull String data) throws IOException {
+        FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
+      }
+
+      @NotNull
+      public String readConfirmedConsents() throws IOException {
+        return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
+      }
+
+      @NotNull
+      private String loadText(InputStream stream) {
+        try {
+          if (stream != null) {
+            final Reader reader = new InputStreamReader(new BufferedInputStream(stream), StandardCharsets.UTF_8);
+            try {
+              return new String(FileUtil.adaptiveLoadText(reader));
+            }
+            finally {
+              reader.close();
+            }
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        return "";
+      }
+    });
+  }
+
+  private final IOBackend myBackend;
+
+  ConsentOptions(IOBackend backend) {
+    myBackend = backend;
+  }
+
+  public static ConsentOptions getInstance() {
+    return InstanceHolder.ourInstance;
+  }
 
   // here we have some well-known consents
   public enum Permission {
     YES, NO, UNDEFINED
   }
 
-  public static Permission isSendingUsageStatsAllowed() {
+  public Permission isSendingUsageStatsAllowed() {
     final ConfirmedConsent confirmedConsent = getConfirmedConsent(STATISTICS_OPTION_ID);
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
   }
 
   @Nullable
-  public static String getConfirmedConsentsString() {
+  public String getConfirmedConsentsString() {
     final Map<String, Consent> defaults = loadDefaultConsents();
     if (!defaults.isEmpty()) {
       final String str = confirmedConsentToExternalString(
@@ -57,7 +113,7 @@ public class ConsentOptions {
     return null;
   }
 
-  public static void applyServerUpdates(@Nullable String json) {
+  public void applyServerUpdates(@Nullable String json) {
     if (StringUtil.isEmptyOrSpaces(json)) {
       return;
     }
@@ -66,15 +122,12 @@ public class ConsentOptions {
       // defaults
       final Map<String, Consent> defaults = loadDefaultConsents();
       if (applyServerChangesToDefaults(defaults, fromServer)) {
-        FileUtil.writeToFile(getDefaultConsentsFile(), consentsToJson(defaults.values().stream()));
+        myBackend.writeDefaultConsents(consentsToJson(defaults.values().stream()));
       }
       // confirmed consents
       final Map<String, ConfirmedConsent> confirmed = loadConfirmedConsents();
       if (applyServerChangesToConfirmedConsents(confirmed, fromServer)) {
-        FileUtil.writeToFile(
-          getConfirmedConsentsFile(),
-          confirmedConsentToExternalString(confirmed.values().stream())
-        );
+        myBackend.writeConfirmedConsents(confirmedConsentToExternalString(confirmed.values().stream()));
       }
     }
     catch (Exception e) {
@@ -82,7 +135,7 @@ public class ConsentOptions {
     }
   }
 
-  public static Pair<Collection<Consent>, Boolean> getConsents() {
+  public Pair<Collection<Consent>, Boolean> getConsents() {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (allDefaults.isEmpty()) {
       return Pair.create(Collections.emptyList(), Boolean.FALSE);
@@ -96,11 +149,11 @@ public class ConsentOptions {
         result.add(confirmed == null? base : base.derive(confirmed.isAccepted()));
       }
     }
-    Collections.sort(result, Comparator.comparing(o -> o.getName()));
+    Collections.sort(result, Comparator.comparing(o -> o.getId()));
     return Pair.create(result, needReconfirm(allDefaults, allConfirmed));
   }
 
-  public static void setConsents(Collection<Consent> confirmedByUser) {
+  public void setConsents(Collection<Consent> confirmedByUser) {
     saveConfirmedConsents(
       confirmedByUser.stream().map(
         c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L)
@@ -109,7 +162,7 @@ public class ConsentOptions {
   }
 
   @Nullable
-  private static ConfirmedConsent getConfirmedConsent(String consentId) {
+  private ConfirmedConsent getConfirmedConsent(String consentId) {
     final Consent defConsent = loadDefaultConsents().get(consentId);
     if (defConsent != null && defConsent.isDeleted()) {
       return null;
@@ -117,7 +170,7 @@ public class ConsentOptions {
     return loadConfirmedConsents().get(consentId);
   }
 
-  private static void saveConfirmedConsents(@NotNull Collection<ConfirmedConsent> updates) {
+  private void saveConfirmedConsents(@NotNull Collection<ConfirmedConsent> updates) {
     if (!updates.isEmpty()) {
       try {
         final Map<String, ConfirmedConsent> allConfirmed = loadConfirmedConsents();
@@ -126,10 +179,7 @@ public class ConsentOptions {
           consent.setAcceptanceTime(stamp);
           allConfirmed.put(consent.getId(), consent);
         }
-        FileUtil.writeToFile(
-          getConfirmedConsentsFile(),
-          confirmedConsentToExternalString(allConfirmed.values().stream())
-        );
+        myBackend.writeConfirmedConsents(confirmedConsentToExternalString(allConfirmed.values().stream()));
       }
       catch (IOException e) {
         LOG.info(e);
@@ -154,14 +204,6 @@ public class ConsentOptions {
       }
     }
     return false;
-  }
-
-  private static File getDefaultConsentsFile() {
-    return new File(Locations.getDataRoot(), DEFAULTS_PATH);
-  }
-
-  private static File getConfirmedConsentsFile() {
-    return new File(Locations.getDataRoot(), CONFIRMED_PATH);
   }
 
   private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<ConsentAttributes> fromServer) {
@@ -208,28 +250,28 @@ public class ConsentOptions {
   }
   
   private static String confirmedConsentToExternalString(Stream<ConfirmedConsent> consents) {
-    return StringUtil.join(consents.map(c -> c.toExternalString()).collect(Collectors.toList()), ";");
+    return StringUtil.join(consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(c -> c.toExternalString()).collect(Collectors.toList()), ";");
   }
 
   @NotNull
-  private static Map<String, Consent> loadDefaultConsents() {
+  private Map<String, Consent> loadDefaultConsents() {
     final Map<String, Consent> result = new HashMap<>();
-    for (ConsentAttributes attributes : fromJson(loadText(ConsentOptions.class.getResourceAsStream(BUNDLED_RESOURCE_PATH)))) {
+    for (ConsentAttributes attributes : fromJson(myBackend.readBundledConsents())) {
       result.put(attributes.consentId, new Consent(attributes));
     }
     try {
-      applyServerChangesToDefaults(result, fromJson(loadText(new FileInputStream(getDefaultConsentsFile()))));
+      applyServerChangesToDefaults(result, fromJson(myBackend.readDefaultConsents()));
     }
-    catch (FileNotFoundException ignored) {
+    catch (IOException ignored) {
     }
     return result;
   }
 
   @NotNull
-  private static Map<String, ConfirmedConsent> loadConfirmedConsents() {
+  private Map<String, ConfirmedConsent> loadConfirmedConsents() {
     final Map<String, ConfirmedConsent> result = new HashMap<>();
     try {
-      final StringTokenizer tokenizer = new StringTokenizer(loadText(new FileInputStream(getConfirmedConsentsFile())), ";", false);
+      final StringTokenizer tokenizer = new StringTokenizer(myBackend.readConfirmedConsents(), ";", false);
       while (tokenizer.hasMoreTokens()) {
         final ConfirmedConsent consent = ConfirmedConsent.fromString(tokenizer.nextToken());
         if (consent != null) {
@@ -237,28 +279,22 @@ public class ConsentOptions {
         }
       }
     }
-    catch (FileNotFoundException ignored) {
+    catch (IOException ignored) {
     }
     return result;
   }
 
-  @NotNull
-  private static String loadText(InputStream stream) {
-    try {
-      if (stream != null) {
-        final Reader reader = new InputStreamReader(new BufferedInputStream(stream), StandardCharsets.UTF_8);
-        try {
-          return new String(FileUtil.adaptiveLoadText(reader));
-        }
-        finally {
-          reader.close();
-        }
-      }
-    }
-    catch (IOException e) {
-      LOG.info(e);
-    }
-    return "";
+  protected interface IOBackend {
+    void writeDefaultConsents(@NotNull String data) throws IOException;
+    @NotNull
+    String readDefaultConsents() throws IOException;
+    @NotNull
+    String readBundledConsents();
+
+    void writeConfirmedConsents(@NotNull String data) throws IOException;
+    @NotNull
+    String readConfirmedConsents() throws IOException;
   }
+
 
 }
