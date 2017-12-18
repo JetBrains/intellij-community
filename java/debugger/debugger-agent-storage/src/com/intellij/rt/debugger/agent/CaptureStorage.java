@@ -218,12 +218,15 @@ public class CaptureStorage {
 
   private static final JavaLangAccess ourJavaLangAccess;
   static {
-    JavaLangAccess access = null;
+    JavaLangAccess access;
     try {
       access = SharedSecrets.getJavaLangAccess();
+      if (access != null) {
+        access.getStackTraceDepth(new Throwable()); // may throw UnsupportedOperationException in some implementations
+      }
     }
     catch (Throwable e) {
-      // java 9
+      access = null;
     }
     ourJavaLangAccess = access;
   }
