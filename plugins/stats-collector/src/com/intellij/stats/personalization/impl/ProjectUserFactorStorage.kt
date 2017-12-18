@@ -19,9 +19,10 @@ package com.intellij.stats.personalization.impl
 import com.intellij.openapi.components.ProjectComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 
 /**
  * @author Vitaliy.Bibaev
  */
-@State(name = "ProjectUserFactors", storages = arrayOf(Storage("completion.factors.user.xml")))
+@State(name = "ProjectUserFactors", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
 class ProjectUserFactorStorage : ProjectComponent, UserFactorStorageBase()
