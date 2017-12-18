@@ -54,13 +54,11 @@ abstract class UserFactorStorageBase
 
         fun applyState(element: Element) {
             aggregateFactors.clear()
-            if (element.name == "userFactors") {
-                for (child in element.children) {
-                    val factorId = child.getAttributeValue("id")
-                    if (child.name == "factor" && factorId != null) {
-                        val factor = DailyAggregateFactor.restore(child)
-                        if (factor != null) aggregateFactors[factorId] = factor
-                    }
+            for (child in element.children) {
+                val factorId = child.getAttributeValue("id")
+                if (child.name == "factor" && factorId != null) {
+                    val factor = DailyAggregateFactor.restore(child)
+                    if (factor != null) aggregateFactors[factorId] = factor
                 }
             }
         }
