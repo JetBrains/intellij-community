@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -29,6 +30,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,9 +150,23 @@ public class NullnessUtil {
       PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
       PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
       if (thenExpression == null || elseExpression == null) return Nullness.UNKNOWN;
-      Nullness left = getExpressionNullness(thenExpression, useDataflow);
+      PsiExpression condition = ((PsiConditionalExpression)expression).getCondition();
+      // simple cases like x == null ? something : x
+      PsiReferenceExpression ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, true);
+      if (ref != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(ref, elseExpression)) {
+        return getExpressionNullness(thenExpression, useDataflow);
+      }
+      // x != null ? x : something
+      ref = ExpressionUtils.getReferenceExpressionFromNullComparison(condition, false);
+      if (ref != null && JavaPsiEquivalenceUtil.areExpressionsEquivalent(ref, thenExpression)) {
+        return getExpressionNullness(elseExpression, useDataflow);
+      }
+      if (useDataflow) {
+        return fromBoolean(CommonDataflow.getExpressionFact(expression, DfaFactType.CAN_BE_NULL));
+      }
+      Nullness left = getExpressionNullness(thenExpression, false);
       if (left == Nullness.UNKNOWN) return Nullness.UNKNOWN;
-      Nullness right = getExpressionNullness(elseExpression, useDataflow);
+      Nullness right = getExpressionNullness(elseExpression, false);
       return left == right ? left : Nullness.UNKNOWN;
     }
     if (expression instanceof PsiTypeCastExpression) {
