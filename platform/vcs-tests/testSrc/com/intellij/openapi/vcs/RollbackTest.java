@@ -42,7 +42,7 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     insertString(7, "\n5\n6");
     compareRanges();
     rollbackFirstChange(Range.INSERTED);
-    assertEquals(initialContent, myDocument.getText());
+    assertTextContentIs(initialContent);
     compareRanges();
     insertString(7, "\5\n6\n7\n");
     compareRanges();
@@ -110,7 +110,7 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     createDocument(text2, text1);
     rollback(myTracker.getRanges().get(0));
 
-    assertEquals(text1, myDocument.getText());
+    assertTextContentIs(text1);
     assertEmpty(myTracker.getRanges());
   }
 
@@ -131,7 +131,7 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     replaceString(0, initialContent.length(), newContent);
     compareRanges();
     rollbackFirstChange(Range.MODIFIED);
-    assertEquals(initialContent, myDocument.getText());
+    assertTextContentIs(initialContent);
     compareRanges();
   }
 
@@ -152,7 +152,7 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     modifyAction.run();
     compareRanges();
     rollbackFirstChange(expectedRangeType);
-    assertEquals(initialContent, myDocument.getText());
+    assertTextContentIs(initialContent);
     compareRanges();
   }
 

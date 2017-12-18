@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.DiffManager;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.vcs.ex.Range;
 
@@ -264,7 +263,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     createDocument("   11\n   3 \n   44\n   55\n   6\n   7\n   88\n   ", "   1\n   2\n   3 \n   4\n   5\n   6\n   7\n   8\n   ");
     insertString(9, "3");
     compareRanges();
-    assertEquals("   11\n   33 \n   44\n   55\n   6\n   7\n   88\n   ", myDocument.getText());
+    assertTextContentIs("   11\n   33 \n   44\n   55\n   6\n   7\n   88\n   ");
     insertString(9, "aaa\nbbbbbbbb\ncccc\ndddd");
     compareRanges();
   }
@@ -273,7 +272,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
   public void testUndoDeletion() {
     createDocument("1\n2\n3\n4\n5\n6\n7\n");
     deleteString(4, 6);
-    assertEquals("1\n2\n4\n5\n6\n7\n", myDocument.getText());
+    assertTextContentIs("1\n2\n4\n5\n6\n7\n");
     compareRanges();
     insertString(4, "3\n");
     compareRanges();
@@ -282,7 +281,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
   public void testUndoDeletion2() {
     createDocument("1\n2\n3\n4\n5\n6\n7\n");
     deleteString(3, 5);
-    assertEquals("1\n2\n4\n5\n6\n7\n", myDocument.getText());
+    assertTextContentIs("1\n2\n4\n5\n6\n7\n");
     compareRanges();
     insertString(4, "\n3");
     compareRanges();
@@ -294,9 +293,8 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
                    "    }\n" + "}");
     deleteString(39, 58);
     compareRanges();
-    assertEquals("package package;\n" + "\n" + "public class Class3 {\n" + "    public int i2;\n" + "    public int i3;\n" +
-                 "    public int i4;\n" + "\n" + "    public static void main(String[] args) {\n" + "\n" + "    }\n" + "}",
-                 myDocument.getText());
+    assertTextContentIs("package package;\n" + "\n" + "public class Class3 {\n" + "    public int i2;\n" + "    public int i3;\n" +
+                        "    public int i4;\n" + "\n" + "    public static void main(String[] args) {\n" + "\n" + "    }\n" + "}");
 
     deleteString(39, myDocument.getTextLength());
     compareRanges();
@@ -306,28 +304,28 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
   public void testUnexpetedDeletedRange() {
     createDocument("    public class\n    bbb\n");
     insertString(17, "    \n");
-    assertEquals("    public class\n    \n    bbb\n", myDocument.getText());
+    assertTextContentIs("    public class\n    \n    bbb\n");
     compareRanges();
     deleteString(17, 21);
-    assertEquals("    public class\n\n    bbb\n", myDocument.getText());
+    assertTextContentIs("    public class\n\n    bbb\n");
     compareRanges();
     insertString(18, "    \n");
-    assertEquals("    public class\n\n    \n    bbb\n", myDocument.getText());
+    assertTextContentIs("    public class\n\n    \n    bbb\n");
     compareRanges();
     deleteString(18, 22);
-    assertEquals("    public class\n\n\n    bbb\n", myDocument.getText());
+    assertTextContentIs("    public class\n\n\n    bbb\n");
     compareRanges();
     deleteString(4, 10);
-    assertEquals("     class\n\n\n    bbb\n", myDocument.getText());
+    assertTextContentIs("     class\n\n\n    bbb\n");
     compareRanges();
     insertString(4, "p");
-    assertEquals("    p class\n\n\n    bbb\n", myDocument.getText());
+    assertTextContentIs("    p class\n\n\n    bbb\n");
     compareRanges();
     insertString(5, "r");
-    assertEquals("    pr class\n\n\n    bbb\n", myDocument.getText());
+    assertTextContentIs("    pr class\n\n\n    bbb\n");
     compareRanges();
     insertString(6, "i");
-    assertEquals("    pri class\n\n\n    bbb\n", myDocument.getText());
+    assertTextContentIs("    pri class\n\n\n    bbb\n");
     compareRanges();
   }
 
@@ -337,7 +335,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     createDocument(text);
     deleteString(0, text.length());
     compareRanges();
-    assertEquals("", myDocument.getText());
+    assertTextContentIs("");
     insertString(0, "222\n");
     compareRanges();
     deleteString(0, 4);
@@ -359,7 +357,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
 
     createDocument(text);
     deleteString(part1.length(), part1.length() + part2.length());
-    assertEquals(part1 + part3, myDocument.getText());
+    assertTextContentIs(part1 + part3);
     assertEqualRanges(Arrays.asList(new Range(5, 5, 5, 12)), myTracker.getRanges());
 
     deleteString(part1.length(), part1.length() + 1);
@@ -428,36 +426,36 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
   public void testTrimSpaces1() {
     createDocument("a \nb \nc ");
     insertString(0, "x");
-    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
+    stripTrailingSpaces();
 
     BitSet lines = new BitSet();
     lines.set(0);
     rollback(lines);
 
-    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
-    assertEquals("a \nb \nc ", myDocument.getText());
+    stripTrailingSpaces();
+    assertTextContentIs("a \nb \nc ");
   }
 
   public void testTrimSpaces2() {
     createDocument("a \nb \nc ");
     insertString(0, "x");
-    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
+    stripTrailingSpaces();
 
-    assertEquals("xa\nb \nc ", myDocument.getText());
+    assertTextContentIs("xa\nb \nc ");
   }
 
   public void testTrimSpaces3() {
     createDocument("a \nb \nc ");
     insertString(6, "x");
     insertString(0, "x");
-    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
+    stripTrailingSpaces();
 
     BitSet lines = new BitSet();
     lines.set(2);
     rollback(lines);
 
-    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
-    assertEquals("xa\nb \nc ", myDocument.getText());
+    stripTrailingSpaces();
+    assertTextContentIs("xa\nb \nc ");
   }
 
   public void testInsertion1() {

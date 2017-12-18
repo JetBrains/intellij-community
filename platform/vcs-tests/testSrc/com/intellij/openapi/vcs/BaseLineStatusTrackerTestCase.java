@@ -21,6 +21,7 @@ import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -46,7 +47,6 @@ import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
  * author: lesya
  */
 public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCase {
-  protected VirtualFile myFile;
   protected Document myDocument;
   protected Document myUpToDateDocument;
   protected LineStatusTracker<?> myTracker;
@@ -101,6 +101,14 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     });
   }
 
+  public void stripTrailingSpaces() {
+    ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
+  }
+
+  public void assertTextContentIs(String expected) {
+    assertEquals(expected, myDocument.getText());
+  }
+
   protected void createDocument(@NotNull String text) {
     createDocument(text, text);
     compareRanges();
@@ -112,12 +120,12 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
   }
 
   protected void createDocument(@NotNull String text, @NotNull final String upToDateDocument, boolean smart) {
-    myFile = new LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, text);
-    myDocument = FileDocumentManager.getInstance().getDocument(myFile);
+    VirtualFile file = new LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, text);
+    myDocument = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(myDocument);
     ApplicationManager.getApplication().runWriteAction(() -> {
       assert myTracker == null;
-      myTracker = LineStatusTracker.createOn(myFile, myDocument, getProject(), smart ? Mode.SMART : Mode.DEFAULT);
+      myTracker = LineStatusTracker.createOn(file, myDocument, getProject(), smart ? Mode.SMART : Mode.DEFAULT);
       myTracker.setBaseRevision(upToDateDocument);
     });
     myUpToDateDocument = myTracker.getVcsDocument();
