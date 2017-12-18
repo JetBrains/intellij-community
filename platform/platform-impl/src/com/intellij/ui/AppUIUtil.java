@@ -53,7 +53,11 @@ import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
+import javax.swing.plaf.ButtonUI;
+import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
@@ -417,6 +421,21 @@ public class AppUIUtil {
 
         final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
         cb.setBackground(viewer.getBackground());
+        cb.setFont(cb.getFont().deriveFont(Font.BOLD));
+        int leftInset;
+        ButtonUI ui = cb.getUI();
+        if (ui instanceof BasicRadioButtonUI) {
+          Icon icon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+          if (icon != null) {
+            leftInset = icon.getIconWidth() + cb.getIconTextGap();
+            Insets margin = cb.getMargin();
+            if (margin != null) leftInset += margin.left;
+            Border border = cb.getBorder();
+            if (border != null) leftInset += border.getBorderInsets(cb).left;
+            //noinspection UseDPIAwareBorders
+            viewer.setBorder(new EmptyBorder(JBUI.scale(5), leftInset, JBUI.scale(15), JBUI.scale(5)));
+          }
+        }
 
         final JPanel pane = new JPanel(new BorderLayout());
         pane.setBackground(viewer.getBackground());
@@ -441,7 +460,7 @@ public class AppUIUtil {
     };
     dialog.setModal(true);
     dialog.setTitle("Data Sharing Options");
-    dialog.setSize(JBUI.scale(509), JBUI.scale(395));
+    dialog.setSize(JBUI.scale(530), JBUI.scale(395));
     dialog.show();
 
     final Collection<Consent> result;
