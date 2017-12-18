@@ -76,7 +76,7 @@ class PyDataclassInspection : PyInspection() {
             true
           }
 
-          PyNamedTupleInspection.inspectFieldsOrder(node, this::registerProblem)
+          PyNamedTupleInspection.inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
         }
       }
     }
