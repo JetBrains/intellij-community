@@ -8,17 +8,17 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
-import com.jetbrains.python.psi.PyBinaryExpression
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyTargetExpression
-import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.types.*
 
 class PyDataclassInspection : PyInspection() {
 
   companion object {
     private val ORDER_OPERATORS = setOf("__lt__", "__le__", "__gt__", "__ge__")
+    private val DATACLASSES_HELPERS = setOf("dataclasses.fields", "dataclasses.asdict", "dataclasses.astuple", "dataclasses.replace")
   }
 
   override fun buildVisitor(holder: ProblemsHolder,
@@ -99,8 +99,49 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
+    override fun visitPyCallExpression(node: PyCallExpression?) {
+      super.visitPyCallExpression(node)
+
+      if (node != null) {
+        val resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext)
+        val markedCallee = node.multiResolveCallee(resolveContext).singleOrNull()
+        val callee = markedCallee?.element
+        val calleeQName = callee?.qualifiedName
+
+        if (markedCallee != null && callee != null && DATACLASSES_HELPERS.contains(calleeQName)) {
+          val mapping = PyCallExpressionHelper.mapArguments(node, markedCallee, myTypeEvalContext)
+
+          val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
+          val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
+
+          processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+        }
+      }
+    }
+
     private fun getPyClass(element: PyTypedElement?): PyClass? {
       return (element?.let { myTypeEvalContext.getType(it) } as? PyClassType)?.pyClass
+    }
+
+    private fun processHelperDataclassArgument(argument: PyExpression?, calleeQName: String) {
+      if (argument == null) return
+
+      val allowDefinition = calleeQName == "dataclasses.fields"
+
+      if (isNotDataclass(myTypeEvalContext.getType(argument), allowDefinition)) {
+        val message = "'$calleeQName' method should be called on dataclass instances" + if (allowDefinition) " or types" else ""
+
+        registerProblem(argument, message)
+      }
+    }
+
+    private fun isNotDataclass(type: PyType?, allowDefinition: Boolean): Boolean {
+      if (type is PyStructuralType || PyTypeChecker.isUnknown(type, myTypeEvalContext)) return false
+      if (type is PyUnionType) return type.members.all { isNotDataclass(it, allowDefinition) }
+
+      return type !is PyClassType ||
+             !allowDefinition && type.isDefinition ||
+             parseDataclassParameters(type.pyClass, myTypeEvalContext) == null
     }
   }
 }
