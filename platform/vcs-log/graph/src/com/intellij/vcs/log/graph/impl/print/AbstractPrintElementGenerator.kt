@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.graph.impl.print
 
 import com.intellij.vcs.log.graph.EdgePrintElement
-import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphNode
@@ -26,7 +25,6 @@ import com.intellij.vcs.log.graph.impl.print.elements.EdgePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement
 import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
-import java.lang.IllegalStateException
 import java.util.*
 
 abstract class AbstractPrintElementGenerator protected constructor(protected val linearGraph: LinearGraph,
@@ -51,12 +49,9 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
                                         printElementManager))
       }
 
-      override fun consumeArrow(edge: GraphEdge, position: Int, arrowType: RowElementType) {
+      override fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {
         result.add(TerminalEdgePrintElement(rowIndex, position,
-                                            if (arrowType == RowElementType.UP_ARROW)
-                                              EdgePrintElement.Type.UP
-                                            else
-                                              EdgePrintElement.Type.DOWN, edge,
+                                            arrowType, edge,
                                             printElementManager))
       }
     })
@@ -66,17 +61,11 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     return result
   }
 
-  protected enum class RowElementType {
-    NODE,
-    UP_ARROW,
-    DOWN_ARROW
-  }
-
   protected open class ElementConsumer {
     open fun consumeNode(node: GraphNode, position: Int) {}
     open fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {}
     open fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {}
-    open fun consumeArrow(edge: GraphEdge, position: Int, arrowType: RowElementType) {}
+    open fun consumeArrow(edge: GraphEdge, position: Int, arrowType: EdgePrintElement.Type) {}
   }
 
   protected abstract fun collectElements(rowIndex: Int, consumer: ElementConsumer)

@@ -19,6 +19,7 @@ package com.intellij.vcs.log.graph.impl.print
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SLRUMap
+import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.api.EdgeFilter
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
@@ -110,10 +111,10 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
           }
           else {
             val arrow = getArrowType(e, i)
-            if (arrow === AbstractPrintElementGenerator.RowElementType.DOWN_ARROW) {
+            if (arrow === EdgePrintElement.Type.DOWN) {
               downArrows++
             }
-            else if (arrow === AbstractPrintElementGenerator.RowElementType.UP_ARROW) {
+            else if (arrow === EdgePrintElement.Type.UP) {
               upArrows++
             }
           }
@@ -159,10 +160,10 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
             val down = downPosition(it)
             val up = upPosition(it)
             if (down != null) {
-              consumer.consumeDownEdge(it, position, down, arrowType == RowElementType.DOWN_ARROW)
+              consumer.consumeDownEdge(it, position, down, arrowType == EdgePrintElement.Type.DOWN)
             }
             if (up != null) {
-              consumer.consumeUpEdge(it, up, position, arrowType == RowElementType.UP_ARROW)
+              consumer.consumeUpEdge(it, up, position, arrowType == EdgePrintElement.Type.UP)
             }
           }
         }
@@ -171,15 +172,15 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
           val down = downPosition(element)
           val up = upPosition(element)
           if (down != null) {
-            consumer.consumeDownEdge(element, position, down, arrowType == RowElementType.DOWN_ARROW)
+            consumer.consumeDownEdge(element, position, down, arrowType == EdgePrintElement.Type.DOWN)
           }
-          else if (arrowType == RowElementType.DOWN_ARROW) {
+          else if (arrowType == EdgePrintElement.Type.DOWN) {
             consumer.consumeArrow(element, position, arrowType)
           }
           if (up != null) {
-            consumer.consumeUpEdge(element, up, position, arrowType == RowElementType.UP_ARROW)
+            consumer.consumeUpEdge(element, up, position, arrowType == EdgePrintElement.Type.UP)
           }
-          else if (arrowType == RowElementType.UP_ARROW) {
+          else if (arrowType == EdgePrintElement.Type.UP) {
             consumer.consumeArrow(element, position, arrowType)
           }
         }
@@ -207,7 +208,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     }
   }
 
-  private fun getArrowType(edge: GraphEdge, rowIndex: Int): AbstractPrintElementGenerator.RowElementType? {
+  private fun getArrowType(edge: GraphEdge, rowIndex: Int): EdgePrintElement.Type? {
     val normalEdge = asNormalEdge(edge)
     if (normalEdge != null) {
       return getArrowType(normalEdge, rowIndex)
@@ -215,12 +216,12 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     else { // special edges
       when (edge.type) {
         GraphEdgeType.DOTTED_ARROW_DOWN, GraphEdgeType.NOT_LOAD_COMMIT -> if (intEqual(edge.upNodeIndex, rowIndex - 1)) {
-          return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
+          return EdgePrintElement.Type.DOWN
         }
         GraphEdgeType.DOTTED_ARROW_UP ->
           // todo case 0-row arrow
           if (intEqual(edge.downNodeIndex, rowIndex + 1)) {
-            return AbstractPrintElementGenerator.RowElementType.UP_ARROW
+            return EdgePrintElement.Type.UP
           }
         else -> LOG.error("Unknown special edge type " + edge.type + " at row " + rowIndex)
       }
@@ -228,7 +229,7 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
     return null
   }
 
-  private fun getArrowType(normalEdge: NormalEdge, rowIndex: Int): AbstractPrintElementGenerator.RowElementType? {
+  private fun getArrowType(normalEdge: NormalEdge, rowIndex: Int): EdgePrintElement.Type? {
     val edgeSize = normalEdge.down - normalEdge.up
     val upOffset = rowIndex - normalEdge.up
     val downOffset = normalEdge.down - rowIndex
@@ -237,16 +238,16 @@ class PrintElementGeneratorImpl : AbstractPrintElementGenerator {
       if (upOffset == myVisiblePartSize) {
         LOG.assertTrue(downOffset != myVisiblePartSize,
                        "Both up and down arrow at row " + rowIndex) // this can not happen due to how constants are picked out, but just in case
-        return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
+        return EdgePrintElement.Type.DOWN
       }
-      if (downOffset == myVisiblePartSize) return AbstractPrintElementGenerator.RowElementType.UP_ARROW
+      if (downOffset == myVisiblePartSize) return EdgePrintElement.Type.UP
     }
     if (edgeSize >= myEdgeWithArrowSize) {
       if (upOffset == 1) {
         LOG.assertTrue(downOffset != 1, "Both up and down arrow at row " + rowIndex)
-        return AbstractPrintElementGenerator.RowElementType.DOWN_ARROW
+        return EdgePrintElement.Type.DOWN
       }
-      if (downOffset == 1) return AbstractPrintElementGenerator.RowElementType.UP_ARROW
+      if (downOffset == 1) return EdgePrintElement.Type.UP
     }
     return null
   }
