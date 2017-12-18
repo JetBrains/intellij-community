@@ -81,6 +81,26 @@ public class PushDownConflicts {
     }
     boolean isAbstract = myClass.hasModifierProperty(PsiModifier.ABSTRACT);
     for (PsiMember member : myMovedMembers) {
+      if (!member.hasModifierProperty(PsiModifier.STATIC)) {
+        member.accept(new JavaRecursiveElementWalkingVisitor() {
+          @Override
+          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+            super.visitMethodCallExpression(expression);
+            if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
+              final PsiMethod resolvedMethod = expression.resolveMethod();
+              if (resolvedMethod != null) {
+                final PsiClass resolvedClass = resolvedMethod.getContainingClass();
+                if (resolvedClass != null && myClass.isInheritor(resolvedClass, true)) {
+                  final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
+                  if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
+                    myConflicts.putValue(expression, "Super method call will resolve to another method");
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
       if (!member.hasModifierProperty(PsiModifier.STATIC) && member instanceof PsiMethod && !myAbstractMembers.contains(member)) {
         Set<PsiClass> unrelatedDefaults = new LinkedHashSet<>();
         for (PsiMethod superMethod : ((PsiMethod)member).findSuperMethods()) {
@@ -111,26 +131,6 @@ public class PushDownConflicts {
     if (targetClass != null) {
       for (final PsiMember movedMember : myMovedMembers) {
         checkMemberPlacementInTargetClassConflict(targetClass, movedMember);
-        movedMember.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override
-          public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-            super.visitMethodCallExpression(expression);
-            if (expression.getMethodExpression().getQualifierExpression() instanceof PsiSuperExpression) {
-              final PsiMethod resolvedMethod = expression.resolveMethod();
-              if (resolvedMethod != null) {
-                final PsiClass resolvedClass = resolvedMethod.getContainingClass();
-                if (resolvedClass != null) {
-                  if (myClass.isInheritor(resolvedClass, true)) {
-                    final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
-                    if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
-                      myConflicts.putValue(expression, "Super method call will resolve to another method");
-                    }
-                  }
-                }
-              }
-            }
-          }
-        });
       }
     }
     Members:
@@ -139,6 +139,7 @@ public class PushDownConflicts {
       for (PsiReference ref : ReferencesSearch.search(member, member.getResolveScope(), false)) {
         final PsiElement element = ref.getElement();
         if (element instanceof PsiReferenceExpression) {
+          if (myConflicts.containsKey(element)) continue;
           final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
           final PsiExpression qualifier = referenceExpression.getQualifierExpression();
           if (qualifier != null) {
