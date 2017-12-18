@@ -39,15 +39,15 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
 
     collectElements(rowIndex, object : ElementConsumer() {
       override fun consumeNode(node: GraphNode, position: Int) {
-        nodes.add(createSimplePrintElement(rowIndex, SimpleRowElement(node, RowElementType.NODE, position)))
+        nodes.add(createSimplePrintElement(rowIndex, node, position))
       }
 
       override fun consumeDownEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-        result.add(createEdgePrintElement(rowIndex, ShortEdge(edge, upPosition, downPosition), EdgePrintElement.Type.DOWN, hasArrow))
+        result.add(createEdgePrintElement(rowIndex, edge, upPosition, downPosition, EdgePrintElement.Type.DOWN, hasArrow))
       }
 
       override fun consumeUpEdge(edge: GraphEdge, upPosition: Int, downPosition: Int, hasArrow: Boolean) {
-        result.add(createEdgePrintElement(rowIndex, ShortEdge(edge, upPosition, downPosition), EdgePrintElement.Type.UP, hasArrow))
+        result.add(createEdgePrintElement(rowIndex, edge, upPosition, downPosition, EdgePrintElement.Type.UP, hasArrow))
       }
 
       override fun consumeArrow(edge: GraphEdge, position: Int, arrowType: RowElementType) {
@@ -65,25 +65,27 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     return result
   }
 
-  private fun createSimplePrintElement(rowIndex: Int, rowElement: SimpleRowElement): SimplePrintElementImpl {
-    return SimplePrintElementImpl(rowIndex, rowElement.myPosition, rowElement.myElement, printElementManager)
+  private fun createSimplePrintElement(rowIndex: Int, node: GraphNode, position: Int): SimplePrintElementImpl {
+    return SimplePrintElementImpl(rowIndex, position, node, printElementManager)
   }
 
   private fun createEdgePrintElement(rowIndex: Int,
-                                     shortEdge: ShortEdge,
+                                     edge: GraphEdge,
+                                     upPosition: Int,
+                                     downPosition: Int,
                                      type: EdgePrintElement.Type,
                                      hasArrow: Boolean): EdgePrintElementImpl {
     val positionInCurrentRow: Int
     val positionInOtherRow: Int
     if (type == EdgePrintElement.Type.DOWN) {
-      positionInCurrentRow = shortEdge.myUpPosition
-      positionInOtherRow = shortEdge.myDownPosition
+      positionInCurrentRow = upPosition
+      positionInOtherRow = downPosition
     }
     else {
-      positionInCurrentRow = shortEdge.myDownPosition
-      positionInOtherRow = shortEdge.myUpPosition
+      positionInCurrentRow = downPosition
+      positionInOtherRow = upPosition
     }
-    return EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, shortEdge.myEdge, hasArrow,
+    return EdgePrintElementImpl(rowIndex, positionInCurrentRow, positionInOtherRow, type, edge, hasArrow,
                                 printElementManager)
   }
 
@@ -95,10 +97,6 @@ abstract class AbstractPrintElementGenerator protected constructor(protected val
     return getPrintElements(printElement.rowIndex).find { it == printElement } ?:
            throw IllegalStateException("Not found graphElement for this printElement: " + printElement)
   }
-
-  protected class ShortEdge(val myEdge: GraphEdge, val myUpPosition: Int, val myDownPosition: Int)
-
-  protected class SimpleRowElement(val myElement: GraphElement, val myType: RowElementType, val myPosition: Int)
 
   protected enum class RowElementType {
     NODE,
