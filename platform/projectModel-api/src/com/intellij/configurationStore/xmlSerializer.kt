@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
@@ -31,16 +33,21 @@ private fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
 }
 
 @JvmOverloads
-fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
+fun <T : Any> T.serialize(filter: SerializationFilter? = null, createElementIfEmpty: Boolean = false): Element? {
   try {
     val clazz = javaClass
     val binding = serializer.getClassBinding(clazz)
     return if (binding is BeanBinding) {
       // top level expects not null (null indicates error, empty element will be omitted)
-      binding.serialize(this, createElementIfEmpty, filter)
+      val effectiveFilter = when {
+        filter != null -> filter
+        this !is BaseState -> getDefaultSerializationFilter()
+        else -> null /* BaseState implements SerializationFilter filter */
+      }
+      binding.serialize(this, createElementIfEmpty, effectiveFilter)
     }
     else {
-      binding.serialize(this, null, filter) as Element
+      binding.serialize(this, null, filter ?: getDefaultSerializationFilter()) as Element
     }
   }
   catch (e: XmlSerializationException) {

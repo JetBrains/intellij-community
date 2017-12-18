@@ -3,22 +3,30 @@
  */
 package com.intellij.util.xmlb;
 
+import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 
 class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
   protected final Binding myBinding;
 
   private final boolean myFlat;
+  private final Property.Style beanStyle;
 
-  public AccessorBindingWrapper(@NotNull MutableAccessor accessor, @NotNull Binding binding, boolean flat) {
+  public AccessorBindingWrapper(@NotNull MutableAccessor accessor,
+                                @NotNull Binding binding,
+                                boolean flat,
+                                Property.Style beanStyle) {
     super(accessor);
 
     myBinding = binding;
     myFlat = flat;
+    this.beanStyle = beanStyle;
   }
 
   public boolean isFlat() {
@@ -33,7 +41,18 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
       throw new XmlSerializationException("Property " + myAccessor + " of object " + o + " (" + o.getClass() + ") must not be null");
     }
     if (myFlat) {
-      ((BeanBinding)myBinding).serializeInto(value, (Element)context, filter);
+      Element element = (Element)context;
+      if (beanStyle == Property.Style.ATTRIBUTE && value instanceof Rectangle) {
+        Rectangle bounds = (Rectangle)value;
+        LOG.assertTrue(element != null);
+        element.setAttribute("x", Integer.toString(bounds.x));
+        element.setAttribute("y", Integer.toString(bounds.y));
+        element.setAttribute("width", Integer.toString(bounds.width));
+        element.setAttribute("height", Integer.toString(bounds.height));
+      }
+      else {
+        ((BeanBinding)myBinding).serializeInto(value, element, filter);
+      }
       return null;
     }
     else {
@@ -53,7 +72,18 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
       ((BeanBinding)myBinding).deserializeInto(currentValue, element);
     }
     else {
-      Object deserializedValue = myBinding.deserializeUnsafe(currentValue, element);
+      Object deserializedValue;
+      if (beanStyle == Property.Style.ATTRIBUTE && myBinding instanceof BeanBinding && ((BeanBinding)myBinding).myBeanClass == Rectangle.class) {
+        int x = StringUtilRt.parseInt(element.getAttributeValue("x"), 0);
+        int y = StringUtilRt.parseInt(element.getAttributeValue("y"), 0);
+        int w = StringUtilRt.parseInt(element.getAttributeValue("width"), 0);
+        int h = StringUtilRt.parseInt(element.getAttributeValue("height"), 0);
+        deserializedValue = new Rectangle(x, y, w, h);
+      }
+      else {
+        deserializedValue = myBinding.deserializeUnsafe(currentValue, element);
+      }
+
       if (currentValue != deserializedValue) {
         myAccessor.set(context, deserializedValue);
       }

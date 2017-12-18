@@ -63,15 +63,16 @@ internal class LongStoredProperty(override val defaultValue: Long) : PrimitiveSt
   }
 }
 
-internal class FloatStoredProperty(override val defaultValue: Float) : PrimitiveStoredPropertyBase<Float>() {
+internal class FloatStoredProperty(override val defaultValue: Float, private val valueNormalizer: ((value: Float) -> Float)?) : PrimitiveStoredPropertyBase<Float>() {
   override var value = defaultValue
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Float) {
-    if (this.value != value) {
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") rawNewValue: Float) {
+    val newValue = valueNormalizer?.invoke(value) ?: rawNewValue
+    if (value != newValue) {
       thisRef.ownModificationCount++
-      this.value = value
+      value = newValue
     }
   }
 

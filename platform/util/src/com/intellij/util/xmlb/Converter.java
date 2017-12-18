@@ -10,6 +10,6 @@ public abstract class Converter<T> {
   @Nullable
   public abstract T fromString(@NotNull String value);
 
-  @NotNull
+  @Nullable
   public abstract String toString(@NotNull T value);
 }

@@ -50,10 +50,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert myBindings == null;
 
+    Property classAnnotation = myBeanClass.getAnnotation(Property.class);
+
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i), serializer);
+      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OLD : classAnnotation.style());
       binding.init(originalType, serializer);
       myBindings[i] = binding;
     }
@@ -251,6 +253,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
         return name;
       }
     }
+
     String name = aClass.getSimpleName();
     if (name.isEmpty()) {
       name = aClass.getSuperclass().getSimpleName();
@@ -263,7 +266,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return name;
   }
 
-  private static String getTagNameFromAnnotation(Class<?> aClass) {
+  @Nullable
+  private static String getTagNameFromAnnotation(@NotNull Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
     return tag != null && !tag.value().isEmpty() ? tag.value() : null;
   }
@@ -278,11 +282,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
     accessors = new ArrayList<MutableAccessor>();
 
     Map<String, Couple<Method>> nameToAccessors;
-    if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
-      nameToAccessors = collectPropertyAccessors(aClass, accessors);
+    // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
+    if (aClass == Rectangle.class) {
+      nameToAccessors = Collections.emptyMap();
     }
     else {
-      nameToAccessors = Collections.emptyMap();
+      nameToAccessors = collectPropertyAccessors(aClass, accessors);
     }
 
     int propertyAccessorCount = accessors.size();
@@ -351,6 +356,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   private static boolean hasStoreAnnotations(@NotNull AccessibleObject object) {
+    //noinspection deprecation
     return object.getAnnotation(OptionTag.class) != null ||
            object.getAnnotation(Tag.class) != null ||
            object.getAnnotation(Attribute.class) != null ||
@@ -414,7 +420,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer) {
+  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
     Binding binding = serializer.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
@@ -436,7 +442,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding, false);
+      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OLD);
     }
 
     boolean surroundWithTag = true;
@@ -454,7 +460,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
       if (binding == null || binding instanceof TextBinding) {
         throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
-      return new AccessorBindingWrapper(accessor, binding, inline);
+      return new AccessorBindingWrapper(accessor, binding, inline, property.style());
     }
 
     XCollection xCollection = accessor.getAnnotation(XCollection.class);
@@ -462,6 +468,9 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return new TagBinding(accessor, xCollection.propertyElementName());
     }
 
+    if (propertyStyle == Property.Style.ATTRIBUTE) {
+      return new AttributeBinding(accessor, null);
+    }
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
   }
 }

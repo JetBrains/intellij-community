@@ -25,7 +25,7 @@ internal class XmlSerializerCollectionTest {
     bean.list.add("\u0001one")
     bean.list.add("two")
     bean.list.add("three")
-    doSerializerTest("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
+    testSerializer("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
   }
 
   @Test fun CollectionBean() {
@@ -33,7 +33,7 @@ internal class XmlSerializerCollectionTest {
     bean.list.add("one")
     bean.list.add("two")
     bean.list.add("three")
-    doSerializerTest("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
+    testSerializer("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
   }
 
   @Test fun CollectionBeanReadJDOMExternalizableStringList() {
@@ -58,11 +58,11 @@ internal class XmlSerializerCollectionTest {
 
     val bean = BeanWithPolymorphicArray()
 
-    doSerializerTest("<bean>\n  <option name=\"v\">\n    <array />\n  </option>\n</bean>", bean)
+    testSerializer("<bean>\n  <option name=\"v\">\n    <array />\n  </option>\n</bean>", bean)
 
     bean.v = arrayOf(BeanWithPublicFields(), BeanWithPublicFieldsDescendant(), BeanWithPublicFields())
 
-    doSerializerTest("""<bean>
+    testSerializer("""<bean>
   <option name="v">
     <array>
       <BeanWithPublicFields>
@@ -85,7 +85,7 @@ internal class XmlSerializerCollectionTest {
 
   @Test fun xCollection() {
     val bean = BeanWithArrayWithoutTagName()
-     doSerializerTest(
+     testSerializer(
      """
       <BeanWithArrayWithoutTagName>
         <option name="foo">
@@ -102,7 +102,7 @@ internal class XmlSerializerCollectionTest {
 
     val bean = Bean()
 
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="v">
         <array>
@@ -114,7 +114,7 @@ internal class XmlSerializerCollectionTest {
 
     bean.v = arrayOf("1", "2", "3")
 
-    doSerializerTest(
+    testSerializer(
       "<bean>\n" + "  <option name=\"v\">\n" + "    <array>\n" + "      <vvalue v=\"1\" />\n" + "      <vvalue v=\"2\" />\n" + "      <vvalue v=\"3\" />\n" + "    </array>\n" + "  </option>\n" + "</bean>",
       bean)
   }
@@ -129,7 +129,7 @@ internal class XmlSerializerCollectionTest {
 
     val bean = Bean()
 
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="INT_V" value="1" />
       <option name="v">
@@ -140,7 +140,7 @@ internal class XmlSerializerCollectionTest {
 
     bean.v = arrayOf("1", "2", "3")
 
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="INT_V" value="1" />
       <option name="v">
@@ -155,12 +155,12 @@ internal class XmlSerializerCollectionTest {
 
   @Test fun array() {
     val bean = BeanWithArray()
-    doSerializerTest(
+    testSerializer(
       "<BeanWithArray>\n  <option name=\"ARRAY_V\">\n    <array>\n      <option value=\"a\" />\n      <option value=\"b\" />\n    </array>\n  </option>\n</BeanWithArray>",
       bean)
 
     bean.ARRAY_V = arrayOf("1", "2", "3", "")
-    doSerializerTest(
+    testSerializer(
       "<BeanWithArray>\n  <option name=\"ARRAY_V\">\n    <array>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n      <option value=\"\" />\n    </array>\n  </option>\n</BeanWithArray>",
       bean)
   }
@@ -172,13 +172,13 @@ internal class XmlSerializerCollectionTest {
   @Test fun ListSerialization() {
     val bean = BeanWithList()
 
-    doSerializerTest(
+    testSerializer(
       "<BeanWithList>\n  <option name=\"VALUES\">\n    <list>\n      <option value=\"a\" />\n      <option value=\"b\" />\n      <option value=\"c\" />\n    </list>\n  </option>\n</BeanWithList>",
       bean)
 
     bean.VALUES = ArrayList(Arrays.asList("1", "2", "3"))
 
-    doSerializerTest(
+    testSerializer(
       "<BeanWithList>\n  <option name=\"VALUES\">\n    <list>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n    </list>\n  </option>\n</BeanWithList>",
       bean)
   }
@@ -189,12 +189,12 @@ internal class XmlSerializerCollectionTest {
 
   @Test fun SetSerialization() {
     val bean = BeanWithSet()
-    doSerializerTest(
+    testSerializer(
       "<BeanWithSet>\n  <option name=\"VALUES\">\n    <set>\n      <option value=\"a\" />\n      <option value=\"b\" />\n      <option value=\"w\" />\n    </set>\n  </option>\n</BeanWithSet>",
       bean)
     bean.VALUES = LinkedHashSet(Arrays.asList("1", "2", "3"))
 
-    doSerializerTest(
+    testSerializer(
       "<BeanWithSet>\n  <option name=\"VALUES\">\n    <set>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n    </set>\n  </option>\n</BeanWithSet>",
       bean)
   }

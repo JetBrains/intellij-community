@@ -125,8 +125,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  fun property(defaultValue: Float = 0f): StoredPropertyBase<Float> {
-    val result = FloatStoredProperty(defaultValue)
+  fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
+    val result = FloatStoredProperty(defaultValue, valueNormalizer)
     properties.add(result)
     return result
   }
