@@ -59,12 +59,6 @@ public class ExtendableTextField extends JBTextField {
     setExtensions(asList(extensions));
   }
 
-  public void addExtension(@NotNull Extension extension) {
-    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
-    extensions.add(extension);
-    setExtensions(extensions);
-  }
-
   public void setExtensions(Collection<Extension> extensions) {
     setExtensions(new ArrayList<>(extensions));
   }
@@ -74,6 +68,17 @@ public class ExtendableTextField extends JBTextField {
     this.extensions = unmodifiableList(extensions);
     putClientProperty("JTextField.variant", VARIANT);
   }
+
+  public void addExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.add(extension)) setExtensions(extensions);
+  }
+
+  public void removeExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.remove(extension)) setExtensions(extensions);
+  }
+
 
   public interface Extension {
     Icon getIcon(boolean hovered);
