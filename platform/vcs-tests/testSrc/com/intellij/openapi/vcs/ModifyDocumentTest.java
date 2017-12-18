@@ -19,7 +19,6 @@ import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -37,13 +36,13 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     MarkupEditorFilterFactory.createIsNotDiffFilter();
   }
 
-  public void testSimpleInsert() throws Throwable {
+  public void testSimpleInsert() {
     createDocument("1234\n2345\n3456");
     insertString(2, "a");
     compareRanges();
   }
 
-  public void testUndo() throws Throwable {
+  public void testUndo() {
     createDocument("1234\n2345\n3456");
     insertString(7, "a");
     compareRanges();
@@ -51,7 +50,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testLineEndBeforeModification() throws Throwable {
+  public void testLineEndBeforeModification() {
     createDocument("1234\n2345\n3456");
     insertString(6, "a");
     compareRanges();
@@ -59,7 +58,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testLineEndBeforeModification2() throws Throwable {
+  public void testLineEndBeforeModification2() {
     createDocument("1234\n2345\n3456");
     insertString(6, "a");
     compareRanges();
@@ -67,7 +66,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertDoubleEnterAtEnd() throws Throwable {
+  public void testInsertDoubleEnterAtEnd() {
     createDocument("1");
     insertString(1, "\n");
     compareRanges();
@@ -75,7 +74,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testSimpleInsertAndWholeReplace() throws Throwable {
+  public void testSimpleInsertAndWholeReplace() {
     createDocument("1234\n2345\n3456");
     insertString(2, "a");
     compareRanges();
@@ -83,19 +82,19 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testSimpleInsert2() throws Throwable {
+  public void testSimpleInsert2() {
     createDocument("1\n2\n3\n4\n5");
     insertString(4, "a");
     compareRanges();
   }
 
-  public void testSimpleInsertToEmpty() throws Throwable {
+  public void testSimpleInsertToEmpty() {
     createDocument("");
     insertString(0, "a");
     compareRanges();
   }
 
-  public void testDoubleSimpleInsert() throws Throwable {
+  public void testDoubleSimpleInsert() {
     createDocument("1234\n2345\n3456");
     insertString(2, "a");
     compareRanges();
@@ -103,13 +102,13 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertEnter() throws Throwable {
+  public void testInsertEnter() {
     createDocument("1234\n2345\n3456");
     insertString(2, "\n");
     compareRanges();
   }
 
-  public void testSimpleInsertAndEnterToEmpty() throws Throwable {
+  public void testSimpleInsertAndEnterToEmpty() {
     createDocument("");
     insertString(0, "a");
     compareRanges();
@@ -117,13 +116,13 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertEnterAtEnter() throws Throwable {
+  public void testInsertEnterAtEnter() {
     createDocument("1234\n2345\n3456");
     insertString(4, "\n");
     compareRanges();
   }
 
-  public void testInsertEnterAtEnterAndSimpleInsert() throws Throwable {
+  public void testInsertEnterAtEnterAndSimpleInsert() {
     createDocument("1234\n2345\n3456");
     insertString(4, "\n");
     compareRanges();
@@ -131,7 +130,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertDoubleEnterAtEnters() throws Throwable {
+  public void testInsertDoubleEnterAtEnters() {
     createDocument("1234\n2345\n3456");
     insertString(4, "\n");
     compareRanges();
@@ -140,13 +139,13 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
 
   }
 
-  public void testInsertEnterAndSpaceAfterEnter() throws Throwable {
+  public void testInsertEnterAndSpaceAfterEnter() {
     createDocument("12345\n12345\n12345");
     insertString(5, "\n ");
     compareRanges();
   }
 
-  public void testInsertEnterAndDeleteEnter1() throws Throwable {
+  public void testInsertEnterAndDeleteEnter1() {
     createDocument("12345\n12345\n12345");
     insertString(5, "\n");
     compareRanges();
@@ -154,7 +153,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertEnterAndDeleteEnter2() throws Throwable {
+  public void testInsertEnterAndDeleteEnter2() {
     createDocument("12345\n12345\n12345");
     insertString(5, "\n");
     compareRanges();
@@ -162,39 +161,39 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testSimpleDelete() throws Throwable {
+  public void testSimpleDelete() {
     createDocument("1234\n2345\n3456");
     deleteString(2, 3);
     compareRanges();
   }
 
-  public void testDeleteLine() throws Throwable {
+  public void testDeleteLine() {
     createDocument("1234\n2345\n3456");
     deleteString(0, 5);
     compareRanges();
   }
 
-  public void testDoubleDelete() throws Throwable {
+  public void testDoubleDelete() {
     createDocument("1234\n2345\n3456");
     deleteString(2, 3);
     deleteString(2, 3);
     compareRanges();
   }
 
-  public void testDeleteEnter() throws Throwable {
+  public void testDeleteEnter() {
     createDocument("12345\n23456\n34567");
     deleteString(5, 6);
     compareRanges();
   }
 
-  public void testDeleteDoubleEnter() throws Throwable {
+  public void testDeleteDoubleEnter() {
     createDocument("12345\n\n23456\n34567");
     deleteString(5, 6);
     compareRanges();
   }
 
   //
-  public void testDoubleInsertToClass() throws Throwable {
+  public void testDoubleInsertToClass() {
     createDocument("class A{\n\n}");
     insertString(9, "a");
     compareRanges();
@@ -202,7 +201,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertSymbolAndEnterToClass() throws Throwable {
+  public void testInsertSymbolAndEnterToClass() {
     createDocument("class A{\n\n}");
     insertString(9, "a");
     compareRanges();
@@ -210,18 +209,18 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testMultiLineReplace2() throws Throwable {
+  public void testMultiLineReplace2() {
     createDocument("012a\n012b\n012c");
     replaceString(4, 9, "\nx\ny\nz");
     compareRanges();
   }
 
-  public void testChangedLines1() throws Throwable {
+  public void testChangedLines1() {
     createDocument("class A{\nx\na\nb\nc\n}", "class A{\n1\nx\n2\n}");
     compareRanges();
   }
 
-  public void testMultiLineReplace1() throws Throwable {
+  public void testMultiLineReplace1() {
     createDocument("012a\n012b\n012c\n012d\n012e");
     replaceString(5, 6, "a");
     compareRanges();
@@ -229,7 +228,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertAndModify() throws FilesTooBigForDiffException {
+  public void testInsertAndModify() {
     createDocument("a\nb\nc\nd");
     insertString(3, "\n");
     compareRanges();
@@ -239,7 +238,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testRangesShouldMerge() throws FilesTooBigForDiffException {
+  public void testRangesShouldMerge() {
     createDocument("1\n2\n3\n4");
     insertString(1, "1");
     compareRanges();
@@ -249,7 +248,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testShiftRangesAfterChange() throws FilesTooBigForDiffException {
+  public void testShiftRangesAfterChange() {
     createDocument("1\n2\n3\n4");
     insertString(7, "4");
     compareRanges();
@@ -261,7 +260,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testInsertBeforeChange() throws FilesTooBigForDiffException {
+  public void testInsertBeforeChange() {
     createDocument("   11\n   3 \n   44\n   55\n   6\n   7\n   88\n   ", "   1\n   2\n   3 \n   4\n   5\n   6\n   7\n   8\n   ");
     insertString(9, "3");
     compareRanges();
@@ -271,7 +270,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
   }
 
 
-  public void testUndoDeletion() throws FilesTooBigForDiffException {
+  public void testUndoDeletion() {
     createDocument("1\n2\n3\n4\n5\n6\n7\n");
     deleteString(4, 6);
     assertEquals("1\n2\n4\n5\n6\n7\n", myDocument.getText());
@@ -280,7 +279,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testUndoDeletion2() throws FilesTooBigForDiffException {
+  public void testUndoDeletion2() {
     createDocument("1\n2\n3\n4\n5\n6\n7\n");
     deleteString(3, 5);
     assertEquals("1\n2\n4\n5\n6\n7\n", myDocument.getText());
@@ -289,7 +288,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testSRC17123() throws FilesTooBigForDiffException {
+  public void testSRC17123() {
     createDocument("package package;\n" + "\n" + "public class Class3 {\n" + "    public int i1;\n" + "    public int i2;\n" +
                    "    public int i3;\n" + "    public int i4;\n" + "\n" + "    public static void main(String[] args) {\n" + "\n" +
                    "    }\n" + "}");
@@ -304,7 +303,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     deleteString(myDocument.getTextLength() - 1, myDocument.getTextLength());
   }
 
-  public void testUnexpetedDeletedRange() throws FilesTooBigForDiffException {
+  public void testUnexpetedDeletedRange() {
     createDocument("    public class\n    bbb\n");
     insertString(17, "    \n");
     assertEquals("    public class\n    \n    bbb\n", myDocument.getText());
@@ -332,7 +331,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testSrc29814() throws FilesTooBigForDiffException {
+  public void testSrc29814() {
     String text = "111\n" + "222\n" + "333\n";
 
     createDocument(text);
@@ -347,7 +346,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testDeletingTwoMethods() throws FilesTooBigForDiffException {
+  public void testDeletingTwoMethods() {
 
     String part1 = "class Foo {\n" + "  public void method1() {\n" + "    // something\n" + "  }\n" + "\n";
 
@@ -367,7 +366,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testBug1() throws Throwable {
+  public void testBug1() {
     createDocument("1\n2\n3\n4\n");
     deleteString(4, 6);
     compareRanges();
@@ -375,7 +374,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testBug2() throws Throwable {
+  public void testBug2() {
     createDocument("1\n2\n3\n4\n5\n6\n");
     deleteString(4, 6);
     compareRanges();
@@ -385,7 +384,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     compareRanges();
   }
 
-  public void testBug3() throws Throwable {
+  public void testBug3() {
     createDocument("\n\n00\n556\n");
 
     deleteString(3, 6);
@@ -395,7 +394,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     deleteString(1, 4);
   }
 
-  public void testBug4() throws Throwable {
+  public void testBug4() {
     createDocument("\n5\n30\n5240\n32\n46\n\n\n\n51530\n\n");
 
     insertString(3, "40\n1\n2");
@@ -405,7 +404,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     deleteString(2, 11);
   }
 
-  public void testBug5() throws Throwable {
+  public void testBug5() {
     createDocument("\n");
 
     replaceString(0, 0, "\n\n6406");
@@ -426,7 +425,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     insertString(1, "051");
   }
 
-  public void testTrimSpaces1() throws Throwable {
+  public void testTrimSpaces1() {
     createDocument("a \nb \nc ");
     insertString(0, "x");
     ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
@@ -439,7 +438,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     assertEquals("a \nb \nc ", myDocument.getText());
   }
 
-  public void testTrimSpaces2() throws Throwable {
+  public void testTrimSpaces2() {
     createDocument("a \nb \nc ");
     insertString(0, "x");
     ((DocumentImpl)myDocument).stripTrailingSpaces(null, true);
@@ -447,7 +446,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     assertEquals("xa\nb \nc ", myDocument.getText());
   }
 
-  public void testTrimSpaces3() throws Throwable {
+  public void testTrimSpaces3() {
     createDocument("a \nb \nc ");
     insertString(6, "x");
     insertString(0, "x");
@@ -461,35 +460,35 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     assertEquals("xa\nb \nc ", myDocument.getText());
   }
 
-  public void testInsertion1() throws Throwable {
+  public void testInsertion1() {
     createDocument("X\nX\nX\n");
     insertString(0, "X\n");
 
     assertEqualRanges(Arrays.asList(new Range(0, 1, 0, 0)), myTracker.getRanges());
   }
 
-  public void testInsertion2() throws Throwable {
+  public void testInsertion2() {
     createDocument("X\nX\nX\n");
     insertString(2, "X\n");
 
     assertEqualRanges(Arrays.asList(new Range(1, 2, 1, 1)), myTracker.getRanges());
   }
 
-  public void testInsertion3() throws Throwable {
+  public void testInsertion3() {
     createDocument("X\nX\nX\n");
     insertString(4, "X\n");
 
     assertEqualRanges(Arrays.asList(new Range(2, 3, 2, 2)), myTracker.getRanges());
   }
 
-  public void testInsertion4() throws Throwable {
+  public void testInsertion4() {
     createDocument("X\nX\nX\n");
     insertString(6, "X\n");
 
     assertEqualRanges(Arrays.asList(new Range(3, 4, 3, 3)), myTracker.getRanges());
   }
 
-  public void testInsertion5() throws Throwable {
+  public void testInsertion5() {
     createDocument("Z\nX\nX\n");
     replaceString(0, 1, "Y");
     insertString(2, "X\n");
@@ -497,7 +496,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     assertEqualRanges(Arrays.asList(new Range(0, 2, 0, 1)), myTracker.getRanges());
   }
 
-  public void testInsertion6() throws Throwable {
+  public void testInsertion6() {
     createDocument("X\nX\nX\n");
     replaceString(0, 1, "Y");
     insertString(4, "X\n");
@@ -505,7 +504,7 @@ public class ModifyDocumentTest extends BaseLineStatusTrackerTestCase {
     assertEqualRanges(Arrays.asList(new Range(0, 1, 0, 1), new Range(2, 3, 2, 2)), myTracker.getRanges());
   }
 
-  public void testInsertion7() throws Throwable {
+  public void testInsertion7() {
     createDocument("X\nX\nX\n");
     replaceString(0, 1, "Y");
     insertString(6, "X\n");

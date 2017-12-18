@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.vcs.ex.Range;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,19 +24,19 @@ import org.jetbrains.annotations.NotNull;
  */
 public class RollbackTest extends BaseLineStatusTrackerTestCase{
 
-  public void testUpToDateContent1() throws FilesTooBigForDiffException {
+  public void testUpToDateContent1() {
     createDocument("\n1\n2\n3\n4\n5\n6\n7");
     deleteString(0, 4);
     assertEquals("1\n2", getVcsContent(getFirstRange()).toString());
   }
 
-  public void testUpToDateContent2() throws FilesTooBigForDiffException {
+  public void testUpToDateContent2() {
     createDocument("\n1\n2\n3\n4\n5\n6\n7");
     deleteString(3, 5);
     assertEquals("2", getVcsContent(getFirstRange()).toString());
   }
 
-  public void testRollbackInserted1() throws FilesTooBigForDiffException {
+  public void testRollbackInserted1() {
     String initialContent = "1\n2\n3\n4";
     createDocument(initialContent);
     insertString(7, "\n5\n6");
@@ -51,57 +50,57 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     compareRanges();
   }
 
-  public void testRollbackInserted2() throws FilesTooBigForDiffException {
+  public void testRollbackInserted2() {
 
     doTestRollback("1\n2\n3\n4", () -> insertString(0, "\n0\n"), Range.INSERTED);
   }
 
-  public void testRollbackInserted3() throws FilesTooBigForDiffException {
+  public void testRollbackInserted3() {
     doTestRollback("1\n2\n3\n4\n5\n6", () -> insertString(5, "\n0\n"), Range.INSERTED);
   }
 
-  public void testRollbackInserted4() throws FilesTooBigForDiffException {
+  public void testRollbackInserted4() {
     doTestRollback("1\n2\n3\n4\n5", () -> insertString(myDocument.getTextLength(), "\n"), Range.INSERTED);
   }
 
-  public void testRollbackModified4() throws FilesTooBigForDiffException {
+  public void testRollbackModified4() {
     doTestRollback("1\n2\n3\n4", () -> insertString(0, "\n0\n0"), Range.MODIFIED);
 
   }
 
-  public void testRollbackModified1() throws FilesTooBigForDiffException {
+  public void testRollbackModified1() {
     doTestRollback("1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 3), Range.MODIFIED);
   }
 
-  public void testRollbackDeleted2() throws FilesTooBigForDiffException {
+  public void testRollbackDeleted2() {
     doTestRollback("1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 4), Range.DELETED);
   }
 
-  public void testRollbackDeleted3() throws FilesTooBigForDiffException {
+  public void testRollbackDeleted3() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 3), Range.DELETED);
   }
 
-  public void testRollbackDeleted4() throws FilesTooBigForDiffException {
+  public void testRollbackDeleted4() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(0, 4), Range.DELETED);
   }
 
-  public void testRollbackModified5() throws FilesTooBigForDiffException {
+  public void testRollbackModified5() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(2, 5), Range.MODIFIED);
   }
 
-  public void testRollbackDeleted6() throws FilesTooBigForDiffException {
+  public void testRollbackDeleted6() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(3, 5), Range.DELETED);
   }
 
-  public void testRollbackModified7() throws FilesTooBigForDiffException {
+  public void testRollbackModified7() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(3, 6), Range.MODIFIED);
   }
 
-  public void testRollbackDeleted8() throws FilesTooBigForDiffException {
+  public void testRollbackDeleted8() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(3, 7), Range.DELETED);
   }
 
-  public void testRollbackDeleted9() throws FilesTooBigForDiffException {
+  public void testRollbackDeleted9() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(5, 13), Range.DELETED);
   }
 
@@ -111,11 +110,11 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     createDocument(text2, text1);
     rollback(myTracker.getRanges().get(0));
 
-    assertEquals(myDocument.getText(), text1);
+    assertEquals(text1, myDocument.getText());
     assertEmpty(myTracker.getRanges());
   }
 
-  public void testSRC27943() throws FilesTooBigForDiffException {
+  public void testSRC27943() {
     String initialContent = "<%@ taglib uri=\"/WEB-INF/sigpath.tld\" prefix=\"sigpath\" %>\n" +
                        "<%@ taglib uri=\"/WEB-INF/struts-html.tld\" prefix=\"html\" %>\n" +
                        "<%@ taglib uri=\"/WEB-INF/struts-bean.tld\" prefix=\"bean\" %>\n" +
@@ -136,11 +135,11 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     compareRanges();
   }
 
-  public void testRollbackModified10() throws FilesTooBigForDiffException {
+  public void testRollbackModified10() {
     doTestRollback("\n1\n2\n3\n4\n5\n6\n7", () -> deleteString(6, 13), Range.MODIFIED);
   }
 
-  public void testEmptyDocumentBug() throws Throwable {
+  public void testEmptyDocumentBug() {
     createDocument("");
 
     insertString(0, "adsf");
@@ -148,7 +147,7 @@ public class RollbackTest extends BaseLineStatusTrackerTestCase{
     compareRanges();
   }
 
-  private void doTestRollback(String initialContent, Runnable modifyAction, byte expectedRangeType) throws FilesTooBigForDiffException {
+  private void doTestRollback(String initialContent, Runnable modifyAction, byte expectedRangeType) {
     createDocument(initialContent);
     modifyAction.run();
     compareRanges();

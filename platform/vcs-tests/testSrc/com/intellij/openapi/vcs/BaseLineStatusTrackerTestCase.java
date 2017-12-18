@@ -35,7 +35,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
@@ -87,7 +86,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     runCommand(() -> myTracker.rollbackChanges(lines));
   }
 
-  protected void compareRanges() throws FilesTooBigForDiffException {
+  protected void compareRanges() {
     List<? extends Range> expected = RangesBuilder.createRanges(myDocument, myUpToDateDocument);
     List<? extends Range> actual = myTracker.getRanges();
     assertEqualRanges(expected, actual);
@@ -102,7 +101,7 @@ public abstract class BaseLineStatusTrackerTestCase extends LightPlatformTestCas
     });
   }
 
-  protected void createDocument(@NotNull String text) throws FilesTooBigForDiffException {
+  protected void createDocument(@NotNull String text) {
     createDocument(text, text);
     compareRanges();
     assertEquals(0, DocumentMarkupModel.forDocument(myDocument, getProject(), true).getAllHighlighters().length);
