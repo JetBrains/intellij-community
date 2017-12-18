@@ -123,9 +123,11 @@ public class TestTextFieldAction extends DumbAwareAction {
             }
           },
           new Extension() {
+            private final Icon icon = new AnimatedIcon.Grey();
+
             @Override
             public Icon getIcon(boolean hovered) {
-              return AllIcons.Actions.ForceRefresh;
+              return icon;
             }
 
             @Override
