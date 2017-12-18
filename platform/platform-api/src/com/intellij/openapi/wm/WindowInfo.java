@@ -13,36 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.wm
 
-package com.intellij.openapi.wm;
+import java.awt.Rectangle
 
-import org.jetbrains.annotations.NotNull;
+interface WindowInfo {
+  val anchor: ToolWindowAnchor
 
-import java.awt.*;
+  val floatingBounds: Rectangle?
 
-public interface WindowInfo {
-  @NotNull
-  ToolWindowAnchor getAnchor();
+  val isSplit: Boolean
 
-  Rectangle getFloatingBounds();
+  val type: ToolWindowType
 
-  boolean isSplit();
+  val isActive: Boolean
 
-  ToolWindowType getType();
+  val isAutoHide: Boolean
 
-  boolean isActive();
+  val isDocked: Boolean
 
-  boolean isAutoHide();
+  val isFloating: Boolean
 
-  boolean isDocked();
+  val isWindowed: Boolean
 
-  boolean isFloating();
+  val isSliding: Boolean
 
-  boolean isWindowed();
+  val isShowStripeButton: Boolean
 
-  boolean isSliding();
-
-  boolean isShowStripeButton();
-
-  ToolWindowContentUiType getContentUiType();
+  val contentUiType: ToolWindowContentUiType
 }
