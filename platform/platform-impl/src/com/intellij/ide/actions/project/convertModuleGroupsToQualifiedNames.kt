@@ -61,7 +61,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
-    importMapping(emptyMap())
+    importRenamingScheme(emptyMap())
     init()
   }
 
@@ -100,17 +100,17 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     return listOf(name, group)
   }
 
-  fun importMapping(mapping: Map<String, String>) {
+  fun importRenamingScheme(renamingScheme: Map<String, String>) {
     val moduleManager = ModuleManager.getInstance(project)
     fun getDefaultName(module: Module) = (moduleManager.getModuleGroupPath(module)?.let { it.joinToString(".") + "." } ?: "") + module.name
-    val names = moduleManager.modules.associateBy({ it }, { mapping.getOrElse(it.name, {getDefaultName(it)}) })
+    val names = moduleManager.modules.associateBy({ it }, { renamingScheme.getOrElse(it.name, {getDefaultName(it)}) })
     modules = moduleManager.modules.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, {names[it]!!}))
     runWriteAction {
       document.setText(modules.joinToString("\n") { names[it]!! })
     }
   }
 
-  fun getMapping(): Map<String, String> {
+  fun getRenamingScheme(): Map<String, String> {
     val lines = document.charsSequence.split('\n')
 
     return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, {
@@ -120,16 +120,16 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
 
   override fun doOKAction() {
     ModuleNamesListInspection.checkModuleNames(document.charsSequence.lines(), project) { line, message ->
-      Messages.showErrorDialog(project, ProjectBundle.message("convert.module.groups.error.text", line+1, StringUtil.decapitalize(message)),
+      Messages.showErrorDialog(project, ProjectBundle.message("convert.module.groups.error.at.text", line + 1, StringUtil.decapitalize(message)),
                                CommonBundle.getErrorTitle())
       return
     }
 
-    val mapping = getMapping()
-    if (mapping.isNotEmpty()) {
+    val renamingScheme = getRenamingScheme()
+    if (renamingScheme.isNotEmpty()) {
       val model = ModuleManager.getInstance(project).modifiableModel
       val byName = modules.associateBy { it.name }
-      for (entry in mapping) {
+      for (entry in renamingScheme) {
         model.renameModule(byName[entry.key]!!, entry.value)
       }
       modules.forEach {
@@ -144,8 +144,8 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   }
 
   override fun createActions(): Array<Action> {
-    return arrayOf(okAction, SaveModuleNameMappingAction(this),
-                   LoadModuleNameMappingAction(this), cancelAction)
+    return arrayOf(okAction, SaveModuleRenamingSchemeAction(this),
+                   LoadModuleRenamingSchemeAction(this), cancelAction)
   }
 }
 
