@@ -338,7 +338,7 @@ public abstract class InspectionRVContentProvider {
                 if (nodes.isEmpty()) continue;
                 parentNode.removeAllChildren();
                 for (ProblemDescriptionNode node : nodes) {
-                  parentNode.add(node);
+                  parentNode.insertByOrder(node, false);
                 }
               }
             }
