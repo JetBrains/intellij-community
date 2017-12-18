@@ -19,8 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SearchTextField;
+import com.intellij.ui.*;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.HorizontalLayout;
@@ -135,9 +134,16 @@ public class TestTextFieldAction extends DumbAwareAction {
             }
           },
           new Extension() {
+            private final TextIcon icon = new TextIcon("empty", null, null, 1);
+
             @Override
             public Icon getIcon(boolean hovered) {
-              if (null == getActionOnClick()) return null;
+              if (null == getActionOnClick()) {
+                icon.setFont(RelativeFont.SMALL.derive(getFont()));
+                icon.setBackground(getForeground());
+                icon.setForeground(getBackground());
+                return icon;
+              }
               return hovered ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight;
             }
 
