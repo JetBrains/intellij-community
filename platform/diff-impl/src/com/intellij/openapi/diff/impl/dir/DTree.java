@@ -104,6 +104,7 @@ public class DTree {
 
   public void setSource(DiffElement<?> source) {
     mySource = source;
+    dropPathCaches();
   }
 
   public DiffElement<?> getTarget() {
@@ -112,6 +113,7 @@ public class DTree {
 
   public void setTarget(DiffElement<?> target) {
     myTarget = target;
+    dropPathCaches();
   }
 
   private void init() {
@@ -318,5 +320,16 @@ public class DTree {
       mySeparator = mySource != null ? mySource.getSeparator() : myTarget != null ? myTarget.getSeparator() : "";
     }
     return mySeparator;
+  }
+
+  private void dropPathCaches() {
+    mySeparator = null;
+    myPath = null;
+
+    if (myChildren != null) {
+      for (DTree tree : myChildren.values()) {
+        tree.dropPathCaches();
+      }
+    }
   }
 }
