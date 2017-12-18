@@ -8,9 +8,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.ElementClassHint;
-import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,16 +16,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.GrOperatorExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Objects;
-
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessDynamicProperties;
-import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.getBinding;
 
 /**
  * @author ilyas
@@ -84,53 +74,6 @@ public class GrAssignmentExpressionImpl extends GrOperatorExpressionImpl impleme
   @Override
   public PsiReference getReference() {
     return isOperatorAssignment() ? this : null;
-  }
-
-  @Override
-  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                     @NotNull ResolveState state,
-                                     @Nullable PsiElement lastParent,
-                                     @NotNull PsiElement place) {
-    if (!shouldProcessBindings(this, processor, lastParent, place)) return true;
-    return processLValue(processor, state, place, (GroovyFileImpl)getParent(), getLValue());
-  }
-
-  static boolean shouldProcessBindings(@NotNull PsiElement owner,
-                                       @NotNull PsiScopeProcessor processor,
-                                       @Nullable PsiElement lastParent,
-                                       @NotNull PsiElement place) {
-    final ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    if (!ResolveUtil.shouldProcessProperties(classHint)) return false;
-    if (!shouldProcessDynamicProperties(processor)) return false;
-
-    PsiElement parent = owner.getParent();
-    if (!(parent instanceof GroovyFileImpl)) return false;
-
-    final GroovyFileImpl file = (GroovyFileImpl)parent;
-    if (!file.isInScriptBody(lastParent, place)) return false;
-
-    return true;
-  }
-
-
-  static boolean processLValue(@NotNull PsiScopeProcessor processor,
-                               @NotNull ResolveState state,
-                               @NotNull PsiElement place,
-                               @NotNull GroovyFileImpl file,
-                               @NotNull GrExpression lValue) {
-    if (!(lValue instanceof GrReferenceExpression)) return true;
-
-    final GrReferenceExpression lReference = (GrReferenceExpression)lValue;
-    if (lReference.isQualified()) return true;
-
-    final String name = lReference.getReferenceName();
-    if (name == null) return true;
-
-    String hintName = ResolveUtil.getNameHint(processor);
-    if (hintName != null && !name.equals(hintName)) return true;
-
-    if (lReference != place && lReference.resolve() != null && !(lReference.resolve() instanceof GrBindingVariable)) return true;
-    return processor.execute(getBinding(file, name), state);
   }
 
   @Nullable

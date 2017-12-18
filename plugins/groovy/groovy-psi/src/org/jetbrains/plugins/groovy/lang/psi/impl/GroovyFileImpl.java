@@ -25,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -43,7 +41,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPackages;
+import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.processBindings;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -114,9 +114,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
         // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
         if (!processLocals(this, processor, state, lastParent, place)) return false;
       }
-      if (ResolveUtil.shouldProcessProperties(classHint)) {
-        if (!processBindings(processor, state, lastParent, place)) return false;
-      }
+      if (!processBindings(this, processor, state, lastParent, place)) return false;
     }
 
     if (myContext != null) {
@@ -160,25 +158,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return true;
   }
 
-  public boolean isInScriptBody(PsiElement lastParent, PsiElement place) {
-    return isScript() &&
-           !(lastParent instanceof GrTypeDefinition) &&
-           PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
-  }
-
   @Override
   public boolean isTopControlFlowOwner() {
     return true;
-  }
-
-  private boolean processBindings(@NotNull PsiScopeProcessor processor,
-                                  @NotNull ResolveState state,
-                                  @Nullable PsiElement lastParent,
-                                  @NotNull PsiElement place) {
-    return processStatements(this, lastParent, statement -> {
-      if (!(statement instanceof GrAssignmentExpression) && !(statement instanceof GrTupleAssignmentExpression)) return true;
-      return statement.processDeclarations(processor, state, null, place);
-    });
   }
 
   @Override
