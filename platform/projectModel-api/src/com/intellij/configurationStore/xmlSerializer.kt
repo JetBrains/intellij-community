@@ -21,33 +21,37 @@ import kotlin.concurrent.write
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
-private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
+private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SerializationFilter>>()
 
-private fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
+private fun getDefaultSerializationFilter(): SerializationFilter {
   var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
   if (result == null) {
-    result = SkipDefaultsSerializationFilter()
+    result = object : SkipDefaultsSerializationFilter() {
+      override fun accepts(accessor: Accessor, bean: Any): Boolean {
+        return if (bean is BaseState) {
+          bean.accepts(accessor, bean)
+        }
+        else {
+          super.accepts(accessor, bean)
+        }
+      }
+    }
     skipDefaultsSerializationFilter.set(SoftReference(result))
   }
   return result
 }
 
 @JvmOverloads
-fun <T : Any> T.serialize(filter: SerializationFilter? = null, createElementIfEmpty: Boolean = false): Element? {
+fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
   try {
     val clazz = javaClass
     val binding = serializer.getClassBinding(clazz)
     return if (binding is BeanBinding) {
       // top level expects not null (null indicates error, empty element will be omitted)
-      val effectiveFilter = when {
-        filter != null -> filter
-        this !is BaseState -> getDefaultSerializationFilter()
-        else -> null /* BaseState implements SerializationFilter filter */
-      }
-      binding.serialize(this, createElementIfEmpty, effectiveFilter)
+      binding.serialize(this, createElementIfEmpty, filter)
     }
     else {
-      binding.serialize(this, null, filter ?: getDefaultSerializationFilter()) as Element
+      binding.serialize(this, null, filter) as Element
     }
   }
   catch (e: XmlSerializationException) {

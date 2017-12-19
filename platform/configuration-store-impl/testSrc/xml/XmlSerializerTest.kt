@@ -605,9 +605,7 @@ internal fun assertSerializer(bean: Any, expected: String, filter: Serialization
   return element
 }
 
-// no filter by default
-// ? = SerializationFilter { _, _ -> true }
-internal fun <T: Any> testSerializer(@Language("XML") expectedText: String, bean: T, filter: SerializationFilter? = SerializationFilter { _, _ -> true }): T {
+internal fun <T: Any> testSerializer(@Language("XML") expectedText: String, bean: T, filter: SerializationFilter? = null): T {
   val expectedTrimmed = expectedText.trimIndent()
   val element = assertSerializer(bean, expectedTrimmed, filter)
 
