@@ -185,12 +185,11 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     }
 
     return { edge ->
-      var position: Int? = toPosition[edge]
-      if (position == null) {
+      toPosition[edge] ?: run {
         val nodeIndex = if (up) edge.upNodeIndex else edge.downNodeIndex
-        if (nodeIndex != null) position = toPosition[linearGraph.getGraphNode(nodeIndex)]
+        if (nodeIndex != null) toPosition[linearGraph.getGraphNode(nodeIndex)]
+        else null
       }
-      position
     }
   }
 
