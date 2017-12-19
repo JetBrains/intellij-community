@@ -1264,6 +1264,7 @@ public class AllIcons {
     public static final Icon Documentation = IconLoader.getIcon("/toolwindows/documentation.png"); // 13x13
     public static final Icon Problems = IconLoader.getIcon("/toolwindows/problems.png"); // 13x13
     public static final Icon ToolWindowAnt = IconLoader.getIcon("/toolwindows/toolWindowAnt.png"); // 13x13
+    public static final Icon ToolWindowBuild = IconLoader.getIcon("/toolwindows/toolWindowBuild.png"); // 13x13
     public static final Icon ToolWindowChanges = IconLoader.getIcon("/toolwindows/toolWindowChanges.png"); // 13x13
     public static final Icon ToolWindowCommander = IconLoader.getIcon("/toolwindows/toolWindowCommander.png"); // 13x13
     public static final Icon ToolWindowCoverage = IconLoader.getIcon("/toolwindows/toolWindowCoverage.png"); // 13x13
