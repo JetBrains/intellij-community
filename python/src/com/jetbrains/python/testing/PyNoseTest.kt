@@ -24,6 +24,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.run.ConfigField
 
 /**
  * Nose runner

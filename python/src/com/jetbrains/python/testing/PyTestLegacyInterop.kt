@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.run.ConfigField
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType
 import com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer

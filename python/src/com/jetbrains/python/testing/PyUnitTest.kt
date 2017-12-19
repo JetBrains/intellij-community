@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.run.ConfigField
 
 /**
  * unittest
