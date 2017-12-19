@@ -20,10 +20,9 @@ import org.jdom.Element
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-// public only to test
-fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
+internal fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path) {
   LOG.runAndLogException {
-    moveComponentConfiguration(defaultProject, element, projectConfigDir)
+    moveComponentConfiguration(defaultProject, element) { projectConfigDir.resolve(it)}
   }
 
   LOG.runAndLogException {
@@ -87,7 +86,7 @@ private fun convertProfiles(profileIterator: MutableIterator<Element>, component
   }
 }
 
-private fun moveComponentConfiguration(defaultProject: Project, element: Element, projectConfigDir: Path) {
+internal fun moveComponentConfiguration(defaultProject: Project, element: Element, fileResolver: (name: String) -> Path) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
     return
@@ -135,7 +134,7 @@ private fun moveComponentConfiguration(defaultProject: Project, element: Element
   }
 
   for ((names, list) in elements) {
-    writeConfigFile(list, projectConfigDir.resolve(if (names === workspaceComponentNames) "workspace.xml" else "compiler.xml"))
+    writeConfigFile(list, fileResolver(if (names === workspaceComponentNames) "workspace.xml" else "compiler.xml"))
   }
 }
 

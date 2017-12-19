@@ -103,6 +103,11 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       if (isDirectoryBased) {
         normalizeDefaultProjectElement(defaultProject, element, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)))
       }
+      else {
+        LOG.runAndLogException {
+          moveComponentConfiguration(defaultProject, element) { if (it == "workspace.xml") Paths.get(workspaceFilePath) else Paths.get(projectFilePath) }
+        }
+      }
     }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
   }
