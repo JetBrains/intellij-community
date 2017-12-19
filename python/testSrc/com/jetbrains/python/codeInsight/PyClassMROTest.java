@@ -125,6 +125,11 @@ public class PyClassMROTest extends PyTestCase {
     assertMRO(getClass("MyClass"), "Base", "object");
   }
 
+  // PY-27656
+  public void testDirectlyInstantiatedMetaclassAncestor() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> assertMRO(getClass("MyClass"), "Meta", "object"));
+  }
+
   // PY-20026
   public void testUnresolvedMetaClassAncestors() {
     runWithLanguageLevel(LanguageLevel.PYTHON30, () -> assertMRO(getClass("CompositeFieldMeta"), "type", "object"));

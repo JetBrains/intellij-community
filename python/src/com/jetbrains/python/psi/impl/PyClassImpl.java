@@ -427,7 +427,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       final List<List<PyClassLikeType>> lines = new ArrayList<>();
       for (PyClassLikeType base : bases) {
         if (base != null) {
-          final List<PyClassLikeType> baseClassMRO = mroLinearize(base, true, context, cache);
+          // Don't include ancestors of a metaclass instance
+          final List<PyClassLikeType> baseClassMRO;
+          if (base.isDefinition()) {
+            baseClassMRO = mroLinearize(base, true, context, cache);
+          }
+          else {
+            List<PyClassLikeType> metaclassInstanceMro = new ArrayList<>();
+            metaclassInstanceMro.add(base);
+            if (base instanceof PyClassType) {
+              final PyClassImpl pyClass = as(((PyClassType)base).getPyClass(), PyClassImpl.class);
+              if (pyClass != null) {
+                ContainerUtil.addIfNotNull(metaclassInstanceMro, pyClass.getImplicitSuper(context));
+              }
+            }
+            baseClassMRO = metaclassInstanceMro;
+          }
           if (!baseClassMRO.isEmpty()) {
             // mroMerge() updates passed MRO lists internally
             lines.add(new LinkedList<>(baseClassMRO));
