@@ -428,7 +428,14 @@ public class RemoteDebugger implements ProcessDebugger {
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
-    execute(command);  // set temp. breakpoint
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
@@ -440,7 +447,7 @@ public class RemoteDebugger implements ProcessDebugger {
       execute(command);  // remove temp. breakpoint
     }
     else {
-      LOG.error("Temp breakpoint not found for " + file + ":" + line);
+      LOG.warn("Temp breakpoint not found for " + file + ":" + line);
     }
   }
 
