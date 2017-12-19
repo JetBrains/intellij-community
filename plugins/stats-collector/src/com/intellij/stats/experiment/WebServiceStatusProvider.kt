@@ -101,6 +101,4 @@ class WebServiceStatusProvider(
 
 }
 
-data class ExperimentInfo(var experimentVersion: Int, var salt: String, var performExperiment: Boolean) {
-    constructor() : this(0, "", false)
-}
+data class ExperimentInfo(var experimentVersion: Int, var salt: String, var performExperiment: Boolean)

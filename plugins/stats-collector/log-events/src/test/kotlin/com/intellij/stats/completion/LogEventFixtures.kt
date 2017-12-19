@@ -18,6 +18,7 @@ package com.intellij.stats.completion
 
 import com.intellij.stats.completion.events.*
 
+@Suppress("unused")
 object LogEventFixtures {
     
     val sessionId = "session-id-xxx"
