@@ -371,11 +371,22 @@ public class AppUIUtil {
   public static Collection<Consent> confirmConsentOptions(@NotNull Collection<Consent> consents) {
     final Collection<Pair<JCheckBox, Consent>> consentMapping = new ArrayList<>();
     final DialogWrapper dialog = new DialogWrapper(true) {
+      @Nullable
+      @Override
+      protected Border createContentPaneBorder() {
+        return null;
+      }
+
       @Override
       protected JComponent createCenterPanel() {
-        final JPanel mainPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
 
         final JPanel body = new JPanel(new GridBagLayout());
+
+        //noinspection UseDPIAwareInsets
+        body.add(new JLabel("Please review your options regarding the sharing your data with JetBrains:"),
+                 new GridBagConstraints(
+                   0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.BOTH,
+                   new Insets(JBUI.scale(10), getLeftTextMargin(new JCheckBox()), JBUI.scale(10), 0), 0, 0));
         for (Iterator<Consent> it = consents.iterator(); it.hasNext(); ) {
           final Consent consent = it.next();
           final JComponent comp = createConsentElement(consent);
@@ -387,10 +398,8 @@ public class AppUIUtil {
             0, GridBagConstraints.RELATIVE, 1, 1, 1.0, lastConsent ? 1.0 : 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH, JBUI.insets(10, 0, 0, 0), 0, 0)
           );
         }
-
-        mainPanel.add(new JLabel("Please review your options regarding the sharing your data with JetBrains"), BorderLayout.NORTH);
-        mainPanel.add(new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
-        return mainPanel;
+        body.setBorder(JBUI.Borders.empty(10));
+        return new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
       }
 
       @NotNull
@@ -419,30 +428,13 @@ public class AppUIUtil {
         styleSheet.addRule("li {margin-bottom:" + JBUI.scaleFontSize(6) + "pt;}");
         styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
         viewer.setCaretPosition(0);
-        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
 
         final JCheckBox cb = new JBCheckBox(consent.getName(), consent.isAccepted());
         cb.setBackground(viewer.getBackground());
         cb.setFont(cb.getFont().deriveFont(Font.BOLD));
-        int leftInset = 0;
-        Insets margin = cb.getMargin();
-        if (margin != null) leftInset += margin.left;
-        Border border = cb.getBorder();
-        if (border != null) leftInset += border.getBorderInsets(cb).left;
-        ButtonUI ui = cb.getUI();
-        Icon icon = null;
-        if (ui instanceof BasicRadioButtonUI) {
-          icon = ((BasicRadioButtonUI)ui).getDefaultIcon();
-        } else if (ui instanceof SynthCheckBoxUI){
-          SynthCheckBoxUI sui = (SynthCheckBoxUI)ui;
-          SynthContext context = sui.getContext(cb);
-          icon = context.getStyle().getIcon(context, "CheckBox.icon");
-        }
-        if (icon != null) {
-          leftInset += icon.getIconWidth() + cb.getIconTextGap();
-          //noinspection UseDPIAwareBorders
-        }
-        viewer.setBorder(new EmptyBorder(JBUI.scale(5), leftInset, JBUI.scale(15), JBUI.scale(5)));
+        int leftInset = getLeftTextMargin(cb);
+        //noinspection UseDPIAwareBorders
+        viewer.setBorder(new EmptyBorder(JBUI.scale(5), leftInset, JBUI.scale(15), 0));
 
         final JPanel pane = new JPanel(new BorderLayout());
         pane.setBackground(viewer.getBackground());
@@ -450,11 +442,6 @@ public class AppUIUtil {
         pane.add(viewer, BorderLayout.CENTER);
         consentMapping.add(Pair.create(cb, consent));
         return pane;
-      }
-
-      @NotNull
-      protected Action[] createActions() {
-        return new Action[] {getOKAction()};
       }
 
       @Override
@@ -505,5 +492,30 @@ public class AppUIUtil {
     if (comp.isShowing()) return;
     GraphicsConfiguration gc = target != null ? target.getGraphicsConfiguration() : null;
     AWTAccessor.getComponentAccessor().setGraphicsConfiguration(comp, gc);
+  }
+
+  /**
+   * Returns distance (px) from the left edge to actual text position for specified checkbox.
+   * It may be used as left margin when you need to align text in a label located above or below the checkbox
+   */
+  public static int getLeftTextMargin(@NotNull JCheckBox checkBox) {
+    int leftMargin = 0;
+    Insets margin = checkBox.getMargin();
+    if (margin != null) leftMargin += margin.left;
+    Border border = checkBox.getBorder();
+    if (border != null) leftMargin += border.getBorderInsets(checkBox).left;
+    ButtonUI ui = checkBox.getUI();
+    Icon icon = null;
+    if (ui instanceof BasicRadioButtonUI) {
+      icon = ((BasicRadioButtonUI)ui).getDefaultIcon();
+    } else if (ui instanceof SynthCheckBoxUI){
+      SynthCheckBoxUI sui = (SynthCheckBoxUI)ui;
+      SynthContext context = sui.getContext(checkBox);
+      icon = context.getStyle().getIcon(context, "CheckBox.icon");
+    }
+    if (icon != null) {
+      leftMargin += icon.getIconWidth() + checkBox.getIconTextGap();
+    }
+    return leftMargin;
   }
 }
