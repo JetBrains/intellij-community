@@ -261,24 +261,4 @@ public class Splash extends JDialog implements StartupProgress {
       return myIcon.getIconHeight();
     }
   }
-
-  //public static void main(String[] args) {
-  //  final ImageIcon icon = new ImageIcon("c:\\IDEA\\ultimate\\ultimate-resources\\src\\progress_tail.png");
-  //
-  //  final int w = icon.getIconWidth();
-  //  final int h = icon.getIconHeight();
-  //  final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-  //    .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Color.TRANSLUCENT);
-  //  final Graphics2D g = image.createGraphics();
-  //  icon.paintIcon(null, g, 0, 0);
-  //  g.dispose();
-  //
-  //  for (int y = 0; y < image.getHeight(); y++) {
-  //    for (int x = 0; x < image.getWidth(); x++) {
-  //      final Color c = new Color(image.getRGB(x, y), true);
-  //      System.out.print(String.format("[%3d,%3d,%3d,%3d]  ", c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
-  //    }
-  //    System.out.println("");
-  //  }
-  //}
 }
