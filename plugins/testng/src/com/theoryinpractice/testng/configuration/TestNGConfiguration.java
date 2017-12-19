@@ -104,7 +104,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return null;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final TestData data = getPersistantData();
     if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
       return new TestNGTestDiscoveryRunnableState(env, this);
@@ -338,7 +338,6 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
 
     Element propertiesElement = element.getChild("properties");
-
     if (propertiesElement == null) {
       propertiesElement = new Element("properties");
       element.addContent(propertiesElement);
