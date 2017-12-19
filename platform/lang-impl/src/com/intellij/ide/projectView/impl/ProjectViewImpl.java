@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.ide.projectView.impl;
 
@@ -1362,18 +1364,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
 
-  private static void readOption(Element node, @NotNull Map<String, Boolean> options) {
-    if (node == null) return;
+  private static void readOption(@Nullable Element node, @NotNull Map<String, Boolean> options) {
+    if (node == null) {
+      return;
+    }
     for (Attribute attribute : node.getAttributes()) {
       options.put(attribute.getName(), Boolean.TRUE.toString().equals(attribute.getValue()) ? Boolean.TRUE : Boolean.FALSE);
     }
   }
 
   private static void writeOption(@NotNull Element parentNode, @NotNull Map<String, Boolean> optionsForPanes, @NotNull String optionName) {
+    if (optionsForPanes.isEmpty()) {
+      return;
+    }
+
     Element e = new Element(optionName);
     for (Map.Entry<String, Boolean> entry : optionsForPanes.entrySet()) {
       final String key = entry.getKey();
-      if (key != null) { //SCR48267
+      //SCR48267
+      if (key != null) {
         e.setAttribute(key, Boolean.toString(entry.getValue().booleanValue()));
       }
     }
@@ -1382,7 +1391,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public void loadState(Element parentNode) {
+  public void loadState(@NotNull Element parentNode) {
     Element navigatorElement = parentNode.getChild(ELEMENT_NAVIGATOR);
     if (navigatorElement != null) {
       mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
@@ -1718,7 +1727,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       if (isHideEmptyMiddlePackages(myCurrentViewId)) {
@@ -1977,7 +1986,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
@@ -2007,7 +2016,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
@@ -2031,7 +2040,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
