@@ -17,16 +17,14 @@ package com.jetbrains.python.run;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,6 +37,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
+import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extenstions.ContextAnchor;
 import com.jetbrains.extenstions.ModuleBasedContextAnchor;
 import com.jetbrains.extenstions.ProjectSdkContextAnchor;
@@ -84,26 +83,19 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
 
     myProject = configuration.getProject();
 
-    FileChooserDescriptor chooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
+    final FileChooserDescriptor chooserDescriptor =
+      FileChooserDescriptorExtKt.withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
+
+    final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
+
       @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return file.isDirectory() || file.getExtension() == null || Comparing.equal(file.getExtension(), "py");
+      protected void onFileChosen(@NotNull final VirtualFile chosenFile) {
+        super.onFileChosen(chosenFile);
+        myCommonOptionsForm.setWorkingDirectory(chosenFile.getParent().getPath());
       }
     };
-    //chooserDescriptor.setRoot(s.getProject().getBaseDir());
 
-    ComponentWithBrowseButton.BrowseFolderActionListener<JTextField> listener =
-      new ComponentWithBrowseButton.BrowseFolderActionListener<JTextField>("Select Script", "", myScriptTextField, myProject,
-                                                                           chooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
-
-        @Override
-        protected void onFileChosen(@NotNull VirtualFile chosenFile) {
-          super.onFileChosen(chosenFile);
-          myCommonOptionsForm.setWorkingDirectory(chosenFile.getParent().getPath());
-        }
-      };
-
-    myScriptTextField.addActionListener(listener);
+    myScriptTextField.addBrowseFolderListener(listener);
 
     if (SystemInfo.isWindows) {
       //TODO: enable it on Windows when it works there
