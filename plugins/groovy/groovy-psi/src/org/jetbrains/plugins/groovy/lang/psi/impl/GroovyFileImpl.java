@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -15,7 +17,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -24,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -33,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
@@ -43,9 +41,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 
-import java.util.concurrent.ConcurrentMap;
-
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPackages;
+import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.processBindings;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -57,11 +55,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
-
-  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = () -> {
-    final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
-    return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-  };
 
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
@@ -116,8 +109,12 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
                                      @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    if (ResolveUtil.shouldProcessProperties(classHint) || shouldProcessLocals(processor)) {
-      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
+    if (getStub() == null) {
+      if (!(lastParent instanceof GrMember)) {
+        // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
+        if (!processLocals(this, processor, state, lastParent, place)) return false;
+      }
+      if (!processBindings(this, processor, state, lastParent, place)) return false;
     }
 
     if (myContext != null) {
@@ -161,41 +158,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return true;
   }
 
-  public boolean isInScriptBody(PsiElement lastParent, PsiElement place) {
-    return isScript() &&
-           !(lastParent instanceof GrTypeDefinition) &&
-           PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
-  }
-
-  @NotNull
-  public ConcurrentMap<String, GrBindingVariable> getBindings() {
-    return CachedValuesManager.getCachedValue(this, BINDING_PROVIDER);
-  }
-
   @Override
   public boolean isTopControlFlowOwner() {
     return true;
-  }
-
-  private boolean processChildrenScopes(@NotNull PsiScopeProcessor processor,
-                                        @NotNull ResolveState state,
-                                        @Nullable PsiElement lastParent,
-                                        @NotNull PsiElement place) {
-    final StubElement<?> stub = getStub();
-    if (stub != null) {
-      return true; // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
-    }
-
-    return processStatements(
-      this, lastParent,
-      statement -> !shouldProcess(lastParent, statement) ||
-                   statement.processDeclarations(processor, state, null, place)
-    );
-  }
-
-  private static boolean shouldProcess(@Nullable PsiElement lastParent, @NotNull PsiElement run) {
-    return run instanceof GrAssignmentExpression || run instanceof GrTupleAssignmentExpression || // binding variables
-           run instanceof GrVariableDeclaration && !(lastParent instanceof GrMember);             // local variables
   }
 
   @Override

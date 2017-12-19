@@ -1326,12 +1326,10 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void testing() throws Exception {
         waitForPause();
         List<PyDebugValue> frameVariables = loadFrame();
-        assertTrue(findDebugValueByName(frameVariables, "f").isLoadValueAsync());
         String result = computeValueAsync(frameVariables, "f");
         assertEquals("foo", result);
 
         List<PyDebugValue> listChildren = loadChildren(frameVariables, "l");
-        assertTrue(findDebugValueByName(frameVariables, "l").isLoadValueAsync());
         result = computeValueAsync(listChildren, "0");
         assertEquals("list", result);
       }

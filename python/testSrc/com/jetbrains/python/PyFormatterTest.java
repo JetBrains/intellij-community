@@ -903,4 +903,14 @@ public class PyFormatterTest extends PyTestCase {
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
+
+  // PY-27266
+  public void testChainedMethodCallsInParentheses() {
+    doTest();
+  }
+
+  // PY-27266
+  public void testChainedAttributeAccessInParentheses() {
+    doTest();
+  }
 }

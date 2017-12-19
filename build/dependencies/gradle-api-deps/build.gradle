@@ -1,5 +1,11 @@
 import org.gradle.tooling.GradleConnector
 
+plugins {
+  id "base"
+  id "maven-publish"
+  id "com.jfrog.bintray" version "1.7.3"
+}
+
 def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
 def gradleApiArtifactId = 'gradle-api'
 def gradleApiImplDepArtifactId = 'gradle-api-impldep'
@@ -38,7 +44,7 @@ dependencies {
 task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
   from new File(project.gradle.getGradleHomeDir(), 'lib/${gradleLauncherFileName}')
   from zipTree(configurations.gradleApiDeps.files.find {it.name == "gradle-api-${gradleApiVersion}.jar"})
-  into '${gradleApiDepsDir}'
+  into '${gradleApiDepsDir.path.replace("\\","\\\\")}'
 
   include '${gradleWrapperFileName}'
   include '${gradleLauncherFileName}'
@@ -56,7 +62,15 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
       .forProjectDirectory(projectDir)
       .connect()
     try {
-      connection.newBuild().run()
+      def buildLauncher = connection.newBuild()
+      buildLauncher.withArguments("--stacktrace")
+      if (logging.level == LogLevel.INFO) {
+        buildLauncher.withArguments("--info")
+      }
+      if (logging.level == LogLevel.DEBUG) {
+        buildLauncher.withArguments("--debug")
+      }
+      buildLauncher.run()
       assert new File(gradleApiDepsDir, "org/gradle/internal/impldep").isDirectory()
       assert new File(gradleApiDepsDir, gradleWrapperFileName).isFile()
       assert new File(gradleApiDepsDir, gradleLauncherFileName).isFile()
@@ -87,9 +101,6 @@ task gradleApiImplDepJar(type: Zip, dependsOn: expandGradleApiJar) {
   from gradleApiDepsDir
   include 'org/gradle/internal/impldep/**'
 }
-
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
 
 publishing {
   publications {
@@ -152,8 +163,8 @@ task publishGradleApiToMavenRepository
 publishGradleApiToMavenRepository.dependsOn tasks.withType(PublishToMavenRepository).matching { it.name.startsWith('publishGradle') }
 
 bintray {
-  user = System.getenv('BINTRAY_USER')
-  key = System.getenv('BINTRAY_KEY')
+  user = System.getenv('BINTRAY_JETBRAINS_TEAMCITY_UPLOADER_USER')
+  key = System.getenv('BINTRAY_JETBRAINS_TEAMCITY_UPLOADER_API_KEY')
 
   publish = true
 

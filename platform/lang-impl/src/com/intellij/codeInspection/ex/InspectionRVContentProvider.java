@@ -172,13 +172,14 @@ public abstract class InspectionRVContentProvider {
   }
 
   protected static void checkFixClass(InspectionToolPresentation presentation, QuickFix fix, LocalQuickFixWrapper quickFixAction) {
-    LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
-                   "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
+    Class class1 = getFixClass(fix);
+    Class class2 = getFixClass(quickFixAction.getFix());
+    LOG.assertTrue(class1.equals(class2),
+                   "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances but actually are " + class1.getName() + " and " + class2.getName() + "instances. " +
                    "Please assign reported exception for the inspection \"" + presentation.getToolWrapper().getTool().getClass() + "\" (\"" +
                    presentation.getToolWrapper().getShortName() + "\") developer");
   }
 
-  ;
 
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                               @NotNull InspectionNode toolNode,
@@ -338,7 +339,7 @@ public abstract class InspectionRVContentProvider {
                 if (nodes.isEmpty()) continue;
                 parentNode.removeAllChildren();
                 for (ProblemDescriptionNode node : nodes) {
-                  parentNode.add(node);
+                  parentNode.insertByOrder(node, false);
                 }
               }
             }

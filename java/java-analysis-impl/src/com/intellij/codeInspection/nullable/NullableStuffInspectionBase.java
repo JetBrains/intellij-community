@@ -622,17 +622,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private NullableNotNullManager getNullityManager(PsiMethod method) {
+  private static NullableNotNullManager getNullityManager(PsiMethod method) {
     return NullableNotNullManager.getInstance(method.getProject());
   }
 
-  private LocalQuickFix createFixForNonAnnotatedOverridesNotNull(PsiMethod method,
-                                                                 PsiMethod superMethod) {
+  private static LocalQuickFix createFixForNonAnnotatedOverridesNotNull(PsiMethod method,
+                                                                        PsiMethod superMethod) {
     NullableNotNullManager nullableManager = getNullityManager(method);
-    final String defaultNotNull = nullableManager.getDefaultNotNull();
-    final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
-    return AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull)
-                              ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove, method)
+    return AnnotationUtil.isAnnotatingApplicable(method, nullableManager.getDefaultNotNull())
+                              ? new AddNotNullAnnotationFix(method)
                               : createChangeDefaultNotNullFix(nullableManager, superMethod);
   }
 
@@ -853,10 +851,6 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
     }
     return null;
-  }
-
-  private static AddAnnotationPsiFix createAnnotateMethodFix(String defaultNotNull, String[] annotationsToRemove, PsiMethod method) {
-    return new AddAnnotationPsiFix(defaultNotNull, method, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
   }
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,

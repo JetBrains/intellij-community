@@ -97,6 +97,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
 
   @Test
+  @Staging
   public void testVariablesView() {
     runPythonTest(new PyConsoleTask() {
       @Override

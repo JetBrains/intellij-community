@@ -84,7 +84,6 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   
   // PY-18762
   public void testHomogeneousTuples() {
-    myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
     doTest();
   }
 

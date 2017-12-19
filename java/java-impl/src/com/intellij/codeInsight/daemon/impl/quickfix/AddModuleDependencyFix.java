@@ -156,8 +156,4 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 }

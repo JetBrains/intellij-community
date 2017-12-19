@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.Nullable;
@@ -67,6 +68,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JavaFxEditCertificatesDialog myDialog;
   private List<JavaFxManifestAttribute> myCustomManifestAttributes;
   private JavaFxApplicationIcons myIcons;
+  private JComboBox<String> myMsgOutputLevel;
 
   public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, final Project project, Artifact artifact) {
     super();
@@ -110,6 +112,9 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       bundleNames.add(bundle.name());
     }
     myNativeBundleCB.setModel(new DefaultComboBoxModel<>(ArrayUtil.toStringArray(bundleNames)));
+
+    final List<String> outputLevels = ContainerUtil.map2List(JavaFxPackagerConstants.MsgOutputLevel.values(), Enum::name);
+    myMsgOutputLevel.setModel(new DefaultComboBoxModel<>(outputLevels.toArray(ArrayUtil.EMPTY_STRING_ARRAY)));
   }
 
   @Override
@@ -153,6 +158,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
     if (!Comparing.equal(myCustomManifestAttributes, myProperties.getCustomManifestAttributes())) return true;
     if (!Comparing.equal(myIcons, myProperties.getIcons())) return true;
+    if (!Comparing.equal(myMsgOutputLevel.getSelectedItem(), myProperties.getMsgOutputLevel())) return true;
     return false;
   }
 
@@ -198,6 +204,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
     myProperties.setCustomManifestAttributes(myCustomManifestAttributes);
     myProperties.setIcons(myIcons);
+    myProperties.setMsgOutputLevel((String)myMsgOutputLevel.getSelectedItem());
   }
 
   @Nullable
@@ -226,6 +233,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myEditSignCertificateButton.setEnabled(myProperties.isEnabledSigning());
     myCustomManifestAttributes = myProperties.getCustomManifestAttributes();
     myIcons = myProperties.getIcons();
+    myMsgOutputLevel.setSelectedItem(myProperties.getMsgOutputLevel());
   }
 
   private static void setText(TextFieldWithBrowseButton tf, final String title) {

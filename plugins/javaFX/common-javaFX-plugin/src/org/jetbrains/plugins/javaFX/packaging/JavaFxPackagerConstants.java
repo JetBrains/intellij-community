@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaFxPackagerConstants {
   @NonNls public static final String UPDATE_MODE_BACKGROUND = "background";
@@ -36,6 +37,27 @@ public class JavaFxPackagerConstants {
 
     public boolean isOnWindows() {
       return this == all || this == exe || this == msi;
+    }
+  }
+
+  public enum MsgOutputLevel {
+    Quiet("-quiet", false), Default("", false), Verbose("-verbose", true), Debug("-debug", true);
+
+    private final String myCmdLineParam;
+    private final boolean myIsVerbose;
+
+    MsgOutputLevel(String cmdLineParam, boolean isVerbose) {
+      myCmdLineParam = cmdLineParam;
+      myIsVerbose = isVerbose;
+    }
+
+    @NotNull
+    public String getCmdLineParam() {
+      return myCmdLineParam;
+    }
+
+    public boolean isVerbose() {
+      return myIsVerbose;
     }
   }
 }

@@ -908,16 +908,12 @@ public class PyTypeTest extends PyTestCase {
   public void testHomogeneousTupleSubstitution() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> {
-        myFixture.copyDirectoryToProject("typing", "");
-
-        doTest("Tuple[int, ...]",
-               "from typing import TypeVar, Tuple\n" +
-               "T = TypeVar('T')\n" +
-               "def foo(i: T) -> Tuple[T, ...]:\n" +
-               "    pass\n" +
-               "expr = foo(5)");
-      }
+      () -> doTest("Tuple[int, ...]",
+                   "from typing import TypeVar, Tuple\n" +
+                   "T = TypeVar('T')\n" +
+                   "def foo(i: T) -> Tuple[T, ...]:\n" +
+                   "    pass\n" +
+                   "expr = foo(5)")
     );
   }
 

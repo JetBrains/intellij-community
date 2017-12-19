@@ -94,7 +94,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
+    return false;
   }
 
   @Override

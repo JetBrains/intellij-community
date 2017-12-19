@@ -346,6 +346,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, true);
   }
 
+  // PY-25381
+  public void testBuiltinDecorator() {
+    doTest(true, true);
+  }
+
   // PY-11418
   public void testFunctionCalls() {
     doTest();

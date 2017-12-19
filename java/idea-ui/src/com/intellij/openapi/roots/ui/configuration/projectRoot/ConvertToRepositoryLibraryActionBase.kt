@@ -258,7 +258,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     }
     else if (file.fileType == StdFileTypes.ARCHIVE) {
       val jarRootUrl = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file))
-      result.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)!!)
+      VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)?.let { result.add(it) }
     }
   }
 

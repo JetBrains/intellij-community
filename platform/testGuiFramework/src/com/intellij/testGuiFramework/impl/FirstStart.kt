@@ -148,10 +148,14 @@ abstract class FirstStart(val ideType: IdeType) {
   protected fun acceptAgreement() {
     if (!needToShowAgreement()) return
     with(myRobot) {
-      val policyAgreementTitle = "Privacy Policy Agreement"
+      val policyAgreementTitle = "Licence Agreement"
       try {
         LOG.info("Waiting for '$policyAgreementTitle' dialog")
         with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
+          click()
+          while(!button("Accept").isEnabled) {
+            scroll(10)
+          }
           LOG.info("Accept '$policyAgreementTitle' dialog")
           button("Accept").click()
         }
@@ -189,7 +193,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
   protected fun needToShowAgreement(): Boolean {
     val agreement = EndUserAgreement.getLatestDocument()
-    return !agreement.isAccepted();
+    return !agreement.isAccepted()
   }
 
   protected fun needToShowCompleteInstallation(): Boolean {
