@@ -519,4 +519,11 @@ public class EditorImplTest extends AbstractEditorTest {
     assertEquals(new LogicalPosition(0, 2), myEditor.getCaretModel().getLogicalPosition());
     assertEquals(new VisualPosition(0, 2), myEditor.getCaretModel().getVisualPosition());
   }
+
+  public void testTypingInOverwriteModeWithMultilineSelection() {
+    initText("a<selection>b\nc<caret></selection>d");
+    ((EditorEx)myEditor).setInsertMode(false);
+    type(' ');
+    checkResultByText("a <caret>");
+  }
 }
