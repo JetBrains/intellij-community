@@ -44,6 +44,26 @@ class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
 
   }
 
+  fun testExtensionMethods() {
+    myFixture.configureByText("UastUsage.kt", """
+      import org.jetbrains.uast.*;
+      import com.intellij.psi.*;
+
+      class UastUsage {
+
+          fun processUClassCaller(psiElement: PsiElement, uClass: UClass){
+             this.process(psiElement, uClass)
+             uClass.process(<warning>uClass</warning>, uClass)
+          }
+
+          fun Any.process(psiClass: PsiElement, uElement: UElement?){ psiClass.toString(); uElement.toString() }
+
+      }
+    """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+
+  }
+
   fun testAssignment() {
     myFixture.configureByText("UastUsage.kt", """
       import org.jetbrains.uast.UClass;
