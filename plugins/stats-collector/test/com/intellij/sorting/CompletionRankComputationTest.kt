@@ -31,7 +31,7 @@ import org.assertj.core.api.Assertions.assertThat
 
 class CompletionOrderTest : LightFixtureCompletionTestCase() {
 
-    lateinit var ranker: Ranker
+    private lateinit var ranker: Ranker
 
     override fun setUp() {
         super.setUp()

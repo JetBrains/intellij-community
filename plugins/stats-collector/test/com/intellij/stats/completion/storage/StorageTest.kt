@@ -28,7 +28,7 @@ import java.io.File
 
 class FilesProviderTest {
     
-    lateinit var provider: UniqueFilesProvider
+    private lateinit var provider: UniqueFilesProvider
 
     @Before
     fun setUp() {
@@ -56,8 +56,8 @@ class FilesProviderTest {
 
 class AsciiMessageStorageTest {
     
-    lateinit var storage: LineStorage
-    lateinit var tmpFile: File
+    private lateinit var storage: LineStorage
+    private lateinit var tmpFile: File
 
     @Before
     fun setUp() {
@@ -96,8 +96,8 @@ class AsciiMessageStorageTest {
 
 class FileLoggerTest {
     
-    lateinit var fileLogger: LogFileManager
-    lateinit var filesProvider: UniqueFilesProvider
+    private lateinit var fileLogger: LogFileManager
+    private lateinit var filesProvider: UniqueFilesProvider
 
     @Before
     fun setUp() {
@@ -135,7 +135,7 @@ class FileLoggerTest {
         val files = filesProvider.getDataFiles()
         val fileIndexes = files.map { it.name.substringAfter('_').toInt() }
         assertThat(files.isNotEmpty()).isTrue()
-        assertThat(fileIndexes).isEqualTo((0..files.size - 1).toList())
+        assertThat(fileIndexes).isEqualTo((0 until files.size).toList())
     }
 
 

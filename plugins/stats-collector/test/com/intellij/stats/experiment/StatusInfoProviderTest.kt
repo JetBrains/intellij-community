@@ -26,7 +26,7 @@ import org.mockito.Mockito.mock
 class StatusInfoProviderTest : LightIdeaTestCase() {
 
 
-    fun newResponse(status: String, salt: String, version: String, url: String) = """
+    private fun newResponse(status: String, salt: String, version: String, url: String) = """
 {
   "status" : "$status",
   "salt" : "$salt",

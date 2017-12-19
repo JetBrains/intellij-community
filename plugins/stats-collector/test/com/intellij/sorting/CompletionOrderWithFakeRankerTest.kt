@@ -73,9 +73,9 @@ object WebServiceMock {
 
 class CompletionOrderWithFakeRankerTest : LightFixtureCompletionTestCase() {
 
-    lateinit var ranker: Ranker
-    lateinit var point: ExtensionPoint<WeigherExtensionPoint>
-    lateinit var fakeWeigherExt: WeigherExtensionPoint
+    private lateinit var ranker: Ranker
+    private lateinit var point: ExtensionPoint<WeigherExtensionPoint>
+    private lateinit var fakeWeigherExt: WeigherExtensionPoint
 
     override fun setUp() {
         super.setUp()
