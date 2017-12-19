@@ -49,11 +49,12 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
       class UastUsage {
 
-          PsiClass psiClass;
+          PsiClass psiClass = null;
 
           public UastUsage(UClass uClass){
              psiClass = <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>;
              PsiClass localPsiClass = <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>;
+             localPsiClass = null;
           }
 
       }

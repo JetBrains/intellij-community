@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.TypeConversionUtil.isAssignable
+import com.intellij.psi.util.TypeConversionUtil.isNullType
 import com.intellij.util.SmartList
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
@@ -79,7 +80,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
     }
 
     private fun isPsiElementType(type: PsiType?) =
-      type?.let { isAssignable(psiElementType, it) && !isUElementType(it) } ?: false
+      type?.let { !isNullType(type) && isAssignable(psiElementType, it) && !isUElementType(it) } ?: false
 
     private fun isPsiElementClass(cls: PsiClass?): Boolean {
       if (cls == null) return false
@@ -87,7 +88,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
     }
 
     private fun isUElementType(type: PsiType?) =
-      type?.let { isAssignable(uElementType, it) } ?: false
+      type?.let { !isNullType(type) && isAssignable(uElementType, it) } ?: false
   }
 
   private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
