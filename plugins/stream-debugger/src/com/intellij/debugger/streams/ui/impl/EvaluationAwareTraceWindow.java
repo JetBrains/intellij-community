@@ -139,7 +139,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     if (resolvedTrace.exceptionThrown()) {
       resultTab.setContent(new JBLabel("There is no result: exception was thrown", SwingConstants.CENTER), BorderLayout.CENTER);
       setTitle(DIALOG_TITLE + " - Exception was thrown. Trace can be incomplete");
-      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, result), "", 0);
+      final ExceptionView exceptionView = new ExceptionView(context, result);
+      Disposer.register(myDisposable, exceptionView);
+      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, exceptionView, "", 0);
       myTabsPane.setSelectedIndex(0);
     }
     else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
