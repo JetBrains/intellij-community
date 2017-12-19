@@ -1,5 +1,9 @@
 <html>
 <body>
-Usage of UElement-s as PsiElement-s is deprecated. Use <code>UElementKt.getAsJavaPsiElement()</code> or <code>UElementKt.getSourcePsiElement()</code>
+It is better to avoid direct usage of <code>UElement</code> as <code>PsiElement</code> because of ambiguity of <code>PsiElement</code> you
+get
+and several issues in the direct implementation. If you need "physical" <code>PsiElement</code> please use <code>UElementKt.getSourcePsiElement()</code>,
+if you need <code>PsiElement</code> that "emulates" behaviour of Java-elements (<code>PsiClass</code>, <code>PsiMethod</code>, etc.)
+then please use <code>UElementKt.getAsJavaPsiElement()</code>.
 </body>
 </html>

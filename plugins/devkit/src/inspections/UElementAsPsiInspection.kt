@@ -7,8 +7,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
@@ -24,16 +22,15 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val sourcePsiElement = method.sourcePsiElement ?: return null
-    val module = ModuleUtilCore.findModuleForPsiElement(sourcePsiElement) ?: return null
-    val uElementType = psiClassType(module, UELEMENT_FQN) ?: return null
-    val psiElementType = psiClassType(module, PSI_ELEMENT_FQN) ?: return null
+    val uElementType = psiClassType(UElement::class.java.name, sourcePsiElement.resolveScope) ?: return null
+    val psiElementType = psiClassType(PsiElement::class.java.name, sourcePsiElement.resolveScope) ?: return null
     val visitor = CodeVisitor(uElementType, psiElementType)
     method.accept(visitor)
     return visitor.reportedElements.map {
       manager.createProblemDescriptor(
         it,
-        DevKitBundle.message("usage.uelement.as.psi"),
-        emptyArray<LocalQuickFix>(), ProblemHighlightType.LIKE_DEPRECATED,
+        DevKitBundle.message("inspections.usage.uelement.as.psi"),
+        emptyArray<LocalQuickFix>(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         isOnTheFly,
         false)
     }.toTypedArray()
@@ -86,20 +83,14 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
 
     private fun isPsiElementClass(cls: PsiClass?): Boolean {
       if (cls == null) return false
-      return isPsiElementType(PsiType.getTypeByName(cls.qualifiedName, cls.project, GlobalSearchScope.allScope(cls.project)))
+      return isPsiElementType(PsiType.getTypeByName(cls.qualifiedName, cls.project, cls.resolveScope))
     }
 
     private fun isUElementType(type: PsiType?) =
       type?.let { isAssignable(uElementType, it) } ?: false
   }
 
-  private fun psiClassType(module: Module, fqn: String): PsiClassType? =
-    PsiType.getTypeByName(fqn, module.project, GlobalSearchScope.moduleWithLibrariesScope(module)).takeIf { it.resolve() != null }
-
-  companion object {
-    private const val UELEMENT_FQN = "org.jetbrains.uast.UElement"
-
-    private const val PSI_ELEMENT_FQN = "com.intellij.psi.PsiElement"
-  }
+  private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
+    PsiType.getTypeByName(fqn, searchScope.project, searchScope).takeIf { it.resolve() != null }
 
 }

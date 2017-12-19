@@ -34,7 +34,7 @@ class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
              processUClass(uClass);
           }
 
-          fun processUClass(uClass: UClass){ processPsiClass(<warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass</warning>); }
+          fun processUClass(uClass: UClass){ processPsiClass(<warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>); }
 
           fun processPsiClass(psiClass: PsiClass){ psiClass.toString() }
 
@@ -54,8 +54,8 @@ class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
           var psiClass:PsiClass;
 
           constructor(uClass: UClass){
-             psiClass = <warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass</warning>;
-             val localPsiClass:PsiClass = <warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass</warning>;
+             psiClass = <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>;
+             val localPsiClass:PsiClass = <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>;
              localPsiClass.toString()
           }
 
@@ -73,7 +73,7 @@ class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
       class UastUsage {
 
           fun foo(uClass: UClass){
-             uClass.<warning descr="Usage of UElement-s as PsiElement-s is deprecated">getParent()</warning>;
+             uClass.<warning descr="Usage of UElement as PsiElement is not recommended">getParent()</warning>;
              uClass.uClassMethod();
           }
 
@@ -92,7 +92,7 @@ class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
 
           fun foo(){
             val impl = UClassImpl();
-            impl.<warning descr="Usage of UElement-s as PsiElement-s is deprecated">getParent()</warning>;
+            impl.<warning descr="Usage of UElement as PsiElement is not recommended">getParent()</warning>;
             impl.uClassMethod();
           }
 

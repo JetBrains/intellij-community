@@ -31,7 +31,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
              processUClass(uClass);
           }
 
-          public void processUClass(UClass uClass){ processPsiClass(<warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass</warning>); }
+          public void processUClass(UClass uClass){ processPsiClass(<warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>); }
 
           public void processPsiClass(PsiClass psiClass){ }
 
@@ -52,8 +52,8 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
           PsiClass psiClass;
 
           public UastUsage(UClass uClass){
-             psiClass = <warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass</warning>;
-             PsiClass localPsiClass = <warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass</warning>;
+             psiClass = <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>;
+             PsiClass localPsiClass = <warning descr="Usage of UElement as PsiElement is not recommended">uClass</warning>;
           }
 
       }
@@ -71,7 +71,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
       class UastUsage {
 
           public UastUsage(UClass uClass){
-             <warning descr="Usage of UElement-s as PsiElement-s is deprecated">uClass.getParent()</warning>;
+             <warning descr="Usage of UElement as PsiElement is not recommended">uClass.getParent()</warning>;
              uClass.uClassMethod();
           }
 
@@ -91,7 +91,7 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
 
           public UastUsage(){
             UClassImpl impl = new UClassImpl();
-            <warning descr="Usage of UElement-s as PsiElement-s is deprecated">impl.getParent()</warning>;
+            <warning descr="Usage of UElement as PsiElement is not recommended">impl.getParent()</warning>;
             impl.uClassMethod();
           }
 
