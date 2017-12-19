@@ -47,18 +47,18 @@ class ItemPositionUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(f
     }
 }
 
-class AverageSelectedItemPosition()
+class AverageSelectedItemPosition
     : UserFactorBase<ItemPositionReader>("averageSelectedPosition", UserFactorDescriptions.SELECTED_ITEM_POSITION) {
     override fun compute(reader: ItemPositionReader): String? = reader.getAveragePosition()?.toString()
 }
 
-class MaxSelectedItemPosition()
+class MaxSelectedItemPosition
     : UserFactorBase<ItemPositionReader>("maxSelectedItemPosition", UserFactorDescriptions.SELECTED_ITEM_POSITION) {
     override fun compute(reader: ItemPositionReader): String? =
             reader.getCountsByPosition().asSequence().filter { it.value != 0.0 }.maxBy { it.key }?.key?.toString()
 }
 
-class MostFrequentSelectedItemPosition()
+class MostFrequentSelectedItemPosition
     : UserFactorBase<ItemPositionReader>("mostFrequentItemPosition", UserFactorDescriptions.SELECTED_ITEM_POSITION) {
     override fun compute(reader: ItemPositionReader): String? =
             reader.getCountsByPosition().maxBy { it.value }?.key?.toString()

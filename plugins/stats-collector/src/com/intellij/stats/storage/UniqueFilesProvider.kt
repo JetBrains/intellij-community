@@ -63,8 +63,7 @@ open class UniqueFilesProvider(private val baseFileName: String,
 
         val newIndex = if (currentMaxIndex != null) currentMaxIndex + 1 else 0
 
-        val file = File(dir, "${baseFileName}_$newIndex")
-        return file
+        return File(dir, "${baseFileName}_$newIndex")
     }
 
     override fun getDataFiles(): List<File> {

@@ -16,8 +16,6 @@
 
 package com.intellij.stats.personalization
 
-import com.intellij.openapi.project.Project
-
 /**
  * @author Vitaliy.Bibaev
  */
