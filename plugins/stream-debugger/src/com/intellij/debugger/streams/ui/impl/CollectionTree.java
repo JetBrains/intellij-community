@@ -116,9 +116,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
         return;
       }
 
-      @Nullable final TreePath[] selectedPaths = getSelectionPaths();
-
-      @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
+      final TreePath[] selectedPaths = getSelectionPaths();
+      final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<TraceElement> selectedItems =
         Arrays.stream(paths)
           .map(this::getTopPath)
