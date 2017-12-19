@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.actions;
 
@@ -46,7 +34,6 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
     RunConfigurationProducer[] allProducers = Extensions.getExtensions(EP_NAME);
-
     List<RunConfigurationProducer<?>> result = ContainerUtil.newArrayListWithCapacity(allProducers.length);
     for (RunConfigurationProducer producer : allProducers) {
       if (!runConfigurationProducerService.isIgnored(producer)) {
@@ -87,6 +74,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     final RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
+      //noinspection unchecked
       if (!setupConfigurationFromContext((T)settings.getConfiguration(), context, ref)) {
        return null;
      }
@@ -207,6 +195,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     final RunManager runManager = RunManager.getInstance(context.getProject());
     final List<RunnerAndConfigurationSettings> configurations = getConfigurationSettingsList(runManager);
     for (RunnerAndConfigurationSettings configurationSettings : configurations) {
+      //noinspection unchecked
       if (isConfigurationFromContext((T) configurationSettings.getConfiguration(), context)) {
         return configurationSettings;
       }

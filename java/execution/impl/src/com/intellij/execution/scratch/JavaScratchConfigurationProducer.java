@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
@@ -45,7 +46,7 @@ public class JavaScratchConfigurationProducer extends AbstractApplicationConfigu
   }
 
   @Override
-  public boolean shouldReplace(ConfigurationFromContext self, ConfigurationFromContext other) {
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
     return other.isProducedBy(AbstractApplicationConfigurationProducer.class) && !other.isProducedBy(JavaScratchConfigurationProducer.class);
   }
 
