@@ -1482,7 +1482,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     catch (WriteExternalException e) {
       // ignore
     }
-    parentNode.addContent(navigatorElement);
+
+    if (!JDOMUtil.isEmpty(navigatorElement)) {
+      parentNode.addContent(navigatorElement);
+    }
 
     Element panesElement = new Element(ELEMENT_PANES);
     writePaneState(panesElement);
