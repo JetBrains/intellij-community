@@ -164,23 +164,19 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     c.setFont(comboBox.getFont());
     c.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
 
-    if (c instanceof JComponent) {
-      ((JComponent)c).setBorder(DEFAULT_EDITOR_BORDER);
-    }
-
-    // paint selection in table-cell-editor mode correctly
-    boolean changeOpaque = c instanceof JComponent && c.isOpaque();
-    if (changeOpaque) {
-      ((JComponent)c).setOpaque(false);
-    }
-
     Rectangle r = new Rectangle(bounds);
-    Insets i = UIManager.getInsets("ComboBox.padding");
-    if (i == null && c instanceof JComponent) {
-      i = ((JComponent)c).getInsets();
-    }
+    boolean changeOpaque = false;
+    if (c instanceof JComponent) {
+      JComponent jc = (JComponent)c;
+      jc.setBorder(DEFAULT_EDITOR_BORDER);
+      JBInsets.removeFrom(r, jc.getInsets());
 
-    JBInsets.removeFrom(r, i);
+      changeOpaque = c.isOpaque();
+      // paint selection in table-cell-editor mode correctly
+      if (changeOpaque) {
+        jc.setOpaque(false);
+      }
+    }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, c instanceof JPanel);
 
@@ -337,7 +333,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
-      jEditor.setOpaque(false);
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
 
       editorHoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);

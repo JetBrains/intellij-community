@@ -1611,7 +1611,9 @@ public class UIUtil {
   }
 
   public static int getListCellHPadding() {
-    return isUnderNativeMacLookAndFeel() ? 7 : 2;
+    return isUnderDefaultMacTheme() ? 8 :
+           isUnderWin10LookAndFeel() ? 2 :
+           7;
   }
 
   public static int getListCellVPadding() {
