@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -171,6 +173,24 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     @Nullable
     public GrEnumConstantList getEnumConstantList() {
       return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANTS);
+    }
+
+    @NotNull
+    @Override
+    public GrEnumConstant[] getEnumConstants() {
+      GrEnumConstantList list = getEnumConstantList();
+      if (list != null) return list.getEnumConstants();
+      return GrEnumConstant.EMPTY_ARRAY;
+    }
+
+    @NotNull
+    @Override
+    public GrField[] getFields() {
+      GrField[] bodyFields = super.getFields();
+      GrEnumConstant[] enumConstants = getEnumConstants();
+      if (bodyFields.length == 0) return enumConstants;
+      if (enumConstants.length == 0) return bodyFields;
+      return ArrayUtil.mergeArrays(bodyFields, enumConstants);
     }
 
     @Override
