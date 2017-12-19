@@ -31,8 +31,9 @@ import java.nio.file.Files
 open class UniqueFilesProvider(private val baseFileName: String,
                                private val rootDirectoryPath: String,
                                private val logsDirectoryName: String) : FilePathProvider() {
-
-    private val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
+    private companion object {
+        val MAX_ALLOWED_SEND_SIZE = 2 * 1024 * 1024
+    }
 
     override fun cleanupOldFiles() {
         val files = getDataFiles()

@@ -31,7 +31,9 @@ import java.io.IOException
 import java.util.zip.GZIPOutputStream
 
 class SimpleRequestService: RequestService() {
-    private val LOG = logger<SimpleRequestService>()
+    private companion object {
+        val LOG = logger<SimpleRequestService>()
+    }
 
     override fun post(url: String, params: Map<String, String>): ResponseData? {
         val form = Form.form()
