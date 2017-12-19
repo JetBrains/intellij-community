@@ -1,0 +1,16 @@
+<html>
+<body>
+<p>This inspection reports if suspicious assignment or equality check found. Usually this happens because of copy-paste</p>
+<!-- tooltip end -->
+Example:
+<pre><code>
+  first.a = second.a;
+  first.b = second.b;
+  first.c = second.c;
+  first.d = second.c; // - probably bug
+  first.f = second.f;
+</code></pre>
+
+<p><small>New in 2018.1</small>
+</body>
+</html>

@@ -716,6 +716,11 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.undeclared.service.usage.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousChainOperations"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.suspicious.chain.operation" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.SuspiciousChainOperationsInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"
