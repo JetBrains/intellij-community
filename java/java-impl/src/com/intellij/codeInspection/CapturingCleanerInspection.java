@@ -38,6 +38,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
         if (trackedObject == null || runnableExpression == null) return;
 
         final PsiElement highlightingElement;
+        final String referenceName;
         if (trackedObject instanceof PsiThisExpression) {
           PsiClassType classType = tryCast(trackedObject.getType(), PsiClassType.class);
           if (classType == null) return;
@@ -46,6 +47,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           PsiElement elementCapturingThis = getElementCapturingThis(runnableExpression, trackedClass);
           if (elementCapturingThis == null) return;
           highlightingElement = elementCapturingThis;
+          referenceName = "this";
         }
         else if (trackedObject instanceof PsiReferenceExpression) {
           PsiVariable variable = tryCast(((PsiReferenceExpression)trackedObject).resolve(), PsiVariable.class);
@@ -59,12 +61,14 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           String variableName = variable.getName();
           if (variableName == null) return;
           highlightingElement = referenceExpression.get();
+          referenceName = variableName;
         }
         else {
           return;
         }
-        holder.registerProblem(highlightingElement, InspectionsBundle.message("inspection.capturing.cleaner"));
+        holder.registerProblem(highlightingElement, InspectionsBundle.message("inspection.capturing.cleaner", referenceName));
       }
+
 
       private PsiElement getElementCapturingThis(PsiExpression runnableExpr, PsiClass trackedClass) {
         if (runnableExpr instanceof PsiMethodReferenceExpression) {
@@ -84,7 +88,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
           if (lambda.getParameterList().getParametersCount() != 0) return null;
           PsiElement lambdaBody = lambda.getBody();
           if (lambdaBody == null) return null;
-          return getElementLambdaCapturingThis(lambdaBody, trackedClass).orElse(null);
+          return getLambdaElementCapturingThis(lambdaBody, trackedClass).orElse(null);
         }
         if (runnableExpr instanceof PsiNewExpression) {
           PsiNewExpression newExpression = (PsiNewExpression)runnableExpr;
@@ -102,7 +106,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
-  private static Optional<PsiElement> getElementLambdaCapturingThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
+  private static Optional<PsiElement> getLambdaElementCapturingThis(@NotNull PsiElement lambdaBody, @NotNull PsiClass containingClass) {
     return StreamEx.ofTree(lambdaBody, el -> StreamEx.of(el.getChildren()))
       .findAny(element -> isThisCapturingElement(containingClass, element));
   }
