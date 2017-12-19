@@ -248,21 +248,6 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     return normalEdge.down - normalEdge.up < longEdgeSize || getAttachmentDistance(normalEdge, visibleRowIndex) <= visiblePartSize
   }
 
-  private fun addSpecialEdges(result: MutableList<GraphElement>, rowIndex: Int) {
-    if (rowIndex > 0) {
-      for (edge in linearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)) {
-        assert(!edge.type.isNormalEdge)
-        if (isEdgeDown(edge, rowIndex - 1)) result.add(edge)
-      }
-    }
-    if (rowIndex < linearGraph.nodesCount() - 1) {
-      for (edge in linearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)) {
-        assert(!edge.type.isNormalEdge)
-        if (isEdgeUp(edge, rowIndex + 1)) result.add(edge)
-      }
-    }
-  }
-
   private fun getSortedVisibleElementsInRow(rowIndex: Int): List<GraphElement> {
     val graphElements = cache.get(rowIndex)
     if (graphElements != null) {
@@ -273,8 +258,14 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     result.add(linearGraph.getGraphNode(rowIndex))
 
     edgesInRowGenerator.getEdgesInRow(rowIndex).filterTo(result) { isEdgeVisibleInRow(it, rowIndex) }
-
-    addSpecialEdges(result, rowIndex)
+    if (rowIndex > 0) {
+      linearGraph.getAdjacentEdges(rowIndex - 1, EdgeFilter.SPECIAL)
+        .filterTo(result) { isEdgeDown(it, rowIndex - 1) }
+    }
+    if (rowIndex < linearGraph.nodesCount() - 1) {
+      linearGraph.getAdjacentEdges(rowIndex + 1, EdgeFilter.SPECIAL)
+        .filterTo(result) { isEdgeUp(it, rowIndex + 1) }
+    }
 
     Collections.sort(result, elementComparator)
     cache.put(rowIndex, result)
