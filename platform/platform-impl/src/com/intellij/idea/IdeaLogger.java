@@ -11,7 +11,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
 import org.apache.log4j.spi.LoggerRepository;
@@ -95,8 +94,9 @@ public class IdeaLogger extends Log4jBasedLogger {
   }
 
   @Override
-  public void error(String message, @NotNull Attachment... attachments) {
-    myLogger.error(LogMessageEx.createEvent(message, DebugUtil.currentStackTrace(), attachments));
+  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+    String trace = ExceptionUtil.getThrowableText(t != null ? t : new Throwable());
+    myLogger.error(LogMessageEx.createEvent(message, trace, attachments));
   }
 
   @Override

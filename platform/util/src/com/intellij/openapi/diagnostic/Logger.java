@@ -134,15 +134,19 @@ public abstract class Logger {
   };
 
   public void error(String message, @NotNull Attachment... attachments) {
-    error(message, null, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
+    error(message, null, attachments);
+  }
+
+  public void error(String message, @Nullable Throwable t, @NotNull Attachment... attachments) {
+    error(message, t, ContainerUtil.map2Array(attachments, String.class, ATTACHMENT_TO_STRING));
   }
 
   public void error(String message, @NotNull String... details) {
     error(message, new Throwable(message), details);
   }
 
-  public void error(String message, @Nullable Throwable e) {
-    error(message, e, ArrayUtil.EMPTY_STRING_ARRAY);
+  public void error(String message, @Nullable Throwable t) {
+    error(message, t, ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   public void error(@NotNull Throwable t) {
