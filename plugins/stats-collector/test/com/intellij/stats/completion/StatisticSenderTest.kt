@@ -27,11 +27,11 @@ import java.io.File
 
 
 class StatisticsSenderTest: LightPlatformTestCase() {
-    lateinit var firstFile: File
-    lateinit var secondFile: File
-    lateinit var filePathProvider: FilePathProvider
+    private lateinit var firstFile: File
+    private lateinit var secondFile: File
+    private lateinit var filePathProvider: FilePathProvider
     
-    val test_url = "http://xxx.com" 
+    private val testUrl = "http://xxx.com"
 
     override fun setUp() {
         super.setUp()
@@ -61,12 +61,12 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
     fun `test removed if every file send response was ok`() {
         val requestService = mock(RequestService::class.java).apply {
-            `when`(postZipped(test_url, firstFile)).thenReturn(okResponse())
-            `when`(postZipped(test_url, secondFile)).thenReturn(okResponse())
+            `when`(postZipped(testUrl, firstFile)).thenReturn(okResponse())
+            `when`(postZipped(testUrl, secondFile)).thenReturn(okResponse())
         }
         
         val sender = StatisticSenderImpl(requestService, filePathProvider)
-        sender.sendStatsData(test_url)
+        sender.sendStatsData(testUrl)
         
         assertThat(firstFile.exists()).isEqualTo(false)
         assertThat(secondFile.exists()).isEqualTo(false)
@@ -75,12 +75,12 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
     fun `test removed first if only first is sent`() {
         val requestService = mock(RequestService::class.java).apply {
-            `when`(postZipped(test_url, firstFile)).thenReturn(okResponse())
-            `when`(postZipped(test_url, secondFile)).thenReturn(failResponse())
+            `when`(postZipped(testUrl, firstFile)).thenReturn(okResponse())
+            `when`(postZipped(testUrl, secondFile)).thenReturn(failResponse())
         }
         
         val sender = StatisticSenderImpl(requestService, filePathProvider)
-        sender.sendStatsData(test_url)
+        sender.sendStatsData(testUrl)
 
         assertThat(firstFile.exists()).isEqualTo(false)
         assertThat(secondFile.exists()).isEqualTo(true)
@@ -88,12 +88,12 @@ class StatisticsSenderTest: LightPlatformTestCase() {
 
     fun `test none is removed if all send failed`() {
         val requestService = mock(RequestService::class.java).apply {
-            `when`(postZipped(test_url, firstFile)).thenReturn(failResponse())
-            `when`(postZipped(test_url, secondFile)).thenThrow(IllegalStateException("Should not be invoked"))
+            `when`(postZipped(testUrl, firstFile)).thenReturn(failResponse())
+            `when`(postZipped(testUrl, secondFile)).thenThrow(IllegalStateException("Should not be invoked"))
         }
 
         val sender = StatisticSenderImpl(requestService, filePathProvider)
-        sender.sendStatsData(test_url)
+        sender.sendStatsData(testUrl)
 
         assertThat(firstFile.exists()).isEqualTo(true)
         assertThat(secondFile.exists()).isEqualTo(true)
