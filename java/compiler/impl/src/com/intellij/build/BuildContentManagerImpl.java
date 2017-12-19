@@ -98,7 +98,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
       if (component != null) {
         component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
       }
-      toolWindow.setIcon(AllIcons.Actions.Compile);
+      toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
       toolWindow.setAvailable(true, null);
       toolWindow.hide(null);
       myToolWindow = toolWindow;
@@ -289,7 +289,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
       if (component != null) {
         component.invalidate();
       }
-      myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
+      myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
     });
   }
 
@@ -313,7 +313,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
         }
         liveContentsMap.remove(content);
         if (liveContentsMap.isEmpty()) {
-          myToolWindow.setIcon(AllIcons.Actions.Compile);
+          myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
         }
       }
     });
