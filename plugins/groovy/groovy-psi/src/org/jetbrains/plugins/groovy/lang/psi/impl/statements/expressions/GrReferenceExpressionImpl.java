@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
@@ -440,7 +437,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         GrExpression qualifier = getQualifier();
         if (qualifier == null || qualifier.getType() == null) return GroovyResolveResult.EMPTY_ARRAY;
       }
-      final GroovyResolveResult[] results = resolveReferenceExpression(this, forceRValue, incompleteCode);
+      final GroovyResolveResult[] results = resolveReferenceExpression(this, forceRValue, incompleteCode).toArray(GroovyResolveResult.EMPTY_ARRAY);
       if (results.length == 0) {
         return GroovyResolveResult.EMPTY_ARRAY;
       }

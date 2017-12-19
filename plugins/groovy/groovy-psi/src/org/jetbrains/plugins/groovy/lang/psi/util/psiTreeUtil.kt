@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.openapi.progress.ProgressManager
@@ -29,9 +29,9 @@ fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = Re
   return true
 }
 
-fun PsiElement.treeWalkUpAndGetArray(processor: GrResolverProcessor<*>): Array<out GroovyResolveResult> {
+fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGet(processor: GrResolverProcessor<T>): List<T> {
   treeWalkUp(processor, ResolveState.initial(), this)
-  return processor.resultsArray
+  return processor.results
 }
 
 inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)
