@@ -16,8 +16,6 @@
 package com.intellij.stats.completion
 
 
-import com.intellij.codeInsight.completion.CompletionProgressIndicator
-import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.tracker.LookupElementPositionTracker
@@ -216,8 +214,7 @@ private fun calcPluginVersion(): String? {
 
 
 private fun LookupStateLogData.fillCompletionParameters() {
-    val completion = CompletionService.getCompletionService().currentCompletion as? CompletionProgressIndicator
-    val params = completion?.parameters
+    val params = CompletionUtil.getCurrentCompletionParameters()
 
     originalCompletionType = params?.completionType?.toString() ?: ""
     originalInvokationCount = params?.invocationCount ?: -1
