@@ -43,7 +43,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
   private val unresolved = MultiMap.createSmart<String, ModulePointerImpl>()
   private val pointers = MultiMap.createSmart<Module, ModulePointerImpl>()
   private val lock = ReentrantReadWriteLock()
-  private val oldNameMapping = THashMap<String, String>()
+  private val oldToNewName = THashMap<String, String>()
 
   init {
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
@@ -65,7 +65,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
 
   override fun getState() = ModuleRenamingHistoryState().apply {
     lock.read {
-      oldToNewName.putAll(oldNameMapping)
+      oldToNewName.putAll(this@ModulePointerManagerImpl.oldToNewName)
     }
   }
 
@@ -75,8 +75,8 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
 
   fun setRenamingScheme(renamingScheme: Map<String, String>) {
     lock.write {
-      oldNameMapping.clear()
-      oldNameMapping.putAll(renamingScheme)
+      oldToNewName.clear()
+      oldToNewName.putAll(renamingScheme)
 
       val moduleManager = ModuleManager.getInstance(project)
       renamingScheme.entries.forEach { (oldName, newName) ->
@@ -157,7 +157,7 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
       return create(it)
     }
 
-    val newName = lock.read { oldNameMapping[moduleName] }
+    val newName = lock.read { oldToNewName[moduleName] }
     if (newName != null) {
       ModuleManager.getInstance(project).findModuleByName(newName)?.let {
         return create(it)
