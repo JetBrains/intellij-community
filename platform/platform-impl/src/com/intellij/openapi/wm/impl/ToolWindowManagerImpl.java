@@ -862,8 +862,8 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   @Override
   @Nullable
-  public ToolWindow getToolWindow(final String id) {
-    if (!myLayout.isToolWindowRegistered(id)) {
+  public ToolWindow getToolWindow(@Nullable String id) {
+    if (id == null || !myLayout.isToolWindowRegistered(id)) {
       return null;
     }
 
