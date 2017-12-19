@@ -13,10 +13,10 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +34,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
     RunConfigurationProducer[] allProducers = Extensions.getExtensions(EP_NAME);
-    List<RunConfigurationProducer<?>> result = ContainerUtil.newArrayListWithCapacity(allProducers.length);
+    List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.length);
     for (RunConfigurationProducer producer : allProducers) {
       if (!runConfigurationProducerService.isIgnored(producer)) {
         result.add(producer);
@@ -229,6 +229,7 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static <T extends RunConfigurationProducer> T getInstance(Class<? extends T> aClass) {
     for (RunConfigurationProducer producer : Extensions.getExtensions(EP_NAME)) {
       if (aClass.isInstance(producer)) {
+        //noinspection unchecked
         return (T)producer;
       }
     }
@@ -238,10 +239,11 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
 
   @Nullable
   public RunConfiguration createLightConfiguration(@NotNull final ConfigurationContext context) {
-    RunConfiguration configuration = myConfigurationFactory.createTemplateConfiguration(context.getProject());
+    @SuppressWarnings("unchecked")
+    T configuration = (T)myConfigurationFactory.createTemplateConfiguration(context.getProject());
     final Ref<PsiElement> ref = new Ref<>(context.getPsiLocation());
     try {
-      if (!setupConfigurationFromContext((T)configuration, context, ref)) {
+      if (!setupConfigurationFromContext(configuration, context, ref)) {
         return null;
       }
     }
