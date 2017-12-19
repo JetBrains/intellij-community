@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
@@ -90,10 +92,10 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
 
-    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myCatchCheckBox)));
-    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myInstanceFiltersCheckBox)));
-    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myClassFiltersCheckBox)));
-    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myPassCountCheckbox)));
+    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(myCatchCheckBox.getInsets().left));
+    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(myInstanceFiltersCheckBox.getInsets().left));
+    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(myClassFiltersCheckBox.getInsets().left));
+    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(myPassCountCheckbox.getInsets().left));
 
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
