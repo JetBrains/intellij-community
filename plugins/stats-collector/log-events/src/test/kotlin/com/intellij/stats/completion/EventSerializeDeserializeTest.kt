@@ -129,12 +129,13 @@ class EventSerializeDeserializeTest {
 }
 
 
+@Suppress("PropertyName", "unused")
 private class First {
     val just_field: String = ""
     val unknown_field: Int = 0
 }
 
-
+@Suppress("PropertyName", "unused")
 class Second {
     val just_field: String = ""
     val absent_field0: Double = 1.0
