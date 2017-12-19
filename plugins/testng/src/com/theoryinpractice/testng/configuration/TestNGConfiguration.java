@@ -134,7 +134,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return testObject != null ? testObject.getActionName() : null;
   }
 
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     data.setVMParameters(value);
   }
 

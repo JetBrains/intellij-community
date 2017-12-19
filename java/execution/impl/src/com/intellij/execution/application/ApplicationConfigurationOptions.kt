@@ -10,10 +10,10 @@ import java.util.*
 
 open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PROGRAM_PARAMETERS")
-  var programParameters by string()
+  open var programParameters by string()
 
   @get:OptionTag("WORKING_DIRECTORY")
-  var workingDirectory by string()
+  open var workingDirectory by string()
 
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
   var includeProvidedScope by property(false)

@@ -110,7 +110,7 @@ public class CreateSnapShotAction extends AnAction {
       if (config.getConfiguration() instanceof ApplicationConfiguration) {
         ApplicationConfiguration appConfig = (ApplicationConfiguration) config.getConfiguration();
         appConfigurations.add(config);
-        if (appConfig.getOptions().isSwingInspectorEnabled()) {
+        if (appConfig.isSwingInspectorEnabled()) {
           SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
           snapshotConfiguration = config;
           if (settings.getLastPort() > 0) {
@@ -280,7 +280,7 @@ public class CreateSnapShotAction extends AnAction {
       if (rc < 0) return null;
       snapshotConfiguration = configurations.get(rc);
     }
-    ((ApplicationConfiguration) snapshotConfiguration.getConfiguration()).getOptions().setSwingInspectorEnabled(true);
+    ((ApplicationConfiguration)snapshotConfiguration.getConfiguration()).setSwingInspectorEnabled(true);
     return snapshotConfiguration;
   }
 

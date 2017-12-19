@@ -128,7 +128,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
   }
 
   @Override
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     myBean.VM_PARAMETERS = value;
   }
 

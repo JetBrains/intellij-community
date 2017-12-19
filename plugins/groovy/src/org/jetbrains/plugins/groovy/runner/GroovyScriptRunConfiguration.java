@@ -315,7 +315,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     vmParams = value;
   }
 

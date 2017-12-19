@@ -79,7 +79,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
   public boolean isConfigurationFromContext(T appConfiguration, ConfigurationContext context) {
     final PsiElement location = context.getPsiLocation();
     final PsiClass aClass = ApplicationConfigurationType.getMainClass(location);
-    if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getOptions().getMainClassName())) {
+    if (aClass != null && Comparing.equal(JavaExecutionUtil.getRuntimeQualifiedName(aClass), appConfiguration.getMainClassName())) {
       final PsiMethod method = PsiTreeUtil.getParentOfType(location, PsiMethod.class, false);
       if (method != null && TestFrameworks.getInstance().isTestMethod(method)) {
         return false;

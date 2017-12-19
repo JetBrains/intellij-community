@@ -55,7 +55,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public void setVMParameters(String vmParams) {
+  public void setVMParameters(@Nullable String vmParams) {
     this.vmParams = vmParams;
   }
 

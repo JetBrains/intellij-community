@@ -7,7 +7,7 @@ import com.intellij.execution.configurations.ConfigurationWithAlternativeJre;
 import org.jetbrains.annotations.Nullable;
 
 public interface CommonJavaRunConfigurationParameters extends CommonProgramRunConfigurationParameters, ConfigurationWithAlternativeJre {
-  void setVMParameters(String value);
+  void setVMParameters(@Nullable String value);
 
   String getVMParameters();
 

@@ -38,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -211,7 +212,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     myData.setVMParameters(value);
   }
 

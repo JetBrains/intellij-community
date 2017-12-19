@@ -4,7 +4,6 @@
 package com.intellij.execution.scratch;
 
 import com.intellij.application.options.ModulesComboBox;
-import com.intellij.execution.application.ApplicationConfigurationOptions;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.execution.ui.DefaultJreSelector;
@@ -125,9 +124,8 @@ public class JavaScratchConfigurable extends SettingsEditor<JavaScratchConfigura
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
 
-    ApplicationConfigurationOptions options = configuration.getOptions();
-    myMainClass.getComponent().setText(options.getMainClassName() != null ? options.getMainClassName().replaceAll("\\$", "\\.") : "");
-    myJrePathEditor.setPathOrName(options.getAlternativeJrePath(), options.isAlternativeJrePathEnabled());
+    myMainClass.getComponent().setText(configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "");
+    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     setVFileToEditor(configuration.getScratchVirtualFile());
   }
 

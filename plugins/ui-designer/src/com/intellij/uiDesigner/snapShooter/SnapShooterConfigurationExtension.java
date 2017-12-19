@@ -7,7 +7,6 @@ package com.intellij.uiDesigner.snapShooter;
 import com.intellij.designer.DesignerEditorPanelFacade;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.application.ApplicationConfigurationOptions;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -42,20 +41,19 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     if (!isApplicableFor(configuration)) {
       return;
     }
-    ApplicationConfiguration appConfiguration = (ApplicationConfiguration) configuration;
+    ApplicationConfiguration appConfiguration = (ApplicationConfiguration)configuration;
     SnapShooterConfigurationSettings settings = appConfiguration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings == null) {
       settings = new SnapShooterConfigurationSettings();
       appConfiguration.putUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY, settings);
     }
-    ApplicationConfigurationOptions options = appConfiguration.getOptions();
-    boolean swingInspectorEnabled = options.isSwingInspectorEnabled();
+    boolean swingInspectorEnabled = appConfiguration.isSwingInspectorEnabled();
     if (swingInspectorEnabled) {
       settings.setLastPort(NetUtils.tryToFindAvailableSocketPort());
     }
 
     if (swingInspectorEnabled && settings.getLastPort() != -1) {
-      params.getProgramParametersList().prepend(options.getMainClassName());
+      params.getProgramParametersList().prepend(appConfiguration.getMainClassName());
       params.getProgramParametersList().prepend(Integer.toString(settings.getLastPort()));
       // add +1 because idea_rt.jar will be added as the last entry to the classpath
       params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));

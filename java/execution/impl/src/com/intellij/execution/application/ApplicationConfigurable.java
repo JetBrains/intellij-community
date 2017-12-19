@@ -71,7 +71,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     configuration.setMainClassName(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
     configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
     configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
-    configuration.getOptions().setSwingInspectorEnabled((myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected());
+    configuration.setSwingInspectorEnabled((myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) && myShowSwingInspectorCheckbox.isSelected());
     configuration.setShortenCommandLine((ShortenCommandLine)myShortenClasspathModeCombo.getComponent().getSelectedItem());
     configuration.setIncludeProvidedScope(myIncludeProvidedDeps.getComponent().isSelected());
 
@@ -82,9 +82,8 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
     myCommonProgramParameters.reset(configuration);
     myModuleSelector.reset(configuration);
 
-    ApplicationConfigurationOptions options = configuration.getOptions();
-    getMainClassField().setText(options.getMainClassName() != null ? options.getMainClassName().replaceAll("\\$", "\\.") : "");
-    myJrePathEditor.setPathOrName(options.getAlternativeJrePath(), options.isAlternativeJrePathEnabled());
+    getMainClassField().setText(configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "");
+    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myIncludeProvidedDeps.getComponent().setSelected(configuration.isProvidedScopeIncluded());
 
@@ -94,7 +93,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private void updateShowSwingInspector(final ApplicationConfiguration configuration) {
     if (myVersionDetector.isJre50Configured(configuration) || myVersionDetector.isModuleJre50Configured(configuration)) {
       myShowSwingInspectorCheckbox.setEnabled(true);
-      myShowSwingInspectorCheckbox.setSelected(configuration.getOptions().isSwingInspectorEnabled());
+      myShowSwingInspectorCheckbox.setSelected(configuration.isSwingInspectorEnabled());
       myShowSwingInspectorCheckbox.setText(ExecutionBundle.message("show.swing.inspector"));
     }
     else {
