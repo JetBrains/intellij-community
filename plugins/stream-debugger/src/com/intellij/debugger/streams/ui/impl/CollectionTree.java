@@ -317,15 +317,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     return myHighlighted.contains(path) || isPathSelected(path);
   }
 
-  @NotNull
-  private static <T> List<T> tail(@NotNull List<T> list) {
-    if (list.size() <= 1) {
-      return Collections.emptyList();
-    }
-
-    return list.subList(1, list.size());
-  }
-
   private class MyRootValue extends XValue {
     private final List<Value> myValues;
     private final EvaluationContextImpl myEvaluationContext;
