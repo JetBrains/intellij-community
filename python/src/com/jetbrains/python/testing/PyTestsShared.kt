@@ -34,8 +34,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.JDOMExternalizerUtil.readField
-import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -63,12 +61,16 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.*
 import com.jetbrains.reflection.DelegationProperty
-import com.jetbrains.reflection.Properties
-import com.jetbrains.reflection.Property
 import com.jetbrains.reflection.getProperties
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
+
+/**
+ * To prevent legacy configuration options  from clashing with new names, we add prefix
+ * to use for writing/reading xml
+ */
+private val configFieldPrefix = "_new_"
 
 
 /**
@@ -87,7 +89,7 @@ val factories: Array<PythonConfigurationFactoryBase> = arrayOf(
 fun processTCMessage(text: String): String {
   val parsedMessage = ServiceMessage.parse(text.trim()) ?: return text // Not a TC message
   return when (parsedMessage) {
-    is TestStdOut  -> parsedMessage.stdOut // TC with stdout
+    is TestStdOut -> parsedMessage.stdOut // TC with stdout
     is TestStdErr -> parsedMessage.stdErr // TC with stderr
     else -> "" // TC with out of any output
   }
@@ -161,7 +163,7 @@ object PyTestsLocator : SMTestLocator {
       return listOf()
     }
     val matcher = PATH_URL.matcher(protocol)
-    if (! matcher.matches()) {
+    if (!matcher.matches()) {
       // special case: setup.py runner uses unittest configuration but different (old) protocol
       // delegate to old protocol locator until setup.py moved to separate configuration
       val oldLocation = PythonUnitTestTestIdUrlProvider.INSTANCE.getLocation(protocol, path, project, scope)
@@ -223,14 +225,15 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
 
 
   override fun resetEditorFrom(s: PyAbstractTestConfiguration) {
-    // usePojoProperties is true because we know that Form is java-based
+
     AbstractPythonRunConfiguration.copyParams(s, sharedForm.optionsForm)
-    s.copyTo(getProperties(sharedForm, usePojoProperties = true))
+    // usePojoProperties is true because we know that Form is java-based
+    s.copyToForm(sharedForm)
   }
 
   override fun applyEditorTo(s: PyAbstractTestConfiguration) {
     AbstractPythonRunConfiguration.copyParams(sharedForm.optionsForm, s)
-    s.copyFrom(getProperties(sharedForm, usePojoProperties = true))
+    s.copyFromForm(sharedForm)
   }
 
   override fun createEditor(): javax.swing.JComponent = sharedForm.panel
@@ -382,13 +385,6 @@ data class ConfigurationTarget(@ConfigField var target: String,
 
 
 /**
- * To prevent legacy configuration options  from clashing with new names, we add prefix
- * to use for writing/reading xml
- */
-private val Property.prefixedName: String
-  get() = "_new_" + this.getName()
-
-/**
  * Parent of all new test configurations.
  * All config-specific fields are implemented as properties. They are saved/restored automatically and passed to GUI form.
  *
@@ -396,8 +392,10 @@ private val Property.prefixedName: String
 abstract class PyAbstractTestConfiguration(project: Project,
                                            configurationFactory: ConfigurationFactory,
                                            private val runnerName: String)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
-    RefactoringListenerProvider {
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory),
+    PyRerunAwareConfiguration,
+    RefactoringListenerProvider,
+    ConfigurationWithFields {
   @DelegationProperty
   val target = ConfigurationTarget(DEFAULT_PATH, TestTargetType.PATH)
   @ConfigField
@@ -593,48 +591,21 @@ abstract class PyAbstractTestConfiguration(project: Project,
     additionalArguments = ""
   }
 
-  fun copyFrom(src: Properties) {
-    src.copyTo(getConfigFields())
-  }
-
-  fun copyTo(dst: Properties) {
-    getConfigFields().copyTo(dst)
-  }
-
 
   override fun writeExternal(element: org.jdom.Element) {
     // Write legacy config to preserve it
     legacyConfigurationAdapter.writeExternal(element)
     // Super is called after to overwrite legacy settings with new one
     super.writeExternal(element)
-
-    val gson = com.google.gson.Gson()
-
-    getConfigFields().properties.forEach {
-      val value = it.get()
-      if (value != null) {
-        // No need to write null since null is default value
-        writeField(element, it.prefixedName, gson.toJson(value))
-      }
-    }
+    getConfigFields().writeToXml(element, configFieldPrefix)
   }
 
   override fun readExternal(element: org.jdom.Element) {
     super.readExternal(element)
-
-    val gson = com.google.gson.Gson()
-
-    getConfigFields().properties.forEach {
-      val fromJson: Any? = gson.fromJson(readField(element, it.prefixedName), it.getType())
-      if (fromJson != null) {
-        it.set(fromJson)
-      }
-    }
+    getConfigFields().fillToXml(element, configFieldPrefix)
     legacyConfigurationAdapter.readExternal(element)
   }
 
-
-  private fun getConfigFields() = getProperties(this, ConfigField::class.java)
 
   /**
    * Checks if element could be test target for this config.
@@ -648,7 +619,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    return isTestElement(element,isTestClassRequired(), context)
+    return isTestElement(element, isTestClassRequired(), context)
   }
 
   /**
@@ -808,10 +779,3 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     return configuration.target == targetForConfig.first
   }
 }
-
-@Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.PROPERTY)
-/**
- * Mark run configuration field with it to enable saving, resotring and form iteraction
- */
-annotation class ConfigField
