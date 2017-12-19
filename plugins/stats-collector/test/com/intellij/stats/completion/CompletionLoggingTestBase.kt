@@ -52,10 +52,10 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
 
   val trackedEvents = mutableListOf<LogEvent>()
 
-  lateinit var realLoggerProvider: CompletionLoggerProvider
-  lateinit var mockLoggerProvider: CompletionLoggerProvider
+  private lateinit var realLoggerProvider: CompletionLoggerProvider
+  private lateinit var mockLoggerProvider: CompletionLoggerProvider
 
-  lateinit var container: MutablePicoContainer
+  private lateinit var container: MutablePicoContainer
 
 
   val completionStartedEvent: CompletionStartedEvent

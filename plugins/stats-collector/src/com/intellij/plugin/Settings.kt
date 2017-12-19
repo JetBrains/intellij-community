@@ -45,16 +45,9 @@ class PluginSettingsConfigurable : Configurable {
     private lateinit var manualSortingCb: JBCheckBox
 
     override fun isModified(): Boolean {
-        val isModifiedStates = mutableListOf<Boolean>()
-        isModifiedStates +=
-                manualControlCb.isSelected != ManualExperimentControl.isOn
-        
-        if (manualControlCb.isSelected) {
-            isModifiedStates +=
-                    manualSortingCb.isSelected != ManualMlSorting.isOn
-        }
-        
-        return isModifiedStates.contains(true)
+        val manualControlEnabled = manualControlCb.isSelected
+        return manualControlEnabled != ManualExperimentControl.isOn ||
+                (manualControlEnabled && manualSortingCb.isSelected != ManualMlSorting.isOn)
     }
 
     override fun getDisplayName() = "Completion Stats Collector"

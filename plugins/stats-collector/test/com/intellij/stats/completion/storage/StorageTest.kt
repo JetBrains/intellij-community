@@ -28,7 +28,7 @@ import java.io.File
 
 class FilesProviderTest {
     
-    lateinit var provider: UniqueFilesProvider
+    private lateinit var provider: UniqueFilesProvider
 
     @Before
     fun setUp() {
@@ -42,7 +42,7 @@ class FilesProviderTest {
     }
     
     @Test
-    fun test_three_new_files_created() {
+    fun `test three new files created`() {
         provider.getUniqueFile().createNewFile()
         provider.getUniqueFile().createNewFile()
         provider.getUniqueFile().createNewFile()
@@ -56,8 +56,8 @@ class FilesProviderTest {
 
 class AsciiMessageStorageTest {
     
-    lateinit var storage: LineStorage
-    lateinit var tmpFile: File
+    private lateinit var storage: LineStorage
+    private lateinit var tmpFile: File
 
     @Before
     fun setUp() {
@@ -72,14 +72,14 @@ class AsciiMessageStorageTest {
     }
 
     @Test
-    fun test_size_with_new_lines() {
+    fun `test size with new lines`() {
         val line = "text"
         storage.appendLine(line)
         assertThat(storage.sizeWithNewLine("")).isEqualTo(line.length + 2 * System.lineSeparator().length)
     }
     
     @Test
-    fun test_size_is_same_as_file_size() {
+    fun `test size is same as file size`() {
         val line = "text"
         storage.appendLine(line)
         storage.appendLine(line)
@@ -90,16 +90,14 @@ class AsciiMessageStorageTest {
         storage.dump(tmpFile)
         assertThat(tmpFile.length()).isEqualTo(expectedSize.toLong())
     }
-    
-    
 }
 
 
 
 class FileLoggerTest {
     
-    lateinit var fileLogger: LogFileManager
-    lateinit var filesProvider: UniqueFilesProvider
+    private lateinit var fileLogger: LogFileManager
+    private lateinit var filesProvider: UniqueFilesProvider
 
     @Before
     fun setUp() {
@@ -116,7 +114,7 @@ class FileLoggerTest {
     }
 
     @Test
-    fun test_chunk_is_around_256Kb() {
+    fun `test chunk is around 256Kb`() {
         val bytesToWrite = 1024 * 200
         val text = StringUtil.repeat("c", bytesToWrite)
         fileLogger.println(text)
@@ -131,24 +129,24 @@ class FileLoggerTest {
     }
     
     @Test
-    fun test_multiple_chunks() {
+    fun `test multiple chunks`() {
         writeKb(1024)
 
         val files = filesProvider.getDataFiles()
         val fileIndexes = files.map { it.name.substringAfter('_').toInt() }
-        assertThat(files.isNotEmpty())
-        assertThat(fileIndexes).isEqualTo((0..files.size - 1).toList())
+        assertThat(files.isNotEmpty()).isTrue()
+        assertThat(fileIndexes).isEqualTo((0 until files.size).toList())
     }
 
 
     @Test
-    fun test_delete_old_stuff() {
+    fun `test delete old stuff`() {
         writeKb(4096)
 
         var files = filesProvider.getDataFiles()
 
         val totalSize = files.fold(0L, { total, file -> total + file.length() })
-        assertThat(totalSize > 2 * 1024 * 1024)
+        assertThat(totalSize > 2 * 1024 * 1024).isTrue()
 
         val firstBefore = files
           .map { it.name.substringAfter('_').toInt() }
@@ -161,7 +159,7 @@ class FileLoggerTest {
         files = filesProvider.getDataFiles()
 
         val totalSizeAfterCleanup = files.fold(0L, { total, file -> total + file.length() })
-        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024)
+        assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024).isTrue()
 
         val firstAfter = files
           .map { it.name.substringAfter('_').toInt() }
@@ -178,5 +176,4 @@ class FileLoggerTest {
         }
         fileLogger.dispose()
     }
-
 }

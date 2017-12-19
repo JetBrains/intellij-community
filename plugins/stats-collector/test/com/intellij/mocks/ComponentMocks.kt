@@ -47,29 +47,9 @@ internal class TestRequestService : RequestService() {
 
 
 internal class TestStatisticSender : StatisticSender {
-    companion object {
-        var sendAction: (String) -> Unit = { Unit }
-    }
-
     override fun sendStatsData(url: String) {
     }
 }
 
 
-class TestFilePathProvider: UniqueFilesProvider("chunk", ".", "logs-data") {
-    override fun cleanupOldFiles() {
-        super.cleanupOldFiles()
-    }
-
-    override fun getUniqueFile(): File {
-        return super.getUniqueFile()
-    }
-
-    override fun getDataFiles(): List<File> {
-        return super.getDataFiles()
-    }
-
-    override fun getStatsDataDirectory(): File {
-        return super.getStatsDataDirectory()
-    }
-}
+class TestFilePathProvider: UniqueFilesProvider("chunk", ".", "logs-data")

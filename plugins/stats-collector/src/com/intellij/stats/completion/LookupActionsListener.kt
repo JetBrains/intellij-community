@@ -22,7 +22,10 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 
 class LookupActionsListener : AnActionListener.Adapter() {
-    private val LOG = Logger.getInstance(LookupActionsListener::class.java)
+    private companion object {
+        val LOG = Logger.getInstance(LookupActionsListener::class.java)
+    }
+
     private val down = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
     private val up = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)
     private val backspace = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_BACKSPACE)

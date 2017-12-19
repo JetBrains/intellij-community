@@ -44,13 +44,14 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         if (!completionStarted) return
 
         val items = lookup.items
-        if (lookup.currentItem == null) {
+        val currentItem = lookup.currentItem
+        if (currentItem == null) {
             deferredLog.clear()
             logger.completionCancelled()
             return
         }
 
-        val prefix = lookup.itemPattern(lookup.currentItem!!)
+        val prefix = lookup.itemPattern(currentItem)
         val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
         if (wasTyped || selectedByDotTyping) {
             deferredLog.log()

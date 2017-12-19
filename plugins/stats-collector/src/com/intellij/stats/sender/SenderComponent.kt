@@ -28,8 +28,10 @@ class SenderComponent(
         private val sender: StatisticSender,
         private val statusHelper: WebServiceStatus
 ) : ApplicationComponent {
+    private companion object {
+        val LOG = logger<SenderComponent>()
+    }
 
-    private val LOG = logger<SenderComponent>()
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
     private val sendInterval = 5 * Time.MINUTE

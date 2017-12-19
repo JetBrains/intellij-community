@@ -19,14 +19,14 @@ import com.intellij.stats.network.service.RequestService
 import com.intellij.stats.network.service.ResponseData
 import com.intellij.testFramework.LightIdeaTestCase
 import org.assertj.core.api.Assertions.assertThat
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
 class StatusInfoProviderTest : LightIdeaTestCase() {
 
 
-    fun newResponse(status: String, salt: String, version: String, url: String) = """
+    private fun newResponse(status: String, salt: String, version: String, url: String) = """
 {
   "status" : "$status",
   "salt" : "$salt",
@@ -72,7 +72,7 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
 
     private fun getProvider(response: String): WebServiceStatus {
         val requestSender = mock(RequestService::class.java).apply {
-            `when`(get(Matchers.anyString())).thenReturn(ResponseData(200, response))
+            `when`(get(ArgumentMatchers.anyString())).thenReturn(ResponseData(200, response))
         }
         val decision = mock(ExperimentDecision::class.java)
         return WebServiceStatusProvider(requestSender, decision)

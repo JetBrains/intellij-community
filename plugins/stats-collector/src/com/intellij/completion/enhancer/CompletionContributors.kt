@@ -22,7 +22,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.util.ReflectionUtil
-import org.picocontainer.ComponentAdapter
 
 object CompletionContributors {
 
@@ -41,14 +40,12 @@ object CompletionContributors {
     private fun contributorOrderId(contributorEP: CompletionContributorEP): String? {
         val className = contributorEP.implementationClass
         val picoContainer = Extensions.getRootArea().picoContainer
-        val adapterForFirstContributor = (picoContainer.componentAdapters as Collection<ComponentAdapter>)
+        val adapterForFirstContributor = (picoContainer.componentAdapters)
                 .asSequence()
-                .filter {
-                    it is ExtensionComponentAdapter
-                            && ReflectionUtil.isAssignable(CompletionContributorEP::class.java, it.componentImplementation)
-                }
-                .map { it to it.getComponentInstance(picoContainer) as CompletionContributorEP }
-                .find { it.second.implementationClass == className }?.first as? ExtensionComponentAdapter
+                .filterIsInstance<ExtensionComponentAdapter>()
+                .filter { ReflectionUtil.isAssignable(CompletionContributorEP::class.java, it.componentImplementation) }
+                .map { it to it.getComponentInstance(picoContainer) as? CompletionContributorEP }
+                .find { it.second?.implementationClass == className }?.first
 
         return adapterForFirstContributor?.orderId
     }

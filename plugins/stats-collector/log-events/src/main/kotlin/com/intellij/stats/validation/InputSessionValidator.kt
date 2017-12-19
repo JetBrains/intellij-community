@@ -71,7 +71,8 @@ class InputSessionValidator(private val sessionValidationResult: SessionValidati
         dumpSession(session, isValidSession, errorMessage)
     }
 
-    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean, errorMessage: String) {
+    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean,
+                            @Suppress("UNUSED_PARAMETER") errorMessage: String) {
         if (isValidSession) {
             sessionValidationResult.addValidSession(session)
         }

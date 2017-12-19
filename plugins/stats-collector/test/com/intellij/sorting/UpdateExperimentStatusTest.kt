@@ -28,14 +28,6 @@ import org.assertj.core.api.Assertions.assertThat
 class UpdateExperimentStatusTest: LightFixtureCompletionTestCase() {
 
 
-    override fun setUp() {
-        super.setUp()
-    }
-
-    override fun tearDown() {
-        super.tearDown()
-    }
-
     fun `test on performExperiment=true sort`() {
         TestRequestService.mock = WebServiceMock.mockRequestService(performExperiment = true)
         WebServiceStatus.getInstance().updateStatus()

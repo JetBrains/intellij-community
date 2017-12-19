@@ -14,9 +14,20 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.personalization
+@file:Suppress("DEPRECATION")
+
+package com.intellij.stats.completion
+
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionProgressIndicator
+import com.intellij.codeInsight.completion.CompletionService
 
 /**
  * @author Vitaliy.Bibaev
  */
-interface FactorUpdater
+object CompletionUtil {
+    fun getCurrentCompletionParameters(): CompletionParameters? = getCurrentCompletion()?.parameters
+
+    private fun getCurrentCompletion(): CompletionProgressIndicator? =
+            CompletionService.getCompletionService().currentCompletion as? CompletionProgressIndicator
+}

@@ -20,8 +20,10 @@ import com.intellij.stats.storage.FilePathProvider
 import java.io.File
 
 class LogFileManager(private val filePathProvider: FilePathProvider) {
+    private companion object {
+        val MAX_SIZE_BYTE = 250 * 1024
+    }
 
-    private val MAX_SIZE_BYTE = 250 * 1024
     private val storage = LineStorage()
 
     fun println(message: String) {
