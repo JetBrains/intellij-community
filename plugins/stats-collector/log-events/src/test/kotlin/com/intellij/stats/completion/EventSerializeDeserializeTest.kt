@@ -17,8 +17,8 @@
 package com.intellij.stats.completion
 
 import com.intellij.stats.completion.events.*
-import junit.framework.Assert.assertEquals
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.*
 
