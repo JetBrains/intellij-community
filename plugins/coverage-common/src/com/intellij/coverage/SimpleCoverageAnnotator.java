@@ -339,6 +339,13 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
           public void annotateTestDirectory(final String dirPath, final DirCoverageInfo info) {
             myTestDirCoverageInfos.put(dirPath, info);
+
+            try {
+              myTestDirCoverageInfos.put((new File(dirPath)).getCanonicalPath(), info);
+            }
+            catch (IOException e) {
+              //pass
+            }
           }
 
           public void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info) {
