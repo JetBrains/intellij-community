@@ -47,11 +47,15 @@ public abstract class PyEnvTestCase {
   /**
    * Folder with python interpreters.
    */
-  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHONS";
+  private static final String PYCHARM_PYTHONS = "PYCHARM_PYTHONS";
   /**
    * Folder with virtual envs.
    */
   private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
+  /**
+   * Separated list of python interpreters
+   */
+  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
 
   protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
 
@@ -216,7 +220,7 @@ public abstract class PyEnvTestCase {
      */
     Assume.assumeFalse(testName +
                        ": environments are not defined. Skipping. \nSpecify either " +
-                       PYCHARM_PYTHON_ENVS +
+                       PYCHARM_PYTHONS +
                        " or " +
                        PYCHARM_PYTHON_VIRTUAL_ENVS +
                        " environment variable.",
@@ -266,7 +270,7 @@ public abstract class PyEnvTestCase {
   public static List<String> getPythonRoots() {
     List<String> roots = Lists.newArrayList();
 
-    String envs = System.getenv(PYCHARM_PYTHON_ENVS);
+    String envs = System.getenv(PYCHARM_PYTHONS);
     if (envs != null) {
       roots.addAll(readEnvRoots(envs));
     }
@@ -274,6 +278,11 @@ public abstract class PyEnvTestCase {
     String virtualEnvs = System.getenv(PYCHARM_PYTHON_VIRTUAL_ENVS);
     if (virtualEnvs != null) {
       roots.addAll(readEnvRoots(virtualEnvs));
+    }
+
+    String envsList = System.getenv(PYCHARM_PYTHON_ENVS);
+    if (envsList != null) {
+      roots.addAll(Lists.newArrayList(envsList.split(File.pathSeparator)));
     }
 
     return roots;
