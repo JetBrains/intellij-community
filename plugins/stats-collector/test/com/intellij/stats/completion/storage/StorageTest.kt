@@ -42,7 +42,7 @@ class FilesProviderTest {
     }
     
     @Test
-    fun test_three_new_files_created() {
+    fun `test three new files created`() {
         provider.getUniqueFile().createNewFile()
         provider.getUniqueFile().createNewFile()
         provider.getUniqueFile().createNewFile()
@@ -72,14 +72,14 @@ class AsciiMessageStorageTest {
     }
 
     @Test
-    fun test_size_with_new_lines() {
+    fun `test size with new lines`() {
         val line = "text"
         storage.appendLine(line)
         assertThat(storage.sizeWithNewLine("")).isEqualTo(line.length + 2 * System.lineSeparator().length)
     }
     
     @Test
-    fun test_size_is_same_as_file_size() {
+    fun `test size is same as file size`() {
         val line = "text"
         storage.appendLine(line)
         storage.appendLine(line)
@@ -90,8 +90,6 @@ class AsciiMessageStorageTest {
         storage.dump(tmpFile)
         assertThat(tmpFile.length()).isEqualTo(expectedSize.toLong())
     }
-    
-    
 }
 
 
@@ -116,7 +114,7 @@ class FileLoggerTest {
     }
 
     @Test
-    fun test_chunk_is_around_256Kb() {
+    fun `test chunk is around 256Kb`() {
         val bytesToWrite = 1024 * 200
         val text = StringUtil.repeat("c", bytesToWrite)
         fileLogger.println(text)
@@ -131,7 +129,7 @@ class FileLoggerTest {
     }
     
     @Test
-    fun test_multiple_chunks() {
+    fun `test multiple chunks`() {
         writeKb(1024)
 
         val files = filesProvider.getDataFiles()
@@ -142,7 +140,7 @@ class FileLoggerTest {
 
 
     @Test
-    fun test_delete_old_stuff() {
+    fun `test delete old stuff`() {
         writeKb(4096)
 
         var files = filesProvider.getDataFiles()
@@ -178,5 +176,4 @@ class FileLoggerTest {
         }
         fileLogger.dispose()
     }
-
 }

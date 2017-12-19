@@ -28,19 +28,19 @@ private fun List<LogEvent>.serialize(): List<String> = map { LogEventSerializer.
 class EventStreamValidatorTest {
 
     @Test
-    fun simple_sequence_of_actions() {
+    fun `simple sequence of actions`() {
         val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_position_0)
         validate(list, list.map { LogEventSerializer.toString(it) }, emptyList())
     }
 
     @Test
-    fun sample_error_sequence_of_actions() {
+    fun `sample error sequence of actions`() {
         val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_position_1)
         validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
     }
 
     @Test
-    fun up_down_actions() {
+    fun `up down actions`() {
         val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.down_event_new_pos_1,
@@ -53,7 +53,7 @@ class EventStreamValidatorTest {
     }
 
     @Test
-    fun up_down_actions_wrong() {
+    fun `up down actions wrong`() {
         val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.down_event_new_pos_1,
@@ -66,7 +66,7 @@ class EventStreamValidatorTest {
     }
 
     @Test
-    fun selected_by_typing_relaxed_conditions() {
+    fun `selected by typing relaxed conditions`() {
         val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.type_event_current_pos_0_left_ids_1_2,
@@ -77,7 +77,7 @@ class EventStreamValidatorTest {
     }
 
     @Test
-    fun selected_by_typing_error() {
+    fun `selected by typing error`() {
         val list = listOf(
                 LogEventFixtures.completion_started_3_items_shown,
                 LogEventFixtures.type_event_current_pos_0_left_ids_0_1,
