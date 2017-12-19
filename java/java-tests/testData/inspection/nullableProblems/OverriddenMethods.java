@@ -24,7 +24,7 @@ class PPP2 extends P2 {
 interface Foo {
     @NotNull Object get(int i );
 }
-class FooImpl extends java.util.ArrayList implements Foo { }
+class FooImpl extends java.util.ArrayList implements <warning descr="Non-annotated method 'get' from 'ArrayList' implements non-null method from 'Foo'">Foo</warning> { }
 
 
 interface I1 {
@@ -44,5 +44,5 @@ class A implements I1 {
   <error descr="Missing return statement">}</error>
 }
 
-class B extends A implements I2 {
+class B extends A implements <warning descr="Non-annotated method 'foo' from 'A' implements non-null method from 'I2'">I2</warning> {
 }
