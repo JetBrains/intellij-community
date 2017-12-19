@@ -60,9 +60,9 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
   override val comments: List<UComment>
     get() = super<JavaUElementWithComments>.comments
   override val sourcePsi: PsiElement?
-    get() = super.sourcePsi
+    get() = super<JavaUElementWithComments>.sourcePsi
   override val javaPsi: PsiElement?
-    get() = super.javaPsi
+    get() = super<JavaUElementWithComments>.javaPsi
 
 }
 
