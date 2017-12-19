@@ -35,12 +35,11 @@ interface Ranker {
     }
 }
 
-
-class FeatureTransformerProvider(featureManager: FeatureManager) : ApplicationComponent.Adapter() {
+class FeatureTransformerProvider(featureManager: FeatureManager) : ApplicationComponent {
     val featureTransformer: Transformer = featureManager.createTransformer()
 }
 
-class MLRanker(val provider: FeatureTransformerProvider) : Ranker {
+class MLRanker(provider: FeatureTransformerProvider) : Ranker {
 
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
