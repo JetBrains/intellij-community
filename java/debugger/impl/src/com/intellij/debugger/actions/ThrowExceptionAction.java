@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -18,11 +17,8 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -31,14 +27,14 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
-import com.sun.jdi.Method;
+import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ForceEarlyReturnAction extends DebuggerAction {
+public class ThrowExceptionAction extends DebuggerAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
@@ -57,62 +53,22 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     debugProcess.getManagerThread().schedule(new DebuggerContextCommandImpl(debuggerContext, thread) {
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        Method method;
-        try {
-          method = proxy.location().method();
-        }
-        catch (EvaluateException e) {
-          showError(project, DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
-          return;
-        }
-
-        if ("void".equals(method.returnTypeName())) {
-          forceEarlyReturnWithFinally(thread.getVirtualMachine().mirrorOfVoid(), stackFrame, debugProcess, null);
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(
-            () -> new ReturnExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), debugProcess, stackFrame).show());
-        }
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(
+          () -> new ReturnExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), debugProcess, stackFrame).show());
       }
     });
   }
 
-  private static void forceEarlyReturnWithFinally(final Value value,
-                                                  final JavaStackFrame frame,
-                                                  final DebugProcessImpl debugProcess,
-                                                  @Nullable final DialogWrapper dialog) {
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
-      if (PopFrameAction.evaluateFinallyBlocks(debugProcess.getProject(),
-                                               UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")),
-                                               frame,
-                                               new XDebuggerEvaluator.XEvaluationCallback() {
-                                                 @Override
-                                                 public void evaluated(@NotNull XValue result) {
-                                                   forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
-                                                 }
-
-                                                 @Override
-                                                 public void errorOccurred(@NotNull String errorMessage) {
-                                                   showError(debugProcess.getProject(),
-                                                             DebuggerBundle.message("error.executing.finally", errorMessage));
-                                                 }
-                                               })) {
-        return;
-      }
-      forceEarlyReturn(value, frame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
-    });
-  }
-
-  private static void forceEarlyReturn(final Value value,
-                                       final ThreadReferenceProxyImpl thread,
-                                       final DebugProcessImpl debugProcess,
-                                       @Nullable final DialogWrapper dialog) {
+  private static void throwException(final Value value,
+                                     final ThreadReferenceProxyImpl thread,
+                                     final DebugProcessImpl debugProcess,
+                                     @Nullable final DialogWrapper dialog) {
     debugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         try {
-          thread.forceEarlyReturn(value);
+          thread.stop((ObjectReference)value);
         }
         catch (Exception e) {
           showError(debugProcess.getProject(), DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
@@ -129,6 +85,10 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     });
   }
 
+  private static void showError(Project project, String message) {
+    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
+  }
+
   private static void evaluateAndReturn(final Project project,
                                         final JavaStackFrame stackFrame,
                                         final DebugProcessImpl debugProcess,
@@ -141,10 +101,8 @@ public class ForceEarlyReturnAction extends DebuggerAction {
                            @Override
                            public void evaluated(@NotNull XValue result) {
                              if (result instanceof JavaValue) {
-                               forceEarlyReturnWithFinally(((JavaValue)result).getDescriptor().getValue(),
-                                                           stackFrame,
-                                                           debugProcess,
-                                                           dialog);
+                               throwException(((JavaValue)result).getDescriptor().getValue(),
+                                              stackFrame.getDescriptor().getFrameProxy().threadProxy(), debugProcess, dialog);
                              }
                            }
 
@@ -159,17 +117,8 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     }
   }
 
-  private static void showError(Project project, String message) {
-    PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ForceEarlyReturn")));
-  }
-
   public void update(@NotNull AnActionEvent e) {
-    boolean enable = false;
-
-    JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
-    if (stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0) {
-      enable = stackFrame.getStackFrameProxy().getVirtualMachine().canForceEarlyReturn();
-    }
+    boolean enable = PopFrameAction.getStackFrame(e) != null;
 
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
       e.getPresentation().setEnabled(enable);
@@ -195,10 +144,10 @@ public class ForceEarlyReturnAction extends DebuggerAction {
       myEditorsProvider = provider;
       myProcess = process;
       myFrame = frame;
-      myEditor = new XDebuggerExpressionEditor(myProject, myEditorsProvider, "forceReturnValue", myFrame.getSourcePosition(),
+      myEditor = new XDebuggerExpressionEditor(myProject, myEditorsProvider, "throwExceptionValue", myFrame.getSourcePosition(),
                                                XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
 
-      setTitle("Return Value");
+      setTitle("Exception");
       init();
     }
 
