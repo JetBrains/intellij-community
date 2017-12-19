@@ -5,7 +5,9 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties;
 
 /**
@@ -81,6 +83,12 @@ public class SyntheticLineBreakpoint extends LineBreakpoint<JavaLineBreakpointPr
 
   @Override
   protected void fireBreakpointChanged() {
+  }
+
+  @Nullable
+  @Override
+  protected JavaLineBreakpointType getXBreakpointType() {
+    return XDebuggerUtil.getInstance().findBreakpointType(JavaLineBreakpointType.class);
   }
 
   @Override
