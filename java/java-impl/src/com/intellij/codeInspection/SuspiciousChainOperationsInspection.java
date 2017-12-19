@@ -129,6 +129,7 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
     private final Map<String, List<BinaryUnit>> myLeftNameToUnit = new HashMap<>();
     private final PsiExpression myFirstLeftQualifier;
     private final PsiExpression myFirstRightQualifier;
+    private int myCount = 0;
 
     private BinaryUnitsChain(@NotNull BinaryUnit first) {
       myFirstLeftQualifier = first.myLeft.getQualifierExpression();
@@ -138,14 +139,16 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
 
     void add(@Nullable BinaryUnit unit) {
       if (unit == null) return;
+      myCount++;
       if (!ourEquivalence.expressionsAreEquivalent(unit.myLeft.getQualifierExpression(), myFirstLeftQualifier)) return;
       if (!ourEquivalence.expressionsAreEquivalent(unit.myRight.getQualifierExpression(), myFirstRightQualifier)) return;
-        myRightNameToUnit.computeIfAbsent(unit.getRightName(), k -> new ArrayList<>()).add(unit);
-        myLeftNameToUnit.computeIfAbsent(unit.getLeftName(), k -> new ArrayList<>()).add(unit);
+      myRightNameToUnit.computeIfAbsent(unit.getRightName(), k -> new ArrayList<>()).add(unit);
+      myLeftNameToUnit.computeIfAbsent(unit.getLeftName(), k -> new ArrayList<>()).add(unit);
     }
 
     @Nullable
     PsiReferenceExpression getProbableBug() {
+      if(myCount < MIN_OPERAND_COUNT) return null;
       PsiReferenceExpression leftUnit = getProbableBug(myRightNameToUnit, true);
       PsiReferenceExpression rightUnit = getProbableBug(myLeftNameToUnit, false);
       if(leftUnit != null && rightUnit != null) return null;
