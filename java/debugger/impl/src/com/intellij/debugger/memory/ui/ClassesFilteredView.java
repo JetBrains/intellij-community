@@ -327,7 +327,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
   private void handleClassSelection(@Nullable ReferenceType ref) {
     final XDebugSession debugSession = XDebuggerManager.getInstance(myProject).getCurrentSession();
     if (ref != null && debugSession != null && debugSession.isSuspended()) {
-      if (ref.virtualMachine().canGetInstanceInfo()) {
+      if (!ref.virtualMachine().canGetInstanceInfo()) {
         XDebuggerManagerImpl.NOTIFICATION_GROUP
           .createNotification("The virtual machine implementation does not provide an ability to get instances",
                               NotificationType.INFORMATION).notify(debugSession.getProject());
