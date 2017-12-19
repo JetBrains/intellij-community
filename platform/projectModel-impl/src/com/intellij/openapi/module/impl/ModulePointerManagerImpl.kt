@@ -37,7 +37,8 @@ import kotlin.concurrent.write
 /**
  * @author nik
  */
-@State(name = "ModuleRenamingHistory", storages = arrayOf(Storage("module-renaming-history.xml")))
+const val RENAMING_HISTORY_FILE_NAME = "module-renaming-history.xml"
+@State(name = "ModuleRenamingHistory", storages = arrayOf(Storage(RENAMING_HISTORY_FILE_NAME)))
 class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager(), PersistentStateComponent<ModuleRenamingHistoryState> {
   private val unresolved = MultiMap.createSmart<String, ModulePointerImpl>()
   private val pointers = MultiMap.createSmart<Module, ModulePointerImpl>()
