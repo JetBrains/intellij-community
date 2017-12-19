@@ -74,11 +74,21 @@ class AccessorBindingWrapper extends Binding implements MultiNodeBinding {
     else {
       Object deserializedValue;
       if (beanStyle == Property.Style.ATTRIBUTE && myBinding instanceof BeanBinding && ((BeanBinding)myBinding).myBeanClass == Rectangle.class) {
-        int x = StringUtilRt.parseInt(element.getAttributeValue("x"), 0);
-        int y = StringUtilRt.parseInt(element.getAttributeValue("y"), 0);
-        int w = StringUtilRt.parseInt(element.getAttributeValue("width"), 0);
-        int h = StringUtilRt.parseInt(element.getAttributeValue("height"), 0);
-        deserializedValue = new Rectangle(x, y, w, h);
+        String xA = element.getAttributeValue("x");
+        String yA = element.getAttributeValue("y");
+        String wA = element.getAttributeValue("width");
+        String hA = element.getAttributeValue("height");
+
+        if (xA != null && yA != null && wA != null && hA != null) {
+          int x = StringUtilRt.parseInt(xA, 0);
+          int y = StringUtilRt.parseInt(yA, 0);
+          int h = StringUtilRt.parseInt(hA, 0);
+          int w = StringUtilRt.parseInt(wA, 0);
+          deserializedValue = new Rectangle(x, y, w, h);
+        }
+        else {
+          return context;
+        }
       }
       else {
         deserializedValue = myBinding.deserializeUnsafe(currentValue, element);
