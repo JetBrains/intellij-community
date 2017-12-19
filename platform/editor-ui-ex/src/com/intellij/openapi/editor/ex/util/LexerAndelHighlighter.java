@@ -36,16 +36,14 @@ public class LexerAndelHighlighter {
     private final SegmentArrayWithData mySegments;
     private final SyntaxHighlighter myHighlighter;
     private static final EditorColorsScheme colorScheme = EditorColorsManager.getInstance().getScheme("zenburn");
-    private final String myLanguageID;
     private final Language myLanguage;
     private final PairedBraceMatcher myBraceMatcher;
     private final BracePair[] myBracePairs;
 
-    private TokensContainer(SyntaxHighlighter highlighter, String languageID) {
+    private TokensContainer(SyntaxHighlighter highlighter, Language language) {
       mySegments = new SegmentArrayWithData();
       myHighlighter = highlighter;
-      myLanguageID = languageID;
-      myLanguage = Language.findLanguageByID(languageID);
+      myLanguage = language;
 
       myBraceMatcher = LanguageBraceMatching.INSTANCE.forLanguage(myLanguage);
       myBracePairs = myBraceMatcher.getPairs();
@@ -55,10 +53,9 @@ public class LexerAndelHighlighter {
       myInitialState = myLexer.getState();
     }
 
-    private TokensContainer(SyntaxHighlighter highlighter, String languageID, SegmentArrayWithData se) {
+    private TokensContainer(SyntaxHighlighter highlighter, Language language, SegmentArrayWithData se) {
       myHighlighter = highlighter;
-      myLanguageID = languageID;
-      myLanguage = Language.findLanguageByID(languageID);
+      myLanguage = language;
 
       myBraceMatcher = LanguageBraceMatching.INSTANCE.forLanguage(myLanguage);
       myBracePairs = myBraceMatcher.getPairs();
@@ -145,9 +142,8 @@ public class LexerAndelHighlighter {
   }
 
   @NotNull
-  public static TokensContainer createTokensContainer(@NotNull String languageID, @NotNull CharSequence text) {
-    final Language lang = Language.findLanguageByID(languageID);
-    final TokensContainer tc = new TokensContainer(SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, null), languageID);
+  public static TokensContainer createTokensContainer(@NotNull CharSequence text, Language language) {
+    final TokensContainer tc = new TokensContainer(SyntaxHighlighterFactory.getSyntaxHighlighter(language, null, null), language);
     final int textLength = text.length();
     tc.myLexer.start(text, 0, textLength, tc.myInitialState);
     tc.mySegments.removeAll();
@@ -196,7 +192,7 @@ public class LexerAndelHighlighter {
   @NotNull
   public static TokensContainer changeText(@NotNull TokensContainer tokensContainer, @NotNull TextChange e) {
     if(tokensContainer.mySegments.getSegmentCount() == 0) {
-      return createTokensContainer(tokensContainer.myLanguageID, e.myText);
+      return createTokensContainer(e.myText, tokensContainer.myLanguage);
     }
     int oldStartOffset = e.myOffset;
 
@@ -299,7 +295,7 @@ public class LexerAndelHighlighter {
     final SegmentArrayWithData newSegments = tokensContainer.mySegments.copy();
     newSegments.shiftSegments(oldEndIndex, shift);
     newSegments.replace(startIndex, oldEndIndex, insertSegments);
-    return new TokensContainer(tokensContainer.myHighlighter, tokensContainer.myLanguageID, newSegments);
+    return new TokensContainer(tokensContainer.myHighlighter, tokensContainer.myLanguage, newSegments);
   }
 
 }
