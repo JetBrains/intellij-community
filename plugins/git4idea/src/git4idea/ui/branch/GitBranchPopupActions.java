@@ -177,6 +177,8 @@ class GitBranchPopupActions {
     protected final String myBranchName;
     @NotNull private final GitRepository mySelectedRepository;
     private final GitBranchManager myGitBranchManager;
+    @NotNull private final GitVcsSettings myGitVcsSettings;
+    @NotNull private final GitBranchIncomingOutgoingManager myIncomingOutgoingManager;
 
     LocalBranchActions(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName,
                        @NotNull GitRepository selectedRepository) {
@@ -185,6 +187,8 @@ class GitBranchPopupActions {
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = ServiceManager.getService(project, GitBranchManager.class);
+      myGitVcsSettings = GitVcsSettings.getInstance(myProject);
+      myIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
       getTemplatePresentation().setText(calcBranchText(), false); // no mnemonics
       setFavorite(myGitBranchManager.isFavorite(LOCAL, repositories.size() > 1 ? null : mySelectedRepository, myBranchName));
     }
@@ -238,16 +242,14 @@ class GitBranchPopupActions {
 
     @Override
     public boolean hasSmthToPull() {
-      return GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
-             GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPull(chooseRepo())
-               .contains(new GitLocalBranch(myBranchName));
+      return myGitVcsSettings.shouldUpdateBranchInfo() &&
+             myIncomingOutgoingManager.getBranchesToPull(chooseRepo()).contains(new GitLocalBranch(myBranchName));
     }
 
     @Override
     public boolean hasSmthToPush() {
-      return GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo() &&
-             GitBranchIncomingOutgoingManager.getInstance(myProject).getBranchesToPush(chooseRepo())
-               .contains(new GitLocalBranch(myBranchName));
+      return myGitVcsSettings.shouldUpdateBranchInfo() &&
+             myIncomingOutgoingManager.getBranchesToPush(chooseRepo()).contains(new GitLocalBranch(myBranchName));
     }
 
     static class CheckoutAction extends DumbAwareAction {
