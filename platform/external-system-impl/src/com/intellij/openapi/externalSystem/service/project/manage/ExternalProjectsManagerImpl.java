@@ -124,7 +124,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public void registerView(@NotNull ExternalProjectsView externalProjectsView) {
     assert getExternalProjectsView(externalProjectsView.getSystemId()) == null;
 
-    init();
     myProjectsViews.add(externalProjectsView);
     if (externalProjectsView instanceof ExternalProjectsViewImpl) {
       ExternalProjectsViewImpl view = (ExternalProjectsViewImpl)externalProjectsView;

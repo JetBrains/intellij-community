@@ -8,7 +8,6 @@ public class PoisonFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory{
   public PoisonFactory() {
     RuntimeException exception = new RuntimeException("ForkJoinPool initialized too early, IdeaForkJoinWorkerThreadFactory ignored");
     exception.printStackTrace();
-    exception.printStackTrace(System.out);
     throw exception;
   }
 

@@ -526,4 +526,11 @@ public class EditorImplTest extends AbstractEditorTest {
     type(' ');
     checkResultByText("a <caret>");
   }
+
+  public void testSettingPromptDoesNotCreateSoftWraps() {
+    initText(StringUtil.repeat("a ", 1000));
+    ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes());
+    runWriteCommand(() -> myEditor.getDocument().deleteString(0, myEditor.getDocument().getTextLength()));
+    assertEquals(0, ((EditorImpl)myEditor).getVisibleLineCount());
+  }
 }
