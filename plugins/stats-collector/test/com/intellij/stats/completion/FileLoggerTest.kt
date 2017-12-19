@@ -21,7 +21,7 @@ import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.PlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
@@ -70,7 +70,7 @@ class FileLoggerTest : PlatformTestCase() {
         val logger = loggerProvider.newCompletionLogger()
         
         val lookup = mock(LookupImpl::class.java).apply {
-            `when`(getRelevanceObjects(Matchers.any(), Matchers.anyBoolean())).thenReturn(emptyMap())
+            `when`(getRelevanceObjects(ArgumentMatchers.any(), ArgumentMatchers.anyBoolean())).thenReturn(emptyMap())
             `when`(items).thenReturn(emptyList())
             `when`(psiFile).thenReturn(null)
             `when`(editor).thenReturn(mock(Editor::class.java))

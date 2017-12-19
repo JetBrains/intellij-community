@@ -22,7 +22,7 @@ import com.intellij.stats.network.service.ResponseData
 import com.intellij.stats.sender.StatisticSenderImpl
 import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.UsefulTestCase
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
@@ -97,7 +97,7 @@ class Test {
                 ResponseData(200)
             }
 
-            `when`(post(Matchers.anyString(), anyMapOf(String::class.java, String::class.java))).then {
+            `when`(post(ArgumentMatchers.anyString(), ArgumentMatchers.anyMap<String, String>())).then {
                 Thread.sleep(1000)
                 ResponseData(200)
             }
