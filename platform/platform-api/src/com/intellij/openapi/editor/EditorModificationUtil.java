@@ -102,7 +102,6 @@ public class EditorModificationUtil {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (editor.isInsertMode() || !toProcessOverwriteMode) {
       if (selectionModel.hasSelection()) {
-        oldOffset = selectionModel.getSelectionStart();
         document.replaceString(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), s);
       } else {
         document.insertString(oldOffset, s);
