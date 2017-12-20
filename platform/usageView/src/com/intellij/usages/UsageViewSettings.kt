@@ -17,16 +17,20 @@ class UsageViewSettings : BaseState(), PersistentStateComponent<UsageViewSetting
       get() = ServiceManager.getService(UsageViewSettings::class.java)
   }
 
-  var EXPORT_FILE_NAME by string("report.txt")
+  @Suppress("MemberVisibilityCanPrivate")
+  @get:OptionTag("EXPORT_FILE_NAME")
+  internal var EXPORT_FILE_NAME by property("report.txt")
 
+  @get:OptionTag("IS_EXPANDED")
   var isExpanded by property(false)
-  var isShowPackages by property(true)
-  var isShowMethods by property(false)
 
   @get:OptionTag("IS_AUTOSCROLL_TO_SOURCE")
   var isAutoScrollToSource by property(false)
 
+  @get:OptionTag("IS_FILTER_DUPLICATED_LINE")
   var isFilterDuplicatedLine by property(true)
+
+  @get:OptionTag("IS_SHOW_METHODS")
   var isShowModules by property(false)
 
   @get:OptionTag("IS_PREVIEW_USAGES")

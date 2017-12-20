@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.usages.impl;
 
@@ -60,19 +48,19 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     if (supportsNonCodeRule()) {
       rules.add(new NonCodeUsageGroupingRule(project));
     }
-    if (supportsScopesRule() && UsageViewSettings.getInstance().GROUP_BY_SCOPE) {
+    if (supportsScopesRule() && UsageViewSettings.getInstance().isGroupByScope()) {
       rules.add(new UsageScopeGroupingRule());
     }
-    if (UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE) {
+    if (UsageViewSettings.getInstance().isGroupByUsageType()) {
       rules.add(new UsageTypeGroupingRule());
     }
-    if (supportsModuleRule() && UsageViewSettings.getInstance().GROUP_BY_MODULE) {
-      rules.add(new ModuleGroupingRule(project, UsageViewSettings.getInstance().FLATTEN_MODULES));
+    if (supportsModuleRule() && UsageViewSettings.getInstance().isGroupByModule()) {
+      rules.add(new ModuleGroupingRule(project, UsageViewSettings.getInstance().isFlattenModules()));
     }
-    if (UsageViewSettings.getInstance().GROUP_BY_PACKAGE) {
+    if (UsageViewSettings.getInstance().isGroupByPackage()) {
       rules.add(DirectoryGroupingRule.getInstance(project));
     }
-    if (UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE) {
+    if (UsageViewSettings.getInstance().isGroupByFileStructure()) {
       FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
       for (FileStructureGroupRuleProvider ruleProvider : providers) {
         ContainerUtil.addIfNotNull(rules, ruleProvider.getUsageGroupingRule(project));
@@ -143,11 +131,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE;
+      return UsageViewSettings.getInstance().isGroupByUsageType();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().GROUP_BY_USAGE_TYPE = value;
+      UsageViewSettings.getInstance().setGroupByUsageType(value);
     }
   }
 
@@ -157,11 +145,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().GROUP_BY_SCOPE;
+      return UsageViewSettings.getInstance().isGroupByScope();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().GROUP_BY_SCOPE = value;
+      UsageViewSettings.getInstance().setGroupByScope(value);
     }
   }
 
@@ -172,12 +160,12 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().GROUP_BY_MODULE;
+      return UsageViewSettings.getInstance().isGroupByModule();
     }
 
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().GROUP_BY_MODULE = value;
+      UsageViewSettings.getInstance().setGroupByModule(value);
     }
   }
 
@@ -188,18 +176,18 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().FLATTEN_MODULES;
+      return UsageViewSettings.getInstance().isFlattenModules();
     }
 
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().FLATTEN_MODULES = value;
+      UsageViewSettings.getInstance().setFlattenModules(value);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(UsageViewSettings.getInstance().GROUP_BY_MODULE);
+      e.getPresentation().setEnabled(UsageViewSettings.getInstance().isGroupByModule());
     }
   }
 
@@ -209,11 +197,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().GROUP_BY_PACKAGE;
+      return UsageViewSettings.getInstance().isGroupByPackage();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().GROUP_BY_PACKAGE = value;
+      UsageViewSettings.getInstance().setGroupByPackage(value);
     }
   }
 
@@ -223,11 +211,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE;
+      return UsageViewSettings.getInstance().isGroupByFileStructure();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().GROUP_BY_FILE_STRUCTURE = value;
+      UsageViewSettings.getInstance().setGroupByFileStructure(value);
     }
   }
 }
