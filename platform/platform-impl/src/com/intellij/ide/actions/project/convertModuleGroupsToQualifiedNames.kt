@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.module.impl.ModulePointerManagerImpl
-import com.intellij.openapi.module.impl.RENAMING_HISTORY_FILE_NAME
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -94,7 +93,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   override fun createCenterPanel(): JPanel {
     val text = XmlStringUtil.wrapInHtml(ProjectBundle.message("convert.module.groups.description.text"))
     val historyFilePath = when (project.stateStore.storageScheme) {
-      StorageScheme.DIRECTORY_BASED -> "${Project.DIRECTORY_STORE_FOLDER}/$RENAMING_HISTORY_FILE_NAME"
+      StorageScheme.DIRECTORY_BASED -> "${Project.DIRECTORY_STORE_FOLDER}/modules.xml"
       StorageScheme.DEFAULT -> PathUtil.getFileName(project.stateStore.projectFilePath)
     }
     val rememberOldNames = JBPanelFactory.panel(rememberOldNamesCheckBox)
