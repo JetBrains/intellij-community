@@ -16,15 +16,13 @@
 package com.jetbrains.python.console
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.CredentialsCase
-import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.remote.PyRemoteProcessHandlerBase
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager
+import com.jetbrains.python.remote.*
 import java.io.File
 
 interface PythonConsoleRemoteProcessCreator<T> {
@@ -46,8 +44,18 @@ interface PythonConsoleRemoteProcessCreator<T> {
   }
 }
 
-data class RemoteConsoleProcessData(val remoteProcessHandlerBase: PyRemoteProcessHandlerBase,
-                                    val pydevConsoleCommunication: PydevRemoteConsoleCommunication)
+data class RemoteConsoleProcessData(val remoteProcessHandlerBase: ProcessHandler,
+                                    val pydevConsoleCommunication: PydevRemoteConsoleCommunication,
+                                    val commandLine: String?,
+                                    val process: Process,
+                                    val socketProvider: PyRemoteSocketToLocalHostProvider) {
+  constructor(remoteProcessHandlerBase: PyRemoteProcessHandlerBase,
+              pydevConsoleCommunication: PydevRemoteConsoleCommunication) : this(remoteProcessHandlerBase = remoteProcessHandlerBase,
+                                                                                 pydevConsoleCommunication = pydevConsoleCommunication,
+                                                                                 commandLine = remoteProcessHandlerBase.commandLine,
+                                                                                 process = remoteProcessHandlerBase.process,
+                                                                                 socketProvider = remoteProcessHandlerBase.remoteSocketToLocalHostProvider)
+}
 
 @Throws(ExecutionException::class)
 fun createRemoteConsoleProcess(manager: PythonRemoteInterpreterManager,
