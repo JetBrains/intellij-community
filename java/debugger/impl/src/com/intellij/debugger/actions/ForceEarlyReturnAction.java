@@ -19,18 +19,14 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
+import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
 import com.sun.jdi.Method;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +67,13 @@ public class ForceEarlyReturnAction extends DebuggerAction {
         }
         else {
           ApplicationManager.getApplication().invokeLater(
-            () -> new ReturnExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), debugProcess, stackFrame).show());
+            () -> new XExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), "forceReturnValue",
+                                        "Return Value", stackFrame.getSourcePosition(), null) {
+              @Override
+              protected void doOKAction() {
+                evaluateAndReturn(project, stackFrame, debugProcess, getExpression(), this);
+              }
+            }.show());
         }
       }
     });
@@ -176,47 +178,6 @@ public class ForceEarlyReturnAction extends DebuggerAction {
     }
     else {
       e.getPresentation().setVisible(enable);
-    }
-  }
-
-  private static class ReturnExpressionDialog extends DialogWrapper {
-    private final Project myProject;
-    private final XDebuggerEditorsProvider myEditorsProvider;
-    private final DebugProcessImpl myProcess;
-    private final JavaStackFrame myFrame;
-    private final XDebuggerExpressionEditor myEditor;
-
-    public ReturnExpressionDialog(@NotNull Project project,
-                                  XDebuggerEditorsProvider provider,
-                                  DebugProcessImpl process,
-                                  JavaStackFrame frame) {
-      super(project);
-      myProject = project;
-      myEditorsProvider = provider;
-      myProcess = process;
-      myFrame = frame;
-      myEditor = new XDebuggerExpressionEditor(myProject, myEditorsProvider, "forceReturnValue", myFrame.getSourcePosition(),
-                                               XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
-
-      setTitle("Return Value");
-      init();
-    }
-
-    @Nullable
-    @Override
-    protected JComponent createCenterPanel() {
-      return myEditor.getComponent();
-    }
-
-    @Nullable
-    @Override
-    public JComponent getPreferredFocusedComponent() {
-      return myEditor.getPreferredFocusedComponent();
-    }
-
-    @Override
-    protected void doOKAction() {
-      evaluateAndReturn(myProject, myFrame, myProcess, myEditor.getExpression(), this);
     }
   }
 }
