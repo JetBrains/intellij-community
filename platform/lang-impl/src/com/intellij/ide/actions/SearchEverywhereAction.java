@@ -468,12 +468,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (index == model.moreIndex.runConfigurations) wid = WidgetID.RUN_CONFIGURATIONS;
       if (wid != null) {
         final WidgetID widgetID = wid;
-        myCurrentWorker.doWhenProcessed(() -> {
-          myCalcThread = new CalcThread(project, pattern, true);
-          myPopupActualWidth = 0;
-          myCurrentWorker = myCalcThread.insert(index, widgetID);
-        });
-
+        synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
+          final int currentRestartRequest = ++myCalcThreadRestartRequestId;
+          myCurrentWorker.doWhenProcessed(() -> {
+            synchronized (myWorkerRestartRequestLock) {
+              if (currentRestartRequest != myCalcThreadRestartRequestId) {
+                return;
+              }
+              myCalcThread = new CalcThread(project, pattern, true);
+              myPopupActualWidth = 0;
+              myCurrentWorker = myCalcThread.insert(index, widgetID);
+            }
+          });
+        }
         return;
       }
     }
