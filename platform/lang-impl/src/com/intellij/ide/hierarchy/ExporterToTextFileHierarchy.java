@@ -57,7 +57,7 @@ class ExporterToTextFileHierarchy implements ExporterToTextFile {
   }
 
   @Override
-  public void exportedTo(String filePath) {
+  public void exportedTo(@NotNull String filePath) {
     final HierarchyBrowserManager.State state = HierarchyBrowserManager.getInstance(myHierarchyBrowserBase.myProject).getState();
     if (state != null) {
       state.EXPORT_FILE_PATH = filePath;

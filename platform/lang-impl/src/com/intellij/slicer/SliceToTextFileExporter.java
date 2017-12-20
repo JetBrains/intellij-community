@@ -54,7 +54,7 @@ public class SliceToTextFileExporter implements ExporterToTextFile {
   }
 
   @Override
-  public void exportedTo(String filePath) {
+  public void exportedTo(@NotNull String filePath) {
     UsageViewSettings.getInstance().setExportFileName(filePath);
   }
 

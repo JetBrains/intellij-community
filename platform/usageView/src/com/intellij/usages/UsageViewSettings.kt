@@ -5,12 +5,20 @@ package com.intellij.usages
 
 import com.intellij.openapi.components.*
 import com.intellij.util.PathUtil
-import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
 
+/**
+ * Passed params will be used as default values, so, do not use constructor if instance will be used as a state (unless you want to change defaults)
+ */
 @State(name = "UsageViewSettings", storages = arrayOf(Storage("usageView.xml"), Storage(value = "other.xml", deprecated = true)))
-class UsageViewSettings : BaseState(), PersistentStateComponent<UsageViewSettings> {
+open class UsageViewSettings(
+  isGroupByFileStructure: Boolean = true,
+  isGroupByModule: Boolean = true,
+  isGroupByPackage: Boolean = true,
+  isGroupByUsageType: Boolean = true,
+  isGroupByScope: Boolean = false
+) : BaseState(), PersistentStateComponent<UsageViewSettings> {
   companion object {
     @JvmStatic
     val instance: UsageViewSettings
@@ -43,22 +51,22 @@ class UsageViewSettings : BaseState(), PersistentStateComponent<UsageViewSetting
   var previewUsagesSplitterProportion by property(0.5f)
 
   @get:OptionTag("GROUP_BY_USAGE_TYPE")
-  var isGroupByUsageType by property(true)
+  var isGroupByUsageType by property(isGroupByUsageType)
 
   @get:OptionTag("GROUP_BY_MODULE")
-  var isGroupByModule by property(true)
+  var isGroupByModule by property(isGroupByModule)
 
   @get:OptionTag("FLATTEN_MODULES")
   var isFlattenModules by property(true)
 
   @get:OptionTag("GROUP_BY_PACKAGE")
-  var isGroupByPackage by property(true)
+  var isGroupByPackage by property(isGroupByPackage)
 
   @get:OptionTag("GROUP_BY_FILE_STRUCTURE")
-  var isGroupByFileStructure by property(true)
+  var isGroupByFileStructure by property(isGroupByFileStructure)
 
   @get:OptionTag("GROUP_BY_SCOPE")
-  var isGroupByScope: Boolean by property(false)
+  var isGroupByScope: Boolean by property(isGroupByScope)
 
   var exportFileName: String?
     @Transient
@@ -69,7 +77,7 @@ class UsageViewSettings : BaseState(), PersistentStateComponent<UsageViewSetting
 
   override fun getState() = this
 
-  override fun loadState(`object`: UsageViewSettings) {
-    XmlSerializerUtil.copyBean(`object`, this)
+  override fun loadState(state: UsageViewSettings) {
+    copyFrom(state)
   }
 }

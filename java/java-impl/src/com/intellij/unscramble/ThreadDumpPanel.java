@@ -426,11 +426,6 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
-    public void exportedTo(String filePath) {
-
-    }
-
-    @Override
     public boolean canExport() {
       return !myThreadStates.isEmpty();
     }

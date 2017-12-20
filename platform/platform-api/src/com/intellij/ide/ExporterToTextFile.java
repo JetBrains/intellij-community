@@ -28,7 +28,8 @@ public interface ExporterToTextFile {
   @NotNull
   String getDefaultFilePath();
 
-  void exportedTo(String filePath);
+  default void exportedTo(@NotNull String filePath) {
+  }
 
   boolean canExport();
 }

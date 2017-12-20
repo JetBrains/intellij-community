@@ -18,9 +18,12 @@ import java.util.Enumeration;
  */
 public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   private final UsageViewImpl myUsageView;
+  @NotNull
+  private final UsageViewSettings myUsageViewSettings;
 
-  public ExporterToTextFile(@NotNull UsageViewImpl usageView) {
+  public ExporterToTextFile(@NotNull UsageViewImpl usageView, @NotNull UsageViewSettings usageViewSettings) {
     myUsageView = usageView;
+    myUsageViewSettings = usageViewSettings;
   }
 
   @NotNull
@@ -86,12 +89,12 @@ public class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
   @NotNull
   @Override
   public String getDefaultFilePath() {
-    return UsageViewSettings.getInstance().getExportFileName();
+    return myUsageViewSettings.getExportFileName();
   }
 
   @Override
-  public void exportedTo(String filePath) {
-    UsageViewSettings.getInstance().setExportFileName(filePath);
+  public void exportedTo(@NotNull String filePath) {
+    myUsageViewSettings.setExportFileName(filePath);
   }
 
   @Override

@@ -7,23 +7,26 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.util.xmlb.XmlSerializerUtil
 
 @State(name = "ShowUsagesSettings", storages = arrayOf(Storage("usageView.xml")))
-class ShowUsagesSettings : PersistentStateComponent<UsageViewSettings> {
-  private val myState = UsageViewSettings(false, false, false, false, false)
-
-  override fun getState(): UsageViewSettings? {
-    return myState
-  }
-
-  override fun loadState(state: UsageViewSettings) {
-    XmlSerializerUtil.copyBean(state, myState)
-  }
-
+class ShowUsagesSettings : PersistentStateComponent<ShowUsageViewSettings> {
   companion object {
-
+    @JvmStatic
     val instance: ShowUsagesSettings
       get() = ServiceManager.getService(ShowUsagesSettings::class.java)
   }
+
+  private var state = ShowUsageViewSettings()
+
+  override fun getState() = state
+
+  override fun loadState(state: ShowUsageViewSettings) {
+    this.state = state
+  }
+
+  fun applyUsageViewSettings(otherState: UsageViewSettings) {
+    state.copyFrom(otherState)
+  }
 }
+
+class ShowUsageViewSettings : UsageViewSettings(false, false, false, false, false)

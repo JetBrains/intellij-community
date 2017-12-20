@@ -708,10 +708,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
 
     @Override
-    public void exportedTo(String filePath) {
-    }
-
-    @Override
     public boolean canExport() {
       return true;
     }

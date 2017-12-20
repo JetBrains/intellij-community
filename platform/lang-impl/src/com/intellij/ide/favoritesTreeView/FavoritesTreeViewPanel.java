@@ -300,10 +300,6 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
 
       @Override
-      public void exportedTo(String filePath) {
-      }
-
-      @Override
       public boolean canExport() {
         return true;
       }
