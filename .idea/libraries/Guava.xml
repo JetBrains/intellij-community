@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="Guava">
+  <library name="Guava" type="repository">
+    <properties maven-id="com.google.guava:guava:21.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/guava-21.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/21.0/guava-21.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/guava-21.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/21.0/guava-21.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
