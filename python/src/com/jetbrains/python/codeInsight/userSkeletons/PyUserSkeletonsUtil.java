@@ -15,12 +15,13 @@
  */
 package com.jetbrains.python.codeInsight.userSkeletons;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,7 +57,7 @@ public class PyUserSkeletonsUtil {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
 
-  private static final ImmutableList<String> STDLIB_SKELETONS = ImmutableList.of(
+  private static final ImmutableSet<String> STDLIB_SKELETONS = ImmutableSet.of(
     "asyncio",
     "multiprocessing",
     "os",
@@ -130,12 +131,13 @@ public class PyUserSkeletonsUtil {
     if (skeletonsDir == null) {
       return false;
     }
-    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir);
+    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir, '/');
     // not under skeletons directory
     if (relativePath == null) {
       return false;
     }
-    return ContainerUtil.exists(STDLIB_SKELETONS, relativePath::startsWith);
+    final String firstComponent = ContainerUtil.getFirstItem(StringUtil.split(relativePath, "/"));
+    return STDLIB_SKELETONS.contains(firstComponent);
   }
 
   @Nullable

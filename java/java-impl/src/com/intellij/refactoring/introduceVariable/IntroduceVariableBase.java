@@ -81,7 +81,6 @@ import java.util.*;
 
 /**
  * @author dsl
- * Date: Nov 15, 2002
  */
 public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static class JavaReplaceChoice implements OccurrencesChooser.BaseReplaceChoice {

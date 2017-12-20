@@ -40,7 +40,6 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
@@ -130,6 +129,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     result.clear();
   }
 
+  private static Set<String> ourToolsWithInformationProblems = new HashSet<>();
   public void doInspectInBatch(@NotNull final GlobalInspectionContextImpl context,
                                @NotNull final InspectionManager iManager,
                                @NotNull final List<LocalInspectionToolWrapper> toolWrappers) {
@@ -140,7 +140,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (resultList == null) return;
     for (InspectionResult inspectionResult : resultList) {
       LocalInspectionToolWrapper toolWrapper = inspectionResult.tool;
+      final String shortName = toolWrapper.getShortName();
       for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
+        if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
+          if (ourToolsWithInformationProblems.add(shortName)) {
+            LOG.error("Tool '" + shortName + "' registers INFORMATION level problem in batch mode on " + getFile() + ". " +
+                      "INFORMATION level fixes could change semantics and should not be used in batch transformations");
+          }
+          continue;
+        }
         addDescriptors(toolWrapper, descriptor, context);
       }
     }
@@ -198,7 +206,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                        @NotNull final ProgressIndicator progress) {
     myFailFastOnAcquireReadAction = failFastOnAcquireReadAction;
     if (toolWrappers.isEmpty()) return;
-
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_INSPECT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
     List<PsiElement> inside = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
@@ -215,7 +222,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     inspectInjectedPsi(inside, isOnTheFly, progress, iManager, true, toolWrappers);
     visitRestElementsAndCleanup(progress, outside, session, init, elementDialectIds);
     inspectInjectedPsi(outside, isOnTheFly, progress, iManager, false, toolWrappers);
-
     ProgressManager.checkCanceled();
 
     myInfos = new ArrayList<>();
@@ -317,7 +323,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                           @NotNull final List<LocalInspectionToolWrapper> wrappers) {
     final Set<PsiFile> injected = new THashSet<>();
     for (PsiElement element : elements) {
-      InjectedLanguageUtil.enumerate(element, getFile(), false, (injectedPsi, places) -> injected.add(injectedPsi));
+      PsiFile containingFile = getFile();
+      InjectedLanguageManager.getInstance(containingFile.getProject()).enumerateEx(element, containingFile, false,
+                                                                                   (injectedPsi, places) -> injected.add(injectedPsi));
     }
     if (injected.isEmpty()) return;
     Processor<PsiFile> processor = injectedPsi -> {

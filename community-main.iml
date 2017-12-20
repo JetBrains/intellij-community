@@ -56,7 +56,7 @@
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="community-resources" />
-    <orderEntry type="module" module-name="java-tests" />
+    <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="copyright" />
     <orderEntry type="module" module-name="cvs-plugin" />
     <orderEntry type="module" module-name="java-i18n" />
@@ -70,7 +70,7 @@
     <orderEntry type="module" module-name="maven" />
     <orderEntry type="module" module-name="RegExpSupport" />
     <orderEntry type="module" module-name="svn4idea" />
-    <orderEntry type="module" module-name="svn4idea-tests" />
+    <orderEntry type="module" module-name="svn4idea-tests" scope="TEST" />
     <orderEntry type="module" module-name="testng" />
     <orderEntry type="module" module-name="IntelliLang-java" />
     <orderEntry type="module" module-name="IntelliLang-xml" />
@@ -80,17 +80,17 @@
     <orderEntry type="module" module-name="tasks-core" />
     <orderEntry type="module" module-name="tasks-api" />
     <orderEntry type="module" module-name="tasks-java" />
-    <orderEntry type="module" module-name="tasks-tests" />
+    <orderEntry type="module" module-name="tasks-tests" scope="TEST" />
     <orderEntry type="module" module-name="github" />
     <orderEntry type="module" module-name="hg4idea" />
     <orderEntry type="module" module-name="relaxng" />
     <orderEntry type="module" module-name="gradle" />
     <orderEntry type="module" module-name="remote-servers-impl" />
-    <orderEntry type="module" module-name="dom-tests" />
+    <orderEntry type="module" module-name="dom-tests" scope="TEST" />
     <orderEntry type="module" module-name="colorSchemes" />
     <orderEntry type="module" module-name="javaFX-CE" />
     <orderEntry type="module" module-name="javaFX-jps-plugin" />
-    <orderEntry type="module" module-name="IntelliLang-tests" />
+    <orderEntry type="module" module-name="IntelliLang-tests" scope="TEST" />
     <orderEntry type="module" module-name="manifest" />
     <orderEntry type="module" module-name="yaml" />
     <orderEntry type="module" module-name="xml-tests" scope="TEST" />
@@ -99,7 +99,6 @@
     <orderEntry type="module" module-name="jps-serialization-tests" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
     <orderEntry type="module" module-name="ui-designer-jps-plugin" scope="TEST" />
-    <orderEntry type="module" module-name="java-tests" scope="TEST" />
     <orderEntry type="module" module-name="jira" />
     <orderEntry type="module" module-name="java-decompiler-plugin" />
     <orderEntry type="module" module-name="structuralsearch" />
@@ -109,7 +108,7 @@
     <orderEntry type="module" module-name="json" />
     <orderEntry type="module" module-name="json-tests" scope="TEST" />
     <orderEntry type="module" module-name="typeMigration" />
-    <orderEntry type="module" module-name="platform-tests" />
+    <orderEntry type="module" module-name="platform-tests" scope="TEST" />
     <orderEntry type="module" module-name="android" />
     <orderEntry type="module" module-name="diff-tests" scope="TEST" />
     <orderEntry type="module" module-name="built-in-server-tests" scope="TEST" />

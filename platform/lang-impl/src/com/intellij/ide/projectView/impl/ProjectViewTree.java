@@ -30,11 +30,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
-import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,11 +44,12 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ProjectViewTree extends DnDAwareTree {
-  private final Project myProject;
-
   protected ProjectViewTree(Project project, TreeModel model) {
+    this(model);
+  }
+
+  public ProjectViewTree(TreeModel model) {
     super(model);
-    myProject = project;
 
     final NodeRenderer cellRenderer = new NodeRenderer() {
       @Override
@@ -76,10 +74,6 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   public DefaultMutableTreeNode getSelectedNode() {
     TreePath path = TreeUtil.getSelectedPathIfOne(this);
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
-  }
-
-  public Project getProject() {
-    return myProject;
   }
 
   @Override
@@ -115,24 +109,23 @@ public abstract class ProjectViewTree extends DnDAwareTree {
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
-    return getColorForObject(object, getProject(), (NullableFunction<Object, PsiElement>)object1 -> {
-      if (object1 instanceof AbstractTreeNode) {
-        final Object element = ((AbstractTreeNode)object1).getValue();
-        if (element instanceof PsiElement) {
-          return (PsiElement)element;
-        }
+    if (object instanceof AbstractTreeNode) {
+      AbstractTreeNode node = (AbstractTreeNode)object;
+      Object value = node.getValue();
+      if (value instanceof PsiElement) {
+        return getColorForElement((PsiElement)value);
       }
-      return null;
-    });
+    }
+    return null;
   }
 
   @Nullable
-  public static <T> Color getColorForObject(T object, Project project, @NotNull Function<T, PsiElement> converter) {
+  public static Color getColorForElement(@Nullable PsiElement psi) {
     Color color = null;
-    final PsiElement psi = converter.fun(object);
     if (psi != null) {
       if (!psi.isValid()) return null;
 
+      Project project = psi.getProject();
       final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
 
       if (file != null) {

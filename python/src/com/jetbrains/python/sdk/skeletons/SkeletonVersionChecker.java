@@ -33,7 +33,6 @@ import java.util.regex.Pattern;
  * Is immutable.
  * <br/>
  * User: dcheryasov
- * Date: 2/23/11 5:32 PM
  */
 public class SkeletonVersionChecker {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");
@@ -111,7 +110,9 @@ public class SkeletonVersionChecker {
                 if (package_name != null) {
                   final int version = fromVersionString(ver);
                   if (DEFAULT_NAME.equals(package_name)) {
-                    myDefaultVersion = version;
+                    if (myDefaultVersion != PREGENERATED_VERSION) {
+                      myDefaultVersion = version;
+                    }
                   }
                   else if (BUILTIN_NAME.equals(package_name)) {
                     myBuiltinsVersion = version;

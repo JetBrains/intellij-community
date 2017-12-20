@@ -275,36 +275,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return isPossibleObjectComparison(boxingExpression, polyadicExpression);
       }
       return MethodCallUtils.isNecessaryForSurroundingMethodCall(boxingExpression, boxedExpression) ||
-             isNotSameOverloadAfterReplacement(boxingExpression, boxedExpression);
-    }
-
-    private boolean isNotSameOverloadAfterReplacement(@NotNull PsiExpression expression, PsiExpression unboxedExpression) {
-      if (expression.getParent() instanceof PsiReturnStatement || expression.getParent() instanceof PsiLambdaExpression) {
-        PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class, true, PsiMethod.class);
-        if (lambdaExpression != null &&
-            !LambdaUtil.isSameOverloadAfterReplacement(lambdaExpression,
-                                                       () -> prepareUnboxedReplacement(expression, unboxedExpression, lambdaExpression))) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private PsiElement prepareUnboxedReplacement(@NotNull PsiExpression expression,
-                                                 PsiExpression unboxedExpression,
-                                                 PsiLambdaExpression lambdaExpression) {
-      PsiElement body = lambdaExpression.getBody();
-      if (body == null) return null;
-      Object marker = new Object();
-      PsiTreeUtil.mark(expression, marker);
-      PsiElement copy = body.copy();
-      PsiElement exprInReturn = PsiTreeUtil.releaseMark(copy, marker);
-      if (exprInReturn == null) return null;
-      if (exprInReturn == copy) {
-        return exprInReturn.replace(unboxedExpression);
-      }
-      exprInReturn.replace(unboxedExpression);
-      return copy;
+             !LambdaUtil.isSafeLambdaReturnValueReplacement(boxingExpression, boxedExpression);
     }
 
     private boolean isPossibleObjectComparison(PsiExpression expression, PsiPolyadicExpression polyadicExpression) {

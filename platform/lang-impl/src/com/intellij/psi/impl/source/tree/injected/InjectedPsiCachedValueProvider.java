@@ -19,7 +19,6 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -30,14 +29,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-/**
- * @author cdr
-*/
-class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider<InjectionRegistrarImpl, PsiElement> {
+class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider<InjectionResult, PsiElement> {
   @Override
-  public CachedValueProvider.Result<InjectionRegistrarImpl> compute(PsiElement element) {
+  public CachedValueProvider.Result<InjectionResult> compute(PsiElement element) {
     PsiFile hostPsiFile = element.getContainingFile();
     if (hostPsiFile == null) return null;
     FileViewProvider viewProvider = hostPsiFile.getViewProvider();
@@ -48,20 +42,20 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
     final Project project = psiManager.getProject();
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
 
-    final InjectionRegistrarImpl result = doCompute(element, injectedManager, project, hostPsiFile);
+    InjectionResult result = doCompute(element, injectedManager, project, hostPsiFile);
 
     return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT, hostDocument);
   }
 
   @Nullable
-  static InjectionRegistrarImpl doCompute(@NotNull final PsiElement element,
-                                          @NotNull InjectedLanguageManagerImpl injectedManager,
-                                          Project project,
-                                          PsiFile hostPsiFile) {
+  static InjectionResult doCompute(@NotNull final PsiElement element,
+                                   @NotNull InjectedLanguageManagerImpl injectedManager,
+                                   @NotNull Project project,
+                                   @NotNull PsiFile hostPsiFile) {
     MyInjProcessor processor = new MyInjProcessor(project, hostPsiFile);
     injectedManager.processInPlaceInjectorsFor(element, processor);
     InjectionRegistrarImpl registrar = processor.hostRegistrar;
-    return registrar == null || registrar.getResult() == null ? null : registrar;
+    return registrar == null ? null : registrar.getInjectedResult();
   }
 
   private static class MyInjProcessor implements InjectedLanguageManagerImpl.InjProcessor {
@@ -69,7 +63,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
     private final Project myProject;
     private final PsiFile myHostPsiFile;
 
-    private MyInjProcessor(Project project, PsiFile hostPsiFile) {
+    private MyInjProcessor(@NotNull Project project, @NotNull PsiFile hostPsiFile) {
       myProject = project;
       myHostPsiFile = hostPsiFile;
     }
@@ -80,8 +74,7 @@ class InjectedPsiCachedValueProvider implements ParameterizedCachedValueProvider
         hostRegistrar = new InjectionRegistrarImpl(myProject, myHostPsiFile, element);
       }
       injector.getLanguagesToInject(hostRegistrar, element);
-      List<Pair<Place,PsiFile>> result = hostRegistrar.getResult();
-      return result == null;
+      return hostRegistrar.getInjectedResult() == null;
     }
   }
 }

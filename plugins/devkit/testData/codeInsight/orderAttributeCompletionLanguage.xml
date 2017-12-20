@@ -8,11 +8,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <myEp7 id="id1" language="JAVA"/>
+    <myEp7 id="javaLanguage1" language="JAVA"/>
     <!--suppress PluginXmlValidity -->
-    <myEp7 id="id2" language="any"/>
-    <myEp7 id="id3"/>
-    <myEp7 id="id4" language="XML"/>
-    <myEp7 id="id5" language="JAVA" order="before <caret>"/>
+    <myEp7 id="anyLanguage" language="any"/>
+    <myEp7 id="withoutLanguage"/>
+    <myEp7 id="xmlLanguage" language="XML"/>
+    <myEp7 id="javaLanguage2" language="JAVA" order="before <caret>"/>
   </extensions>
 </idea-plugin>

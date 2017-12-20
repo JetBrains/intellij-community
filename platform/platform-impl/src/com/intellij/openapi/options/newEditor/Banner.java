@@ -27,10 +27,13 @@ import com.intellij.ui.components.labels.SwingActionLink;
 import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Sergey.Malenkov
@@ -52,9 +55,10 @@ final class Banner extends JPanel {
     add(BorderLayout.WEST, myBreadcrumbs);
     add(BorderLayout.CENTER, myProjectIcon);
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
+    setComponentPopupMenuTo(myBreadcrumbs);
   }
 
-  void setText(String... names) {
+  void setText(Collection<String> names) {
     ArrayList<Crumb> crumbs = new ArrayList<>();
     if (names != null) {
       for (String name : names) {
@@ -74,5 +78,19 @@ final class Banner extends JPanel {
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
     }
+  }
+
+  private static void setComponentPopupMenuTo(Breadcrumbs breadcrumbs) {
+    breadcrumbs.setComponentPopupMenu(new JPopupMenu() {
+      @Override
+      public void show(Component invoker, int x, int y) {
+        if (invoker != breadcrumbs) return;
+        super.show(invoker, x, invoker.getHeight());
+      }
+
+      {
+        add(new CopyAction(() -> CopyAction.createTransferable(breadcrumbs.getCrumbs())));
+      }
+    });
   }
 }

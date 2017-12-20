@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.usages.impl;
 
@@ -25,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -38,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -127,7 +117,7 @@ public class UsageViewImpl implements UsageView {
     if (o1 == o2) return 0;
     if (o1 == NULL_NODE) return -1;
     if (o2 == NULL_NODE) return 1;
-    if (o1 instanceof Comparable && o2 instanceof Comparable) {
+    if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
       //noinspection unchecked
       final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
       if (selfcompared != 0) return selfcompared;
@@ -148,7 +138,7 @@ public class UsageViewImpl implements UsageView {
     }
     return o1.toString().compareTo(o2.toString());
   };
-  @NonNls private static final String HELP_ID = "ideaInterface.find";
+  @NonNls public static final String HELP_ID = "ideaInterface.find";
   private UsageContextPanel myCurrentUsageContextPanel;
   private List<UsageContextPanel.Provider> myUsageContextPanelProviders;
   private UsageContextPanel.Provider myCurrentUsageContextProvider;
@@ -794,8 +784,7 @@ public class UsageViewImpl implements UsageView {
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
-      actionsManager.createExportToTextFileAction(myTextFileExporter),
-      actionsManager.createHelpAction(HELP_ID)
+      actionsManager.createExportToTextFileAction(myTextFileExporter)
     };
   }
 
@@ -817,12 +806,21 @@ public class UsageViewImpl implements UsageView {
     if (description == null) {
       description = "Show find usages settings dialog";
     }
-    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
+    String finalDescription = description;
+    return new EmptyAction.MyDelegatingAction(ActionManager.getInstance().getAction("FindInPath")) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {
           registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
         }
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setText("Settings...");
+        e.getPresentation().setDescription(finalDescription);
+        e.getPresentation().setIcon(AllIcons.General.ProjectSettings);
       }
 
       @Override
@@ -832,6 +830,14 @@ public class UsageViewImpl implements UsageView {
 
       @Override
       public void actionPerformed(AnActionEvent e) {
+        Component data = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        if (data instanceof EditorComponentImpl) {
+          String toFind = ((EditorComponentImpl)data).getSelectedText();
+          if (!StringUtil.isEmpty(toFind)) {
+            super.actionPerformed(e);//call myDelegate (namely, FindInPathAction)
+            return;
+          }
+        }
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };

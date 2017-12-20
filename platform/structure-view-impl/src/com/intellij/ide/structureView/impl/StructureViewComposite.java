@@ -18,10 +18,15 @@ package com.intellij.ide.structureView.impl;
 
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.structureView.TextEditorBasedStructureViewModel;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -29,17 +34,26 @@ import javax.swing.*;
  * @author cdr
  */
 public class StructureViewComposite implements StructureView {
+  
   private final StructureViewDescriptor[] myStructureViews;
-  private final StructureViewDescriptor mySelectedViewDescriptor;
 
   public static class StructureViewDescriptor {
     public final String title;
+    public final StructureViewModel structureModel;
     public final StructureView structureView;
     public final Icon icon;
 
     public StructureViewDescriptor(String title, @NotNull StructureView structureView, Icon icon) {
       this.title = title;
+      this.structureModel = structureView.getTreeModel();
       this.structureView = structureView;
+      this.icon = icon;
+    }
+
+    public StructureViewDescriptor(String title, @NotNull StructureViewModel structureModel, Icon icon) {
+      this.title = title;
+      this.structureModel = structureModel;
+      this.structureView = null;
       this.icon = icon;
     }
   }
@@ -49,31 +63,34 @@ public class StructureViewComposite implements StructureView {
     for (StructureViewDescriptor descriptor : views) {
       Disposer.register(this, descriptor.structureView);
     }
-    mySelectedViewDescriptor = ObjectUtils.notNull(views[0]);
   }
 
+  public boolean isOutdated() {
+    return false;
+  }
+
+  @Nullable
   public StructureView getSelectedStructureView() {
-    return mySelectedViewDescriptor.structureView;
-  }
-
-  public void setStructureView(int index, StructureViewDescriptor view) {
-    myStructureViews[index] = view;
-    Disposer.register(this, view.structureView);
+    StructureViewDescriptor descriptor = ArrayUtil.getFirstElement(myStructureViews);
+    return descriptor == null ? null : descriptor.structureView;
   }
 
   @Override
   public FileEditor getFileEditor() {
-    return getSelectedStructureView().getFileEditor();
+    StructureView view = getSelectedStructureView();
+    return view == null ? null : view.getFileEditor();
   }
 
   @Override
   public boolean navigateToSelectedElement(final boolean requestFocus) {
-    return getSelectedStructureView().navigateToSelectedElement(requestFocus);
+    StructureView view = getSelectedStructureView();
+    return view != null && view.navigateToSelectedElement(requestFocus);
   }
 
   @Override
   public JComponent getComponent() {
-    return mySelectedViewDescriptor.structureView.getComponent();
+    StructureView view = getSelectedStructureView();
+    return view == null ? null : view.getComponent();
   }
 
   @Override
@@ -82,7 +99,8 @@ public class StructureViewComposite implements StructureView {
 
   @Override
   public void centerSelectedRow() {
-    getSelectedStructureView().centerSelectedRow();
+    StructureView view = getSelectedStructureView();
+    if (view != null) view.centerSelectedRow();
   }
 
   @Override
@@ -107,6 +125,22 @@ public class StructureViewComposite implements StructureView {
   @Override
   @NotNull
   public StructureViewModel getTreeModel() {
-    return getSelectedStructureView().getTreeModel();
+    StructureView view = getSelectedStructureView();
+    if (view != null) return view.getTreeModel();
+    class M extends TextEditorBasedStructureViewModel implements StructureViewTreeElement, ItemPresentation {
+      M() { super(null, null);}
+
+      @NotNull @Override public StructureViewTreeElement getRoot() { return this;} 
+      @Override public Object getValue() { return null;} 
+      @NotNull @Override public ItemPresentation getPresentation() { return this;} 
+      @NotNull @Override public TreeElement[] getChildren() { return EMPTY_ARRAY;} 
+      @Nullable @Override public String getPresentableText() { return null;} 
+      @Nullable @Override public String getLocationString() { return null;} 
+      @Nullable @Override public Icon getIcon(boolean unused) { return null;} 
+      @Override public void navigate(boolean requestFocus) {} 
+      @Override public boolean canNavigate() { return false;} 
+      @Override public boolean canNavigateToSource() { return false;}
+    }
+    return new M();
   }
 }

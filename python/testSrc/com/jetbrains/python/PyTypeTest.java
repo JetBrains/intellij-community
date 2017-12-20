@@ -908,16 +908,12 @@ public class PyTypeTest extends PyTestCase {
   public void testHomogeneousTupleSubstitution() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> {
-        myFixture.copyDirectoryToProject("typing", "");
-
-        doTest("Tuple[int, ...]",
-               "from typing import TypeVar, Tuple\n" +
-               "T = TypeVar('T')\n" +
-               "def foo(i: T) -> Tuple[T, ...]:\n" +
-               "    pass\n" +
-               "expr = foo(5)");
-      }
+      () -> doTest("Tuple[int, ...]",
+                   "from typing import TypeVar, Tuple\n" +
+                   "T = TypeVar('T')\n" +
+                   "def foo(i: T) -> Tuple[T, ...]:\n" +
+                   "    pass\n" +
+                   "expr = foo(5)")
     );
   }
 
@@ -1947,6 +1943,16 @@ public class PyTypeTest extends PyTestCase {
            "expr = my_list.count");
   }
 
+  // PY-26616
+  public void testClassMethodQualifiedWithDefinition() {
+    doTest("(x: str) -> Foo",
+           "class Foo:\n" +
+           "    @classmethod\n" +
+           "    def make_foo(cls, x: str) -> 'Foo':\n" +
+           "        pass\n" +
+           "expr = Foo.make_foo");
+  }
+
   public void testConstructingGenericClassWithNotFilledGenericValue() {
     doTest("MyIterator",
            "from typing import Iterator\n" +
@@ -2418,6 +2424,114 @@ public class PyTypeTest extends PyTestCase {
                    "\n" +
                    "expr = C().f()\n")
     );
+  }
+
+  // PY-26643
+  public void testReplaceSelfInGenerator() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON33,
+      () -> doTest("Generator[B, Any, B]",
+                   "class A:\n" +
+                   "    def foo(self):\n" +
+                   "        yield self\n" +
+                   "        return self\n" +
+                   "class B(A):\n" +
+                   "    pass\n" +
+                   "expr = B().foo()")
+    );
+  }
+
+  public void testReplaceSelfInUnion() {
+    doTest("Union[B, int]",
+           "class A:\n" +
+           "    def foo(self, x):\n" +
+           "        if x:\n" +
+           "            return self\n" +
+           "        else:\n" +
+           "            return 1\n" +
+           "class B(A):\n" +
+           "    pass\n" +
+           "expr = B().foo(abc)");
+  }
+
+  // PY-27143
+  public void testReplaceInstanceInClassMethod() {
+    doTest("Derived",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def instance(cls):\n" +
+           "        return cls()\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.instance()");
+
+    doTest("Derived",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def instance(cls):\n" +
+           "        return cls()\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().instance()");
+  }
+
+  // PY-27143
+  public void testReplaceInstanceInMethod() {
+    doTest("Derived",
+           "class Base:\n" +
+           "    def instance(self):\n" +
+           "        return self\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.instance(Derived())");
+
+    doTest("Derived",
+           "class Base:\n" +
+           "    def instance(self):\n" +
+           "        return self\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().instance()");
+  }
+
+  // PY-27143
+  public void testReplaceDefinitionInClassMethod() {
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def cls(cls):\n" +
+           "        return cls\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.cls()");
+
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def cls(cls):\n" +
+           "        return cls\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().cls()");
+  }
+
+  // PY-27143
+  public void testReplaceDefinitionInMethod() {
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    def cls(self):\n" +
+           "        return self.__class__\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.cls(Derived())");
+
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    def cls(self):\n" +
+           "        return self.__class__\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().cls()");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

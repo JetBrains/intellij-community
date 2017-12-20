@@ -76,12 +76,11 @@ public class GitStashChangesSaver extends GitChangesSaver {
           myStashedRoots.add(root);
         }
         else {
-          String error = "stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString();
           if (!result.success()) {
-            throw new VcsException(error);
+            throw new VcsException("Couldn't stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString());
           }
           else {
-            LOG.warn(error);
+            LOG.warn("There was nothing to stash in " + repository.getRoot());
           }
         }
       }

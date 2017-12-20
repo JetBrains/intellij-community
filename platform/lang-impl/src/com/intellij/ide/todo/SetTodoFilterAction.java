@@ -30,8 +30,6 @@ import javax.swing.*;
 
 /**
 * @author irengrig
-*         Date: 2/24/11
-*         Time: 3:38 PM
  *         moved from inner class
 */
 public class SetTodoFilterAction extends AnAction implements CustomComponentAction {

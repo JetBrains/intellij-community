@@ -1,29 +1,15 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.uiDesigner.snapShooter;
 
 import com.intellij.designer.DesignerEditorPanelFacade;
-import com.intellij.execution.Location;
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -34,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.pom.Navigatable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.lw.LwComponent;
@@ -42,7 +27,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jgoodies.forms.layout.FormLayout;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -57,18 +41,19 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
     if (!isApplicableFor(configuration)) {
       return;
     }
-    ApplicationConfiguration appConfiguration = (ApplicationConfiguration) configuration;
+    ApplicationConfiguration appConfiguration = (ApplicationConfiguration)configuration;
     SnapShooterConfigurationSettings settings = appConfiguration.getUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY);
     if (settings == null) {
       settings = new SnapShooterConfigurationSettings();
       appConfiguration.putUserData(SnapShooterConfigurationSettings.SNAP_SHOOTER_KEY, settings);
     }
-    if (appConfiguration.ENABLE_SWING_INSPECTOR) {
+    boolean swingInspectorEnabled = appConfiguration.isSwingInspectorEnabled();
+    if (swingInspectorEnabled) {
       settings.setLastPort(NetUtils.tryToFindAvailableSocketPort());
     }
 
-    if (appConfiguration.ENABLE_SWING_INSPECTOR && settings.getLastPort() != -1) {
-      params.getProgramParametersList().prepend(appConfiguration.MAIN_CLASS_NAME);
+    if (swingInspectorEnabled && settings.getLastPort() != -1) {
+      params.getProgramParametersList().prepend(appConfiguration.getMainClassName());
       params.getProgramParametersList().prepend(Integer.toString(settings.getLastPort()));
       // add +1 because idea_rt.jar will be added as the last entry to the classpath
       params.getProgramParametersList().prepend(Integer.toString(params.getClassPath().getPathList().size() + 1));
@@ -120,19 +105,5 @@ public class SnapShooterConfigurationExtension extends RunConfigurationExtension
   @Override
   public String getSerializationId() {
     return "snapshooter";
-  }
-
-  @Override
-  public void readExternal(@NotNull RunConfigurationBase runConfiguration, @NotNull Element element) throws InvalidDataException {
-  }
-
-  @Override
-  public void extendCreatedConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, @NotNull Location location) {
-  }
-
-  @Override
-  public void validateConfiguration(@NotNull RunConfigurationBase runJavaConfiguration, boolean isExecution)
-    throws RuntimeConfigurationException {
-
   }
 }

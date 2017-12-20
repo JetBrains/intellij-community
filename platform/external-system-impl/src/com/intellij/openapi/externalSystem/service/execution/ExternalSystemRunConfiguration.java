@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
@@ -122,7 +124,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
     if (e != null) {
@@ -132,7 +134,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
       @Override
@@ -426,7 +428,9 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (executionConsole instanceof BuildView) {
         actions = ((BuildView)executionConsole).getSwitchActions();
       }
-      return new DefaultExecutionResult(executionConsole, processHandler, actions);
+      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
+      executionResult.setRestartActions(restartActions);
+      return executionResult;
     }
 
     private BuildProgressListener createBuildView(ExternalSystemTaskId id,

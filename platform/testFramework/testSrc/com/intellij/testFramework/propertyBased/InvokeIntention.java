@@ -90,7 +90,7 @@ public class InvokeIntention extends ActionOnRange {
     myInvocationLog += ", invoked '" + intention.getText() + "'";
     String intentionString = intention.toString();
 
-    boolean checkComments = myPolicy.checkComments(intention) && PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiComment.class) == null;
+    boolean checkComments = myPolicy.checkComments(intention) && PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiComment.class, false) == null;
     Collection<String> comments = checkComments
                                   ? extractCommentsReformattedToSingleWhitespace(file)
                                   : Collections.emptyList();

@@ -230,7 +230,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         UISettings.setupAntialiasing(gg);
       }
       gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = JBUI.alignToIntGrid(gg);
+      AffineTransform origTx = JBUI.alignToIntGrid(gg, true, false);
       myEditor.paint(gg);
       if (origTx != null) gg.setTransform(origTx);
     }

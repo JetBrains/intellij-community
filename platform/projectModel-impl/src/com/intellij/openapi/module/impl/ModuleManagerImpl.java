@@ -407,16 +407,20 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       final Module module = moduleModel.getModuleByFilePath(error.getModulePath().getPath());
       if (module != null) {
         moduleModel.myModules.remove(module.getName());
-        ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
+        disposeModuleLater(module);
       }
     }
 
     fireModuleLoadErrors(errors);
   }
 
+  private static void disposeModuleLater(Module module) {
+    ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(module), module.getDisposed());
+  }
+
   // overridden in Upsource
   protected void fireModuleLoadErrors(@NotNull List<ModuleLoadingErrorDescription> errors) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
       throw new RuntimeException(errors.get(0).getDescription());
     }
 
@@ -425,6 +429,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   public void removeFailedModulePath(@NotNull ModulePath modulePath) {
     myFailedModulePaths.remove(modulePath);
+    incModificationCount();
   }
 
   @Override
@@ -784,7 +789,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     }
 
     private void initModule(@NotNull ModuleEx module, @NotNull Runnable beforeComponentCreation) {
-      module.init(beforeComponentCreation);
+      try {
+        module.init(beforeComponentCreation);
+      }
+      catch (Throwable e) {
+        disposeModuleLater(module);
+        throw e;
+      }
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }

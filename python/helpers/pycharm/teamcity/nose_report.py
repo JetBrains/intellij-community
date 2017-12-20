@@ -98,20 +98,21 @@ class TeamcityReport(Plugin):
             old_format_error = capture_plugin.formatError
 
             def newCaptureBeforeTest(test):
-                old_before_test(test)
+                rv = old_before_test(test)
                 test_id = self.get_test_id(test)
                 capture_plugin._buf = FlushingStringIO(lambda data: dump_test_stdout(self.messages, test_id, test_id, data))
                 sys.stdout = capture_plugin._buf
+                return rv
 
             def newCaptureAfterTest(test):
                 if isinstance(capture_plugin._buf, FlushingStringIO):
                     capture_plugin._buf.flush()
-                old_after_test(test)
+                return old_after_test(test)
 
             def newCaptureFormatError(test, err):
                 if isinstance(capture_plugin._buf, FlushingStringIO):
                     capture_plugin._buf.flush()
-                old_format_error(test, err)
+                return old_format_error(test, err)
 
             capture_plugin.beforeTest = newCaptureBeforeTest
             capture_plugin.afterTest = newCaptureAfterTest
@@ -144,6 +145,12 @@ class TeamcityReport(Plugin):
             return 'false'
         else:
             return 'true'
+
+    def report_started(self, test):
+        test_id = self.get_test_id(test)
+
+        self.test_started_datetime_map[test_id] = datetime.datetime.now()
+        self.messages.testStarted(test_id, captureStandardOutput=self._captureStandardOutput_value(), flowId=test_id)
 
     def report_fail(self, test, fail_type, err):
         # workaround nose bug on python 3
@@ -233,6 +240,10 @@ class TeamcityReport(Plugin):
             self.report_fail(test, 'error in ' + test.error_context + ' context', err)
             self.messages.testFinished(test_id, flowId=test_id)
         else:
+            # some test cases may report errors in pre setup when startTest was not called yet
+            # example: https://github.com/JetBrains/teamcity-messages/issues/153
+            if test_id not in self.test_started_datetime_map:
+                self.report_started(test)
             self.report_fail(test, 'Error', err)
             self.report_finish(test)
 

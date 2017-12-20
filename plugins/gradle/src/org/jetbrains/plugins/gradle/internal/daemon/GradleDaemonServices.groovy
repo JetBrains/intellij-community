@@ -15,6 +15,7 @@ import org.gradle.tooling.internal.consumer.loader.CachingToolingImplementationL
 import org.gradle.tooling.internal.consumer.loader.SynchronizedToolingImplementationLoader
 import org.gradle.tooling.internal.consumer.loader.ToolingImplementationLoader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 
 import java.lang.reflect.Method
 
@@ -61,6 +62,7 @@ class GradleDaemonServices {
       .allowLock(false)
       .get()
 
+    String serviceDirectoryPath = GradleSystemSettings.instance.getServiceDirectoryPath()
     def myRawArgData = getSerialized(arg)
     byte[] myRawResultData = null
     final ClassLoader oldClassLoader = Thread.currentThread().getContextClassLoader()
@@ -69,9 +71,9 @@ class GradleDaemonServices {
       Class<?> clazz = daemonClientClassLoader.loadClass(actionClass.name)
       def _arg = getObject(myRawArgData)
       Method method = findMethod(clazz, daemonClientFactory, _arg)
-
-      def result = arg == null ? method.invoke(clazz.newInstance(), daemonClientFactory) :
-                   method.invoke(clazz.newInstance(), daemonClientFactory, _arg)
+      Object[] serviceDirParam = [serviceDirectoryPath]
+      def result = arg == null ? method.invoke(clazz.newInstance(serviceDirParam), daemonClientFactory) :
+                   method.invoke(clazz.newInstance(serviceDirParam), daemonClientFactory, _arg)
       if (result instanceof Serializable) {
         myRawResultData = getSerialized(result)
       }
@@ -143,6 +145,9 @@ class GradleDaemonServices {
   @CompileStatic(TypeCheckingMode.SKIP)
   private static Map<ClassPath, ConsumerConnection> getConnections() {
     def registry = ConnectorServices.singletonRegistry
+    if (registry.closed) {
+      return Collections.emptyMap()
+    }
     def loader = registry.get(ToolingImplementationLoader.class) as SynchronizedToolingImplementationLoader
     def delegate = loader.delegate as CachingToolingImplementationLoader
     return delegate.connections

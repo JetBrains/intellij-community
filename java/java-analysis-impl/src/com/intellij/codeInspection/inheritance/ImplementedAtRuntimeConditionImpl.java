@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 public class ImplementedAtRuntimeConditionImpl extends ImplementedAtRuntimeCondition {
   @Override
   public boolean isImplementedAtRuntime(@NotNull PsiClass psiClass) {
-    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
       ImplicitSubclassProvider.SubclassingInfo info = provider.getSubclassingInfo(psiClass);
       if (info != null && !info.isAbstract()) {
         return true;

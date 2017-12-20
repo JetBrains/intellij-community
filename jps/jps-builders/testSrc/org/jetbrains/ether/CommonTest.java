@@ -22,7 +22,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author: db
- * Date: 22.09.11
  */
 public class CommonTest extends IncrementalTestCase {
   public CommonTest() {

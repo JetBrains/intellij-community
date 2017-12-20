@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -10,10 +12,7 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.SchemeManager
@@ -25,6 +24,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.project.isDirectoryBased
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
@@ -35,6 +35,7 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
@@ -104,11 +105,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private val workspaceSchemeManagerProvider = SchemeManagerIprProvider("configuration")
 
-  @Suppress("LeakingThis")
-  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = workspaceSchemeManagerProvider, autoSave = false)
+  internal val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
-  private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), schemeNameToFileName = OLD_NAME_CONVERTER)
+  private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false, isWrapSchemeIntoComponentElement = false), streamProvider = workspaceSchemeManagerProvider, autoSave = false)
+
+  @Suppress("LeakingThis")
+  private var projectSchemeManager = SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true, isWrapSchemeIntoComponentElement = schemeManagerIprProvider == null), schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   private val isFirstLoadState = AtomicBoolean(true)
 
@@ -514,8 +517,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
-    projectSchemeManager.loadSchemes()
-    projectRunConfigurationFirstLoaded()
+    loadSharedRunConfigurations()
   }
 
   override fun loadState(parentNode: Element) {
@@ -587,8 +589,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     if (isFirstLoadState) {
-      projectSchemeManager.loadSchemes()
-      projectRunConfigurationFirstLoaded()
+      loadSharedRunConfigurations()
     }
 
     fireBeforeRunTasksUpdated()
@@ -596,6 +597,21 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected()
     }
+  }
+
+  private fun loadSharedRunConfigurations() {
+    if (schemeManagerIprProvider == null) {
+      projectSchemeManager.loadSchemes()
+      return
+    }
+    else {
+      project.service<IprRunManagerImpl>().lastLoadedState.getAndSet(null)?.let { data ->
+        schemeManagerIprProvider.load(data)
+        projectSchemeManager.reload()
+      }
+    }
+
+    projectRunConfigurationFirstLoaded()
   }
 
   private fun projectRunConfigurationFirstLoaded() {
@@ -1021,5 +1037,21 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       throw IllegalStateException("test only")
     }
     return templateIdToConfiguration
+  }
+}
+
+@State(name = "ProjectRunConfigurationManager")
+internal class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
+  val lastLoadedState = AtomicReference<Element>()
+
+  override fun getState(): Element? {
+    val iprProvider = RunManagerImpl.getInstanceImpl(project).schemeManagerIprProvider ?: return null
+    val result = Element("state")
+    iprProvider.writeState(result)
+    return result
+  }
+
+  override fun loadState(state: Element) {
+    lastLoadedState.set(state)
   }
 }

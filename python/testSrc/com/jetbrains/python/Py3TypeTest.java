@@ -70,7 +70,6 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromHomogeneousTuple() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest("str",
            "import typing\n"+
            "def get_tuple() -> typing.Tuple[str, ...]:\n" +
@@ -82,7 +81,6 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testYieldFromHeterogeneousTuple() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest("Union[int, str]",
            "import typing\n" +
            "def get_tuple() -> typing.Tuple[int, int, str]:\n" +
@@ -648,6 +646,20 @@ public class Py3TypeTest extends PyTestCase {
                             "\n" +
                             "async def main():\n" +
                             "    expr = await mycoroutine()")
+    );
+  }
+
+  // PY-26643
+  public void testReplaceSelfInCoroutine() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Coroutine[Any, Any, B]",
+                   "class A:\n" +
+                   "    async def foo(self):\n" +
+                   "        return self\n" +
+                   "class B(A):\n" +
+                   "    pass\n" +
+                   "expr = B().foo()")
     );
   }
 

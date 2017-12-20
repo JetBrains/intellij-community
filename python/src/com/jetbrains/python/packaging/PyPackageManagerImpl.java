@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -46,10 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author vlan
  */
 public class PyPackageManagerImpl extends PyPackageManager {
-  // Python 2.4-2.5 compatible versions
-  private static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
-  private static final String PIP_PRE_26_VERSION = "1.1";
-  private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
   private static final String SETUPTOOLS_VERSION = "28.8.0";
   private static final String PIP_VERSION = "9.0.1";
@@ -89,15 +84,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void installManagement() throws ExecutionException {
-    final Sdk sdk = getSdk();
-    final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON26);
     if (!refreshAndCheckForSetuptools()) {
-      final String name = PyPackageUtil.SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
-      installManagement(name);
+      installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
     }
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
-      final String name = PyPackageUtil.PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : PIP_VERSION);
-      installManagement(name);
+      installManagement(PyPackageUtil.PIP + "-" + PIP_VERSION);
     }
   }
 
@@ -315,8 +306,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      final boolean pre26 = languageLevel.isOlderThan(LanguageLevel.PYTHON26);
-      final String name = "virtualenv-" + (pre26 ? VIRTUALENV_PRE_26_VERSION : VIRTUALENV_VERSION);
+      final String name = "virtualenv-" + VIRTUALENV_VERSION;
       final String dirName = extractHelper(name + ".tar.gz");
       try {
         final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
@@ -356,8 +346,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   @Override
   public List<PyRequirement> parseRequirements(@NotNull String text) {
-    return ContainerUtil.map(PyRequirement.fromText(text),
-                             req -> req.withVersionComparator(PyPackageVersionComparator.getSTR_COMPARATOR()));
+    return PyPackageUtil.fix(PyRequirement.fromText(text));
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
@@ -526,7 +515,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.fromText(requiresSpec));
+        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, location, requirements));

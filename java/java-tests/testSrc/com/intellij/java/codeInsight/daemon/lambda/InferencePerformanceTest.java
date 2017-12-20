@@ -32,6 +32,10 @@ public class InferencePerformanceTest extends LightDaemonAnalyzerTestCase {
     PlatformTestUtil.startPerformanceTest("50 diamond constructor calls passed to Arrays.asList", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }
 
+  public void testDiamondConstructorCallPassedToEnumConstantWithVarargs() {
+    PlatformTestUtil.startPerformanceTest("10 enum constants with vararg diamonds", 12000, this::doTest).usesAllCPUCores().assertTiming();
+  }
+
   public void testLeastUpperBoundWithLotsOfSupers() {
     PlatformTestUtil.startPerformanceTest("7 unrelated intersection conjuncts", 12000, this::doTest).usesAllCPUCores().assertTiming();
   }

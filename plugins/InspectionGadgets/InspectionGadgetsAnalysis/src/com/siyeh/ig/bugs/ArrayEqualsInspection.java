@@ -18,13 +18,13 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,22 +89,19 @@ public class ArrayEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name =
-        (PsiIdentifier)descriptor.getPsiElement();
-      final PsiReferenceExpression expression =
-        (PsiReferenceExpression)name.getParent();
+    public void doFix(Project project, ProblemDescriptor descriptor){
+      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
+      final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       assert expression != null;
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)expression.getParent();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent();
       final PsiExpression qualifier = expression.getQualifierExpression();
       assert qualifier != null;
-      final String qualifierText = qualifier.getText();
+      CommentTracker commentTracker = new CommentTracker();
+      final String qualifierText = commentTracker.markUnchanged(qualifier).getText();
       assert call != null;
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final String argumentText = arguments[0].getText();
+      final String argumentText = commentTracker.markUnchanged(arguments[0]).getText();
       @NonNls final StringBuilder newExpressionText = new StringBuilder();
       if (deepEquals) {
         newExpressionText.append("java.util.Arrays.deepEquals(");
@@ -116,7 +113,7 @@ public class ArrayEqualsInspection extends BaseInspection {
       newExpressionText.append(", ");
       newExpressionText.append(argumentText);
       newExpressionText.append(')');
-      PsiReplacementUtil.replaceExpressionAndShorten(call, newExpressionText.toString());
+      PsiReplacementUtil.replaceExpressionAndShorten(call, newExpressionText.toString(), commentTracker);
     }
   }
 

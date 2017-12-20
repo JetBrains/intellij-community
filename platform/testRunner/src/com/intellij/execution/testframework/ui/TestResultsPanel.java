@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.*;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -98,15 +99,16 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
         mySplitter.dispose();
       }
     });
+    mySplitter.setOpaque(false);
     add(mySplitter, BorderLayout.CENTER);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myLeftPane, BorderLayout.CENTER);
     leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     mySplitter.setFirstComponent(leftPanel);
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
-    final JPanel rightPanel = new JPanel(new BorderLayout());
+    final JPanel rightPanel = new NonOpaquePanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    JPanel outputTab = new JPanel(new BorderLayout());
+    JPanel outputTab = new NonOpaquePanel(new BorderLayout());
     myConsole.setFocusable(true);
     final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
     myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT), new SideBorder(editorBackground, SideBorder.LEFT)));

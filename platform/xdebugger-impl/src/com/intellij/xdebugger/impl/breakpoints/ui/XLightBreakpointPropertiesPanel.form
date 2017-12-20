@@ -95,13 +95,15 @@
       </grid>
       <grid id="56399" binding="myCustomRightPropertiesPanelWrapper" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
-          <grid row="6" column="1" row-span="3" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="1" row-span="3" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="2" use-parent-layout="false"/>
         </constraints>
         <properties>
           <enabled value="true"/>
           <visible value="true"/>
         </properties>
-        <border type="none"/>
+        <border type="empty">
+          <size top="4" left="0" bottom="0" right="0"/>
+        </border>
         <children/>
       </grid>
       <vspacer id="9f6bc">

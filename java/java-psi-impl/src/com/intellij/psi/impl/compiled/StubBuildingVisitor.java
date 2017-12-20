@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.compiled;
 
@@ -73,16 +61,16 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final String myShortName;
   private final Function<String, String> myMapping;
   private String myInternalName;
-  private PsiClassStub myResult;
+  private PsiClassStub<?> myResult;
   private PsiModifierListStub myModList;
   private final boolean myAnonymousInner;
   private final boolean myLocalClassInner;
-  
+
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName) {
     this(classSource, innersStrategy, parent, access, shortName, false, false);
   }
-  
-  public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName, 
+
+  public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName,
                              boolean anonymousInner, boolean localClassInner) {
     super(ASM_API);
     mySource = classSource;
@@ -113,7 +101,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isInterface = isSet(flags, Opcodes.ACC_INTERFACE);
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
-    short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, 
+    short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false,
                                                  isAnnotationType, false, false, myAnonymousInner, myLocalClassInner);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
@@ -259,7 +247,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     boolean isAnonymousInner = innerName == null;
     boolean isLocalClassInner = !isAnonymousInner && outerName == null;
-    
+
     if (innerName == null || outerName == null) {
       if(myInternalName.equals(name)) {
         return;
@@ -279,7 +267,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
         }
       }
     }
-    
+
     if (myParent instanceof PsiFileStub && myInternalName.equals(name)) {
       throw new OutOfOrderInnerClassException();  // our result is inner class
     }
@@ -379,9 +367,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     boolean isEnumConstructor = isEnum && isConstructor;
-    boolean isInnerClassConstructor = isConstructor &&
-                                      !(myParent instanceof PsiFileStub) &&
-                                      !isSet(myModList.getModifiersMask(), Opcodes.ACC_STATIC);
+    boolean isInnerClassConstructor =
+      isConstructor && myParent instanceof PsiClassStub && !isSet(myModList.getModifiersMask(), Opcodes.ACC_STATIC) && !isGroovyClosure(canonicalMethodName);
 
     List<String> args = info.argTypes;
     if (!generic && isEnumConstructor && args.size() >= 2 && CommonClassNames.JAVA_LANG_STRING.equals(args.get(0)) && "int".equals(args.get(1))) {
@@ -411,6 +398,18 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     int localVarIgnoreCount = isStatic ? 0 : isEnumConstructor ? 3 : 1;
     int paramIgnoreCount = isEnumConstructor ? 2 : isInnerClassConstructor ? 1 : 0;
     return new MethodAnnotationCollectingVisitor(stub, modList, localVarIgnoreCount, paramIgnoreCount, paramCount, paramStubs, myMapping);
+  }
+
+  private boolean isGroovyClosure(String canonicalMethodName) {
+    if (canonicalMethodName != null && canonicalMethodName.startsWith("_closure")) {
+      PsiClassReferenceListStub extendsList = myResult.findChildStubByType(JavaStubElementTypes.EXTENDS_LIST);
+      if (extendsList != null) {
+        String[] names = extendsList.getReferencedNames();
+        return names.length == 1 && "groovy.lang.Closure".equals(names[0]);
+      }
+    }
+
+    return false;
   }
 
   private MethodInfo parseMethodSignature(String signature, String[] exceptions) throws ClsFormatException {

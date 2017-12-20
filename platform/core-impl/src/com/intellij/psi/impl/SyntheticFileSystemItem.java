@@ -108,6 +108,10 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
+  @NotNull @NonNls
+  public abstract String getName();
+
+  @Override
   public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Frameworks cannot be renamed");
   }

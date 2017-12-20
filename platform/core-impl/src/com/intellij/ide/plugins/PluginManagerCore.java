@@ -854,23 +854,24 @@ public class PluginManagerCore {
   public static void resolveOptionalDescriptors(@NotNull String fileName,
                                                 @NotNull IdeaPluginDescriptorImpl descriptor,
                                                 @NotNull Function<String, IdeaPluginDescriptorImpl> optionalDescriptorLoader) {
-    Map<PluginId, String> optionalConfigs = descriptor.getOptionalConfigs();
+    Map<PluginId, List<String>> optionalConfigs = descriptor.getOptionalConfigs();
     if (optionalConfigs != null && !optionalConfigs.isEmpty()) {
-      Map<PluginId, IdeaPluginDescriptorImpl> descriptors = new THashMap<>(optionalConfigs.size());
+      Map<PluginId, List<IdeaPluginDescriptorImpl>> descriptors = new THashMap<>(optionalConfigs.size());
 
-      for (Map.Entry<PluginId, String> entry : optionalConfigs.entrySet()) {
-        String optionalDescriptorName = entry.getValue();
-        if (fileName.equals(optionalDescriptorName)) {
-          getLogger().info("recursive dependency (" + fileName + ") in " + descriptor);
-          continue;
-        }
+      for (Map.Entry<PluginId, List<String>> entry : optionalConfigs.entrySet()) {
+        for (String optionalDescriptorName : entry.getValue()) {
+          if (fileName.equals(optionalDescriptorName)) {
+            getLogger().info("recursive dependency (" + fileName + ") in " + descriptor);
+            continue;
+          }
 
-        IdeaPluginDescriptorImpl optionalDescriptor = optionalDescriptorLoader.fun(optionalDescriptorName);
-        if (optionalDescriptor == null) {
-          getLogger().info("Cannot find optional descriptor " + optionalDescriptorName);
-        }
-        else {
-          descriptors.put(entry.getKey(), optionalDescriptor);
+          IdeaPluginDescriptorImpl optionalDescriptor = optionalDescriptorLoader.fun(optionalDescriptorName);
+          if (optionalDescriptor == null) {
+            getLogger().info("Cannot find optional descriptor " + optionalDescriptorName);
+          }
+          else {
+            descriptors.computeIfAbsent(entry.getKey(), it -> new SmartList<>()).add(optionalDescriptor);
+          }
         }
       }
 
@@ -1131,11 +1132,13 @@ public class PluginManagerCore {
     final Map<PluginId, IdeaPluginDescriptorImpl> descriptorsWithModules = new THashMap<>(descriptors);
     addModulesAsDependents(descriptorsWithModules);
     for (IdeaPluginDescriptorImpl descriptor : descriptors.values()) {
-      final Map<PluginId, IdeaPluginDescriptorImpl> optionalDescriptors = descriptor.getOptionalDescriptors();
+      final Map<PluginId, List<IdeaPluginDescriptorImpl>> optionalDescriptors = descriptor.getOptionalDescriptors();
       if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
-        for (Map.Entry<PluginId, IdeaPluginDescriptorImpl> entry: optionalDescriptors.entrySet()) {
+        for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry: optionalDescriptors.entrySet()) {
           if (descriptorsWithModules.containsKey(entry.getKey())) {
-            descriptor.mergeOptionalConfig(entry.getValue());
+            for (IdeaPluginDescriptorImpl optionalDescriptor : entry.getValue()) {
+              descriptor.mergeOptionalConfig(optionalDescriptor);
+            }
           }
         }
       }

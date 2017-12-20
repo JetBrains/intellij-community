@@ -25,7 +25,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 /**
  * @author Dmitry Avdeev
- *         Date: 30.08.13
  */
 public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testClosingTag() {

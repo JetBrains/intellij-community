@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
  * This will work only in presence of IntelliLang plugin.
  *
  * @author Dmitry Avdeev
- *         Date: 01.08.13
  */
 public abstract class ReferenceInjector extends Injectable {
 

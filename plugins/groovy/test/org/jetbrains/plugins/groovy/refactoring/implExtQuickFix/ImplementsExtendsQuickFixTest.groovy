@@ -24,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * User: Dmitry.Krasilschikov
- * Date: 11.10.2007
  */
 class ImplementsExtendsQuickFixTest extends LightCodeInsightFixtureTestCase {
 

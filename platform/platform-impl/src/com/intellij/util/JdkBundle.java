@@ -68,7 +68,7 @@ public class JdkBundle {
   private static final Pattern BUILD_STR_PATTERN = Pattern.compile(".*\\([^-]*-(.*)\\).*", Pattern.MULTILINE);
 
   @NotNull
-  private static final Pattern PROP_BUILD_PATTERN = Pattern.compile(".*-(.*)", Pattern.MULTILINE);
+  private static final Pattern PROP_BUILD_PATTERN = Pattern.compile("[^-]*-(.*)", Pattern.MULTILINE);
 
   @NotNull public static final Bitness runtimeBitness = is64BitJVM(System.getProperty("java.vm.name")) ? Bitness.x64 : Bitness.x32;
 
@@ -257,9 +257,9 @@ public class JdkBundle {
       outputLines = ExecUtil.execAndGetOutput(commandLine).getStderrLines();
     }
     catch (ExecutionException e) {
-      // Checking for jdk 6 on mac
+      // Checking for custom jdk layout on mac
       if (SystemInfo.isMac) {
-        commandLine.setExePath(new File(jvm,  homeSubPath + File.separator +  "bin" + File.separator + "java").getAbsolutePath());
+        commandLine.setExePath(new File(jvm,"bin" + File.separator + "java").getAbsolutePath());
         try {
           outputLines = ExecUtil.execAndGetOutput(commandLine).getStderrLines();
         }
@@ -277,7 +277,7 @@ public class JdkBundle {
       String versionLine = outputLines.get(0);
       versionAndUpdate = VersionUtil.parseNewVersionAndUpdate(versionLine, LINE_TO_VERSION_PATTERNS);
       displayVersion = versionLine.replaceFirst("\".*\"", "");
-      displayVersion = displayVersion.replaceFirst("version", "");
+      displayVersion = displayVersion.replaceFirst("version ", "");
       if (outputLines.size() >= 2) {
         Matcher matcher = BUILD_STR_PATTERN.matcher(outputLines.get(1));
         if (matcher.find()) {
@@ -301,11 +301,14 @@ public class JdkBundle {
       VersionUtil.parseNewVersionAndUpdate(System.getProperty("java.version"), PROP_TO_VERSION_PATTERNS);
     if (versionAndUpdate == null) return null;
     Matcher matcher = PROP_BUILD_PATTERN.matcher(System.getProperty("java.runtime.version"));
-    String displayVersion = "java ";
+    String vmName = System.getProperty("java.vm.name","");
+
+    String displayVersion = vmName.startsWith("OpenJDK") ? "openjdk ": "java ";
+
     if (matcher.find()) {
       displayVersion += "(" + matcher.group(1) + ")";
     }
-    return Pair.create(Pair.create(displayVersion, is64BitJVM(System.getProperty("java.vm.name"))), versionAndUpdate);
+    return Pair.create(Pair.create(displayVersion, is64BitJVM(vmName)), versionAndUpdate);
   }
 
   private static boolean is64BitJVM(String archLine) {

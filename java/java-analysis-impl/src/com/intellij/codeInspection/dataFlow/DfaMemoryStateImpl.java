@@ -382,8 +382,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
    * @return true if current state is a super-state of the supplied state.
    */
   public boolean isSuperStateOf(DfaMemoryStateImpl that) {
-    if (!equalsSuperficially(that) ||
-        !equalsByUnknownVariables(that) ||
+    if (myEphemeral && !that.myEphemeral) return false;
+    if (myStack.size() != that.myStack.size()) return false;
+    if (StreamEx.zip(myStack, that.myStack, DfaMemoryStateImpl::isSuperValue).has(false)) return false;
+    if (!equalsByUnknownVariables(that) ||
         !that.getDistinctClassPairs().containsAll(getDistinctClassPairs())) {
       return false;
     }
@@ -408,6 +410,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if(!thisState.isSuperStateOf(thatState)) return false;
     }
     return true;
+  }
+
+  private static boolean isSuperValue(DfaValue superValue, DfaValue subValue) {
+    if (superValue == DfaUnknownValue.getInstance() || superValue == subValue) return true;
+    if (superValue instanceof DfaFactMapValue && subValue instanceof DfaFactMapValue) {
+      return ((DfaFactMapValue)superValue).getFacts().isSuperStateOf(((DfaFactMapValue)subValue).getFacts());
+    }
+    return false;
   }
 
   private static boolean canBeInRelation(@NotNull DfaValue dfaValue) {
@@ -1295,6 +1305,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   void doFlush(@NotNull DfaVariableValue varPlain, boolean markUnknown) {
+    if(isNull(varPlain)) {
+      myStack.replaceAll(val -> val == varPlain ? myFactory.getConstFactory().getNull() : val);
+    }
     DfaVariableValue varNegated = varPlain.getNegatedValue();
 
     removeEquivalenceRelations(varPlain);

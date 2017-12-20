@@ -122,14 +122,14 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     for (PyClass cls : classes) {
       final PsiFile file = cls.getContainingFile();
       if (file instanceof PyFile) {
-        assertNotParsed((PyFile)file);
+        assertNotParsed(file);
       }
     }
   }
 
   // PY-9011
   public void testDatetimeDateAttributesOutsideClass() {
-    doMultiFileTest("a.py");
+    doTest();
   }
 
   public void testObjectNewAttributes() {
@@ -157,7 +157,6 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-17841
   public void testTypingParameterizedTypeIndexing() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest();
   }
 
@@ -213,6 +212,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-22642
   public void testTypingGenericDunderGetItem() {
+    doTest();
+  }
+
+  // PY-27102
+  public void testTypingGenericIndirectInheritorGetItem() {
     doTest();
   }
 

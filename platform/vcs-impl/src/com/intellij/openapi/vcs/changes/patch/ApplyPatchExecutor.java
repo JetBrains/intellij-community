@@ -30,8 +30,6 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 2/25/11
- *         Time: 5:18 PM
  */
 public interface ApplyPatchExecutor<T extends AbstractFilePatchInProgress> {
   @Nls(capitalization = Nls.Capitalization.Title)

@@ -28,24 +28,23 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HighlightInfoComposite extends HighlightInfo {
+class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
 
-  public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
+  HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
     super(null, null, infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos),
           createCompositeTooltip(infos), infos.get(0).type.getSeverity(null), false, null, false, 0, infos.get(0).getProblemGroup(), infos.get(0).getGutterIconRenderer());
-    setHighlighter(infos.get(0).getHighlighter());
+    highlighter = infos.get(0).getHighlighter();
     setGroup(infos.get(0).getGroup());
-    List EMPTY = ContainerUtil.emptyList();
-    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = EMPTY;
-    List<Pair<IntentionActionDescriptor, TextRange>> ranges = EMPTY;
+    List<Pair<IntentionActionDescriptor, RangeMarker>> markers = ContainerUtil.emptyList();
+    List<Pair<IntentionActionDescriptor, TextRange>> ranges = ContainerUtil.emptyList();
     for (HighlightInfo info : infos) {
       if (info.quickFixActionMarkers != null) {
-        if (markers == EMPTY) markers = new ArrayList<>();
+        if (markers == ContainerUtil.<Pair<IntentionActionDescriptor, RangeMarker>>emptyList()) markers = new ArrayList<>();
         markers.addAll(info.quickFixActionMarkers);
       }
       if (info.quickFixActionRanges != null) {
-        if (ranges == EMPTY) ranges = new ArrayList<>();
+        if (ranges == ContainerUtil.<Pair<IntentionActionDescriptor, TextRange>>emptyList()) ranges = new ArrayList<>();
         ranges.addAll(info.quickFixActionRanges);
       }
     }

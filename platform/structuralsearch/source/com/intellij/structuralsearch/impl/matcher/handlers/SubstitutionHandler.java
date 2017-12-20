@@ -57,18 +57,12 @@ public class SubstitutionHandler extends MatchingHandler {
     }
   };
 
-  public SubstitutionHandler(final String name, final boolean target, int minOccurs,
-                             int maxOccurs, boolean greedy) {
+  public SubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
     this.name = name;
     this.maxOccurs = maxOccurs;
     this.minOccurs = minOccurs;
     this.target = target;
     this.greedy = greedy;
-  }
-
-  public SubstitutionHandler(final SubstitutionHandler substitutionHandler) {
-    this(substitutionHandler.getName(),substitutionHandler.isTarget(), substitutionHandler.getMinOccurs(),
-         substitutionHandler.getMaxOccurs(), substitutionHandler.greedy);
   }
 
   public boolean isSubtype() {

@@ -21,10 +21,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,7 +32,6 @@ import java.util.Set;
  */
 @State(name = "RunConfigurationProducerService", storages = @Storage("runConfigurations.xml"))
 public class RunConfigurationProducerService implements PersistentStateComponent<RunConfigurationProducerService.State> {
-
   private State myState = new State();
 
   @NotNull
@@ -43,15 +41,12 @@ public class RunConfigurationProducerService implements PersistentStateComponent
   }
 
   @Override
-  public void loadState(@Nullable State state) {
-    if (state == null) {
-      state = new State();
-    }
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 
   public static class State {
-    public Set<String> ignoredProducers = new HashSet<>();
+    public Set<String> ignoredProducers = new THashSet<>();
   }
 
   @NotNull

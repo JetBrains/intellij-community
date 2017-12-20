@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.panel;
 
+import com.intellij.openapi.ui.panel.GridBagPanelBuilder;
 import com.intellij.openapi.ui.panel.PanelBuilder;
 import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.util.ui.JBUI;
@@ -11,19 +12,19 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PanelGridBuilderImpl<T extends PanelBuilder> implements PanelGridBuilder<T> {
+public class PanelGridBuilderImpl implements PanelGridBuilder {
   private boolean expand;
-  private final List<T> builders = new ArrayList<>();
+  private final List<GridBagPanelBuilder> builders = new ArrayList<>();
 
   @Override
-  public PanelGridBuilder<T> add(@NotNull T builder) {
-    builders.add(builder);
+  public PanelGridBuilder add(@NotNull PanelBuilder builder) {
+    builders.add((GridBagPanelBuilder)builder);
     return this;
   }
 
   @Override
-  public PanelGridBuilder<T> expandVertically(boolean expand) {
-    this.expand = expand;
+  public PanelGridBuilder expandVertically() {
+    this.expand = true;
     return this;
   }
 
@@ -43,12 +44,11 @@ public class PanelGridBuilderImpl<T extends PanelBuilder> implements PanelGridBu
     return builders.stream().allMatch(b -> b.constrainsValid());
   }
 
-  public int gridWidth() {
+  private int gridWidth() {
     return builders.stream().map(b -> b.gridWidth()).max(Integer::compareTo).orElse(0);
   }
 
-  @Override
-  public void addToPanel(JPanel panel, GridBagConstraints gc) {
+  private void addToPanel(JPanel panel, GridBagConstraints gc) {
     builders.stream().filter(b -> b.constrainsValid()).forEach(b -> b.addToPanel(panel, gc));
 
     if (!expand) {

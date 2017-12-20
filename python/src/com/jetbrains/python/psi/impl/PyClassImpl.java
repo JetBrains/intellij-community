@@ -641,13 +641,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   /**
    * @param name            name of the property
    * @param property_filter returns true if the property is acceptable
-   * @param advanced        is @foo.setter syntax allowed
    * @return the first property that both filters accepted.
    */
   @Nullable
-  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter, boolean advanced) {
+  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter) {
     // NOTE: fast enough to be rerun every time
-    Property prop = processDecoratedProperties(name, property_filter, advanced);
+    Property prop = processDecoratedProperties(name, property_filter);
     if (prop != null) return prop;
     if (getStub() != null) {
       prop = processStubProperties(name, property_filter);
@@ -668,7 +667,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean useAdvancedSyntax) {
+  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter) {
     // look at @property decorators
     Map<String, List<PyFunction>> grouped = new HashMap<>();
     // group suitable same-named methods, each group defines a property
@@ -703,16 +702,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                 }
               }
               if (PyNames.PROPERTY.equals(decoName) ||
-                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject()))) {
+                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
+                  qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.GETTER)) {
-                getter = new Maybe<>(method);
-              }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.SETTER)) {
+              else if (qname.matches(decoratorName, PyNames.SETTER)) {
                 setter = new Maybe<>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.DELETER)) {
+              else if (qname.matches(decoratorName, PyNames.DELETER)) {
                 deleter = new Maybe<>(method);
               }
             }
@@ -827,14 +824,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
     PyPsiUtils.assertValid(this);
-    LanguageLevel level = LanguageLevel.getDefault();
-    // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
-    final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
-    if (file != null) {
-      level = LanguageLevel.forElement(file);
-    }
-    final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    final Property local = processPropertiesInClass(name, filter, useAdvancedSyntax);
+    final Property local = processPropertiesInClass(name, filter);
     if (local != null) {
       return local;
     }
@@ -843,7 +833,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return null;
       }
       for (PyClass cls : getAncestorClasses(null)) {
-        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter, useAdvancedSyntax);
+        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter);
         if (property != null) {
           return property;
         }

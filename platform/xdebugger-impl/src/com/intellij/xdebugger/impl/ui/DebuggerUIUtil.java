@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -11,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -18,6 +21,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
@@ -96,8 +100,13 @@ public class DebuggerUIUtil {
 
   @Nullable
   public static RelativePoint getPositionForPopup(@NotNull Editor editor, int line) {
-    Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
-    return editor.getScrollingModel().getVisibleArea().contains(p) ? new RelativePoint(editor.getContentComponent(), p) : null;
+    if (line > -1) {
+      Point p = editor.logicalPositionToXY(new LogicalPosition(line + 1, 0));
+      if (editor.getScrollingModel().getVisibleArea().contains(p)) {
+        return new RelativePoint(editor.getContentComponent(), p);
+      }
+    }
+    return null;
   }
 
   public static void showPopupForEditorLine(@NotNull JBPopup popup, @NotNull Editor editor, int line) {
@@ -392,9 +401,16 @@ public class DebuggerUIUtil {
     }
   }
 
+  @NotNull
   public static String getSelectionShortcutsAdText(String... actionNames) {
-    return XDebuggerBundle.message("ad.extra.selection.shortcut",
-                                   StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().joining(", "));
+    return getShortcutsAdText("ad.extra.selection.shortcut", actionNames);
+  }
+
+  @NotNull
+  public static String getShortcutsAdText(String key, String... actionNames) {
+    String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
+      .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
+    return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);
   }
 
   @Nullable
@@ -453,5 +469,13 @@ public class DebuggerUIUtil {
       }
     }
     return data;
+  }
+
+  public static void repaintCurrentEditor(Project project) {
+    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (editor != null) {
+      editor.getContentComponent().revalidate();
+      editor.getContentComponent().repaint();
+    }
   }
 }

@@ -83,7 +83,7 @@ fun resolveQualifiedName(name: QualifiedName, context: PyQualifiedNameResolveCon
                              resultsFromRoots(name, context),
                              relativeResultsFromSkeletons(name, context)).flatten().distinct()
   val allResults = pythonResults + foreignResults
-  val results = if (name.componentCount > 0) findFirstResults(pythonResults) + foreignResults else allResults
+  val results = if (name.componentCount > 0) findFirstResults(pythonResults, context.module) + foreignResults else allResults
 
   if (mayCache) {
     cache?.put(key, results)
@@ -207,15 +207,25 @@ fun relativeResultsForStubsFromRoots(name: QualifiedName, context: PyQualifiedNa
 /**
  * Filters the results according to their import priority in sys.path.
  */
-private fun findFirstResults(results: List<PsiElement>) =
+private fun findFirstResults(results: List<PsiElement>, module: Module?) =
     if (results.all(::isNamespacePackage))
       results
     else {
+      val result = results.firstOrNull { !isNamespacePackage(it) }
       val stubFile = results.firstOrNull { it is PyiFile || PyUtil.turnDirIntoInit(it) is PyiFile }
-      if (stubFile != null)
-        listOf(stubFile)
-      else
-        listOfNotNull(results.firstOrNull { !isNamespacePackage(it) })
+
+      val resultVFile = (result as? PsiFileSystemItem)?.virtualFile
+      val stubVFile = (stubFile as? PsiFileSystemItem)?.virtualFile
+
+      if (stubFile == null ||
+          module != null &&
+          stubVFile != null && PyTypeShed.isInside(stubVFile) &&
+          resultVFile != null && ModuleUtilCore.moduleContainsFile(module, resultVFile, false)) {
+        listOfNotNull(result)
+      }
+      else {
+        listOfNotNull(stubFile)
+      }
     }
 
 private fun isNamespacePackage(element: PsiElement): Boolean {

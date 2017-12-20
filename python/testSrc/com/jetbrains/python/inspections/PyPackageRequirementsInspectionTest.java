@@ -56,6 +56,11 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doMultiFileTest("test1.py"));
   }
 
+  // PY-26725
+  public void testSecretsNotInRequirements() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doMultiFileTest("test1.py"));
+  }
+
   // PY-11963
   // PY-26050
   public void testMismatchBetweenPackageAndRequirement() {

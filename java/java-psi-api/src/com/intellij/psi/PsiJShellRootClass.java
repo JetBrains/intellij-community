@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 24-Jun-17
  */
 public interface PsiJShellRootClass extends PsiSyntheticClass, PsiJShellSyntheticElement{
   PsiJShellImportHolder[] getSnippets();

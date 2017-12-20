@@ -1,26 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.psi;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
@@ -32,12 +20,12 @@ import java.io.File;
  * @author max
  */
 public class ClsStubBuilderTest extends LightIdeaTestCase {
-  public void testUtilList() { doTest("java/util/List.class"); }
-  public void testNullable() { doTest("org/jetbrains/annotations/Nullable.class"); }
-  public void testUtilCollections() { doTest("java/util/Collections.class"); }
-  public void testUtilHashMap() { doTest("java/util/HashMap.class"); }
-  public void testUtilMap() { doTest("java/util/Map.class"); }
-  public void testTimeUnit() { doTest("java/util/concurrent/TimeUnit.class"); }
+  public void testUtilList() { doClassTest("java.util.List"); }
+  public void testNullable() { doClassTest("org.jetbrains.annotations.Nullable"); }
+  public void testUtilCollections() { doClassTest("java.util.Collections"); }
+  public void testUtilHashMap() { doClassTest("java.util.HashMap"); }
+  public void testUtilMap() { doClassTest("java.util.Map"); }
+  public void testTimeUnit() { doClassTest("java.util.concurrent.TimeUnit"); }
 
   public void testTestSuite() { doTest(); }
   public void testDoubleTest() { doTest(); /* IDEA-53195 */ }
@@ -46,41 +34,24 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testInterfaceMethodParameters() { doTest(); }
   public void testEnumMethodParameters() { doTest(); }
 
-  public void testModifiers() {
-    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/repo/pack/" + getTestName(false) + ".class";
-    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
-    assertNotNull(clsFile);
+  public void testModifiers() { doTest("../repo/pack/" + getTestName(false)); }
+  public void testModuleInfo() { doTest("module-info"); }
+
+  private void doClassTest(String className) {
+    PsiClass aClass = getJavaFacade().findClass(className);
+    assertNotNull("Cannot find class: " + className, aClass);
+    VirtualFile clsFile = aClass.getContainingFile().getVirtualFile();
     doTest(clsFile, getTestName(false) + ".txt");
-  }
-
-  public void testModuleInfo() {
-    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/module-info.class";
-    VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
-    assertNotNull(clsFile);
-    doTest(clsFile, "module-info.txt");
-  }
-
-  private void doTest(String className) {
-    VirtualFile clsFile = findFile(className);
-    assertNotNull(clsFile);
-    doTest(clsFile, getTestName(false) + ".txt");
-  }
-
-  private VirtualFile findFile(final String className) {
-    final VirtualFile[] roots = getProjectJDK().getRootProvider().getFiles(OrderRootType.CLASSES);
-    for (VirtualFile root : roots) {
-      VirtualFile vFile = root.findFileByRelativePath(className);
-      if (vFile != null) return vFile;
-    }
-
-    fail("Cannot file class file for: " + className);
-    return null;
   }
 
   private void doTest() {
-    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + getTestName(false) + ".class";
+    doTest(getTestName(false));
+  }
+
+  private void doTest(String clsPath) {
+    String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + clsPath + ".class";
     VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
-    assertNotNull(clsFile);
+    assertNotNull("Can't find: " + clsFilePath, clsFile);
     doTest(clsFile, getTestName(false) + ".txt");
   }
 

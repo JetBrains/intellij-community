@@ -48,6 +48,7 @@ class ForEachMigration extends BaseStreamApiMigration {
     if(args.length != 1) return null;
     PsiExpression arg = args[0];
     if(ExpressionUtils.isReferenceTo(arg, tb.getVariable())) return null;
+    if(PsiType.VOID.equals(arg.getType())) return null;
     PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
     if(tb.dependsOn(qualifier) ||
        VariableAccessUtils.variableIsUsed(tb.getVariable(), qualifier) ||
@@ -72,9 +73,9 @@ class ForEachMigration extends BaseStreamApiMigration {
       if (addedType == null) addedType = call.getType();
       JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       SuggestedNameInfo suggestedNameInfo =
-        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, addedType, false);
+        codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, addedType, true);
       if (suggestedNameInfo.names.length == 0) {
-        suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, null, false);
+        suggestedNameInfo = codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, "item", null, null, true);
       }
       String varName = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, call, false).names[0];
 

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.refactoring.util;
 
@@ -43,7 +31,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 05-Oct-2009
  */
 public class RefactoringConflictsUtil {
   private RefactoringConflictsUtil() { }
@@ -161,7 +148,8 @@ public class RefactoringConflictsUtil {
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         PsiExpression qualifier = refExpr.getQualifierExpression();
-        PsiClass qualifierAccessClass = (PsiClass)(qualifier != null && !(qualifier instanceof PsiSuperExpression) ? PsiUtil.getAccessObjectClass(qualifier).getElement() : accessClass);
+        PsiClass qualifierAccessClass = (PsiClass)(qualifier != null && !(qualifier instanceof PsiSuperExpression) ? PsiUtil.getAccessObjectClass(qualifier).getElement()
+                                                                                                                   : accessClass != null && PsiTreeUtil.isAncestor(((PsiMember)refElement).getContainingClass(), accessClass, true) ? null : accessClass);
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false) &&
             (qualifierAccessClass == null || !RefactoringHierarchyUtil.willBeInTargetClass(qualifierAccessClass, moving, targetClass, false))) {
           checkAccessibility((PsiMember)refElement, context, qualifierAccessClass, member, conflicts);
@@ -206,7 +194,8 @@ public class RefactoringConflictsUtil {
                                         @Nullable PsiClass accessClass,
                                         PsiMember member,
                                         MultiMap<PsiElement, String> conflicts) {
-    if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
+    PsiResolveHelper helper = JavaPsiFacade.getInstance(newContext.getProject()).getResolveHelper();
+    if (!helper.isAccessible(refMember, refMember.getModifierList(), newContext, accessClass, newContext)) {
       String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
                                                  RefactoringUIUtil.getDescription(refMember, true),
                                                  VisibilityUtil.getVisibilityStringToDisplay(refMember),
@@ -215,9 +204,9 @@ public class RefactoringConflictsUtil {
       conflicts.putValue(refMember, message);
     }
     else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
-      final PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
-      if (fieldInSubClass != null && 
-          !refMember.hasModifierProperty(PsiModifier.STATIC) && 
+      PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
+      if (fieldInSubClass != null &&
+          !refMember.hasModifierProperty(PsiModifier.STATIC) &&
           fieldInSubClass != refMember &&
           !member.hasModifierProperty(PsiModifier.STATIC)) {
         conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +

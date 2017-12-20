@@ -141,7 +141,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   private RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
     if (element == null ||
         !(ScopeUtil.getScopeOwner(element) instanceof PyFile) ||
-        !element.getContainingFile().getName().equals("re.py") ||
+        !ArrayUtil.contains(element.getContainingFile().getName(), "re.py", "re.pyi") ||
         !(element instanceof PyFunction)) {
       return null;
     }

@@ -321,7 +321,7 @@ public class PyBlock implements ASTBlock {
     // TODO: merge with needChildAlignment()
     //Align elements vertically if there is an argument in the first line of parenthesized expression
     else if (!hasHangingIndent(myNode.getPsi()) &&
-             ((parentType == PyElementTypes.PARENTHESIZED_EXPRESSION && myContext.getSettings().ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION) ||
+             (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION ||
               (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) ||
               (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
              !isIndentNext(child) &&

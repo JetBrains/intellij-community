@@ -45,7 +45,6 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/25/13
  */
 public abstract class FileEditorManagerTestCase extends LightPlatformCodeInsightFixtureTestCase {
 

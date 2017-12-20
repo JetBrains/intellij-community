@@ -1,0 +1,17 @@
+package pkg;
+
+import groovy.transform.Trait;
+import org.codehaus.groovy.transform.trait.Traits.Implemented;
+
+@Trait
+public interface TestGroovyTrait {
+   @Implemented
+   Object myMethod();
+
+   @Implemented
+   Object getMyField();
+
+   @Implemented
+   void setMyField(Object var1);
+}
+

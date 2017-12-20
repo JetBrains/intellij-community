@@ -9,7 +9,7 @@
     <border type="none"/>
     <children>
       <grid id="5736" binding="myConditionsPanel" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="7">
-        <margin top="2" left="2" bottom="5" right="5"/>
+        <margin top="2" left="0" bottom="5" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -17,7 +17,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="etched" title-resource-bundle="messages/DebuggerBundle" title-key="label.breakpoint.properties.panel.group.conditions"/>
+        <border type="none"/>
         <children>
           <grid id="8e867" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
             <margin top="0" left="0" bottom="0" right="0"/>

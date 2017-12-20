@@ -18,18 +18,25 @@ import org.jetbrains.annotations.NotNull;
 public interface ComponentPanelBuilder extends PanelBuilder {
 
   /**
-   * @param labelText text for the label. If <code>null</code> or not set then no label is added in the layout.
+   * @param labelText text for the label.
    *
    * @return <code>this</code>
    */
-  ComponentPanelBuilder withLabel(String labelText);
+  ComponentPanelBuilder withLabel(@NotNull String labelText);
+
+  /**
+   * Move label on top of the owner component. Default position is on the left of the owner component.
+   *
+   * @return <code>this</code>
+   */
+  ComponentPanelBuilder moveLabelOnTop();
 
   /**
    * @param commentText help context styled text written below the owner component.
    *
    * @return <code>this</code>
    */
-  ComponentPanelBuilder withComment(String commentText);
+  ComponentPanelBuilder withComment(@NotNull String commentText);
 
   /**
    * Move comment to the right of the owner component. Default position is below the owner component.
@@ -41,21 +48,20 @@ public interface ComponentPanelBuilder extends PanelBuilder {
   /**
    * Enables the help tooltip icon on the right of the owner component and sets the description text for the tooltip.
    *
-   * @param description help tooltip description. If <code>null</code> is passed then help tooltip is disabled (default
-   *                    behaviour) and no help icon is added.
+   * @param description help tooltip description.
    *
    * @return <code>this</code>
    */
-  ComponentPanelBuilder withTooltip(String description);
+  ComponentPanelBuilder withTooltip(@NotNull String description);
 
   /**
    * Sets optional help tooltip link and link action.
    *
-   * @param linkText help tooltip link text. If <code>null</code> is passed, no link is added.
+   * @param linkText help tooltip link text.
    *
    * @param action help tooltip link action.
    *
    * @return <code>this</code>
    */
-  ComponentPanelBuilder withTooltipLink(String linkText, @NotNull Runnable action);
+  ComponentPanelBuilder withTooltipLink(@NotNull String linkText, @NotNull Runnable action);
 }

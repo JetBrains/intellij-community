@@ -134,7 +134,7 @@ public interface RegionPainter<T> {
     @Override
     public void paint(Graphics2D g, int x, int y, int width, int height, Object object) {
       if (width > 0 && height > 0) {
-        if (myImage == null || width != myImage.getWidth() || height != myImage.getHeight()) {
+        if (myImage == null || width != ImageUtil.getUserWidth(myImage) || height != ImageUtil.getUserHeight(myImage)) {
           myImage = createImage(width, height);
         }
         else if (myImage != null) {

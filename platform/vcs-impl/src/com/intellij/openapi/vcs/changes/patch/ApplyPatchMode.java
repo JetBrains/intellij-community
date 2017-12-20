@@ -19,8 +19,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 
 /**
  * @author irengrig
- *         Date: 2/25/11
- *         Time: 5:23 PM
  */
 public enum ApplyPatchMode {
   APPLY(VcsBundle.message("patch.apply.dialog.title"), true),

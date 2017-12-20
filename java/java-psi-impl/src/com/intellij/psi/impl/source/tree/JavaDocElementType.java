@@ -81,7 +81,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser, false, LanguageLevel.JDK_1_3);
     }
   };
@@ -96,7 +96,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser, false, LanguageLevel.JDK_1_3);
     }
   };
@@ -116,7 +116,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
 

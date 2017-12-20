@@ -25,7 +25,7 @@ public interface ProgressPanelBuilder extends PanelBuilder {
    * @param text label text
    * @return <code>this</code>
    */
-  ProgressPanelBuilder withLabel(String text);
+  ProgressPanelBuilder withLabel(@NotNull String text);
 
   /**
    * Move comment to the left of the progress bar. Default position is above the progress bar.

@@ -35,8 +35,6 @@ import java.util.*;
 
 /**
  * @author irengrig
- *         Date: 2/21/11
- *         Time: 5:14 PM
  */
 public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];

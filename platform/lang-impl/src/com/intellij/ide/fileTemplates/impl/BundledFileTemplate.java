@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/6/11
  */
 public final class BundledFileTemplate extends FileTemplateBase {
   private final DefaultTemplate myDefaultTemplate;

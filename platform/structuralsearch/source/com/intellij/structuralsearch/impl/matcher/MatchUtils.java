@@ -21,8 +21,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author maxim
- * Date: 24.12.2003
- * Time: 22:10:20
  */
 public class MatchUtils {
 

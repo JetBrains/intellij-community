@@ -245,10 +245,11 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static class RedundantCollectionOperationFix implements LocalQuickFix {
-    private RedundantCollectionOperationHandler myHandler;
+    private final RedundantCollectionOperationHandler myHandler;
 
-    public RedundantCollectionOperationFix(
-      RedundantCollectionOperationHandler handler) {myHandler = handler;}
+    public RedundantCollectionOperationFix(RedundantCollectionOperationHandler handler) {
+      myHandler = handler;
+    }
 
     @Nls
     @NotNull

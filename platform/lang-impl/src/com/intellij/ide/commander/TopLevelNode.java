@@ -26,7 +26,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 23, 2005
  */
 public class TopLevelNode extends AbstractTreeNode {
 

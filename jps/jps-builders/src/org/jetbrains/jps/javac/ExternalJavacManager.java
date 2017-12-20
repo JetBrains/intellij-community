@@ -190,13 +190,17 @@ public class ExternalJavacManager {
         return false;
       }
     }
+    return true;
+  }
+
+  @TestOnly
+  public boolean awaitNettyThreadPoolTermination(long time, @NotNull TimeUnit unit) {
     try {
-      myExecutor.awaitTermination(time, unit);
+      return myExecutor.awaitTermination(time, unit);
     }
     catch (InterruptedException ignored) {
-
+      return true;
     }
-    return true;
   }
 
   private void unregisterMessageHandler(UUID uuid) {
@@ -217,7 +221,7 @@ public class ExternalJavacManager {
 
   public void stop() {
     myChannelRegistrar.close().awaitUninterruptibly();
-    myExecutor.shutdownNow();
+    myExecutor.shutdown();
   }
 
   private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid,

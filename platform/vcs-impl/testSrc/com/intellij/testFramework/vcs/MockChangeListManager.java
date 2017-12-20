@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -229,6 +230,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public void addChangeListListener(@NotNull ChangeListListener listener, @NotNull Disposable disposable) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void addChangeListListener(@NotNull ChangeListListener listener) {
     throw new UnsupportedOperationException();
   }
@@ -381,7 +387,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @NotNull
   @Override
-  public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
+  public Collection<LocalChangeList> getAffectedLists(@NotNull Collection<Change> changes) {
     throw new UnsupportedOperationException();
   }
 

@@ -70,7 +70,7 @@ public class DoubleNegationInspection extends BaseInspection {
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
-        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker));
+        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker), tracker);
       } else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -122,6 +122,13 @@ public class DoubleNegationInspection extends BaseInspection {
       final PsiExpression operand = expression.getOperand();
       if (!isNegation(operand)) {
         return;
+      }
+      PsiExpression nestedOperand = ParenthesesUtils.stripParentheses(operand);
+      if (nestedOperand instanceof PsiPrefixExpression) {
+        PsiExpression nestedPrefixOperand = ((PsiPrefixExpression)nestedOperand).getOperand();
+        if (nestedPrefixOperand == null || !LambdaUtil.isSafeLambdaReturnValueReplacement(expression, nestedPrefixOperand)) {
+          return;
+        }
       }
       registerError(expression);
     }

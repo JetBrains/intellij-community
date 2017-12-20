@@ -703,8 +703,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         return myStackFrameCache.containsKey(frame.getThreadFrameId());
       }
     }
-    catch (PyDebuggerException e) {
-      LOG.warn(e);
+    catch (PyDebuggerException ignored) {
     }
     return false;
   }

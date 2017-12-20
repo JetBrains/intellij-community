@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
@@ -33,13 +21,15 @@ import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar;
 import com.intellij.util.xmlb.Constants;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UastContextKt;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -126,7 +116,16 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static void registerXmlb(final DomExtensionsRegistrar registrar, @Nullable final PsiClass beanClass, @NotNull List<With> elements) {
     if (beanClass == null) return;
 
-    for (PsiField field : beanClass.getAllFields()) {
+    PsiField[] fields;
+    UClass beanClassNavigationClass = UastContextKt.toUElement(beanClass.getNavigationElement(), UClass.class);
+    if (beanClassNavigationClass != null) {
+      fields = beanClassNavigationClass.getAllFields();
+    }
+    else {
+      fields = beanClass.getAllFields(); // fallback
+    }
+
+    for (PsiField field : fields) {
       registerField(registrar, field, findWithElement(elements, field));
     }
   }
@@ -172,12 +171,12 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
     }
     final PsiAnnotation tagAnno = findAnnotation(Tag.class, field, getter, setter);
     final PsiAnnotation propAnno = findAnnotation(Property.class, field, getter, setter);
-    final PsiAnnotation absColAnno = findAnnotation(AbstractCollection.class, field, getter, setter);
+    final PsiAnnotation collectionAnnotation = findAnnotation(XCollection.class, field, getter, setter);
     //final PsiAnnotation colAnno = modifierList.findAnnotation(Collection.class.getName()); // todo
     final String tagName = tagAnno != null? getStringAttribute(tagAnno, "value", evalHelper) :
                            propAnno != null && getBooleanAttribute(propAnno, "surroundWithTag", evalHelper)? Constants.OPTION : null;
     if (tagName != null) {
-      if (absColAnno == null) {
+      if (collectionAnnotation == null) {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), SimpleTagValue.class).setDeclaringElement(field);
         markAsClass(extension, fieldName, withElement);
@@ -186,13 +185,13 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
         registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerCollectionBinding(field.getType(), registrar, absColAnno, evalHelper);
+            registerCollectionBinding(field.getType(), registrar, collectionAnnotation, evalHelper);
           }
         });
       }
     }
-    else if (absColAnno != null) {
-      registerCollectionBinding(field.getType(), registrar, absColAnno, evalHelper);
+    else if (collectionAnnotation != null) {
+      registerCollectionBinding(field.getType(), registrar, collectionAnnotation, evalHelper);
     }
   }
 

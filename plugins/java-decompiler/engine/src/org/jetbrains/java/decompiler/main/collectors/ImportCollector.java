@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
 import org.jetbrains.java.decompiler.struct.StructField;
@@ -68,13 +70,14 @@ public class ImportCollector {
   }
 
   public String getShortName(String fullName, boolean imported) {
-    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/'));
+    ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName.replace('.', '/')); //todo[r.sh] anonymous classes?
 
     String result = null;
     if (node != null && node.classStruct.isOwn()) {
       result = node.simpleName;
 
       while (node.parent != null && node.type == ClassNode.CLASS_MEMBER) {
+        //noinspection StringConcatenationInLoop
         result = node.parent.simpleName + '.' + result;
         node = node.parent;
       }

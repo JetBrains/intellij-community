@@ -23,7 +23,7 @@ import one.util.streamex.IntStreamEx
 class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
 
   fun testPsiDocSynchronization() {
-    PropertyChecker.forAll(commands()).shouldHold { cmd ->
+    PropertyChecker.forAll(commands).shouldHold { cmd ->
       runCommand(cmd)
       true
     }
@@ -91,14 +91,14 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   private val genCoords = Generator.zipWith(Generator.naturals(), Generator.integers(0, 5), ::NodeCoordinates)
-  private fun commands(): Generator<AstCommand> = Generator.frequency(
-    1, Generator.from { CommandGroup(Generator.listsOf(IntDistribution.uniform(1, 5), commands()).generateValue(it)) },
+  private val commands: Generator<AstCommand> = Generator.recursive { rec -> Generator.frequency(
+    1, Generator.listsOf(IntDistribution.uniform(1, 5), rec).map(::CommandGroup),
     5, genCoords.flatMap { coords ->
     Generator.anyOf(
       Generator.constant(DeleteElement(coords)),
       nodes.map { ReplaceElement(coords, it) },
       Generator.zipWith(nodes, Generator.naturals()) { n, i -> AddElement(coords, i, n) }
-    ) })
+    ) }) }
 
   private val leafTypes = IntStreamEx.range(1, 5).mapToObj { i -> IElementType("Leaf" + i, null) }.toList()
   private val compositeTypes = IntStreamEx.range(1, 5).mapToObj { i -> IElementType("Composite" + i, null) }.toList()

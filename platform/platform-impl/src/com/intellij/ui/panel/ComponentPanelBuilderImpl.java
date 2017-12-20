@@ -4,6 +4,7 @@ package com.intellij.ui.panel;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
+import com.intellij.openapi.ui.panel.GridBagPanelBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -15,30 +16,39 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
+public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBagPanelBuilder {
 
   private final JComponent myComponent;
 
   private String myLabelText;
+  private boolean myLabelOnTop;
   private String myComment;
   private boolean myCommentBelow = true;
   private String myHTDescription;
   private String myHTLinkText;
   private Runnable myHTAction;
+  private boolean valid = true;
 
   ComponentPanelBuilderImpl(JComponent component) {
     myComponent = component;
   }
 
   @Override
-  public ComponentPanelBuilder withLabel(String labelText) {
+  public ComponentPanelBuilder withLabel(@NotNull String labelText) {
     myLabelText = labelText;
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder withComment(String comment) {
+  public ComponentPanelBuilder moveLabelOnTop() {
+    myLabelOnTop = true;
+    return this;
+  }
+
+  @Override
+  public ComponentPanelBuilder withComment(@NotNull String comment) {
     myComment = comment;
+    valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
@@ -49,13 +59,14 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
   }
 
   @Override
-  public ComponentPanelBuilder withTooltip(String description) {
+  public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
+    valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myComment);
     return this;
   }
 
   @Override
-  public ComponentPanelBuilder withTooltipLink(String linkText, @NotNull Runnable action) {
+  public ComponentPanelBuilder withTooltipLink(@NotNull String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
     return this;
@@ -73,7 +84,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
 
   @Override
   public boolean constrainsValid() {
-    return myCommentBelow || StringUtil.isEmpty(myHTDescription);
+    return valid;
   }
 
   @Override
@@ -91,14 +102,22 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder {
     gc.anchor = GridBagConstraints.LINE_START;
 
     if (StringUtil.isNotEmpty(myLabelText)) {
-      gc.insets = JBUI.insetsRight(8);
       JLabel lbl = new JLabel();
       LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(myLabelText).setToLabel(lbl);
       lbl.setLabelFor(myComponent);
-      panel.add(lbl, gc);
+
+      if (myLabelOnTop) {
+        gc.insets = JBUI.insetsBottom(4);
+        gc.gridx++;
+        panel.add(lbl, gc);
+        gc.gridy++;
+      } else {
+        gc.insets = JBUI.insetsRight(8);
+        panel.add(lbl, gc);
+      }
     }
 
-    gc.gridx++;
+    gc.gridx += myLabelOnTop ? 0 : 1;
     gc.weightx = 1.0;
     gc.insets = JBUI.emptyInsets();
 

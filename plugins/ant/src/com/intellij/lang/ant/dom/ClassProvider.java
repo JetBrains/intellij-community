@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 3/4/13
 */
 abstract class ClassProvider {
   static final ClassProvider EMPTY = new ClassProvider() {

@@ -11,16 +11,17 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MethodWrapper {
   public final RootStatement root;
   public final VarProcessor varproc;
   public final StructMethod methodStruct;
   public final CounterContainer counter;
-  public final HashSet<String> setOuterVarNames = new HashSet<>();
+  public final Set<String> setOuterVarNames = new HashSet<>();
 
   public DirectGraph graph;
-  public List<VarVersionPair> signatureFields;
+  public List<VarVersionPair> synthParameters;
   public boolean decompiledWithErrors;
 
   public MethodWrapper(RootStatement root, VarProcessor varproc, StructMethod methodStruct, CounterContainer counter) {

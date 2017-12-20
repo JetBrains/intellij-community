@@ -19,8 +19,6 @@ import org.tmatesoft.svn.core.auth.*;
 
 /**
  * @author irengrig
- *         Date: 1/24/11
- *         Time: 6:14 PM
  */
 public class ProxySvnAuthentication {
   private ProxySvnAuthentication() {

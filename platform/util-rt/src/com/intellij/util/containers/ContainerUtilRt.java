@@ -322,7 +322,7 @@ public class ContainerUtilRt {
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
+    public boolean containsAll(@NotNull Collection<?> c) {
       return c.isEmpty();
     }
 
@@ -335,7 +335,7 @@ public class ContainerUtilRt {
     @Override
     @Contract(pure = true)
     public boolean equals(Object o) {
-      return (o instanceof List) && ((List)o).isEmpty();
+      return o instanceof List && ((List)o).isEmpty();
     }
 
     @Override

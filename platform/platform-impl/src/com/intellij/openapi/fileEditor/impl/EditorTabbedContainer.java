@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -329,9 +331,13 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     }
   }
 
+  /**
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab, 
+   *                    component for which menu is invoked will be returned
+   */
   @Nullable
-  public Object getSelectedComponent() {
-    final TabInfo info = myTabs.getTargetInfo();
+  public Object getSelectedComponent(boolean ignorePopup) {
+    final TabInfo info = ignorePopup ? myTabs.getSelectedInfo() : myTabs.getTargetInfo();
     return info != null ? info.getComponent() : null;
   }
 

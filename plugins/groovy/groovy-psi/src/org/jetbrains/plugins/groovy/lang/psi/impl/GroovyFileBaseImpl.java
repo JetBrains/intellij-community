@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -43,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
@@ -87,7 +90,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @Override
   @NotNull
   public GrTypeDefinition[] getTypeDefinitions() {
-    final StubElement<?> stub = getStub();
+    final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(TokenSets.TYPE_DEFINITIONS, GrTypeDefinition.ARRAY_FACTORY);
     }
@@ -98,7 +101,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   @Override
   @NotNull
   public GrMethod[] getMethods() {
-    final StubElement<?> stub = getStub();
+    final StubElement<?> stub = getGreenStub();
     if (stub != null) {
       return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
     }
@@ -223,7 +226,11 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    return !shouldProcessMembers(processor) || getAppropriateHolder(processor).processDeclarations(processor, state, place);
+    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+      if (!shouldProcessMembers(each)) continue;
+      if (!getAppropriateHolder(processor).processDeclarations(each, state, place)) return false;
+    }
+    return true;
   }
 
   @NotNull

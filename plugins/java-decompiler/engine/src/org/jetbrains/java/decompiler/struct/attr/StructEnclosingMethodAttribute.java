@@ -5,7 +5,6 @@ import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 
 public class StructEnclosingMethodAttribute extends StructGeneralAttribute {

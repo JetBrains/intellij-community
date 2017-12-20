@@ -472,13 +472,13 @@ public class JavaDocInfoGenerator {
     if (generateClassSignature(buffer, aClass, SignaturePlace.Javadoc)) return;
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
-
     PsiDocComment comment = getDocComment(aClass);
     if (comment != null) {
       generateCommonSection(buffer, comment);
       generateTypeParametersSection(buffer, aClass);
     }
+
+    new NonCodeAnnotationGenerator(aClass, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
@@ -626,14 +626,14 @@ public class JavaDocInfoGenerator {
     generateFieldSignature(buffer, field, SignaturePlace.Javadoc);
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
-
     ColorUtil.appendColorPreview(field, buffer);
 
     PsiDocComment comment = getDocComment(field);
     if (comment != null) {
       generateCommonSection(buffer, comment);
     }
+
+    new NonCodeAnnotationGenerator(field, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
@@ -908,8 +908,6 @@ public class JavaDocInfoGenerator {
     buffer.append("</b>");
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations();
-
     final PsiElement method = PsiTreeUtil.getParentOfType(parameter, PsiMethod.class, PsiLambdaExpression.class);
 
     if (method instanceof PsiMethod) {
@@ -926,6 +924,8 @@ public class JavaDocInfoGenerator {
         }
       }
     }
+
+    new NonCodeAnnotationGenerator(parameter, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }
@@ -964,8 +964,6 @@ public class JavaDocInfoGenerator {
     generateMethodSignature(buffer, method, SignaturePlace.Javadoc);
     buffer.append("</PRE>");
 
-    new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
-
     PsiDocComment comment = getMethodDocComment(method);
 
     generateMethodDescription(buffer, method, comment);
@@ -987,6 +985,8 @@ public class JavaDocInfoGenerator {
       generateSinceSection(buffer, comment);
       generateSeeAlsoSection(buffer, comment);
     }
+
+    new NonCodeAnnotationGenerator(method, buffer).explainAnnotations();
 
     if (generatePrologueAndEpilogue) generateEpilogue(buffer);
   }

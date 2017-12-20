@@ -23,15 +23,13 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class DaemonStopAction {
+public class DaemonStopAction extends DaemonAction {
+  public DaemonStopAction(String serviceDirectoryPath) {
+    super(serviceDirectoryPath);
+  }
+
   public void run(DaemonClientFactory daemonClientFactory) {
-    OutputEventListener outputEventListener = new OutputEventListener() {
-      @Override
-      public void onOutput(OutputEvent event) { }
-    };
-    BuildLayoutParameters layout = new BuildLayoutParameters();
-    DaemonParameters daemonParameters = new DaemonParameters(layout);
-    ServiceRegistry daemonServices = daemonClientFactory.createStopDaemonServices(outputEventListener, daemonParameters);
+    ServiceRegistry daemonServices = getDaemonServices(daemonClientFactory);
     DaemonStopClient stopClient = daemonServices.get(DaemonStopClient.class);
     stopClient.stop();
   }

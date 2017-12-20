@@ -33,7 +33,6 @@ import com.intellij.util.io.PersistentHashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,7 +43,6 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
 public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input>{
   private static final Logger LOG = Logger.getInstance(VfsAwareMapReduceIndex.class);
@@ -62,27 +60,27 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
-    super(extension, storage, getForwardIndex(extension));
+    this(extension, storage, getForwardIndex(extension));
     if (!(myIndexId instanceof ID<?, ?>)) {
       throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
     }
+  }
+
+  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                                @NotNull IndexStorage<Key, Value> storage,
+                                @Nullable ForwardIndex<Key, Value> forwardIndex) throws IOException {
+    super(extension, storage, forwardIndex);
     SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
-    mySnapshotInputMappings = myForwardIndex == null ?
+    mySnapshotInputMappings = myForwardIndex == null && hasSnapshotMapping(extension)?
                               new SnapshotInputMappings<>(extension) :
                               null;
     installMemoryModeListener();
   }
 
-  @TestOnly
-  public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
-                                @NotNull IndexStorage<Key, Value> storage,
-                                @NotNull ForwardIndex<Key, Value> forwardIndex) throws IOException {
-    super(extension, storage, forwardIndex);
-    SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
-    mySnapshotInputMappings = myForwardIndex == null ?
-                              new SnapshotInputMappings<>(extension) :
-                              null;
-    installMemoryModeListener();
+  private static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
+    return indexExtension instanceof FileBasedIndexExtension &&
+           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
+           IdIndex.ourSnapshotMappingsEnabled;
   }
 
   @NotNull
@@ -115,10 +113,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
           return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
         }
       }
-      if (myForwardIndex != null) {
-        return getKeysDiffBuilder(inputId);
-      }
-      return new EmptyInputDataDiffBuilder(inputId);
+      return getKeysDiffBuilder(inputId);
     }, () -> {
       if (myInMemoryMode.get()) {
         synchronized (myInMemoryKeys) {
@@ -214,10 +209,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   @Nullable
   private static <Key, Value> ForwardIndex<Key, Value> getForwardIndex(@NotNull IndexExtension<Key, Value, ?> indexExtension)
     throws IOException {
-    final boolean hasSnapshotMapping = indexExtension instanceof FileBasedIndexExtension &&
-                                       ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-                                       IdIndex.ourSnapshotMappingsEnabled;
-    if (hasSnapshotMapping) return null;
+    if (hasSnapshotMapping(indexExtension)) return null;
 
     KeyCollectionBasedForwardIndex<Key, Value> backgroundIndex =
       !SharedIndicesData.ourFileSharedIndicesEnabled || SharedIndicesData.DO_CHECKS ? new MyForwardIndex<>(indexExtension) : null;

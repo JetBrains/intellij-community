@@ -36,8 +36,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Maxim.Mossienko
- * Date: Apr 21, 2004
- * Time: 7:50:48 PM
  */
 public class UIUtil {
   private static final String MODIFY_EDITOR_CONTENT = SSRBundle.message("modify.editor.content.command.name");

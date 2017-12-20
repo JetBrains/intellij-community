@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.actions.FormatChangedTextUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -120,14 +121,6 @@ public class ArrangementEngine {
       return;
     }
 
-    final DocumentEx documentEx;
-    if (document instanceof DocumentEx && !((DocumentEx)document).isInBulkUpdate()) {
-      documentEx = (DocumentEx)document;
-    }
-    else {
-      documentEx = null;
-    }
-
     final Context<? extends ArrangementEntry> context;
     DumbService.getInstance(file.getProject()).setAlternativeResolveEnabled(true);
     try {
@@ -138,20 +131,12 @@ public class ArrangementEngine {
     }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      if (documentEx != null) {
-        //documentEx.setInBulkUpdate(true);
-      }
-      try {
+      FormatChangedTextUtil.getInstance().runHeavyModificationTask(file.getProject(), document, () -> {
         doArrange(context);
         if (callback != null) {
           callback.afterArrangement(context.moveInfos);
         }
-      }
-      finally {
-        if (documentEx != null) {
-          //documentEx.setInBulkUpdate(false);
-        }
-      }
+      });
     });
   }
 

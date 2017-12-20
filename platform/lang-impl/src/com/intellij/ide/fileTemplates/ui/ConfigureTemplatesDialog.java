@@ -22,8 +22,6 @@ import com.intellij.openapi.project.Project;
 
 /*
  * @author: MYakovlev
- * Date: Oct 18, 2002
- * Time: 1:31:37 PM
  */
 public class ConfigureTemplatesDialog extends SingleConfigurableEditor{
   private static final String DIMENSION_KEY = "#com.intellij.ide.fileTemplates.ui.ConfigureTemplatesDialog";

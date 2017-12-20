@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.ex;
 
@@ -137,7 +139,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       myView.getTree().setTreeState(myTreeState);
     }
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
-
+    myContent.setHelpId(InspectionResultsView.HELP_ID);
     myContent.setDisposer(myView);
 
     ContentManager contentManager = getContentManager();

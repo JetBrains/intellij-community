@@ -496,12 +496,7 @@ public class MavenIndex {
   }
 
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    Set<T> result = map.get(key);
-    if (result == null) {
-      result = new THashSet<>();
-      map.put(key, result);
-    }
-    return result;
+    return map.computeIfAbsent(key, k -> new THashSet<>());
   }
 
   private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
@@ -601,29 +596,14 @@ public class MavenIndex {
     if (isBroken) return false;
 
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
-
-    Boolean res = myData.hasVersionCache.get(groupWithArtifactWithVersion);
-    if (res == null) {
-      String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
-      res = doIndexTask(() -> {
-        Set<String> set = myData.groupWithArtifactToVersionMap.get(groupWithArtifact);
-        return set != null && set.contains(version);
-      }, false);
-
-      myData.hasVersionCache.put(groupWithArtifactWithVersion, res);
-    }
-
-    return res;
+    String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
+    return myData.hasVersionCache.computeIfAbsent(groupWithArtifactWithVersion, gav -> doIndexTask(
+      () -> notNullize(myData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version),
+      false));
   }
 
   private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
-    Boolean res = cache.get(value);
-    if (res == null) {
-      res = doIndexTask(() -> map.tryEnumerate(value) != 0, false);
-      cache.put(value, res);
-    }
-
-    return res;
+    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.tryEnumerate(v) != 0, false));
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {

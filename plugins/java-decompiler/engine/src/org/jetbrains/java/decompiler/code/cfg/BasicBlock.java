@@ -16,8 +16,7 @@ public class BasicBlock implements IGraphNode {
   // public fields
   // *****************************************************************************
 
-  public int id = 0;
-
+  public int id;
   public int mark = 0;
 
   // *****************************************************************************
@@ -26,15 +25,11 @@ public class BasicBlock implements IGraphNode {
 
   private InstructionSequence seq = new SimpleInstructionSequence();
 
-  private List<BasicBlock> preds = new ArrayList<>();
-
-  private List<BasicBlock> succs = new ArrayList<>();
-
+  private final List<BasicBlock> preds = new ArrayList<>();
+  private final List<BasicBlock> succs = new ArrayList<>();
   private final List<Integer> instrOldOffsets = new ArrayList<>();
-
-  private List<BasicBlock> predExceptions = new ArrayList<>();
-
-  private List<BasicBlock> succExceptions = new ArrayList<>();
+  private final List<BasicBlock> predExceptions = new ArrayList<>();
+  private final List<BasicBlock> succExceptions = new ArrayList<>();
 
   public BasicBlock(int id) {
     this.id = id;
@@ -44,21 +39,15 @@ public class BasicBlock implements IGraphNode {
   // public methods
   // *****************************************************************************
 
-  public Object clone() {
+  @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
+  public BasicBlock clone() {
     BasicBlock block = new BasicBlock(id);
 
     block.setSeq(seq.clone());
     block.instrOldOffsets.addAll(instrOldOffsets);
 
     return block;
-  }
-
-  public void free() {
-    preds.clear();
-    succs.clear();
-    instrOldOffsets.clear();
-    succExceptions.clear();
-    seq = new SimpleInstructionSequence();
   }
 
   public Instruction getInstruction(int index) {
@@ -91,7 +80,7 @@ public class BasicBlock implements IGraphNode {
   }
 
   public void removePredecessor(BasicBlock block) {
-    while (preds.remove(block)) ;
+    while (preds.remove(block)) /**/;
   }
 
   public void addSuccessor(BasicBlock block) {
@@ -100,7 +89,7 @@ public class BasicBlock implements IGraphNode {
   }
 
   public void removeSuccessor(BasicBlock block) {
-    while (succs.remove(block)) ;
+    while (succs.remove(block)) /**/;
     block.removePredecessor(this);
   }
 
@@ -128,7 +117,7 @@ public class BasicBlock implements IGraphNode {
   }
 
   public void removePredecessorException(BasicBlock block) {
-    while (predExceptions.remove(block)) ;
+    while (predExceptions.remove(block)) /**/;
   }
 
   public void addSuccessorException(BasicBlock block) {
@@ -139,7 +128,7 @@ public class BasicBlock implements IGraphNode {
   }
 
   public void removeSuccessorException(BasicBlock block) {
-    while (succExceptions.remove(block)) ;
+    while (succExceptions.remove(block)) /**/;
     block.removePredecessorException(this);
   }
 
@@ -154,39 +143,9 @@ public class BasicBlock implements IGraphNode {
     return id + ":" + new_line_separator + seq.toString(indent);
   }
 
-  public String toStringOldIndices() {
-
-    String new_line_separator = DecompilerContext.getNewLineSeparator();
-
-    StringBuilder buf = new StringBuilder();
-
-    for (int i = 0; i < seq.length(); i++) {
-      if (i < instrOldOffsets.size()) {
-        buf.append(instrOldOffsets.get(i));
-      }
-      else {
-        buf.append("-1");
-      }
-      buf.append(": ");
-      buf.append(seq.getInstr(i).toString());
-      buf.append(new_line_separator);
-    }
-
-    return buf.toString();
-  }
-
   public boolean isSuccessor(BasicBlock block) {
     for (BasicBlock succ : succs) {
       if (succ.id == block.id) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public boolean isPredecessor(BasicBlock block) {
-    for (int i = 0; i < preds.size(); i++) {
-      if (preds.get(i).id == block.id) {
         return true;
       }
     }
@@ -211,10 +170,6 @@ public class BasicBlock implements IGraphNode {
     return preds;
   }
 
-  public void setPreds(List<BasicBlock> preds) {
-    this.preds = preds;
-  }
-
   public InstructionSequence getSeq() {
     return seq;
   }
@@ -227,25 +182,11 @@ public class BasicBlock implements IGraphNode {
     return succs;
   }
 
-  public void setSuccs(List<BasicBlock> succs) {
-    this.succs = succs;
-  }
-
-
   public List<BasicBlock> getSuccExceptions() {
     return succExceptions;
   }
 
-
-  public void setSuccExceptions(List<BasicBlock> succExceptions) {
-    this.succExceptions = succExceptions;
-  }
-
   public List<BasicBlock> getPredExceptions() {
     return predExceptions;
-  }
-
-  public void setPredExceptions(List<BasicBlock> predExceptions) {
-    this.predExceptions = predExceptions;
   }
 }

@@ -230,10 +230,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
 
     final PyExpression receiver = callSite.getReceiver(this);
-    final Map<PyExpression, PyCallableParameter> mapping =
-      PyCallExpressionHelper.mapArguments(callSite, this, context).getMappedParameters();
+    final PyCallExpression.PyArgumentsMapping fullMapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
+    final Map<PyExpression, PyCallableParameter> mappedExplicitParameters = fullMapping.getMappedParameters();
 
-    return getCallType(receiver, mapping, context);
+    final Map<PyExpression, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
+    final PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
+    if (receiver != null && firstImplicit != null) {
+      allMappedParameters.put(receiver, firstImplicit);
+    }
+    allMappedParameters.putAll(mappedExplicitParameters);
+
+    return getCallType(receiver, allMappedParameters, context);
   }
 
   @Nullable
@@ -299,8 +306,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    return replaceSelf(returnType, receiver, context, true);
+  }
+
+  @Nullable
+  private PyType replaceSelf(@Nullable PyType returnType,
+                             @Nullable PyExpression receiver,
+                             @NotNull TypeEvalContext context,
+                             boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
-      // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
+      // TODO: Currently we substitute only simple subclass types and unions, but we could handle collection types as well
       if (returnType instanceof PyClassType) {
         final PyClassType returnClassType = (PyClassType)returnType;
 
@@ -310,11 +325,28 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           if (receiverType instanceof PyClassType) {
             final PyClassType receiverClassType = (PyClassType)receiverType;
 
-            if (receiverClassType.getPyClass() != returnClassType.getPyClass() && PyTypeChecker.match(returnType, receiverType, context)) {
-              return returnClassType.isDefinition() ? receiverType : receiverClassType.toInstance();
+            if (receiverClassType.getPyClass() != returnClassType.getPyClass() &&
+                PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
+              return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
             }
           }
         }
+        else if (allowCoroutineOrGenerator &&
+                 returnType instanceof PyCollectionType &&
+                 PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType) != null) {
+          final List<PyType> replacedElementTypes = ContainerUtil.map(
+            ((PyCollectionType)returnType).getElementTypes(),
+            type -> replaceSelf(type, receiver, context, false)
+          );
+
+          return new PyCollectionTypeImpl(returnClassType.getPyClass(),
+                                          returnClassType.isDefinition(),
+                                          replacedElementTypes);
+        }
+      }
+      else if (returnType instanceof PyUnionType) {
+        final Collection<PyType> members = ((PyUnionType)returnType).getMembers();
+        return PyUnionType.union(ContainerUtil.map(members, type -> replaceSelf(type, receiver, context, true)));
       }
     }
     return returnType;

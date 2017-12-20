@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
@@ -68,7 +70,8 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.count;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
 /**
  * @author ven
@@ -199,22 +202,6 @@ public class ResolveUtil {
   private static PsiClassType createPsiType(@NotNull PsiClass psiClass) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     return factory.createType(psiClass);
-  }
-
-  public static boolean processChildren(@NotNull PsiElement element,
-                                        @NotNull PsiScopeProcessor processor,
-                                        @NotNull ResolveState state,
-                                        @Nullable PsiElement lastParent,
-                                        @NotNull PsiElement place) {
-    if (!shouldProcessLocals(processor)) return true;
-
-    PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
-    while (run != null) {
-      if (!run.processDeclarations(processor, state, null, place)) return false;
-      run = run.getPrevSibling();
-    }
-
-    return true;
   }
 
   @Nullable

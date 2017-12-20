@@ -23,7 +23,6 @@ import java.util.Arrays;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 11/18/12
 */
 public final class BinaryContent {
   private final byte[] myBuffer;

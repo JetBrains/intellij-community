@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.psi.*;
@@ -28,18 +30,19 @@ public class FromStringHintProcessor extends SignatureHintProcessor {
                                                  @NotNull final PsiSubstitutor substitutor,
                                                  @NotNull String[] options) {
     PsiElement context = createContext(method);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     return ContainerUtil.map(options, value -> {
-        String[] params = value.split(",");
-        return ContainerUtil.map(params, param -> {
-          try {
-            PsiType original = JavaPsiFacade.getElementFactory(method.getProject()).createTypeFromText(param, context);
-            return substitutor.substitute(original);
-          }
-          catch (IncorrectOperationException e) {
-            //do nothing. Just don't throw an exception
-          }
-          return PsiType.NULL;
-        }, new PsiType[params.length]);
+      try {
+        PsiType original = factory.createTypeFromText("SomeUnexpectedDummyClass<" + value + ">", context);
+        if (original instanceof PsiClassType) {
+          PsiType[] parameters = ((PsiClassType)original).getParameters();
+          return ContainerUtil.map(parameters, substitutor::substitute).toArray(new PsiType[parameters.length]) ;
+        }
+      }
+      catch (IncorrectOperationException e) {
+        //do nothing. Just don't throw an exception
+      }
+      return new PsiType[]{PsiType.NULL};
     });
   }
 

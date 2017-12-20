@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -11,7 +13,10 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.OptionTag;
+import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,8 +73,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
 
-  @AbstractCollection(surroundWithTag = false, elementTag = "path")
-  @Tag("ignored-roots")
+  @XCollection(elementName = "path", propertyElementName = "ignored-roots")
   public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
 
   public enum StandardOption {
@@ -110,7 +114,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(elementTag = "MESSAGE", surroundWithTag = false)
+  @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;

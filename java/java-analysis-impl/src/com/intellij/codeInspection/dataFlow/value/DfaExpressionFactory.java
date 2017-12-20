@@ -16,10 +16,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -191,7 +188,7 @@ public class DfaExpressionFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtilBase.isSimplePropertyGetter(method) && !(method.getReturnType() instanceof PsiPrimitiveType)) {
+      if (PropertyUtilBase.isSimplePropertyGetter(method) && ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
         String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
           return method;
@@ -202,7 +199,8 @@ public class DfaExpressionFactory {
           return sf.getCanonicalOwner(null, ((PsiMethod)target).getContainingClass());
         }
       }
-      if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
+      if (method.getParameterList().getParametersCount() == 0 &&
+          AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
         return method;
       }
     }

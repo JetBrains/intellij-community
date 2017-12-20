@@ -113,7 +113,7 @@ public class NegatedIfElseInspection extends BaseInspection {
         }
       }
       @NonNls final String newStatement = "if(" + negatedCondition + ')' + elseText + " else " + tracker.markUnchanged(thenBranch).getText();
-      PsiReplacementUtil.replaceStatement(ifStatement, newStatement);
+      PsiReplacementUtil.replaceStatement(ifStatement, newStatement, tracker);
     }
   }
 

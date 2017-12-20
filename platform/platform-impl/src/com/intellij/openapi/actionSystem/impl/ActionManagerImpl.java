@@ -24,6 +24,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionIdProvider;
 import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -1170,6 +1171,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
+      if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
+        myLastPreformedActionId = ((ActionIdProvider)action).getId();
+      }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
       ActionsCollector.getInstance().record(myLastPreformedActionId);

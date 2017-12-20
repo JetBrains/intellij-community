@@ -631,7 +631,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void startBackgroundVcsOperation() {
-    myBackgroundOperationCounter.incrementAndGet();
+    int counter = myBackgroundOperationCounter.incrementAndGet();
+    if (counter == 1) {
+      myProject.getMessageBus().syncPublisher(BackgroundVfsOperationListener.TOPIC).backgroundVcsOperationStarted();
+    }
   }
 
   @Override
@@ -640,6 +643,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode();
     int counter = myBackgroundOperationCounter.getAndDecrement();
     LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was " + counter + " while should have been > 0");
+    if (counter == 1) {
+      myProject.getMessageBus().syncPublisher(BackgroundVfsOperationListener.TOPIC).backgroundVcsOperationStopped();
+    }
   }
 
   @Override

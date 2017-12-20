@@ -7,7 +7,6 @@ import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
-import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectGraph;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.SwitchStatement;
 
 import java.util.ArrayList;
@@ -29,18 +28,15 @@ public class SwitchHelper {
       if (classNode != null) {
         MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
         if (wrapper != null && wrapper.root != null) {
-          wrapper.getOrBuildGraph().iterateExprents(new DirectGraph.ExprentIterator() {
-            @Override
-            public int processExprent(Exprent exprent) {
-              if (exprent instanceof AssignmentExprent) {
-                AssignmentExprent assignment = (AssignmentExprent)exprent;
-                Exprent left = assignment.getLeft();
-                if (left.type == Exprent.EXPRENT_ARRAY && ((ArrayExprent)left).getArray().equals(arrayField)) {
-                  mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
-                }
+          wrapper.getOrBuildGraph().iterateExprents(exprent -> {
+            if (exprent instanceof AssignmentExprent) {
+              AssignmentExprent assignment = (AssignmentExprent)exprent;
+              Exprent left = assignment.getLeft();
+              if (left.type == Exprent.EXPRENT_ARRAY && ((ArrayExprent)left).getArray().equals(arrayField)) {
+                mapping.put(assignment.getRight(), ((InvocationExprent)((ArrayExprent)left).getIndex()).getInstance());
               }
-              return 0;
             }
+            return 0;
           });
         }
       }

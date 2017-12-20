@@ -55,7 +55,6 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 4/17/12
 */
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");

@@ -27,7 +27,6 @@ import java.util.ResourceBundle;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 9, 2005
  */
 public class CompilerBundle {
 

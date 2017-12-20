@@ -4,7 +4,6 @@ package org.jetbrains.java.decompiler.util;
 import java.util.ArrayList;
 
 public class ListStack<T> extends ArrayList<T> {
-
   protected int pointer = 0;
 
   public ListStack() {
@@ -15,16 +14,16 @@ public class ListStack<T> extends ArrayList<T> {
     super(list);
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public ListStack<T> clone() {
-    ListStack<T> newstack = new ListStack<>(this);
-    newstack.pointer = this.pointer;
-    return newstack;
+    ListStack<T> copy = new ListStack<>(this);
+    copy.pointer = this.pointer;
+    return copy;
   }
 
-  public T push(T item) {
+  public void push(T item) {
     this.add(item);
     pointer++;
-    return item;
   }
 
   public T pop() {
@@ -42,21 +41,12 @@ public class ListStack<T> extends ArrayList<T> {
     return o;
   }
 
-  public void remove() {
-    pointer--;
-    this.remove(pointer);
-  }
-
   public void removeMultiple(int count) {
     while (count > 0) {
       pointer--;
       this.remove(pointer);
       count--;
     }
-  }
-
-  public boolean empty() {
-    return (pointer == 0);
   }
 
   public int getPointer() {

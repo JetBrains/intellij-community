@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -142,7 +144,7 @@ class ImmediatePainter {
                                          : JBUI.scale(caret.getVisualAttributes().getWidth(settings.getLineCursorWidth()));
     final float caretShift = isBlockCursor ? 0 : caretWidth == 1 ? 0 : 1 / JBUI.sysScale((Graphics2D)g);
     final Rectangle2D caretRectangle = new Rectangle2D.Float((int)(p2x + width2) - caretShift, p2y - topOverhang,
-                                                             caretWidth, lineHeight + topOverhang + bottomOverhang + (isBlockCursor ? -1 : 0));
+                                                             caretWidth, lineHeight + topOverhang + bottomOverhang);
 
     final Rectangle rectangle1 = new Rectangle((int)(p2x - width1), p2y, width1i, lineHeight);
     final Rectangle rectangle2 = new Rectangle((int)p2x, p2y, (int)(width2i + caretWidth - caretShift), lineHeight);

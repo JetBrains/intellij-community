@@ -14,7 +14,6 @@ import javax.swing.tree.DefaultTreeModel;
 
 /**
  * @author anna
- * Date: 11-Apr-2008
  */
 public class TypeMigrationTreeBuilder extends AbstractTreeBuilder{
   public TypeMigrationTreeBuilder(JTree tree, Project project) {

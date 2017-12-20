@@ -18,9 +18,9 @@ public class A11YUsagesCollector extends UsagesCollector {
   @NotNull
   @Override
   public Set<UsageDescriptor> getUsages() {
-    String activity = ScreenReader.isActive() ? "on" : "off";
+    String activity = ScreenReader.isActive() ? "ENABLED" : "DISABLED";
     String os = SystemInfo.isWindows ? "Windows" : SystemInfo.isLinux ? "Linux" : SystemInfo.isMac ? "Mac" : "Unknown OS";
-    return Collections.singleton(new UsageDescriptor(os + " " + activity, 1));
+    return Collections.singleton(new UsageDescriptor(os + " screen reader " + activity, 1));
   }
 
   @NotNull

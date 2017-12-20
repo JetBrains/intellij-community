@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -70,10 +72,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -107,6 +106,7 @@ import java.awt.font.TextHitInfo;
 import java.awt.geom.Point2D;
 import java.awt.im.InputMethodRequests;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -119,6 +119,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntFunction;
 
 public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
@@ -235,6 +236,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
+  private RangeMarker myTopLeftCornerMarker;
 
   @Nullable
   private final Project myProject;
@@ -313,6 +315,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myUseEditorAntialiasing = true;
 
   private final ImmediatePainter myImmediatePainter;
+
+  private final List<IntFunction<Collection<LineExtensionInfo>>> myLineExtensionPainters = new SmartList<>();
 
   static {
     ourCaretBlinkingCommand.start();
@@ -466,10 +470,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
           if (newGuide != null) {
             final Rectangle visibleArea = getScrollingModel().getVisibleArea();
-            final int line = newGuide.startLine;
-            if (logicalLineToY(line) < visibleArea.y) {
-              TextRange textRange = new TextRange(myDocument.getLineStartOffset(line), myDocument.getLineEndOffset(line));
-
+            final int startLine = newGuide.codeConstructStartLine;
+            final int endLine = newGuide.startLine;
+            if (logicalLineToY(startLine) < visibleArea.y) {
+              TextRange textRange = new TextRange(myDocument.getLineStartOffset(startLine), myDocument.getLineEndOffset(endLine));
               myCurrentHint = EditorFragmentComponent.showEditorFragmentHint(EditorImpl.this, textRange, false, false);
             }
           }
@@ -556,6 +560,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
+
+    PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent e) {
+        if (Document.PROP_WRITABLE.equals(e.getPropertyName())) {
+          myEditorComponent.repaint();
+        }
+      }
+    };
+    myDocument.addPropertyChangeListener(propertyChangeListener);
+    Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
@@ -660,6 +675,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setPurePaintingMode(boolean enabled) {
     myPurePaintingMode = enabled;
+  }
+
+  @Override
+  public void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter) {
+    myLineExtensionPainters.add(lineExtensionPainter);
+  }
+
+  public boolean processLineExtensions(int line, Processor<LineExtensionInfo> processor) {
+    for (IntFunction<Collection<LineExtensionInfo>> painter : myLineExtensionPainters) {
+      for (LineExtensionInfo extension : painter.apply(line)) {
+        if (!processor.process(extension)) {
+          return false;
+        }
+      }
+    }
+    if (myProject != null && myVirtualFile != null) {
+      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+        Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
+        if (extensions != null) {
+          for (LineExtensionInfo extension : extensions) {
+            if (!processor.process(extension)) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   @Override
@@ -1447,7 +1490,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     repaintToScreenBottom(0);
     updateCaretCursor();
 
-    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
+    if (myTopLeftCornerMarker != null || !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING))) {
       restoreCaretRelativePosition();
     }
   }
@@ -1508,7 +1551,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       repaintLines(startLine, endLine);
     }
 
-    if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
+    if (myTopLeftCornerMarker != null ||
+        !Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) &&
         (getCaretModel().getOffset() < e.getOffset() || getCaretModel().getOffset() > e.getOffset() + e.getNewLength())) {
       restoreCaretRelativePosition();
     }
@@ -1524,15 +1568,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void saveCaretRelativePosition() {
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     Point pos = visualPositionToXY(getCaretModel().getVisualPosition());
-    myCaretUpdateVShift = pos.y - visibleArea.y;
+    // if caret is not visible we try to keep displayed fragment (its top-left corner to be precise) visible
+    if (visibleArea.height > 0 && (pos.y + getLineHeight() < visibleArea.y || pos.y > (visibleArea.y + visibleArea.height))) {
+      int topLeftCornerOffset = logicalPositionToOffset(xyToLogicalPosition(visibleArea.getLocation()));
+      myTopLeftCornerMarker = myDocument.createRangeMarker(topLeftCornerOffset, topLeftCornerOffset);
+      myCaretUpdateVShift = offsetToXY(topLeftCornerOffset).y - visibleArea.y;
+    }
+    else {
+      myTopLeftCornerMarker = null;
+      myCaretUpdateVShift = pos.y - visibleArea.y;
+    }
   }
 
   private void restoreCaretRelativePosition() {
-    Point caretLocation = visualPositionToXY(getCaretModel().getVisualPosition());
-    int scrollOffset = caretLocation.y - myCaretUpdateVShift;
+    Point newLocation = myTopLeftCornerMarker == null || !myTopLeftCornerMarker.isValid() 
+                        ? visualPositionToXY(getCaretModel().getVisualPosition())
+                        : offsetToXY(myTopLeftCornerMarker.getStartOffset());
     getScrollingModel().disableAnimation();
-    getScrollingModel().scrollVertically(scrollOffset);
+    getScrollingModel().scrollVertically(newLocation.y - myCaretUpdateVShift);
     getScrollingModel().enableAnimation();
+    myTopLeftCornerMarker = null;
   }
 
   public boolean isScrollToCaret() {
@@ -2531,7 +2586,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Point pos2 = visualPositionToXY(new VisualPosition(caretPosition.line, Math.max(0, caretPosition.column + (isRtl ? -1 : 1)), isRtl));
       int width = Math.abs(pos2.x - pos1.x);
       if (!isRtl && myInlayModel.hasInlineElementAt(caretPosition)) {
-        width = Math.min(width, myView.getPlainSpaceWidth());
+        width = Math.min(width, (int)Math.ceil(myView.getPlainSpaceWidth()));
       }
       caretPoints.add(new CaretRectangle(pos1, width, caret, isRtl));
     }

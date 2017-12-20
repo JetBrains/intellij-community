@@ -93,7 +93,6 @@ public class PyOptimizeImportsTest extends PyTestCase {
 
   // PY-18521
   public void testImportsFromTypingUnusedInTypeComments() {
-    myFixture.copyDirectoryToProject("../typing", "");
     doTest();
   }
 

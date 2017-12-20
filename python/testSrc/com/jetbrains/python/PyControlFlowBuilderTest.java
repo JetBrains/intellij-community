@@ -238,6 +238,12 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-14840
+  // PY-22003
+  public void testPositiveIteration() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");

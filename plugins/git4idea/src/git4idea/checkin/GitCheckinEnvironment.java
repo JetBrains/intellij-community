@@ -16,6 +16,7 @@
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.util.Side;
 import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
@@ -24,13 +25,12 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -40,6 +40,10 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.PartialCommitHelper;
+import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
@@ -50,6 +54,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
@@ -72,6 +77,7 @@ import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
+import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -84,9 +90,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.DialogWrapper.BALLOON_WARNING_BACKGROUND;
@@ -206,39 +214,50 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         continue;
       }
 
-      Set<FilePath> added = new HashSet<>();
-      Set<FilePath> removed = new HashSet<>();
-      final Set<Change> caseOnlyRenames = new HashSet<>();
-      for (Change change : sortedChanges.get(root)) {
-        switch (change.getType()) {
-          case NEW:
-          case MODIFICATION:
-            added.add(change.getAfterRevision().getFile());
-            break;
-          case DELETED:
-            removed.add(change.getBeforeRevision().getFile());
-            break;
-          case MOVED:
-            FilePath afterPath = change.getAfterRevision().getFile();
-            FilePath beforePath = change.getBeforeRevision().getFile();
-            if (!SystemInfo.isFileSystemCaseSensitive && isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
-              caseOnlyRenames.add(change);
-            }
-            else {
-              added.add(afterPath);
-              removed.add(beforePath);
-            }
-            break;
-          default:
-            throw new IllegalStateException("Unknown change type: " + change.getType());
-        }
-      }
-
       try {
-        if (!caseOnlyRenames.isEmpty()) {
-          List<VcsException> exs = commitWithCaseOnlyRename(myProject, root, caseOnlyRenames, added, removed,
-                                                            messageFile, myNextCommitAuthor);
+        // Stage partial changes
+        Collection<Change> rootChanges = sortedChanges.get(root);
+        Pair<Runnable, List<Change>> partialAddResult = addPartialChangesToIndex(repository, rootChanges);
+        Runnable callback = partialAddResult.first;
+        Set<Change> partialChanges = newHashSet(partialAddResult.second);
+
+        Set<FilePath> added = new HashSet<>();
+        Set<FilePath> removed = new HashSet<>();
+        final Set<Change> caseOnlyRenames = new HashSet<>();
+        for (Change change : rootChanges) {
+          if (partialChanges.contains(change)) continue;
+
+          switch (change.getType()) {
+            case NEW:
+            case MODIFICATION:
+              added.add(change.getAfterRevision().getFile());
+              break;
+            case DELETED:
+              removed.add(change.getBeforeRevision().getFile());
+              break;
+            case MOVED:
+              FilePath afterPath = change.getAfterRevision().getFile();
+              FilePath beforePath = change.getBeforeRevision().getFile();
+              if (!SystemInfo.isFileSystemCaseSensitive && isCaseOnlyChange(beforePath.getPath(), afterPath.getPath())) {
+                caseOnlyRenames.add(change);
+              }
+              else {
+                added.add(afterPath);
+                removed.add(beforePath);
+              }
+              break;
+            default:
+              throw new IllegalStateException("Unknown change type: " + change.getType());
+          }
+        }
+
+        if (!caseOnlyRenames.isEmpty() || !partialChanges.isEmpty()) {
+          List<VcsException> exs = commitUsingIndex(myProject, root, caseOnlyRenames, partialChanges, added, removed, messageFile);
           exceptions.addAll(exs);
+
+          if (exceptions.isEmpty()) {
+            callback.run();
+          }
         }
         else {
           try {
@@ -252,11 +271,13 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
             if (partialOperation == PartialOperation.NONE) {
               throw ex;
             }
-            if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions, partialOperation)) {
+            if (!mergeCommit(myProject, root, added, removed, messageFile, exceptions, partialOperation)) {
               throw ex;
             }
           }
         }
+
+        manager.updateRepository(root);
       }
       catch (VcsException e) {
         exceptions.add(e);
@@ -280,69 +301,154 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   @NotNull
-  private List<VcsException> commitWithCaseOnlyRename(@NotNull Project project,
-                                                      @NotNull VirtualFile root,
-                                                      @NotNull Set<Change> caseOnlyRenames,
-                                                      @NotNull Set<FilePath> added,
-                                                      @NotNull Set<FilePath> removed,
-                                                      @NotNull File messageFile,
-                                                      @Nullable String author) {
-    String rootPath = root.getPath();
-    LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
-
-    // 1. Check what is staged besides case-only renames
-    Collection<Change> stagedChanges;
-    try {
-      stagedChanges = GitChangeUtils.getStagedChanges(project, root);
-      LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
-    }
-    catch (VcsException e) {
-      return Collections.singletonList(e);
-    }
-
-    // 2. Reset staged changes which are not selected for commit
-    Collection<Change> excludedStagedChanges = filter(stagedChanges, change ->
-      !caseOnlyRenames.contains(change) && !added.contains(getAfterPath(change)) && !removed.contains(getBeforePath(change)));
-    if (!excludedStagedChanges.isEmpty()) {
-      LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
-      try {
-        reset(project, root, excludedStagedChanges);
-      }
-      catch (VcsException e) {
-        return Collections.singletonList(e);
-      }
-    }
-
+  private List<VcsException> commitUsingIndex(@NotNull Project project,
+                                              @NotNull VirtualFile root,
+                                              @NotNull Set<Change> caseOnlyRenames,
+                                              @NotNull Set<Change> partialChanges,
+                                              @NotNull Set<FilePath> added,
+                                              @NotNull Set<FilePath> removed,
+                                              @NotNull File messageFile) {
     List<VcsException> exceptions = new ArrayList<>();
     try {
-      // 3. Stage what else is needed to commit
-      List<FilePath> newPathsOfCaseRenames = map(caseOnlyRenames, ChangesUtil::getAfterPath);
-      LOG.debug("Updating index for added:" + added + "\n, removed: " + removed + "\n, and case-renames: " + newPathsOfCaseRenames);
-      Set<FilePath> toAdd = new HashSet<>(added);
-      toAdd.addAll(newPathsOfCaseRenames);
-      updateIndex(project, root, toAdd, removed, exceptions);
-      if (!exceptions.isEmpty()) return exceptions;
+      String rootPath = root.getPath();
+      LOG.info("Committing case only rename: " + getLogString(rootPath, caseOnlyRenames) + " in " + getShortRepositoryName(project, root));
 
-      // 4. Commit the staging area
-      LOG.debug("Performing commit...");
+      // 1. Check what is staged besides case-only renames
+      Collection<Change> stagedChanges;
       try {
-        commitWithoutPaths(project, root, messageFile, author);
+        stagedChanges = GitChangeUtils.getStagedChanges(project, root);
+        LOG.debug("Found staged changes: " + getLogString(rootPath, stagedChanges));
       }
       catch (VcsException e) {
         return Collections.singletonList(e);
       }
-    }
-    finally {
-      // 5. Stage back the changes unstaged before commit
+
+      // 2. Reset staged changes which are not selected for commit
+      Collection<Change> excludedStagedChanges = filter(stagedChanges, change -> !caseOnlyRenames.contains(change) &&
+                                                                                 !partialChanges.contains(change) &&
+                                                                                 !added.contains(getAfterPath(change)) &&
+                                                                                 !removed.contains(getBeforePath(change)));
       if (!excludedStagedChanges.isEmpty()) {
-        LOG.debug("Restoring changes which were unstaged before commit: " + getLogString(rootPath, excludedStagedChanges));
-        Set<FilePath> toAdd = map2SetNotNull(excludedStagedChanges, ChangesUtil::getAfterPath);
-        Condition<Change> isMovedOrDeleted = change -> change.getType() == Change.Type.MOVED || change.getType() == Change.Type.DELETED;
-        Set<FilePath> toRemove = map2SetNotNull(filter(excludedStagedChanges, isMovedOrDeleted), ChangesUtil::getBeforePath);
-        updateIndex(project, root, toAdd, toRemove, exceptions);
+        LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
+        reset(project, root, excludedStagedChanges);
+      }
+      try {
+        // 3. Stage what else is needed to commit
+        List<FilePath> newPathsOfCaseRenames = map(caseOnlyRenames, ChangesUtil::getAfterPath);
+        LOG.debug("Updating index for added:" + added + "\n, removed: " + removed + "\n, and case-renames: " + newPathsOfCaseRenames);
+        Set<FilePath> toAdd = new HashSet<>(added);
+        toAdd.addAll(newPathsOfCaseRenames);
+        updateIndex(project, root, toAdd, removed, exceptions);
+        if (!exceptions.isEmpty()) return exceptions;
+
+
+        // 4. Commit the staging area
+        LOG.debug("Performing commit...");
+        commitWithoutPaths(project, root, messageFile);
+      }
+      finally {
+        // 5. Stage back the changes unstaged before commit
+        if (!excludedStagedChanges.isEmpty()) {
+          LOG.debug("Restoring changes which were unstaged before commit: " + getLogString(rootPath, excludedStagedChanges));
+          Set<FilePath> toAdd = map2SetNotNull(excludedStagedChanges, ChangesUtil::getAfterPath);
+          Condition<Change> isMovedOrDeleted = change -> change.getType() == Change.Type.MOVED || change.getType() == Change.Type.DELETED;
+          Set<FilePath> toRemove = map2SetNotNull(filter(excludedStagedChanges, isMovedOrDeleted), ChangesUtil::getBeforePath);
+          updateIndex(project, root, toAdd, toRemove, exceptions);
+        }
       }
     }
+    catch (VcsException e) {
+      exceptions.add(e);
+    }
     return exceptions;
+  }
+
+
+  @NotNull
+  private Pair<Runnable, List<Change>> addPartialChangesToIndex(@NotNull GitRepository repository,
+                                                                @NotNull Collection<Change> changes) throws VcsException {
+    Set<String> changelistIds = map2SetNotNull(changes, change -> {
+      return change instanceof ChangeListChange ? ((ChangeListChange)change).getChangeListId() : null;
+    });
+    if (changelistIds.isEmpty()) return Pair.create(EmptyRunnable.INSTANCE, emptyList());
+    if (changelistIds.size() != 1) throw new VcsException("Can't commit changes from multiple changelists at once");
+    String changelistId = changelistIds.iterator().next();
+
+    Pair<List<PartialCommitHelper>, List<Change>> result = computeAfterLSTManagerUpdate(repository.getProject(), () -> {
+      List<PartialCommitHelper> helpers = new ArrayList<>();
+      List<Change> partialChanges = new ArrayList<>();
+
+      for (Change change : changes) {
+        if (change instanceof ChangeListChange) {
+          PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
+          if (tracker == null) continue;
+          if (!tracker.isOperational()) {
+            LOG.warn("Tracker is not operational for " + tracker.getVirtualFile().getPresentableUrl());
+            return null; // commit failure
+          }
+
+          helpers.add(tracker.handlePartialCommit(Side.LEFT, changelistId));
+          partialChanges.add(change);
+        }
+      }
+
+      return Pair.create(helpers, partialChanges);
+    });
+
+    if (result == null) throw new VcsException("Can't collect partial changes to commit");
+    List<PartialCommitHelper> helpers = result.first;
+    List<Change> partialChanges = result.second;
+
+    for (int i = 0; i < partialChanges.size(); i++) {
+      CurrentContentRevision revision = (CurrentContentRevision)partialChanges.get(i).getAfterRevision();
+      assert revision != null;
+
+      FilePath path = revision.getFile();
+      PartialCommitHelper helper = helpers.get(i);
+      VirtualFile file = revision.getVirtualFile();
+      if (file == null) throw new VcsException("Can't find file: " + path.getPath());
+
+      GitIndexUtil.StagedFile stagedFile = GitIndexUtil.list(repository, path);
+      boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
+
+      Pair.NonNull<Charset, byte[]> fileContent =
+        LoadTextUtil.charsetForWriting(repository.getProject(), file, helper.getContent(), file.getCharset());
+
+      GitIndexUtil.write(repository, path, fileContent.second, isExecutable);
+    }
+
+    Runnable callback = () -> ApplicationManager.getApplication().invokeLater(() -> {
+      for (PartialCommitHelper helper : helpers) {
+        try {
+          helper.applyChanges();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+    });
+
+    return Pair.create(callback, partialChanges);
+  }
+
+  @Nullable
+  private static <T> T computeAfterLSTManagerUpdate(@NotNull Project project, @NotNull final Computable<T> computation) {
+    assert !ApplicationManager.getApplication().isDispatchThread();
+    FutureResult<T> ref = new FutureResult<>();
+    LineStatusTrackerManager.getInstance(project).invokeAfterUpdate(() -> {
+      try {
+        ref.set(computation.compute());
+      }
+      catch (Throwable e) {
+        ref.setException(e);
+      }
+    });
+    try {
+      return ref.get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      return null;
+    }
   }
 
   private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
@@ -378,8 +484,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                               final Set<FilePath> added,
                               final Set<FilePath> removed,
                               final File messageFile,
-                              final String author,
-                              List<VcsException> exceptions, @NotNull final PartialOperation partialOperation) {
+                              List<VcsException> exceptions,
+                              @NotNull final PartialOperation partialOperation) {
     HashSet<FilePath> realAdded = new HashSet<>();
     HashSet<FilePath> realRemoved = new HashSet<>();
     // perform diff
@@ -455,9 +561,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     // perform merge commit
     try {
-      commitWithoutPaths(project, root, messageFile, author);
-      GitRepositoryManager manager = getRepositoryManager(project);
-      manager.updateRepository(root);
+      commitWithoutPaths(project, root, messageFile);
     }
     catch (VcsException ex) {
       exceptions.add(ex);
@@ -468,13 +572,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private void commitWithoutPaths(@NotNull Project project,
                                   @NotNull VirtualFile root,
-                                  @NotNull File messageFile,
-                                  @Nullable String author) throws VcsException {
+                                  @NotNull File messageFile) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
     handler.addParameters("-F", messageFile.getAbsolutePath());
-    if (author != null) {
-      handler.addParameters("--author=" + author);
+    if (myNextCommitAmend) {
+      handler.addParameters("--amend");
+    }
+    if (myNextCommitAuthor != null) {
+      handler.addParameters("--author=" + myNextCommitAuthor);
+    }
+    if (myNextCommitAuthorDate != null) {
+      handler.addParameters("--date", COMMIT_DATE_FORMAT.format(myNextCommitAuthorDate));
     }
     if (myNextCommitSignOff) {
       handler.addParameters("--signoff");
@@ -616,10 +725,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       handler.addParameters(paths);
       Git.getInstance().runCommand(handler).getOutputOrThrow();
     }
-    if (!project.isDisposed()) {
-      GitRepositoryManager manager = getRepositoryManager(project);
-      manager.updateRepository(root);
-    }
   }
 
   public List<VcsException> scheduleUnversionedFilesForAddition(List<VirtualFile> files) {
@@ -706,7 +811,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
-    
+
     @NotNull private final GitVcs myVcs;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private JPanel myPanel;
@@ -715,8 +820,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @NotNull private AmendComponent myAmendComponent;
     @NotNull private final JCheckBox mySignOffCheckbox;
     @NotNull private final BalloonBuilder myAuthorNotificationBuilder;
-    @Nullable private Balloon myAuthorBalloon; 
-    
+    @Nullable private Balloon myAuthorBalloon;
+
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
       myVcs = GitVcs.getInstance(project);

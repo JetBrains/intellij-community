@@ -1,6 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.idea;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -74,6 +77,7 @@ public class StartupUtil {
   }
 
   static void prepareAndStart(String[] args, AppStarter appStarter) {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     boolean newConfigFolder = false;
 
     if (!Main.isHeadless()) {
@@ -126,7 +130,7 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
-      AppUIUtil.showPrivacyPolicy();
+      AppUIUtil.showEndUserAgreement();
     }
 
     appStarter.start(newConfigFolder);
@@ -291,7 +295,7 @@ public class StartupUtil {
       return ActivationResult.ACTIVATED;
     }
     else if (Main.isHeadless() || status == SocketLock.ActivateStatus.CANNOT_ACTIVATE) {
-      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getFullProductName() + " can be run at a time.";
+      String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
       Main.showMessage("Too Many Instances", message, true);
     }
 
@@ -334,11 +338,8 @@ public class StartupUtil {
   }
 
   private static void startLogging(final Logger log) {
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
-      @Override
-      public void run() {
-        log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
-      }
+    ShutDownTracker.getInstance().registerShutdownTask(() -> {
+      log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
     });
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
 

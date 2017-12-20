@@ -19,6 +19,9 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 public interface PackageSet {
   boolean contains(@NotNull PsiFile file, NamedScopesHolder holder);
   @NotNull
@@ -26,4 +29,19 @@ public interface PackageSet {
   @NonNls @NotNull
   String getText();
   int getNodePriority();
+
+  /**
+   * Applies given {@code transformation} to all inner {@code PackageSet} of this instance and returns the modified instance or {@code this}
+   * if no modification in inner {@code PackageSet} were made.
+   */
+  default PackageSet map(Function<PackageSet, PackageSet> transformation) {
+    return transformation.apply(this);
+  }
+
+  /**
+   * @return {@code true} if any inner {@code PackageSet} of this instance matched given predicate
+   */
+  default boolean anyMatches(Predicate<PackageSet> predicate) {
+    return predicate.test(this);
+  }
 }

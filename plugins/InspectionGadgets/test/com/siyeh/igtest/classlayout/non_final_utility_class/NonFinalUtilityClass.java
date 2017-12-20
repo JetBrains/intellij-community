@@ -11,3 +11,6 @@ final class FinalUtilityClass {
 abstract class NoUtilityClass {
   public static void foo() {}
 }
+class ConcreteNoUtilityClass {
+  public static void foo() {}
+}

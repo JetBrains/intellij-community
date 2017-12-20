@@ -31,10 +31,8 @@ import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +40,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -274,17 +271,10 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   private void validateMaxLineWithExtension() {
     if (myMaxLineWithExtensionWidth > 0) {
-      Project project = myEditor.getProject();
-      VirtualFile virtualFile = myEditor.getVirtualFile();
-      if (project != null && virtualFile != null) {
-        for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
-          Collection<LineExtensionInfo> extensions = painter.getLineExtensions(project, virtualFile, myWidestLineWithExtension);
-          if (extensions != null && !extensions.isEmpty()) {
-            return;
-          }
-        }
+      boolean hasNoExtensions = myEditor.processLineExtensions(myWidestLineWithExtension, (info) -> false);
+      if (hasNoExtensions) {
+        myMaxLineWithExtensionWidth = 0;
       }
-      myMaxLineWithExtensionWidth = 0;
     }
   }
 

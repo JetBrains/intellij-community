@@ -17,10 +17,14 @@ package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.*;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.ArrayUtil;
@@ -101,6 +105,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
 
   @TestOnly
   public static void __testWhileAlwaysCheckingCanceled(@NotNull Runnable runnable) {
+    @SuppressWarnings("InstantiatingAThreadWithDefaultRunMethod")
     Thread fake = new Thread("fake");
     try {
       threadsUnderCanceledIndicator.add(fake);
@@ -143,54 +148,14 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  @NotNull
-  public Future<?> runProcessWithProgressAsynchronously(@NotNull final Task.Backgroundable task,
-                                                        @NotNull final ProgressIndicator progressIndicator,
-                                                        @Nullable final Runnable continuation,
-                                                        @NotNull final ModalityState modalityState) {
-    if (progressIndicator instanceof Disposable) {
-      Disposer.register(ApplicationManager.getApplication(), (Disposable)progressIndicator);
-    }
-
-    final Runnable process = new TaskRunnable(task, progressIndicator, continuation);
-
-    TaskContainer action = new TaskContainer(task) {
-      @Override
-      public void run() {
-        boolean processCanceled = false;
-        Throwable exception = null;
-
-        final long start = System.currentTimeMillis();
-        try {
-          ProgressManager.getInstance().runProcess(process, progressIndicator);
-        }
-        catch (ProcessCanceledException e) {
-          processCanceled = true;
-        }
-        catch (Throwable e) {
-          exception = e;
-        }
-        final long end = System.currentTimeMillis();
-
-        final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
-        final Throwable finalException = exception;
-
-        if (!finalCanceled) {
-          final Task.NotificationInfo notificationInfo = task.notifyFinished();
-          final long time = end - start;
-          if (notificationInfo != null && time > 5000) { // snow notification if process took more than 5 secs
-            final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
-            if (window == null || notificationInfo.isShowWhenFocused()) {
-              systemNotify(notificationInfo);
-            }
-          }
-        }
-
-        ApplicationManager.getApplication().invokeLater(() -> finishTask(task, finalCanceled, finalException), modalityState);
+  void notifyTaskFinished(@NotNull Task.Backgroundable task, long elapsed) {
+    final Task.NotificationInfo notificationInfo = task.notifyFinished();
+    if (notificationInfo != null && elapsed > 5000) { // snow notification if process took more than 5 secs
+      final Component window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (window == null || notificationInfo.isShowWhenFocused()) {
+        systemNotify(notificationInfo);
       }
-    };
-
-    return ApplicationManager.getApplication().executeOnPooledThread(action);
+    }
   }
 
   @Override

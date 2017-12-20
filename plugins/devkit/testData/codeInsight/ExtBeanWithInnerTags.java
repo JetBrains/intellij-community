@@ -2,7 +2,7 @@ import com.intellij.util.xmlb.annotations.*;
 
 public class ExtBeanWithInnerTags {
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection
   public InnerBean[] children;
 }
 

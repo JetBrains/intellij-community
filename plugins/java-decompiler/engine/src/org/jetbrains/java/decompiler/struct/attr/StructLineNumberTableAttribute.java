@@ -33,10 +33,6 @@ public class StructLineNumberTableAttribute extends StructGeneralAttribute {
     }
   }
 
-  public int getFirstLine() {
-    return myLineInfo.length > 0 ? myLineInfo[1] : -1;
-  }
-
   public int findLineNumber(int pc) {
     if (myLineInfo.length >= 2) {
       for (int i = myLineInfo.length - 2; i >= 0; i -= 2) {

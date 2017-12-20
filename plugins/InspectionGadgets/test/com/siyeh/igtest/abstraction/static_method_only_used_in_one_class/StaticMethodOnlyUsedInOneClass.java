@@ -1,7 +1,7 @@
 package com.siyeh.igtest.abstraction;
 
 public class StaticMethodOnlyUsedInOneClass {
-    public static void <warning descr="static method 'methodWithSomePrettyUniqueName()' is only used from class 'OneClass'">methodWithSomePrettyUniqueName</warning>() {
+    public static void <warning descr="Static method 'methodWithSomePrettyUniqueName()' is only used from class 'OneClass'">methodWithSomePrettyUniqueName</warning>() {
 
     }
 

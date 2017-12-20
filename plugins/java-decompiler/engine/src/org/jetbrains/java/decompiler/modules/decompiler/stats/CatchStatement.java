@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
@@ -14,13 +16,11 @@ import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CatchStatement extends Statement {
-
   private final List<List<String>> exctstrings = new ArrayList<>();
-
   private final List<VarExprent> vars = new ArrayList<>();
 
   // *****************************************************************************
@@ -31,8 +31,7 @@ public class CatchStatement extends Statement {
     type = TYPE_TRYCATCH;
   }
 
-  private CatchStatement(Statement head, Statement next, HashSet<Statement> setHandlers) {
-
+  private CatchStatement(Statement head, Statement next, Set<Statement> setHandlers) {
     this();
 
     first = head;
@@ -62,15 +61,12 @@ public class CatchStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-
     if (head.getLastBasicType() != LASTBASICTYPE_GENERAL) {
       return null;
     }
 
-    HashSet<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
-
+    Set<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
     if (!setHandlers.isEmpty()) {
-
       int hnextcount = 0; // either no statements with connection to next, or more than 1
 
       Statement next = null;
@@ -185,7 +181,6 @@ public class CatchStatement extends Statement {
   }
 
   public Statement getSimpleCopy() {
-
     CatchStatement cs = new CatchStatement();
 
     for (List<String> exc : this.exctstrings) {

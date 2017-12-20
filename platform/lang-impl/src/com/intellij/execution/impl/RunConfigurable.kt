@@ -390,7 +390,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       val userObject1 = o1.userObject
       val userObject2 = o2.userObject
       when {
-        userObject1 is ConfigurationType && userObject2 is ConfigurationType -> (userObject1).displayName.compareTo(userObject2.displayName)
+        userObject1 is ConfigurationType && userObject2 is ConfigurationType -> (userObject1).displayName.compareTo(userObject2.displayName, true)
         userObject1 === DEFAULTS && userObject2 is ConfigurationType -> 1
         userObject2 === DEFAULTS && userObject1 is ConfigurationType -> - 1
         else -> 0

@@ -61,7 +61,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public String toString() {
-      return "MovedFileInfo{myNewPath=" + myNewPath + ", myFile=" + myFile + '}';
+      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);
     }
   }
 
@@ -119,7 +119,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected void executeAdd() {
     final List<VirtualFile> addedFiles = acquireAddedFiles();
-    LOG.debug("executeAdd. addedFiles: " + addedFiles);
+    LOG.debug("executeAdd. addedFiles: ", addedFiles);
     for (Iterator<VirtualFile> iterator = addedFiles.iterator(); iterator.hasNext(); ) {
       VirtualFile file = iterator.next();
       if (myVcsFileListenerContextHelper.isAdditionIgnored(file)) {
@@ -157,7 +157,7 @@ public abstract class VcsVFSListener implements Disposable {
    * @param copyFromMap the copied files
    */
   protected void executeAdd(List<VirtualFile> addedFiles, Map<VirtualFile, VirtualFile> copyFromMap) {
-    LOG.debug("executeAdd. add-option: " + myAddOption.getValue() + ", files to add: " + addedFiles);
+    LOG.debug("executeAdd. add-option: ", myAddOption.getValue(), ", files to add: ", addedFiles);
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY) return;
     if (myAddOption.getValue() == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
       performAdding(addedFiles, copyFromMap);
@@ -247,7 +247,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected void fileAdded(VirtualFileEvent event, VirtualFile file) {
     if (!isEventIgnored(event, true) && !myChangeListManager.isIgnoredFile(file) &&
         (isDirectoryVersioningSupported() || !file.isDirectory())) {
-      LOG.debug("Adding [" + file.getPresentableUrl() + "] to added files");
+      LOG.debug("Adding [", file, "] to added files");
       myAddedFiles.add(event.getFile());
     }
   }
@@ -272,7 +272,7 @@ public abstract class VcsVFSListener implements Disposable {
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
     final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
-    LOG.debug("Checking moved file " + file + "; status=" + status);
+    LOG.debug("Checking moved file ", file, "; status=", status);
     if (status == FileStatus.IGNORED) {
       if (file.getParent() != null) {
         myDirtyFiles.add(file.getParent());
@@ -287,7 +287,7 @@ public abstract class VcsVFSListener implements Disposable {
       existingMovedFile.myNewPath = newPath;
     }
     else {
-      LOG.debug("Registered moved file " + file);
+      LOG.debug("Registered moved file ", file);
       myMovedFiles.add(new MovedFileInfo(file, newPath));
     }
   }
@@ -298,6 +298,7 @@ public abstract class VcsVFSListener implements Disposable {
     myMovedFiles.clear();
     performMoveRename(ContainerUtil.filter(movedFiles, info -> {
       FileStatus status = FileStatusManager.getInstance(myProject).getStatus(info.myFile);
+      LOG.debug("File " + info.myNewPath + " has status " + status);
       return !(status == FileStatus.UNKNOWN && filterOutUnknownFiles()) && status != FileStatus.IGNORED;
     }));
   }
@@ -331,7 +332,7 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void fileCreated(@NotNull final VirtualFileEvent event) {
       VirtualFile file = event.getFile();
-      LOG.debug("fileCreated: " + file.getPresentableUrl());
+      LOG.debug("fileCreated: ", file);
       if (isUnderMyVcs(file)) {
         fileAdded(event, file);
       }
@@ -380,7 +381,7 @@ public abstract class VcsVFSListener implements Disposable {
       if (isEventIgnored(event, true)) return;
       final VirtualFile file = event.getFile();
       final AbstractVcs newVcs = ProjectLevelVcsManager.getInstance(myProject).getVcsFor(event.getNewParent());
-      LOG.debug("beforeFileMovement " + event + " into " + newVcs);
+      LOG.debug("beforeFileMovement ", event, " into ", newVcs);
       if (newVcs == myVcs) {
         addFileToMove(file, event.getNewParent().getPath(), file.getName());
       }
@@ -401,7 +402,7 @@ public abstract class VcsVFSListener implements Disposable {
     @Override
     public void beforePropertyChange(@NotNull final VirtualFilePropertyEvent event) {
       if (!isEventIgnored(event, false) && event.getPropertyName().equalsIgnoreCase(VirtualFile.PROP_NAME)) {
-        LOG.debug("before file rename " + event);
+        LOG.debug("before file rename ", event);
         String oldName = (String)event.getOldValue();
         String newName = (String)event.getNewValue();
         // in order to force a reparse of a file, the rename event can be fired with old name equal to new name -

@@ -28,7 +28,6 @@ import java.util.Map;
 /**
  * Used as a plug for all SDKs which type cannot be determined (for example, plugin that registered a custom type has been deinstalled)
  * @author Eugene Zhuravlev
- *         Date: Dec 11, 2004
  */
 public class UnknownSdkType extends SdkType{
   private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<>();

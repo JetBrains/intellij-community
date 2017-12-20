@@ -23,8 +23,6 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 
 /**
  * @author irengrig
- *         Date: 2/21/11
- *         Time: 4:28 PM
  */
 public class CustomChangelistTodoTreeStructure extends TodoTreeStructure {
   private final PsiTodoSearchHelper mySearchHelper;

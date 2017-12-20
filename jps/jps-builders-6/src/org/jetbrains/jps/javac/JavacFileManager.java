@@ -33,7 +33,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/24/11
  */
 class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager{
 

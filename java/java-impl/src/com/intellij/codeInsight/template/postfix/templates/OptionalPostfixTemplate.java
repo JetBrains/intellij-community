@@ -51,7 +51,7 @@ public class OptionalPostfixTemplate extends StringBasedPostfixTemplate {
       }
     }
 
-    String methodName = Nullness.NOT_NULL.equals(NullnessUtil.getExpressionNullness((PsiExpression)element)) ? "of" : "ofNullable";
+    String methodName = Nullness.NOT_NULL.equals(NullnessUtil.getExpressionNullness((PsiExpression)element, true)) ? "of" : "ofNullable";
     return "java.util." + className + "." + methodName + "($expr$)";
   }
 }

@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.binaryCalculators;
 
 import com.intellij.psi.PsiType;
@@ -19,38 +19,25 @@ public class GrBinaryExpressionTypeCalculators {
   private static final Map<IElementType, Function<GrOperatorExpression, PsiType>> MAP = ContainerUtil.newLinkedHashMap();
 
   static {
-
     MAP.put(GroovyTokenTypes.mPLUS, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mPLUS_ASSIGN, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mMINUS, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mMINUS_ASSIGN, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mSTAR, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mSTAR_ASSIGN, GrMultiplicativeExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mDIV, GrDivExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mDIV_ASSIGN, GrDivExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mMOD, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mMOD_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mSTAR_STAR, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mSTAR_STAR_ASSIGN, GrNumericBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mSR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mSL_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mBSR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mRANGE_EXCLUSIVE, GrRangeExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mRANGE_INCLUSIVE, GrRangeExpressionTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mBAND, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mBAND_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mBOR, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mBOR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mBXOR, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
-    MAP.put(GroovyTokenTypes.mBXOR_ASSIGN, GrDecimalBinaryExpressionTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mCOMPARE_TO, GrIntegerTypeCalculator.INSTANCE);
 
     MAP.put(GroovyTokenTypes.mLOR, GrBooleanExpressionTypeCalculator.INSTANCE);
@@ -65,14 +52,12 @@ public class GrBinaryExpressionTypeCalculators {
 
     MAP.put(GroovyTokenTypes.mREGEX_FIND, GrMatcherTypeCalculator.INSTANCE);
     MAP.put(GroovyTokenTypes.mREGEX_MATCH, GrBooleanExpressionTypeCalculator.INSTANCE);
-
-    MAP.put(GroovyTokenTypes.mASSIGN, GrAssignTypeCalculator.INSTANCE);
   }
 
   @Nullable
   public static PsiType computeType(@NotNull GrOperatorExpression e) {
-    final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperationTokenType());
-    assert function != null : e.getOperationTokenType();
+    final Function<GrOperatorExpression, PsiType> function = MAP.get(e.getOperator());
+    assert function != null : e.getOperator();
     return function.fun(e);
   }
 }

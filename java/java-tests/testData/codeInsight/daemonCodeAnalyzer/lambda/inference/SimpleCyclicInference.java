@@ -14,7 +14,7 @@ class NoLambda {
     static <T> T id(T i2) {return i2;}
 
     {
-       id(<error descr="Object is not a functional interface">() -> {System.out.println("hi");}</error>);
+       id(<error descr="Target type of a lambda conversion must be an interface">() -> {System.out.println("hi");}</error>);
        NoLambda.<Runnable>id(() -> {System.out.println("hi");});
     }
 }

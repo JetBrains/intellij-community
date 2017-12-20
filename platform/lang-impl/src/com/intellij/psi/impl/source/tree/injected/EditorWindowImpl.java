@@ -49,6 +49,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.function.IntFunction;
 
 class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl implements EditorWindow, EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
@@ -854,6 +855,11 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   @Override
   public void setPurePaintingMode(boolean enabled) {
     myDelegate.setPurePaintingMode(enabled);
+  }
+
+  @Override
+  public void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

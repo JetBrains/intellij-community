@@ -148,7 +148,9 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
             elements.add(psiElement);
           }
         }
-        HighlightUtils.highlightElements(elements);
+        if (isOnTheFly()) {
+          HighlightUtils.highlightElements(elements);
+        }
       }
     }
 

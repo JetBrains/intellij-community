@@ -1,18 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.execution.application.ApplicationConfigurable">
-  <grid id="93687" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="8" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="93687" binding="myWholePanel" layout-manager="GridLayoutManager" row-count="9" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="53" y="36" width="708" height="326"/>
+      <xy x="53" y="36" width="708" height="341"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <vspacer id="eeb03">
-        <constraints>
-          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </vspacer>
       <component id="50b09" class="com.intellij.execution.ui.CommonJavaParametersPanel" binding="myCommonProgramParameters">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
@@ -42,13 +37,13 @@
       </component>
       <component id="e88bd" class="com.intellij.execution.ui.JrePathEditor" binding="myJrePathEditor">
         <constraints>
-          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
       </component>
       <component id="b45cf" class="javax.swing.JCheckBox" binding="myShowSwingInspectorCheckbox">
         <constraints>
-          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/ExecutionBundle" key="show.swing.inspector"/>
@@ -63,18 +58,27 @@
       </vspacer>
       <vspacer id="7cceb">
         <constraints>
-          <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
+          <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false">
             <preferred-size width="-1" height="10"/>
           </grid>
         </constraints>
       </vspacer>
       <component id="c452d2" class="com.intellij.openapi.ui.LabeledComponent" binding="myShortenClasspathModeCombo" custom-create="true">
         <constraints>
-          <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+          <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <labelLocation value="West"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.shorten.command.line.label"/>
+        </properties>
+      </component>
+      <component id="241cb" class="com.intellij.openapi.ui.LabeledComponent" binding="myIncludeProvidedDeps">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <labelLocation value="West"/>
+          <text value=""/>
         </properties>
       </component>
     </children>

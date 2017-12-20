@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -8,7 +10,10 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.reference.RefElement;
+import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.reference.RefManager;
+import com.intellij.codeInspection.reference.RefVisitor;
 import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +34,6 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.Equality;
 import org.jdom.Element;
@@ -40,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class DefaultInspectionToolPresentation implements InspectionToolPresentation {
@@ -50,15 +53,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @NotNull private final GlobalInspectionContextImpl myContext;
   protected InspectionNode myToolNode;
 
-  private final Object myLock = new Object();
-
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myProblemElements = createBidiMap();
   protected final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> mySuppressedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myResolvedElements = createBidiMap();
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 
   protected final Map<String, Set<RefEntity>> myContents = Collections.synchronizedMap(new HashMap<String, Set<RefEntity>>(1)); // keys can be null
-  private final Set<RefModule> myModulesProblems = Collections.synchronizedSet(ContainerUtil.newIdentityTroveSet());
 
   private DescriptorComposer myComposer;
   private volatile boolean isDisposed;
@@ -366,13 +366,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<CommonProblemDescriptor> isDescriptorExcluded) {
-    synchronized (myLock) {
-      if (getProblemElements().containsKey(refEntity)) {
-        CommonProblemDescriptor[] descriptions = getDescriptions(refEntity);
-        if (descriptions != null) {
-          exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
-        }
-      }
+    CommonProblemDescriptor[] descriptions = getProblemElements().get(refEntity);
+    if (descriptions != null) {
+      exportResults(descriptions, refEntity, parentNode, isDescriptorExcluded);
     }
   }
 
@@ -435,13 +431,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   @Override
   public synchronized boolean hasReportedProblems() {
-    return !myContents.isEmpty() || !myModulesProblems.isEmpty();
+    return !myContents.isEmpty();
   }
 
   @Override
   public synchronized void updateContent() {
     myContents.clear();
-    myModulesProblems.clear();
     updateProblemElements();
   }
 
@@ -449,13 +444,8 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     final Collection<RefEntity> elements = getProblemElements().keys();
     for (RefEntity element : elements) {
       if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element) || isExcluded(element))) continue;
-      if (element instanceof RefModule) {
-        myModulesProblems.add((RefModule)element);
-      }
-      else {
-        String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
-        registerContentEntry(element, groupName);
-      }
+      String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
+      registerContentEntry(element, groupName);
     }
   }
 
@@ -470,78 +460,10 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return myContents;
   }
 
-  @NotNull
-  @Override
-  public Set<RefModule> getModuleProblems() {
-    return myModulesProblems;
-  }
-
   @Override
   @NotNull
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
-    return extractActiveFixes(refElements, getProblemElements()::get, tree != null ? tree.getSelectedDescriptors() : null);
-  }
-
-  @Override
-  @NotNull
-  public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
-                                             @NotNull Function<RefEntity, CommonProblemDescriptor[]> descriptorMap,
-                                             @Nullable CommonProblemDescriptor[] allowedDescriptors) {
-    final Set<CommonProblemDescriptor> allowedDescriptorSet = allowedDescriptors == null ? null : ContainerUtil.newHashSet(allowedDescriptors);
-    Map<String, LocalQuickFixWrapper> result = null;
-    for (RefEntity refElement : refElements) {
-      final CommonProblemDescriptor[] descriptors = descriptorMap.apply(refElement);
-      if (descriptors == null) continue;
-      for (CommonProblemDescriptor d : descriptors) {
-        if (allowedDescriptorSet != null && !allowedDescriptorSet.contains(d)) {
-          continue;
-        }
-        QuickFix[] fixes = d.getFixes();
-        if (fixes == null || fixes.length == 0) continue;
-        if (result == null) {
-          result = new HashMap<>();
-          for (QuickFix fix : fixes) {
-            if (fix == null) continue;
-            result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, myToolWrapper));
-          }
-        }
-        else {
-          for (String familyName : new ArrayList<>(result.keySet())) {
-            boolean isFound = false;
-            for (QuickFix fix : fixes) {
-              if (fix == null) continue;
-              if (familyName.equals(fix.getFamilyName())) {
-                isFound = true;
-                final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
-                LOG.assertTrue(getFixClass(fix).equals(getFixClass(quickFixAction.getFix())),
-                               "QuickFix-es with the same family name (" + fix.getFamilyName() + ") should be the same class instances. " +
-                               "Please assign reported exception for the inspection \"" + myToolWrapper.getTool().getClass() + "\" (\"" +
-                               myToolWrapper.getShortName() + "\") developer");
-                try {
-                  quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
-                }
-                catch (AbstractMethodError e) {
-                  //for plugin compatibility
-                  quickFixAction.setText("Name is not available");
-                }
-                break;
-              }
-            }
-            if (!isFound) {
-              result.remove(familyName);
-              if (result.isEmpty()) {
-                return QuickFixAction.EMPTY;
-              }
-            }
-          }
-        }
-      }
-    }
-    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
-  }
-
-  private static Class getFixClass(QuickFix fix) {
-    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+    return QuickFixAction.EMPTY;
   }
 
   @Override

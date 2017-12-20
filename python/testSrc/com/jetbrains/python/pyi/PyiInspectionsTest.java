@@ -47,7 +47,6 @@ public class PyiInspectionsTest extends PyTestCase {
 
   private void doTestByFileName(@NotNull Class<? extends LocalInspectionTool> inspectionClass, String fileName) {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
-    myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final PsiFile file = myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);

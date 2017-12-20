@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.impl;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.project.IntelliJProjectConfiguration;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -197,6 +200,11 @@ public class OutputChecker {
         result = StringUtil.replace(result, InetAddress.getLocalHost().getHostName(), "!HOST_NAME!", true);
         result = StringUtil.replace(result, "127.0.0.1", "!HOST_NAME!", false);
         result = replacePath(result, internalJdkHome, JDK_HOME_STR);
+
+        File productionFile = new File(PathUtil.getJarPathForClass(OutputChecker.class));
+        if (productionFile.isDirectory()) {
+          result = replacePath(result, StringUtil.trimTrailing(productionFile.getParentFile().toURI().toString(), '/'), "!PRODUCTION_PATH!");
+        }
         result = replacePath(result, PathManager.getHomePath(), "!IDEA_HOME!");
         result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
 

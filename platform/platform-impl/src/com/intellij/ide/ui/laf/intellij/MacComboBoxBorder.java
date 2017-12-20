@@ -16,7 +16,6 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -102,7 +101,7 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new JBInsets(3, 3, 3, 3);
+    return JBUI.insets(3).asUIResource();
   }
 
   @Override
@@ -110,7 +109,8 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
     return false;
   }
 
-  boolean isFocused(Component c) {
+  @Override
+  protected boolean isFocused(Component c) {
     if (c instanceof JComboBox) {
       JComboBox comboBox = (JComboBox)c;
 
@@ -144,7 +144,8 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
     return c instanceof JComboBox && !((JComboBox)c).isEditable();
   }
 
-  @Override void clipForBorder(Component c, Graphics2D g2, int width, int height) {
+  @Override
+  protected void clipForBorder(Component c, Graphics2D g2, int width, int height) {
     Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
     double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
     Shape innerShape = isRound(c) ?
@@ -164,7 +165,8 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
     g2.setClip(area);
   }
 
-  boolean isSymmetric() {
+  @Override
+  protected boolean isSymmetric() {
     return false;
   }
 }

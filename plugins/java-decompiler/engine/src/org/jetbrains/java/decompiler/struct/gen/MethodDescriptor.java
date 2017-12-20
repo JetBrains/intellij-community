@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MethodDescriptor {
-
   public final VarType[] params;
   public final VarType ret;
 

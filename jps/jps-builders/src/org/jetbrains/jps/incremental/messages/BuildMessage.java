@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental.messages;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
  */
 public abstract class BuildMessage {
   public enum Kind {

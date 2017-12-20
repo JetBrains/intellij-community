@@ -71,7 +71,8 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
   override fun getHandler(debuggerSupport: DebuggerSupport) = setNextStatementActionHandler
 
   override fun isHidden(event: AnActionEvent): Boolean {
-    return !PyDebugSupportUtils.isCurrentPythonDebugProcess(event.getData(CommonDataKeys.PROJECT))
+    val project = event.getData(CommonDataKeys.PROJECT)
+    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(project)
   }
 
   companion object {

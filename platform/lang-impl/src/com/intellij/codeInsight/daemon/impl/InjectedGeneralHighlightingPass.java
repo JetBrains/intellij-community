@@ -181,7 +181,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
                                                                    element -> {
                                                                      ApplicationManager.getApplication().assertReadAccessAllowed();
                                                                      ProgressManager.checkCanceled();
-                                                                     InjectedLanguageUtil.enumerate(element, myFile, false, visitor);
+                                                                     InjectedLanguageManager.getInstance(myFile.getProject()).enumerateEx(
+                                                                       element, myFile, false, visitor);
                                                                      return true;
                                                                    })) {
       throw new ProcessCanceledException();

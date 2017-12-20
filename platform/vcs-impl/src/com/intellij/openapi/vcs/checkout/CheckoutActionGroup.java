@@ -24,6 +24,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 public class CheckoutActionGroup extends ComputableActionGroup.Simple {
+  protected final String myIdPrefix;
+
+  @SuppressWarnings("unused")
+  public CheckoutActionGroup() {
+    this("Vcs.Checkout");
+  }
+
+  public CheckoutActionGroup(String idPrefix) {
+    myIdPrefix = idPrefix;
+  }
+
   @NotNull
   @Override
   protected AnAction[] computeChildren(@NotNull ActionManager manager) {
@@ -43,6 +54,6 @@ public class CheckoutActionGroup extends ComputableActionGroup.Simple {
 
   @NotNull
   protected AnAction createAction(CheckoutProvider provider) {
-    return new CheckoutAction(provider);
+    return new CheckoutAction(provider, myIdPrefix);
   }
 }

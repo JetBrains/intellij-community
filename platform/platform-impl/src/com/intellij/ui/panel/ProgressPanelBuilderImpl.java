@@ -2,6 +2,7 @@
 package com.intellij.ui.panel;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.ui.panel.GridBagPanelBuilder;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.openapi.ui.popup.IconButton;
@@ -16,7 +17,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
+public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPanelBuilder {
   private static final Color SEPARATOR_COLOR = new JBColor(Gray.xC9, Gray.x55);
 
   private final JProgressBar myProgressBar;
@@ -40,7 +41,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder {
   }
 
   @Override
-  public ProgressPanelBuilder withLabel(String text) {
+  public ProgressPanelBuilder withLabel(@NotNull String text) {
     initialLabelText = text;
     return this;
   }

@@ -1,10 +1,16 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.jsonSchema;
 
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,15 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-/**
- * @author Irina.Chernushina on 2/2/2016.
- */
-@State(
-  name = "JsonSchemaMappingsProjectConfiguration",
-  storages = {
-    @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/jsonSchemas.xml", scheme = StorageScheme.DIRECTORY_BASED)
-  }
-)
+@State(name = "JsonSchemaMappingsProjectConfiguration", storages = @Storage("jsonSchemas.xml"))
 public class JsonSchemaMappingsProjectConfiguration implements PersistentStateComponent<JsonSchemaMappingsProjectConfiguration.MyState> {
   public volatile MyState myState = new MyState();
 
@@ -38,7 +36,6 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   public MyState getState() {
     return myState;
   }
-
 
   public void schemaFileMoved(@NotNull final Project project,
                               @NotNull final String oldRelativePath,
@@ -66,7 +63,8 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   }
 
   static class MyState {
-    @Tag("state") @AbstractCollection(surroundWithTag = false)
+    @Tag("state")
+    @XCollection
     public Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();
 
     public MyState() {

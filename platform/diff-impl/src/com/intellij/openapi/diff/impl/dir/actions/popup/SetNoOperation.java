@@ -25,7 +25,6 @@ import javax.swing.*;
 
 /**
  * @author lene
- *         Date: 23.04.12
  */
 public class SetNoOperation extends DumbAwareAction {
   @Override

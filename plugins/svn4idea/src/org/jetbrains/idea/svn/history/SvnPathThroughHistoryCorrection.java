@@ -25,8 +25,6 @@ import java.util.Map;
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 8/30/12
- * Time: 5:18 PM
  *
  * We consider here, that history is traversed "from now to past"
  */

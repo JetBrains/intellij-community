@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class LazyLoader {
-
   private final Map<String, Link> mapClassLinks = new HashMap<>();
   private final IBytecodeProvider provider;
 
@@ -130,17 +129,11 @@ public class LazyLoader {
     }
   }
 
-
   public static class Link {
-    public static final int CLASS = 1;
-    public static final int ENTRY = 2;
-
-    public final int type;
     public final String externalPath;
     public final String internalPath;
 
-    public Link(int type, String externalPath, String internalPath) {
-      this.type = type;
+    public Link(String externalPath, String internalPath) {
       this.externalPath = externalPath;
       this.internalPath = internalPath;
     }

@@ -21,11 +21,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class PlainTextTokenTypes {
   public static final IElementType PLAIN_TEXT_FILE = new IFileElementType("PLAIN_TEXT_FILE", PlainTextLanguage.INSTANCE) {
     @Override
-    public ASTNode parseContents(ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull ASTNode chameleon) {
       return ASTFactory.leaf(PLAIN_TEXT, chameleon.getChars());
     }
   };

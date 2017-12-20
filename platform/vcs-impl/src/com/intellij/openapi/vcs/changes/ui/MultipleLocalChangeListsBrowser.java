@@ -27,7 +27,6 @@ import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -50,8 +49,10 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.intellij.openapi.util.text.StringUtil.shortenTextWithEllipsis;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
@@ -81,17 +82,11 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
     updateDisplayedChangeLists();
     updateSelectedChangeList(myChangeList);
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
 
@@ -460,37 +455,8 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       });
     }
 
-    public void changeListAdded(ChangeList list) {
-      doUpdate();
-    }
-
     @Override
-    public void changeListRemoved(ChangeList list) {
-      doUpdate();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesAdded(Collection<Change> changes, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changeListUpdateDone() {
+    public void changeListsChanged() {
       doUpdate();
     }
   }

@@ -3,7 +3,6 @@ package org.jetbrains.java.decompiler.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 
 public class VBStyleCollection<E, K> extends ArrayList<E> {
@@ -22,10 +21,6 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     map = new HashMap<>(initialCapacity);
   }
 
-  public VBStyleCollection(Collection<E> c) {
-    super(c);
-  }
-
   public boolean add(E element) {
     lstKeys.add(null);
     super.add(element);
@@ -41,12 +36,6 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
       lstKeys.add(null);
     }
     return super.addAll(c);
-  }
-
-  public void addAllWithKey(VBStyleCollection<E, K> c) {
-    for (int i = 0; i < c.size(); i++) {
-      addWithKey(c.get(i), c.getKey(i));
-    }
   }
 
   public void addAllWithKey(Collection<E> elements, Collection<K> keys) {
@@ -92,7 +81,7 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
   }
 
   public void removeWithKey(K key) {
-    int index = map.get(key).intValue();
+    int index = map.get(key);
     addToListIndex(index + 1, -1);
     super.remove(index);
     lstKeys.remove(index);
@@ -114,11 +103,11 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     if (index == null) {
       return null;
     }
-    return super.get(index.intValue());
+    return super.get(index);
   }
 
   public int getIndexByKey(K key) {
-    return map.get(key).intValue();
+    return map.get(key);
   }
 
   public E getLast() {
@@ -141,26 +130,6 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     c.setMap(new HashMap<>(map));
     c.setLstKeys(new ArrayList<>(lstKeys));
     return c;
-  }
-
-  public void swap(int index1, int index2) {
-
-    Collections.swap(this, index1, index2);
-    Collections.swap(lstKeys, index1, index2);
-
-    K key = lstKeys.get(index1);
-    if (key != null) {
-      map.put(key, index1);
-    }
-
-    key = lstKeys.get(index2);
-    if (key != null) {
-      map.put(key, index2);
-    }
-  }
-
-  public HashMap<K, Integer> getMap() {
-    return map;
   }
 
   public void setMap(HashMap<K, Integer> map) {

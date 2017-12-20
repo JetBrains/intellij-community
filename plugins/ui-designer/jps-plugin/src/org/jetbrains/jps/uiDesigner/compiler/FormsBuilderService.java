@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/20/12
  */
 public class FormsBuilderService extends BuilderService{
   @NotNull

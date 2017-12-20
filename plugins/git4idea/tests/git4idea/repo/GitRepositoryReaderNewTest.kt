@@ -19,7 +19,6 @@ import com.intellij.dvcs.repo.Repository.State
 import com.intellij.openapi.util.SystemInfo
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchUtil
-import git4idea.test.GitScenarios.commit
 import git4idea.test.GitScenarios.conflict
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.last
@@ -54,8 +53,7 @@ class GitRepositoryReaderNewTest : GitSingleRepoTest() {
   fun `test rebase with conflicts while being on detached HEAD`() {
     makeCommit("file.txt")
     conflict(repo, "feature")
-    commit(repo)
-    commit(repo)
+    makeCommit("file2.txt")
     git("checkout HEAD^")
     git("rebase feature", true)
 

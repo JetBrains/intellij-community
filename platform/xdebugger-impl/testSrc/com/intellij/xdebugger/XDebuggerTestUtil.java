@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger;
 
@@ -69,7 +57,7 @@ public class XDebuggerTestUtil {
                                                                          Class<? extends XBreakpointType<B, ?>> breakpointType) {
     XLineBreakpointType type = (XLineBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(breakpointType);
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
+    XLineBreakpointImpl breakpoint = ReadAction.compute(() -> (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line));
     assertNotNull(breakpoint);
     assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     assertEquals(errorMessage, breakpoint.getErrorMessage());
@@ -353,11 +341,6 @@ public class XDebuggerTestUtil {
         @Override
         public void errorOccurred(@NotNull String errorMessage) {
           result.set(errorMessage);
-        }
-
-        @Override
-        public boolean isObsolete() {
-          return false;
         }
       });
 

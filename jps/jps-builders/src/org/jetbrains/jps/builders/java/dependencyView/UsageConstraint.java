@@ -3,7 +3,6 @@ package org.jetbrains.jps.builders.java.dependencyView;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Oct-17
  */
 public interface UsageConstraint {
   UsageConstraint ANY = residence -> true;

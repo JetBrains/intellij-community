@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
@@ -37,7 +39,7 @@ public class ConstExprent extends Exprent {
   private final boolean boolPermitted;
 
   public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
-    this(guessType(val, boolPermitted), Integer.valueOf(val), boolPermitted, bytecodeOffsets);
+    this(guessType(val, boolPermitted), val, boolPermitted, bytecodeOffsets);
   }
 
   public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
@@ -112,7 +114,7 @@ public class ConstExprent extends Exprent {
 
     switch (constType.type) {
       case CodeConstants.TYPE_BOOLEAN:
-        return new TextBuffer(Boolean.toString(((Integer)value).intValue() != 0));
+        return new TextBuffer(Boolean.toString((Integer)value != 0));
 
       case CodeConstants.TYPE_CHAR:
         Integer val = (Integer)value;
@@ -133,7 +135,7 @@ public class ConstExprent extends Exprent {
       case CodeConstants.TYPE_SHORT:
       case CodeConstants.TYPE_SHORTCHAR:
       case CodeConstants.TYPE_INT:
-        int intVal = ((Integer)value).intValue();
+        int intVal = (Integer)value;
         if (!literal) {
           if (intVal == Integer.MAX_VALUE) {
             return new FieldExprent("MAX_VALUE", "java/lang/Integer", true, null, FieldDescriptor.INTEGER_DESCRIPTOR, bytecode).toJava(0, tracer);
@@ -145,7 +147,7 @@ public class ConstExprent extends Exprent {
         return new TextBuffer(value.toString());
 
       case CodeConstants.TYPE_LONG:
-        long longVal = ((Long)value).longValue();
+        long longVal = (Long)value;
         if (!literal) {
           if (longVal == Long.MAX_VALUE) {
             return new FieldExprent("MAX_VALUE", "java/lang/Long", true, null, FieldDescriptor.LONG_DESCRIPTOR, bytecode).toJava(0, tracer);
@@ -157,7 +159,7 @@ public class ConstExprent extends Exprent {
         return new TextBuffer(value.toString()).append('L');
 
       case CodeConstants.TYPE_FLOAT:
-        float floatVal = ((Float)value).floatValue();
+        float floatVal = (Float)value;
         if (!literal) {
           if (Float.isNaN(floatVal)) {
             return new FieldExprent("NaN", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
@@ -187,7 +189,7 @@ public class ConstExprent extends Exprent {
         return new TextBuffer(value.toString()).append('F');
 
       case CodeConstants.TYPE_DOUBLE:
-        double doubleVal = ((Double)value).doubleValue();
+        double doubleVal = (Double)value;
         if (!literal) {
           if (Double.isNaN(doubleVal)) {
             return new FieldExprent("NaN", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
@@ -306,7 +308,7 @@ public class ConstExprent extends Exprent {
       case CodeConstants.TYPE_SHORT:
       case CodeConstants.TYPE_SHORTCHAR:
       case CodeConstants.TYPE_INT:
-        int value = ((Integer)this.value).intValue();
+        int value = (Integer)this.value;
         return value == 0 || (DecompilerContext.getOption(IFernflowerPreferences.BOOLEAN_TRUE_ONE) && value == 1);
     }
 
@@ -322,7 +324,7 @@ public class ConstExprent extends Exprent {
       case CodeConstants.TYPE_SHORT:
       case CodeConstants.TYPE_SHORTCHAR:
       case CodeConstants.TYPE_INT:
-        return ((Integer)value).intValue() == 1;
+        return (Integer)value == 1;
       case CodeConstants.TYPE_LONG:
         return ((Long)value).intValue() == 1;
       case CodeConstants.TYPE_DOUBLE:
@@ -337,13 +339,13 @@ public class ConstExprent extends Exprent {
   public static ConstExprent getZeroConstant(int type) {
     switch (type) {
       case CodeConstants.TYPE_INT:
-        return new ConstExprent(VarType.VARTYPE_INT, Integer.valueOf(0), null);
+        return new ConstExprent(VarType.VARTYPE_INT, 0, null);
       case CodeConstants.TYPE_LONG:
-        return new ConstExprent(VarType.VARTYPE_LONG, Long.valueOf(0), null);
+        return new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
       case CodeConstants.TYPE_DOUBLE:
-        return new ConstExprent(VarType.VARTYPE_DOUBLE, Double.valueOf(0), null);
+        return new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
       case CodeConstants.TYPE_FLOAT:
-        return new ConstExprent(VarType.VARTYPE_FLOAT, Float.valueOf(0), null);
+        return new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
     }
 
     throw new RuntimeException("Invalid argument: " + type);
@@ -383,7 +385,7 @@ public class ConstExprent extends Exprent {
   }
 
   public int getIntValue() {
-    return ((Integer)value).intValue();
+    return (Integer)value;
   }
 
   public boolean isBoolPermitted() {

@@ -92,7 +92,7 @@ public class VcsProjectLog implements Disposable {
   private void recreateLog() {
     UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
       if (hasDvcsRoots()) {
-        createLog();
+        createLog(false);
       }
     }));
   }
@@ -119,11 +119,11 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInBackground
-  public void createLog() {
+  public void createLog(boolean forceInit) {
     VcsLogManager logManager = myLogManager.getValue();
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (logManager.isLogVisible()) {
+      if (logManager.isLogVisible() || forceInit) {
         logManager.scheduleInitialization();
       }
       else if (PostponableLogRefresher.keepUpToDate()) {
@@ -201,7 +201,7 @@ public class VcsProjectLog implements Disposable {
         MessageBusConnection connection = project.getMessageBus().connect(project);
         connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
         if (projectLog.hasDvcsRoots()) {
-          projectLog.createLog();
+          projectLog.createLog(false);
         }
       });
     }

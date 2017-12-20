@@ -45,6 +45,9 @@ class Iteration<T> {
       try {
         value = session.generator.getGeneratorFunction().apply(new GenerativeDataStructure(random, node, sizeHint));
       }
+      catch (CannotSatisfyCondition e) {
+        continue;
+      }
       catch (Throwable e) {
         throw new GeneratorException(this, e);
       }
@@ -52,7 +55,7 @@ class Iteration<T> {
 
       return CounterExampleImpl.checkProperty(session.property, value, node);
     }
-    throw new CannotSatisfyCondition(DATA_IS_DIFFERENT);
+    throw new GeneratorException(this, new CannotSatisfyCondition(DATA_IS_DIFFERENT));
   }
 
   String printToReproduce() {

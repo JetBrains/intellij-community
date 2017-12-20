@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -545,6 +547,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   public IElementType getDotTokenType() {
     PsiElement dot = getDotToken();
     return dot == null ? null : dot.getNode().getElementType();
+  }
+
+  @Override
+  public PsiReference getReference() {
+    return this;
   }
 
   private static final PolyVariantResolver<GrReferenceExpressionImpl> RESOLVER = new DependentResolver<GrReferenceExpressionImpl>() {

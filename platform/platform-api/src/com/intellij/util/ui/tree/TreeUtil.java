@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -218,11 +219,17 @@ public final class TreeUtil {
 
   @Nullable
   public static DefaultMutableTreeNode findNodeWithObject(@NotNull final DefaultMutableTreeNode aRoot, final Object aObject) {
-    if (Comparing.equal(aRoot.getUserObject(), aObject)) {
+    return findNode(aRoot, node -> Comparing.equal(node.getUserObject(), aObject));
+  }
+
+  @Nullable
+  public static DefaultMutableTreeNode findNode(@NotNull final DefaultMutableTreeNode aRoot,
+                                                @NotNull final Condition<DefaultMutableTreeNode> condition) {
+    if (condition.value(aRoot)) {
       return aRoot;
     } else {
       for (int i = 0; i < aRoot.getChildCount(); i++) {
-        final DefaultMutableTreeNode candidate = findNodeWithObject((DefaultMutableTreeNode) aRoot.getChildAt(i), aObject);
+        final DefaultMutableTreeNode candidate = findNode((DefaultMutableTreeNode)aRoot.getChildAt(i), condition);
         if (null != candidate) {
           return candidate;
         }
@@ -1139,7 +1146,7 @@ public final class TreeUtil {
    */
   @NotNull
   public static Promise<TreePath> promiseMakeVisible(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
-    return promiseAccept(tree, path -> {
+    return promiseVisit(tree, path -> {
       TreeVisitor.Action action = visitor.visit(path);
       if (action == TreeVisitor.Action.CONTINUE || action == TreeVisitor.Action.INTERRUPT) {
         TreePath parent = path.getParentPath(); // do not expand children if parent path is collapsed
@@ -1157,8 +1164,8 @@ public final class TreeUtil {
    * @param visitor  a visitor that controls processing of tree nodes
    * @param consumer a path consumer called on done
    */
-  public static void accept(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
-    promiseAccept(tree, visitor).processed(path -> consumer.accept(path));
+  public static void visit(@NotNull JTree tree, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+    promiseVisit(tree, visitor).processed(path -> consumer.accept(path));
   }
 
   /**
@@ -1168,35 +1175,42 @@ public final class TreeUtil {
    * @param visitor a visitor that controls processing of tree nodes
    */
   @NotNull
-  public static Promise<TreePath> promiseAccept(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+  public static Promise<TreePath> promiseVisit(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
     TreeModel model = tree.getModel();
     if (model instanceof TreeVisitor.Acceptor) {
       TreeVisitor.Acceptor acceptor = (TreeVisitor.Acceptor)model;
       return acceptor.accept(visitor);
     }
-    if (model == null) {
-      return Promises.rejectedPromise();
-    }
+    return model == null
+           ? Promises.rejectedPromise("tree model is not set")
+           : Promises.resolvedPromise(visitModel(model, visitor));
+  }
+
+  /**
+   * Processes nodes in the specified tree model.
+   *
+   * @param model   a tree model, which nodes should be processed
+   * @param visitor a visitor that controls processing of tree nodes
+   */
+  private static TreePath visitModel(@NotNull TreeModel model, @NotNull TreeVisitor visitor) {
     Object root = model.getRoot();
-    if (root == null) {
-      return Promises.resolvedPromise();
-    }
+    if (root == null) return null;
+
     TreePath path = new TreePath(root);
     switch (visitor.visit(path)) {
       case INTERRUPT:
-        return Promises.resolvedPromise(path); // root path is found
+        return path; // root path is found
       case CONTINUE:
         break; // visit children
       default:
-        return Promises.resolvedPromise(); // skip children
+        return null; // skip children
     }
     ArrayDeque<ArrayDeque<TreePath>> stack = new ArrayDeque<>();
     stack.push(children(model, path));
     while (path != null) {
       ArrayDeque<TreePath> siblings = stack.peek();
-      if (siblings == null) {
-        return Promises.resolvedPromise(); // nothing to process
-      }
+      if (siblings == null) return null; // nothing to process
+
       TreePath next = siblings.poll();
       if (next == null) {
         assert siblings == stack.poll();
@@ -1205,7 +1219,7 @@ public final class TreeUtil {
       else {
         switch (visitor.visit(next)) {
           case INTERRUPT:
-            return Promises.resolvedPromise(next); // path is found
+            return next; // path is found
           case CONTINUE:
             path = next;
             stack.push(children(model, path));
@@ -1219,7 +1233,7 @@ public final class TreeUtil {
       }
     }
     assert stack.isEmpty();
-    return Promises.resolvedPromise();
+    return null;
   }
 
   private static ArrayDeque<TreePath> children(@NotNull TreeModel model, @NotNull TreePath path) {
@@ -1228,5 +1242,42 @@ public final class TreeUtil {
     ArrayDeque<TreePath> deque = new ArrayDeque<>(count);
     for (int i = 0; i < count; i++) deque.add(path.pathByAddingChild(model.getChild(object, i)));
     return deque;
+  }
+
+  /**
+   * Processes visible nodes in the specified tree.
+   *
+   * @param tree    a tree, which nodes should be processed
+   * @param visitor a visitor that controls processing of tree nodes
+   */
+  public static TreePath visitVisibleRows(@NotNull JTree tree, @NotNull TreeVisitor visitor) {
+    TreePath parent = null;
+    int count = tree.getRowCount();
+    for (int row = 0; row < count; row++) {
+      if (count != tree.getRowCount()) {
+        throw new ConcurrentModificationException("tree is modified");
+      }
+      TreePath path = tree.getPathForRow(row);
+      if (path == null) {
+        throw new NullPointerException("path is not found at row " + row);
+      }
+      if (parent == null || !parent.isDescendant(path)) {
+        switch (visitor.visit(path)) {
+          case INTERRUPT:
+            return path; // path is found
+          case CONTINUE:
+            parent = null;
+            break;
+          case SKIP_CHILDREN:
+            parent = path;
+            break;
+          case SKIP_SIBLINGS:
+            parent = path.getParentPath();
+            if (parent == null) return null;
+            break;
+        }
+      }
+    }
+    return null;
   }
 }

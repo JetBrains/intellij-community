@@ -45,8 +45,6 @@ import java.util.function.BiFunction;
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 7/4/12
- * Time: 6:29 PM
  *
  * map: tag name->file url
  */

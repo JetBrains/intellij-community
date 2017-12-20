@@ -61,10 +61,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.run.CommandLinePatcher
-import com.jetbrains.python.run.PythonConfigurationFactoryBase
-import com.jetbrains.python.run.PythonRunConfiguration
+import com.jetbrains.python.run.*
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -239,8 +236,10 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
   override fun createEditor(): javax.swing.JComponent = sharedForm.panel
 }
 
-enum class TestTargetType {
-  PYTHON, PATH, CUSTOM
+enum class TestTargetType(private val customName: String? = null) {
+  PYTHON(PythonRunConfigurationForm.MODULE_NAME), PATH(PythonRunConfigurationForm.SCRIPT_PATH), CUSTOM;
+
+  fun getCustomName() = customName ?: name
 }
 
 /**

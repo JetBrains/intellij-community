@@ -348,7 +348,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     if (!(expression instanceof PsiConditionalExpression) && !PsiType.BOOLEAN.equals(expression.getType())) return false;
     PsiElement parent = expression.getParent();
     if (parent instanceof PsiLambdaExpression &&
-        !LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {
+        !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, () -> createSimplifiedReplacement(expression))) {
       return false;
     }
 

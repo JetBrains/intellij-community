@@ -41,7 +41,7 @@ public class CompositeInputFilter implements InputFilter {
 
   @Override
   @Nullable
-  public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull final String text, final ConsoleViewContentType contentType) {
+  public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull final String text, @NotNull final ConsoleViewContentType contentType) {
     boolean dumb = myDumbService.isDumb();
     for (Pair<InputFilter, Boolean> pair : myFilters) {
       if (!dumb || pair.second == Boolean.TRUE) {
@@ -66,7 +66,7 @@ public class CompositeInputFilter implements InputFilter {
 
       @Nullable
       @Override
-      public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, ConsoleViewContentType contentType) {
+      public List<Pair<String, ConsoleViewContentType>> applyFilter(@NotNull String text, @NotNull ConsoleViewContentType contentType) {
         if (!isBroken) {
           try {
             return filter.applyFilter(text, contentType);

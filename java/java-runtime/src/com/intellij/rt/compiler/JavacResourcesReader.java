@@ -22,7 +22,6 @@ import java.util.ResourceBundle;
 /**
   * MUST BE COMPILED WITH JDK 1.1 IN ORDER TO SUPPORT JAVAC LAUNCHING FOR ALL JDKs
   * @author Eugene Zhuravlev
-  *         Date: Oct 10, 2005
   */
 public class JavacResourcesReader {
   public static final String MSG_PATTERNS_START = "__patterns_start";

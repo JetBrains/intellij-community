@@ -207,6 +207,9 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
       else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expression, unboxedExpression)) {
         return true;
       }
+
+      if (!LambdaUtil.isSafeLambdaReturnValueReplacement(expression, unboxedExpression)) return true;
+
       if (onlyReportSuperfluouslyUnboxed) {
         final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
         if (!(expectedType instanceof PsiClassType)) {

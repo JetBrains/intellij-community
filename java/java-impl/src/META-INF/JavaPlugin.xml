@@ -711,6 +711,11 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ConstantConditions" bundle="messages.InspectionsBundle" key="inspection.data.flow.display.name"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.dataFlow.DataFlowInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="Java9UndeclaredServiceUsage"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.undeclared.service.usage.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" displayName="Empty method" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="UnusedReturnValue" bundle="messages.InspectionsBundle" key="inspection.unused.return.value.display.name"

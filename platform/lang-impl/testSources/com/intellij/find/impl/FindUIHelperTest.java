@@ -72,7 +72,7 @@ public class FindUIHelperTest extends LightPlatformTestCase {
     myHelper.setSkipResultsWithOneUsage(initialSkipResultsWithOneUsage);
     assertSame(initialSkipResultsWithOneUsage, myHelper.isSkipResultsWithOneUsage());
 
-    myFindManager.changeGlobalSettings(myHelper.getModel());
+    myHelper.updateFindSettings();
 
     FindModel findModel = FindManager.getInstance(getProject()).getFindInProjectModel();
     myHelper.setModel(findModel);

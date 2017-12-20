@@ -40,7 +40,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
   private static final int VERSION = 35 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);

@@ -16,8 +16,8 @@ public class VarVersionPair {
   }
 
   public VarVersionPair(Integer var, Integer version) {
-    this.var = var.intValue();
-    this.version = version.intValue();
+    this.var = var;
+    this.version = version;
   }
 
   public VarVersionPair(VarExprent var) {

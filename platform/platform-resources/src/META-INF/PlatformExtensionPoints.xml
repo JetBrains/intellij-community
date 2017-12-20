@@ -293,6 +293,10 @@
 
     <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider"/>
-    <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeature"/>
+    <extensionPoint name="experimentalFeature" beanClass="com.intellij.openapi.application.ExperimentalFeatureImpl" />
+
+    <extensionPoint qualifiedName="com.intellij.tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

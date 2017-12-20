@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -55,7 +57,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private TextAttributes myPrefixAttributes; // accessed only in EDT
   private int myBidiFlags; // accessed only in EDT
   
-  private int myPlainSpaceWidth; // guarded by myLock
+  private float myPlainSpaceWidth; // guarded by myLock
   private int myLineHeight; // guarded by myLock
   private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
@@ -410,7 +412,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
 
-  public int getPlainSpaceWidth() {
+  public float getPlainSpaceWidth() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myPlainSpaceWidth;
@@ -482,9 +484,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private void initMetricsIfNeeded() {
     if (myPlainSpaceWidth >= 0) return;
 
-    FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+    FontMetrics fm = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN), myFontRenderContext);
 
-    int width = FontLayoutService.getInstance().charWidth(fm, ' ');
+    float width = FontLayoutService.getInstance().charWidth2D(fm, ' ');
     myPlainSpaceWidth = width > 0 ? width : 1;
 
     myCharHeight = FontLayoutService.getInstance().charWidth(fm, 'a');
@@ -500,7 +502,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     myBottomOverhang = descent - myDescent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
-    FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
+    FontMetrics fmBI = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC), myFontRenderContext);
     myMaxCharWidth = FontLayoutService.getInstance().charWidth(fmBI, 'W');
   }
   
@@ -526,6 +528,9 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   private void checkFontRenderContext(FontRenderContext context) {
     if (setFontRenderContext(context)) {
+      synchronized (myLock) {
+        myPlainSpaceWidth = -1;
+      }
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
     }

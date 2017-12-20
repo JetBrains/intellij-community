@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 24-Apr-17
  */
 @State(name = "RemoteRepositoriesConfiguration", storages = @Storage("jarRepositories.xml"))
 public class RemoteRepositoriesConfiguration implements PersistentStateComponent<RemoteRepositoriesConfiguration.State> {

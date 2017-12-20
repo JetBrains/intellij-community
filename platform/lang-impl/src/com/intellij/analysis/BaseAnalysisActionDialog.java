@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.analysis;
@@ -28,10 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -51,6 +36,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class BaseAnalysisActionDialog extends DialogWrapper {
   private JPanel myPanel;
@@ -130,21 +116,10 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     //module scope if applicable
     myModuleButton.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));
-    boolean useModuleScope = false;
-    if (myModuleName != null) {
-      useModuleScope = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.MODULE;
-      myModuleButton.setSelected(myRememberScope && useModuleScope);
-    }
-
     myModuleButton.setVisible(myModuleName != null && ModuleManager.getInstance(myProject).getModules().length > 1);
 
-    boolean useUncommitedFiles = false;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
-    if (hasVCS){
-      useUncommitedFiles = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITTED_FILES;
-      myUncommittedFilesButton.setSelected(myRememberScope && useUncommitedFiles);
-    }
     myUncommittedFilesButton.setVisible(hasVCS);
 
     DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
@@ -196,20 +171,36 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       searchInLib = true;
     }
 
-    //custom scope
-    myCustomScopeButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM);
+    boolean someButtonEnabled = false;
+    if (myRememberScope) {
+      switch (myAnalysisOptions.SCOPE_TYPE) {
+        case AnalysisScope.PROJECT:
+          someButtonEnabled = select(myProjectButton);
+          break;
+        case AnalysisScope.MODULE:
+          someButtonEnabled = select(myModuleButton);
+          break;
+        case AnalysisScope.FILE:
+          someButtonEnabled = select(myFileButton);
+          break;
+        case AnalysisScope.UNCOMMITTED_FILES:
+          someButtonEnabled = select(myUncommittedFilesButton);
+          break;
+        case AnalysisScope.CUSTOM:
+          someButtonEnabled = select(myCustomScopeButton);
+          break;
+      }
+    } else {
+      if (!(someButtonEnabled = select(myFileButton))) {
+        select(myModuleButton);
+      }
+    }
+    if (!someButtonEnabled) {
+      select(myProjectButton);
+    }
 
     myScopeCombo.init(myProject, searchInLib, true, preselect);
     myScopeCombo.setCurrentSelection(false);
-
-    //correct selection
-    myFileButton.setSelected(myFileName != null &&
-                             (!myRememberScope ||
-                             myAnalysisOptions.SCOPE_TYPE != AnalysisScope.PROJECT && !useModuleScope && myAnalysisOptions.SCOPE_TYPE != AnalysisScope.CUSTOM && !useUncommitedFiles));
-    if (!myFileButton.isSelected()) {
-      myProjectButton.setSelected(myRememberScope && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.PROJECT);
-    }
-
     myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
 
     final ActionListener radioButtonPressed = new ActionListener() {
@@ -320,20 +311,12 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
           files = changeListManager.getAffectedFiles();
         }
         else {
-          files = new ArrayList<>();
-          for (ChangeList list : changeListManager.getChangeListsCopy()) {
-            if (!Comparing.strEqual(list.getName(), (String)myChangeLists.getSelectedItem())) continue;
-            final Collection<Change> changes = list.getChanges();
-            for (Change change : changes) {
-              final ContentRevision afterRevision = change.getAfterRevision();
-              if (afterRevision != null) {
-                final VirtualFile vFile = afterRevision.getFile().getVirtualFile();
-                if (vFile != null) {
-                  files.add(vFile);
-                }
-              }
-            }
-          }
+          files = changeListManager
+            .getChangeListsCopy()
+            .stream()
+            .filter(l -> Comparing.strEqual(l.getName(), (String)myChangeLists.getSelectedItem()))
+            .flatMap(l -> ChangesUtil.getAfterRevisionsFiles(l.getChanges().stream()))
+            .collect(Collectors.toList());
         }
         scope = new AnalysisScope(project, new HashSet<>(files));
         uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITTED_FILES;
@@ -348,5 +331,13 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
+  }
+
+  private static boolean select(JRadioButton button) {
+    if (button.isVisible()) {
+      button.setSelected(true);
+      return true;
+    }
+    return false;
   }
 }

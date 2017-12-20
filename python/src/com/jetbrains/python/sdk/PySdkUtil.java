@@ -52,8 +52,6 @@ import java.util.Map;
  * Needs not to be instantiated and only holds static methods.
  *
  * @author dcheryasov
- *         Date: Apr 24, 2008
- *         Time: 1:19:47 PM
  */
 public class PySdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");

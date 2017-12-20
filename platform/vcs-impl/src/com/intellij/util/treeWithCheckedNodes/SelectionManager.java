@@ -31,8 +31,6 @@ import java.util.Set;
 
 /**
 * @author irengrig
-*         Date: 2/7/11
-*         Time: 10:43 AM
  *
  * see {@link SelectedState}
 */

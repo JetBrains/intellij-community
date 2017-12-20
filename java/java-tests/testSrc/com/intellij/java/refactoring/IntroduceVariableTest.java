@@ -234,6 +234,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i", true, true, false, "int"));
   }
 
+  public void testGenericTypeMismatch() {
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.lang.String"));
+  }
+
+  public void testGenericTypeMismatch1() {
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.util.List<java.lang.String>"));
+  }
+
   public void testThisQualifier() {
     doTest(new MockIntroduceVariableHandler("count", true, true, false, "int"));
   }
@@ -375,7 +383,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
-        assertTrue(type.getPresentableText(), type.getPresentableText().equals(expectedTypeName));
+        assertEquals(type.getPresentableText(), expectedTypeName, type.getPresentableText());
         assertEquals("path", getSuggestedName(type, expr).names[0]);
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
@@ -394,7 +402,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
-        assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
+        assertEquals(type.getPresentableText(), "B", type.getPresentableText());
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -555,8 +563,8 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType[] types = typeSelectorManager.getTypesForAll();
-        assertTrue(types[0].getPresentableText(), types[0].getPresentableText().equals("B"));
-        assertTrue(types[1].getPresentableText(), types[1].getPresentableText().equals("A"));
+        assertEquals(types[0].getPresentableText(), "B", types[0].getPresentableText());
+        assertEquals(types[1].getPresentableText(), "A", types[1].getPresentableText());
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -565,6 +573,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testChooseIntersectionConjunctBasedOnFollowingCalls() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "IA"));
+  }
+
+  public void testTooPopularNameOfTheFollowingCall() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.List<java.lang.String>"));
   }
 
   public void testChooseTypeExpressionWhenNotDenotable() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo")); }

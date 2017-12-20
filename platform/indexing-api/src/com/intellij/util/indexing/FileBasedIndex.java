@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -175,6 +176,10 @@ public abstract class FileBasedIndex {
         return true;
       }
     });
+  }
+
+  public void invalidateCaches() {
+    throw new IncorrectOperationException();
   }
 
   @FunctionalInterface

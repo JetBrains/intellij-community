@@ -351,6 +351,11 @@ common.attrs.other =
 	common.data.mimetype =
 		w:mime-type
 
+## Script type
+
+	common.data.scripttype =
+		w:script-type
+
 ## Encodings
 
 	common.data.charset =

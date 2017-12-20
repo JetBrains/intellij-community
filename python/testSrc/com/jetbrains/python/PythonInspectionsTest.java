@@ -85,11 +85,6 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyRaisingNewStyleClassInspection() {
-    LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
-    doTestWithLanguageLevel(getTestName(false), inspection, LanguageLevel.PYTHON24);
-  }
-
   public void testPyDocstringInspection() {
     LocalInspectionTool inspection = new PyMissingOrEmptyDocstringInspection();
     doTest(getTestName(false), inspection);
@@ -174,10 +169,6 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.configureByFile("inspections/" + getTestName(false) + "/test.py");
     myFixture.enableInspections(entry);
     myFixture.checkHighlighting(true, false, true);
-  }
-
-  public void testPyPropertyDefinitionInspection25() {
-    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON25);
   }
 
   public void testPyPropertyDefinitionInspection26() {

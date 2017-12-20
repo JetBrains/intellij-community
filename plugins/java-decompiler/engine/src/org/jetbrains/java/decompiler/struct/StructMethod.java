@@ -97,7 +97,7 @@ public class StructMethod extends StructMember {
     }
   }
 
-  public void releaseResources() throws IOException {
+  public void releaseResources() {
     if (containsCode && expanded) {
       seq = null;
       expanded = false;
@@ -141,12 +141,12 @@ public class StructMethod extends StructMember {
       else {
         switch (opcode) {
           case opc_bipush:
-            operands.add(Integer.valueOf(in.readByte()));
+            operands.add((int)in.readByte());
             i++;
             break;
           case opc_ldc:
           case opc_newarray:
-            operands.add(Integer.valueOf(in.readUnsignedByte()));
+            operands.add(in.readUnsignedByte());
             i++;
             break;
           case opc_sipush:
@@ -171,7 +171,7 @@ public class StructMethod extends StructMember {
             if (opcode != opc_sipush) {
               group = GROUP_JUMP;
             }
-            operands.add(Integer.valueOf(in.readShort()));
+            operands.add((int)in.readShort());
             i += 2;
             break;
           case opc_ldc_w:
@@ -230,12 +230,12 @@ public class StructMethod extends StructMember {
           case opc_iinc:
             if (wide) {
               operands.add(in.readUnsignedShort());
-              operands.add(Integer.valueOf(in.readShort()));
+              operands.add((int)in.readShort());
               i += 4;
             }
             else {
               operands.add(in.readUnsignedByte());
-              operands.add(Integer.valueOf(in.readByte()));
+              operands.add((int)in.readByte());
               i += 2;
             }
             break;
@@ -309,11 +309,11 @@ public class StructMethod extends StructMember {
       if (!operands.isEmpty()) {
         ops = new int[operands.size()];
         for (int j = 0; j < operands.size(); j++) {
-          ops[j] = operands.get(j).intValue();
+          ops[j] = operands.get(j);
         }
       }
 
-      Instruction instr = ConstantsUtil.getInstructionInstance(opcode, wide, group, bytecode_version, ops);
+      Instruction instr = Instruction.create(opcode, wide, group, bytecode_version, ops);
 
       instructions.addWithKey(instr, offset);
 
@@ -331,7 +331,6 @@ public class StructMethod extends StructMember {
       handler.handler = in.readUnsignedShort();
 
       int excclass = in.readUnsignedShort();
-      handler.class_index = excclass;
       if (excclass != 0) {
         handler.exceptionClass = pool.getPrimitiveConstant(excclass).getString();
       }

@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author anna
- * Date: 16-Apr-2008
  */
 public class MigrationRootNode extends AbstractTreeNode<TypeMigrationLabeler> implements DuplicateNodeRenderer.DuplicatableNode  {
   private final TypeMigrationLabeler myLabeler;

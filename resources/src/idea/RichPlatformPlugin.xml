@@ -85,6 +85,8 @@
 
     <extensionPoint name="projectStructureValidator"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
+
+    <extensionPoint name="compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -375,6 +377,8 @@
 
     <editorActionHandler action="EditorChooseLookupItemReplace"
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
+
+    <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>

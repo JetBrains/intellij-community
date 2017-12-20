@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrImportAlias;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
@@ -100,10 +100,12 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
       return StringUtil.getShortName(referenceText);
     }
 
-
-    PsiElement aliasNameElement = getAliasNameElement();
-    if (aliasNameElement != null) {
-      return aliasNameElement.getText();
+    GrImportAlias alias = getAlias();
+    if (alias != null) {
+      String aliasName = alias.getName();
+      if (aliasName != null) {
+        return aliasName;
+      }
     }
 
     GrCodeReferenceElement ref = getImportReference();
@@ -126,7 +128,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     if (stub != null) {
       return stub.getAliasName() != null;
     }
-    return getAliasNameElement() != null;
+    GrImportAlias alias = getAlias();
+    return alias != null && alias.getName() != null;
   }
 
   @Override
@@ -167,17 +170,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
   @Nullable
   @Override
-  public PsiElement getAliasNameElement() {
-    GrImportStatementStub stub = getStub();
-    if (stub != null) {
-      String alias = stub.getAliasName();
-      if (alias == null) return null;
-
-      GrImportStatement imp = GroovyPsiElementFactory.getInstance(getProject()).createImportStatementFromText("import A as " + alias);
-      return imp.getAliasNameElement();
-    }
-
-    return findChildByType(GroovyTokenTypes.mIDENT);
+  public GrImportAlias getAlias() {
+    return findChildByClass(GrImportAlias.class);
   }
 
   @Nullable

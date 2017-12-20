@@ -330,6 +330,8 @@
           <action id="SelectAllOccurrences" class="com.intellij.openapi.editor.actions.SelectAllOccurrencesAction"/>
           <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
+          <action id="GotoNextElementUnderCaretUsage" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
+          <action id="GotoPrevElementUnderCaretUsage" class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction"/>
           <separator/>
           <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
           <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
@@ -554,6 +556,7 @@
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
         <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
+        <action id="DataSharingOptions" class="com.intellij.ide.actions.DataSharingOptionsAction"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
@@ -567,13 +570,6 @@
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
       <separator/>
-      <reference ref="$Undo"/>
-      <reference ref="$Redo"/>
-      <separator/>
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
-      <separator/>
       <reference ref="Back"/>
       <reference ref="Forward"/>
       <separator/>
@@ -581,7 +577,6 @@
         <reference ref="ShowSettings"/>
       </group>
       <separator/>
-      <reference ref="HelpTopics"/>
       <reference ref="SearchEverywhere"/>
     </group>
 
@@ -824,10 +819,6 @@
       <reference ref="MaintenanceGroup"/>
 
       <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.actions.SendStatisticsAction" text="Collect And Send Statistics"/>
-
-      <group id="Internal.Profile" popup="true" text="Profiler">
-        <action id="DTraceAction" internal="true" class="com.intellij.internal.performance.profiler.dtrace.DTraceAction" text="DTrace lwawt"/>
-      </group>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>

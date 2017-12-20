@@ -556,21 +556,24 @@ public class JBUI {
   }
 
   /**
-   * If the graphics has floating point scale transform, aligns the graphics to the integer coordinate grid,
+   * Aligns the x or/and y translate of the graphics to the integer coordinate grid if the graphics has fractional scale transform,
    * otherwise does nothing. This is used to avoid the rounding problem, see JRE-502.
    *
    * @param g the graphics to align
+   * @param alignX should the x-translate be aligned
+   * @param alignY should the y-translate be aligned
    * @return the original graphics transform when aligned, otherwise null
    */
-  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g) {
+  public static AffineTransform alignToIntGrid(@NotNull Graphics2D g, boolean alignX, boolean alignY) {
     try {
       AffineTransform tx = g.getTransform();
-      double scaleX = tx.getScaleX();
-      double scaleY = tx.getScaleY();
-      boolean fpsTx = scaleX != (int)scaleX || scaleY != (int)scaleY;
-      if (fpsTx) {
+      if (isFractionalScale(tx)) {
+        double scaleX = tx.getScaleX();
+        double scaleY = tx.getScaleY();
         AffineTransform alignedTx = new AffineTransform();
-        alignedTx.translate((int)Math.ceil(tx.getTranslateX() - 0.5), (int)Math.ceil(tx.getTranslateY() - 0.5));
+        double trX = alignX ? (int)Math.ceil(tx.getTranslateX() - 0.5) : tx.getTranslateX();
+        double trY = alignY ? (int)Math.ceil(tx.getTranslateY() - 0.5) : tx.getTranslateY();
+        alignedTx.translate(trX, trY);
         alignedTx.scale(scaleX, scaleY);
         assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
         g.setTransform(alignedTx);
@@ -581,6 +584,15 @@ public class JBUI {
       LOG.trace(e);
     }
     return null;
+  }
+
+  /**
+   * Returns true if the transform matrix contains fractional scale element.
+   */
+  public static boolean isFractionalScale(AffineTransform tx) {
+    double scaleX = tx.getScaleX();
+    double scaleY = tx.getScaleY();
+    return scaleX != (int)scaleX || scaleY != (int)scaleY;
   }
 
   public static class Fonts {

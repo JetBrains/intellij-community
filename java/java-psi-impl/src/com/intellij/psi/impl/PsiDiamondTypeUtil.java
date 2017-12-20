@@ -17,13 +17,11 @@ package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -171,15 +169,7 @@ public class PsiDiamondTypeUtil {
         if (isAugmented(context)) {
           return false;
         }
-        final String arrayInitializer = "new " + typeByParent.getCanonicalText() + "[]{0}";
-        final Project project = context.getProject();
-        final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-        PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, context);
-        //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
-        newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
-        final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
-        LOG.assertTrue(initializer != null);
-        copy = initializer.getInitializers()[0].replace(context);
+        copy = LambdaUtil.copyWithExpectedType(context, typeByParent);
       }
       else {
         final PsiExpressionList argumentList = context instanceof PsiCallExpression ? ((PsiCallExpression)context).getArgumentList() : null;

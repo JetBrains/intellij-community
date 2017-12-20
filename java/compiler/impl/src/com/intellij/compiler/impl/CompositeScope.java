@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Feb 5, 2003
- * Time: 4:17:58 PM
  */
 package com.intellij.compiler.impl;
 

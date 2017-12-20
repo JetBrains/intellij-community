@@ -1,7 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -30,10 +32,9 @@ public class IfExprent extends Exprent {
   public static final int IF_ACMPEQ = 14;
   public static final int IF_ACMPNE = 15;
 
-  public static final int IF_CAND = 16;
-  public static final int IF_COR = 17;
-
-  public static final int IF_NOT = 18;
+  //public static final int IF_CAND = 16;
+  //public static final int IF_COR = 17;
+  //public static final int IF_NOT = 18;
   public static final int IF_VALUE = 19;
 
   private static final int[] FUNC_TYPES = {

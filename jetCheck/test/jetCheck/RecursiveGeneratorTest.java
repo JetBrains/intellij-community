@@ -26,7 +26,7 @@ public class RecursiveGeneratorTest extends PropertyCheckerTestCase {
 
   public void testShrinksToLeafDespiteWrapping() {
     checkShrinksToLeaf(Generator.recursive(nodes -> Generator.frequency(2, leaves,
-                                                                        1, Generator.from(data -> Generator.listsOf(nodes).map(Composite::new).generateValue(data)))));
+                                                                        1, Generator.from(data -> data.generate(Generator.listsOf(nodes).map(Composite::new))))));
   }
   
   private interface Node {}

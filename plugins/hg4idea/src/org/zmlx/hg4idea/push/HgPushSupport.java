@@ -98,11 +98,6 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   }
 
   @Override
-  public boolean isForcePushEnabled() {
-    return true;
-  }
-
-  @Override
   public boolean shouldRequestIncomingChangesForNotCheckedRepositories() {
     // load commit for all repositories if sync
     return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC;

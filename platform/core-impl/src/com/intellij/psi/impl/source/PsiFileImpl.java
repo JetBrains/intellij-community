@@ -1108,7 +1108,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (!useStrongRefs()) {
       synchronized (myPsiLock) {
         for (PsiFile root : myViewProvider.getAllFiles()) {
-          if ((root instanceof PsiFileImpl)) {
+          if (root instanceof PsiFileImpl) {
             ((PsiFileImpl)root).switchToStrongRefs();
           }
         }

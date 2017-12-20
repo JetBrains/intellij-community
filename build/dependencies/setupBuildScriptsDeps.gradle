@@ -15,7 +15,9 @@
  */
 repositories {
   mavenCentral()
-  maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
+  if (project.ext.inJetBrainsNetwork) {
+    maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
+  }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
 }
 
@@ -31,6 +33,8 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("commons-codec")
   buildScriptsDeps loadLibraryMavenId("commons-logging")
   buildScriptsDeps loadLibraryMavenId("Trove4j")
+  buildScriptsDeps loadLibraryMavenId("NanoXML")
+  buildScriptsDeps loadLibraryMavenId("Guava")
 }
 
 /**

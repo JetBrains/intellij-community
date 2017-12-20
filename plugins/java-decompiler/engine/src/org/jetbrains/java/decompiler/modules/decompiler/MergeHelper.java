@@ -13,16 +13,12 @@ import java.util.List;
 import java.util.Set;
 
 public class MergeHelper {
-
   public static void enhanceLoops(Statement root) {
-
-    while (enhanceLoopsRec(root)) ;
-
+    while (enhanceLoopsRec(root)) /**/;
     SequenceHelper.condenseSequences(root);
   }
 
   private static boolean enhanceLoopsRec(Statement stat) {
-
     boolean res = false;
 
     for (Statement st : stat.getStats()) {
@@ -39,7 +35,6 @@ public class MergeHelper {
   }
 
   private static boolean enhanceLoop(DoStatement stat) {
-
     int oldloop = stat.getLooptype();
 
     switch (oldloop) {
@@ -63,8 +58,7 @@ public class MergeHelper {
     return (stat.getLooptype() != oldloop);
   }
 
-  private static boolean matchDoWhile(DoStatement stat) {
-
+  private static void matchDoWhile(DoStatement stat) {
     // search for an if condition at the end of the loop
     Statement last = stat.getFirst();
     while (last.type == Statement.TYPE_SEQUENCE) {
@@ -86,9 +80,8 @@ public class MergeHelper {
           set.remove(last);
 
           if (!set.isEmpty()) {
-            return false;
+            return;
           }
-
 
           stat.setLooptype(DoStatement.LOOP_DOWHILE);
 
@@ -121,12 +114,9 @@ public class MergeHelper {
             }
             stat.addSuccessor(edge);
           }
-
-          return true;
         }
       }
     }
-    return false;
   }
 
   private static boolean matchWhile(DoStatement stat) {
@@ -277,15 +267,14 @@ public class MergeHelper {
     }
   }
 
-  private static boolean matchFor(DoStatement stat) {
-
-    Exprent lastDoExprent = null, initDoExprent = null;
-    Statement lastData = null, preData = null;
+  private static void matchFor(DoStatement stat) {
+    Exprent lastDoExprent, initDoExprent;
+    Statement lastData, preData = null;
 
     // get last exprent
     lastData = getLastDirectData(stat.getFirst());
     if (lastData == null || lastData.getExprents().isEmpty()) {
-      return false;
+      return;
     }
 
     List<Exprent> lstExpr = lastData.getExprents();
@@ -298,11 +287,9 @@ public class MergeHelper {
       }
     }
 
-    boolean haslast = issingle || (lastDoExprent.type == Exprent.EXPRENT_ASSIGNMENT ||
-                                   lastDoExprent.type == Exprent.EXPRENT_FUNCTION);
-
+    boolean haslast = issingle || lastDoExprent.type == Exprent.EXPRENT_ASSIGNMENT || lastDoExprent.type == Exprent.EXPRENT_FUNCTION;
     if (!haslast) {
-      return false;
+      return;
     }
 
     boolean hasinit = false;
@@ -336,13 +323,12 @@ public class MergeHelper {
       }
     }
 
-    if ((hasinit && haslast) || issingle) {  // FIXME: issingle sufficient?
-
+    if (hasinit || issingle) {  // FIXME: issingle sufficient?
       Set<Statement> set = stat.getNeighboursSet(StatEdge.TYPE_CONTINUE, Statement.DIRECTION_BACKWARD);
       set.remove(lastData);
 
       if (!set.isEmpty()) {
-        return false;
+        return;
       }
 
       stat.setLooptype(DoStatement.LOOP_FOR);
@@ -359,8 +345,6 @@ public class MergeHelper {
       }
       removeLastEmptyStatement(stat, lastData);
     }
-
-    return true;
   }
 
   private static void removeLastEmptyStatement(DoStatement dostat, Statement stat) {
@@ -388,7 +372,6 @@ public class MergeHelper {
   }
 
   private static Statement getLastDirectData(Statement stat) {
-
     if (stat.getExprents() != null) {
       return stat;
     }

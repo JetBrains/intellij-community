@@ -29,7 +29,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testListContainsDivisible() {
     checkGeneratesExample(nonEmptyLists(integers()),
                           l -> l.stream().anyMatch(i -> i % 10 == 0),
-                          3);
+                          4);
   }
 
   public void testStringContains() {
@@ -77,6 +77,10 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     PropertyChecker.forAll(integers().suchThat(i -> i < 0)).shouldHold(i -> i < 0);
   }
 
+  public void testNestedSometimesVeryRareSuchThat() {
+    forAllStable(frequency(50, constant(0), 1, integers(1, 1000)).suchThat(i -> i > 0)).shouldHold(i -> i > 0);
+  }
+
   public void testStringOfStringChecksAllChars() {
     checkFalsified(stringsOf("abc "),
                    s -> !s.contains(" "),
@@ -108,7 +112,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
       .shouldHold(s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkGeneratesExample(asciiIdentifiers(),
                           s -> s.contains("_"),
-                          8);
+                          11);
   }
 
   public void testBoolean() {
@@ -121,7 +125,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testShrinkingNonEmptyList() {
     List<Integer> list = checkGeneratesExample(nonEmptyLists(integers(0, 100)),
                                                l -> l.contains(42),
-                                               11);
+                                               12);
     assertEquals(1, list.size());
   }
 
@@ -153,11 +157,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSameFrequency() {
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2))),
                    l -> !l.contains(1) || !l.contains(2),
-                   2);
+                   3);
 
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2)).with(1, constant(3))),
                    l -> !l.contains(1) || !l.contains(2) || !l.contains(3),
-                   7);
+                   8);
   }
 
 }

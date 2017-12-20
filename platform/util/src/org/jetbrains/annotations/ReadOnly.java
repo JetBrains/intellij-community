@@ -28,7 +28,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.LOCAL_VARIABLE})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
 @ApiStatus.Experimental
 public @interface ReadOnly {
 }

@@ -165,7 +165,10 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     CommentTracker ct = new CommentTracker();
     PsiElement anchor = loop;
     for (PsiExpression expression : expressions) {
-      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(ct.text(loop), element);
+      if (loop.getBody() != null) {
+        ct.markUnchanged(loop.getBody());
+      }
+      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(loop.getText(), element);
       PsiVariable variable = Objects.requireNonNull(getVariable(copy));
       for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(copy))) {
         final PsiElement referenceElement = reference.getElement();

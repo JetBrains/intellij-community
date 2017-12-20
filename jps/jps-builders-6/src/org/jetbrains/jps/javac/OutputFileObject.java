@@ -27,7 +27,6 @@ import java.net.URI;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/24/11
  */
 public final class OutputFileObject extends SimpleJavaFileObject {
   @Nullable

@@ -45,7 +45,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 25, 2007
  *
  * A file has three indexed states (per particular index): indexed (with particular index_stamp), outdated and (trivial) unindexed
  * if index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything

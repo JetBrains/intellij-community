@@ -31,10 +31,6 @@ public class VarVersionNode implements IGraphNode {
     this.version = version;
   }
 
-  public VarVersionPair getVarPaar() {
-    return new VarVersionPair(var, version);
-  }
-
   public List<IGraphNode> getPredecessors() {
     List<IGraphNode> lst = new ArrayList<>(preds.size());
     for (VarVersionEdge edge : preds) {

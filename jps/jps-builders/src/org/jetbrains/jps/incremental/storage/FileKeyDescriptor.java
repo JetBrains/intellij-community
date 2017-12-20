@@ -27,7 +27,6 @@ import java.io.IOException;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 9/10/12
 */
 public final class FileKeyDescriptor implements KeyDescriptor<File> {
   public void save(@NotNull DataOutput out, File value) throws IOException {

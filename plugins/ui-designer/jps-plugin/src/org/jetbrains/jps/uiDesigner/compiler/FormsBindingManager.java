@@ -47,7 +47,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/20/12
  */
 public class FormsBindingManager extends FormsBuilder {
   private static final String JAVA_EXTENSION = ".java";

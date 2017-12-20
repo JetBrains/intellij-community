@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -422,11 +423,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 
+  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
+                                                       final boolean debuggerInServerMode,
+                                                       int transport, final String debugPort,
+                                                       boolean checkValidity) throws ExecutionException {
+    return createDebugParameters(parameters, debuggerInServerMode, transport, debugPort, checkValidity, true);
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,
-                                                       boolean checkValidity)
+                                                       boolean checkValidity,
+                                                       boolean addAsyncDebuggerAgent)
     throws ExecutionException {
     if (checkValidity) {
       checkTargetJPDAInstalled(parameters);
@@ -449,9 +458,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       address = debugPort;
     }
 
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
     final String debugAddress = debuggerInServerMode && useSockets ? LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
-    String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
+    String debuggeeRunProperties =
+      "transport=" + DebugProcessImpl.findConnector(useSockets, debuggerInServerMode).transport().name() + ",address=" + debugAddress;
     if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
     }
@@ -467,7 +476,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
 
-      addDebuggerAgent(parameters);
+      if (addAsyncDebuggerAgent) {
+        addDebuggerAgent(parameters);
+      }
 
       final Sdk jdk = parameters.getJdk();
       final boolean forceClassicVM = shouldForceClassicVM(jdk);

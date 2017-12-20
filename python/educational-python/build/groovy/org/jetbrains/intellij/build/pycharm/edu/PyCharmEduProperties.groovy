@@ -25,6 +25,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       "python-community-ide", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
+    additionalIDEPropertiesFilePaths = ["$home/community/python/educational-python/build/pycharm-edu.properties".toString()]
   }
 
   @Override
@@ -107,6 +108,12 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
         dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
+      }
+
+      @Override
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} RC" : ""
+        "PyCharm Edu${suffix}.app"
       }
     }
   }

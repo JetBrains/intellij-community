@@ -153,6 +153,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private Future<IndexConfiguration> myStateFuture;
   private volatile IndexConfiguration myState;
+  private volatile Future<?> myAllIndicesInitializedFuture;
 
   private IndexConfiguration getState() {
     if (!myInitialized) {
@@ -334,12 +335,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(extensions));
-    IndexInfrastructure.submitGenesisTask(() -> {
-      if (!myShutdownPerformed.get()) {
-        myChangedFilesCollector.ensureUpToDateAsync();
-      }
-      return null;
-    });
     LOG.info("Index scheduled:" + (System.nanoTime() - started) / 1000000);
     if (!IndexInfrastructure.ourDoAsyncIndicesInitialization) {
       waitUntilIndicesAreInitialized();
@@ -512,7 +507,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       return; // already shut down
     }
 
-    waitUntilIndicesAreInitialized();
+    waitUntilAllIndicesAreInitialized();
     try {
       if (myFlushingFuture != null) {
         myFlushingFuture.cancel(false);
@@ -552,6 +547,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
       LOG.info("END INDEX SHUTDOWN");
     }
+  }
+
+  private void waitUntilAllIndicesAreInitialized() {
+    try {
+      waitUntilIndicesAreInitialized();
+      myAllIndicesInitializedFuture.get();
+    } catch (Throwable ignore) {}
   }
 
   private void removeDataFromIndicesForFile(final int fileId) {
@@ -2432,8 +2434,24 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
             lastModCount = myLocalModCount;
           }
         });
+        myAllIndicesInitializedFuture = IndexInfrastructure.submitGenesisTask(() -> {
+          if (!myShutdownPerformed.get()) {
+            myChangedFilesCollector.ensureUpToDateAsync();
+          }
+          return null;
+        });
         myInitialized = true;  // this will ensure that all changes to component's state will be visible to other threads
       }
     }
+  }
+
+  public void invalidateCaches() {
+    File indexRoot = PathManager.getIndexRoot();
+    final File corruptionMarker = new File(indexRoot, CORRUPTION_MARKER_NAME);
+    LOG.info("Requesting explicit indices invalidation", new Throwable());
+    try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      new FileOutputStream(corruptionMarker).close();
+    } catch (Throwable ignore) {}
   }
 }

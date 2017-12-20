@@ -29,7 +29,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class GenerationUtils {
     private GenerationUtils() {

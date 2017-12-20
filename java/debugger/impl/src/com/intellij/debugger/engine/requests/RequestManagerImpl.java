@@ -29,8 +29,6 @@ import java.util.*;
 
 /**
  * @author lex
- * Date: May 6, 2003
- * Time: 5:32:38 PM
  */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.RequestManagerImpl");

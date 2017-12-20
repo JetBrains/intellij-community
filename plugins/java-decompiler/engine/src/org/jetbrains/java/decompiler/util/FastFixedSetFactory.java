@@ -97,12 +97,6 @@ public class FastFixedSetFactory<E> {
       data[index[0]] &= ~index[1];
     }
 
-    public void removeAll(Collection<E> set) {
-      for (E element : set) {
-        remove(element);
-      }
-    }
-
     public boolean contains(E element) {
       int[] index = colValuesInternal.getWithKey(element);
       return (data[index[0]] & index[1]) != 0;
@@ -136,15 +130,6 @@ public class FastFixedSetFactory<E> {
 
       for (int i = intdata.length - 1; i >= 0; i--) {
         intdata[i] &= extdata[i];
-      }
-    }
-
-    public void symdiff(FastFixedSet<E> set) {
-      int[] extdata = set.getData();
-      int[] intdata = data;
-
-      for (int i = intdata.length - 1; i >= 0; i--) {
-        intdata[i] ^= extdata[i];
       }
     }
 
@@ -194,11 +179,6 @@ public class FastFixedSetFactory<E> {
       return toPlainCollection(new HashSet<>());
     }
 
-    public List<E> toPlainList() {
-      return toPlainCollection(new ArrayList<>());
-    }
-
-
     private <T extends Collection<E>> T toPlainCollection(T cl) {
 
       int[] intdata = data;
@@ -217,18 +197,6 @@ public class FastFixedSetFactory<E> {
       }
 
       return cl;
-    }
-
-    public String toBinary() {
-
-      StringBuilder buffer = new StringBuilder();
-      int[] intdata = data;
-
-      for (int i = 0; i < intdata.length; i++) {
-        buffer.append(" ").append(Integer.toBinaryString(intdata[i]));
-      }
-
-      return buffer.toString();
     }
 
     public String toString() {
@@ -343,4 +311,3 @@ public class FastFixedSetFactory<E> {
     }
   }
 }
-

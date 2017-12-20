@@ -33,7 +33,6 @@ import java.io.File;
 /**
  * Detects and configures a buildout facet.
  * User: dcheryasov
- * Date: Jul 26, 2010 6:10:39 PM
  */
 public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
   @Override

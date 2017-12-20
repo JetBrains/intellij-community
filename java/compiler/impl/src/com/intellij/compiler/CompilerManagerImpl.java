@@ -122,10 +122,12 @@ public class CompilerManagerImpl extends CompilerManager {
   @TestOnly
   public boolean waitForExternalJavacToTerminate(long time, @NotNull TimeUnit unit) {
     ExternalJavacManager externalJavacManager = myExternalJavacManager;
-    if (externalJavacManager != null) {
-      if (!externalJavacManager.waitForAllProcessHandlers(time, unit)) return false;
-    }
-    return true;
+    return externalJavacManager == null || externalJavacManager.waitForAllProcessHandlers(time, unit);
+  }
+  @TestOnly
+  public boolean awaitNettyThreadPoolTermination(long time, @NotNull TimeUnit unit) {
+    ExternalJavacManager externalJavacManager = myExternalJavacManager;
+    return externalJavacManager == null || externalJavacManager.awaitNettyThreadPoolTermination(time, unit);
   }
 
   public Semaphore getCompilationSemaphore() {

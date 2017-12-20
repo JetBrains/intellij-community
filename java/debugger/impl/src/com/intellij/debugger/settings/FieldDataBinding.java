@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Apr 12, 2005
  */
 public abstract class FieldDataBinding implements DataBinding{
 

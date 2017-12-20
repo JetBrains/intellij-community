@@ -25,7 +25,6 @@ import java.io.PrintStream;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
  */
 public class CompilerMessage extends BuildMessage {
 

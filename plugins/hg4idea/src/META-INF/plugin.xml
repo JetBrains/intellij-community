@@ -38,6 +38,8 @@
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
     <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
                         serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <applicationService serviceInterface="org.zmlx.hg4idea.HgExecutableManager"
+                        serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.branch.HgBranchManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"

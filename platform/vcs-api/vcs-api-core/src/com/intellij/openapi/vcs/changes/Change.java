@@ -38,7 +38,7 @@ import java.util.Map;
  * @author max
  */
 public class Change {
-  private int myHash;
+  private int myHash = -1;
 
   public enum Type {
     MODIFICATION,
@@ -67,8 +67,15 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
-    myHash = -1;
     myOtherLayers = null;
+  }
+
+  protected Change(@NotNull Change change) {
+    myBeforeRevision = change.getBeforeRevision();
+    myAfterRevision = change.getAfterRevision();
+    myFileStatus = change.getFileStatus();
+    myOtherLayers = change.myOtherLayers != null ? new HashMap<>(change.myOtherLayers) : null;
+    myIsReplaced = change.isIsReplaced();
   }
 
   private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {

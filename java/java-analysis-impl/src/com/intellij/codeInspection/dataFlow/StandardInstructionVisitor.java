@@ -27,8 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.callMatcher.CallMapper;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodUtils;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
@@ -43,15 +41,6 @@ import java.util.stream.Stream;
  */
 public class StandardInstructionVisitor extends InstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.StandardInstructionVisitor");
-
-  private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
-    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), LongRangeSet.range(0, 23))
-    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), LongRangeSet.range(0, 59))
-    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
-              LongRangeSet.range(0, Long.SIZE))
-    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
-              LongRangeSet.range(0, Integer.SIZE))
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ENUM, "ordinal").parameterCount(0), LongRangeSet.indexRange());
 
   private final Set<BinopInstruction> myReachable = new THashSet<>();
   private final Set<BinopInstruction> myCanBeNullInInstanceof = new THashSet<>();
@@ -324,15 +313,10 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(instruction);
     if (handler == null) return Collections.emptyList();
+    memState = memState.createCopy();
     DfaCallArguments callArguments = popCall(instruction, runner, memState, false);
-    List<DfaMemoryState> states =
-      callArguments.myArguments == null ? Collections.emptyList() :
-      handler.handle(callArguments, memState, runner.getFactory());
-    if (states.isEmpty()) {
-      memState.push(getMethodResultValue(instruction, callArguments.myQualifier, memState, runner.getFactory()));
-      return Collections.singletonList(memState);
-    }
-    return states;
+    return callArguments.myArguments == null ? Collections.emptyList() :
+         handler.handle(callArguments, memState, runner.getFactory());
   }
 
   @NotNull
@@ -551,11 +535,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (range != null) {
       PsiCall call = instruction.getCallExpression();
       if (call instanceof PsiMethodCallExpression) {
-        LongRangeSet inferredRange = KNOWN_METHOD_RANGES.mapFirst((PsiMethodCallExpression)call);
-        if (inferredRange == null) {
-          inferredRange = LongRangeSet.fromAnnotation(call.resolveMethod());
-        }
-        range = range.intersect(inferredRange);
+        range = range.intersect(LongRangeSet.fromPsiElement(call.resolveMethod()));
       }
       return factory.getFactValue(DfaFactType.RANGE, range);
     }

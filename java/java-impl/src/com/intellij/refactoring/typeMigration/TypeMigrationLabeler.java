@@ -45,7 +45,6 @@ import java.util.*;
 
 /**
  * @author db
- * Date: Sep 19, 2004
  */
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeMigrationLabeler");

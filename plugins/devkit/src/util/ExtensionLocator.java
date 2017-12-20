@@ -104,11 +104,12 @@ public abstract class ExtensionLocator {
 
       Project project = epTag.getProject();
       DomManager domManager = DomManager.getDomManager(project);
-      String epName = myExtensionPoint.getEffectiveName();
-
+      // We must search for the last part of EP name, because for instance 'com.intellij.console.folding' extension
+      // may be declared as <extensions defaultExtensionNs="com"><intellij.console.folding ...
+      String epNameToSearch = StringUtil.substringAfterLast(myExtensionPoint.getEffectiveQualifiedName(), ".");
       List<ExtensionCandidate> result = new SmartList<>();
-      processExtensionDeclarations(myExtensionPoint.getEffectiveName(), project, (file, startOffset, endOffset) -> {
-        XmlTag tag = getXmlTagOfTokenElement(file, startOffset, epName, false);
+      processExtensionDeclarations(epNameToSearch, project, (file, startOffset, endOffset) -> {
+        XmlTag tag = getXmlTagOfTokenElement(file, startOffset, epNameToSearch, false);
         if (tag == null) {
           return true;
         }

@@ -158,7 +158,7 @@ public final class PyExtractSuperclassHelper {
     LOG.assertTrue(psiFile != null);
     if (psiFile.getLastChild() != null) {
       // TODO: make the number of newlines depend on style setting
-      psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON24, PsiWhiteSpace.class, "\n\n"));
+      psiFile.add(PyElementGenerator.getInstance(project).createFromText(LanguageLevel.PYTHON27, PsiWhiteSpace.class, "\n\n"));
     }
     newClass = (PyClass)psiFile.add(newClass);
     PyClassRefactoringUtil.insertImport(clazz, Collections.singleton(newClass));

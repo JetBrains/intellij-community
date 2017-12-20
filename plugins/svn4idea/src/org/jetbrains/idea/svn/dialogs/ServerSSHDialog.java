@@ -30,8 +30,6 @@ import java.awt.*;
 
 /**
  * @author irengrig
- *         Date: 1/31/11
- *         Time: 5:48 PM
  */
 public class ServerSSHDialog extends DialogWrapper {
   private int myResult;

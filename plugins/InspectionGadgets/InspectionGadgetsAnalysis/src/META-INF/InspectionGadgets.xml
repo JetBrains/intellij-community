@@ -85,10 +85,10 @@
                      key="public.method.not.in.interface.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.PublicMethodNotExposedInInterfaceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StaticMethodOnlyUsedInOneClass" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="static.method.only.used.in.one.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.StaticMethodOnlyUsedInOneClassInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="StaticMethodOnlyUsedInOneClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                      key="static.method.only.used.in.one.class.display.name" groupBundle="messages.InspectionsBundle"
+                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.siyeh.ig.abstraction.StaticMethodOnlyUsedInOneClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticVariableOfConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
@@ -204,6 +204,9 @@
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CompareToUsesNonFinalVariableInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CopyConstructorMissesField" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="copy.constructor.misses.field.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.bugs.CopyConstructorMissesFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CovariantEquals" bundle="com.siyeh.InspectionGadgetsBundle" key="covariant.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CovariantEqualsInspection"/>

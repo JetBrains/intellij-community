@@ -26,7 +26,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/20/12
  */
 public class XMLCatalogConfigurable extends BaseConfigurable {
 

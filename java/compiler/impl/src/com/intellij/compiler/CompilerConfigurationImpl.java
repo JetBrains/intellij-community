@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -39,6 +41,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.Accessor;
@@ -59,6 +63,7 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
 import static com.intellij.util.JdomKt.element;
@@ -117,6 +122,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       @Override
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         myProcessorsProfilesMap = null; // clear cache
+      }
+
+      @Override
+      public void modulesRenamed(@NotNull Project project,
+                                 @NotNull List<Module> modules,
+                                 @NotNull Function<Module, String> oldNameProvider) {
+        updateModuleNames(modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName)));
       }
     });
   }
@@ -242,6 +254,39 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @Override
   public void setBuildProcessVMOptions(String options) {
     myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = options == null? "" : options.trim();
+  }
+
+  private void updateModuleNames(Map<String, String> moduleNameMap) {
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    boolean updated = false;
+    for (Map.Entry<String, String> entry : moduleNameMap.entrySet()) {
+      String targetLevel = myModuleBytecodeTarget.remove(entry.getKey());
+      if (targetLevel != null) {
+        myModuleBytecodeTarget.put(entry.getValue(), targetLevel);
+        updated = true;
+      }
+      if (settings != null) {
+        String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.remove(entry.getKey());
+        if (options != null) {
+          settings.ADDITIONAL_OPTIONS_OVERRIDE.put(entry.getValue(), options);
+          updated = true;
+        }
+      }
+    }
+
+    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
+      Set<String> names = profile.getModuleNames();
+      Collection<String> updatedNames = ContainerUtil.intersection(names, moduleNameMap.keySet());
+      if (!updatedNames.isEmpty()) {
+        profile.removeModuleNames(updatedNames);
+        profile.addModuleNames(ContainerUtil.map(updatedNames, moduleNameMap::get));
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      BuildManager.getInstance().clearState(myProject);
+    }
   }
 
   @Override
@@ -781,7 +826,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      readByteTargetLevel(parentNode);
+      readByteTargetLevel(parentNode, myModuleBytecodeTarget);
     }
 
     Map<String, String> externalState = myProject.getComponent(ExternalCompilerConfigurationStorage.class).getLoadedState();

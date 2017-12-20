@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 6/23/12
  */
 public class AntUnresolvedRefsFixProvider extends UnresolvedReferenceQuickFixProvider<PsiReference> {
 

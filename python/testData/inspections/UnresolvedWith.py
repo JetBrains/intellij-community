@@ -1,2 +1,0 @@
-<error descr="Unresolved reference 'with'">with</error><error descr="End of statement expected"> </error>open("x.txt")<error descr="End of statement expected"> </error><error descr="Unresolved reference 'as'">as</error><error descr="End of statement expected"> </error><error descr="Unresolved reference 'f'">f</error><error descr="End of statement expected">:</error><EOLError descr="Statement expected, found Py:COLON"></EOLError>
-    <error descr="Unexpected indent">d</error>ata = <error descr="Unresolved reference 'f'">f</error>.read()

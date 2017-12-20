@@ -73,12 +73,16 @@ public class AbstractTreeUi {
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
     @Override
     public int compare(TreeNode n1, TreeNode n2) {
-      if (isLoadingNode(n1) || isLoadingNode(n2)) return 0;
+      if (isLoadingNode(n1) && isLoadingNode(n2)) return 0;
+      if (isLoadingNode(n1)) return -1;
+      if (isLoadingNode(n2)) return 1;
 
       NodeDescriptor nodeDescriptor1 = getDescriptorFrom(n1);
       NodeDescriptor nodeDescriptor2 = getDescriptorFrom(n2);
 
-      if (nodeDescriptor1 == null || nodeDescriptor2 == null) return 0;
+      if (nodeDescriptor1 == null && nodeDescriptor2 == null) return 0;
+      if (nodeDescriptor1 == null) return -1;
+      if (nodeDescriptor2 == null) return 1;
 
       return myNodeDescriptorComparator != null
              ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2)
@@ -1004,7 +1008,7 @@ public class AbstractTreeUi {
       DefaultMutableTreeNode nodeToUpdate = null;
       boolean updateElementStructure = updateStructure;
       for (Object element = fromElement; element != null; element = getTreeStructure().getParentElement(element)) {
-        final DefaultMutableTreeNode node = getNodeForElement(element, false);
+        final DefaultMutableTreeNode node = getFirstNode(element);
         if (node != null) {
           nodeToUpdate = node;
           break;

@@ -26,7 +26,7 @@ class GenerativeDataStructure extends AbstractDataStructure {
 
   @NotNull
   @Override
-  public GenerativeDataStructure subStructure() {
+  GenerativeDataStructure subStructure() {
     return new GenerativeDataStructure(random, node.subStructure(), childSizeHint());
   }
 

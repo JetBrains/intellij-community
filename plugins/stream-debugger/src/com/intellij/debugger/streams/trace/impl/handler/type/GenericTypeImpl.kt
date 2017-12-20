@@ -21,4 +21,6 @@ open class GenericTypeImpl(override val variableTypeName: String,
 
     return other is GenericType && variableTypeName == other.variableTypeName && genericTypeName == other.genericTypeName
   }
+
+  override fun toString(): String = "variable: $variableTypeName, generic: $genericTypeName"
 }

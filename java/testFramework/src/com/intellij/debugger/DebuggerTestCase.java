@@ -76,6 +76,29 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
   private static final int MAX_RESTARTS = 3;
   private volatile TestDisposable myTestRootDisposable;
   private final List<Runnable> myTearDownRunnables = new ArrayList<>();
+  private CompilerManagerImpl myCompilerManager;
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+      if (myDebugProcess != null) {
+        myDebugProcess.stop(true);
+        myDebugProcess.waitFor();
+      }
+      myTearDownRunnables.forEach(Runnable::run);
+      myTearDownRunnables.clear();
+    }
+    finally {
+      super.tearDown();
+    }
+    if (myCompilerManager != null) {
+      // after the project disposed ensure there are no Netty threads leaked
+      // (we should call this method only after ExternalJavacManager.stop() which happens on project dispose)
+      assertTrue(myCompilerManager.awaitNettyThreadPoolTermination(1, TimeUnit.MINUTES));
+      myCompilerManager = null;
+    }
+  }
 
   @Override
   protected void initApplication() throws Exception {
@@ -141,22 +164,6 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
   protected void disposeSession(final DebuggerSession debuggerSession) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)debuggerSession::dispose);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-      if (myDebugProcess != null) {
-        myDebugProcess.stop(true);
-        myDebugProcess.waitFor();
-      }
-      myTearDownRunnables.forEach(Runnable::run);
-      myTearDownRunnables.clear();
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   protected void createLocalProcess(String className) throws ExecutionException {
@@ -368,7 +375,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     }
   }
 
-  protected void waitForCompleted() {
+  private void waitForCompleted() {
     final SynchronizationBasedSemaphore s = new SynchronizationBasedSemaphore();
     s.down();
 
@@ -419,7 +426,8 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     });
 
     waitFor(s::waitFor);
-    ((CompilerManagerImpl)CompilerManager.getInstance(getProject())).waitForExternalJavacToTerminate(1, TimeUnit.MINUTES);
+    myCompilerManager = (CompilerManagerImpl)CompilerManager.getInstance(getProject());
+    myCompilerManager.waitForExternalJavacToTerminate(1, TimeUnit.MINUTES);
   }
 
   private DebuggerContextImpl createDebuggerContext(final SuspendContextImpl suspendContext, StackFrameProxyImpl stackFrame) {

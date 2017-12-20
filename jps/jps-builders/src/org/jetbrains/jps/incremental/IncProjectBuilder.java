@@ -63,7 +63,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/17/11
  */
 public class IncProjectBuilder {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.IncProjectBuilder");

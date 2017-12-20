@@ -348,10 +348,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     };
   }
 
+  @Override
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
     return ElementManipulators.handleContentChange(this, text);
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new StringLiteralTextEscaper(this);

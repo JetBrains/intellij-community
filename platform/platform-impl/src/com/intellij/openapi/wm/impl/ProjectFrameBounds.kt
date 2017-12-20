@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.components.*
@@ -51,10 +53,10 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
 
 class FrameInfo : BaseState() {
   // flat is used due to backward compatibility
-  @get:Property(flat = true) var bounds by storedProperty<Rectangle>()
-  @get:Attribute var extendedState by storedProperty(Frame.NORMAL)
+  @get:Property(flat = true) var bounds by property<Rectangle>()
+  @get:Attribute var extendedState by property(Frame.NORMAL)
 
-  @get:Attribute var fullScreen by storedProperty(false)
+  @get:Attribute var fullScreen by property(false)
 }
 
 fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {

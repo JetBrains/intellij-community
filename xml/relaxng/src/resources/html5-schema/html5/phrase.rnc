@@ -36,6 +36,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.switch
 			|	common.attrs.aria.role.tab
 			|	common.attrs.aria.role.treeitem
+			|	common.attrs.aria.role.doc-backlink
+			|	common.attrs.aria.role.doc-biblioref
+			|	common.attrs.aria.role.doc-glossref
+			|	common.attrs.aria.role.doc-noteref
 			)?
 		)
 		a.attrs.name =

@@ -35,7 +35,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/7/12
  */
 class DomStubBuilderVisitor {
   private final DomManagerImpl myManager;

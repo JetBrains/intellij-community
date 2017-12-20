@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -33,7 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.List;
 
 public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
   @Override
@@ -70,27 +68,19 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
       final PsiVariable variable = (PsiVariable)variableIdentifier.getParent();
       assert variable != null;
-      final Query<PsiReference> query = ReferencesSearch.search(variable);
-      final Collection<PsiReference> referenceCollection = query.findAll();
-      final PsiElement[] referenceElements = new PsiElement[referenceCollection.size()];
-      int index = 0;
-      for (PsiReference reference : referenceCollection) {
-        final PsiElement referenceElement = reference.getElement();
-        referenceElements[index] = referenceElement;
-        index++;
-      }
-      PsiElement commonParent = ScopeUtils.getCommonParent(referenceElements);
+      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
+      final List<PsiReferenceExpression> references = VariableAccessUtils.findReferences(variable, variableScope);
+      PsiElement commonParent = ScopeUtils.getCommonParent(references);
       assert commonParent != null;
       final PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
-        final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
         assert variableScope != null;
         commonParent = ScopeUtils.moveOutOfLoopsAndClasses(commonParent, variableScope);
         if (commonParent == null) {
           return;
         }
       }
-      final PsiElement referenceElement = referenceElements[0];
+      final PsiElement referenceElement = references.get(0);
       final PsiElement firstReferenceScope = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class);
       if (firstReferenceScope == null) {
         return;

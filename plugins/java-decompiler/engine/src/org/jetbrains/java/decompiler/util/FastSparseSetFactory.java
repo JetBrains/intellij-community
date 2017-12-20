@@ -64,10 +64,6 @@ public class FastSparseSetFactory<E> {
     return lastBlock;
   }
 
-  public int getLastMask() {
-    return lastMask;
-  }
-
   private VBStyleCollection<int[], E> getInternalValuesCollection() {
     return colValuesInternal;
   }
@@ -151,30 +147,6 @@ public class FastSparseSetFactory<E> {
       changeNext(next, block, next[block], block);
     }
 
-    public void setAllElements() {
-
-      int lastblock = factory.getLastBlock();
-      int lastmask = factory.getLastMask();
-
-      if (lastblock >= data.length) {
-        ensureCapacity(lastblock);
-      }
-
-      for (int i = lastblock - 1; i >= 0; i--) {
-        data[i] = 0xFFFFFFFF;
-        next[i] = i + 1;
-      }
-
-      data[lastblock] = lastmask | (lastmask - 1);
-      next[lastblock] = 0;
-    }
-
-    public void addAll(Set<E> set) {
-      for (E element : set) {
-        add(element);
-      }
-    }
-
     public void remove(E element) {
       int[] index = colValuesInternal.getWithKey(element);
 
@@ -192,12 +164,6 @@ public class FastSparseSetFactory<E> {
       }
     }
 
-    public void removeAll(Set<E> set) {
-      for (E element : set) {
-        remove(element);
-      }
-    }
-
     public boolean contains(E element) {
       int[] index = colValuesInternal.getWithKey(element);
 
@@ -206,27 +172,6 @@ public class FastSparseSetFactory<E> {
       }
 
       return index[0] < data.length && ((data[index[0]] & index[1]) != 0);
-    }
-
-    public boolean contains(FastSparseSet<E> set) {
-      int[] extdata = set.getData();
-      int[] intdata = data;
-
-      int minlength = Math.min(extdata.length, intdata.length);
-
-      for (int i = minlength - 1; i >= 0; i--) {
-        if ((extdata[i] & ~intdata[i]) != 0) {
-          return false;
-        }
-      }
-
-      for (int i = extdata.length - 1; i >= minlength; i--) {
-        if (extdata[i] != 0) {
-          return false;
-        }
-      }
-
-      return true;
     }
 
     private void setNext() {
@@ -288,29 +233,6 @@ public class FastSparseSetFactory<E> {
 
       for (int i = intdata.length - 1; i >= minlength; i--) {
         intdata[i] = 0;
-      }
-
-      setNext();
-    }
-
-    public void symdiff(FastSparseSet<E> set) {
-      int[] extdata = set.getData();
-      int[] intdata = data;
-
-      int minlength = Math.min(extdata.length, intdata.length);
-
-      for (int i = minlength - 1; i >= 0; i--) {
-        intdata[i] ^= extdata[i];
-      }
-
-      boolean expanded = false;
-      for (int i = extdata.length - 1; i >= minlength; i--) {
-        if (extdata[i] != 0) {
-          if (!expanded) {
-            intdata = ensureCapacity(extdata.length - 1);
-          }
-          intdata[i] = extdata[i];
-        }
       }
 
       setNext();
@@ -424,37 +346,12 @@ public class FastSparseSetFactory<E> {
       return toPlainSet().toString();
     }
 
-    public String toBinary() {
-
-      StringBuilder buffer = new StringBuilder();
-      int[] intdata = data;
-
-      for (int i = 0; i < intdata.length; i++) {
-        buffer.append(" ").append(Integer.toBinaryString(intdata[i]));
-      }
-
-      return buffer.toString();
-    }
-
     private int[] getData() {
       return data;
     }
 
     private int[] getNext() {
       return next;
-    }
-
-    public int[] getLoad() {
-      int[] intdata = data;
-      int notempty = 0;
-
-      for (int i = 0; i < intdata.length; i++) {
-        if (intdata[i] != 0) {
-          notempty++;
-        }
-      }
-
-      return new int[]{intdata.length, notempty};
     }
 
     public FastSparseSetFactory<E> getFactory() {

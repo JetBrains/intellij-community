@@ -33,8 +33,6 @@ import java.util.List;
 
 /**
  * @author irengrig
- *         Date: 2/25/11
- *         Time: 2:23 PM
  */
 public class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {

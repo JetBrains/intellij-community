@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -271,6 +272,8 @@ public class PlatformTestUtil {
     TreeModel model = tree.getModel();
     if (model instanceof AsyncTreeModel) {
       AsyncTreeModel async = (AsyncTreeModel)model;
+      if (async.isProcessing()) return true;
+      UIUtil.dispatchAllInvocationEvents();
       return async.isProcessing();
     }
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(tree);
@@ -657,6 +660,11 @@ public class PlatformTestUtil {
     private boolean adjustForIO = false;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
     private boolean useLegacyScaling;
+
+    static {
+      // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+    }
 
     private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {
       this.test = test;

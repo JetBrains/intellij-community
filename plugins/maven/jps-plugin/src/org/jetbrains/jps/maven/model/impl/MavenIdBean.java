@@ -19,7 +19,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/27/12
  */
 public class MavenIdBean {
   @Tag("groupId")

@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 24-Jun-17
  */
 public abstract class IJShellElementType extends ILazyParseableElementType{
   public IJShellElementType(@NotNull String debugName) {

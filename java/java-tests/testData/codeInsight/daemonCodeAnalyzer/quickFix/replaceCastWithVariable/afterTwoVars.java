@@ -7,6 +7,7 @@ class FooBar {
     FooBar foobar = (FooBar)foo;
     foobar = null;
     FooBar foobar2 = (FooBar)foo;
-    return foobar2.baz;
+      //comment
+      return foobar2.baz;
   }
 }

@@ -17,6 +17,8 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -31,6 +33,16 @@ public abstract class ApplicationInfo {
   public abstract String getMicroVersion();
   public abstract String getPatchVersion();
   public abstract String getVersionName();
+
+  /**
+   * Returns the first number from 'minor' part of the version. This method is temporary added because some products specify composite number (like '1.3')
+   * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
+   * @see org.jetbrains.intellij.build.ApplicationInfoProperties#minorVersionMainPart
+   */
+  public final String getMinorVersionMainPart() {
+    return ObjectUtils.notNull(StringUtil.substringBefore(getMinorVersion(), "."), getMinorVersion());
+  }
+
   @Nullable
   public abstract String getHelpURL();
 

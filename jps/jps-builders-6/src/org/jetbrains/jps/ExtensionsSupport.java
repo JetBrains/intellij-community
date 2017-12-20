@@ -24,7 +24,6 @@ import java.util.ServiceLoader;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 14-Dec-16
  */
 public class ExtensionsSupport<T> {
 

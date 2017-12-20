@@ -374,8 +374,8 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
 
       if (parent instanceof PsiLambdaExpression &&
-          !LambdaUtil.isSameOverloadAfterReplacement((PsiLambdaExpression)parent,
-                                                    () -> {
+          !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent,
+                                                  () -> {
                                             String simplifiedReturnExpression = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
                                             return JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(simplifiedReturnExpression, expression);
                                           })) {

@@ -57,7 +57,7 @@ import java.util.*;
  */
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
-  private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
+  protected static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR =
     ContainerUtil::createMaybeSingletonList;
 
   private final Icon myIcon;

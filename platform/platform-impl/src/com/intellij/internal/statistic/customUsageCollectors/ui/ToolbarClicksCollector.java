@@ -51,9 +51,13 @@ public class ToolbarClicksCollector implements PersistentStateComponent<ToolbarC
         id = action.getClass().getName();
       }
     }
+    record(id, place);
+  }
+
+  public static void record(String actionId, String place) {
     ToolbarClicksCollector collector = getInstance();
     if (collector != null) {
-      String key = ConvertUsagesUtil.escapeDescriptorName(id + "@" + place);
+      String key = ConvertUsagesUtil.escapeDescriptorName(actionId + "@" + place);
       ClicksState state = collector.getState();
       if (state != null) {
         final Integer count = state.myValues.get(key);

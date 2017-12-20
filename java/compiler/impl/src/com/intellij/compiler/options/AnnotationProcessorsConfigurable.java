@@ -31,7 +31,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 5, 2009
  */
 public class AnnotationProcessorsConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 

@@ -34,8 +34,6 @@ import java.util.Map;
  *
  * Created by IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 1/24/12
- * Time: 12:29 PM
  */
 public class PortableStatus extends Status {
 

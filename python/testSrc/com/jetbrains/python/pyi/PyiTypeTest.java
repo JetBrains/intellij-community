@@ -81,7 +81,6 @@ public class PyiTypeTest extends PyTestCase {
 
   private void doTest(@NotNull String expectedType) {
     myFixture.copyDirectoryToProject("pyi/type/" + getTestName(true), "");
-    myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     final String fileName = getTestName(false) + ".py";
     myFixture.configureByFile(fileName);
@@ -144,6 +143,11 @@ public class PyiTypeTest extends PyTestCase {
   }
 
   public void testComparisonOperatorOverloads() {
+    doTest("int");
+  }
+
+  // PY-24929
+  public void testInstanceAttributeAnnotation() {
     doTest("int");
   }
 }

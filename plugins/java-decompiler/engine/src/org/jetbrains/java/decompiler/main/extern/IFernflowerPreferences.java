@@ -64,7 +64,7 @@ public interface IFernflowerPreferences {
     defaults.put(LITERALS_AS_IS, "0");
     defaults.put(BOOLEAN_TRUE_ONE, "1");
     defaults.put(ASCII_STRING_CHARACTERS, "0");
-    defaults.put(SYNTHETIC_NOT_SET, "1");
+    defaults.put(SYNTHETIC_NOT_SET, "0");
     defaults.put(UNDEFINED_PARAM_TYPE_OBJECT, "1");
     defaults.put(USE_DEBUG_VAR_NAMES, "1");
     defaults.put(REMOVE_EMPTY_RANGES, "1");

@@ -1,10 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.util;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 
@@ -30,10 +31,12 @@ public class TextUtil {
     if (length == 0) return "";
     StringBuilder buf = new StringBuilder();
     String indent = (String)DecompilerContext.getProperty(IFernflowerPreferences.INDENT_STRING);
-    while (length-- > 0) {
-      buf.append(indent);
-    }
+    append(buf, indent, length);
     return buf.toString();
+  }
+
+  public static void append(StringBuilder buf, String string, int times) {
+    while (times-- > 0) buf.append(string);
   }
 
   public static boolean isPrintableUnicode(char c) {

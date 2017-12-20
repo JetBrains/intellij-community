@@ -40,7 +40,8 @@ public class JavaCompletionStatistician extends CompletionStatistician{
 
     if (o instanceof PsiLocalVariable || o instanceof PsiParameter || 
         o instanceof PsiThisExpression || o instanceof PsiKeyword || 
-        element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null) {
+        element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null || 
+        element.getUserData(FunctionalExpressionCompletionProvider.FUNCTIONAL_EXPR_ITEM) != null) {
       return StatisticsInfo.EMPTY;
     }
 
@@ -102,7 +103,6 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       return new StatisticsInfo(contextPrefix, memberValue);
     }
 
-    return new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass),
-                              JavaStatisticsManager.getMemberUseKey2(member));
+    return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
   }
 }

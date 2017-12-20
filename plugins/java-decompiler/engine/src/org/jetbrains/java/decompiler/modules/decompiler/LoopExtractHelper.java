@@ -58,9 +58,7 @@ public class LoopExtractHelper {
     return res ? 1 : 0;
   }
 
-
   private static boolean extractLoop(DoStatement stat) {
-
     if (stat.getLooptype() != DoStatement.LOOP_DO) {
       return false;
     }
@@ -71,12 +69,7 @@ public class LoopExtractHelper {
       }
     }
 
-    if (!extractLastIf(stat)) {
-      return extractFirstIf(stat);
-    }
-    else {
-      return true;
-    }
+    return extractLastIf(stat) || extractFirstIf(stat);
   }
 
   private static boolean extractLastIf(DoStatement stat) {

@@ -44,7 +44,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Sep 7, 2004
  */
 public class ExistingModuleLoader extends ModuleBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ExistingModuleLoader");

@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/2/12
  */
 public class ImportFromSourcesProvider extends ProjectImportProvider {
 

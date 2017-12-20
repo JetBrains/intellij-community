@@ -44,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -364,7 +365,9 @@ public class JavaCompletionUtil {
           PsiMethod method = (PsiMethod)o;
           PsiClassType.ClassResolveResult plainResult = ((PsiClassType)plainQualifier).resolveGenerics();
           PsiClass plainClass = plainResult.getElement();
-          if (plainClass != null && plainClass.findMethodBySignature(method, true) != null) {
+          HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+          if (plainClass != null && StreamEx.of(signature.getSuperSignatures()).prepend(signature)
+            .anyMatch(sig -> MethodSignatureUtil.findMethodBySignature(plainClass, sig, true) != null)) {
             PsiClass castClass = ((PsiClassType)castType).resolveGenerics().getElement();
 
             if (castClass == null || !castClass.isInheritor(plainClass, true)) {

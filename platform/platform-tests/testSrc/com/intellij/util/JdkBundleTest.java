@@ -24,8 +24,9 @@ import org.junit.Test;
 import java.io.File;
 import java.util.ArrayList;
 
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 
 public class JdkBundleTest {
@@ -173,4 +174,31 @@ public class JdkBundleTest {
     final String evalVerStr = verUpdate.first.toString() + "_" + verUpdate.second.toString();
     assertTrue(evalVerStr + " is not the same with " + verStr, verStr.contains(evalVerStr));
   }
+
+  @Test
+  public void testBootName() {
+    File homeJDK = new File(System.getProperty("java.home")).getParentFile();
+
+    if (!new File(homeJDK, "lib/tools.jar").exists()) return; // Skip pure jre
+
+    File bootJDK = SystemInfo.isMac ? homeJDK.getParentFile().getParentFile() : homeJDK;
+
+    boolean macNonStandardJDK = SystemInfo.isMac && !new File(bootJDK, "Contents/Home").exists();
+
+    if (SystemInfo.isMac && macNonStandardJDK) {
+      bootJDK = homeJDK;
+    }
+
+    JdkBundle bootBundle = macNonStandardJDK ? JdkBundle.createBoot(false) : // the test is run under jdk with non-standard layout
+                       JdkBundle.createBoot();
+
+    JdkBundle bundle = JdkBundle.createBundle(bootJDK, false, false);
+
+    assertNotNull(bootBundle);
+    assertNotNull(bundle);
+
+    assertEquals(bundle.getNameVersion(), bootBundle.getNameVersion());
+    assertEquals(bundle.getBundleName(), bootBundle.getBundleName());
+  }
+
 }

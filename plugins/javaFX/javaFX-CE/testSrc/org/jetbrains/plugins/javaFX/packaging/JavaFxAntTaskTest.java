@@ -36,6 +36,7 @@ public class JavaFxAntTaskTest extends TestCase {
   private static final String PLACEHOLDER = "placeholder";
   private static final String PRELOADER_JAR = "preloaderJar";
   private static final String SIGNED = "signed";
+  private static final String VERBOSE = "verbose";
 
   public void testJarDeployNoInfo() {
     doTest("<fx:fileset id=\"all_but_jarDeployNoInfo\" dir=\"temp\" includes=\"**/*.jar\">\n" +
@@ -348,6 +349,35 @@ public class JavaFxAntTaskTest extends TestCase {
            "</fx:deploy>\n", options);
   }
 
+  public void testJarDeployVerbose() {
+    doTest("<fx:fileset id=\"all_but_jarDeployVerbose\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "<exclude name=\"jarDeployVerbose.jar\">\n" +
+           "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployVerbose\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeployVerbose_id\" name=\"jarDeployVerbose\" mainClass=\"Main\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp/jarDeployVerbose.jar\" verbose=\"true\">\n" +
+           "<fx:application refid=\"jarDeployVerbose_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_but_jarDeployVerbose\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployVerbose\" verbose=\"true\">\n" +
+           "<fx:application refid=\"jarDeployVerbose_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeployVerbose\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", Collections.singletonMap(VERBOSE, "true"));
+  }
+
   private void doTest(final String expected, Map<String, String> options) {
     final String artifactName = UsefulTestCase.getTestName(getName(), true);
     final String artifactFileName = artifactName + ".jar";
@@ -398,6 +428,10 @@ public class JavaFxAntTaskTest extends TestCase {
       packager.setSigned(true);
     }
 
+    if (options.containsKey(VERBOSE)) {
+      packager.setMsgOutputLevel(JavaFxPackagerConstants.MsgOutputLevel.Verbose);
+    }
+
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
       .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp", "temp" + "/" + "deploy", relativeToBaseDirPath);
     final StringBuilder buf = new StringBuilder();
@@ -425,6 +459,7 @@ public class JavaFxAntTaskTest extends TestCase {
     private List<JavaFxManifestAttribute> myCustomManifestAttributes;
     private JavaFxApplicationIcons myIcons;
     private JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
+    private JavaFxPackagerConstants.MsgOutputLevel myMsgOutputLevel = JavaFxPackagerConstants.MsgOutputLevel.Default;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;
@@ -480,6 +515,10 @@ public class JavaFxAntTaskTest extends TestCase {
 
     public void setNativeBundle(JavaFxPackagerConstants.NativeBundles nativeBundle) {
       myNativeBundle = nativeBundle;
+    }
+
+    public void setMsgOutputLevel(JavaFxPackagerConstants.MsgOutputLevel msgOutputLevel) {
+      myMsgOutputLevel = msgOutputLevel;
     }
 
     @Override
@@ -567,6 +606,10 @@ public class JavaFxAntTaskTest extends TestCase {
     }
 
     @Override
+    protected void registerJavaFxPackagerInfo(String message) {
+    }
+
+    @Override
     public String getKeypass() {
       return null;
     }
@@ -619,6 +662,11 @@ public class JavaFxAntTaskTest extends TestCase {
     @Override
     public JavaFxApplicationIcons getIcons() {
       return myIcons;
+    }
+
+    @Override
+    public JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel() {
+      return myMsgOutputLevel;
     }
   }
 }

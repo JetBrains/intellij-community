@@ -35,8 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 /*
  * @author: MYakovlev
- * Date: Aug 22, 2002
- * Time: 1:31:43 PM
  */
 public class SelectTemplateDialog extends DialogWrapper{
   private ComboBox myCbxTemplates;

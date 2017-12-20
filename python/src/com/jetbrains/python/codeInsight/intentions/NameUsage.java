@@ -35,7 +35,6 @@ import java.awt.*;
 /**
  * Simplistic usage object for demonstration of name clashes, etc.
  * User: dcheryasov
- * Date: Oct 11, 2009 6:24:05 AM
  */
 class NameUsage implements PsiElementUsage {
 

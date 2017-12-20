@@ -73,7 +73,7 @@ public abstract class Identikit {
     private final IElementType myElementType;
     private final Language myFileLanguage;
 
-    private ByType(@NotNull Class elementClass, @Nullable IElementType elementType, Language fileLanguage) {
+    private ByType(@NotNull Class elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
       myElementClass = elementClass;
       myElementType = elementType;
       myFileLanguage = fileLanguage;
@@ -155,6 +155,7 @@ public abstract class Identikit {
         .toString();
     }
 
+    @Override
     @NotNull
     public Language getFileLanguage() {
       return myFileLanguage;
@@ -175,7 +176,7 @@ public abstract class Identikit {
     private final ByType myAnchorInfo;
     private final SmartPointerAnchorProvider myAnchorProvider;
 
-    ByAnchor(ByType elementInfo, ByType anchorInfo, SmartPointerAnchorProvider anchorProvider) {
+    ByAnchor(@NotNull ByType elementInfo, @NotNull ByType anchorInfo, @NotNull SmartPointerAnchorProvider anchorProvider) {
       myElementInfo = elementInfo;
       myAnchorInfo = anchorInfo;
       myAnchorProvider = anchorProvider;

@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
 class MethodRepr extends ProtoMember {
 

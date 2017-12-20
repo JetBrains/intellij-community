@@ -216,7 +216,7 @@ public class ExceptionDeobfuscator {
       }
 
       public Set<? extends IGraphNode> getRoots() {
-        return new HashSet<>(Arrays.asList(new IGraphNode[]{graph.getFirst()}));
+        return new HashSet<>(Collections.singletonList(graph.getFirst()));
       }
     });
 
@@ -279,16 +279,10 @@ public class ExceptionDeobfuscator {
     return lstRes;
   }
 
-
   public static boolean hasObfuscatedExceptions(ControlFlowGraph graph) {
-
     Map<BasicBlock, Set<BasicBlock>> mapRanges = new HashMap<>();
     for (ExceptionRangeCFG range : graph.getExceptions()) {
-      Set<BasicBlock> set = mapRanges.get(range.getHandler());
-      if (set == null) {
-        mapRanges.put(range.getHandler(), set = new HashSet<>());
-      }
-      set.addAll(range.getProtectedRange());
+      mapRanges.computeIfAbsent(range.getHandler(), k -> new HashSet<>()).addAll(range.getProtectedRange());
     }
 
     for (Entry<BasicBlock, Set<BasicBlock>> ent : mapRanges.entrySet()) {

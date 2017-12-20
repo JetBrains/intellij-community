@@ -148,6 +148,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     PlatformTestUtil.waitForAlarm(600);
     final PsiFile containingFile2 = aClass2.getContainingFile();
     pane.select(aClass2, containingFile2.getVirtualFile(), true);
+    PlatformTestUtil.waitUntilBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: updateProjectView\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -227,6 +228,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final PsiField lastField = aClass.getFields()[1];
     pane.select(lastField, containingFile.getVirtualFile(), true);
 
+    PlatformTestUtil.waitUntilBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: showClassMembers\n" +
                                                      "  -PsiDirectory: src\n" +

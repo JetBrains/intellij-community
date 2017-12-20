@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
+ * @author Hani Suleiman
  */
 public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOGGER = Logger.getInstance("TestNG Runner");

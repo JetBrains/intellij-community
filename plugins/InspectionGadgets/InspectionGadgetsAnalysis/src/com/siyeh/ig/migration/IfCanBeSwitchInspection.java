@@ -517,9 +517,14 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       if (switchExpression == null) {
         return;
       }
-      final ProblemHighlightType highlightType = shouldHighlight(switchExpression)
-                                                 ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-                                                 : ProblemHighlightType.INFORMATION;
+      final ProblemHighlightType highlightType;
+      if (shouldHighlight(switchExpression)) {
+        highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+      }
+      else {
+        if (!isOnTheFly()) return;
+        highlightType = ProblemHighlightType.INFORMATION;
+      }
       registerError(statement.getFirstChild(), highlightType, switchExpression);
     }
 

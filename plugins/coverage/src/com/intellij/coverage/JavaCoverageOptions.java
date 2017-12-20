@@ -58,7 +58,7 @@ public class JavaCoverageOptions extends CoverageOptions {
   private static class JavaCoverageOptionsEditor {
 
     private JPanel myPanel = new JPanel(new VerticalFlowLayout());
-    private JCheckBox myImplicitCheckBox = new JCheckBox("Ignore implicit constructors", true);
+    private JCheckBox myImplicitCheckBox = new JCheckBox("Ignore implicitly declared default constructors", true);
     private JCheckBox myEmptyCheckBox = new JCheckBox("Ignore empty private constructors of utility classes", true);
 
     public JavaCoverageOptionsEditor() {

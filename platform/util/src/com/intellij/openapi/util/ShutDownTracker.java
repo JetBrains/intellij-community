@@ -1,26 +1,11 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -132,49 +117,5 @@ public class ShutDownTracker implements Runnable {
 
   private synchronized <T> T removeLast(@NotNull LinkedList<T> list) {
     return list.isEmpty() ? null : list.removeLast();
-  }
-
-  /** @deprecated to be removed in IDEA 2018 */
-  public static void invokeAndWait(boolean returnOnTimeout, boolean runInEdt, @NotNull final Runnable runnable) {
-    if (!runInEdt) {
-      if (returnOnTimeout) {
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-        new Thread(new Runnable() {
-          @Override
-          public void run() {
-            runnable.run();
-            semaphore.up();
-          }
-        }, "shutdown tracker invoker").start();
-        semaphore.waitFor(1000);
-      }
-      else {
-        runnable.run();
-      }
-      return;
-    }
-
-    if (returnOnTimeout) {
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          runnable.run();
-          semaphore.up();
-        }
-      });
-      semaphore.waitFor(1000);
-      return;
-    }
-
-    try {
-      UIUtil.invokeAndWaitIfNeeded(runnable);
-    }
-    catch (Exception e) {
-      Logger.getInstance(ShutDownTracker.class).error(e);
-    }
   }
 }

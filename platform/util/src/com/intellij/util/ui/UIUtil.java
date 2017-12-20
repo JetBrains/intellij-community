@@ -223,6 +223,13 @@ public class UIUtil {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
   }
 
+  public static boolean isScrolledToTheBottom(JComponent c) {
+    JScrollPane scrollPane = c != null ? getParentOfType(JScrollPane.class, c) : null;
+    if (scrollPane == null) return true;
+    Rectangle viewRect = scrollPane.getViewport().getViewRect();
+    return (c.getHeight() == viewRect.y + viewRect.height);
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {LARGE, REGULAR, SMALL, MINI}
@@ -1604,7 +1611,9 @@ public class UIUtil {
   }
 
   public static int getListCellHPadding() {
-    return isUnderNativeMacLookAndFeel() ? 7 : 2;
+    return isUnderDefaultMacTheme() ? 8 :
+           isUnderWin10LookAndFeel() ? 2 :
+           7;
   }
 
   public static int getListCellVPadding() {

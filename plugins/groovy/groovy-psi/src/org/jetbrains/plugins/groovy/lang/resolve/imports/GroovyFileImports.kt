@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
 import com.intellij.psi.PsiElement
@@ -30,7 +32,7 @@ interface GroovyFileImports {
 
   fun isImplicit(import: GroovyImport): Boolean
 
-  fun findUnneecessaryStatements(): Collection<GrImportStatement>
+  fun findUnnecessaryStatements(): Collection<GrImportStatement>
 
   fun findUnresolvedStatements(names: Collection<String>): Collection<GrImportStatement>
 }

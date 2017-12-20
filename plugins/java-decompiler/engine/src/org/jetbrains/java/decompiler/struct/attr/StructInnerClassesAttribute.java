@@ -11,7 +11,6 @@ import java.util.List;
 
 public class StructInnerClassesAttribute extends StructGeneralAttribute {
   public static class Entry {
-    public final int innerNameIdx;
     public final int outerNameIdx;
     public final int simpleNameIdx;
     public final int accessFlags;
@@ -19,8 +18,7 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
     public final String enclosingName;
     public final String simpleName;
 
-    private Entry(int innerNameIdx, int outerNameIdx, int simpleNameIdx, int accessFlags, String innerName, String enclosingName, String simpleName) {
-      this.innerNameIdx = innerNameIdx;
+    private Entry(int outerNameIdx, int simpleNameIdx, int accessFlags, String innerName, String enclosingName, String simpleName) {
       this.outerNameIdx = outerNameIdx;
       this.simpleNameIdx = simpleNameIdx;
       this.accessFlags = accessFlags;
@@ -48,7 +46,7 @@ public class StructInnerClassesAttribute extends StructGeneralAttribute {
         String outerName = outerNameIdx != 0 ? pool.getPrimitiveConstant(outerNameIdx).getString() : null;
         String simpleName = simpleNameIdx != 0 ? pool.getPrimitiveConstant(simpleNameIdx).getString() : null;
 
-        entries.add(new Entry(innerNameIdx, outerNameIdx, simpleNameIdx, accessFlags, innerName, outerName, simpleName));
+        entries.add(new Entry(outerNameIdx, simpleNameIdx, accessFlags, innerName, outerName, simpleName));
       }
     }
     else {

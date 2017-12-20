@@ -31,7 +31,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public abstract class PropertyProviderFinder extends AntDomRecursiveVisitor {
 

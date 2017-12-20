@@ -9,7 +9,7 @@ public class Collect {
   }
 
   void collectNames(List<Person> persons){
-    Set<String> names = new HashSet<>();
+    Set<String> names = new HashSet/*valuable comment*/<>();
     for (Person person : pers<caret>ons) {
       names.add(person.getName());
     }

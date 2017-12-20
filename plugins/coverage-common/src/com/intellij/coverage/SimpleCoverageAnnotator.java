@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -109,7 +110,8 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return normalizeFilePath(filePath);
   }
 
-  private static @NotNull String normalizeFilePath(@NotNull String filePath) {
+  protected static @NotNull
+  String normalizeFilePath(@NotNull String filePath) {
     if (SystemInfo.isWindows) {
       filePath = filePath.toLowerCase();
     }
@@ -120,7 +122,11 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   public String getFileCoverageInformationString(@NotNull final PsiFile psiFile,
                                                  @NotNull final CoverageSuitesBundle currentSuite,
                                                  @NotNull final CoverageDataManager manager) {
-    final VirtualFile file = psiFile.getVirtualFile();
+    VirtualFile file = psiFile.getVirtualFile().getCanonicalFile();
+    if (file == null) {
+      file = psiFile.getVirtualFile();
+    }
+
     assert file != null;
     final String path = normalizeFilePath(file.getPath());
 
@@ -137,10 +143,14 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  protected FileCoverageInfo collectBaseFileCoverage(@NotNull final VirtualFile file,
+  protected FileCoverageInfo collectBaseFileCoverage(@NotNull VirtualFile file,
                                                      @NotNull final Annotator annotator,
                                                      @NotNull final ProjectData projectData,
                                                      @NotNull final Map<String, String> normalizedFiles2Files) {
+
+    file = file.getCanonicalFile() != null ? file.getCanonicalFile() : file;
+    assert file != null;
+
     final String filePath = normalizeFilePath(file.getPath());
 
     // process file
@@ -162,7 +172,8 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return info;
   }
 
-  private static @Nullable ClassData getClassData(
+  private static @Nullable
+  ClassData getClassData(
     final @NotNull String filePath,
     final @NotNull ProjectData data,
     final @NotNull Map<String, String> normalizedFiles2Files) {
@@ -317,14 +328,35 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
         annotate(root, suite, dataManager, data, project, new Annotator() {
           public void annotateSourceDirectory(final String dirPath, final DirCoverageInfo info) {
             myDirCoverageInfos.put(dirPath, info);
+
+            try {
+              myDirCoverageInfos.put((new File(dirPath)).getCanonicalPath(), info);
+            }
+            catch (IOException e) {
+              //pass
+            }
           }
 
           public void annotateTestDirectory(final String dirPath, final DirCoverageInfo info) {
             myTestDirCoverageInfos.put(dirPath, info);
+
+            try {
+              myTestDirCoverageInfos.put((new File(dirPath)).getCanonicalPath(), info);
+            }
+            catch (IOException e) {
+              //pass
+            }
           }
 
           public void annotateFile(@NotNull final String filePath, @NotNull final FileCoverageInfo info) {
             myFileCoverageInfos.put(filePath, info);
+
+            try {
+              myFileCoverageInfos.put((new File(filePath)).getCanonicalPath(), info);
+            }
+            catch (IOException e) {
+              //pass
+            }
           }
         });
       }
@@ -416,7 +448,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     return info;
   }
 
-  protected void processLineData(@NotNull  FileCoverageInfo info, @Nullable  LineData lineData) {
+  protected void processLineData(@NotNull FileCoverageInfo info, @Nullable LineData lineData) {
     if (lineData == null) {
       // Ignore not src code
       return;

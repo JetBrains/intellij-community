@@ -22,6 +22,7 @@ import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixt
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 
 /**
@@ -34,6 +35,7 @@ class Java9ReflectionClassVisibilityTest : LightJava9ModulesCodeInsightFixtureTe
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(Java9ReflectionClassVisibilityInspection())
+    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter({ it.name != "module-info.java"})
   }
 
   fun testOpenModule() {

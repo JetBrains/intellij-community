@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/6/11
  */
 public class ResourcePatterns {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns");

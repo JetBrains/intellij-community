@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 12/7/12
 */
 public class FSCache {
 

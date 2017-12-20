@@ -216,4 +216,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testMutabilityJdk() {
     doTest();
   }
+
+  public void testPrimitiveGetters() { doTest(); }
+  public void testUnknownOnStack() { doTest(); }
+  public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
 }

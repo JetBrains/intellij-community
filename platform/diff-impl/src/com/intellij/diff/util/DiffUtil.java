@@ -879,15 +879,67 @@ public class DiffUtil {
     }
   }
 
+  public static String applyModification(@NotNull CharSequence text,
+                                         @NotNull LineOffsets lineOffsets,
+                                         @NotNull CharSequence otherText,
+                                         @NotNull LineOffsets otherLineOffsets,
+                                         @NotNull List<Range> ranges) {
+    return new Object() {
+      private final StringBuilder stringBuilder = new StringBuilder();
+      private boolean isEmpty = true;
+
+      @NotNull
+      public String execute() {
+        int lastLine = 0;
+
+        for (Range range : ranges) {
+          CharSequence newChunkContent = getLinesContent(otherText, otherLineOffsets, range.start2, range.end2);
+
+          appendOriginal(lastLine, range.start1);
+          append(newChunkContent, range.end2 - range.start2);
+
+          lastLine = range.end1;
+        }
+
+        appendOriginal(lastLine, lineOffsets.getLineCount());
+
+        return stringBuilder.toString();
+      }
+
+      private void appendOriginal(int start, int end) {
+        append(getLinesContent(text, lineOffsets, start, end), end - start);
+      }
+
+      private void append(CharSequence content, int lineCount) {
+        if (lineCount > 0 && !isEmpty) {
+          stringBuilder.append('\n');
+        }
+        stringBuilder.append(content);
+        isEmpty &= lineCount == 0;
+      }
+    }.execute();
+  }
+
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
     return getLinesRange(document, line1, line2).subSequence(document.getImmutableCharSequence());
   }
 
   @NotNull
+  public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2, boolean includeNewLine) {
+    return getLinesRange(document, line1, line2, includeNewLine).subSequence(document.getImmutableCharSequence());
+  }
+
+  @NotNull
   public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2) {
+    return getLinesContent(sequence, lineOffsets, line1, line2, false);
+  }
+
+  @NotNull
+  public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2,
+                                             boolean includeNewline) {
     assert sequence.length() == lineOffsets.getTextLength();
-    return getLinesRange(lineOffsets, line1, line2, false).subSequence(sequence);
+    return getLinesRange(lineOffsets, line1, line2, includeNewline).subSequence(sequence);
   }
 
   /**
@@ -945,17 +997,27 @@ public class DiffUtil {
   }
 
   @NotNull
+  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets) {
+    return getLines(text, lineOffsets, 0, lineOffsets.getLineCount());
+  }
+
+  @NotNull
   public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
-    if (startLine < 0 || startLine > endLine || endLine > getLineCount(document)) {
+    return getLines(document.getCharsSequence(), LineOffsetsUtil.create(document), startLine, endLine);
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets, int startLine, int endLine) {
+    if (startLine < 0 || startLine > endLine || endLine > lineOffsets.getLineCount()) {
       throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'",
-                                                        startLine, endLine, document.getLineCount()));
+                                                        startLine, endLine, lineOffsets.getLineCount()));
     }
 
     List<String> result = new ArrayList<>();
     for (int i = startLine; i < endLine; i++) {
-      int start = document.getLineStartOffset(i);
-      int end = document.getLineEndOffset(i);
-      result.add(document.getText(new TextRange(start, end)));
+      int start = lineOffsets.getLineStart(i);
+      int end = lineOffsets.getLineEnd(i);
+      result.add(text.subSequence(start, end).toString());
     }
     return result;
   }

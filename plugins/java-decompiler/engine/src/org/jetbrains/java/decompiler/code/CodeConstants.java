@@ -1,8 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
+@SuppressWarnings({"unused", "SpellCheckingInspection"})
 public interface CodeConstants {
-
   // ----------------------------------------------------------------------
   // BYTECODE VERSIONS
   // ----------------------------------------------------------------------
@@ -51,20 +51,6 @@ public interface CodeConstants {
   int TYPE_FAMILY_OBJECT = 6;
 
   // ----------------------------------------------------------------------
-  // MODULE CONSTANTS
-  // ----------------------------------------------------------------------
-
-  int STACKSIZE_SIMPLE = 1;
-  int STACKSIZE_DOUBLE = 2;
-
-  int VAR_LOCAL = 0;
-  int VAR_STACK = 1;
-
-  int VAR_WRITE = 0;
-  int VAR_READ = 1;
-
-
-  // ----------------------------------------------------------------------
   // ACCESS FLAGS
   // ----------------------------------------------------------------------
 
@@ -91,17 +77,6 @@ public interface CodeConstants {
 
   int ACC_SUPER = 0x0020;
   int ACC_INTERFACE = 0x0200;
-
-
-  // ----------------------------------------------------------------------
-  // DEPENDENCY CONSTANTS
-  // ----------------------------------------------------------------------
-
-  int DEP_CONSTANT = 0;
-  int DEP_UNKNOWN = 1;
-  int DEP_GENERAL = 2;
-  int DEP_PARAMS = 4;
-  int DEP_STATIC = 8;
 
   // ----------------------------------------------------------------------
   // INSTRUCTION GROUPS
@@ -338,7 +313,6 @@ public interface CodeConstants {
   int opc_invokestatic = 184;
   int opc_invokeinterface = 185;
   int opc_invokedynamic = 186;
-  int opc_xxxunusedxxx = 186;
   int opc_new = 187;
   int opc_newarray = 188;
   int opc_anewarray = 189;
@@ -355,7 +329,6 @@ public interface CodeConstants {
   int opc_goto_w = 200;
   int opc_jsr_w = 201;
 
-  @SuppressWarnings("SpellCheckingInspection")
   String CLINIT_NAME = "<clinit>";
   String INIT_NAME = "<init>";
 }

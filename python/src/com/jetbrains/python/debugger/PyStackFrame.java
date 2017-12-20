@@ -16,7 +16,6 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,9 +27,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.content.Content;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
@@ -130,21 +127,9 @@ public class PyStackFrame extends XStackFrame {
            ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES;
   }
 
-  private boolean isDebugVariableViewVisible() {
-    if (myDebugProcess instanceof PyDebugProcess) {
-      RunnerLayoutUi ui = ((PyDebugProcess)myDebugProcess).getSession().getUI();
-      Content variablesView = null;
-      if (ui != null) {
-        variablesView = ui.getContentManager().findContent(XDebuggerBundle.message("debugger.session.tab.variables.title"));
-      }
-      return variablesView != null;
-    }
-    return true;
-  }
-
   @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
-    if (node.isObsolete() || !isDebugVariableViewVisible()) return;
+    if (node.isObsolete()) return;
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         boolean cached = myDebugProcess.isCurrentFrameCached();

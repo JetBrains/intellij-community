@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental.fs;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 22-Nov-14
 */
 public enum CompilationRound {
   CURRENT, NEXT

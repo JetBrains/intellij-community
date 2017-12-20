@@ -2,6 +2,9 @@
 package org.jetbrains.java.decompiler.struct.gen.generics;
 
 public class GenericFieldDescriptor {
+  public final GenericType type;
 
-  public GenericType type;
+  public GenericFieldDescriptor(GenericType type) {
+    this.type = type;
+  }
 }

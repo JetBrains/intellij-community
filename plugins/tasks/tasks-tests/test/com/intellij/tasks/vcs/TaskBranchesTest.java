@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 18.07.13
  */
 public abstract class TaskBranchesTest extends PlatformTestCase {
 

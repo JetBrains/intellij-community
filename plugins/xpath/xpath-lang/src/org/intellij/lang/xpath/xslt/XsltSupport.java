@@ -15,6 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.*;
 import com.intellij.ui.LayeredIcon;
@@ -94,7 +94,7 @@ public class XsltSupport {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value != null) {
       final List<PsiFile> files = new SmartList<>();
-      InjectedLanguageUtil.enumerate(value, (injectedPsi, places) -> {
+      InjectedLanguageManager.getInstance(value.getProject()).enumerate(value, (injectedPsi, places) -> {
         if (injectedPsi instanceof XPathFile) {
           files.add(injectedPsi);
         }

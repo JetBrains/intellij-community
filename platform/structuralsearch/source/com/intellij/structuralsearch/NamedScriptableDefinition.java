@@ -9,8 +9,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
- * Date: 11.06.2009
- * Time: 12:55:39
  */
 public abstract class NamedScriptableDefinition implements JDOMExternalizable {
   @NonNls private static final String NAME = "name";

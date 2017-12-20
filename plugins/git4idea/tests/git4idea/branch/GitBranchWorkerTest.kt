@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.LineSeparator
@@ -401,6 +402,48 @@ class GitBranchWorkerTest : GitPlatformTest() {
     `check deny to smart operation in first repo should show nothing`("merge")
   }
 
+  fun `test local changes would be overwritten in several repositories`() {
+    val local1 = "local1.txt"
+    localChangesOverwrittenByWithoutConflict(first, "feature", listOf(local1))
+
+    // in addition to a local change preventing checkout...
+    cd(second)
+    val local2 = second.file("local2.txt")
+    local2.create(LOCAL_CHANGES_OVERWRITTEN_BY.initial).addCommit("initial-local2")
+    git("checkout -b feature")
+    local2.prepend(LOCAL_CHANGES_OVERWRITTEN_BY.branchLine).addCommit("feature-local2")
+    // ... make another file producing diff between master and feature (but not related to the 'local change would be overwritten' error)
+    second.file("feature.txt").create("feature\n").addCommit("feature.txt")
+    git("checkout master")
+    local2.append(LOCAL_CHANGES_OVERWRITTEN_BY.masterLine)
+
+    cd(last)
+    git("branch feature")
+
+    val file1 = File(first.root.path, local1)
+    val file2 = local2.file
+    val expectedLocalChanges = listOf(file1, file2).map { FileUtil.toSystemIndependentName(it.path) }
+
+    updateChangeListManager()
+
+    var smartOperationDialogTimes = 0
+    val filesInDialog = mutableListOf<String>()
+    checkoutOrMerge("checkout", "feature", object : TestUiHandler() {
+      override fun showSmartOperationDialog(project: Project,
+                                            changes: List<Change>,
+                                            paths: Collection<String>,
+                                            operation: String,
+                                            forceButton: String?): GitSmartOperationDialog.Choice {
+        smartOperationDialogTimes++
+        filesInDialog.addAll(ChangesUtil.getPaths(changes).map { it.path })
+        return GitSmartOperationDialog.Choice.SMART
+      }
+    })
+
+    assertSameElements("Local changes would be overwritten by checkout are shown incorrectly", filesInDialog, expectedLocalChanges)
+    assertEquals("Smart checkout dialog should be shown only once", 1, smartOperationDialogTimes)
+  }
+
   private fun `check deny to smart operation in first repo should show nothing`(operation: String) {
     prepareLocalChangesOverwrittenBy(first)
 
@@ -621,7 +664,7 @@ class GitBranchWorkerTest : GitPlatformTest() {
       repository.git("branch todelete")
     }
     git.onBranchDelete {
-      if (second == it) GitCommandResult(false, 1, listOf("Couldn't remove branch"), listOf())
+      if (second == it) GitCommandResult(false, 1, false, listOf("Couldn't remove branch"), listOf())
       else null
     }
   }

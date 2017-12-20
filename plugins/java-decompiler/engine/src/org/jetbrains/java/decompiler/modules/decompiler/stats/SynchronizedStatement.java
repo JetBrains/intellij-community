@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
@@ -137,15 +139,7 @@ public class SynchronizedStatement extends Statement {
     return body;
   }
 
-  public void setBody(Statement body) {
-    this.body = body;
-  }
-
   public List<Exprent> getHeadexprentList() {
     return headexprent;
-  }
-
-  public Exprent getHeadexprent() {
-    return headexprent.get(0);
   }
 }

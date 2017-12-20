@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -40,7 +39,7 @@ public class MoveChanges implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     myMovedFrom = worker.moveChangesTo(myName, myChanges);
 
-    myListCopy = worker.getChangeListCopyByName(myName);
+    myListCopy = worker.getChangeListByName(myName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
@@ -50,10 +49,5 @@ public class MoveChanges implements ChangeListCommand {
         dispatcher.getMulticaster().changesMoved(changesInList, fromList, myListCopy);
       }
     }
-  }
-
-  @Nullable
-  public MultiMap<LocalChangeList, Change> getMovedFrom() {
-    return myMovedFrom;
   }
 }

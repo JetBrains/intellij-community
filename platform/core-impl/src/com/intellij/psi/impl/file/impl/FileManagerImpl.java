@@ -213,12 +213,11 @@ public class FileManagerImpl implements FileManager {
       if (fileViewProvider == null) {
         myVFileToViewProviderMap.remove(virtualFile);
       }
+      else if (virtualFile instanceof LightVirtualFile) {
+        virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
+      }
       else {
-        if (virtualFile instanceof LightVirtualFile) {
-          virtualFile.putUserData(myPsiHardRefKey, fileViewProvider);
-        } else {
-          myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
-        }
+        myVFileToViewProviderMap.put(virtualFile, fileViewProvider);
       }
     }
   }

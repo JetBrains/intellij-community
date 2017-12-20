@@ -74,7 +74,7 @@ class TestProjectViewPSIPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
     };
   }
 

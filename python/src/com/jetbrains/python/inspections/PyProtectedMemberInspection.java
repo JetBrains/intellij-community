@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
@@ -24,6 +25,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +86,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
-      if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
+      if (qualifier == null || ArrayUtil.contains(qualifier.getText(), PyNames.CANONICAL_SELF, PyNames.CANONICAL_CLS)) return;
       checkReference(node, qualifier);
     }
 
@@ -102,7 +104,7 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
         final PsiElement resolvedExpression = reference.resolve();
-        final PyClass resolvedClass = getClassOwner(resolvedExpression);
+        final PyClass resolvedClass = getNotPyiClassOwner(resolvedExpression);
 
         if (resolvedExpression instanceof PyTargetExpression) {
 
@@ -150,6 +152,12 @@ public class PyProtectedMemberInspection extends PyInspection {
         final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
         registerProblem(node, PyBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,  null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()-1]));
       }
+    }
+
+    @Nullable
+    private PyClass getNotPyiClassOwner(@Nullable PsiElement element) {
+      final PyClass owner = getClassOwner(element);
+      return owner == null ? null : PyiUtil.stubToOriginal(owner, PyClass.class);
     }
 
     @Nullable

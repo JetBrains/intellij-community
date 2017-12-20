@@ -19,7 +19,6 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +34,7 @@ public class ClassWrapper {
     this.classStruct = classStruct;
   }
 
-  public void init() throws IOException {
+  public void init() {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);

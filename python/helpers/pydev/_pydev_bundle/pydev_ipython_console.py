@@ -4,7 +4,6 @@ import sys
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
 from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
 from _pydevd_bundle.pydevd_constants import dict_iter_items
-from _pydevd_bundle.pydevd_io import IOBuf
 
 
 # Uncomment to force PyDev standard shell.
@@ -18,25 +17,21 @@ class InterpreterInterface(BaseInterpreterInterface):
         The methods in this class should be registered in the xml-rpc server.
     '''
 
-    def __init__(self, host, client_port, mainThread, show_banner=True):
-        BaseInterpreterInterface.__init__(self, mainThread)
+    def __init__(self, host, client_port, main_thread, show_banner=True, connect_status_queue=None):
+        BaseInterpreterInterface.__init__(self, main_thread, connect_status_queue)
         self.client_port = client_port
         self.host = host
-
-        # Wrap output to handle IPython's banner and show it in appropriate time
-        original_stdout = sys.stdout
-        sys.stdout = IOBuf()
-        self.interpreter = get_pydev_frontend(host, client_port, show_banner=show_banner)
-        self.default_banner = sys.stdout.getvalue()
-        sys.stdout = original_stdout
-
+        self.interpreter = get_pydev_frontend(host, client_port)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0
         self.notification_max_tries = 3
+        self.show_banner = show_banner
 
     def get_greeting_msg(self):
-        return self.interpreter.get_greeting_msg() + "\n" + self.default_banner
+        if self.show_banner:
+            self.interpreter.show_banner()
+        return self.interpreter.get_greeting_msg()
 
     def do_add_exec(self, code_fragment):
         self.notify_about_magic()

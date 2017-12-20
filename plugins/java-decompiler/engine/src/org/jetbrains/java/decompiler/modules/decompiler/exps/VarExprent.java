@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassWriter;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -37,7 +39,7 @@ public class VarExprent extends Exprent {
   private int index;
   private VarType varType;
   private boolean definition = false;
-  private VarProcessor processor;
+  private final VarProcessor processor;
   private final int visibleOffset;
   private int version = 0;
   private boolean classDef = false;
@@ -219,10 +221,6 @@ public class VarExprent extends Exprent {
     return processor;
   }
 
-  public void setProcessor(VarProcessor processor) {
-    this.processor = processor;
-  }
-
   public int getVersion() {
     return version;
   }
@@ -251,26 +249,22 @@ public class VarExprent extends Exprent {
   // IMatchable implementation
   // *****************************************************************************
 
+  @Override
   public boolean match(MatchNode matchNode, MatchEngine engine) {
-
-    if(!super.match(matchNode, engine)) {
+    if (!super.match(matchNode, engine)) {
       return false;
     }
 
     RuleValue rule = matchNode.getRules().get(MatchProperties.EXPRENT_VAR_INDEX);
-    if(rule != null) {
-      if(rule.isVariable()) {
-        if(!engine.checkAndSetVariableValue((String)rule.value, this.index)) {
-          return false;
-        }
-      } else {
-        if(this.index != Integer.valueOf((String)rule.value).intValue()) {
-          return false;
-        }
+    if (rule != null) {
+      if (rule.isVariable()) {
+        return engine.checkAndSetVariableValue((String)rule.value, this.index);
+      }
+      else {
+        return this.index == Integer.valueOf((String)rule.value);
       }
     }
 
     return true;
   }
-
 }

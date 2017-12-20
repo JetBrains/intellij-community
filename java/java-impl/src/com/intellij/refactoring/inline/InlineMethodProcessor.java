@@ -652,7 +652,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiElement firstBodyElement = blockData.block.getFirstBodyElement();
     if (firstBodyElement instanceof PsiWhiteSpace) firstBodyElement = PsiTreeUtil.skipWhitespacesForward(firstBodyElement);
     PsiElement firstAdded = null;
-    if (firstBodyElement != null) {
+    if (firstBodyElement != null && firstBodyElement != blockData.block.getRBrace()) {
       int last = statements.length - 1;
       /*PsiElement first = statements[0];
       PsiElement last = statements[statements.length - 1];*/

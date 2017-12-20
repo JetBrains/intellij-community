@@ -91,12 +91,12 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public Document getDocumentToSynchronize() {
+  Document getDocumentToSynchronize() {
     return ourFileDocManager.getCachedDocument(getVirtualFile());
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement() {
     Segment segment = getPsiRange();
     if (segment == null) return null;
 
@@ -108,7 +108,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   @Override
-  public TextRange getPsiRange() {
+  TextRange getPsiRange() {
     return calcPsiRange();
   }
 
@@ -118,12 +118,12 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile() {
     return restoreFileFromVirtual(getVirtualFile(), getProject(), myIdentikit.getFileLanguage());
   }
 
   @Override
-  public void cleanup() {
+  void cleanup() {
     setRange(null);
   }
 
@@ -172,12 +172,12 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return getVirtualFile().hashCode() + myIdentikit.hashCode() * 31;
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
     if (other instanceof SelfElementInfo) {
       final SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
@@ -195,13 +195,13 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   @NotNull
-  public final VirtualFile getVirtualFile() {
+  final VirtualFile getVirtualFile() {
     return myFile;
   }
 
   @Override
   @Nullable
-  public Segment getRange() {
+  Segment getRange() {
     if (hasRange()) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
@@ -220,7 +220,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @NotNull
   @Override
-  public final Project getProject() {
+  final Project getProject() {
     return myManager.getProject();
   }
 
