@@ -731,8 +731,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
       return TreeVisitor.Action.CONTINUE;
     };
-    myStructureTreeModel.getInvoker().invokeLater(() ->
-      myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null)));
+    myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
     return result;
   }
 

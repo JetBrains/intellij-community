@@ -493,8 +493,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
         }
       }
     };
-    myStructureTreeModel.getInvoker().invokeLaterIfNeeded(
-      () -> myAsyncTreeModel.accept(visitor).thenAsync(fallback).processed(result));
+    myAsyncTreeModel.accept(visitor).thenAsync(fallback).processed(result);
     return result;
   }
 
@@ -510,8 +509,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
       return TreeVisitor.Action.CONTINUE;
     };
-    rebuild(false).processed(ignore1 -> myStructureTreeModel.getInvoker().invokeLater(
-      () -> myAsyncTreeModel.accept(visitor).processed(ignore2 -> result.setResult(null))));
+    rebuild(false).processed(ignore1 -> myAsyncTreeModel.accept(visitor).processed(ignore2 -> result.setResult(null)));
     return result;
   }
 

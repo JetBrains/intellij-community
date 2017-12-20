@@ -245,24 +245,18 @@ class AsyncProjectViewSupport {
   }
 
   void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
-    int size = visitors == null ? 0 : visitors.size();
     if (visitors != null && !visitors.isEmpty()) {
-      // start visiting on the background thread to ensure that root node is already invalidated
-      myStructureTreeModel.getInvoker().invokeLater(() -> {
-        if (1 == visitors.size()) {
-          myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
-            if (path != null) consumer.consume(singletonList(path));
-          });
-        }
-        else if (size > 1) {
-          myStructureTreeModel.getInvoker().invokeLater(() -> {
-            List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
-            collectResults(promises, true).done(list -> {
-              if (list != null && !list.isEmpty()) consumer.consume(list);
-            });
-          });
-        }
-      });
+      if (1 == visitors.size()) {
+        myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
+          if (path != null) consumer.consume(singletonList(path));
+        });
+      }
+      else {
+        List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
+        collectResults(promises, true).done(list -> {
+          if (list != null && !list.isEmpty()) consumer.consume(list);
+        });
+      }
     }
   }
 
