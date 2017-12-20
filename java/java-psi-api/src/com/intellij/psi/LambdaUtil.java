@@ -4,9 +4,11 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
@@ -778,6 +780,10 @@ public class LambdaUtil {
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }
+    PsiType type = PsiTypesUtil.getExpectedTypeByParent(call);
+    if (type != null) {
+      return (PsiCall)copyWithExpectedType(call, type);
+    }
     return (PsiCall)call.copy();
   }
 
@@ -966,5 +972,17 @@ public class LambdaUtil {
       }
     }
     return true;
+  }
+
+  public static PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
+    final String arrayInitializer = "new " + type.getCanonicalText() + "[]{0}";
+    final Project project = expression.getProject();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, expression);
+    //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
+    newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
+    final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
+    LOG.assertTrue(initializer != null);
+    return initializer.getInitializers()[0].replace(expression);
   }
 }
