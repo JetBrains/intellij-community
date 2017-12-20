@@ -1,3 +1,5 @@
+import org.jetbrains.annotations.*;
+
 interface NotNullInt {
   void setString(@NotNull String s);
 }
