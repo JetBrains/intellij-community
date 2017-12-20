@@ -919,6 +919,10 @@
                     beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="scratchFileLanguageProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.ide.scratch.ScratchFileLanguageProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>
 
