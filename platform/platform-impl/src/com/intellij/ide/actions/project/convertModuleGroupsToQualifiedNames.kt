@@ -162,6 +162,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       if (rememberOldNamesCheckBox.isSelected) {
         (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
       }
+      project.save()
     }
 
     super.doOKAction()
