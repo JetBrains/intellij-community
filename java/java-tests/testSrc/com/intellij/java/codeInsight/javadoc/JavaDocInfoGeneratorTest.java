@@ -409,6 +409,8 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
 
   public void testCaretAtLinkInJavadoc() throws Exception { doTestAtCaret(); }
 
+  public void testParamInJavadoc() throws Exception { doTestAtCaret(); }
+
   private void doTestAtCaret() throws Exception {
     configureByFile();
     String docInfo = JavaExternalDocumentationTest.getDocumentationText(myFile, myEditor.getCaretModel().getOffset());
