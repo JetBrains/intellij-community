@@ -42,8 +42,6 @@
 
     <extensionPoint qualifiedName="com.intellij.canBeFinal"
                     interface="com.intellij.codeInspection.canBeFinal.CanBeFinalHandler"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.implementedAtRuntime"
-                    interface="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.implicitSubclassProvider"
                     interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider"
