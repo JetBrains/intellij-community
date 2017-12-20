@@ -28,7 +28,6 @@ import java.util.List;
  * @author max
  */
 public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider {
-
   protected boolean supportsNonCodeRule() {
     return true;
   }
@@ -41,29 +40,35 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     return true;
   }
 
+  @NotNull
+  @Override
+  public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
+    return getActiveRules(project, UsageViewSettings.getInstance());
+  }
+
   @Override
   @NotNull
-  public UsageGroupingRule[] getActiveRules(Project project) {
+  public UsageGroupingRule[] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
     List<UsageGroupingRule> rules = new ArrayList<>();
     if (supportsNonCodeRule()) {
       rules.add(new NonCodeUsageGroupingRule(project));
     }
-    if (supportsScopesRule() && UsageViewSettings.getInstance().isGroupByScope()) {
+    if (supportsScopesRule() && usageViewSettings.isGroupByScope()) {
       rules.add(new UsageScopeGroupingRule());
     }
-    if (UsageViewSettings.getInstance().isGroupByUsageType()) {
+    if (usageViewSettings.isGroupByUsageType()) {
       rules.add(new UsageTypeGroupingRule());
     }
-    if (supportsModuleRule() && UsageViewSettings.getInstance().isGroupByModule()) {
-      rules.add(new ModuleGroupingRule(project, UsageViewSettings.getInstance().isFlattenModules()));
+    if (supportsModuleRule() && usageViewSettings.isGroupByModule()) {
+      rules.add(new ModuleGroupingRule(project, usageViewSettings.isFlattenModules()));
     }
-    if (UsageViewSettings.getInstance().isGroupByPackage()) {
+    if (usageViewSettings.isGroupByPackage()) {
       rules.add(DirectoryGroupingRule.getInstance(project));
     }
-    if (UsageViewSettings.getInstance().isGroupByFileStructure()) {
+    if (usageViewSettings.isGroupByFileStructure()) {
       FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
       for (FileStructureGroupRuleProvider ruleProvider : providers) {
-        ContainerUtil.addIfNotNull(rules, ruleProvider.getUsageGroupingRule(project));
+        ContainerUtil.addIfNotNull(rules, ruleProvider.getUsageGroupingRule(project, usageViewSettings));
       }
     }
     else {
@@ -131,11 +136,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isGroupByUsageType();
+      return myView.getUsageViewSettings().isGroupByUsageType();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setGroupByUsageType(value);
+      myView.getUsageViewSettings().setGroupByUsageType(value);
     }
   }
 
@@ -145,11 +150,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isGroupByScope();
+      return myView.getUsageViewSettings().isGroupByScope();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setGroupByScope(value);
+      myView.getUsageViewSettings().setGroupByScope(value);
     }
   }
 
@@ -160,12 +165,12 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isGroupByModule();
+      return myView.getUsageViewSettings().isGroupByModule();
     }
 
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setGroupByModule(value);
+      myView.getUsageViewSettings().setGroupByModule(value);
     }
   }
 
@@ -176,18 +181,18 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isFlattenModules();
+      return myView.getUsageViewSettings().isFlattenModules();
     }
 
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setFlattenModules(value);
+      myView.getUsageViewSettings().setFlattenModules(value);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(UsageViewSettings.getInstance().isGroupByModule());
+      e.getPresentation().setEnabled(myView.getUsageViewSettings().isGroupByModule());
     }
   }
 
@@ -197,11 +202,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isGroupByPackage();
+      return myView.getUsageViewSettings().isGroupByPackage();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setGroupByPackage(value);
+      myView.getUsageViewSettings().setGroupByPackage(value);
     }
   }
 
@@ -211,11 +216,11 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     }
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isGroupByFileStructure();
+      return myView.getUsageViewSettings().isGroupByFileStructure();
     }
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setGroupByFileStructure(value);
+      myView.getUsageViewSettings().setGroupByFileStructure(value);
     }
   }
 }

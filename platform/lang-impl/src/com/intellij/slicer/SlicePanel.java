@@ -370,7 +370,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     myProvider.registerExtraPanelActions(actionGroup, myBuilder);
-    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new SliceToTextFileExporter(myBuilder)));
+    actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new SliceToTextFileExporter(myBuilder, UsageViewSettings.getInstance())));
 
     //actionGroup.add(new ContextHelpAction(HELP_ID));
 

@@ -7,7 +7,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,11 +19,11 @@ class PreviewUsageAction extends RuleAction {
 
   @Override
   protected boolean getOptionValue() {
-    return UsageViewSettings.getInstance().isPreviewUsages();
+    return myView.getUsageViewSettings().isPreviewUsages();
   }
 
   @Override
   protected void setOptionValue(final boolean value) {
-    UsageViewSettings.getInstance().setPreviewUsages(value);
+    myView.getUsageViewSettings().setPreviewUsages(value);
   }
 }

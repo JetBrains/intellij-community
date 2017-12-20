@@ -32,7 +32,13 @@ import javax.swing.*;
  * @author max
  */
 public class MethodGroupingRule extends SingleParentUsageGroupingRule {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.usages.impl.rules.MethodGroupingRule");
+  private static final Logger LOG = Logger.getInstance(MethodGroupingRule.class);
+  @NotNull
+  private final UsageViewSettings myUsageViewSettings;
+
+  public MethodGroupingRule(@NotNull UsageViewSettings usageViewSettings) {
+    myUsageViewSettings = usageViewSettings;
+  }
 
   @Nullable
   @Override
@@ -58,7 +64,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       while (true);
 
       if (containingMethod != null) {
-        return new MethodUsageGroup((PsiMethod)containingMethod);
+        return new MethodUsageGroup((PsiMethod)containingMethod, myUsageViewSettings);
       }
     }
     return null;
@@ -70,7 +76,10 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     private final Icon myIcon;
     private final Project myProject;
 
-    public MethodUsageGroup(PsiMethod psiMethod) {
+    @NotNull
+    private final UsageViewSettings myUsageViewSettings;
+
+    public MethodUsageGroup(PsiMethod psiMethod, @NotNull UsageViewSettings usageViewSettings) {
       myName = PsiFormatUtil.formatMethod(
           psiMethod,
           PsiSubstitutor.EMPTY,
@@ -81,6 +90,8 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       myMethodPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(psiMethod);
 
       myIcon = getIconImpl(psiMethod);
+
+      myUsageViewSettings = usageViewSettings;
     }
 
     @Override
@@ -157,7 +168,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
       if (SmartPointerManager.getInstance(myProject).pointToTheSameElement(myMethodPointer, other.myMethodPointer)) {
         return 0;
       }
-      if (!UsageViewSettings.getInstance().isSortAlphabetically()) {
+      if (!myUsageViewSettings.isSortAlphabetically()) {
         Segment segment1 = myMethodPointer.getRange();
         Segment segment2 = other.myMethodPointer.getRange();
         if (segment1 != null && segment2 != null) {

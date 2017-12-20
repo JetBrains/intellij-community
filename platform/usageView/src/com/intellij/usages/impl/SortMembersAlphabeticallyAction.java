@@ -5,23 +5,23 @@ package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.UsageViewSettings;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author cdr
 */
 class SortMembersAlphabeticallyAction extends RuleAction {
-  SortMembersAlphabeticallyAction(UsageViewImpl usageView) {
+  SortMembersAlphabeticallyAction(@NotNull UsageViewImpl usageView) {
     super(usageView, UsageViewBundle.message("sort.alphabetically.action.text"), AllIcons.ObjectBrowser.Sorted);
   }
 
   @Override
   protected boolean getOptionValue() {
-    return UsageViewSettings.getInstance().isSortAlphabetically();
+    return myView.getUsageViewSettings().isSortAlphabetically();
   }
 
   @Override
   protected void setOptionValue(final boolean value) {
-    UsageViewSettings.getInstance().setSortAlphabetically(value);
+    myView.getUsageViewSettings().setSortAlphabetically(value);
   }
 }

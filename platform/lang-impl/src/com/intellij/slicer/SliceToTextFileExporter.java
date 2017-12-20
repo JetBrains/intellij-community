@@ -15,10 +15,12 @@ import java.util.List;
  */
 public class SliceToTextFileExporter implements ExporterToTextFile {
   private final SliceTreeBuilder myBuilder;
+  @NotNull private final UsageViewSettings myUsageViewSettings;
   private String myLineSeparator = SystemProperties.getLineSeparator();
 
-  public SliceToTextFileExporter(SliceTreeBuilder builder) {
+  public SliceToTextFileExporter(@NotNull SliceTreeBuilder builder, @NotNull UsageViewSettings usageViewSettings) {
     myBuilder = builder;
+    myUsageViewSettings = usageViewSettings;
   }
 
   @NotNull
@@ -50,12 +52,12 @@ public class SliceToTextFileExporter implements ExporterToTextFile {
   @NotNull
   @Override
   public String getDefaultFilePath() {
-    return UsageViewSettings.getInstance().getExportFileName();
+    return myUsageViewSettings.getExportFileName();
   }
 
   @Override
   public void exportedTo(@NotNull String filePath) {
-    UsageViewSettings.getInstance().setExportFileName(filePath);
+    myUsageViewSettings.setExportFileName(filePath);
   }
 
   @Override
