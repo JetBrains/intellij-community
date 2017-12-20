@@ -3,11 +3,9 @@
  */
 package com.jetbrains.python.codeInsight.stdlib
 
+import com.intellij.openapi.util.Ref
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyReferenceExpression
-import com.jetbrains.python.psi.PyTargetExpression
-import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
@@ -16,6 +14,30 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
 
   override fun getReferenceExpressionType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyType? {
     return getDataclassTypeForCallee(referenceExpression, context)
+  }
+
+  override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
+    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null && func.name == "__post_init__") {
+      val cls = func.containingClass
+
+      if (cls != null && parseDataclassParameters(cls, context)?.init == true) {
+        var result: Ref<PyType>? = null
+
+        cls.processClassLevelDeclarations { element, _ ->
+          if (element is PyTargetExpression && element.name == param.name && element.annotationValue != null) {
+            result = Ref.create(getTypeForParameter(element, context))
+            false
+          }
+          else {
+            true
+          }
+        }
+
+        return result
+      }
+    }
+
+    return null
   }
 
   private fun getDataclassTypeForCallee(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {
