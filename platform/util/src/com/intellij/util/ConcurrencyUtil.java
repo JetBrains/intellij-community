@@ -22,6 +22,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -86,6 +87,17 @@ public class ConcurrencyUtil {
     if (v != null) return v;
     V prev = map.putIfAbsent(key, defaultValue);
     return prev == null ? defaultValue : prev;
+  }
+
+  /**
+   * @return defaultValue if the reference contains null (in that case defaultValue is placed there), or reference value otherwise.
+   */
+  public static <T> T cacheOrGet(@NotNull AtomicReference<T> ref, @NotNull T defaultValue) {
+    T value = ref.get();
+    while (value == null) {
+      value = ref.compareAndSet(null, defaultValue) ? defaultValue : ref.get();
+    }
+    return value;
   }
 
   @NotNull
