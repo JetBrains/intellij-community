@@ -71,7 +71,7 @@ public class ThrowExceptionAction extends DebuggerAction {
           thread.stop((ObjectReference)value);
         }
         catch (Exception e) {
-          showError(debugProcess.getProject(), DebuggerBundle.message("error.early.return", e.getLocalizedMessage()));
+          showError(debugProcess.getProject(), DebuggerBundle.message("error.throw.exception", e.getLocalizedMessage()));
           return;
         }
         //noinspection SSBasedInspection
@@ -147,7 +147,7 @@ public class ThrowExceptionAction extends DebuggerAction {
       myEditor = new XDebuggerExpressionEditor(myProject, myEditorsProvider, "throwExceptionValue", myFrame.getSourcePosition(),
                                                XExpressionImpl.EMPTY_EXPRESSION, false, true, false);
 
-      setTitle("Exception");
+      setTitle("Exception To Throw");
       init();
     }
 
