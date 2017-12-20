@@ -54,6 +54,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
@@ -1139,7 +1140,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       @Override
       protected void run(@NotNull Result result) {
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        EditorUtil.fillVirtualSpaceUntilCaret(myEditor);
+        EditorUtil.fillVirtualSpaceUntilCaret(getHostEditor());
         checkResult("TEXT", stripTrailingSpaces, SelectionAndCaretMarkupLoader.fromText(text), getHostFile().getText());
       }
     }.execute();
@@ -1462,8 +1463,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private PsiFile getHostFile() {
-    PsiElement element = getFile();
-    return InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
+    VirtualFile hostVFile = myFile instanceof VirtualFileWindow ? ((VirtualFileWindow)myFile).getDelegate() : myFile;
+    return ReadAction.compute(() -> PsiManager.getInstance(getProject()).findFile(hostVFile));
   }
 
   private long collectAndCheckHighlighting(@NotNull ExpectedHighlightingData data) {
