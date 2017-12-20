@@ -5,7 +5,6 @@ package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
-import com.intellij.framework.detection.impl.exclude.old.DisabledAutodetectionInfo;
 import com.intellij.framework.detection.impl.exclude.old.OldFacetDetectionExcludesConfiguration;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -96,7 +95,7 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
 
   private void markAsConverted() {
     myConverted = true;
-    OldFacetDetectionExcludesConfiguration.getInstance(myProject).loadState(new DisabledAutodetectionInfo());
+    OldFacetDetectionExcludesConfiguration.getInstance(myProject).unsetState();
   }
 
   private void ensureOldSettingsLoaded() {

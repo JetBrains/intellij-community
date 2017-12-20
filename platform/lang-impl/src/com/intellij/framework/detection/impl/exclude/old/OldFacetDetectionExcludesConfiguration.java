@@ -48,6 +48,10 @@ public class OldFacetDetectionExcludesConfiguration implements PersistentStateCo
     myDisabledAutodetectionInfo = state;
   }
 
+  public void unsetState() {
+    myDisabledAutodetectionInfo = null;
+  }
+
   @Nullable
   public ExcludesConfigurationState convert() {
     if (myDisabledAutodetectionInfo == null || myDisabledAutodetectionInfo.getElements().isEmpty()) {

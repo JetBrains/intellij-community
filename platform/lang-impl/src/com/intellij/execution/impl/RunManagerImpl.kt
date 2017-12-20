@@ -1040,7 +1040,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 }
 
-// open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "ProjectRunConfigurationManager")
 internal class IprRunManagerImpl(private val project: Project) : PersistentStateComponent<Element> {
   val lastLoadedState = AtomicReference<Element>()
