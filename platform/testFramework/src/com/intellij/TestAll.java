@@ -31,8 +31,10 @@ import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runners.Parameterized;
 
 import java.io.Closeable;
 import java.io.File;
@@ -447,13 +449,26 @@ public class TestAll implements Test {
       }
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
-        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest(null, testCaseClass) && isPerformanceTestsRun();
-        if (!runEverything) {
-          try {
-            adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
+        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
+        if (runEverything) return new JUnit4TestAdapter(testCaseClass);
+
+        final RunWith runWithAnnotation = testCaseClass.getAnnotation(RunWith.class);
+        if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
+          if (isPerformanceTestsRun() != isPerformanceTest) {
+            // do not create JUnit4TestAdapter for @Parameterized tests to avoid @Parameters computation - just skip the test
+            return null;
           }
-          catch (NoTestsRemainException ignored) {}
+          else {
+            return new JUnit4TestAdapter(testCaseClass);
+          }
+        }
+
+        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
+        try {
+          adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
+        }
+        catch (NoTestsRemainException ignored) {
         }
         return adapter;
       }

@@ -198,6 +198,22 @@ public class DiffDrawUtil {
   }
 
   @NotNull
+  private static TextAttributes getResolvedTextAttributes(@NotNull final TextDiffType type,
+                                                          @Nullable final Editor editor) {
+    return new TextAttributes() {
+      @Override
+      public Color getEffectColor() {
+        return type.getColor(editor);
+      }
+
+      @Override
+      public EffectType getEffectType() {
+        return EffectType.BOXED;
+      }
+    };
+  }
+
+  @NotNull
   private static TextAttributes getStripeTextAttributes(@NotNull final TextDiffType type,
                                                         @NotNull final Editor editor) {
     return new TextAttributes() {
@@ -324,14 +340,22 @@ public class DiffDrawUtil {
 
   @NotNull
   public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
-    return new InlineHighlighterBuilder(editor, start, end, type).done();
+    return createInlineHighlighter(editor, start, end, type, false);
   }
 
   @NotNull
-  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type) {
+  public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type,
+                                                               boolean resolved) {
+    return new InlineHighlighterBuilder(editor, start, end, type).withResolved(resolved).done();
+  }
+
+  @NotNull
+  public static List<RangeHighlighter> createLineMarker(@NotNull final Editor editor, int line, @NotNull final TextDiffType type,
+                                                        boolean resolved) {
     if (line == 0) return Collections.emptyList();
     return new LineMarkerBuilder(editor, line - 1, SeparatorPlacement.BOTTOM)
       .withType(type)
+      .withResolved(resolved)
       .withDefaultRenderer(false)
       .withDefaultGutterRenderer(false)
       .done();
@@ -465,6 +489,7 @@ public class DiffDrawUtil {
     @NotNull private final TextDiffType type;
     private final int start;
     private final int end;
+    private boolean resolved = false;
 
     private InlineHighlighterBuilder(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
       this.editor = editor;
@@ -474,8 +499,15 @@ public class DiffDrawUtil {
     }
 
     @NotNull
+    public InlineHighlighterBuilder withResolved(boolean resolved) {
+      this.resolved = resolved;
+      return this;
+    }
+
+    @NotNull
     public List<RangeHighlighter> done() {
-      TextAttributes attributes = getTextAttributes(type, editor, false);
+      TextAttributes attributes = resolved ? getResolvedTextAttributes(type, editor)
+                                           : getTextAttributes(type, editor, false);
 
       RangeHighlighter highlighter = editor.getMarkupModel()
         .addRangeHighlighter(start, end, INLINE_LAYER, attributes, HighlighterTargetArea.EXACT_RANGE);

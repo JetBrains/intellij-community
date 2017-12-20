@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ui;
 
@@ -31,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.font.TextAttribute;
+import java.text.AttributedCharacterIterator;
+import java.text.AttributedString;
 import java.util.List;
 
 
@@ -175,6 +166,8 @@ public class Splash extends JDialog implements StartupProgress {
       final LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
         UIUtil.applyRenderingHints(g);
+        final String licensedToMessage = provider.getLicensedToMessage();
+        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
 
         Font font = SystemInfo.isMacOSElCapitan ? createFont(".SF NS Text") :
                     SystemInfo.isMacOSYosemite ? createFont("HelveticaNeue-Regular") :
@@ -182,11 +175,8 @@ public class Splash extends JDialog implements StartupProgress {
         if (font == null || UIUtil.isDialogFont(font)) {
           font = createFont(UIUtil.ARIAL_FONT_NAME);
         }
-        g.setFont(font);
 
         g.setColor(textColor);
-        final String licensedToMessage = provider.getLicensedToMessage();
-        final List<String> licenseRestrictionsMessages = provider.getLicenseRestrictionsMessages();
         int offsetX = uiScale(15);
         int offsetY = 30;
         if (Registry.is("ide.new.about")) {
@@ -198,14 +188,37 @@ public class Splash extends JDialog implements StartupProgress {
           }
         }
 
-        g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
+        g.drawString(wrapText(licensedToMessage, font), x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
+          g.drawString(wrapText(licenseRestrictionsMessages.get(0), font), x + offsetX, y + height - uiScale(offsetY - 16));
         }
       }
       return true;
     }
     return false;
+  }
+
+  private static AttributedCharacterIterator wrapText(String text, Font font) {
+    Font fallbackFont = createFont("Serif");
+    AttributedString result = new AttributedString(text);
+    if (text.isEmpty()) return result.getIterator();
+
+    Font curFont = font.canDisplay(text.charAt(0)) ? font : fallbackFont;
+    int start = 0, end = 0;
+
+    for (int i = 1; i < text.length(); i++) {
+      Font f = font.canDisplay(text.charAt(i)) ? font : fallbackFont;
+      if (f != curFont) {
+        result.addAttribute(TextAttribute.FONT, curFont, start, end);
+        start = i;
+        end = start;
+        curFont = f;
+      } else {
+        end++;
+      }
+    }
+    result.addAttribute(TextAttribute.FONT, curFont, start, end);
+    return result.getIterator();
   }
 
   @NotNull
@@ -248,24 +261,4 @@ public class Splash extends JDialog implements StartupProgress {
       return myIcon.getIconHeight();
     }
   }
-
-  //public static void main(String[] args) {
-  //  final ImageIcon icon = new ImageIcon("c:\\IDEA\\ultimate\\ultimate-resources\\src\\progress_tail.png");
-  //
-  //  final int w = icon.getIconWidth();
-  //  final int h = icon.getIconHeight();
-  //  final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-  //    .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Color.TRANSLUCENT);
-  //  final Graphics2D g = image.createGraphics();
-  //  icon.paintIcon(null, g, 0, 0);
-  //  g.dispose();
-  //
-  //  for (int y = 0; y < image.getHeight(); y++) {
-  //    for (int x = 0; x < image.getWidth(); x++) {
-  //      final Color c = new Color(image.getRGB(x, y), true);
-  //      System.out.print(String.format("[%3d,%3d,%3d,%3d]  ", c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
-  //    }
-  //    System.out.println("");
-  //  }
-  //}
 }

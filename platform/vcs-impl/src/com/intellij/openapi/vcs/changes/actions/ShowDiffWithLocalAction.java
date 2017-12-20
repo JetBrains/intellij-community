@@ -56,21 +56,19 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     return e.getData(VcsDataKeys.CHANGES_SELECTION) != null;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     ListSelection<Change> selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
 
-    ListSelection<Change> changesToLocal = selection.map(change -> {
-      return getChangeWithLocal(change);
-    });
+    ListSelection<Change> changesToLocal = selection.map(change -> getChangeWithLocal(change));
 
     if (!changesToLocal.isEmpty()) {
       showDiffForChange(project, changesToLocal);
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));

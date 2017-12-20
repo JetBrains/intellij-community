@@ -27,10 +27,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
-import com.intellij.openapi.vcs.ex.Range
-import com.intellij.openapi.vcs.ex.createRanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightPlatformTestCase.assertOrderedEquals
@@ -49,7 +47,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, parseInput(text))
     val document = FileDocumentManager.getInstance().getDocument(file)!!
     val tracker = runWriteAction {
-      val tracker = LineStatusTracker.createOn(file, document, getProject(), if (smart) Mode.SMART else Mode.DEFAULT)
+      val tracker = SimpleLocalLineStatusTracker.createTracker(getProject(), document, file, if (smart) Mode.SMART else Mode.DEFAULT)
       tracker.setBaseRevision(parseInput(vcsText))
       tracker
     }

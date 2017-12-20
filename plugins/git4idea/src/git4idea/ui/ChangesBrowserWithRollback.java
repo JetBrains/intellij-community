@@ -94,17 +94,7 @@ public class ChangesBrowserWithRollback extends ChangesBrowserBase implements Di
     }
 
     @Override
-    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesAdded(Collection<Change> changes, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    public void changeListsChanged() {
       doUpdate();
     }
   }

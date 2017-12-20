@@ -149,6 +149,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.StatefulEpInspection"/>
+    <localInspection language="UAST" shortName="UElementAsPsi" displayName="UElement as PsiElement usage"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UElementAsPsiInspection"/>
     <localInspection language="JAVA" shortName="UsePrimitiveTypes" displayName="Use .equals with primitive types"
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
