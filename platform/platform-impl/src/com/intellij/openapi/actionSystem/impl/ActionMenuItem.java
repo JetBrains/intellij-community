@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.internal.statistic.customUsageCollectors.actions.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -221,9 +220,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       else if (!(getUI() instanceof GtkMenuItemUI)) {
         if (myToggled) {
           boolean darcula = UIUtil.isUnderDarcula();
-          setIcon(getIcon(darcula));
-          setSelectedIcon(getSelectedIcon(darcula));
-          setDisabledIcon(getDisabledIcon(darcula));
+          setIcon(DarculaLaf.getCheckmarkIcon(darcula));
+          setSelectedIcon(DarculaLaf.getCheckmarkSelectedIcon(darcula));
+          setDisabledIcon(DarculaLaf.getCheckmarkDisabledIcon(darcula));
         }
         else {
           setIcon(EmptyIcon.ICON_16);
@@ -245,21 +244,6 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         setDisabledIcon(disabled != null ? disabled : IconLoader.getDisabledIcon(icon));
       }
     }
-  }
-
-  private static Icon getIcon(boolean darcula) {
-    if (darcula) return DarculaLaf.loadIcon("checkmark.png");
-    return MacIntelliJIconCache.getIcon("checkmark", false, false, true);
-  }
-
-  private static Icon getSelectedIcon(boolean darcula) {
-    if (darcula) return DarculaLaf.loadIcon("checkmarkSelected.png");
-    return MacIntelliJIconCache.getIcon("checkmark", true, false, true);
-  }
-
-  private static Icon getDisabledIcon(boolean darcula) {
-    if (darcula) return DarculaLaf.loadIcon("checkmarkDisabled.png");
-    return MacIntelliJIconCache.getIcon("checkmark", false, false, false);
   }
 
   @Override
