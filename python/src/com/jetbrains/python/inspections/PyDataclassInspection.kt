@@ -31,7 +31,7 @@ class PyDataclassInspection : PyInspection() {
     override fun visitPyTargetExpression(node: PyTargetExpression?) {
       super.visitPyTargetExpression(node)
 
-      val cls = getPyClass(node?.qualifier) ?: return
+      val cls = getInstancePyClass(node?.qualifier) ?: return
       if (parseDataclassParameters(cls, myTypeEvalContext)?.frozen == true) {
         registerProblem(node, "'${cls.name}' object attribute '${node!!.name}' is read-only", ProblemHighlightType.GENERIC_ERROR)
       }
@@ -57,7 +57,7 @@ class PyDataclassInspection : PyInspection() {
 
               if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, myTypeEvalContext)) {
                 val value = element.findAssignedValue()
-                val cls = getPyClass(value)
+                val cls = getInstancePyClass(value)
 
                 if (cls != null) {
                   val builtinCache = PyBuiltinCache.getInstance(node)
@@ -85,8 +85,8 @@ class PyDataclassInspection : PyInspection() {
       super.visitPyBinaryExpression(node)
 
       if (node != null && ORDER_OPERATORS.contains(node.referencedName)) {
-        val leftClass = getPyClass(node.leftExpression) ?: return
-        val rightClass = getPyClass(node.rightExpression) ?: return
+        val leftClass = getInstancePyClass(node.leftExpression) ?: return
+        val rightClass = getInstancePyClass(node.rightExpression) ?: return
 
         val leftDataclassParameters = parseDataclassParameters(leftClass, myTypeEvalContext)
 
@@ -126,8 +126,9 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
-    private fun getPyClass(element: PyTypedElement?): PyClass? {
-      return (element?.let { myTypeEvalContext.getType(it) } as? PyClassType)?.pyClass
+    private fun getInstancePyClass(element: PyTypedElement?): PyClass? {
+      val type = element?.let { myTypeEvalContext.getType(it) } as? PyClassType
+      return if (type != null && !type.isDefinition) type.pyClass else null
     }
 
     private fun processHelperDataclassArgument(argument: PyExpression?, calleeQName: String) {
