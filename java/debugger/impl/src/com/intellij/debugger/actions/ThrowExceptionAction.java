@@ -122,7 +122,8 @@ public class ThrowExceptionAction extends DebuggerAction {
   }
 
   public void update(@NotNull AnActionEvent e) {
-    boolean enable = PopFrameAction.getStackFrame(e) != null;
+    JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
+    boolean enable = stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0;
 
     if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
       e.getPresentation().setEnabled(enable);
