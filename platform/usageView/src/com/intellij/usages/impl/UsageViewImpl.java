@@ -117,7 +117,7 @@ public class UsageViewImpl implements UsageView {
     if (o1 == o2) return 0;
     if (o1 == NULL_NODE) return -1;
     if (o2 == NULL_NODE) return 1;
-    if (o1 instanceof Comparable && o2 instanceof Comparable) {
+    if (o1 instanceof Comparable && o2 instanceof Comparable && o1.getClass() == o2.getClass()) {
       //noinspection unchecked
       final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
       if (selfcompared != 0) return selfcompared;
