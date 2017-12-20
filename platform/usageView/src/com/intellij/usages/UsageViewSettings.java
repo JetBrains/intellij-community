@@ -1,119 +1,71 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-package com.intellij.usages;
+package com.intellij.usages
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.Transient;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.components.*
+import com.intellij.util.PathUtil
+import com.intellij.util.xmlb.XmlSerializerUtil
+import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.Transient
 
-import java.io.File;
-
-@State(
-  name = "UsageViewSettings",
-  storages = {
-    @Storage("usageView.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
-public class UsageViewSettings implements PersistentStateComponent<UsageViewSettings> {
-  @NonNls public String EXPORT_FILE_NAME = "report.txt";
-  public boolean IS_EXPANDED;
-  public boolean IS_SHOW_PACKAGES = true;
-  public boolean IS_SHOW_METHODS;
-  public boolean IS_AUTOSCROLL_TO_SOURCE;
-  public boolean IS_FILTER_DUPLICATED_LINE = true;
-  public boolean IS_SHOW_MODULES;
-  public boolean IS_PREVIEW_USAGES;
-  public boolean IS_SORT_MEMBERS_ALPHABETICALLY = true;
-  public float PREVIEW_USAGES_SPLITTER_PROPORTIONS = 0.5f;
-
-  public boolean GROUP_BY_USAGE_TYPE = true;
-  public boolean GROUP_BY_MODULE = true;
-  public boolean FLATTEN_MODULES = true;
-  public boolean GROUP_BY_PACKAGE = true;
-  public boolean GROUP_BY_FILE_STRUCTURE = true;
-  public boolean GROUP_BY_SCOPE;
-
-  public static UsageViewSettings getInstance() {
-    return ServiceManager.getService(UsageViewSettings.class);
+@State(name = "UsageViewSettings", storages = arrayOf(Storage("usageView.xml"), Storage(value = "other.xml", deprecated = true)))
+class UsageViewSettings : BaseState(), PersistentStateComponent<UsageViewSettings> {
+  companion object {
+    @JvmStatic
+    val instance: UsageViewSettings
+      get() = ServiceManager.getService(UsageViewSettings::class.java)
   }
 
-  public boolean isExpanded() {
-    return IS_EXPANDED;
-  }
+  var EXPORT_FILE_NAME by string("report.txt")
 
-  public void setExpanded(boolean val) {
-    IS_EXPANDED = val;
-  }
+  var isExpanded by property(false)
+  var isShowPackages by property(true)
+  var isShowMethods by property(false)
 
-  public boolean isShowPackages() {
-    return IS_SHOW_PACKAGES;
-  }
+  @get:OptionTag("IS_AUTOSCROLL_TO_SOURCE")
+  var isAutoScrollToSource by property(false)
 
-  public void setShowPackages(boolean val) {
-    IS_SHOW_PACKAGES = val;
-  }
+  var isFilterDuplicatedLine by property(true)
+  var isShowModules by property(false)
 
-  public boolean isShowMethods() {
-    return IS_SHOW_METHODS;
-  }
+  @get:OptionTag("IS_PREVIEW_USAGES")
+  var isPreviewUsages by property(false)
 
-  public boolean isShowModules() {
-    return IS_SHOW_MODULES;
-  }
+  @get:OptionTag("IS_SORT_MEMBERS_ALPHABETICALLY")
+  var isSortAlphabetically by property(false)
 
-  public void setShowMethods(boolean val) {
-    IS_SHOW_METHODS = val;
-  }
+  @get:OptionTag("PREVIEW_USAGES_SPLITTER_PROPORTIONS")
+  var previewUsagesSplitterProportion by property(0.5f)
 
-  public void setShowModules(boolean val) {
-    IS_SHOW_MODULES = val;
-  }
+  @get:OptionTag("GROUP_BY_USAGE_TYPE")
+  var isGroupByUsageType by property(true)
 
-  public boolean isFilterDuplicatedLine() {
-    return IS_FILTER_DUPLICATED_LINE;
-  }
+  @get:OptionTag("GROUP_BY_MODULE")
+  var isGroupByModule by property(true)
 
-  public void setFilterDuplicatedLine(boolean val) {
-    IS_FILTER_DUPLICATED_LINE = val;
-  }
+  @get:OptionTag("FLATTEN_MODULES")
+  var isFlattenModules by property(true)
 
-  @Transient
-  public String getExportFileName() {
-    return EXPORT_FILE_NAME != null ? EXPORT_FILE_NAME.replace('/', File.separatorChar) : null;
-  }
+  @get:OptionTag("GROUP_BY_PACKAGE")
+  var isGroupByPackage by property(true)
 
-  public void setExportFileName(String s) {
-    if (s != null){
-      s = s.replace(File.separatorChar, '/');
+  @get:OptionTag("GROUP_BY_FILE_STRUCTURE")
+  var isGroupByFileStructure by property(true)
+
+  @get:OptionTag("GROUP_BY_SCOPE")
+  var isGroupByScope: Boolean by property(false)
+
+  var exportFileName: String?
+    @Transient
+    get() = PathUtil.toSystemDependentName(EXPORT_FILE_NAME)
+    set(value) {
+      EXPORT_FILE_NAME = PathUtil.toSystemIndependentName(value)
     }
-    EXPORT_FILE_NAME = s;
-  }
 
-  @Override
-  public UsageViewSettings getState() {
-    return this;
-  }
+  override fun getState() = this
 
-  @Override
-  public void loadState(final UsageViewSettings object) {
-    XmlSerializerUtil.copyBean(object, this);
+  override fun loadState(`object`: UsageViewSettings) {
+    XmlSerializerUtil.copyBean(`object`, this)
   }
 }
