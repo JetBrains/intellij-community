@@ -1102,7 +1102,7 @@ public class InferenceSession {
   }
 
   public void setUncheckedInContext() {
-    if (myContext != null) {
+    if (myContext != null && !MethodCandidateInfo.isOverloadCheck()) {
       myContext.putUserData(ERASED, myErased);
     }
   }
