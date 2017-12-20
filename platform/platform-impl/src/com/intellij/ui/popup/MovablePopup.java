@@ -21,12 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 
 /**
  * @author Sergey Malenkov
  */
 public class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
+  private WindowFocusListener myWindowFocusAdapter = null;
   private final Component myOwner;
   private final Component myContent;
   private Rectangle myViewBounds;
@@ -56,6 +60,17 @@ public class MovablePopup {
       myAlwaysOnTop = value;
       disposeAndUpdate(true);
     }
+  }
+
+  public void onAncestorFocusLost(Runnable r) {
+    myWindowFocusAdapter = new WindowAdapter() {
+      @Override
+      public void windowLostFocus(WindowEvent e) {
+        super.windowLostFocus(e);
+        r.run();
+      }
+    };
+    SwingUtilities.getWindowAncestor(myOwner).addWindowFocusListener(myWindowFocusAdapter);
   }
 
   private static void setAlwaysOnTop(@NotNull Window window, boolean value) {
@@ -207,6 +222,7 @@ public class MovablePopup {
   private void disposeAndUpdate(boolean update) {
     if (myView != null) {
       myOwner.removeHierarchyListener(myListener);
+      SwingUtilities.getWindowAncestor(myOwner).removeWindowFocusListener(myWindowFocusAdapter);
       boolean visible = myView.isVisible();
       myView.setVisible(false);
       Container container = myContent.getParent();
