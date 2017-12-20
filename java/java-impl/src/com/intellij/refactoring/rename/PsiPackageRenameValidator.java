@@ -17,21 +17,54 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.InitialPatternCondition;
+import com.intellij.patterns.PsiElementPattern;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author anna
  * @since 14.03.2011
  */
 public class PsiPackageRenameValidator implements RenameInputValidatorEx {
-  private final ElementPattern<? extends PsiElement> myPattern = PlatformPatterns.psiElement(PsiPackage.class);
+  private final ElementPattern<? extends PsiElement> myPattern = new MyPattern();
+
+  private static class MyPattern extends PsiElementPattern<PsiPackage, MyPattern> {
+    MyPattern() {
+      super(new InitialPatternCondition<PsiPackage>(PsiPackage.class) {
+        @Override
+        public boolean accepts(@Nullable Object obj, ProcessingContext context) {
+          if (!(obj instanceof PsiPackage)) {
+            return false;
+          }
+          PsiPackage psiPackage = (PsiPackage)obj;
+          // Check if the PsiPackage element points do a directory under a source root.
+          ProjectRootManager rootManager = ProjectRootManager.getInstance(psiPackage.getProject());
+          Set<VirtualFile> sourceRoots = new HashSet<>(rootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES));
+          PsiDirectory[] packageDirectories = psiPackage.getDirectories();
+          for (PsiDirectory packageDirectory : packageDirectories) {
+            if (VfsUtilCore.isUnder(packageDirectory.getVirtualFile(), sourceRoots)) {
+              return true;
+            }
+          }
+          return false;
+        }
+      });
+    }
+  }
 
   @NotNull
   @Override
@@ -46,7 +79,7 @@ public class PsiPackageRenameValidator implements RenameInputValidatorEx {
       return "Trying to create a package with ignored name, result will not be visible";
     }
 
-    if (newName.length() > 0) {
+    if (!newName.isEmpty()) {
       if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
         return "Not a valid package name";
       }

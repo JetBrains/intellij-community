@@ -334,14 +334,14 @@ public class RenameUtil {
   }
 
   public static boolean isValidName(final Project project, final PsiElement psiElement, final String newName) {
-    if (newName == null || newName.length() == 0) {
+    if (newName == null || newName.isEmpty()) {
       return false;
     }
     final Condition<String> inputValidator = RenameInputValidatorRegistry.getInputValidator(psiElement);
     if (inputValidator != null) {
       return inputValidator.value(newName);
     }
-    if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory) {
+    if (psiElement instanceof PsiFile || psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer) {
       return newName.indexOf('\\') < 0 && newName.indexOf('/') < 0;
     }
     if (psiElement instanceof PomTargetPsiElement) {
