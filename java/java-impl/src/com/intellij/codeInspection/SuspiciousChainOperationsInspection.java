@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,16 +133,16 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
     private int myCount = 0;
 
     private BinaryUnitsChain(@NotNull BinaryUnit first) {
-      myFirstLeftQualifier = first.myLeft.getQualifierExpression();
-      myFirstRightQualifier = first.myRight.getQualifierExpression();
+      myFirstLeftQualifier = ExpressionUtils.getQualifierOrThis(first.myLeft);
+      myFirstRightQualifier = ExpressionUtils.getQualifierOrThis(first.myRight);
       myRightNameToUnit.put(first.getRightName(), new ArrayList<>());
     }
 
     void add(@Nullable BinaryUnit unit) {
       if (unit == null) return;
       myCount++;
-      if (!ourEquivalence.expressionsAreEquivalent(unit.myLeft.getQualifierExpression(), myFirstLeftQualifier)) return;
-      if (!ourEquivalence.expressionsAreEquivalent(unit.myRight.getQualifierExpression(), myFirstRightQualifier)) return;
+      if (!ourEquivalence.expressionsAreEquivalent(ExpressionUtils.getQualifierOrThis(unit.myLeft), myFirstLeftQualifier)) return;
+      if (!ourEquivalence.expressionsAreEquivalent(ExpressionUtils.getQualifierOrThis(unit.myRight), myFirstRightQualifier)) return;
       myRightNameToUnit.computeIfAbsent(unit.getRightName(), k -> new ArrayList<>()).add(unit);
       myLeftNameToUnit.computeIfAbsent(unit.getLeftName(), k -> new ArrayList<>()).add(unit);
     }
@@ -173,11 +174,10 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
 
     @Nullable
     static BinaryUnitsChain createChain(@NotNull BinaryUnit first) {
-      PsiExpression leftQualifier = first.myLeft.getQualifierExpression();
-      PsiExpression rightQualifier = first.myRight.getQualifierExpression();
-      if (leftQualifier == null || rightQualifier == null) return null;
+      PsiExpression leftQualifier = ExpressionUtils.getQualifierOrThis(first.myLeft);
+      PsiExpression rightQualifier = ExpressionUtils.getQualifierOrThis(first.myRight);
       PsiClass leftClass = PsiUtil.resolveClassInClassTypeOnly(leftQualifier.getType());
-      PsiClass rightClass = PsiUtil.resolveClassInClassTypeOnly(leftQualifier.getType());
+      PsiClass rightClass = PsiUtil.resolveClassInClassTypeOnly(rightQualifier.getType());
       if (leftClass == null || rightClass == null) return null;
       if (leftClass.isEnum() || rightClass.isEnum()) return null;
       return new BinaryUnitsChain(first);
