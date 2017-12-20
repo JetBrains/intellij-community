@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -485,7 +486,11 @@ public class PyPIPackageUtil {
 
     @NotNull
     public List<String> getReleases() {
-      return new ArrayList<>(releases.keySet());
+      return EntryStream.of(releases).filterValues(PackageDetails::isNotBrokenRelease).keys().toList();
+    }
+
+    private static boolean isNotBrokenRelease(Object o) {
+      return !(o instanceof List) || !((List)o).isEmpty();
     }
   }
 }
