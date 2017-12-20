@@ -36,14 +36,14 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
         BinaryUnit firstUnit = BinaryUnit.extractEqualityCheck(operands[0]);
         if (firstUnit == null) return;
         BinaryUnitsChain chain = BinaryUnitsChain.createChain(firstUnit);
-        if(chain == null) return;
+        if (chain == null) return;
         for (int i = 1; i < operands.length; i++) {
           PsiExpression operand = operands[i];
           BinaryUnit binaryUnit = BinaryUnit.extractEqualityCheck(operand);
           chain.add(binaryUnit);
         }
         PsiReferenceExpression reference = chain.getProbableBug();
-        if(reference == null) return;
+        if (reference == null) return;
         holder.registerProblem(reference, InspectionsBundle.message("inspection.suspicious.chain.operation.description"));
       }
 
@@ -56,11 +56,11 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
           tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(expression), PsiExpressionStatement.class);
         if (previous != null && BinaryUnit.extractAssignment(expression) != null) return; // starting from first assignment only
         PsiExpressionStatement parentStatement = tryCast(expression.getParent(), PsiExpressionStatement.class);
-        if(parentStatement == null) return;
+        if (parentStatement == null) return;
         PsiExpressionStatement next =
           tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(parentStatement), PsiExpressionStatement.class);
         BinaryUnitsChain chain = BinaryUnitsChain.createChain(firstUnit);
-        if(chain == null) return;
+        if (chain == null) return;
         while (next != null) {
           BinaryUnit binaryUnit = BinaryUnit.extractAssignment(next.getExpression());
           if (binaryUnit == null) break;
@@ -68,9 +68,8 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
           next = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(next), PsiExpressionStatement.class);
         }
         PsiReferenceExpression reference = chain.getProbableBug();
-        if(reference == null) return;
+        if (reference == null) return;
         holder.registerProblem(reference, InspectionsBundle.message("inspection.suspicious.chain.operation.description"));
-
       }
     };
   }
@@ -148,18 +147,19 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
 
     @Nullable
     PsiReferenceExpression getProbableBug() {
-      if(myCount < MIN_OPERAND_COUNT) return null;
+      if (myCount < MIN_OPERAND_COUNT) return null;
       PsiReferenceExpression leftUnit = getProbableBug(myRightNameToUnit, true);
       PsiReferenceExpression rightUnit = getProbableBug(myLeftNameToUnit, false);
-      if(leftUnit != null && rightUnit != null) return null;
+      if (leftUnit != null && rightUnit != null) return null;
       if (leftUnit != null) return leftUnit;
       return rightUnit;
     }
 
     @Nullable
     private static PsiReferenceExpression getProbableBug(@NotNull Map<String, List<BinaryUnit>> nameToUnit, boolean isRightSide) {
-      if(nameToUnit.size() < 2) return null;
-      boolean sameNameGroupIsSingle = StreamEx.of(nameToUnit.values()).mapToInt(units -> units.size()).filter(size -> size > 1).count() == 1;
+      if (nameToUnit.size() < 2) return null;
+      boolean sameNameGroupIsSingle =
+        StreamEx.of(nameToUnit.values()).mapToInt(units -> units.size()).filter(size -> size > 1).count() == 1;
       if (!sameNameGroupIsSingle) return null;
       for (List<BinaryUnit> units : nameToUnit.values()) {
         if (units.size() > 1) {
@@ -177,11 +177,11 @@ public class SuspiciousChainOperationsInspection extends AbstractBaseJavaLocalIn
       if (leftQualifier == null || rightQualifier == null) return null;
       PsiClassType leftClassType = tryCast(leftQualifier.getType(), PsiClassType.class);
       PsiClassType rightClassType = tryCast(rightQualifier.getType(), PsiClassType.class);
-      if(leftClassType == null || rightClassType == null) return null;
+      if (leftClassType == null || rightClassType == null) return null;
       PsiClass leftClass = leftClassType.resolve();
       PsiClass rightClass = rightClassType.resolve();
-      if(leftClass == null || rightClass == null) return null;
-      if(leftClass.isEnum() || rightClass.isEnum()) return null;
+      if (leftClass == null || rightClass == null) return null;
+      if (leftClass.isEnum() || rightClass.isEnum()) return null;
       return new BinaryUnitsChain(first);
     }
   }
