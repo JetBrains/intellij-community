@@ -1155,11 +1155,17 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
+      private String getRefWithWordInName(List<String> referrersNames, String word) {
+        return referrersNames.stream().filter(x -> x.contains(word)).findFirst().get();
+      }
+
       @Override
       public void testing() throws Exception {
         waitForPause();
-        int numberOfReferringObjects = getNumberOfReferringObjects("l");
-        assertEquals(3, numberOfReferringObjects);
+        List<String> referrersNames = getNumberOfReferringObjects("l");
+        assertNotNull(getRefWithWordInName(referrersNames, "frame"));
+        assertNotNull(getRefWithWordInName(referrersNames, "module"));
+        assertNotNull(getRefWithWordInName(referrersNames, "dict"));
       }
 
       @NotNull

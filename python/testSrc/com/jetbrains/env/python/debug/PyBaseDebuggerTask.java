@@ -323,15 +323,19 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return null;
   }
 
-  protected int getNumberOfReferringObjects(String name) throws PyDebuggerException {
+  protected List<String> getNumberOfReferringObjects(String name) throws PyDebuggerException {
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
     final PyReferringObjectsValue value = new PyReferringObjectsValue((PyDebugValue)var);
-    EvaluationCallback<Integer> callback = new EvaluationCallback<>();
+    EvaluationCallback<List<String>> callback = new EvaluationCallback<>();
 
     myDebugProcess.loadReferrers(value, new PyDebugCallback<XValueChildrenList>() {
       @Override
       public void ok(XValueChildrenList valueList) {
-        callback.evaluated(valueList.size());
+        ArrayList<String> values = new ArrayList<>();
+        for (int i = 0; i < valueList.size(); ++i) {
+          values.add(valueList.getName(i));
+        }
+        callback.evaluated(values);
       }
 
       @Override
@@ -340,7 +344,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    final Pair<Integer, String> result = callback.waitFor(NORMAL_TIMEOUT);
+    final Pair<List<String>, String> result = callback.waitFor(NORMAL_TIMEOUT);
     if (result.second != null) {
       throw new PyDebuggerException(result.second);
     }
