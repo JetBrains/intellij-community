@@ -151,7 +151,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   private static final long HANDSHAKE_TIMEOUT = 60000;
 
-  private PyRemoteProcessHandlerBase myRemoteProcessHandlerBase;
+  private RemoteConsoleProcessData myRemoteConsoleProcessData;
 
   private String myConsoleTitle = null;
   private PythonConsoleView myConsoleView;
@@ -428,12 +428,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                          PydevConsoleRunner
                                                                            .getPathMapper(myProject, mySdk, myConsoleSettings),
                                                                          myProject, data, getRunnerFileFromHelpers());
-
-        myRemoteProcessHandlerBase = remoteConsoleProcessData.getRemoteProcessHandlerBase();
-        myCommandLine = myRemoteProcessHandlerBase.getCommandLine();
+        myRemoteConsoleProcessData = remoteConsoleProcessData;
+        myCommandLine = remoteConsoleProcessData.getCommandLine();
         myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
 
-        return myRemoteProcessHandlerBase.getProcess();
+        return remoteConsoleProcessData.getProcess();
       }
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
@@ -459,7 +458,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return PYDEV_PYDEVCONSOLE_PY;
   }
 
-  private RemoteProcess createRemoteConsoleProcess(PythonRemoteInterpreterManager manager,
+  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager,
                                                    @NotNull GeneralCommandLine commandLine)
     throws ExecutionException {
     PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
@@ -482,15 +481,15 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       // directory to some path inside the Docker container
       commandLine.putUserData(PythonRemoteInterpreterManager.ADDITIONAL_MAPPINGS, buildDockerPathMappings());
 
-      myRemoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
+      PyRemoteProcessHandlerBase remoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
         .getManager(data).startRemoteProcess(myProject, commandLine, manager, data,
                                              pathMapper);
 
-      myCommandLine = myRemoteProcessHandlerBase.getCommandLine();
-
-      RemoteProcess remoteProcess = myRemoteProcessHandlerBase.getProcess();
+      Process remoteProcess = myRemoteConsoleProcessData.getProcess();
 
       Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
+
+      PydevRemoteConsoleCommunication remoteConsoleCommunication;
 
       if (remoteProcess instanceof Tunnelable) {
         Tunnelable tunnelableProcess = (Tunnelable)remoteProcess;
@@ -503,7 +502,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                   remotePorts.first));
         }
 
-        myPydevConsoleCommunication = new PydevRemoteConsoleCommunication(myProject, myPorts[0], remoteProcess, myPorts[1]);
+        remoteConsoleCommunication = new PydevRemoteConsoleCommunication(myProject, myPorts[0], remoteProcess, myPorts[1]);
+
       }
       else {
         if (LOG.isDebugEnabled()) {
@@ -511,9 +511,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                   remotePorts.second, remotePorts.first));
         }
 
-        myPydevConsoleCommunication =
+        remoteConsoleCommunication =
           new PydevRemoteConsoleCommunication(myProject, remotePorts.first, remoteProcess, remotePorts.second);
       }
+
+      myRemoteConsoleProcessData = new RemoteConsoleProcessData(remoteProcessHandlerBase, remoteConsoleCommunication);
+      myPydevConsoleCommunication = remoteConsoleCommunication;
+      myCommandLine = myRemoteConsoleProcessData.getCommandLine();
 
       return remoteProcess;
     }
@@ -528,7 +532,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                                                                  DOCKER_CONTAINER_PROJECT_PATH)));
   }
 
-  public static Couple<Integer> getRemotePortsFromProcess(RemoteProcess process) throws ExecutionException {
+  public static Couple<Integer> getRemotePortsFromProcess(Process process) throws ExecutionException {
     @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") Scanner s = new Scanner(process.getInputStream());
     return Couple.of(readInt(s, process), readInt(s, process));
   }
@@ -586,7 +590,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           manager.createConsoleProcessHandler((RemoteProcess)process, myConsoleView, myPydevConsoleCommunication,
                                               myCommandLine, CharsetToolkit.UTF8_CHARSET,
                                               manager.setupMappings(myProject, data, null),
-                                              myRemoteProcessHandlerBase.getRemoteSocketToLocalHostProvider());
+                                              myRemoteConsoleProcessData.getSocketProvider());
       }
       else {
         LOG.error("Can't create remote console process handler");
