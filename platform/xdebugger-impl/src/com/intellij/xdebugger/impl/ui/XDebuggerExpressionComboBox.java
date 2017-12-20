@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.openapi.editor.Document;
@@ -76,7 +78,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMinimumSize(minimumSize);
     initEditor(showEditor, languageInside);
     fillComboBox();
-    myComponent = JBUI.Panels.simplePanel(myComboBox);
+    myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
   }
 
   public ComboBox getComboBox() {
