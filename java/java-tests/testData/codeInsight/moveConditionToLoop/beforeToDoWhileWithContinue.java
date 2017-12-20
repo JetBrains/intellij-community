@@ -4,7 +4,7 @@ class Main {
     int i = 0;
     while<caret>((true) {
       i++;
-      ifi == 4) continue;
+      if(i == 4) continue;
       if(i >= 12) break;
     }
   }
