@@ -38,6 +38,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -398,7 +399,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected boolean forkPerModule() {
     final String workingDirectory = getConfiguration().getWorkingDirectory();
     return getScope() != TestSearchScope.SINGLE_MODULE &&
-           ("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) &&
+           (("$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$").equals(workingDirectory) || ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory)) &&
            spansMultipleModules(getConfiguration().getPackage());
   }
 
