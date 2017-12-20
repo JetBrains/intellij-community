@@ -161,7 +161,7 @@ public class MovablePopup {
       Window owner = UIUtil.getWindow(myOwner);
       if (owner != null) {
         if (myHeavyWeight) {
-          Window view = HeavyWeightPopupCache.create(owner);
+          Window view = new JWindow(owner);
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
@@ -215,7 +215,7 @@ public class MovablePopup {
       }
       if (myView instanceof Window) {
         myViewBounds = myView.getBounds();
-        HeavyWeightPopupCache.dispose((Window)myView);
+        ((Window)myView).dispose();
       }
       else {
         Container parent = myView.getParent();
