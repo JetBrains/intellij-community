@@ -10,10 +10,14 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
     myFixture.addClass("package org.jetbrains.uast; public interface UElement {}")
     myFixture.addClass("""package com.intellij.psi; public interface PsiElement {
       | PsiElement getParent();
+      | PsiElement getSelf();
       |}""".trimMargin())
     myFixture.addClass("package com.intellij.psi; public interface PsiClass extends PsiElement {}")
     myFixture.addClass("""package org.jetbrains.uast; public interface UClass extends UElement, com.intellij.psi.PsiClass {
       | void uClassMethod();
+      |
+      | @Override
+      | UClass getSelf();
       |}""".trimMargin())
 
     myFixture.enableInspections(UElementAsPsiInspection())
@@ -94,12 +98,26 @@ class UElementAsPsiInspectionTest : PluginModuleTestCase() {
             UClassImpl impl = new UClassImpl();
             <warning descr="Usage of UElement as PsiElement is not recommended">impl.getParent()</warning>;
             impl.uClassMethod();
+            impl.getSelf();
+          }
+
+           public UastUsage(UClass impl){
+            <warning descr="Usage of UElement as PsiElement is not recommended">impl.getParent()</warning>;
+            impl.uClassMethod();
+            impl.getSelf();
           }
 
       }
 
       class UClassImpl implements UClass {
+
+        @Override
         public PsiElement getParent(){ return null; }
+
+        @Override
+        public UClass getSelf(){ return this; }
+
+        @Override
         public void uClassMethod(){  }
       }
 

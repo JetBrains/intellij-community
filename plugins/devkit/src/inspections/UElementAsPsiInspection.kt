@@ -83,8 +83,12 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
     private fun checkReceiver(node: UCallExpression) {
       if (!isUElementType(node.receiverType)) return
       val psiMethod = node.resolve() ?: return
-      if (isPsiElementClass(psiMethod.containingClass) || psiMethod.findSuperMethods().any { isPsiElementClass(it.containingClass) }) {
-        node.sourcePsiElement?.let { reportedElements.add(it) }
+      val containingClass = psiMethod.containingClass ?: return
+      if (containingClass.qualifiedName in ALLOWED_REDEFINITION) return
+      if (!isPsiElementClass(containingClass) && psiMethod.findSuperMethods().none { isPsiElementClass(it.containingClass) }) return
+      if (psiMethod.findSuperMethods().any { it.containingClass?.qualifiedName in ALLOWED_REDEFINITION }) return
+      node.sourcePsiElement?.let {
+        reportedElements.add(it)
       }
     }
 
@@ -117,5 +121,14 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
 
   private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
     PsiType.getTypeByName(fqn, searchScope.project, searchScope).takeIf { it.resolve() != null }
+
+  private companion object {
+    val ALLOWED_REDEFINITION = setOf(
+      UClass::class.java.name,
+      UMethod::class.java.name,
+      UVariable::class.java.name,
+      UClassInitializer::class.java.name
+    )
+  }
 
 }
