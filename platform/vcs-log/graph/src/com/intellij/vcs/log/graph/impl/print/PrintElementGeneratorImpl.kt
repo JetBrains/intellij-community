@@ -135,21 +135,20 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     val upPosition = createEndPositionFunction(rowIndex - 1, true)
     val downPosition = createEndPositionFunction(rowIndex + 1, false)
 
-    for (position in visibleElements.indices) {
-      val element = visibleElements[position]
+    visibleElements.forEachIndexed { position, element ->
       when (element) {
         is GraphNode -> {
           val nodeIndex = element.nodeIndex
           builder.consumeNode(element, position)
-          linearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL).forEach {
-            val arrowType = getArrowType(it, rowIndex)
-            val down = downPosition(it)
-            val up = upPosition(it)
+          linearGraph.getAdjacentEdges(nodeIndex, EdgeFilter.ALL).forEach { edge ->
+            val arrowType = getArrowType(edge, rowIndex)
+            val down = downPosition(edge)
+            val up = upPosition(edge)
             if (down != null) {
-              builder.consumeDownEdge(it, position, down, arrowType == EdgePrintElement.Type.DOWN)
+              builder.consumeDownEdge(edge, position, down, arrowType === EdgePrintElement.Type.DOWN)
             }
             if (up != null) {
-              builder.consumeUpEdge(it, up, position, arrowType == EdgePrintElement.Type.UP)
+              builder.consumeUpEdge(edge, up, position, arrowType === EdgePrintElement.Type.UP)
             }
           }
         }
@@ -158,15 +157,15 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
           val down = downPosition(element)
           val up = upPosition(element)
           if (down != null) {
-            builder.consumeDownEdge(element, position, down, arrowType == EdgePrintElement.Type.DOWN)
+            builder.consumeDownEdge(element, position, down, arrowType === EdgePrintElement.Type.DOWN)
           }
-          else if (arrowType == EdgePrintElement.Type.DOWN) {
+          else if (arrowType === EdgePrintElement.Type.DOWN) {
             builder.consumeArrow(element, position, arrowType)
           }
           if (up != null) {
-            builder.consumeUpEdge(element, up, position, arrowType == EdgePrintElement.Type.UP)
+            builder.consumeUpEdge(element, up, position, arrowType === EdgePrintElement.Type.UP)
           }
-          else if (arrowType == EdgePrintElement.Type.UP) {
+          else if (arrowType === EdgePrintElement.Type.UP) {
             builder.consumeArrow(element, position, arrowType)
           }
         }
@@ -179,10 +178,8 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
 
     val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex)
 
-    val toPosition = HashMap<GraphElement, Int>()
-    for (position in visibleElementsInNextRow.indices) {
-      toPosition.put(visibleElementsInNextRow[position], position)
-    }
+    val toPosition = HashMap<GraphElement, Int>(visibleElementsInNextRow.size)
+    visibleElementsInNextRow.forEachIndexed { position, element -> toPosition.put(element, position) }
 
     return { edge ->
       toPosition[edge] ?: run {
@@ -200,9 +197,10 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     }
     else { // special edges
       when (edge.type) {
-        GraphEdgeType.DOTTED_ARROW_DOWN, GraphEdgeType.NOT_LOAD_COMMIT -> if (intEqual(edge.upNodeIndex, rowIndex - 1)) {
-          return EdgePrintElement.Type.DOWN
-        }
+        GraphEdgeType.DOTTED_ARROW_DOWN, GraphEdgeType.NOT_LOAD_COMMIT ->
+          if (intEqual(edge.upNodeIndex, rowIndex - 1)) {
+            return EdgePrintElement.Type.DOWN
+          }
         GraphEdgeType.DOTTED_ARROW_UP ->
           // todo case 0-row arrow
           if (intEqual(edge.downNodeIndex, rowIndex + 1)) {
@@ -238,8 +236,8 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
   }
 
   private fun isEdgeVisibleInRow(edge: GraphEdge, visibleRowIndex: Int): Boolean {
-    val normalEdge = asNormalEdge(edge) ?: // e.d. edge is special. See addSpecialEdges
-                     return false
+    val normalEdge = asNormalEdge(edge) ?:
+                     return false // e.d. edge is special. See addSpecialEdges
     return isEdgeVisibleInRow(normalEdge, visibleRowIndex)
   }
 
@@ -281,23 +279,10 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     return Math.min(rowIndex - e1.up, e1.down - rowIndex)
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(PrintElementGeneratorImpl::class.java)
-
-    private val VERY_LONG_EDGE_SIZE = 1000
-    @JvmField val LONG_EDGE_SIZE = 30
-    private val VERY_LONG_EDGE_PART_SIZE = 250
-    private val LONG_EDGE_PART_SIZE = 1
-
-    private val CACHE_SIZE = 100
-    private val SAMPLE_SIZE = 20000
-    private val K = 0.1
-  }
-
   private inner class PrintElementBuilder(private val rowIndex: Int) {
+
     private val result = ArrayList<PrintElementWithGraphElement>()
     private val nodes = ArrayList<PrintElementWithGraphElement>() // nodes at the end, to be drawn over the edges
-
     fun consumeNode(node: GraphNode, position: Int) {
       nodes.add(SimplePrintElementImpl(rowIndex, position, node, printElementManager))
     }
@@ -322,5 +307,19 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
       result.addAll(nodes)
       return result
     }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(PrintElementGeneratorImpl::class.java)
+
+    private val VERY_LONG_EDGE_SIZE = 1000
+    @JvmField
+    val LONG_EDGE_SIZE = 30
+    private val VERY_LONG_EDGE_PART_SIZE = 250
+    private val LONG_EDGE_PART_SIZE = 1
+
+    private val CACHE_SIZE = 100
+    private val SAMPLE_SIZE = 20000
+    private val K = 0.1
   }
 }
