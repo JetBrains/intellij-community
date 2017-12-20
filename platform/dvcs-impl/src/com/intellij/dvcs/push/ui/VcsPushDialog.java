@@ -215,7 +215,7 @@ public class VcsPushDialog extends DialogWrapper {
       myForcePushAction.setEnabled(canForcePush);
       String tooltip = null;
       PushTarget target = myController.getProhibitedTarget();
-      if (!canForcePush && target!=null) {
+      if (!canForcePush && target != null) {
         tooltip = "Force push to <b>" + target.getPresentation() + "</b> is prohibited";
       }
       myForcePushAction.putValue(Action.SHORT_DESCRIPTION, tooltip);

@@ -6,6 +6,7 @@ package com.intellij.debugger.engine.requests;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
@@ -60,7 +61,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
       final Method method = event.method();
       final Value retVal = event.returnValue();
 
-      if (method == null || !"void".equals(method.returnTypeName())) {
+      if (method == null || !DebuggerUtilsEx.isVoid(method)) {
         // remember methods with non-void return types only
         myLastExecutedMethod = method;
         myLastMethodReturnValue = retVal;

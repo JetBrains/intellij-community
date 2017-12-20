@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.graph.impl.facade;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.*;
 import com.intellij.vcs.log.graph.actions.ActionController;
 import com.intellij.vcs.log.graph.actions.GraphAction;
@@ -187,10 +188,19 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
       updatePrintElementGenerator();
     }
 
+    @NotNull
     private LinearGraphAction convert(@NotNull GraphAction graphAction) {
       PrintElementWithGraphElement printElement = null;
-      if (graphAction.getAffectedElement() != null) {
-        printElement = myPrintElementGenerator.withGraphElement(graphAction.getAffectedElement());
+      PrintElement affectedElement = graphAction.getAffectedElement();
+      if (affectedElement != null) {
+        if (affectedElement instanceof PrintElementWithGraphElement) {
+          printElement = (PrintElementWithGraphElement)affectedElement;
+        } else {
+          printElement = ContainerUtil.find(myPrintElementGenerator.getPrintElements(affectedElement.getRowIndex()), it -> it.equals(affectedElement));
+          if (printElement == null) {
+            throw new IllegalStateException("Not found graphElement for this printElement: " + affectedElement);
+          }
+        }
       }
       return new LinearGraphActionImpl(printElement, graphAction.getType());
     }

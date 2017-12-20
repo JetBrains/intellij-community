@@ -54,7 +54,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -361,29 +360,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private class MyChangeListListener extends ChangeListAdapter {
-
     @Override
-    public void changeListAdded(ChangeList list) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changeListRemoved(ChangeList list) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-      scheduleRefresh();
-    }
-
-    @Override
-    public void defaultListChanged(final ChangeList oldDefaultList, ChangeList newDefaultList) {
+    public void changeListsChanged() {
       scheduleRefresh();
     }
 
@@ -510,11 +488,19 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     @Override
     protected void selectChange(@NotNull Wrapper change) {
       DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(root, change.getUserObject());
+      DefaultMutableTreeNode node = findChangeInTree(root, change);
       if (node != null) {
         TreePath path = TreeUtil.getPathFromRoot(node);
         TreeUtil.selectPath(myView, path, false);
       }
+    }
+
+    private DefaultMutableTreeNode findChangeInTree(@NotNull DefaultMutableTreeNode root, @NotNull Wrapper change) {
+      Object userObject = change.getUserObject();
+      if (userObject instanceof ChangeListChange) {
+        return TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+      }
+      return TreeUtil.findNodeWithObject(root, userObject);
     }
 
     @NotNull

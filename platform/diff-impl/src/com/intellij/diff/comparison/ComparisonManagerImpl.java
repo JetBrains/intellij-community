@@ -470,7 +470,7 @@ public class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
-  private static BitSet collectIgnoredRanges(@NotNull List<TextRange> ignoredRanges) {
+  public static BitSet collectIgnoredRanges(@NotNull List<TextRange> ignoredRanges) {
     BitSet set = new BitSet();
     for (TextRange range : ignoredRanges) {
       set.set(range.getStartOffset(), range.getEndOffset());

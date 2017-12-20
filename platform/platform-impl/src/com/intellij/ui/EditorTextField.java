@@ -626,10 +626,9 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       toReleaseEditor = true;
     }
 
-
-    Dimension size = JBUI.size(100, 20);
+    Dimension size = JBUI.size(100, 10);
     if (myEditor != null) {
-      final Dimension preferredSize = new Dimension(myEditor.getComponent().getPreferredSize());
+      Dimension preferredSize = myEditor.getComponent().getPreferredSize();
 
       if (myPreferredWidth != -1) {
         preferredSize.width = myPreferredWidth;
@@ -657,7 +656,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       return super.getMinimumSize();
     }
 
-    Dimension size = JBUI.size(1, 20);
+    Dimension size = JBUI.size(1, 10);
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 

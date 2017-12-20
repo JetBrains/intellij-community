@@ -153,7 +153,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule(), configuration);
 
     for (final TestTargetType testTargetType : TestTargetType.values()) {
-      final JBRadioButton button = new JBRadioButton(StringUtil.capitalize(testTargetType.name().toLowerCase(Locale.getDefault())));
+      final JBRadioButton button = new JBRadioButton(StringUtil.capitalize(testTargetType.getCustomName().toLowerCase(Locale.getDefault())));
       button.setActionCommand(testTargetType.name());
       button.addActionListener(o -> form.onTargetTypeChanged());
       form.myButtonGroup.add(button);

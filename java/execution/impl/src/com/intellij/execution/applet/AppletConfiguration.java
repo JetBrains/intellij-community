@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -68,7 +69,7 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
         myHtmlURL = getHtmlURL();
         final int classPathType = myHtmlURL.isHttp() ? JavaParameters.JDK_ONLY : JavaParameters.JDK_AND_CLASSES;
         final RunConfigurationModule runConfigurationModule = getConfigurationModule();
-        JavaParametersUtil.configureModule(runConfigurationModule, params, classPathType, getOptions().getAlternativeJrePathEnabled() ? getOptions().getAlternativeJrePath() : null);
+        JavaParametersUtil.configureModule(runConfigurationModule, params, classPathType, getOptions().isAlternativeJrePathEnabled() ? getOptions().getAlternativeJrePath() : null);
         final String policyFileParameter = getPolicyFileParameter();
         if (policyFileParameter != null) {
           params.getVMParametersList().add(policyFileParameter);
@@ -155,13 +156,13 @@ public class AppletConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   }
 
   @Override
-  public void setMainClassName(final String qualifiedName) {
+  public void setMainClassName(@Nullable String qualifiedName) {
     getOptions().setMainClassName(qualifiedName);
   }
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    if (getOptions().getAlternativeJrePathEnabled() && (StringUtil.isEmptyOrSpaces(getOptions().getAlternativeJrePath()) || !JdkUtil.checkForJre(getOptions().getAlternativeJrePath()))) {
+    if (getOptions().isAlternativeJrePathEnabled() && (StringUtil.isEmptyOrSpaces(getOptions().getAlternativeJrePath()) || !JdkUtil.checkForJre(getOptions().getAlternativeJrePath()))) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("jre.not.valid.error.message", getOptions().getAlternativeJrePath()));
     }
     getConfigurationModule().checkForWarning();

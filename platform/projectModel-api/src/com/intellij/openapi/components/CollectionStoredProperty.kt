@@ -4,26 +4,23 @@
 package com.intellij.openapi.components
 
 import com.intellij.util.SmartList
-import gnu.trove.THashMap
 import kotlin.reflect.KProperty
 
 /**
  * AbstractCollectionBinding modifies collection directly, so, we cannot use null as default null and return empty list on get.
  */
-internal class ListStoredProperty<T> : StoredPropertyBase<MutableList<T>>() {
+internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protected val value: C) : StoredPropertyBase<C>() {
   override fun isEqualToDefault() = value.isEmpty()
-
-  private val value: MutableList<T> = SmartList()
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value
 
-  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: MutableList<T>) {
+  override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: C) {
     if (doSetValue(value, newValue)) {
       thisRef.ownModificationCount++
     }
   }
 
-  private fun doSetValue(old: MutableList<T>, new: List<T>): Boolean {
+  protected fun doSetValue(old: C, new: C): Boolean {
     if (old == new) {
       return false
     }
@@ -33,7 +30,7 @@ internal class ListStoredProperty<T> : StoredPropertyBase<MutableList<T>>() {
     return true
   }
 
-  override fun equals(other: Any?) = this === other || (other is ListStoredProperty<*> && value == other.value)
+  override fun equals(other: Any?) = this === other || (other is CollectionStoredProperty<*, *> && value == other.value)
 
   override fun hashCode() = value.hashCode()
 
@@ -41,11 +38,15 @@ internal class ListStoredProperty<T> : StoredPropertyBase<MutableList<T>>() {
 
   override fun setValue(other: StoredProperty): Boolean {
     @Suppress("UNCHECKED_CAST")
-    return doSetValue(value, (other as ListStoredProperty<T>).value)
+    return doSetValue(value, (other as CollectionStoredProperty<E, C>).value)
   }
 }
 
-internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V> = THashMap()) : StoredPropertyBase<MutableMap<K, V>>() {
+internal class ListStoredProperty<T> : CollectionStoredProperty<T, SmartList<T>>(SmartList()) {
+  override fun getModificationCount() = value.modificationCount.toLong()
+}
+
+internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>) : StoredPropertyBase<MutableMap<K, V>>() {
   override fun isEqualToDefault() = value.isEmpty()
 
   override operator fun getValue(thisRef: BaseState, property: KProperty<*>) = value

@@ -4,37 +4,25 @@
 package com.intellij.execution.applet
 
 import com.intellij.execution.ExternalizablePath
-import com.intellij.execution.configurations.ModuleBasedConfigurationOptions
+import com.intellij.execution.JvmConfigurationOptions
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.xmlb.annotations.*
 
-class AppletConfigurationOptions : ModuleBasedConfigurationOptions() {
-  @get:OptionTag("MAIN_CLASS_NAME")
-  var mainClassName by string()
-
+class AppletConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("HTML_FILE_NAME")
   var htmlFileName by string()
 
   @get:OptionTag("HTML_USED")
-  var htmlUsed by storedProperty(false)
+  var htmlUsed by property(false)
 
   @get:OptionTag("WIDTH")
-  var width by storedProperty(400)
+  var width by property(400)
 
   @get:OptionTag("HEIGHT")
-  var height by storedProperty(300)
+  var height by property(300)
 
   @get:OptionTag("POLICY_FILE")
   var policyFile by string(ExternalizablePath.urlValue("${PathManager.getHomePath()}/bin/appletviewer.policy"))
-
-  @get:OptionTag("VM_PARAMETERS")
-  var vmParameters by string()
-
-  @get:OptionTag("ALTERNATIVE_JRE_PATH_ENABLED")
-  var alternativeJrePathEnabled by storedProperty(false)
-
-  @get:OptionTag("ALTERNATIVE_JRE_PATH")
-  var alternativeJrePath by string()
 
   @get:Property(surroundWithTag = false)
   @get:XCollection()

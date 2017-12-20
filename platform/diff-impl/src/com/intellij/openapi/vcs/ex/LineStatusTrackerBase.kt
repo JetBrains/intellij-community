@@ -46,7 +46,9 @@ abstract class LineStatusTrackerBase<R : Range> {
   protected val documentTracker: DocumentTracker
   protected abstract val renderer: LineStatusMarkerRenderer
 
-  private var isReleased: Boolean = false
+  var isReleased: Boolean = false
+    private set
+
   private var isInitialized: Boolean = false
 
   protected val blocks: List<Block> get() = documentTracker.blocks
@@ -315,6 +317,19 @@ abstract class LineStatusTrackerBase<R : Range> {
     }
   }
 
+  fun getRangesForLines(lines: BitSet): List<R>? {
+    LOCK.read {
+      if (!isValid()) return null
+      val result = ArrayList<R>()
+      for (block in blocks) {
+        if (block.isSelectedByLine(lines)) {
+          result.add(block.toRange())
+        }
+      }
+      return result
+    }
+  }
+
   fun getRangeForLine(line: Int): R? {
     LOCK.read {
       if (!isValid()) return null
@@ -342,7 +357,7 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
   @CalledInAwt
-  private fun runBulkRollback(condition: (Block) -> Boolean) {
+  protected fun runBulkRollback(condition: (Block) -> Boolean) {
     if (!isValid()) return
 
     updateDocument(Side.RIGHT, VcsBundle.message("command.name.rollback.change")) {
@@ -406,22 +421,26 @@ abstract class LineStatusTrackerBase<R : Range> {
   }
 
 
-  private data class Data(var innerRanges: List<Range.InnerRange>? = null,
-                          var rangeHighlighter: RangeHighlighter? = null)
+  protected open class BlockData(internal var innerRanges: List<Range.InnerRange>? = null,
+                                 internal var rangeHighlighter: RangeHighlighter? = null)
+
+  open protected fun createBlockData(): BlockData = BlockData()
+  open protected val Block.ourData: BlockData get() = getBlockData(this)
+  protected fun getBlockData(block: Block): BlockData {
+    if (block.data == null) block.data = createBlockData()
+    return block.data as BlockData
+  }
+
+  protected val Block.innerRanges: List<Range.InnerRange>? get() = this.ourData.innerRanges.nullize()
+
 
   companion object {
     @JvmStatic protected val LOG = Logger.getInstance("#com.intellij.openapi.vcs.ex.LineStatusTracker")
-
-    private val Block.ourData: Data get() {
-      if (data == null) data = Data()
-      return data as Data
-    }
 
     @JvmStatic protected val Block.start: Int get() = range.start2
     @JvmStatic protected val Block.end: Int get() = range.end2
     @JvmStatic protected val Block.vcsStart: Int get() = range.start1
     @JvmStatic protected val Block.vcsEnd: Int get() = range.end1
-    @JvmStatic protected val Block.innerRanges: List<Range.InnerRange>? get() = this.ourData.innerRanges.nullize()
 
     @JvmStatic protected fun Block.isSelectedByLine(line: Int) = DiffUtil.isSelectedByLine(line, this.range.start2, this.range.end2)
     @JvmStatic protected fun Block.isSelectedByLine(lines: BitSet) = DiffUtil.isSelectedByLine(lines, this.range.start2, this.range.end2)

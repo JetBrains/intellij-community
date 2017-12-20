@@ -358,10 +358,7 @@ public class RedundantCastUtil {
             final PsiType typeByParent = PsiTypesUtil.getExpectedTypeByParent(expression);
             final PsiCall newCall;
             if (typeByParent != null) {
-              final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
-              final String arrayCreationText = "new " + typeByParent.getCanonicalText() + "[] {" + expression.getText() + "}";
-              final PsiExpression arrayDeclaration = elementFactory.createExpressionFromText(arrayCreationText, expression);
-              newCall = (PsiCall)((PsiNewExpression)arrayDeclaration).getArrayInitializer().getInitializers()[0];
+              newCall = (PsiCall)LambdaUtil.copyWithExpectedType(expression, typeByParent);
             }
             else {
               final PsiCall call = LambdaUtil.treeWalkUp(expression);

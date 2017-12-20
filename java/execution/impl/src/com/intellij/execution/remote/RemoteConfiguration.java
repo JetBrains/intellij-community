@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,10 +34,6 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
   @Override
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    final String moduleName = getConfigurationModule().getModuleName();
-    if (!StringUtil.isEmpty(moduleName)) { // default value
-      writeModule(element);
-    }
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 

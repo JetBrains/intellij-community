@@ -11,7 +11,9 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.lang.StdLanguages
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LineExtensionInfo
@@ -19,15 +21,20 @@ import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModulePointerManager
+import com.intellij.openapi.module.impl.ModulePointerManagerImpl
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.panel.JBPanelFactory
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.project.stateStore
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -36,13 +43,15 @@ import java.awt.Font
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Action
+import javax.swing.JCheckBox
 import javax.swing.JPanel
 
 class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWrapper(project) {
   private val editorArea: EditorTextField
   private val document: Document
     get() = editorArea.document
-  private lateinit var modules : List<Module>
+  private lateinit var modules: List<Module>
+  private val rememberOldNamesCheckBox: JCheckBox
 
   init {
     title = ProjectBundle.message("convert.module.groups.dialog.title")
@@ -61,6 +70,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
+    rememberOldNamesCheckBox = JCheckBox(ProjectBundle.message("convert.module.groups.remember.old.names.text"), true)
     importRenamingScheme(emptyMap())
     init()
   }
@@ -82,7 +92,17 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
 
   override fun createCenterPanel(): JPanel {
     val text = XmlStringUtil.wrapInHtml(ProjectBundle.message("convert.module.groups.description.text"))
-    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP).addToCenter(editorArea).addToTop(JBLabel(text))
+    val historyFilePath = when (project.stateStore.storageScheme) {
+      StorageScheme.DIRECTORY_BASED -> "${Project.DIRECTORY_STORE_FOLDER}/modules.xml"
+      StorageScheme.DEFAULT -> PathUtil.getFileName(project.stateStore.projectFilePath)
+    }
+    val rememberOldNames = JBPanelFactory.panel(rememberOldNamesCheckBox)
+      .withTooltip(ProjectBundle.message("convert.module.groups.remember.old.names.tooltip", historyFilePath,
+                                         ApplicationNamesInfo.getInstance().fullProductName)).createPanel()
+    return JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP)
+      .addToCenter(editorArea)
+      .addToTop(JBLabel(text))
+      .addToBottom(rememberOldNames)
   }
 
   override fun getPreferredFocusedComponent() = editorArea.focusTarget
@@ -103,8 +123,8 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   fun importRenamingScheme(renamingScheme: Map<String, String>) {
     val moduleManager = ModuleManager.getInstance(project)
     fun getDefaultName(module: Module) = (moduleManager.getModuleGroupPath(module)?.let { it.joinToString(".") + "." } ?: "") + module.name
-    val names = moduleManager.modules.associateBy({ it }, { renamingScheme.getOrElse(it.name, {getDefaultName(it)}) })
-    modules = moduleManager.modules.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, {names[it]!!}))
+    val names = moduleManager.modules.associateBy({ it }, { renamingScheme.getOrElse(it.name, { getDefaultName(it) }) })
+    modules = moduleManager.modules.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER, { names[it]!! }))
     runWriteAction {
       document.setText(modules.joinToString("\n") { names[it]!! })
     }
@@ -120,7 +140,8 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
 
   override fun doOKAction() {
     ModuleNamesListInspection.checkModuleNames(document.charsSequence.lines(), project) { line, message ->
-      Messages.showErrorDialog(project, ProjectBundle.message("convert.module.groups.error.at.text", line + 1, StringUtil.decapitalize(message)),
+      Messages.showErrorDialog(project,
+                               ProjectBundle.message("convert.module.groups.error.at.text", line + 1, StringUtil.decapitalize(message)),
                                CommonBundle.getErrorTitle())
       return
     }
@@ -138,6 +159,9 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       runWriteAction {
         model.commit()
       }
+      if (rememberOldNamesCheckBox.isSelected) {
+        (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
+      }
     }
 
     super.doOKAction()
@@ -149,7 +173,8 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   }
 }
 
-class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(ProjectBundle.message("convert.module.groups.action.text"), ProjectBundle.message("convert.module.groups.action.description"), null) {
+class ConvertModuleGroupsToQualifiedNamesAction : DumbAwareAction(ProjectBundle.message("convert.module.groups.action.text"),
+                                                                  ProjectBundle.message("convert.module.groups.action.description"), null) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     ConvertModuleGroupsToQualifiedNamesDialog(project).show()

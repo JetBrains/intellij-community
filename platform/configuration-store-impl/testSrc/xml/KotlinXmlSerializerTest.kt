@@ -33,7 +33,7 @@ class KotlinXmlSerializerTest {
 
     val data = Foo()
     data.PLACES_MAP = "new"
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="PLACES_MAP" value="new" />
     </bean>""", data)
@@ -41,8 +41,8 @@ class KotlinXmlSerializerTest {
 
   @Test fun floatProperty() {
     val state = AState()
-    state.floatProperty = 3.4
-    doSerializerTest("""
+    state.floatProperty = 3.4f
+    testSerializer("""
     <AState>
       <option name="floatProperty" value="3.4" />
     </AState>
@@ -58,7 +58,7 @@ class KotlinXmlSerializerTest {
 
     val data = Foo()
     data.PLACES_MAP.put("", PlaceSettings())
-    doSerializerTest("""
+    testSerializer("""
     <bean>
       <option name="PLACES_MAP">
         <entry key="">

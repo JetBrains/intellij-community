@@ -223,7 +223,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
     myParameters.setItems(cloneParameters(configuration.getAppletParameters()));
     myModuleSelector.reset(runConfiguration);
-    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.getAlternativeJrePathEnabled());
+    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
   }
 
   private RawCommandLineEditor getVMParametersComponent() {
@@ -242,7 +242,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
   public void checkEditorData(@NotNull AppletConfiguration runConfiguration) {
     AppletConfigurationOptions configuration = runConfiguration.getOptions();
-    configuration.setMainClassName(getClassNameComponent().getText().trim());
+    runConfiguration.setMainClassName(getClassNameComponent().getText().trim());
     configuration.setHtmlFileName(toSystemFormat(getHtmlPathComponent().getText()));
     configuration.setVmParameters(getVMParametersComponent().getText().trim());
     runConfiguration.setPolicyFile(getPolicyFileComponent().getText());

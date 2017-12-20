@@ -144,7 +144,6 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    writeModule(element);
     JDOMExternalizer.write(element, "path", ExternalizablePath.urlValue(scriptPath));
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "params", scriptParams);
@@ -316,7 +315,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     vmParams = value;
   }
 

@@ -29,7 +29,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Graphics
@@ -37,19 +36,18 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 import java.util.*
 
-class LineStatusTracker<R : Range> private constructor(override val project: Project,
-                                                       document: Document,
-                                                       override val virtualFile: VirtualFile,
-                                                       mode: Mode
-) : LineStatusTrackerBase<Range>(project, document) {
+abstract class LineStatusTracker<R : Range> constructor(override val project: Project,
+                                                        document: Document,
+                                                        override val virtualFile: VirtualFile,
+                                                        mode: Mode
+) : LineStatusTrackerBase<R>(project, document) {
   enum class Mode {
     DEFAULT, SMART, SILENT
   }
 
   private val vcsDirtyScopeManager: VcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project)
 
-  override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override abstract val renderer: LocalLineStatusMarkerRenderer
 
   var mode: Mode = mode
     set(value) {
@@ -70,7 +68,7 @@ class LineStatusTracker<R : Range> private constructor(override val project: Pro
   @CalledInAwt
   override fun fireFileUnchanged() {
     if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-      // later to avoid saving inside document change event processing.
+      // later to avoid saving inside document change event processing and deadlock with CLM.
       TransactionGuard.getInstance().submitTransactionLater(project, Runnable {
         FileDocumentManager.getInstance().saveDocument(document)
         val isEmpty = documentTracker.readLock { blocks.isEmpty() }
@@ -97,7 +95,8 @@ class LineStatusTracker<R : Range> private constructor(override val project: Pro
     renderer.showAfterScroll(editor, range)
   }
 
-  class MyLineStatusMarkerRenderer(val tracker: LineStatusTracker<*>) : LineStatusMarkerPopupRenderer(tracker) {
+  protected open class LocalLineStatusMarkerRenderer(open val tracker: LineStatusTracker<*>)
+    : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
     override fun canDoAction(range: Range, e: MouseEvent?): Boolean {
@@ -128,18 +127,8 @@ class LineStatusTracker<R : Range> private constructor(override val project: Pro
       override fun isEnabled(range: Range): Boolean = true
 
       override fun actionPerformed(range: Range) {
-        RollbackLineStatusAction.rollback(tracker, editor, range)
+        RollbackLineStatusAction.rollback(tracker, range, editor)
       }
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun createOn(virtualFile: VirtualFile,
-                 document: Document,
-                 project: Project,
-                 mode: Mode): LineStatusTracker<*> {
-      return LineStatusTracker<Range>(project, document, virtualFile, mode)
     }
   }
 }

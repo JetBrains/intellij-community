@@ -1,5 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.concurrency.JobScheduler;
@@ -279,10 +280,8 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @Override
   public void readExternal(Element element) throws InvalidDataException {
-    final String showRecycled = element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED);
-    myShowRecycled = showRecycled == null || Boolean.parseBoolean(showRecycled);
-    String removeFilesStrategy = JDOMExternalizerUtil.readField(element, REMOVE_FILES_FROM_SHELF_STRATEGY);
-    myRemoveFilesFromShelf = removeFilesStrategy != null && Boolean.parseBoolean(removeFilesStrategy);
+    myShowRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED));
+    myRemoveFilesFromShelf = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, REMOVE_FILES_FROM_SHELF_STRATEGY));
     migrateOldShelfInfo(element, true);
     migrateOldShelfInfo(element, false);
   }
@@ -361,8 +360,12 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(myShowRecycled));
-    JDOMExternalizerUtil.writeField(element, REMOVE_FILES_FROM_SHELF_STRATEGY, Boolean.toString(isRemoveFilesFromShelf()));
+    if (myShowRecycled) {
+      element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(true));
+    }
+    if (isRemoveFilesFromShelf()) {
+      JDOMExternalizerUtil.writeField(element, REMOVE_FILES_FROM_SHELF_STRATEGY, Boolean.toString(true));
+    }
   }
 
   @NotNull

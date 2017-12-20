@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 @file:JvmName("XmlSerializer")
 package com.intellij.configurationStore
 
@@ -19,12 +21,21 @@ import kotlin.concurrent.write
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.jvm.isAccessible
 
-private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
+private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SerializationFilter>>()
 
-private fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
+private fun getDefaultSerializationFilter(): SerializationFilter {
   var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
   if (result == null) {
-    result = SkipDefaultsSerializationFilter()
+    result = object : SkipDefaultsSerializationFilter() {
+      override fun accepts(accessor: Accessor, bean: Any): Boolean {
+        return if (bean is BaseState) {
+          bean.accepts(accessor, bean)
+        }
+        else {
+          super.accepts(accessor, bean)
+        }
+      }
+    }
     skipDefaultsSerializationFilter.set(SoftReference(result))
   }
   return result

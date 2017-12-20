@@ -53,8 +53,6 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Map<String, Set<RefEntity>> getContent();
 
-  void resolveProblem(@NotNull CommonProblemDescriptor descriptor);
-
   boolean isProblemResolved(@Nullable CommonProblemDescriptor descriptor);
 
   boolean isProblemResolved(@Nullable RefEntity entity);

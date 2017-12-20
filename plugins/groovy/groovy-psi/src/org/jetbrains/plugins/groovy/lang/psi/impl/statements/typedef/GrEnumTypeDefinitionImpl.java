@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
@@ -11,13 +13,11 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -79,16 +79,6 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   @Override
-  @NotNull
-  public GrField[] getFields() {
-    GrField[] bodyFields = super.getFields();
-    GrEnumConstant[] enumConstants = getEnumConstants();
-    if (bodyFields.length == 0) return enumConstants;
-    if (enumConstants.length == 0) return bodyFields;
-    return ArrayUtil.mergeArrays(bodyFields, enumConstants);
-  }
-
-  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
@@ -139,18 +129,17 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     });
   }
 
+  @NotNull
   @Override
   public GrEnumConstant[] getEnumConstants() {
-    GrEnumConstantList list = getEnumConstantList();
-    if (list != null) return list.getEnumConstants();
-    return GrEnumConstant.EMPTY_ARRAY;
+    GrEnumDefinitionBody body = getBody();
+    return body == null ? GrEnumConstant.EMPTY_ARRAY : body.getEnumConstants();
   }
 
   @Override
   public GrEnumConstantList getEnumConstantList() {
     GrEnumDefinitionBody enumDefinitionBody = getBody();
-    if (enumDefinitionBody != null) return enumDefinitionBody.getEnumConstantList();
-    return null;
+    return enumDefinitionBody == null ? null : enumDefinitionBody.getEnumConstantList();
   }
 
   @Override

@@ -140,8 +140,8 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
 
   override fun getState() = loadedModulesListStorage
 
-  override fun loadState(state: LoadedModulesListStorage?) {
-    setLoadedModules(state?.modules ?: emptyList())
+  override fun loadState(state: LoadedModulesListStorage) {
+    setLoadedModules(state.modules)
   }
 
   companion object {

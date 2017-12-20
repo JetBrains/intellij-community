@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
@@ -77,7 +78,9 @@ public class RollbackWorker {
       }, updateMode, "Refresh changelists after update", ModalityState.current());
     };
 
-    final Runnable rollbackAction = new MyRollbackRunnable(changes, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
+    List<Change> otherChanges = revertPartialChanges(changes);
+
+    final Runnable rollbackAction = new MyRollbackRunnable(otherChanges, deleteLocallyAddedFiles, afterRefresh, localHistoryActionName);
 
     if (ApplicationManager.getApplication().isDispatchThread() && !myInvokedFromModalContext) {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myOperationName, true,
@@ -107,6 +110,19 @@ public class RollbackWorker {
       rollbackAction.run();
     }
     changeListManager.showLocalChangesInvalidated();
+  }
+
+  @NotNull
+  private List<Change> revertPartialChanges(Collection<Change> changes) {
+    return PartialChangesUtil.processPartialChanges(
+      myProject, changes,
+      (partialChanges, tracker) -> {
+        for (ChangeListChange change : partialChanges) {
+          tracker.rollbackChangelistChanges(change.getChangeListId());
+        }
+        return true;
+      }
+    );
   }
 
   private class MyRollbackRunnable implements Runnable {

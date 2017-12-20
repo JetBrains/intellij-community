@@ -55,7 +55,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   }
 
   @Override
-  public void setVMParameters(String vmParams) {
+  public void setVMParameters(@Nullable String vmParams) {
     this.vmParams = vmParams;
   }
 
@@ -169,7 +169,6 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
-    writeModule(element);
     JDOMExternalizer.write(element, "vmparams", vmParams);
     JDOMExternalizer.write(element, "cmdLine", cmdLine);
     JDOMExternalizer.write(element, "depsClasspath", depsClasspath);
@@ -177,7 +176,6 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     JDOMExternalizer.write(element, "passParentEnv", passParentEnv);
 
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-
   }
 
   protected abstract String getNoSdkMessage();

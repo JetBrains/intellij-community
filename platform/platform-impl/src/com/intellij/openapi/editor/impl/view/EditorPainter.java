@@ -904,7 +904,7 @@ class EditorPainter implements TextDrawingCallback {
       else {
         int width = location.myWidth;
         float startX = Math.max(minX, isRtl ? x - width : x);
-        g.fill(new Rectangle2D.Float(startX, y, width, nominalLineHeight - 1));
+        g.fill(new Rectangle2D.Float(startX, y, width, nominalLineHeight));
         if (myDocument.getTextLength() > 0 && caret != null) {
           int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
           for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,

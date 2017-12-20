@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -149,7 +151,26 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
 
     Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), "ProjectModuleManager");
-    Element externalModuleData = externalConfigDir == null ? null : loadRootElement(externalConfigDir.resolve("modules.xml"));
+    Element externalModuleData;
+    if (externalConfigDir == null) {
+      externalModuleData = null;
+    }
+    else {
+      Element rootElement = loadRootElement(externalConfigDir.resolve("modules.xml"));
+      if (rootElement == null) {
+        externalModuleData = null;
+      }
+      else {
+        externalModuleData = JDomSerializationUtil.findComponent(rootElement, "ExternalProjectModuleManager");
+        if (externalModuleData == null) {
+          externalModuleData = JDomSerializationUtil.findComponent(rootElement, "ExternalModuleListStorage");
+        }
+        // old format (root tag is "component")
+        if (externalModuleData == null && rootElement.getName().equals(JDomSerializationUtil.COMPONENT_ELEMENT)) {
+          externalModuleData = rootElement;
+        }
+      }
+    }
     if (externalModuleData != null) {
       String componentName = externalModuleData.getAttributeValue("name");
       LOG.assertTrue(componentName != null && componentName.startsWith("External"));

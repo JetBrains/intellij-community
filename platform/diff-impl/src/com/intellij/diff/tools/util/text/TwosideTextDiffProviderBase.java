@@ -21,12 +21,16 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
+import com.intellij.diff.util.Range;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implements TwosideTextDiffProvider {
   protected TwosideTextDiffProviderBase(@NotNull TextDiffSettings settings,
@@ -39,7 +43,39 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
 
   @Nullable
   @Override
-  public List<LineFragment> compare(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ProgressIndicator indicator) {
+  public List<LineFragment> compare(@NotNull CharSequence text1,
+                                    @NotNull CharSequence text2,
+                                    @NotNull ProgressIndicator indicator) {
+    LineOffsets lineOffsets1 = LineOffsetsUtil.create(text1);
+    LineOffsets lineOffsets2 = LineOffsetsUtil.create(text2);
+
+    Range linesRange = new Range(0, lineOffsets1.getLineCount(), 0, lineOffsets2.getLineCount());
+    List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, singletonList(linesRange), indicator);
+
+    if (fragments == null) return null;
+
+    assert fragments.size() == 1;
+    return fragments.get(0);
+  }
+
+  @Nullable
+  @Override
+  public List<List<LineFragment>> compare(@NotNull CharSequence text1,
+                                          @NotNull CharSequence text2,
+                                          @NotNull List<Range> linesRanges,
+                                          @NotNull ProgressIndicator indicator) {
+    LineOffsets lineOffsets1 = LineOffsetsUtil.create(text1);
+    LineOffsets lineOffsets2 = LineOffsetsUtil.create(text2);
+    return doCompare(text1, text2, lineOffsets1, lineOffsets2, linesRanges, indicator);
+  }
+
+  @Nullable
+  private List<List<LineFragment>> doCompare(@NotNull CharSequence text1,
+                                             @NotNull CharSequence text2,
+                                             @NotNull LineOffsets lineOffsets1,
+                                             @NotNull LineOffsets lineOffsets2,
+                                             @NotNull List<Range> linesRanges,
+                                             @NotNull ProgressIndicator indicator) {
     IgnorePolicy ignorePolicy = getIgnorePolicy();
     HighlightPolicy highlightPolicy = getHighlightPolicy();
 
@@ -51,17 +87,24 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
     boolean trimFragments = ignorePolicy.isShouldTrimChunks();
 
     indicator.checkCanceled();
-    List<LineFragment> fragments = doCompare(text1, text2, ignorePolicy, innerFragments, indicator);
+    List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, linesRanges,
+                                                   ignorePolicy, innerFragments, indicator);
+    assert fragments.size() == linesRanges.size();
 
     indicator.checkCanceled();
-    return ComparisonManager.getInstance().processBlocks(fragments, text1, text2,
-                                                         policy, squashFragments, trimFragments);
+    return ContainerUtil.map(fragments, rangeFragments -> {
+      return ComparisonManager.getInstance().processBlocks(rangeFragments, text1, text2,
+                                                           policy, squashFragments, trimFragments);
+    });
   }
 
   @NotNull
-  protected abstract List<LineFragment> doCompare(@NotNull CharSequence text1,
-                                                  @NotNull CharSequence text2,
-                                                  @NotNull IgnorePolicy ignorePolicy,
-                                                  boolean innerFragments,
-                                                  @NotNull ProgressIndicator indicator);
+  protected abstract List<List<LineFragment>> doCompare(@NotNull CharSequence text1,
+                                                        @NotNull CharSequence text2,
+                                                        @NotNull LineOffsets lineOffsets1,
+                                                        @NotNull LineOffsets lineOffsets2,
+                                                        @NotNull List<Range> linesRanges,
+                                                        @NotNull IgnorePolicy ignorePolicy,
+                                                        boolean innerFragments,
+                                                        @NotNull ProgressIndicator indicator);
 }

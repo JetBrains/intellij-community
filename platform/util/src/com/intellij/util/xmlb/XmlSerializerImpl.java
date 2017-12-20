@@ -16,10 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.lang.reflect.WildcardType;
+import java.lang.reflect.*;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -293,8 +290,41 @@ public final class XmlSerializerImpl {
       else if (valueClass == Float.class) {
         deserializedValue = Float.parseFloat(value);
       }
+      else if (callFromStringIfDefined(host, value, accessor, valueClass)) {
+        return;
+      }
+
       accessor.set(host, deserializedValue);
     }
+  }
+
+  private static boolean callFromStringIfDefined(@NotNull Object host,
+                                                 @NotNull String value,
+                                                 @NotNull MutableAccessor accessor,
+                                                 @NotNull Class<?> valueClass) {
+    Method fromText;
+    try {
+      fromText = valueClass.getMethod("fromText", String.class);
+    }
+    catch (NoSuchMethodException ignored) {
+      return false;
+    }
+
+    try {
+      fromText.setAccessible(true);
+    }
+    catch (SecurityException ignored) {
+    }
+
+    try {
+      accessor.set(host, fromText.invoke(null, value));
+      return true;
+    }
+    catch (IllegalAccessException ignored) {
+    }
+    catch (InvocationTargetException ignored) {
+    }
+    return false;
   }
 
   @NotNull

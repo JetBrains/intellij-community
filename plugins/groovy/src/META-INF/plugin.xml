@@ -208,9 +208,9 @@
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
 
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
 
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor"/>
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SimpleTypeHintProcessor"/>

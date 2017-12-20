@@ -104,7 +104,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return null;
   }
 
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final TestData data = getPersistantData();
     if (data.TEST_OBJECT.equals(TestType.SOURCE.getType()) || data.getChangeList() != null) {
       return new TestNGTestDiscoveryRunnableState(env, this);
@@ -134,7 +134,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
     return testObject != null ? testObject.getActionName() : null;
   }
 
-  public void setVMParameters(String value) {
+  public void setVMParameters(@Nullable String value) {
     data.setVMParameters(value);
   }
 
@@ -333,13 +333,11 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    writeModule(element);
     DefaultJDOMExternalizer.writeExternal(this, element);
     DefaultJDOMExternalizer.writeExternal(getPersistantData(), element);
     EnvironmentVariablesComponent.writeExternal(element, getPersistantData().getEnvs());
 
     Element propertiesElement = element.getChild("properties");
-
     if (propertiesElement == null) {
       propertiesElement = new Element("properties");
       element.addContent(propertiesElement);

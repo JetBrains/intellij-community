@@ -10,6 +10,8 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
+import gnu.trove.THashMap
+import java.nio.charset.Charset
 
 private val LOG = logger<BaseState>()
 
@@ -21,16 +23,57 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   @JvmField
   internal var ownModificationCount: Long = 0
 
-  // reset on load state
-  fun resetModificationCount() {
-    ownModificationCount = 0
+  fun <T> property(): StoredPropertyBase<T?> {
+    val result = ObjectStoredProperty<T?>(null)
+    properties.add(result)
+    return result
   }
 
-  protected fun incrementModificationCount() {
-    ownModificationCount++
+  /**
+   * Value considered as default only if all properties have default values.
+   * Passed instance is not used for `isDefault` check. It is just an initial value.
+   */
+  fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
+    val result = StateObjectStoredProperty(initialValue)
+    properties.add(result)
+    return result
   }
 
-  fun <T> storedProperty(defaultValue: T? = null): StoredPropertyBase<T?> {
+  /**
+   * For non-BaseState classes explicit `isDefault` must be provided, because no other way to check.
+   */
+  fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> {
+    val result = object : ObjectStoredProperty<T>(initialValue) {
+      override fun isEqualToDefault() = isDefault(value)
+    }
+
+    properties.add(result)
+    return result
+  }
+
+  /**
+   * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
+   * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
+   */
+  fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
+    val result = CollectionStoredProperty(initialValue)
+    properties.add(result)
+    return result
+  }
+
+  /**
+   * Charset is an immutable, so, it is safe to use it as default value.
+   */
+  fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
+    val result = ObjectStoredProperty(initialValue)
+    properties.add(result)
+    return result
+  }
+
+  /**
+   * Enum is an immutable, so, it is safe to use it as default value.
+   */
+  fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
     properties.add(result)
     return result
@@ -42,20 +85,24 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
     val result = ListStoredProperty<T>()
     properties.add(result)
-    return result
+    @Suppress("UNCHECKED_CAST")
+    return result as StoredPropertyBase<MutableList<T>>
   }
 
-  fun <K: Any, V> map(): StoredPropertyBase<MutableMap<K, V>> {
-    val result = MapStoredProperty<K, V>()
+  fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
+    return map(value)
+  }
+
+  fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
+    val result = MapStoredProperty(value)
     properties.add(result)
     return result
   }
 
-  fun <T : Any> bean(defaultValue: T): StoredPropertyBase<T> {
-    val result = ObjectStoredProperty(defaultValue)
-    properties.add(result)
-    return result
-  }
+  /**
+   * Empty string is always normalized to null.
+   */
+  fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
@@ -66,28 +113,37 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  fun storedProperty(defaultValue: Int = 0): StoredPropertyBase<Int> {
+  fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
     val result = IntStoredProperty(defaultValue)
     properties.add(result)
     return result
   }
 
-  fun storedProperty(defaultValue: Long = 0): StoredPropertyBase<Long> {
+  fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
     val result = LongStoredProperty(defaultValue)
     properties.add(result)
     return result
   }
 
-  fun storedProperty(defaultValue: Float = 0f): StoredPropertyBase<Float> {
-    val result = FloatStoredProperty(defaultValue)
+  fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
+    val result = FloatStoredProperty(defaultValue, valueNormalizer)
     properties.add(result)
     return result
   }
 
-  fun storedProperty(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
+  fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
     val result = ObjectStoredProperty(defaultValue)
     properties.add(result)
     return result
+  }
+
+  // reset on load state
+  fun resetModificationCount() {
+    ownModificationCount = 0
+  }
+
+  protected fun incrementModificationCount() {
+    ownModificationCount++
   }
 
   override fun accepts(accessor: Accessor, bean: Any): Boolean {
@@ -103,6 +159,8 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     // default value in this case will be filtered by common filter (instance will be created in this case, as for non-smart state classes)
     return true
   }
+
+  internal fun isEqualToDefault() = properties.all { it.isEqualToDefault() }
 
   @Transient
   override fun getModificationCount(): Long {

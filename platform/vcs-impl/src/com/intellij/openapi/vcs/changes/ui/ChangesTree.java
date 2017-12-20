@@ -31,6 +31,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +58,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   private boolean myShowFlatten;
   private boolean myIsModelFlat;
 
-  @NotNull private final Set<Object> myIncludedChanges = new HashSet<>();
+  @NotNull private Set<Object> myIncludedChanges = new THashSet<>();
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myKeepTreeState = false;
 
@@ -352,6 +354,13 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (myInclusionListener != null) {
       myInclusionListener.run();
     }
+  }
+
+
+  public void setInclusionHashingStrategy(@NotNull TObjectHashingStrategy<Object> strategy) {
+    Set<Object> oldInclusion = myIncludedChanges;
+    myIncludedChanges = new THashSet<>(strategy);
+    myIncludedChanges.addAll(oldInclusion);
   }
 
   /**

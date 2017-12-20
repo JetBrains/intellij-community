@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
@@ -93,6 +81,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private static final Key<Long> CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT =
     Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT");
   private static final int DOCUMENT_SAVE_DELAY = 1000;
+  private static final int REFRESH_MERGING_TIME_SPAN = 2000;
 
   private final Project myProject;
   private final Set<Document> myChangedDocuments = new THashSet<>();
@@ -111,7 +100,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                                                      DOCUMENT_SAVE_DELAY, false, ANY_COMPONENT, myProject);
 
     myRefreshRequestsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Refresh requests queue",
-                                                    0, false, ANY_COMPONENT, myProject, null, false);
+                                                    REFRESH_MERGING_TIME_SPAN, false, ANY_COMPONENT, myProject, null, false);
 
     myImportAwareManagers = ContainerUtil.newArrayList();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
@@ -287,7 +276,8 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       }
       else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
         if (manager instanceof ExternalSystemAutoImportAware) {
-          Long lastTimestamp = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps().get(projectPath);
+          Long lastTimestamp =
+            (Long)manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps().get(projectPath);
           if (lastTimestamp != null) {
             List<File> affectedFiles = ((ExternalSystemAutoImportAware)manager).getAffectedExternalProjectFiles(projectPath, myProject);
             long currentTimeStamp = affectedFiles.stream().mapToLong(File::lastModified).sum();

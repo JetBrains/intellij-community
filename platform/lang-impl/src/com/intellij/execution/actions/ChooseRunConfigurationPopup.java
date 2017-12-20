@@ -804,6 +804,11 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
     }
+
+    @Override
+    protected boolean isResizable() {
+      return true;
+    }
   }
 
   private static class FolderWrapper extends ItemWrapper<String> {

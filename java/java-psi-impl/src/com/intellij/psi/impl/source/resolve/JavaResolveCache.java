@@ -33,6 +33,7 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JavaResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.JavaResolveCache");
@@ -53,10 +55,9 @@ public class JavaResolveCache {
     return INSTANCE_KEY.getValue(project);
   }
 
-  private final ConcurrentMap<PsiExpression, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakKeySoftValueMap();
-
-  private final Map<PsiVariable,Object> myVarToConstValueMapPhysical = ContainerUtil.createConcurrentWeakMap();
-  private final Map<PsiVariable,Object> myVarToConstValueMapNonPhysical = ContainerUtil.createConcurrentWeakMap();
+  private final AtomicReference<ConcurrentMap<PsiExpression, PsiType>> myCalculatedTypes = new AtomicReference<>();
+  private final AtomicReference<Map<PsiVariable,Object>> myVarToConstValueMapPhysical = new AtomicReference<>();
+  private final AtomicReference<Map<PsiVariable,Object>> myVarToConstValueMapNonPhysical = new AtomicReference<>();
 
   private static final Object NULL = Key.create("NULL");
 
@@ -72,18 +73,22 @@ public class JavaResolveCache {
   }
 
   private void clearCaches(boolean isPhysical) {
-    myCalculatedTypes.clear();
+    myCalculatedTypes.set(null);
     if (isPhysical) {
-      myVarToConstValueMapPhysical.clear();
+      myVarToConstValueMapPhysical.set(null);
     }
-    myVarToConstValueMapNonPhysical.clear();
+    myVarToConstValueMapNonPhysical.set(null);
   }
 
   @Nullable
   public <T extends PsiExpression> PsiType getType(@NotNull T expr, @NotNull Function<T, PsiType> f) {
     final boolean isOverloadCheck = MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck();
     final boolean polyExpression = PsiPolyExpressionUtil.isPolyExpression(expr);
-    PsiType type = isOverloadCheck && polyExpression ? null : myCalculatedTypes.get(expr);
+
+    ConcurrentMap<PsiExpression, PsiType> map = myCalculatedTypes.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(myCalculatedTypes, ContainerUtil.createConcurrentWeakKeySoftValueMap());
+
+    PsiType type = isOverloadCheck && polyExpression ? null : map.get(expr);
     if (type == null) {
       final RecursionGuard.StackStamp dStackStamp = PsiDiamondType.ourDiamondGuard.markStack();
       type = f.fun(expr);
@@ -97,7 +102,7 @@ public class JavaResolveCache {
       }
 
       if (type == null) type = TypeConversionUtil.NULL_TYPE;
-      myCalculatedTypes.put(expr, type);
+      map.put(expr, type);
 
       if (type instanceof PsiClassReferenceType) {
         // convert reference-based class type to the PsiImmediateClassType, since the reference may become invalid
@@ -128,7 +133,10 @@ public class JavaResolveCache {
   public Object computeConstantValueWithCaching(@NotNull PsiVariable variable, @NotNull ConstValueComputer computer, Set<PsiVariable> visitedVars){
     boolean physical = variable.isPhysical();
 
-    Map<PsiVariable, Object> map = physical ? myVarToConstValueMapPhysical : myVarToConstValueMapNonPhysical;
+    AtomicReference<Map<PsiVariable, Object>> ref = physical ? myVarToConstValueMapPhysical : myVarToConstValueMapNonPhysical;
+    Map<PsiVariable, Object> map = ref.get();
+    if (map == null) map = ConcurrencyUtil.cacheOrGet(ref, ContainerUtil.createConcurrentWeakMap());
+
     Object cached = map.get(variable);
     if (cached == NULL) return null;
     if (cached != null) return cached;

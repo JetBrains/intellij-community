@@ -879,6 +879,47 @@ public class DiffUtil {
     }
   }
 
+  public static String applyModification(@NotNull CharSequence text,
+                                         @NotNull LineOffsets lineOffsets,
+                                         @NotNull CharSequence otherText,
+                                         @NotNull LineOffsets otherLineOffsets,
+                                         @NotNull List<Range> ranges) {
+    return new Object() {
+      private final StringBuilder stringBuilder = new StringBuilder();
+      private boolean isEmpty = true;
+
+      @NotNull
+      public String execute() {
+        int lastLine = 0;
+
+        for (Range range : ranges) {
+          CharSequence newChunkContent = getLinesContent(otherText, otherLineOffsets, range.start2, range.end2);
+
+          appendOriginal(lastLine, range.start1);
+          append(newChunkContent, range.end2 - range.start2);
+
+          lastLine = range.end1;
+        }
+
+        appendOriginal(lastLine, lineOffsets.getLineCount());
+
+        return stringBuilder.toString();
+      }
+
+      private void appendOriginal(int start, int end) {
+        append(getLinesContent(text, lineOffsets, start, end), end - start);
+      }
+
+      private void append(CharSequence content, int lineCount) {
+        if (lineCount > 0 && !isEmpty) {
+          stringBuilder.append('\n');
+        }
+        stringBuilder.append(content);
+        isEmpty &= lineCount == 0;
+      }
+    }.execute();
+  }
+
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
     return getLinesRange(document, line1, line2).subSequence(document.getImmutableCharSequence());

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.debugger
 
-import com.intellij.openapi.util.Ref
 import com.intellij.util.Url
 import org.jetbrains.concurrency.Promise
 import java.util.*
@@ -32,14 +31,19 @@ interface BreakpointManager {
   val regExpBreakpointSupported: Boolean
     get() = false
 
+  @Deprecated("use another overload")
+  fun setBreakpoint(target: BreakpointTarget,
+                    line: Int,
+                    condition: String? = null): Breakpoint {
+    throw UnsupportedOperationException()
+  }
+
   fun setBreakpoint(target: BreakpointTarget,
                     line: Int,
                     column: Int = Breakpoint.EMPTY_VALUE,
                     url: Url? = null,
                     condition: String? = null,
-                    ignoreCount: Int = Breakpoint.EMPTY_VALUE,
-                    enabled: Boolean = true,
-                    promiseRef: Ref<Promise<out Breakpoint>>? = null): Breakpoint
+                    ignoreCount: Int = Breakpoint.EMPTY_VALUE): SetBreakpointResult
 
   fun remove(breakpoint: Breakpoint): Promise<*>
 
@@ -75,6 +79,10 @@ interface BreakpointManager {
    * with a null value and not null callback simply returns current value.
    */
   fun enableBreakpoints(enabled: Boolean): Promise<*>
+
+  interface SetBreakpointResult
+  data class BreakpointExist(val existingBreakpoint: Breakpoint) : SetBreakpointResult
+  data class BreakpointCreated(val breakpoint: Breakpoint, val isResolved: Promise<out Breakpoint>) : SetBreakpointResult
 }
 
 interface BreakpointListener : EventListener {

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -220,8 +222,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {
     if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
     VirtualFile file = root.getVirtualFile();
-    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + ")",
-              new Attachment("root_path.txt", file != null ? file.getPath() : root.getName()),
-              new Attachment("stack", t));
+    String path = file != null ? file.getPath() : root.getName();
+    LOG.error("annotator: " + annotator + " (" + annotator.getClass() + ")", t, new Attachment("root_path.txt", path));
   }
 }

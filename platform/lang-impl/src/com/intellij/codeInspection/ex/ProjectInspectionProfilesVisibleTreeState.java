@@ -6,6 +6,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 @State(name = "ProjectInspectionProfilesVisibleTreeState", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectInspectionProfilesVisibleTreeState implements PersistentStateComponent<VisibleTreeStateComponent> {
@@ -21,7 +22,7 @@ public class ProjectInspectionProfilesVisibleTreeState implements PersistentStat
   }
 
   @Override
-  public void loadState(final VisibleTreeStateComponent state) {
+  public void loadState(@NotNull VisibleTreeStateComponent state) {
     myComponent.copyFrom(state);
   }
 

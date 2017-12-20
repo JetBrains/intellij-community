@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -104,8 +103,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Override
   @NotNull
   public ThreeState isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    if (referenceOrReferencedElement instanceof SyntheticElement) return ThreeState.NO;
     if (isEnumConstantReference(element, referenceOrReferencedElement)) return ThreeState.NO;
-    if (element instanceof PsiDocToken) return ThreeState.NO;
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
 
