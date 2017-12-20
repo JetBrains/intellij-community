@@ -65,10 +65,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
+  private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker myOldSdks;
 
-  HeavyIdeaTestFixtureImpl(@NotNull String name) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name, boolean isDirectoryBasedProject) {
     myName = name;
+    myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
   void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
@@ -140,7 +142,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .synchronizeTempDirVfs(ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory)));
     myFilesToDelete.add(tempDirectory);
 
-    String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
+    String projectPath = generateProjectPath(tempDirectory);
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
     myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
@@ -155,6 +157,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       LightPlatformTestCase.clearUncommittedDocuments(myProject);
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     });
+  }
+
+  @NotNull
+  protected String generateProjectPath(@NotNull File tempDirectory) {
+    String suffix = myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION;
+    return FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + suffix;
   }
 
   private void initApplication() {
