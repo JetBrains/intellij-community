@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import org.jdom.Element
 
-@State(name = "ExternalModuleListStorage", storages = arrayOf(Storage("modules.xml")), externalStorageOnly = true)
+@State(name = "ExternalProjectModuleManager", storages = arrayOf(Storage("modules.xml")), externalStorageOnly = true)
 internal class ExternalModuleListStorage(private val project: Project) : PersistentStateComponent<Element>, ProjectModelElement {
   var loadedState: Set<ModulePath>? = null
     private set
