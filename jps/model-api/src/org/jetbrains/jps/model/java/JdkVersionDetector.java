@@ -62,12 +62,16 @@ public abstract class JdkVersionDetector {
 
     /** @deprecated use {@link #version} (to be removed in IDEA 2019) */
     public String getVersion() {
-      return "java version \"" + version + '"';
+      return formatVersionString(version);
     }
 
     /** @deprecated use {@link #bitness} (to be removed in IDEA 2019) */
     public Bitness getBitness() {
       return bitness;
     }
+  }
+
+  public static String formatVersionString(@NotNull JavaVersion version) {
+    return "java version \"" + version + '"';
   }
 }
