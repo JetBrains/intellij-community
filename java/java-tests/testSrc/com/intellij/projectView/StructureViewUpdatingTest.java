@@ -137,6 +137,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
     svc.select(innerClassField, true);
 
+    PlatformTestUtil.waitUntilBusy(svc.getTree());
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
       "-Class2.java\n" +

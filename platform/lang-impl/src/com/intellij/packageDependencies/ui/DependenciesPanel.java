@@ -60,7 +60,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultTreeModel;
@@ -673,22 +672,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     }
   }
 
-
   private class DependenciesExporterToTextFile implements ExporterToTextFile {
-
-    @Override
-    public JComponent getSettingsEditor() {
-      return null;
-    }
-
-    @Override
-    public void addSettingsChangedListener(ChangeListener listener) throws TooManyListenersException {
-    }
-
-    @Override
-    public void removeSettingsChangedListener(ChangeListener listener) {
-    }
-
     @NotNull
     @Override
     public String getReportText() {
@@ -721,10 +705,6 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public String getDefaultFilePath() {
       return "";
-    }
-
-    @Override
-    public void exportedTo(String filePath) {
     }
 
     @Override

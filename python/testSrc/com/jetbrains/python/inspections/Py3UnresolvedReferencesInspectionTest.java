@@ -215,6 +215,11 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doTest();
   }
 
+  // PY-27102
+  public void testTypingGenericIndirectInheritorGetItem() {
+    doTest();
+  }
+
   // PY-21655
   public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
     doMultiFileTest("a.py");

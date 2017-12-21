@@ -8,10 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -33,7 +30,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
-import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +39,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -338,18 +333,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static String augmentUrl(String url) {
-    try {
-      ApplicationInfo info = ApplicationInfo.getInstance();
-      String productVersion = info.getMajorVersion() + "." + info.getMinorVersionMainPart();
-      return new URIBuilder(url).addParameter("utm_source", "product")
-                                .addParameter("utm_medium", "link")
-                                .addParameter("utm_campaign", info.getBuild().getProductCode())
-                                .addParameter("utm_content", productVersion)
-                                .build().toString();
-    }
-    catch (URISyntaxException e) {
-      Logger.getInstance(UpdateInfoDialog.class).warn(url, e);
-      return url;
-    }
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url);
   }
 }

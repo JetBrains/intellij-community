@@ -1,7 +1,6 @@
 <project name="Test gant invocation from Ant script" default="doGant" xmlns:if="ant:if">
   <dirname property="build.dir" file="${ant.file}"/>
   <property name="project.home" value="${build.dir}/.."/>
-  <property name="gant.home" value="${project.home}/build/lib/gant"/>
   <property name="idea.lib" value="${project.home}/lib"/>
 
   <condition property="gant.target" value="default">
@@ -24,9 +23,6 @@
 
   <target name="doGant" depends="init">
     <path id="gant.classpath">
-      <fileset dir="${gant.home}/lib">
-        <include name="*.jar"/>
-      </fileset>
       <fileset dir="${project.home}/build/lib/jps">
         <include name="*.jar"/>
       </fileset>

@@ -71,7 +71,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
           preselectActionCondition, true);
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
-    installOnHoverIconsSupport(getListElementRenderer());
     myKey = dimensionKey;
     if (myKey != null) {
       Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey);
@@ -126,7 +125,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     // don't store children popup userSize;
     myKey = null;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
-    installOnHoverIconsSupport(getListElementRenderer());
   }
 
   private void trackDimensions(@Nullable String dimensionKey) {
@@ -364,10 +362,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       super.customizeComponent(list, value, isSelected);
       myTextLabel.setIcon(null);
       myTextLabel.setDisabledIcon(null);
-      if (value instanceof PopupFactoryImpl.ActionItem) {
-        ((PopupFactoryImpl.ActionItem)value).setIconHovered(isSelected);
-      }
-      myIconLabel.setIcon(myDescriptor.getIconFor(value));
+      myIconLabel.setIcon(isSelected ? myDescriptor.getSelectedIconFor(value) : myDescriptor.getIconFor(value));
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
     }

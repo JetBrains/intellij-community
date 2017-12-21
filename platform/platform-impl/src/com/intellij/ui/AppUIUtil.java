@@ -253,7 +253,7 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showEndUserAgreement() {
+  public static void showUserAgreementAndConsentsIfNeeded() {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {
@@ -374,12 +374,19 @@ public class AppUIUtil {
       @Nullable
       @Override
       protected Border createContentPaneBorder() {
-        return null;
+        return new EmptyBorder(0, 0, UIUtil.PANEL_REGULAR_INSETS.bottom, 0);
       }
 
       @Override
       protected JComponent createCenterPanel() {
 
+        if (consents.isEmpty()) {
+          JLabel label = new JLabel("There are no data-sharing options available", SwingConstants.CENTER);
+          label.setVerticalAlignment(SwingConstants.CENTER);
+          label.setOpaque(true);
+          label.setBackground(JBColor.background());
+          return label;
+        }
         final JPanel body = new JPanel(new GridBagLayout());
 
         //noinspection UseDPIAwareInsets

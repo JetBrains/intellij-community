@@ -149,7 +149,7 @@ open class GuiTestCase {
    */
   fun chooseFileInFileChooser(path: String, timeout: Long = defaultTimeout) {
     val macNativeFileChooser = SystemInfo.isMac() && (System.getProperty("ide.mac.file.chooser.native", "true").toLowerCase() == "true")
-    if (macNativeFileChooser) {
+    if (!macNativeFileChooser) {
       MacFileChooserDialogFixture(robot()).selectByPath(path)
     }
     else {
@@ -170,6 +170,7 @@ open class GuiTestCase {
       }
       val dialogFixture = JDialogFixture(robot(), fileChooserDialog)
       with(dialogFixture) {
+        asyncProcessIcon().waitUntilStop(20)
         textfield("")
         invokeAction("\$SelectAll")
         typeText(path)

@@ -49,6 +49,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
   protected static boolean mayBreakCompilation(String actionText) {
     return actionText.startsWith("Flip") || // doesn't care about compilability
            actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
+           actionText.startsWith("Replace string literal with character") || // can produce uncompilable code by design
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design

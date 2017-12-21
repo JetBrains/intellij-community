@@ -480,6 +480,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
         progressIndicator.setText("Waiting for REPL response with " + (int)(TIMEOUT / 10e8) + "s timeout");
+        progressIndicator.setIndeterminate(false);
         final long startTime = System.nanoTime();
         while (nextResponse == null) {
           if (progressIndicator.isCanceled()) {

@@ -188,13 +188,16 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       i = PsiTreeUtil.skipWhitespacesAndCommentsForward(i);
 
       if (!(child instanceof PsiDeclarationStatement)) continue;
+      int endOffset = last.getTextRange().getEndOffset();
+      //declared after last usage
+      if (child.getTextOffset() > endOffset) break;
 
       PsiElement anchor = child;
       PsiElement[] declaredElements = ((PsiDeclarationStatement)child).getDeclaredElements();
       for (PsiElement declared : declaredElements) {
         if (!(declared instanceof PsiLocalVariable)) continue;
 
-        int endOffset = last.getTextRange().getEndOffset();
+
         boolean contained = ReferencesSearch.search(declared, scope).forEach(ref -> ref.getElement().getTextOffset() <= endOffset);
 
         if (!contained) {

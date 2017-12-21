@@ -98,6 +98,15 @@ public final class ConsentOptions {
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
   }
 
+  public boolean setSendingUsageStatsAllowed(boolean allowed) {
+    final Consent defConsent = loadDefaultConsents().get(STATISTICS_OPTION_ID);
+    if (defConsent != null && !defConsent.isDeleted()) {
+      saveConfirmedConsents(Collections.singleton(new ConfirmedConsent(defConsent.getId(), defConsent.getVersion(), allowed, 0L)));
+      return true;
+    }
+    return false;
+  }
+
   @Nullable
   public String getConfirmedConsentsString() {
     final Map<String, Consent> defaults = loadDefaultConsents();
