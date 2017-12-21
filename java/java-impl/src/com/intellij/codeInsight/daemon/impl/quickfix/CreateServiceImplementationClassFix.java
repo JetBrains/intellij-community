@@ -3,9 +3,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -18,19 +16,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Pavel.Dolgov
  */
-public class CreateServiceImplementationClassFix implements IntentionAction {
+public class CreateServiceImplementationClassFix extends CreateServiceClassFixBase {
   private String mySuperClassName;
   private String myImplementationClassName;
   private String myModuleName;
@@ -39,12 +39,9 @@ public class CreateServiceImplementationClassFix implements IntentionAction {
     init(referenceElement);
   }
 
-  private void init(PsiJavaCodeReferenceElement referenceElement) {
+  private void init(@NotNull PsiJavaCodeReferenceElement referenceElement) {
+    referenceElement = findTopmostReference(referenceElement);
     PsiElement parent = referenceElement.getParent();
-    while (parent instanceof PsiJavaCodeReferenceElement) {
-      referenceElement = (PsiJavaCodeReferenceElement)parent;
-      parent = parent.getParent();
-    }
 
     if (parent != null && referenceElement.isQualified()) {
       PsiProvidesStatement providesStatement = ObjectUtils.tryCast(parent.getParent(), PsiProvidesStatement.class);
@@ -94,10 +91,10 @@ public class CreateServiceImplementationClassFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (mySuperClassName != null && myImplementationClassName != null && myModuleName != null) {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      if (psiFacade.findClass(mySuperClassName, GlobalSearchScope.projectScope(project)) != null) {
-        Module module = ModuleManager.getInstance(project).findModuleByName(myModuleName);
-        return module != null && findClassInModule(myImplementationClassName, module) == null;
-      }
+      GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
+      return psiFacade.findClass(myImplementationClassName, projectScope) == null &&
+             psiFacade.findClass(mySuperClassName, projectScope) != null &&
+             isQualifierInProject(myImplementationClassName, project);
     }
     return false;
   }
@@ -110,8 +107,7 @@ public class CreateServiceImplementationClassFix implements IntentionAction {
       if (!StringUtil.isEmpty(qualifierText)) {
         PsiClass outerClass = findClassInModule(qualifierText, module);
         if (outerClass != null) {
-          String lastName = myImplementationClassName.substring(qualifierText.length() + 1);
-          createClassInOuter(lastName, outerClass);
+          createClassInOuter(qualifierText, outerClass);
           return;
         }
       }
@@ -119,17 +115,12 @@ public class CreateServiceImplementationClassFix implements IntentionAction {
       List<VirtualFile> roots = new ArrayList<>();
       JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(module, roots);
       PsiManager psiManager = file.getManager();
-      roots.stream() // todo UI for choosing source root
+      roots.stream() // todo UI for choosing source root similar to AddModuleDependencyFix
         .map(psiManager::findDirectory)
         .filter(Objects::nonNull)
         .findAny()
         .ifPresent(this::createClassInRoot);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 
   @Nullable
@@ -139,55 +130,14 @@ public class CreateServiceImplementationClassFix implements IntentionAction {
     return JavaPsiFacade.getInstance(project).findClass(className, scope);
   }
 
-  private void createClassInOuter(String lastName, PsiClass outerClass) {
-    PsiClass psiClass = WriteAction.compute(() -> createClassInOuterImpl(lastName, outerClass, mySuperClassName));
+  private void createClassInOuter(String qualifierText, PsiClass outerClass) {
+    String name = myImplementationClassName.substring(qualifierText.length() + 1);
+    PsiClass psiClass = WriteAction.compute(() -> createClassInOuterImpl(name, outerClass, mySuperClassName));
     positionCursor(psiClass);
   }
 
   private void createClassInRoot(PsiDirectory rootDir) {
     PsiClass psiClass = WriteAction.compute(() -> createClassInRootImpl(myImplementationClassName, rootDir, mySuperClassName));
     positionCursor(psiClass);
-  }
-
-  private static PsiClass createClassInOuterImpl(@NotNull String name, @NotNull PsiClass outerClass, @NotNull String superClassName) {
-    Project project = outerClass.getProject();
-    PsiClass psiClass = JavaPsiFacade.getElementFactory(project).createClass(name);
-    psiClass = (PsiClass)outerClass.addBefore(psiClass, outerClass.getRBrace());
-    PsiUtil.setModifierProperty(psiClass, PsiModifier.STATIC, true);
-    PsiUtil.setModifierProperty(psiClass, PsiModifier.PUBLIC, true);
-    CreateFromUsageUtils.setupSuperClassReference(psiClass, superClassName);
-    return psiClass;
-  }
-
-  private static PsiClass createClassInRootImpl(@NotNull String classFQN, @NotNull PsiDirectory rootDir, @NotNull String superClassName) {
-    PsiDirectory directory = rootDir;
-    String lastName;
-    StringTokenizer st = new StringTokenizer(classFQN, ".");
-    for (lastName = st.nextToken(); st.hasMoreTokens(); lastName = st.nextToken()) {
-      PsiDirectory subdirectory = directory.findSubdirectory(lastName);
-      if (subdirectory != null) {
-        directory = subdirectory;
-      }
-      else {
-        try {
-          directory = directory.createSubdirectory(lastName);
-        }
-        catch (IncorrectOperationException e) {
-          CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, true);
-          return null;
-        }
-      }
-    }
-
-    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(directory, lastName);
-    PsiUtil.setModifierProperty(psiClass, PsiModifier.PUBLIC, true);
-    CreateFromUsageUtils.setupSuperClassReference(psiClass, superClassName);
-    return psiClass;
-  }
-
-  private static void positionCursor(PsiClass psiClass) {
-    if (psiClass != null) {
-      CodeInsightUtil.positionCursor(psiClass.getProject(), psiClass.getContainingFile(), psiClass);
-    }
   }
 }

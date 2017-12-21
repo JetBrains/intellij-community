@@ -44,6 +44,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (PsiUtil.isModuleFile(ref.getContainingFile())) {
       OrderEntryFix.registerFixes(registrar, ref);
       registrar.register(new CreateServiceImplementationClassFix(ref));
+      registrar.register(new CreateServiceInterfaceOrClassFix(ref));
       return;
     }
 

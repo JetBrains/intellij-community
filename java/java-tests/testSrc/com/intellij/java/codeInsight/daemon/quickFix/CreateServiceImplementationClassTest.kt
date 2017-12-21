@@ -116,26 +116,39 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
   }
 
   fun testServiceSuperclassFromOtherModule() {
-    moduleInfo("module foo.bar.api { exports foo.bar.api; }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
-    addFile("foo/bar/api/MyService.java", "package foo.bar.api; public class MyService { }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
+    moduleInfo("module foo.bar.other { exports foo.bar.other; }", OTHER)
+    addFile("foo/bar/other/MyService.java", "package foo.bar.other; public class MyService { }", OTHER)
 
-    doAction("module foo.bar.impl { requires foo.bar.api; provides foo.bar.api.MyService with foo.bar.<caret>impl.MyServiceImpl; }",
+    doAction("module foo.bar.impl { requires foo.bar.other; provides foo.bar.other.MyService with foo.bar.<caret>impl.MyServiceImpl; }",
              "foo.bar.impl.MyServiceImpl")
     myFixture.checkResult("foo/bar/impl/MyServiceImpl.java",
                           "package foo.bar.impl;\n\n" +
-                          "import foo.bar.api.MyService;\n" +
+                          "import foo.bar.other.MyService;\n" +
                           "\n" +
                           "public class MyServiceImpl extends MyService {\n" +
                           "}", true)
   }
 
   fun testServiceSuperclassFromNotReadableModule() {
-    moduleInfo("module foo.bar.api { exports foo.bar.api; }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
-    addFile("foo/bar/api/MyService.java", "package foo.bar.api; public class MyService { }", MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2)
+    moduleInfo("module foo.bar.other { exports foo.bar.other; }", OTHER)
+    addFile("foo/bar/other/MyService.java", "package foo.bar.other; public class MyService { }", OTHER)
 
-    myFixture.configureByText("module-info.java", "module foo.bar.impl { provides foo.bar.api.MyService with foo.bar.impl.<caret>MyServiceImpl; }") as PsiJavaFile
+    doTestNoAction("module foo.bar.impl { provides foo.bar.other.MyService with foo.bar.impl.<caret>MyServiceImpl; }")
+  }
 
-    val filtered = myFixture.availableIntentions.filter { it.text.startsWith("Create class 'foo.bar.impl.MyServiceImpl'") }
+  fun testExistingLibraryPackage() {
+    addFile("foo/bar/MyService.java", "package foo.bar; public class MyService { }")
+    doTestNoAction("module foo.bar { provides foo.bar.MyService with java.io.<caret>MyServiceImpl; }")
+  }
+
+  fun testExistingLibraryOuterClass() {
+    addFile("foo/bar/MyService.java", "package foo.bar; public class MyService { }")
+    doTestNoAction("module foo.bar { provides foo.bar.MyService with java.io.File.<caret>MyServiceImpl; }")
+  }
+
+  private fun doTestNoAction(text: String) {
+    myFixture.configureByText("module-info.java", text)
+    val filtered = myFixture.availableIntentions.filter { it.text.startsWith("Create class") }
     TestCase.assertEquals(listOf<IntentionAction>(), filtered)
   }
 
@@ -148,4 +161,6 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     val javaModule = JavaModuleGraphUtil.findDescriptorByElement(serviceImpl)!!
     assertEquals(moduleInfo.moduleDeclaration, javaModule)
   }
+
+  private val OTHER = MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 }
