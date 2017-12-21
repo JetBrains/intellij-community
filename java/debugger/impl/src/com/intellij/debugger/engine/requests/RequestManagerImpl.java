@@ -366,13 +366,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    for (EventRequest request : findRequests(requestor)) {
-      /*ClassPrepareRequest is added in any case, so do not count it*/
-      if (!(request instanceof ClassPrepareRequest)) {
-        return true;
-      }
-    }
-    return false;
+    //ClassPrepareRequest is added in any case, so do not count it
+    return findRequests(requestor).stream().anyMatch(r -> !(r instanceof ClassPrepareRequest));
   }
 
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {

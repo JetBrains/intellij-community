@@ -14,7 +14,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -204,12 +203,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void updateInstanceFilterEditor(boolean updateText) {
-    List<String> filters = new ArrayList<>();
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (instanceFilter.isEnabled()) {
-        filters.add(Long.toString(instanceFilter.getId()));
-      }
-    }
+    List<String> filters = StreamEx.of(myInstanceFilters).filter(InstanceFilter::isEnabled).map(f -> Long.toString(f.getId())).toList();
     if (updateText) {
       myInstanceFiltersField.setText(StringUtil.join(filters, " "));
     }
