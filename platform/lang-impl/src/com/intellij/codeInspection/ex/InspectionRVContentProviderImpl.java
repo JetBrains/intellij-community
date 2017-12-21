@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -36,7 +37,9 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     presentation.updateContent();
 
-    final SearchScope searchScope = context.getCurrentScope().toSearchScope();
+    AnalysisScope scope = context.getCurrentScope();
+    if (scope == null) return false;
+    final SearchScope searchScope = scope.toSearchScope();
     if (searchScope instanceof LocalSearchScope) {
       final Map<String, Set<RefEntity>> contents = presentation.getContent();
       final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
