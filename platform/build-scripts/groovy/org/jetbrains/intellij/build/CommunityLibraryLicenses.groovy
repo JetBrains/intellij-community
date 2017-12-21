@@ -117,7 +117,7 @@ class CommunityLibraryLicenses {
                        url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "fxg-utils", libraryName: "fxg-utils", version: "4.9.1", license: "Apache 2.0", url: "http://flex.apache.org",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant-1.9.11_groovy-2.3.0.jar", license: "Apache 2.0",
+    new LibraryLicense(name: "Gant", version: "1.9.8", libraryName: "gant-groovy", license: "Apache 2.0",
                        url: "https://github.com/codehaus/gant", licenseUrl: "https://github.com/codehaus/gant/blob/master/LICENCE.txt"),
     new LibraryLicense(name: "Gherkin", libraryName: "Gherkin", version: "2.12.2", license: "MIT",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/cucumber/gherkin"),
