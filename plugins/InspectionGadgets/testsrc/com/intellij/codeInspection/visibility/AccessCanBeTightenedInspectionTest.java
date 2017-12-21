@@ -119,6 +119,15 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
            "}");
   }
 
+  public void testSameFileInheritance() {
+    doTest("class C {\n" +
+           "  private static class Err {\n" +
+           "    /*Access can be package-private*/public/**/ boolean notVisible() { return true; }\n" +
+           "  }\n"+
+           "  boolean f = new Err(){}.notVisible();\n" + //call on anonymous class!
+           "}");
+  }
+
   public void testAccessFromSubclass() {
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java",

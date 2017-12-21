@@ -268,8 +268,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
           return suggestPackageLocal(member);
         }
 
-        return !isAbstractMember && (myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS ||
-               !isInnerClass(memberClass)) ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
+        return !isAbstractMember &&
+               (myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS || !isInnerClass(memberClass)) &&
+               !calledOnInheritor(element, memberClass)
+               ? PsiUtil.ACCESS_LEVEL_PRIVATE : suggestPackageLocal(member);
       }
 
       PsiExpression qualifier = getQualifier(element);
@@ -297,6 +299,13 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
         }
       }
       return PsiUtil.ACCESS_LEVEL_PUBLIC;
+    }
+
+    private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
+      PsiExpression qualifier = getQualifier(element);
+      if (qualifier == null) return false;
+      PsiClass qClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
+      return qClass != null && qClass.isInheritor(memberClass, true);
     }
   }
 
