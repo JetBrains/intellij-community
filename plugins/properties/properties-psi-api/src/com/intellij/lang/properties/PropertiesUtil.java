@@ -152,7 +152,16 @@ public class PropertiesUtil {
         final String language = splitRawLocale[1];
         final String country = splitRawLocale.length > 2 ? splitRawLocale[2] : "";
         final String variant = splitRawLocale.length > 3 ? splitRawLocale[3] : "";
-        return Pair.create(new Locale(language, country, variant), language + "_" + country + "_" + variant);
+
+        StringBuilder trimmedSuffix = new StringBuilder(language);
+        if (!country.isEmpty()) {
+          trimmedSuffix.append("_").append(country);
+        }
+        if (!variant.isEmpty()) {
+          trimmedSuffix.append("_").append(variant);
+        }
+
+        return Pair.create(new Locale(language, country, variant), trimmedSuffix.toString());
       }
     }
     return Pair.create(DEFAULT_LOCALE, "");
