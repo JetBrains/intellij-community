@@ -111,6 +111,25 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           """.trimMargin())
   }
 
+  fun `test do not show groups duplicating module names`() {
+    val root = directoryContent {
+      dir("foo") {}
+      dir("foo.bar") {}
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("xxx.foo"), root.findChild("foo"))
+    PsiTestUtil.addContentRoot(createModule("xxx.foo.bar"), root.findChild("foo.bar"))
+    assertStructureEqual("""
+          |Project
+          | Group: xxx
+          |  foo
+          |  foo.bar
+          | test do not show groups duplicating module names.iml
+          | xxx.foo.bar.iml
+          | xxx.foo.iml
+          |
+          """.trimMargin())
+  }
+
   fun `test modules with common parent group`() {
     val root = directoryContent {
       dir("module1") {

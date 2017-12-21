@@ -57,6 +57,20 @@ class GroupModulesByQualifiedNamesTest : PlatformTestCase() {
     assertEmpty(group.childGroups(grouper))
   }
 
+  fun `test module as a group`() {
+    val module1 = createModule("a.foo")
+    val module2 = createModule("a.foo.bar")
+
+    assertEquals("foo", grouper.getShortenedName(module1))
+    assertEquals("bar", grouper.getShortenedName(module2))
+
+    val parentGroup = ModuleGroup(listOf("a"))
+    assertSameElements(parentGroup.modulesInGroup(grouper, false), module1, module2)
+    assertSameElements(parentGroup.modulesInGroup(grouper, true), module1, module2)
+
+    assertEmpty(parentGroup.childGroups(grouper))
+  }
+
   private val grouper: ModuleGrouper
     get() = getQualifiedNameModuleGrouper(myProject)
 }
