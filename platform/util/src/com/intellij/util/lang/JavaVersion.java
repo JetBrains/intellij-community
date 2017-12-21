@@ -130,6 +130,8 @@ public final class JavaVersion {
     return current;
   }
 
+  private static final int MAX_ACCEPTED_VERSION = 25;  // sanity check
+
   /**
    * <p>Parses a Java version string.</p>
    *
@@ -170,7 +172,7 @@ public final class JavaVersion {
         int feature = Integer.parseInt(numbers.get(0)), minor = 0, update = 0, build = 0;
         boolean ea = false;
 
-        if (feature > 8 && feature < 50 /*sanity check*/) {
+        if (feature > 8 && feature < MAX_ACCEPTED_VERSION) {
           // Java 9+
           p = 1;
           while (p < separators.size() && ".".equals(separators.get(p))) p++;
@@ -196,7 +198,7 @@ public final class JavaVersion {
         else if (feature == 1 && numbers.size() > 1 && separators.size() > 1 && ".".equals(separators.get(1))) {
           // Java 1.0 .. 1.8
           feature = Integer.parseInt(numbers.get(1));
-          if (feature <= 8) {
+          if (feature <= MAX_ACCEPTED_VERSION) {
             if (numbers.size() > 2 && separators.size() > 2 && ".".equals(separators.get(2))) {
               minor = Integer.parseInt(numbers.get(2));
               if (numbers.size() > 3 && separators.size() > 3 && "_".equals(separators.get(3))) {

@@ -23,6 +23,7 @@ class JavaVersionTest {
   @Test fun `1_8_0_45-internal`() = doTest("1.8.0_45-internal", 8, 0, 45, 0, true)
   @Test fun `1_8_0_121-2-whatever-b11`() = doTest("1.8.0_121-2-whatever-b11", 8, 0, 121, 11)
   @Test fun `1_8_0_121-(big-number)-b11`() = doTest("1.8.0_121-99${Long.MAX_VALUE}-b11", 8, 0, 121, 11)
+  @Test fun `1_10`() = doTest("1.10", 10)
 
   @Test fun `9`() = doTest("9", 9)
   @Test fun `9-ea`() = doTest("9-ea", 9, 0, 0, 0, true)
