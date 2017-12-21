@@ -142,7 +142,7 @@ public class StartupUtil {
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
       AppUIUtil.registerBundledFonts();
-      AppUIUtil.showEndUserAgreement();
+      AppUIUtil.showUserAgreementAndConsentsIfNeeded();
     }
 
     appStarter.start(newConfigFolder);

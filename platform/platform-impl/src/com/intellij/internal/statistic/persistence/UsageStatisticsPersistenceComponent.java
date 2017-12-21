@@ -2,6 +2,7 @@
 
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -25,7 +26,6 @@ import java.util.Set;
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements NamedComponent, PersistentStateComponent<Element> {
 
-  @NonNls private boolean isAllowed = false;
   @NonNls private boolean isShowNotification = true;
   @NotNull private SendPeriod myPeriod = SendPeriod.DAILY;
 
@@ -73,8 +73,11 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       setSentTime(0);
     }
 
+    // compatibility: if was previously allowed, transfer the setting to the new place
     final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
-    setAllowed(!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue));
+    if (!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue)) {
+      setAllowed(true);
+    }
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
     setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) || Boolean.parseBoolean(isShowNotificationValue));
@@ -100,9 +103,9 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       element.setAttribute(LAST_TIME_ATTR, String.valueOf(lastTimeSent));
     }
 
-    if (isAllowed()) {
-      element.setAttribute(IS_ALLOWED_ATTR, "true");
-    }
+    //if (isAllowed()) {
+    //  element.setAttribute(IS_ALLOWED_ATTR, "true");
+    //}
     if (!isShowNotification()) {
       element.setAttribute(SHOW_NOTIFICATION_ATTR, "false");
     }
@@ -131,12 +134,12 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   public void setAllowed(boolean allowed) {
-    isAllowed = allowed;
+    ConsentOptions.getInstance().setSendingUsageStatsAllowed(allowed);
   }
 
   @Override
   public boolean isAllowed() {
-    return isAllowed;
+    return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
   }
 
   public void setShowNotification(boolean showNotification) {
