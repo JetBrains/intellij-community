@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -338,7 +340,9 @@ public abstract class AbstractValueHint {
 
     DebuggerTreeWithHistoryPopup.showTreePopup(creator, descriptor, myEditor, point, getProject(), () -> {
       disposeHighlighter();
-      myHideRunnable.run();
+      if (myHideRunnable != null) {
+        myHideRunnable.run();
+      }
     });
   }
 

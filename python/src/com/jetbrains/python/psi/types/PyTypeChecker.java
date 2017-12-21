@@ -7,6 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -531,9 +532,30 @@ public class PyTypeChecker {
                                                             @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
     for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
-      final PyType argumentType = context.getType(entry.getKey());
-      final PyCallableParameter parameter = entry.getValue();
-      if (!match(parameter.getArgumentType(context), argumentType, context, substitutions)) {
+      final PyCallableParameter paramWrapper = entry.getValue();
+      PyType actualType = context.getType(entry.getKey());
+      if (paramWrapper.isSelf()) {
+        // TODO find out a better way to pass the corresponding function inside
+        final PyParameter param = paramWrapper.getParameter();
+        final PyFunction function = as(ScopeUtil.getScopeOwner(param), PyFunction.class);
+        if (function != null && function.getModifier() == PyFunction.Modifier.CLASSMETHOD) {
+          final StreamEx<PyType> types;
+          if (actualType instanceof PyUnionType) {
+            types = StreamEx.of(((PyUnionType)actualType).getMembers());
+          }
+          else {
+            types = StreamEx.of(actualType);
+          }
+          actualType = types
+            .select(PyClassLikeType.class)
+            .map(PyClassLikeType::toClass)
+            .select(PyType.class)
+            .foldLeft(PyUnionType::union)
+            .orElse(actualType);
+        }
+      }
+      final PyType expectedType = paramWrapper.getArgumentType(context);
+      if (!match(expectedType, actualType, context, substitutions)) {
         return null;
       }
     }

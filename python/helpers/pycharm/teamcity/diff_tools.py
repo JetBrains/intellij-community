@@ -1,4 +1,3 @@
-import base64
 import pprint
 import sys
 import unittest
@@ -27,12 +26,15 @@ def patch_unittest_diff(test_filter=None):
     old = unittest.TestCase.assertEqual
 
     def _patched_equals(self, first, second, msg=None):
-        if first != second:
+        try:
+            old(self, first, second, msg)
+            return
+        except AssertionError as native_error:
             if not test_filter or test_filter(self):
                 error = EqualsAssertionError(first, second, msg)
-                if not error.is_too_big():
+                if error.can_be_serialized():
                     raise error
-            old(self, first, second, msg)
+            raise native_error
 
     unittest.TestCase.assertEqual = _patched_equals
 
@@ -43,6 +45,8 @@ def _format_and_convert(val):
 
 
 class EqualsAssertionError(AssertionError):
+    MESSAGE_SEP = " :: "
+    NOT_EQ_SEP = " != "
 
     def __init__(self, expected, actual, msg=None, preformated=False):
         super(AssertionError, self).__init__()
@@ -58,8 +62,10 @@ class EqualsAssertionError(AssertionError):
         self.expected = _STR_F(self.expected)
         self.actual = _STR_F(self.actual)
 
-    def is_too_big(self):
-        return len(self.actual) + len(self.expected) > 10000
+    def can_be_serialized(self):
+        if any([self.MESSAGE_SEP in s or self.NOT_EQ_SEP in s for s in [self.expected, self.actual, self.msg]]):
+            return False
+        return len(self.actual) + len(self.expected) < 10000
 
     def __str__(self):
         return self._serialize()
@@ -68,17 +74,14 @@ class EqualsAssertionError(AssertionError):
         return self._serialize()
 
     def _serialize(self):
-        def fix_type(msg):
-            return msg if _PY2K else bytes(str(msg), "utf-8")
+        return self.msg + self.MESSAGE_SEP + self.expected + self.NOT_EQ_SEP + self.actual
 
-        encoded_fields = [base64.b64encode(fix_type(x)) for x in [self.expected, self.actual, self.msg]]
-        if not _PY2K:
-            encoded_fields = [bytes.decode(x) for x in encoded_fields]
-        return "|".join(encoded_fields)
+    @classmethod
+    def deserialize_error(cls, serialized_message):
+        message, diff = serialized_message.split(cls.MESSAGE_SEP)
+        exp, act = diff.split(cls.NOT_EQ_SEP)
+        return EqualsAssertionError(exp, act, message, preformated=True)
 
 
 def deserialize_error(serialized_message):
-    parts = [base64.b64decode(x) for x in str(serialized_message).split("|")]
-    if not _PY2K:
-        parts = [bytes.decode(x) for x in parts]
-    return EqualsAssertionError(parts[0], parts[1], parts[2], preformated=True)
+    return EqualsAssertionError.deserialize_error(serialized_message)

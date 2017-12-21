@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -245,23 +247,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return classRenderer;
   }
 
-  private static final String ourTrace = System.getProperty("idea.debugger.trace");
+  private static final int ourTraceMask;
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  protected void commitVM(VirtualMachine vm) {
-    if (!isInInitialState()) {
-      LOG.error("State is invalid " + myState.get());
-    }
-    DebuggerManagerThreadImpl.assertIsManagerThread();
-    myPositionManager = new CompoundPositionManager(new PositionManagerImpl(this));
-    LOG.debug("*******************VM attached******************");
-    checkVirtualMachineVersion(vm);
-
-    myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
-
-    if (!StringUtil.isEmpty(ourTrace)) {
-      int mask = 0;
-      StringTokenizer tokenizer = new StringTokenizer(ourTrace);
+  static {
+    String traceStr = System.getProperty("idea.debugger.trace");
+    int mask = 0;
+    if (!StringUtil.isEmpty(traceStr)) {
+      StringTokenizer tokenizer = new StringTokenizer(traceStr);
       while (tokenizer.hasMoreTokens()) {
         String token = tokenizer.nextToken();
         if ("SENDS".compareToIgnoreCase(token) == 0) {
@@ -289,9 +281,23 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           mask |= VirtualMachine.TRACE_ALL;
         }
       }
-
-      vm.setDebugTraceMode(mask);
     }
+    ourTraceMask = mask;
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  protected void commitVM(VirtualMachine vm) {
+    if (!isInInitialState()) {
+      LOG.error("State is invalid " + myState.get());
+    }
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    myPositionManager = new CompoundPositionManager(new PositionManagerImpl(this));
+    LOG.debug("*******************VM attached******************");
+    checkVirtualMachineVersion(vm);
+
+    myVirtualMachineProxy = new VirtualMachineProxyImpl(this, vm);
+
+    vm.setDebugTraceMode(ourTraceMask);
   }
 
   private void stopConnecting() {
@@ -1075,15 +1081,26 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
             }
 
-            // workaround for jdi hang in trace mode
-            if (!StringUtil.isEmpty(ourTrace)) {
+            if (Patches.JDK_BUG_ID_21275177 && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               //noinspection ResultOfMethodCallIgnored
               myArgs.forEach(Object::toString);
+            }
+
+            // workaround for jdi hang in trace mode, see IDEA-183387
+            if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
+              StreamEx.of(myArgs).findAny(ThreadReference.class::isInstance).ifPresent(t -> {
+                //noinspection UseOfSystemOutOrSystemErr
+                System.err.println("[JDI: workaround for invocation of " + myMethod + "]");
+                myMethod.virtualMachine().setDebugTraceMode(ourTraceMask & ~VirtualMachine.TRACE_SENDS);
+              });
             }
 
             result[0] = invokeMethod(invokePolicy, myMethod, myArgs);
           }
           finally {
+            if (Patches.JDK_BUG_WITH_TRACE_SEND && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
+              myMethod.virtualMachine().setDebugTraceMode(ourTraceMask);
+            }
             //  assertThreadSuspended(thread, context);
             if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
               // ensure args are not collected

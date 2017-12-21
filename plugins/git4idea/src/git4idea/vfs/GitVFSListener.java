@@ -213,6 +213,7 @@ public class GitVFSListener extends VcsVFSListener {
         toAdd.add(VcsUtil.getFilePath(newPath));
       }
     }
+    LOG.debug("performMoveRename. \ntoAdd: " + toAdd + "\ntoRemove: " + toRemove + "\ntoForceMove: " + toForceMove);
     performAdding(toAdd);
     performDeletion(toRemove);
     performForceMove(toForceMove);

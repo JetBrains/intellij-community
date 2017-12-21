@@ -457,7 +457,7 @@ object UpdateChecker {
 
   private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
-    addUpdateRequestParameter("uid", PermanentInstallationIDImpl.INSTALLATION_ID)
+    addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -471,7 +471,7 @@ object UpdateChecker {
   @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
   @JvmStatic
   @Suppress("unused", "UNUSED_PARAMETER")
-  fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationIDImpl.INSTALLATION_ID
+  fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
 
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>

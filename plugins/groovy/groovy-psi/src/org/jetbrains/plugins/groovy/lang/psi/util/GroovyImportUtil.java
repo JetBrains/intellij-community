@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -235,7 +237,10 @@ public class GroovyImportUtil {
       return ((PsiClass)element).getQualifiedName();
     }
     if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
-      return ((PsiMethod)element).getContainingClass().getQualifiedName();
+      PsiClass aClass = ((PsiMethod)element).getContainingClass();
+      if (aClass != null) {
+        return aClass.getQualifiedName();
+      }
     }
     return null;
   }

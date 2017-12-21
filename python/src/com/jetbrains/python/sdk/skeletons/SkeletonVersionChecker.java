@@ -111,7 +111,9 @@ public class SkeletonVersionChecker {
                 if (package_name != null) {
                   final int version = fromVersionString(ver);
                   if (DEFAULT_NAME.equals(package_name)) {
-                    myDefaultVersion = version;
+                    if (myDefaultVersion != PREGENERATED_VERSION) {
+                      myDefaultVersion = version;
+                    }
                   }
                   else if (BUILTIN_NAME.equals(package_name)) {
                     myBuiltinsVersion = version;

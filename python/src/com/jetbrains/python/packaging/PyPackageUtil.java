@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -155,17 +156,37 @@ public class PyPackageUtil {
   private static List<PyRequirement> getSetupPyRequiresFromArguments(@NotNull Module module,
                                                                      @NotNull PyCallExpression setupCall,
                                                                      @NotNull String... argumentNames) {
-    return PyRequirement.fromText(
-      Stream
-        .of(argumentNames)
-        .map(setupCall::getKeywordArgument)
-        .map(requires -> resolveRequiresValue(module, requires))
-        .filter(requires -> requires != null)
-        .flatMap(requires -> Stream.of(requires.getElements()))
-        .filter(PyStringLiteralExpression.class::isInstance)
-        .map(requirement -> ((PyStringLiteralExpression)requirement).getStringValue())
-        .collect(Collectors.joining("\n"))
+    return fix(
+      PyRequirement.fromText(
+        Stream
+          .of(argumentNames)
+          .map(setupCall::getKeywordArgument)
+          .map(requires -> resolveRequiresValue(module, requires))
+          .filter(requires -> requires != null)
+          .flatMap(requires -> Stream.of(requires.getElements()))
+          .filter(PyStringLiteralExpression.class::isInstance)
+          .map(requirement -> ((PyStringLiteralExpression)requirement).getStringValue())
+          .collect(Collectors.joining("\n"))
+      )
     );
+  }
+
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  @Deprecated
+  public static PyRequirement fix(@NotNull PyRequirement requirement) {
+    return requirement.withVersionComparator(PyPackageVersionComparator.getSTR_COMPARATOR());
+  }
+
+  /**
+   * @deprecated This method will be removed in 2018.2.
+   */
+  @NotNull
+  @Deprecated
+  public static List<PyRequirement> fix(@NotNull List<PyRequirement> requirements) {
+    return ContainerUtil.map(requirements, PyPackageUtil::fix);
   }
 
   @NotNull
@@ -309,13 +330,8 @@ public class PyPackageUtil {
       }
       catch (ExecutionException e) {
         packagesRef.set(Collections.emptyList());
-        if (LOG.isDebugEnabled()) {
-          e.initCause(callStacktrace);
-          LOG.debug(e);
-        }
-        else {
-          LOG.warn(e.getMessage());
-        }
+        e.initCause(callStacktrace);
+        LOG.warn(e);
       }
     });
     return packagesRef.get();
@@ -368,7 +384,7 @@ public class PyPackageUtil {
   public static List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
     final VirtualFile requirementsTxt = findRequirementsTxt(module);
     if (requirementsTxt != null) {
-      return PyRequirement.fromFile(requirementsTxt);
+      return fix(PyRequirement.fromFile(requirementsTxt));
     }
     return null;
   }

@@ -68,6 +68,7 @@ com.jetbrains.performancePlugin 1.1 1.3 1.3.1 1.3.2
 org.vuejs 1.1.0 1.0.1 1.0.0
 Vue.js 1.1.0 1.0.1 1.0.0
 com.intellij.resharper.unity 1.5.0.0 1.5.0.1
+"Error-prone plugin" 171.4342
 com.nmatveev.idea-plugin-protobuf 0.5.9
 Haskell 0.5.2
 cco.atoth.intellij.plugin.chucknorris 1.0 1.1

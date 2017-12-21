@@ -255,7 +255,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   private boolean isExpectedTypeItem(@NotNull LookupElement item) {
     TypedLookupItem typed = item.as(TypedLookupItem.CLASS_CONDITION_KEY);
     PsiType itemType = typed == null ? null : typed.getType();
-    return itemType != null && Arrays.stream(myExpectedTypes).anyMatch(info -> info.getType().isAssignableFrom(itemType));
+    return itemType != null &&
+           Arrays.stream(myExpectedTypes)
+             .map(ExpectedTypeInfo::getType)
+             .anyMatch(type -> !isTooGeneric(type) && type.isAssignableFrom(itemType));
+  }
+
+  private static boolean isTooGeneric(PsiType type) {
+    PsiType erasure = TypeConversionUtil.erasure(type);
+    return erasure == null || erasure.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
   }
 
   @NotNull
@@ -278,7 +286,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (myCompletionType == CompletionType.SMART) {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
-      } else if (Arrays.stream(myExpectedTypes).anyMatch(info -> PsiType.BOOLEAN.isConvertibleFrom(info.getDefaultType())) &&
+      } else if (Arrays.stream(myExpectedTypes).anyMatch(info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
           PsiTreeUtil.getParentOfType(myPosition, PsiIfStatement.class, true, PsiStatement.class, PsiMember.class) == null) {
         return ThreeState.YES;
       }

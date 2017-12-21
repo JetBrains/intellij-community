@@ -58,7 +58,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
 
-  private static final int VERSION = 15 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
+  private static final int VERSION = 16 + (SharedIndicesData.ourFileSharedIndicesEnabled ? 15 : 0) + (SharedIndicesData.DO_CHECKS ? 15 : 0);
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = ContainerUtil.newConcurrentMap();
   static final int INVALID_FILE_ID = 0;
 

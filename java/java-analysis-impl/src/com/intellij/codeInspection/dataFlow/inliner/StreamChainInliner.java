@@ -382,10 +382,13 @@ public class StreamChainInliner implements CallInliner {
       } else {
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
         builder.pop()
+          .pushUnknown()
+          .ifConditionIs(true)
           .doWhile()
           .push(builder.getFactory().createTypeValue(outType, Nullness.UNKNOWN))
           .chain(myNext::iteration)
-          .endWhileUnknown();
+          .endWhileUnknown()
+          .endIf();
       }
     }
   }

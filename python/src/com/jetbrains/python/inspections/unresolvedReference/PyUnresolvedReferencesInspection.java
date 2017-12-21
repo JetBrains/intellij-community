@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.unresolvedReference;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.ControlFlow;
@@ -824,12 +825,20 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     private static boolean hasUnresolvedDynamicMember(@NotNull final PyClassType type,
                                                       PsiReference reference,
                                                       @NotNull final String name, TypeEvalContext typeEvalContext) {
-      for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
-        final Collection<PyCustomMember> resolveResult = provider.getMembers(type, reference.getElement(), typeEvalContext);
-        for (PyCustomMember member : resolveResult) {
-          if (member.getName().equals(name)) return true;
+
+      final List<PyClassType> types = new ArrayList<>(Collections.singletonList(type));
+      types.addAll(FluentIterable.from(type.getAncestorTypes(typeEvalContext)).filter(PyClassType.class).toList());
+
+
+      for (final PyClassType typeToCheck : types) {
+        for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+          final Collection<PyCustomMember> resolveResult = provider.getMembers(typeToCheck, reference.getElement(), typeEvalContext);
+          for (PyCustomMember member : resolveResult) {
+            if (member.getName().equals(name)) return true;
+          }
         }
       }
+
       return false;
     }
 

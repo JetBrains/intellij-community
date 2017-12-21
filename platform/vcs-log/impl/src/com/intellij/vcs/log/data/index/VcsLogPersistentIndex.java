@@ -16,8 +16,10 @@
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener.Adapter;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +56,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -593,7 +594,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       int previousPriority = Thread.currentThread().getPriority();
       try {
         Thread.currentThread().setPriority(LOW_PRIORITY);
-      } catch (SecurityException ignored) {
+      }
+      catch (SecurityException ignored) {
         LOG.debug("Could not set indexing thread priority", ignored);
       }
       return previousPriority;
@@ -773,26 +775,27 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void showIndexingNotification(long time) {
-      Runnable notification = () -> {
-        Adapter notificationListener = new Adapter() {
+      Runnable notificationRunner = () -> {
+        Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
+                                                                   "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
+                                                                   "Indexing was taking too long (" +
+                                                                   StopWatch.formatTime(time - time % 1000) +
+                                                                   ")", NotificationType.WARNING, null);
+        notification.addAction(new NotificationAction("Resume") {
           @Override
-          protected void hyperlinkActivated(@NotNull Notification notification,
-                                            @NotNull HyperlinkEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             if (myBigRepositoriesList.isBig(myRoot)) {
               LOG.info("Resuming indexing " + myRoot.getName());
               myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());
               myBigRepositoriesList.removeRepository(myRoot);
               scheduleIndex(false);
             }
+            notification.expire();
           }
-        };
-        VcsNotifier.getInstance(myProject).notifyImportantWarning("Log Indexing for \"" + myRoot.getName() + "\" Stopped",
-                                                                  "Indexing was taking too long (" +
-                                                                  StopWatch.formatTime(time - time % 1000) +
-                                                                  ")<p/><a href='resume'>Resume</a>",
-                                                                  notificationListener);
+        });
+        VcsNotifier.getInstance(myProject).notify(notification);
       };
-      ApplicationManager.getApplication().invokeLater(notification);
+      ApplicationManager.getApplication().invokeLater(notificationRunner);
     }
   }
 }

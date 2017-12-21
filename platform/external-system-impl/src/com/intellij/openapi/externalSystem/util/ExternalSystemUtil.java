@@ -544,11 +544,15 @@ public class ExternalSystemUtil {
           final Throwable error = myTask.getError();
           if (error == null) {
             if (callback != null) {
-              DataNode<ProjectData> externalProject = myTask.getExternalProject();
-              if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
-                externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+              final ExternalProjectInfo externalProjectData = ProjectDataManagerImpl.getInstance()
+                .getExternalProjectData(project, externalSystemId, externalProjectPath);
+              if (externalProjectData != null) {
+                DataNode<ProjectData> externalProject = externalProjectData.getExternalProjectStructure();
+                if (externalProject != null && importSpec.shouldCreateDirectoriesForEmptyContentRoots()) {
+                  externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
+                }
+                callback.onSuccess(externalProject);
               }
-              callback.onSuccess(externalProject);
             }
             if (!isPreviewMode) {
               externalSystemTaskActivator.runTasks(externalProjectPath, ExternalSystemTaskActivator.Phase.AFTER_SYNC);

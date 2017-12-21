@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -356,8 +355,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @NotNull
   @Override
   public List<PyRequirement> parseRequirements(@NotNull String text) {
-    return ContainerUtil.map(PyRequirement.fromText(text),
-                             req -> req.withVersionComparator(PyPackageVersionComparator.getSTR_COMPARATOR()));
+    return PyPackageUtil.fix(PyRequirement.fromText(text));
   }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
@@ -526,7 +524,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.fromText(requiresSpec));
+        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, location, requirements));

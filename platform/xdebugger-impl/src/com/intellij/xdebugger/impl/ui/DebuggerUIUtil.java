@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -18,6 +20,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
@@ -392,9 +395,16 @@ public class DebuggerUIUtil {
     }
   }
 
+  @NotNull
   public static String getSelectionShortcutsAdText(String... actionNames) {
-    return XDebuggerBundle.message("ad.extra.selection.shortcut",
-                                   StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull().joining(", "));
+    return getShortcutsAdText("ad.extra.selection.shortcut", actionNames);
+  }
+
+  @NotNull
+  public static String getShortcutsAdText(String key, String... actionNames) {
+    String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
+      .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
+    return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);
   }
 
   @Nullable

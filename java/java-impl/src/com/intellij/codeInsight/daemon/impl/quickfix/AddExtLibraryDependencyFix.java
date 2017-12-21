@@ -87,8 +87,4 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
       }.execute());
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 }

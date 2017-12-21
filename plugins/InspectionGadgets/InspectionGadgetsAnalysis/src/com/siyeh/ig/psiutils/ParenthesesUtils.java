@@ -315,7 +315,8 @@ public class ParenthesesUtils {
             return;
           }
         }
-        if (ignoreClarifyingParentheses) {
+        if (ignoreClarifyingParentheses ||
+            (parentOperator == JavaTokenType.PLUS && TypeUtils.isJavaLangString(parentType) && !TypeUtils.isJavaLangString(bodyType))) {
           if (parentOperator.equals(bodyOperator)) {
             removeParentheses(body, ignoreClarifyingParentheses);
           }

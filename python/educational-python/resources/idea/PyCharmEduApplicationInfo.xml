@@ -1,7 +1,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2017" minor="3" eap="true"/>
+  <version major="2017" minor="3" eap="false"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com/?fromIDE"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_edu_logo.png" textcolor="e5e5e5" progressColor="21d688" progressY="281" progressTailIcon="/community_progress_tail.png"/>
@@ -21,7 +21,7 @@
   <documentation url="https://www.jetbrains.com/pycharm-edu/quickstart/"/>
   <support url="https://intellij-support.jetbrains.com/hc/en-us#"/>
   <feedback eap-url="https://youtrack.jetbrains.com/newissue?project=EDU&amp;clearDraft=true&amp;c=Affected+versions+$BUILD&amp;description=$DESCR"
-            release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+            release-url="https://www.jetbrains.com/feedback/feedback.jsp?product=EduTools&amp;ide=PCE"/>
   <whatsnew url="https://www.jetbrains.com/pycharm-edu/whatsnew/"/>
   <third-party url="https://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
   <jetbrains-tv url="https://www.youtube.com/playlist?list=PLQ176FUIyIUY5Ii58pzoZhS_3qIBL80nz"/>

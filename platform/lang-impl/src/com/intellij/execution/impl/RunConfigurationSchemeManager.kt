@@ -12,7 +12,7 @@ import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
     // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
@@ -90,7 +90,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element {
     val result = super.writeScheme(scheme)
-    if (isShared) {
+    if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
         .attribute("name", "ProjectRunConfigurationManager")
         .addContent(result)

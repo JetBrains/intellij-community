@@ -46,8 +46,8 @@ public class JavacMain {
   private static final Set<String> FILTERED_SINGLE_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   )));
-  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Collections.singletonList(
-    "-encoding"
+  private static final Set<String> FILE_MANAGER_EARLY_INIT_OPTIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+    "-encoding", "-extdirs", "-endorseddirs", "-processorpath", "-s", "-d", "-h"
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");

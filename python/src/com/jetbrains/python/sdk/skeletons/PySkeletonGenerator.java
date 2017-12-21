@@ -171,7 +171,7 @@ public class PySkeletonGenerator {
     }
 
     final Map<String, String> extraEnv = PythonSdkType.getVirtualEnvExtraEnv(binaryPath);
-    final Map<String, String> env = extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv;
+    final Map<String, String> env = new HashMap<>(extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
 
     if (myPrebuilt) {
       env.put("IS_PREGENERATED_SKELETONS", "1");

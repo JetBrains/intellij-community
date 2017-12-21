@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,7 +69,7 @@ public class JavaBuilderUtil {
   public static void registerSuccessfullyCompiled(CompileContext context, File file) {
     registerSuccessfullyCompiled(context, Collections.singleton(file));
   }
-  
+
   public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
     getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
   }
@@ -115,13 +101,13 @@ public class JavaBuilderUtil {
     CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, ModuleChunk chunk) throws IOException {
 
     Mappings delta = null;
-    
+
     final Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
     if (pair != null) {
       MAPPINGS_DELTA_KEY.set(context, null);
       delta = pair.getFirst();
     }
-    
+
     if (delta == null) {
       return false;
     }
@@ -352,8 +338,7 @@ public class JavaBuilderUtil {
 
   private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
     JpsProject project = context.getProjectDescriptor().getProject();
-    File storageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
-    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project, storageRoot);
+    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project);
   }
 
   private static FileFilter createOrFilter(final List<FileFilter> filters) {

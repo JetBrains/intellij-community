@@ -150,7 +150,7 @@ public class HtmlDescriptorsTable {
         parentDescriptor.attributes.add(value);
       }
 
-      value.setHelpRef(element.getAttributeValue(HELPREF_ATTR));
+      value.setHelpRef(baseHtmlExtDocUrl + element.getAttributeValue(HELPREF_ATTR));
       value.setDescription(element.getAttributeValue(DESCRIPTION_ATTR));
       value.setName(attrName);
 

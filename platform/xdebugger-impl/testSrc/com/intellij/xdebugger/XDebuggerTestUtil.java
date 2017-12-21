@@ -69,7 +69,7 @@ public class XDebuggerTestUtil {
                                                                          Class<? extends XBreakpointType<B, ?>> breakpointType) {
     XLineBreakpointType type = (XLineBreakpointType)XDebuggerUtil.getInstance().findBreakpointType(breakpointType);
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
+    XLineBreakpointImpl breakpoint = ReadAction.compute(() -> (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line));
     assertNotNull(breakpoint);
     assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     assertEquals(errorMessage, breakpoint.getErrorMessage());

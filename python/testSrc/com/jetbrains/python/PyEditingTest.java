@@ -591,4 +591,9 @@ public class PyEditingTest extends PyTestCase {
                 "    return bar, 'so' \\\n" +
                 "                'me'");
   }
+
+  // PY-27178
+  public void testIncompleteFunctionTypeComment() {
+    doTypingTest('.');
+  }
 }

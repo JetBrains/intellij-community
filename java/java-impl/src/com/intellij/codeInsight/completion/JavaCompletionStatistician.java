@@ -100,7 +100,6 @@ public class JavaCompletionStatistician extends CompletionStatistician{
       return new StatisticsInfo(contextPrefix, memberValue);
     }
 
-    return new StatisticsInfo(contextPrefix + JavaStatisticsManager.getMemberUseKey2(containingClass),
-                              JavaStatisticsManager.getMemberUseKey2(member));
+    return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
   }
 }

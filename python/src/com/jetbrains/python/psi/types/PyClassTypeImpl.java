@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -460,6 +461,40 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     return false;
   }
+
+  @Nullable
+  @Override
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    if (isDefinition()) {
+      List<PyCallableParameter> params = getParametersOfMethod(PyNames.INIT, context);
+      if (params == null) {
+        // TODO better way to resolve the constructor method here
+        params = getParametersOfMethod(PyNames.NEW, context);
+      }
+      if (params != null) {
+        // Skip "self" for __init__ and "cls" for __new__
+        return params.subList(1, params.size());
+      }
+      return null;
+    }
+    return getParametersOfMethod(PyNames.CALL, context);
+  }
+
+  @Nullable
+  private List<PyCallableParameter> getParametersOfMethod(@NotNull String name, @NotNull TypeEvalContext context) {
+    final List<? extends RatedResolveResult> results =
+      resolveMember(name, null, AccessDirection.READ, PyResolveContext.noImplicits().withTypeEvalContext(context), true);
+    if (results != null) {
+      return StreamEx.of(results)
+        .map(RatedResolveResult::getElement)
+        .select(PyCallable.class)
+        .map(func -> func.getParameters(context))
+        .findFirst()
+        .orElse(null);
+    }
+    return null;
+  }
+
 
   private static boolean isMethodType(@NotNull PyClassType type) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(type.getPyClass());

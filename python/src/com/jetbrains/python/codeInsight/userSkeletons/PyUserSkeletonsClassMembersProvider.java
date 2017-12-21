@@ -28,7 +28,7 @@ public class PyUserSkeletonsClassMembersProvider extends PyClassMembersProviderB
   @Override
   public Collection<PyCustomMember> getMembers(@NotNull PyClassType classType, PsiElement location, @NotNull TypeEvalContext context) {
     final PyClass cls = classType.getPyClass();
-    final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeleton(cls);
+    final PyClass skeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext(cls, context);
     if (skeleton != null) {
       return getClassMembers(skeleton, classType.isDefinition());
     }

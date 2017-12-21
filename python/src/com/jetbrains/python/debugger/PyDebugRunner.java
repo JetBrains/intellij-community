@@ -239,33 +239,35 @@ public class PyDebugRunner extends GenericProgramRunner {
     return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort), createRunConfigPatcher(state, profile)};
   }
 
+  public static boolean patchExeParams(ParametersList parametersList) {
+    // we should remove '-m' parameter, but notify debugger of it
+    // but we can't remove one parameter from group, so we create new parameters group
+    int moduleParamsIndex =
+      parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_MODULE));
+    ParamsGroup oldModuleParams = parametersList.removeParamsGroup(moduleParamsIndex);
+    if (oldModuleParams == null) {
+      return false;
+    }
+    boolean isModule = false;
+
+    ParamsGroup newModuleParams = new ParamsGroup(PythonCommandLineState.GROUP_MODULE);
+    for (String param : oldModuleParams.getParameters()) {
+      if (!param.equals("-m")) {
+        newModuleParams.addParameter(param);
+      }
+      else {
+        isModule = true;
+      }
+    }
+
+    parametersList.addParamsGroupAt(moduleParamsIndex, newModuleParams);
+    return isModule;
+  }
+
   private CommandLinePatcher createDebugServerPatcher(final Project project,
                                                       final PythonCommandLineState pyState,
                                                       final int serverLocalPort) {
     return new CommandLinePatcher() {
-
-      private boolean patchExeParams(ParametersList parametersList) {
-        // we should remove '-m' parameter, but notify debugger of it
-        // but we can't remove one parameter from group, so we create new parameters group
-        int exeParamsIndex =
-          parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
-        ParamsGroup oldExeParams = parametersList.removeParamsGroup(exeParamsIndex);
-        boolean isModule = false;
-
-        ParamsGroup newExeParams = new ParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
-        for (String param : oldExeParams.getParameters()) {
-          if (!param.equals("-m")) {
-            newExeParams.addParameter(param);
-          }
-          else {
-            isModule = true;
-          }
-        }
-
-        parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
-        return isModule;
-      }
-
       @Override
       public void patchCommandLine(GeneralCommandLine commandLine) {
         // script name is the last parameter; all other params are for python interpreter; insert just before name

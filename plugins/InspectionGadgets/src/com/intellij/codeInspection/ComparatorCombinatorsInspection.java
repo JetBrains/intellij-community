@@ -15,6 +15,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -276,7 +277,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           second = parameters[1];
         } else if (MethodCallUtils.isCompareToCall(call)) {
           first = call.getMethodExpression().getQualifierExpression();
-          second = call.getArgumentList().getExpressions()[0];
+          second = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
         }
       }
       else if (expr instanceof PsiBinaryExpression) {

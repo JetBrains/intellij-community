@@ -168,9 +168,12 @@ class JarLoader extends Loader {
     @Override
     public byte[] getBytes() throws IOException {
       ZipFile file = getZipFile();
+      InputStream stream = null;
       try {
-        return FileUtil.loadBytes(file.getInputStream(myEntry), (int)myEntry.getSize());
+        stream = file.getInputStream(myEntry);
+        return FileUtil.loadBytes(stream, (int)myEntry.getSize());
       } finally {
+        if (stream != null) stream.close();
         releaseZipFile(file);
       }
     }

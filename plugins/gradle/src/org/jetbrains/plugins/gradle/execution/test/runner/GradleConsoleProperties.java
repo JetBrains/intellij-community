@@ -2,12 +2,15 @@
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.testframework.JavaAwareTestConsoleProperties;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.config.BooleanProperty;
 import com.intellij.util.config.DumbAwareToggleBooleanProperty;
 import com.intellij.util.config.ToggleBooleanProperty;
@@ -54,6 +57,12 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties {
     super.appendAdditionalActions(actionGroup, parent, target);
     actionGroup.add(Separator.getInstance());
     actionGroup.add(createShowInternalNodesAction(target));
+  }
+
+  @Nullable
+  @Override
+  public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
+    return JavaAwareTestConsoleProperties.getStackTraceErrorNavigatable(location, stacktrace);
   }
 
   @NotNull

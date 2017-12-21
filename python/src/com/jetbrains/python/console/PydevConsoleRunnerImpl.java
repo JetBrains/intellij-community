@@ -93,7 +93,6 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
-import com.jetbrains.python.debugger.PySourcePosition;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.remote.PyRemotePathMapper;
@@ -109,7 +108,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.Collections;
@@ -138,7 +136,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Nullable private final String myWorkingDir;
   private final Consumer<String> myRerunAction;
   @NotNull private Sdk mySdk;
-  private GeneralCommandLine myGeneralCommandLine;
   protected int[] myPorts;
   private PydevConsoleCommunication myPydevConsoleCommunication;
   private PyConsoleProcessHandler myProcessHandler;
@@ -254,11 +251,11 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     assert myPorts != null;
 
-    myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, myPorts);
-    myCommandLine = myGeneralCommandLine.getCommandLineString();
+    GeneralCommandLine generalCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, myPorts);
+    myCommandLine = generalCommandLine.getCommandLineString();
 
     try {
-      initAndRun();
+      initAndRun(generalCommandLine);
 
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
         @Override
@@ -283,8 +280,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     assert myPorts != null;
 
-    myGeneralCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, myPorts);
-    myCommandLine = myGeneralCommandLine.getCommandLineString();
+    GeneralCommandLine generalCommandLine = createCommandLine(mySdk, myEnvironmentVariables, myWorkingDir, myPorts);
+    myCommandLine = generalCommandLine.getCommandLineString();
 
     UIUtil
       .invokeLaterIfNeeded(() -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Connecting to Console", false) {
@@ -292,7 +289,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         public void run(@NotNull final ProgressIndicator indicator) {
           indicator.setText("Connecting to console...");
           try {
-            initAndRun();
+            initAndRun(generalCommandLine);
             connect(myStatementsToExecute);
           }
           catch (final Exception e) {
@@ -408,7 +405,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return consoleView;
   }
 
-  private Process createProcess() throws ExecutionException {
+  @NotNull
+  private Process createProcess(@NotNull GeneralCommandLine generalCommandLine) throws ExecutionException {
     if (PySdkUtil.isRemote(mySdk)) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
@@ -420,16 +418,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         if (connectionType == CredentialsType.SSH_HOST ||
             connectionType == CredentialsType.WEB_DEPLOYMENT ||
             connectionType == CredentialsType.VAGRANT) {
-          return createRemoteConsoleProcess(manager,
-                                            myGeneralCommandLine.getParametersList().getArray(),
-                                            myGeneralCommandLine.getEnvironment(),
-                                            myGeneralCommandLine.getWorkDirectory());
+          return createRemoteConsoleProcess(manager, generalCommandLine);
         }
 
         RemoteConsoleProcessData remoteConsoleProcessData =
-          PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(manager, myGeneralCommandLine.getParametersList().getArray(),
-                                                                         myGeneralCommandLine.getEnvironment(),
-                                                                         myGeneralCommandLine.getWorkDirectory(),
+          PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(manager, generalCommandLine.getParametersList().getArray(),
+                                                                         generalCommandLine.getEnvironment(),
+                                                                         generalCommandLine.getWorkDirectory(),
                                                                          PydevConsoleRunner
                                                                            .getPathMapper(myProject, mySdk, myConsoleSettings),
                                                                          myProject, data, getRunnerFileFromHelpers());
@@ -443,12 +438,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
     }
     else {
-      myCommandLine = myGeneralCommandLine.getCommandLineString();
-      Map<String, String> envs = myGeneralCommandLine.getEnvironment();
-      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myGeneralCommandLine.getCharset());
+      myCommandLine = generalCommandLine.getCommandLineString();
+      Map<String, String> envs = generalCommandLine.getEnvironment();
+      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
       UsageTrigger.trigger(CONSOLE_FEATURE + ".local");
-      final Process server = myGeneralCommandLine.createProcess();
+      final Process server = generalCommandLine.createProcess();
 
       try {
         myPydevConsoleCommunication = new PydevConsoleCommunication(myProject, myPorts[0], server, myPorts[1]);
@@ -465,29 +460,16 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private RemoteProcess createRemoteConsoleProcess(PythonRemoteInterpreterManager manager,
-                                                   String[] command,
-                                                   Map<String, String> env,
-                                                   File workDirectory)
+                                                   @NotNull GeneralCommandLine commandLine)
     throws ExecutionException {
     PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     assert data != null;
 
-    GeneralCommandLine commandLine = new GeneralCommandLine();
-
-    commandLine.setWorkDirectory(workDirectory);
-
-    commandLine.withParameters(command);
-
-    commandLine.getEnvironment().putAll(env);
-
-    commandLine.getParametersList().set(0, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
-                                                                                                     getRunnerFileFromHelpers())
-                                                                                              .getPath(),
-                                                                                            PySourcePosition.isWindowsPath(
-                                                                                              data.getInterpreterPath())
-    ));
-    commandLine.getParametersList().set(1, "0");
-    commandLine.getParametersList().set(2, "0");
+    ParamsGroup scriptParams = commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
+    if (scriptParams != null) {
+      scriptParams.getParametersList().set(1, "0");
+      scriptParams.getParametersList().set(2, "0");
+    }
 
     try {
       PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings);
@@ -618,9 +600,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
 
-  private void initAndRun() throws ExecutionException {
+  private void initAndRun(@NotNull GeneralCommandLine generalCommandLine) throws ExecutionException {
     // Create Server process
-    final Process process = createProcess();
+    final Process process = createProcess(generalCommandLine);
     UIUtil.invokeLaterIfNeeded(() -> {
       // Init console view
       myConsoleView = createConsoleView();

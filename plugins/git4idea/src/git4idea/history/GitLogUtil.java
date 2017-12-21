@@ -393,14 +393,16 @@ public class GitLogUtil {
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     String separator = getSeparator(vcs);
     handler.setInputProcessor(stream -> {
-      try (OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset())) {
-        for (String hash : hashes) {
-          writer.write(hash);
-          writer.write(separator);
-        }
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset());
+      // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
+      // see RunnerMediator.sendCtrlEventThroughStream
+      for (String hash : hashes) {
+        writer.write(hash);
         writer.write(separator);
-        writer.flush();
       }
+      writer.write(separator);
+      writer.flush();
     });
   }
 
