@@ -1662,14 +1662,14 @@ class Bar {
     
     myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
     def items = myFixture.completeBasic()
-    PsiClass c1 = items[0].object
+    PsiClass c1 = items[1].object
     assert !c1.physical
     assert CompletionUtil.getOriginalElement(c1)
     
     getLookup().hide()
     myFixture.type('x')
     items = myFixture.completeBasic()
-    PsiClass c2 = items[0].object
+    PsiClass c2 = items[1].object
     assert !c2.physical
     assert CompletionUtil.getOriginalElement(c2)
 

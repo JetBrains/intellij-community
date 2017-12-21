@@ -621,7 +621,11 @@ public class JavaCompletionSorting {
         @Override
         public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
           Object object = shorterElement.getObject();
-          if (object instanceof PsiClass && longerElement.getObject() instanceof PsiClass) {
+          if (!(object instanceof PsiClass)) return false;
+
+          if (longerElement.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) return true;
+          
+          if (longerElement.getObject() instanceof PsiClass) {
             PsiClass psiClass = (PsiClass)object;
             PsiFile file = psiClass.getContainingFile();
             if (file != null) {
