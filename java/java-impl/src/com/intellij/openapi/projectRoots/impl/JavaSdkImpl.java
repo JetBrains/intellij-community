@@ -48,7 +48,8 @@ public class JavaSdkImpl extends JavaSdk {
 
   private static final String VM_EXE_NAME = "java";   // do not use JavaW.exe for Windows because of issues with encoding
 
-  private final Map<String, JavaVersion> myCachedSdkHomeToVersion = new ConcurrentHashMap<>();
+  private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
+  private final Map<String, JavaSdkVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
 
   public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
@@ -72,7 +73,9 @@ public class JavaSdkImpl extends JavaSdk {
       private void updateCache(VirtualFileEvent event) {
         if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
           String filePath = event.getFile().getPath();
-          myCachedSdkHomeToVersion.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false));
+          if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
+            myCachedVersionStringToJdkVersion.clear();
+          }
         }
       }
     });
@@ -195,7 +198,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
-    JavaVersion version = getJavaVersion(sdkHome);
+    JavaVersion version = JavaVersion.tryParse(getVersionString(sdkHome));
     if (version == null) return currentSdkName;
 
     StringBuilder suggested = new StringBuilder();
@@ -280,24 +283,19 @@ public class JavaSdkImpl extends JavaSdk {
     modificator.addRoot(root, annoType);
   }
 
-  @Nullable
-  private JavaVersion getJavaVersion(String sdkHome) {
-    return myCachedSdkHomeToVersion.computeIfAbsent(sdkHome, k -> {
+  @Override
+  public final String getVersionString(String sdkHome) {
+    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, k -> {
       JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(k);
-      return jdkInfo != null ? jdkInfo.version : null;
+      return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
     });
   }
 
   @Override
-  public final String getVersionString(String sdkHome) {
-    JavaVersion version = getJavaVersion(sdkHome);
-    return version != null ? JdkVersionDetector.formatVersionString(version) : null;
-  }
-
-  @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    JavaVersion version = getJavaVersion(sdk.getHomePath());
-    return version != null ? JavaSdkVersion.fromJavaVersion(version) : null;
+    String versionString = sdk.getVersionString();
+    return versionString == null ? null :
+           myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaSdkVersion::fromVersionString);
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
@@ -157,18 +158,17 @@ public class IdeaTestUtil extends PlatformTestUtil {
   }
 
   @TestOnly
-  public static void setTestVersion(@NotNull final JavaSdkVersion testVersion, @NotNull Module module, @NotNull Disposable parentDisposable) {
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    final Sdk sdk = rootManager.getSdk();
-    final String oldVersionString = sdk.getVersionString();
+  public static void setTestVersion(@NotNull JavaSdkVersion testVersion, @NotNull Module module, @NotNull Disposable parentDisposable) {
+    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
+    Assert.assertNotNull(sdk);
+    String oldVersionString = sdk.getVersionString();
 
     // hack
     ((SdkModificator)sdk).setVersionString(testVersion.getDescription());
 
-    //assert JavaSdk.getInstance().getVersion(sdk) == testVersion;
+    Assert.assertSame(testVersion, JavaSdk.getInstance().getVersion(sdk));
     Disposer.register(parentDisposable, () -> ((SdkModificator)sdk).setVersionString(oldVersionString));
   }
-
 
   @NotNull
   public static String requireRealJdkHome() {
@@ -180,6 +180,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
         return path;
       }
     }
+    //noinspection ConstantConditions
     Assume.assumeTrue("Cannot find JDK, checked paths: " + paths, false);
     return null;
   }
