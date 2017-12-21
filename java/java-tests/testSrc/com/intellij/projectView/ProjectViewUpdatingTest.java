@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.projectView;
 
@@ -50,7 +38,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
     getProjectTreeStructure().setProviders();
     pane.select(element, element.getContainingFile().getVirtualFile(), true);
-    PlatformTestUtil.waitUntilBusy(pane.getTree());
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: standardProviders\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -102,7 +90,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final PsiClass aClass = classFile.getClasses()[0];
     final PsiFile containingFile = aClass.getContainingFile();
     pane.select(aClass, containingFile.getVirtualFile(), true);
-    PlatformTestUtil.waitUntilBusy(pane.getTree());
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: updateProjectView\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -148,7 +136,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     PlatformTestUtil.waitForAlarm(600);
     final PsiFile containingFile2 = aClass2.getContainingFile();
     pane.select(aClass2, containingFile2.getVirtualFile(), true);
-    PlatformTestUtil.waitUntilBusy(pane.getTree());
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: updateProjectView\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -181,7 +169,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     PsiClass aClass = classFile.getClasses()[0];
     PsiFile containingFile = aClass.getContainingFile();
     pane.select(aClass, containingFile.getVirtualFile(), true);
-    PlatformTestUtil.waitUntilBusy(pane.getTree());
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: showClassMembers\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -228,7 +216,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     final PsiField lastField = aClass.getFields()[1];
     pane.select(lastField, containingFile.getVirtualFile(), true);
 
-    PlatformTestUtil.waitUntilBusy(pane.getTree());
+    PlatformTestUtil.waitWhileBusy(pane.getTree());
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: showClassMembers\n" +
                                                      "  -PsiDirectory: src\n" +
@@ -395,7 +383,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     AbstractTreeBuilder builder = pane.getTreeBuilder();
     if (builder == null) {
       pane.updateFromRoot(false);
-      PlatformTestUtil.waitUntilBusy(tree);
+      PlatformTestUtil.waitWhileBusy(tree);
       PlatformTestUtil.assertTreeEqual(tree, "-Project\n" +
                                              " -1\n" +
                                              "  +01.2\n" +
