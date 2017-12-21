@@ -5,6 +5,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -144,7 +145,7 @@ public final class JavaVersion {
    */
   public static @NotNull JavaVersion parse(@NotNull String versionString) throws IllegalArgumentException {
     // trimming
-    String str = versionString;
+    String str = versionString.trim();
     if (str.contains("Runtime Environment")) {
       int p = str.indexOf("(build ");
       if (p > 0) str = str.substring(p);
@@ -225,5 +226,19 @@ public final class JavaVersion {
 
   private static boolean startsWithWord(String s, String word) {
     return s.startsWith(word) && (s.length() == word.length() || !Character.isLetterOrDigit(s.charAt(word.length())));
+  }
+
+  /**
+   * A safe version of {@link #parse(String)} - returns {@code null} if can't parse a version string.
+   */
+  public static @Nullable JavaVersion tryParse(String versionString) {
+    if (versionString != null) {
+      try {
+        return parse(versionString);
+      }
+      catch (IllegalArgumentException ignored) { }
+    }
+
+    return null;
   }
 }
