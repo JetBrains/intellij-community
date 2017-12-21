@@ -162,7 +162,6 @@ public class AbstractPopup implements JBPopup {
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private JLabel myAdComponent;
-  private JPanel myAdWrapper;
   private boolean myDisposed;
 
   private UiActivity myActivityKey;
@@ -389,11 +388,8 @@ public class AbstractPopup implements JBPopup {
   }
 
   public void removeAd() {
-    if (myAdWrapper != null) {
-      myContent.remove(myAdWrapper);
-      myAdWrapper = null;
-      myAdComponent = null;
-      pack(false, true);
+    if (myAdComponent != null) {
+      myAdComponent.setVisible(false);
     }
   }
 
@@ -406,7 +402,7 @@ public class AbstractPopup implements JBPopup {
   public void setAdText(@NotNull final String s, int alignment) {
     if (myAdComponent == null) {
       myAdComponent = HintUtil.createAdComponent(s, JBUI.Borders.empty(1, 5), alignment);
-      myAdWrapper = new JPanel(new BorderLayout()) {
+      JPanel wrapper = new JPanel(new BorderLayout()) {
         @Override
         protected void paintComponent(Graphics g) {
           g.setColor(Gray._135);
@@ -414,12 +410,13 @@ public class AbstractPopup implements JBPopup {
           super.paintComponent(g);
         }
       };
-      myAdWrapper.setOpaque(false);
-      myAdWrapper.setBorder(JBUI.Borders.emptyTop(1));
-      myAdWrapper.add(myAdComponent, BorderLayout.CENTER);
-      myContent.add(myAdWrapper, BorderLayout.SOUTH);
+      wrapper.setOpaque(false);
+      wrapper.setBorder(JBUI.Borders.emptyTop(1));
+      wrapper.add(myAdComponent, BorderLayout.CENTER);
+      myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
     } else {
+      myAdComponent.setVisible(true);
       myAdComponent.setText(s);
       myAdComponent.setHorizontalAlignment(alignment);
     }
