@@ -31,11 +31,9 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
-import gnu.trove.Equality;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
@@ -245,38 +243,6 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     if (myToolWrapper instanceof LocalInspectionToolWrapper && (!ApplicationManager.getApplication().isUnitTestMode() || GlobalInspectionContextImpl.CREATE_VIEW_FORCE)) {
       context.initializeViewIfNeed().doWhenDone(() -> context.getView().addProblemDescriptors(myToolWrapper, refElement, descriptors));
     }
-  }
-
-  public static CommonProblemDescriptor[] mergeDescriptors(CommonProblemDescriptor[] problems1,
-                                                           CommonProblemDescriptor[] problems2) {
-    if (problems1 == null) return problems2;
-    if (problems2 == null) return problems1;
-    CommonProblemDescriptor[] out = new CommonProblemDescriptor[problems1.length + problems2.length];
-    int o = problems1.length;
-    Equality<CommonProblemDescriptor> equality = (o1, o2) -> {
-      if (o1 instanceof ProblemDescriptor) {
-        ProblemDescriptorBase p1 = (ProblemDescriptorBase)o1;
-        ProblemDescriptorBase p2 = (ProblemDescriptorBase)o2;
-        if (!Comparing.equal(p1.getHighlightType(), p2.getHighlightType())) return false;
-        if (!Comparing.equal(p1.getProblemGroup(), p2.getProblemGroup())) return false;
-        if (!Comparing.equal(p1.getDescriptionTemplate(), p2.getDescriptionTemplate())) return false;
-        if (!Comparing.equal(p1.getLineNumber(), p2.getLineNumber())) return false;
-        if (!Comparing.equal(p1.getStartElement(), p2.getStartElement())) return false;
-        if (!Comparing.equal(p1.getEndElement(), p2.getEndElement())) return false;
-        if (!Comparing.equal(p1.getTextRange(), p2.getTextRange())) return false;
-      }
-      else {
-        if (!o1.toString().equals(o2.toString())) return false;
-      }
-      return true;
-    };
-    for (CommonProblemDescriptor descriptor : problems2) {
-      if (ArrayUtil.indexOf(problems1, descriptor, equality) == -1) {
-        out[o++] = descriptor;
-      }
-    }
-    System.arraycopy(problems1, 0, out, 0, problems1.length);
-    return Arrays.copyOfRange(out, 0, o);
   }
 
   @Override
@@ -535,13 +501,9 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
 
   public static SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> createBidiMap() {
     return new SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor>() {
+      @NotNull
       @Override
-      public CommonProblemDescriptor[] merge(CommonProblemDescriptor[] values1, CommonProblemDescriptor[] values2) {
-        return mergeDescriptors(values1, values2);
-      }
-
-      @Override
-      public ArrayFactory<CommonProblemDescriptor> arrayFactory() {
+      protected ArrayFactory<CommonProblemDescriptor> arrayFactory() {
         return CommonProblemDescriptor[]::new;
       }
     };
