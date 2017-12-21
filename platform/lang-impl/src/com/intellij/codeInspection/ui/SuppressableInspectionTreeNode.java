@@ -70,8 +70,13 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   @NotNull
-  public Set<SuppressIntentionAction> getAvailableSuppressActions() {
-    return myAvailableSuppressActions;
+  public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
+    Set<SuppressIntentionAction> actions = myAvailableSuppressActions;
+    if (actions == null) {
+      actions = calculateAvailableSuppressActions();
+      myAvailableSuppressActions = actions;
+    }
+    return actions;
   }
 
   public void removeSuppressActionFromAvailable(@NotNull SuppressIntentionAction action) {
@@ -120,7 +125,12 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   protected void nodeAddedToTree() {
     myPresentableName = calculatePresentableName();
     myValid = calculateIsValid();
-    myAvailableSuppressActions = getElement() == null
+    myAvailableSuppressActions = calculateAvailableSuppressActions();
+  }
+
+  @NotNull
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
+    return getElement() == null
                                  ? Collections.emptySet()
                                  : calculateAvailableSuppressActions(myPresentation.getContext().getProject());
   }
