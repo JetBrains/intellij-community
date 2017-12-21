@@ -17,6 +17,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -229,7 +230,8 @@ class CommunityRepositoryModules {
       withResource("resources/.zshrc", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
-    }
+    },
+    PythonCommunityPluginModules.pythonCommunityPluginLayout()
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
