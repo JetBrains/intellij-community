@@ -17,7 +17,6 @@ com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspect
 com.intellij.codeInspection.nullable.NullableStuffInspection
 com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection
 com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection
-com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection
 com.intellij.codeInspection.visibility.VisibilityInspection
 com.intellij.lang.javascript.inspections.JSMismatchedCollectionQueryUpdateInspection
@@ -116,11 +115,8 @@ com.siyeh.ig.encapsulation.UseOfAnotherObjectsPrivateFieldInspection
 com.siyeh.ig.errorhandling.BadExceptionCaughtInspection
 com.siyeh.ig.errorhandling.BadExceptionDeclaredInspection
 com.siyeh.ig.errorhandling.BadExceptionThrownInspection
-com.siyeh.ig.errorhandling.EmptyCatchBlockInspection
 com.siyeh.ig.errorhandling.ExceptionFromCatchWhichDoesntWrapInspection
 com.siyeh.ig.errorhandling.ThrowCaughtLocallyInspection
-com.siyeh.ig.errorhandling.UnusedCatchParameterInspection
-com.siyeh.ig.finalization.FinalizeCallsSuperFinalizeInspection
 com.siyeh.ig.finalization.FinalizeInspection
 com.siyeh.ig.inheritance.InterfaceNeverImplementedInspection
 com.siyeh.ig.inheritance.NonProtectedConstructorInAbstractClassInspection
@@ -165,8 +161,6 @@ com.siyeh.ig.naming.PackageNamingConventionInspection
 com.siyeh.ig.naming.ParameterNameDiffersFromOverriddenParameterInspection
 com.siyeh.ig.naming.ParameterNamingConventionInspection
 com.siyeh.ig.naming.QuestionableNameInspection
-com.siyeh.ig.naming.StaticMethodNamingConventionInspection
-com.siyeh.ig.naming.StaticVariableNamingConventionInspection
 com.siyeh.ig.numeric.CastThatLosesPrecisionInspection
 com.siyeh.ig.numeric.ImplicitNumericConversionInspection
 com.siyeh.ig.numeric.IntegerMultiplicationImplicitCastToLongInspection
@@ -178,7 +172,6 @@ com.siyeh.ig.packaging.PackageWithTooManyClassesInspection
 com.siyeh.ig.performance.CallToSimpleGetterInClassInspection
 com.siyeh.ig.performance.CallToSimpleSetterInClassInspection
 com.siyeh.ig.performance.MethodMayBeStaticInspection
-com.siyeh.ig.performance.SizeReplaceableByIsEmptyInspection
 com.siyeh.ig.performance.StringConcatenationInLoopsInspection
 com.siyeh.ig.performance.StringConstructorInspection
 com.siyeh.ig.performance.StringReplaceableByStringBufferInspection
@@ -203,7 +196,6 @@ com.siyeh.ig.style.RedundantImplementsInspection
 com.siyeh.ig.style.UnnecessarilyQualifiedInnerClassAccessInspection
 com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection
 com.siyeh.ig.style.UnnecessaryBlockStatementInspection
-com.siyeh.ig.style.UnnecessaryFinalOnParameterInspection
 com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 com.siyeh.ig.style.UnnecessaryParenthesesInspection
 com.siyeh.ig.style.UnqualifiedInnerClassAccessInspection
