@@ -148,7 +148,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   @Nullable
   @Override
   public IProperty[] getProperties() {
-    return new IProperty[0];
+    return IProperty.EMPTY_ARRAY;
   }
 
   @Nullable
