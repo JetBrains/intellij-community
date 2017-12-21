@@ -184,7 +184,7 @@ private String setupJdkPath(String propertyName, String defaultDir, String envVa
       else {
         jdk = guessJdk()
         def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(jdk)
-        if (propertyName.contains("8") && jdkInfo.@version.feature != 8) {
+        if (propertyName.contains("8") && jdkInfo.version.contains("1.8.")) {
           projectBuilder.error("JDK 1.8 is required to compile the project, but '$propertyName' property and '$envVarName' environment variable" +
                                " aren't defined and default JDK $jdk ($jdkInfo) cannot be used as JDK 1.8")
           return null
