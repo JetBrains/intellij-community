@@ -680,11 +680,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       @Override
-      public void expandAll() {
-
-      }
-
-      @Override
       public boolean canExpand() {
         return false;
       }
