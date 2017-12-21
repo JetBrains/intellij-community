@@ -84,7 +84,7 @@ public class EmptyClassInspectionBase extends BaseInspection {
         return;
       }
       @NonNls final String fileName = javaFile.getName();
-      if ("package-info.java".equals(fileName)) {
+      if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName) || PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
         return;
       }
       registerError(file, file);
