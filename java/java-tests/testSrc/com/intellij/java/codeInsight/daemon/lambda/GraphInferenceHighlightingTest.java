@@ -186,6 +186,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testRestoreCapturedWildcardsInReturnTypesWhenNoAdditionalConstraintsDetected() { doTest(); }
   public void testIntersectionWithSameInterfaceButDifferentTypeArgument() { doTest(); }
   public void testVarargsMethodPreferred() { doTest(); }
+  public void testSameNamedFreshVariables() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();

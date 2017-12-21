@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1111,10 +1112,11 @@ public class InferenceSession {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(getManager().getProject());
     PsiSubstitutor ySubstitutor = PsiSubstitutor.EMPTY;
     final PsiTypeParameter[] yVars = new PsiTypeParameter[vars.size()];
+    UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
     for (int i = 0; i < vars.size(); i++) {
       InferenceVariable var = vars.get(i);
       final PsiTypeParameter parameter = var.getParameter();
-      yVars[i] = elementFactory.createTypeParameterFromText(parameter.getName(), parameter);
+      yVars[i] = elementFactory.createTypeParameterFromText(nameGenerator.generateUniqueName(parameter.getName()), parameter);
       ySubstitutor = ySubstitutor.put(var, elementFactory.createType(yVars[i]));
     }
     for (int i = 0; i < yVars.length; i++) {
