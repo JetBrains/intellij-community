@@ -113,8 +113,6 @@ public class AttachToLocalProcessAction extends AnAction {
               String description = attachItem.getTooltipText(project);
               if (description != null) {
                 popup.setAdText(description);
-              } else {
-                popup.removeAd();
               }
             }
           };

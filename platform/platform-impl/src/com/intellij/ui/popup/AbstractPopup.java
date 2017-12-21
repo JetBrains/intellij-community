@@ -387,12 +387,6 @@ public class AbstractPopup implements JBPopup {
     setAdText(s, SwingConstants.LEFT);
   }
 
-  public void removeAd() {
-    if (myAdComponent != null) {
-      myAdComponent.setVisible(false);
-    }
-  }
-
   @NotNull
   public PopupBorder getPopupBorder() {
     return myPopupBorder;
@@ -416,7 +410,6 @@ public class AbstractPopup implements JBPopup {
       myContent.add(wrapper, BorderLayout.SOUTH);
       pack(false, true);
     } else {
-      myAdComponent.setVisible(true);
       myAdComponent.setText(s);
       myAdComponent.setHorizontalAlignment(alignment);
     }
