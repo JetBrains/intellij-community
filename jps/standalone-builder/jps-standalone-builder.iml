@@ -13,15 +13,7 @@
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="module" module-name="jps-model-serialization" exported="" />
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../build/lib/gant/lib/gant-1.9.11_groovy-2.3.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="gant-groovy" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
   </component>
 </module>
