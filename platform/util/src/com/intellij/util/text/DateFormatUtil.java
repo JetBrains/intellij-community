@@ -311,7 +311,15 @@ public class DateFormatUtil {
   private static SyncDateFormat[] getDateTimeFormats() {
     DateFormat[] formats = null;
     try {
-      if (SystemInfo.isMac && JnaLoader.isLoaded()) {
+      if (Boolean.parseBoolean(System.getProperty("date.iso8601"))) {
+        formats = new DateFormat[]{
+          new SimpleDateFormat("yyyy-MM-dd");
+          new SimpleDateFormat("HH:mm");
+          new SimpleDateFormat("HH:mm:ss");
+          new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        };
+      }
+      else if (SystemInfo.isMac && JnaLoader.isLoaded()) {
         formats = getMacFormats();
       }
       else if (SystemInfo.isUnix) {
