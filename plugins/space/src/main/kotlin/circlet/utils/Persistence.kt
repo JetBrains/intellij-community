@@ -1,38 +1,26 @@
 package circlet.utils
 
+import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.*
-import com.intellij.openapi.project.*
 import runtime.*
 
 object IdeaPersistence : Persistence {
-    suspend override fun put(key: String, value: String): String {
-        PasswordSafe.getInstance().storePassword(ProjectManager.getInstance().defaultProject, this.javaClass, key, value)
+    override suspend fun put(key: String, value: String): String {
+        PasswordSafe.getInstance().setPassword(createCredentialAttributes(key), value)
+
         return value
     }
 
-    suspend override fun get(key: String): String? {
-        return PasswordSafe.getInstance().getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, key).orEmpty()
+    override suspend fun get(key: String): String? =
+        PasswordSafe.getInstance().getPassword(createCredentialAttributes(key))
+
+    override suspend fun delete(key: String) {
+        PasswordSafe.getInstance().setPassword(createCredentialAttributes(key), null)
     }
 
-    suspend override fun delete(key: String) {
-        PasswordSafe.getInstance().removePassword(ProjectManager.getInstance().defaultProject, this.javaClass, key)
+    override suspend fun clear() {
     }
 
-    suspend override fun clear() {
-    }
+    private fun createCredentialAttributes(key: String) =
+        CredentialAttributes("${javaClass.name}-$key")
 }
-
-object SandboxPersistence : Persistence {
-    suspend override fun put(key: String, value: String): String {
-        return value
-    }
-
-    suspend override fun get(key: String): String? = null
-
-    suspend override fun delete(key: String) {
-    }
-
-    suspend override fun clear() {
-    }
-}
-

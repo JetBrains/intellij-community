@@ -30,7 +30,7 @@ dependencies {
 }
 
 intellij {
-    version 'IC-2017.1'
+    version 'IC-173.4127.17'
     pluginName 'circlet-intellij-plugin'
     updateSinceUntilBuild false
 }

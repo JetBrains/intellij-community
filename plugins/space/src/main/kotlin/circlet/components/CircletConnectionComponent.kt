@@ -38,42 +38,39 @@ class CircletConnectionComponent(private val project: Project) :
     }
 
     init {
-        loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
+        KCircletClient.connectionStatus.view(componentLifetime) { stateLt, state ->
+            when (state) {
+                ConnectionStatus.CONNECTED -> {
+                    notifyConnected()
+                }
+                ConnectionStatus.CONNECTING -> {
+                    notifyReconnect(stateLt)
+                }
+                ConnectionStatus.AUTH_FAILED -> {
+                    authCheckFailedNotification()
+                }
+            }
+        }
+
+        loginDataComponent.enabled.whenTrue(componentLifetime) {
             JobScheduler.getScheduler().schedule(
                 {
                     async {
-                        if (IdeaPersistence.get("token") ?: "" == "") {
+                        if (loginModel.token() == null) {
                             authCheckFailedNotification()
                         }
                         else {
-                            try {
-                                KCircletClient.start(loginModel, endpoint, enabledLt, true)
-                                KCircletClient.connection.status.view(enabledLt) { stateLt, state ->
-                                    when (state) {
-                                        ConnectionStatus.CONNECTED -> {
-                                            notifyConnected()
-                                        }
-                                        ConnectionStatus.CONNECTING -> {
-                                            notifyReconnect(stateLt)
-                                        }
-                                        else -> {
-                                        }
-                                    }
-                                }
-                            }
-                            catch (th: Throwable) {
-                                authCheckFailedNotification()
-                            }
+                            loginModel.restart()
                         }
                     }
-                }, 100, TimeUnit.MILLISECONDS)
+                },
+                100, TimeUnit.MILLISECONDS
+            )
         }
-
 
         loginDataComponent.enabled.whenFalse(componentLifetime) {
             notifyDisconnected(it)
         }
-
     }
 
     fun enable() {
@@ -88,7 +85,7 @@ class CircletConnectionComponent(private val project: Project) :
         val notification = Notification(
             "IdePLuginClient.notifyReconnect",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"update\">Switch off</a>"),
+            XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"switch-off\">Switch off</a>"),
             NotificationType.INFORMATION,
             { _, _ -> disable() })
         notification.notify(lt, project)
@@ -98,7 +95,7 @@ class CircletConnectionComponent(private val project: Project) :
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"update\">Switch on</a>"),
+            XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"switch-on\">Switch on</a>"),
             NotificationType.INFORMATION,
             { _, _ -> enable() })
         notification.notify(lt, project)
@@ -118,7 +115,7 @@ class CircletConnectionComponent(private val project: Project) :
         Notification(
             "IdePLuginClient.authCheckFailedNotification",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"update\">Sign in</a>"),
+            XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"sign-in\">Sign in</a>"),
             NotificationType.INFORMATION,
             { _, _ -> authenticate() })
             .notify(project)
