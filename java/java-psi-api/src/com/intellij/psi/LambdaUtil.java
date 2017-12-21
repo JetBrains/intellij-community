@@ -975,14 +975,18 @@ public class LambdaUtil {
   }
 
   public static PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
-    final String arrayInitializer = "new " + type.getCanonicalText() + "[]{0}";
+    final String objectWithMethod = "new Object() { " + type.getCanonicalText() + " get(){ return x;}}";
     final Project project = expression.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
-    PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(arrayInitializer, expression);
+    PsiNewExpression newExpr = (PsiNewExpression)elementFactory.createExpressionFromText(objectWithMethod, expression);
     //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
     newExpr = (PsiNewExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(newExpr);
-    final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
-    LOG.assertTrue(initializer != null);
-    return initializer.getInitializers()[0].replace(expression);
+    PsiAnonymousClass anonymousClass = newExpr.getAnonymousClass();
+    LOG.assertTrue(anonymousClass != null);
+    PsiCodeBlock body = anonymousClass.getMethods()[0].getBody();
+    LOG.assertTrue(body != null);
+    PsiExpression returnValue = ((PsiReturnStatement)body.getStatements()[0]).getReturnValue();
+    LOG.assertTrue(returnValue != null);
+    return returnValue.replace(expression);
   }
 }
