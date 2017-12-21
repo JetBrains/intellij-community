@@ -44,9 +44,8 @@ class CombinatorialIntCustomizer implements IntCustomizer {
   }
 
   private int suggestCombinatorialVariant(IntData data, IntDistribution currentDistribution) {
-    int value = currentCombination.getOrDefault(data.id, data.value);
+    int value = currentCombination.computeIfAbsent(data.id, __ -> data.value);
     if (currentDistribution.isValidValue(value)) {
-      currentCombination.putIfAbsent(data.id, value);
       return value;
     }
 
