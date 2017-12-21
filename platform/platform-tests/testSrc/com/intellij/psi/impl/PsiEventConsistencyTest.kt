@@ -22,6 +22,21 @@ import one.util.streamex.IntStreamEx
  */
 class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
 
+  fun `test replacing child after changing its subtree`() {
+    WriteCommandAction.runWriteCommandAction(project) {
+      // prepare
+      val root = createEmptyFile().node
+      root.replaceChild(root.firstChildNode, createComposite(compositeTypes[0], listOf(createLeaf(leafTypes[0], "d"))))
+      
+      // actual composite change
+      ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+        root.firstChildNode.removeChild(root.firstChildNode.firstChildNode) // remove "d" leaf
+        root.replaceChild(root.firstChildNode, createComposite(compositeTypes[0], listOf())) // replace now empty composite with another one 
+      }, root as FileElement)
+      assertEquals("", root.text)
+    }
+  }
+
   fun testPsiDocSynchronization() {
     PropertyChecker.forAll(commands).shouldHold { cmd ->
       runCommand(cmd)
@@ -30,7 +45,7 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   private fun runCommand(cmd: AstCommand) {
-    val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
+    val file = createEmptyFile()
     val document = file.viewProvider.document!!
     WriteCommandAction.runWriteCommandAction(project) {
       cmd.performChange(file)
@@ -38,6 +53,9 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
       assertEquals(document.text, file.node.text)
     }
   }
+
+  private fun createEmptyFile() : PsiFile = 
+    PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
 
   private interface AstCommand {
     fun performChange(file: PsiFile)
