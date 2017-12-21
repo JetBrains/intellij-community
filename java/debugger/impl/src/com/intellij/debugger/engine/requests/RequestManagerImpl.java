@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -6,6 +8,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -15,7 +18,6 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
@@ -277,7 +279,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       catch (InternalException e) {
         //noinspection StatementWithEmptyBody
-        if (e.errorCode() == 41) {
+        if (e.errorCode() == JvmtiError.NOT_FOUND) {
           //event request not found
           //there could be no requests after hotswap
         }
@@ -337,9 +339,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.enable();
     } catch (InternalException e) {
       switch (e.errorCode()) {
-        case 40 /* DUPLICATE */ : LOG.info(e); break;
+        case JvmtiError.DUPLICATE : LOG.info(e); break;
 
-        case 41 /* NOT_FOUND */ : break;
+        case JvmtiError.NOT_FOUND : break;
         //event request not found
         //there could be no requests after hotswap
 

@@ -305,7 +305,7 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     catch (InvalidStackFrameException | ObjectCollectedException ignored) {
     }
     catch (InternalException e) {
-      if (e.errorCode() == 32) {
+      if (e.errorCode() == JvmtiError.OPAQUE_FRAME) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("drop.frame.error.no.information"));
       }
       else throw EvaluateExceptionUtil.createEvaluateException(e);
