@@ -65,21 +65,32 @@ public class ModuleGroup {
   @NotNull
   public Collection<Module> modulesInGroup(ModuleGrouper grouper, boolean recursively) {
     List<Module> result = new ArrayList<>();
+    Set<List<String>> moduleAsGroupsPaths = ContainerUtil.map2Set(grouper.getAllModules(), module -> grouper.getModuleAsGroupPath(module));
     for (final Module module : grouper.getAllModules()) {
       List<String> group = grouper.getGroupPath(module);
-      if (myGroupPath.equals(group) || (recursively && isChild(myGroupPath, group))) {
+      if (myGroupPath.equals(group) || isChild(myGroupPath, group) && (recursively || allIntermediatePathsAreFromSet(myGroupPath, group, moduleAsGroupsPaths))) {
         result.add(module);
       }
     }
     return result;
   }
 
+  private static boolean allIntermediatePathsAreFromSet(List<String> parent, List<String> descendant, Set<List<String>> set) {
+    for (int i = parent.size() + 1; i < descendant.size() - 1; i++) {
+      if (!set.contains(descendant.subList(0, i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @NotNull
   public Collection<ModuleGroup> childGroups(ModuleGrouper grouper) {
     Set<ModuleGroup> result = new THashSet<>();
+    Set<List<String>> moduleAsGroupsPaths = ContainerUtil.map2Set(grouper.getAllModules(), module -> grouper.getModuleAsGroupPath(module));
     for (Module module : grouper.getAllModules()) {
       List<String> group = grouper.getGroupPath(module);
-      if (isChild(myGroupPath, group)) {
+      if (!moduleAsGroupsPaths.contains(group) && isChild(myGroupPath, group)) {
         final List<String> directChild = ContainerUtil.append(myGroupPath, group.get(myGroupPath.size()));
         result.add(new ModuleGroup(directChild));
       }
