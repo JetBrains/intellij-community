@@ -695,10 +695,6 @@ public class AnalysisScope {
     }
   }
 
-  private static boolean isTestOnly(@NotNull Module module) {
-    return ModuleRootManager.getInstance(module).getSourceRootUrls(false).length == 0;
-  }
-
   public boolean isIncludeTestSource() {
     return myIncludeTestSource;
   }
