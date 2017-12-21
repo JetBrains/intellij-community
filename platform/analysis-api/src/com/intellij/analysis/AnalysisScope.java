@@ -653,18 +653,14 @@ public class AnalysisScope {
       case DIRECTORY:
         return GlobalSearchScopesCore.directoryScope((PsiDirectory)myElement, true);
       case FILE:
-        return new LocalSearchScope(myElement);
+        return GlobalSearchScope.fileScope((PsiFile)myElement);
       case INVALID:
-        return LocalSearchScope.EMPTY;
+        return GlobalSearchScope.EMPTY_SCOPE;
       case MODULE:
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
         return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
       case MODULES:
-        SearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
-        for (Module module : myModules) {
-          scope = scope.union(GlobalSearchScope.moduleScope(module));
-        }
-        return scope;
+        return GlobalSearchScope.union(myModules.stream().map(m -> GlobalSearchScope.moduleScope(m)).toArray(GlobalSearchScope[]::new));
       case PROJECT:
         return myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScopesCore.projectProductionScope(myProject);
       case VIRTUAL_FILES:
