@@ -25,6 +25,36 @@ open class UsageViewSettings(
       get() = ServiceManager.getService(UsageViewSettings::class.java)
   }
 
+  @Suppress("unused")
+  @JvmField
+  @Transient
+  @Deprecated(message = "Use isGroupByModule")
+  var GROUP_BY_MODULE = isGroupByModule
+
+  @Suppress("unused")
+  @JvmField
+  @Transient
+  @Deprecated(message = "Use isGroupByUsageType")
+  var GROUP_BY_USAGE_TYPE = isGroupByUsageType
+
+  @Suppress("unused")
+  @JvmField
+  @Transient
+  @Deprecated(message = "Use isGroupByFileStructure")
+  var GROUP_BY_FILE_STRUCTURE = isGroupByFileStructure
+
+  @Suppress("unused")
+  @JvmField
+  @Transient
+  @Deprecated(message = "Use isGroupByScope")
+  var GROUP_BY_SCOPE = isGroupByScope
+
+  @Suppress("unused")
+  @JvmField
+  @Transient
+  @Deprecated(message = "Use isGroupByPackage")
+  var GROUP_BY_PACKAGE = isGroupByPackage
+
   @Suppress("MemberVisibilityCanPrivate")
   @get:OptionTag("EXPORT_FILE_NAME")
   internal var EXPORT_FILE_NAME by property("report.txt")
@@ -77,7 +107,13 @@ open class UsageViewSettings(
 
   override fun getState() = this
 
+  @Suppress("DEPRECATION")
   override fun loadState(state: UsageViewSettings) {
     copyFrom(state)
+    GROUP_BY_MODULE = isGroupByModule
+    GROUP_BY_USAGE_TYPE = isGroupByUsageType
+    GROUP_BY_FILE_STRUCTURE = isGroupByFileStructure
+    GROUP_BY_SCOPE = isGroupByScope
+    GROUP_BY_PACKAGE = isGroupByPackage
   }
 }
