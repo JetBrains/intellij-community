@@ -83,7 +83,7 @@ class CircletConnectionComponent(private val project: Project) :
 
     private fun notifyReconnect(lt: Lifetime) {
         val notification = Notification(
-            "IdePLuginClient.notifyReconnect",
+            "IdeaPluginClient.notifyReconnect",
             "Circlet",
             XmlStringUtil.wrapInHtml("Failed to establish server connection. Will keep trying to reconnect.<br> <a href=\"switch-off\">Switch off</a>"),
             NotificationType.INFORMATION,
@@ -93,7 +93,7 @@ class CircletConnectionComponent(private val project: Project) :
 
     private fun notifyDisconnected(lt: Lifetime) {
         val notification = Notification(
-            "IdePLuginClient.notifyDisconnected",
+            "IdeaPluginClient.notifyDisconnected",
             "Circlet",
             XmlStringUtil.wrapInHtml("Integration switched off.<br> <a href=\"switch-on\">Switch on</a>"),
             NotificationType.INFORMATION,
@@ -103,7 +103,7 @@ class CircletConnectionComponent(private val project: Project) :
 
     private fun notifyConnected() {
         val notification = Notification(
-            "IdePLuginClient.notifyDisconnected",
+            "IdeaPluginClient.notifyDisconnected",
             "Circlet",
             XmlStringUtil.wrapInHtml("Signed in"),
             NotificationType.INFORMATION,
@@ -113,7 +113,7 @@ class CircletConnectionComponent(private val project: Project) :
 
     private fun authCheckFailedNotification() {
         Notification(
-            "IdePLuginClient.authCheckFailedNotification",
+            "IdeaPluginClient.authCheckFailedNotification",
             "Circlet",
             XmlStringUtil.wrapInHtml("Not authenticated.<br> <a href=\"sign-in\">Sign in</a>"),
             NotificationType.INFORMATION,

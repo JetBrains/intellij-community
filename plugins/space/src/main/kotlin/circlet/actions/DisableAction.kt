@@ -5,24 +5,11 @@ import circlet.utils.*
 import com.intellij.openapi.actionSystem.*
 
 class DisableAction : AnAction() {
-
-    override fun update(e: AnActionEvent?) {
-        e ?: return
-        val project = e.project
-        project ?: return
-
-        val enabled = component<CircletLoginComponent>().enabled.value
-
-        e.presentation.isEnabled = enabled
-        e.presentation.isVisible = enabled
+    override fun update(e: AnActionEvent) {
+        e.presentation.isEnabledAndVisible = e.project != null && component<CircletLoginComponent>().enabled.value
     }
 
-    override fun actionPerformed(e: AnActionEvent?) {
-        e ?: return
-        val project = e.project
-        project ?: return
-
-        project.component<CircletConnectionComponent>().disable()
+    override fun actionPerformed(e: AnActionEvent) {
+        e.project?.component<CircletConnectionComponent>()?.disable()
     }
 }
-
