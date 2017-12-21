@@ -1228,6 +1228,43 @@ public class PyTypeTest extends PyTestCase {
            TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()));
   }
 
+  // PY-1182
+  public void testCollectionType() {
+    doTest("List[int]",
+           "def f():\n" +
+           "    expr = []\n" +
+           "    expr.append(42)\n" +
+           "    expr.append(0)"
+    );
+
+    doTest("List[Union[str, int]]",
+           "def f():\n" +
+           "    expr = []\n" +
+           "    expr.append('a')\n" +
+           "    expr.append(1)"
+    );
+
+    doTest("List[Union[Union[int, str], Any]]",
+           "expr = [3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4]\n" +
+           "expr.append('a')"
+    );
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2]\n" +
+           "expr.append(42)\n" +
+           "expr.extend(['a']"
+    );
+
+    doTest("List[Union[int, str, None]]",
+           "expr = []\n" +
+           "expr.extend([1, 'a', None])"
+    );
+
+    doTest("List[int]",
+           "expr = []\n" +
+           "expr.index(42)");
+  }
+
   // PY-20063
   public void testIteratedSetElement() {
     doTest("int",

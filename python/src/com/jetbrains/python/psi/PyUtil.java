@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
@@ -34,6 +35,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -1986,6 +1988,88 @@ public class PyUtil {
         }
       }
       return ret;
+    }
+  }
+
+  @Nullable
+  public static PyType getCollectionTypeByModifications(@Nullable PsiElement parent, @NotNull TypeEvalContext context) {
+    if (parent instanceof PyAssignmentStatement) {
+      final PyExpression[] targets = ((PyAssignmentStatement)parent).getTargets();
+      if (targets.length == 1 && targets[0] != null) {
+        final PyExpression expr = targets[0];
+        final List<Pair<String, PyType>> modifications = findModifications(expr, context);
+        final Set<PyType> types = new LinkedHashSet<>();
+        for (Pair<String, PyType> modification : modifications) {
+          final String funcName = modification.getFirst();
+          final PyType argType = modification.getSecond();
+          if (funcName.equals("extend")) {
+            if (argType != null && argType instanceof PyCollectionType) {
+              final PyType argElemType = PyUnionType.union(((PyCollectionType)argType).getElementTypes());
+              types.add(argElemType);
+            }
+          }
+          else {
+            types.add(argType);
+          }
+        }
+        return PyUnionType.union(types);
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  private static List<Pair<String, PyType>> findModifications(@NotNull PsiElement element, TypeEvalContext context) {
+    final CollectionTypeVisitor visitor = new CollectionTypeVisitor(element, context);
+    ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+    if (owner != null) {
+      owner.accept(visitor);
+    }
+    return visitor.result();
+  }
+
+  private static class CollectionTypeVisitor extends PyRecursiveElementVisitor {
+    private final PsiElement myElement;
+    private final List<Pair<String, PyType>> myModifications;
+    private final TypeEvalContext myTypeEvalContext;
+
+    private static final Set<String> SEQUENCE_MODIFICATION_METHODS = ImmutableSet.of(
+      "append",
+      "extend",
+      "insert",
+      "index"
+    );
+
+    public CollectionTypeVisitor(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+      myElement = element;
+      myTypeEvalContext = context;
+      myModifications = new ArrayList<>();
+    }
+
+    @Override
+    public void visitPyCallExpression(PyCallExpression node) {
+      final PyExpression callee = node.getCallee();
+      if (callee instanceof PyQualifiedExpression) {
+        final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+        final String funcName = ((PyQualifiedExpression)callee).getReferencedName();
+        if (qualifier != null) {
+          final PsiReference reference = qualifier.getReference();
+          if (SEQUENCE_MODIFICATION_METHODS.contains(funcName) && reference != null && reference.isReferenceTo(myElement)) {
+            PyExpression[] arguments = node.getArguments();
+            if (arguments.length == 1 && arguments[0] != null) {
+              myModifications.add(Pair.create(funcName, myTypeEvalContext.getType(arguments[0])));
+            }
+            if (arguments.length == 2) { // insert(pos, item)
+              myModifications.add(Pair.create(funcName, myTypeEvalContext.getType(arguments[1])));
+            }
+          }
+        }
+      }
+    }
+
+    @NotNull
+    public List<Pair<String, PyType>> result() {
+      return myModifications;
     }
   }
 }

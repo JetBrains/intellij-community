@@ -170,7 +170,7 @@ public class PyBuiltinCache {
   @NotNull
   private static List<PyType> getSequenceElementTypes(@NotNull PySequenceExpression sequence, @NotNull TypeEvalContext context) {
     if (sequence instanceof PyListLiteralExpression || sequence instanceof PySetLiteralExpression) {
-      return Collections.singletonList(getListOrSetIteratedValueType(sequence.getElements(), context));
+      return Collections.singletonList(getListOrSetIteratedValueType(sequence.getElements(), context, sequence.getParent()));
     }
     else if (sequence instanceof PyDictLiteralExpression) {
       return getDictElementTypes(sequence.getElements(), context);
@@ -181,14 +181,24 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  private static PyType getListOrSetIteratedValueType(@NotNull PyExpression[] elements, @NotNull TypeEvalContext context) {
+  private static PyType getListOrSetIteratedValueType(@NotNull PyExpression[] elements, @NotNull TypeEvalContext context,
+                                                      @Nullable PsiElement parent) {
     final int maxAnalyzedElements = Math.min(MAX_ANALYZED_ELEMENTS_OF_LITERALS, elements.length);
 
-    final PyType analyzedElementsType = StreamEx
+    PyType analyzedElementsType = StreamEx
       .of(elements, 0, maxAnalyzedElements)
       .map(context::getType)
       .toListAndThen(PyUnionType::union);
 
+    PyType typeByModifications = PyUtil.getCollectionTypeByModifications(parent, context);
+    if (analyzedElementsType == null) {
+      analyzedElementsType = typeByModifications;
+    }
+    else {
+      if (typeByModifications != null) {
+        analyzedElementsType = PyUnionType.union(analyzedElementsType, typeByModifications);
+      }
+    }
     if (elements.length > maxAnalyzedElements) {
       return PyUnionType.createWeakType(analyzedElementsType);
     }
