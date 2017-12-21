@@ -54,6 +54,13 @@ public class EnvironmentUtil {
 
   private static final Future<Map<String, String>> ourEnvGetter;
 
+  /**
+   * String that is used as a delimiter for referencing parent environment variable.
+   * <code>"%"</code> on Microsoft Windows;
+   * <code>"$"</code> on Unix systems
+   */
+  public static final String PARENT_ENV_KEY_DELIMITER = SystemInfo.isWindows ? "%" : "$";
+
   static {
     if (SystemInfo.isMac &&
         "unlocked".equals(System.getProperty("__idea.mac.env.lock")) &&
@@ -374,7 +381,7 @@ public class EnvironmentUtil {
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs) {
-    inlineParentOccurrences(envs, new HashMap<String, String>(System.getenv()));
+    inlineParentOccurrences(envs, getEnvironmentMap());
   }
 
   public static void inlineParentOccurrences(@NotNull Map<String, String> envs, @NotNull Map<String, String> parentEnv) {
@@ -382,16 +389,24 @@ public class EnvironmentUtil {
       String key = entry.getKey();
       String value = entry.getValue();
       if (value != null) {
-        String parentVal = parentEnv.get(key);
-        if (parentVal != null && containsEnvKeySubstitution(key, value)) {
-          envs.put(key, value.replace("$" + key + "$", parentVal));
+        final String parentVal = parentEnv.get(key);
+        if (parentVal != null) {
+          StringBuilder newValue = new StringBuilder();
+          final String keySubstitution = PARENT_ENV_KEY_DELIMITER + key + PARENT_ENV_KEY_DELIMITER;
+          for (String part : StringUtil.split(value, File.pathSeparator)) {
+            if (SystemInfo.isWindows) {
+              newValue.append(part.equalsIgnoreCase(keySubstitution) ? parentVal : part);
+            }
+            else {
+              newValue.append(part.equals(keySubstitution) ? parentVal : part);
+            }
+            newValue.append(File.pathSeparator);
+          }
+          newValue.trimToSize();
+          envs.put(key, newValue.substring(0, newValue.length() - File.pathSeparator.length()));
         }
       }
     }
-  }
-
-  private static boolean containsEnvKeySubstitution(final String envKey, final String val) {
-    return ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1;
   }
 
   @TestOnly

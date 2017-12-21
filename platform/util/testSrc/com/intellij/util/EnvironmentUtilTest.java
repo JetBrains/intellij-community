@@ -3,6 +3,9 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
@@ -44,6 +47,53 @@ public class EnvironmentUtilTest {
     else {
       assertEquals(3, map.size());
     }
+  }
+
+  @Test
+  public void inlineParentOccurrences() {
+    Map<String, String> parentEnv = SystemInfo.isWindows ?
+                                    ContainerUtil.newTroveMap(CaseInsensitiveStringHashingStrategy.INSTANCE) :
+                                    ContainerUtil.newHashMap();
+    parentEnv.put("Foo", "foo/bar");
+    parentEnv.put("smth", "another()thing");
+    parentEnv.put("tmp", "tempo#rary");
+    parentEnv.put("123", "50m37h1ng");
+
+    Map<String, String> childEnv = ContainerUtil.newHashMap();
+    childEnv.put("no parent", "no parent indeed");
+    childEnv.put("Foo", "have parent but no parent reference");
+    childEnv.put("smth", "have parent and reference" + File.pathSeparator +
+                         EnvironmentUtil.PARENT_ENV_KEY_DELIMITER + "smth" + EnvironmentUtil.PARENT_ENV_KEY_DELIMITER +
+                         File.pathSeparator + "flavor text");
+    childEnv.put("TMP", "case sensitive" +
+                        File.pathSeparator +
+                        EnvironmentUtil.PARENT_ENV_KEY_DELIMITER + "Tmp" + EnvironmentUtil.PARENT_ENV_KEY_DELIMITER);
+
+    EnvironmentUtil.inlineParentOccurrences(childEnv, parentEnv);
+
+    assertEnvVariable(childEnv, "no parent", "no parent indeed");
+    assertEnvVariable(childEnv, "Foo", "have parent but no parent reference");
+    assertEnvVariable(childEnv, "smth", "have parent and reference" + File.pathSeparator +
+                                        "another()thing" +
+                                        File.pathSeparator + "flavor text");
+    if (SystemInfo.isWindows) {
+      assertEnvVariable(childEnv, "TMP", "case sensitive" +
+                                         File.pathSeparator + "tempo#rary");
+    }
+    else {
+      assertEnvVariable(childEnv, "TMP", "case sensitive" +
+                                         File.pathSeparator +
+                                         EnvironmentUtil.PARENT_ENV_KEY_DELIMITER + "Tmp" + EnvironmentUtil.PARENT_ENV_KEY_DELIMITER);
+    }
+    assertNull(childEnv.get("123"));
+  }
+
+  private static void assertEnvVariable(@NotNull Map<String, String> env,
+                                        @NotNull String expectedKey,
+                                        @NotNull String expectedValue) {
+    String actualValue = env.get(expectedKey);
+    assertNotNull(actualValue);
+    assertEquals(expectedValue, actualValue);
   }
 
   @Test(timeout = 30000)
