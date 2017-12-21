@@ -170,7 +170,8 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   public State getState() {
     synchronized (myStateLock) {
       if (myState.pid == null) {
-        myState.pid = OSProcessUtil.getApplicationPid();
+        //todo[kb] uncomment when we will fix JRE-251 The pid is needed for 3rd parties like Toolbox App to show the project is open now
+        myState.pid = "";//OSProcessUtil.getApplicationPid();
       }
       updateLastProjectPath();
       myState.validateRecentProjects();
