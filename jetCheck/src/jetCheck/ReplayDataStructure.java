@@ -9,7 +9,7 @@ class ReplayDataStructure extends AbstractDataStructure {
   private final Iterator<StructureElement> iterator;
   private final IntCustomizer customizer;
 
-  public ReplayDataStructure(StructureNode node, int sizeHint, IntCustomizer customizer) {
+  ReplayDataStructure(StructureNode node, int sizeHint, IntCustomizer customizer) {
     super(node, sizeHint);
     this.iterator = node.childrenIterator();
     this.customizer = customizer;

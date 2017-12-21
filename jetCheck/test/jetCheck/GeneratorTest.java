@@ -1,9 +1,6 @@
 package jetCheck;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -162,6 +159,31 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2)).with(1, constant(3))),
                    l -> !l.contains(1) || !l.contains(2) || !l.contains(3),
                    7);
+  }
+
+  public void testReplay() {
+    List<List> log = new ArrayList<>();
+    PropertyFailure<List<Integer>> failure = checkFalsified(listsOf(integers(0, 100)), l -> {
+      log.add(l);
+      return !l.contains(42);
+    }, 9);
+    List<Integer> goldMin = Collections.singletonList(42);
+
+    PropertyFailure.CounterExample<List<Integer>> first = failure.getFirstCounterExample();
+    PropertyFailure.CounterExample<List<Integer>> min = failure.getMinimalCounterexample();
+    assertEquals(goldMin, min.getExampleValue());
+    assertTrue(log.contains(first.getExampleValue()));
+    assertTrue(log.contains(min.getExampleValue()));
+    
+    log.clear();
+    PropertyFailure.CounterExample<List<Integer>> first2 = first.replay();
+    assertEquals(first.getExampleValue(), first2.getExampleValue());
+    assertEquals(log, Collections.singletonList(first2.getExampleValue()));
+    
+    log.clear();
+    PropertyFailure.CounterExample<List<Integer>> min2 = min.replay();
+    assertEquals(goldMin, min2.getExampleValue());
+    assertEquals(log, Collections.singletonList(goldMin));
   }
 
 }

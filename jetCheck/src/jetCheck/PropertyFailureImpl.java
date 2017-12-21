@@ -90,8 +90,8 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
             iteration.session.notifier.shrinkAttempt(PropertyFailureImpl.this, iteration);
 
             totalSteps++;
-            T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure(node, iteration.sizeHint, customizer));
-            CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, customizer.writeChanges(node));
+            T value = iteration.generateValue(new ReplayDataStructure(node, iteration.sizeHint, customizer));
+            CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration, value, customizer.writeChanges(node));
             if (example != null) {
               minimized = example;
               successfulSteps++;

@@ -53,7 +53,7 @@ class Iteration<T> {
       }
       if (!session.generatedHashes.add(node.hashCode())) continue;
 
-      return CounterExampleImpl.checkProperty(session.property, value, node);
+      return CounterExampleImpl.checkProperty(this, value, node);
     }
     throw new GeneratorException(this, new CannotSatisfyCondition(DATA_IS_DIFFERENT));
   }
@@ -77,8 +77,7 @@ class Iteration<T> {
     CounterExampleImpl<T> example = findCounterExample(random);
     if (example != null) {
       session.notifier.counterExampleFound(this);
-      PropertyFailureImpl<T> failure = new PropertyFailureImpl<>(example, this);
-      throw new PropertyFalsified(failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, sizeHint, IntCustomizer::checkValidInt));
+      throw new PropertyFalsified(new PropertyFailureImpl<>(example, this));
     }
 
     if (iterationNumber >= session.iterationCount) {
@@ -86,6 +85,10 @@ class Iteration<T> {
     }
     
     return new Iteration<>(session, random.nextLong(), iterationNumber + 1);
+  }
+
+  T generateValue(ReplayDataStructure data) {
+    return session.generator.getGeneratorFunction().apply(data);
   }
 }
 
