@@ -122,8 +122,8 @@ class StructureNode extends StructureElement {
   }
 
   private boolean isList() {
-    if (!children.isEmpty() &&
-        children.get(0) instanceof IntData && ((IntData)children.get(0)).value == children.size() - 1) {
+    if (children.size() > 1 &&
+        children.get(0) instanceof IntData && ((IntData)children.get(0)).value >= children.size() - 1) {
       for (int i = 1; i < children.size(); i++) {
         if (!(children.get(i) instanceof StructureNode)) return false;
       }

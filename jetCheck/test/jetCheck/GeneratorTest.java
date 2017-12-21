@@ -112,7 +112,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
       .shouldHold(s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkGeneratesExample(asciiIdentifiers(),
                           s -> s.contains("_"),
-                          11);
+                          10);
   }
 
   public void testBoolean() {
@@ -161,7 +161,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
 
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2)).with(1, constant(3))),
                    l -> !l.contains(1) || !l.contains(2) || !l.contains(3),
-                   8);
+                   7);
   }
 
 }
