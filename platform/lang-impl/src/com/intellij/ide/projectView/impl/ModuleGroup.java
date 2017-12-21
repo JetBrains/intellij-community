@@ -68,20 +68,15 @@ public class ModuleGroup {
     Set<List<String>> moduleAsGroupsPaths = ContainerUtil.map2Set(grouper.getAllModules(), module -> grouper.getModuleAsGroupPath(module));
     for (final Module module : grouper.getAllModules()) {
       List<String> group = grouper.getGroupPath(module);
-      if (myGroupPath.equals(group) || isChild(myGroupPath, group) && (recursively || allIntermediatePathsAreFromSet(myGroupPath, group, moduleAsGroupsPaths))) {
+      if (myGroupPath.equals(group) || isChild(myGroupPath, group) && (recursively || isUnderGroupWithSameNameAsSomeModule(myGroupPath, group, moduleAsGroupsPaths))) {
         result.add(module);
       }
     }
     return result;
   }
 
-  private static boolean allIntermediatePathsAreFromSet(List<String> parent, List<String> descendant, Set<List<String>> set) {
-    for (int i = parent.size() + 1; i < descendant.size() - 1; i++) {
-      if (!set.contains(descendant.subList(0, i))) {
-        return false;
-      }
-    }
-    return true;
+  private static boolean isUnderGroupWithSameNameAsSomeModule(List<String> parent, List<String> descendant, Set<List<String>> moduleNamesAsGroups) {
+    return descendant.size() > parent.size() && moduleNamesAsGroups.contains(descendant.subList(0, parent.size() + 1));
   }
 
   @NotNull
@@ -90,9 +85,11 @@ public class ModuleGroup {
     Set<List<String>> moduleAsGroupsPaths = ContainerUtil.map2Set(grouper.getAllModules(), module -> grouper.getModuleAsGroupPath(module));
     for (Module module : grouper.getAllModules()) {
       List<String> group = grouper.getGroupPath(module);
-      if (!moduleAsGroupsPaths.contains(group) && isChild(myGroupPath, group)) {
+      if (isChild(myGroupPath, group)) {
         final List<String> directChild = ContainerUtil.append(myGroupPath, group.get(myGroupPath.size()));
-        result.add(new ModuleGroup(directChild));
+        if (!moduleAsGroupsPaths.contains(directChild)) {
+          result.add(new ModuleGroup(directChild));
+        }
       }
     }
 
