@@ -19,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.font.TextAttribute;
-import java.text.AttributedCharacterIterator;
-import java.text.AttributedString;
 import java.util.List;
 
 
@@ -176,6 +173,7 @@ public class Splash extends JDialog implements StartupProgress {
           font = createFont(UIUtil.ARIAL_FONT_NAME);
         }
 
+        g.setFont(UIUtil.getFontWithFallback(font));
         g.setColor(textColor);
         int offsetX = uiScale(15);
         int offsetY = 30;
@@ -188,37 +186,14 @@ public class Splash extends JDialog implements StartupProgress {
           }
         }
 
-        g.drawString(wrapText(licensedToMessage, font), x + offsetX, y + height - uiScale(offsetY));
+        g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {
-          g.drawString(wrapText(licenseRestrictionsMessages.get(0), font), x + offsetX, y + height - uiScale(offsetY - 16));
+          g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
         }
       }
       return true;
     }
     return false;
-  }
-
-  private static AttributedCharacterIterator wrapText(String text, Font font) {
-    Font fallbackFont = createFont("Serif");
-    AttributedString result = new AttributedString(text);
-    if (text.isEmpty()) return result.getIterator();
-
-    Font curFont = font.canDisplay(text.charAt(0)) ? font : fallbackFont;
-    int start = 0, end = 0;
-
-    for (int i = 1; i < text.length(); i++) {
-      Font f = font.canDisplay(text.charAt(i)) ? font : fallbackFont;
-      if (f != curFont) {
-        result.addAttribute(TextAttribute.FONT, curFont, start, end);
-        start = i;
-        end = start;
-        curFont = f;
-      } else {
-        end++;
-      }
-    }
-    result.addAttribute(TextAttribute.FONT, curFont, start, end);
-    return result.getIterator();
   }
 
   @NotNull
