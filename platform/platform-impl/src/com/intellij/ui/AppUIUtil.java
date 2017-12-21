@@ -253,7 +253,7 @@ public class AppUIUtil {
     return iconPath;
   }
 
-  public static void showEndUserAgreement() {
+  public static void showUserAgreementAndConsentsIfNeeded() {
     if (ApplicationInfoImpl.getShadowInstance().isVendorJetBrains()) {
       EndUserAgreement.Document agreement = EndUserAgreement.getLatestDocument();
       if (!agreement.isAccepted()) {

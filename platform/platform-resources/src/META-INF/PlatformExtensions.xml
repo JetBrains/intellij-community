@@ -415,9 +415,6 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigUsageCollectors$DownloadedPlugins"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.editor.colors.impl.EditorColorSchemesUsagesCollector"/>
 
-    <applicationConfigurable parentId="preferences.general" instance="com.intellij.internal.statistic.configurable.StatisticsConfigurable" id="usage.statistics"
-                             displayName="Usage Statistics"/>
-
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 
     <virtualFileSystem key="dummy" implementationClass="com.intellij.openapi.vfs.ex.dummy.DummyFileSystem"/>

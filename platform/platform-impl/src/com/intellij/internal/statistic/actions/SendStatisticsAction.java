@@ -15,11 +15,11 @@
  */
 package com.intellij.internal.statistic.actions;
 
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
+import com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,10 +45,14 @@ public class SendStatisticsAction extends AnAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         UsageStatisticsPersistenceComponent statisticsPersistenceComponent = UsageStatisticsPersistenceComponent.getInstance();
-        boolean sendAllowed = statisticsPersistenceComponent.isAllowed();
-        statisticsPersistenceComponent.setAllowed(true);
-        ApplicationStatisticsPersistenceComponent.persistOpenedProjects();
-        statisticsPersistenceComponent.setAllowed(sendAllowed);
+        final boolean sendAllowed = statisticsPersistenceComponent.isAllowed();
+        try {
+          statisticsPersistenceComponent.setAllowed(true);
+          ApplicationStatisticsPersistenceComponent.persistOpenedProjects();
+        }
+        finally {
+          statisticsPersistenceComponent.setAllowed(sendAllowed);
+        }
         StatisticsService service = StatisticsUploadAssistant.getStatisticsService();
         final StatisticsResult result = service.send();
 
