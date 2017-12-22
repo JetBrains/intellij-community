@@ -78,12 +78,12 @@ public class SaveTo implements SpellCheckerQuickFix {
           .createListPopupBuilder(dictList)
           .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
           .setItemChoosenCallback(
-            () -> spellCheckerManager.acceptWordAsCorrect(myWord, project, getLevelByName(dictList.getSelectedValue())))
+            () -> spellCheckerManager.acceptWordAsCorrect(myWord, project, getLevelByName(dictList.getSelectedValue()), true))
           .createPopup()
           .showInBestPositionFor(context);
       }
       else {
-        spellCheckerManager.acceptWordAsCorrect(myWord, project, myLevel);
+        spellCheckerManager.acceptWordAsCorrect(myWord, project, myLevel, false);
       }
     });
   }

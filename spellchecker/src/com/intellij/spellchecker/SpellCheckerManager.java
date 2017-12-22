@@ -208,10 +208,10 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void acceptWordAsCorrect(@NotNull String word, Project project) {
-    acceptWordAsCorrect(word, project, DictionaryLevel.PROJECT); // TODO: or default
+    acceptWordAsCorrect(word, project, DictionaryLevel.PROJECT, true); // TODO: or default
   }
 
-  public void acceptWordAsCorrect(@NotNull String word, @NotNull Project project, @NotNull DictionaryLevel dictionaryLevel) {
+  public void acceptWordAsCorrect(@NotNull String word, @NotNull Project project, @NotNull DictionaryLevel dictionaryLevel, boolean notify) {
     if (DictionaryLevel.NOT_SPECIFIED == dictionaryLevel) return;
 
     final String transformed = spellChecker.getTransformation().transform(word);
@@ -219,23 +219,25 @@ public class SpellCheckerManager implements Disposable {
     if (transformed != null) {
       dictionary.addToDictionary(word);
       restartInspections();
-      final String dictionaryName = dictionaryLevel.getName();
-      final String title = SpellCheckerBundle.message("changed.dict.title", StringUtil.capitalize(dictionaryName));
-      final String message = SpellCheckerBundle.message("new.word.description", word, dictionaryName);
-      showNotification(project, title, message, new NotificationAction(SpellCheckerBundle.message("revert.action.title")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          dictionary.removeFromDictionary(word);
-          restartInspections();
-          notification.expire();
-        }
-      }, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          openDictionaryInEditor(DictionaryLevel.PROJECT == dictionaryLevel ? getProjectDictionaryPath() : getAppDictionaryPath());
-          notification.expire();
-        }
-      });
+      if(notify) {
+        final String dictionaryName = dictionaryLevel.getName();
+        final String title = SpellCheckerBundle.message("changed.dict.title", StringUtil.capitalize(dictionaryName));
+        final String message = SpellCheckerBundle.message("new.word.description", word, dictionaryName);
+        showNotification(project, title, message, new NotificationAction(SpellCheckerBundle.message("revert.action.title")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            dictionary.removeFromDictionary(word);
+            restartInspections();
+            notification.expire();
+          }
+        }, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            openDictionaryInEditor(DictionaryLevel.PROJECT == dictionaryLevel ? getProjectDictionaryPath() : getAppDictionaryPath());
+            notification.expire();
+          }
+        });
+      }
     }
   }
 
