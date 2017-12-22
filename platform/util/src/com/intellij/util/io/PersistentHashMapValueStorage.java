@@ -31,9 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class PersistentHashMapValueStorage {
   @Nullable
@@ -53,7 +51,8 @@ public class PersistentHashMapValueStorage {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<Boolean>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<Boolean>();
-
+    public static final ThreadLocal<Boolean> HAS_NO_CHUNKS = new ThreadLocal<Boolean>();
+    
     public static final ThreadLocal<Boolean> DO_COMPRESSION = new ThreadLocal<Boolean>() {
       @Override
       protected Boolean initialValue() {
@@ -64,15 +63,18 @@ public class PersistentHashMapValueStorage {
     private final ExceptionalIOCancellationCallback myExceptionalIOCancellationCallback;
     private final boolean myReadOnly;
     private final boolean myCompactChunksWithValueDeserialization;
+    private final boolean myHasNoChunks;
     private final boolean myDoCompression;
 
     private CreationTimeOptions(ExceptionalIOCancellationCallback callback,
                                 boolean readOnly,
                                 boolean compactChunksWithValueDeserialization,
+                                boolean hasNoChunks,
                                 boolean doCompression) {
       myExceptionalIOCancellationCallback = callback;
       myReadOnly = readOnly;
       myCompactChunksWithValueDeserialization = compactChunksWithValueDeserialization;
+      myHasNoChunks = hasNoChunks;
       myDoCompression = doCompression;
     }
 
@@ -81,6 +83,7 @@ public class PersistentHashMapValueStorage {
         EXCEPTIONAL_IO_CANCELLATION.get(),
         READONLY.get() == Boolean.TRUE,
         COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE,
+        CreationTimeOptions.HAS_NO_CHUNKS.get() == Boolean.TRUE,
         DO_COMPRESSION.get() == Boolean.TRUE);
     }
 
@@ -190,9 +193,18 @@ public class PersistentHashMapValueStorage {
 
     return doAppendBytes(data, offset, dataLength, prevChunkAddress);
   }
+  
+  void checkAppendsAllowed(int previouslyAccumulatedChunkSize) {
+    if (previouslyAccumulatedChunkSize != 0) {
+      assert !myOptions.myHasNoChunks;
+    }
+  }
 
   protected long doAppendBytes(byte[] data, int offset, int dataLength, long prevChunkAddress) throws IOException {
     assert allowedToCompactChunks();
+    if (prevChunkAddress != 0) {
+      assert !myOptions.myHasNoChunks;
+    }
     long result = mySize; // volatile read
     final FileAccessorCache.Handle<DataOutputStream> appender = myCompressedAppendableFile != null ? null : ourAppendersCache.get(myPath);
 
@@ -234,9 +246,81 @@ public class PersistentHashMapValueStorage {
   private static final ThreadLocalCachedByteArray myBuffer = new ThreadLocalCachedByteArray();
   private final UnsyncByteArrayInputStream myBufferStreamWrapper = new UnsyncByteArrayInputStream(ArrayUtil.EMPTY_BYTE_ARRAY);
   private final DataInputStream myBufferDataStreamWrapper = new DataInputStream(myBufferStreamWrapper);
-  private static final int ourBufferLength = 4096;
+  private static final int ourBufferLength = 1024;
 
+  private long compactValuesWithoutChunks(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
+    //infos = new ArrayList<PersistentHashMap.CompactionRecordInfo>(infos);
+    Collections.sort(infos, new Comparator<PersistentHashMap.CompactionRecordInfo>() {
+      @Override
+      public int compare(PersistentHashMap.CompactionRecordInfo info, PersistentHashMap.CompactionRecordInfo info2) {
+        return Comparing.compare(info.valueAddress, info2.valueAddress);
+      }
+    });
+
+    final int fileBufferLength = 256 * 1024;
+    final byte[] buffer = new byte[fileBufferLength];
+
+    int fragments = 0;
+    int newFragments = 0;
+
+    byte[] outputBuffer = new byte[4096];
+
+    long readStartOffset = -1;
+    int bytesRead = -1;
+
+    for(PersistentHashMap.CompactionRecordInfo info:infos) {
+      int recordStartInBuffer = (int) (info.valueAddress - readStartOffset);
+
+      if (recordStartInBuffer + 15 > fileBufferLength || readStartOffset == -1) {
+        readStartOffset = info.valueAddress;
+        long remainingBytes = readStartOffset != -1 ? mySize - readStartOffset : mySize;
+        bytesRead = (remainingBytes < fileBufferLength) ? (int)remainingBytes : fileBufferLength;
+
+        myCompactionModeReader.get(readStartOffset, buffer, 0, bytesRead); // buffer contains [readStartOffset, readStartOffset + bytesRead)
+        recordStartInBuffer = (int) (info.valueAddress - readStartOffset);
+      }
+
+      myBufferStreamWrapper.init(buffer, recordStartInBuffer, buffer.length);
+      int available = myBufferStreamWrapper.available();
+      int chunkSize = DataInputOutputUtil.readINT(myBufferDataStreamWrapper);
+      long prevChunkAddress = readPrevChunkAddress(info.valueAddress);
+      assert prevChunkAddress == 0;
+      int dataOffset = available - myBufferStreamWrapper.available() + recordStartInBuffer;
+
+      if (chunkSize >= outputBuffer.length) {
+        outputBuffer = new byte[((chunkSize / 4096) + 1) * 4096];
+      }
+
+      // dataOffset .. dataOffset + chunkSize
+      int bytesFitInBuffer = Math.min(chunkSize, fileBufferLength - dataOffset);
+      System.arraycopy(buffer, dataOffset, outputBuffer, 0, bytesFitInBuffer);
+
+      while(bytesFitInBuffer != chunkSize) {
+        readStartOffset += bytesRead;
+
+        long remainingBytes = mySize - readStartOffset;
+        bytesRead = (remainingBytes < fileBufferLength) ? (int)remainingBytes : fileBufferLength;
+
+        myCompactionModeReader.get(readStartOffset, buffer, 0, bytesRead); // buffer contains [readStartOffset, readStartOffset + bytesRead)
+        int newBytesFitInBuffer = Math.min(chunkSize - bytesFitInBuffer, fileBufferLength);
+        System.arraycopy(buffer, 0, outputBuffer, bytesFitInBuffer, newBytesFitInBuffer);
+        bytesFitInBuffer += newBytesFitInBuffer;
+      }
+
+      info.newValueAddress = storage.appendBytes(outputBuffer, 0, chunkSize, 0);
+
+      ++fragments;
+      ++newFragments;
+    }
+
+    return fragments | ((long)newFragments << 32);
+  }
+  
   public long compactValues(List<PersistentHashMap.CompactionRecordInfo> infos, PersistentHashMapValueStorage storage) throws IOException {
+    if (myOptions.myHasNoChunks) {
+      return compactValuesWithoutChunks(infos, storage);
+    }
+    
     PriorityQueue<PersistentHashMap.CompactionRecordInfo> records = new PriorityQueue<PersistentHashMap.CompactionRecordInfo>(
       infos.size(), new Comparator<PersistentHashMap.CompactionRecordInfo>() {
         @Override
@@ -468,7 +552,10 @@ public class PersistentHashMapValueStorage {
         chunk = prevChunkAddress;
         chunkCount++;
 
-        if (prevChunkAddress != 0) checkCancellation();
+        if (prevChunkAddress != 0) {
+          checkCancellation();
+          assert !myOptions.myHasNoChunks;
+        }
         if (result.length > mySize && myCompressedAppendableFile == null) {
           throw new PersistentEnumeratorBase.CorruptedException(myFile);
         }

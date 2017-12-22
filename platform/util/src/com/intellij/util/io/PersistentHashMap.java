@@ -461,6 +461,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     AppendStream appenderStream = ourFlyweightAppenderStream.getValue();
     BufferExposingByteArrayOutputStream stream = myAppendCache.get(key);
     appenderStream.setOut(stream);
+    myValueStorage.checkAppendsAllowed(stream.size());
     appender.append(appenderStream);
     appenderStream.setOut(null);
   }
