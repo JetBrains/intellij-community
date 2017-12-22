@@ -4,7 +4,6 @@
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -21,7 +20,7 @@ public class ExcludesConfigurationState {
   private boolean myDetectionEnabled = true;
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "type", elementValueAttribute = "id")
+  @XCollection(elementName = "type", valueAttributeName = "id")
   public List<String> getFrameworkTypes() {
     return myFrameworkTypes;
   }
