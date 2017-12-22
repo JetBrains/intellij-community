@@ -109,12 +109,17 @@ class TestingTasksImpl extends TestingTasks {
       options.testPatterns = junitClass
     }
 
+    def configPath = "$tempDir/config".toString()
+    def systemPath = "$tempDir/system".toString()
+
+    removeConfigAndSystemDirectories(configPath, systemPath)
+
     Map<String, String> systemProperties = [
       "classpath.file"                         : classpathFile.absolutePath,
       "idea.platform.prefix"                   : options.platformPrefix,
       "idea.home.path"                         : context.paths.projectHome,
-      "idea.config.path"                       : "$tempDir/config".toString(),
-      "idea.system.path"                       : "$tempDir/system".toString(),
+      "idea.config.path"                       : configPath,
+      "idea.system.path"                       : systemPath,
       "intellij.build.test.patterns"           : options.testPatterns,
       "intellij.build.test.groups"             : options.testGroups,
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
@@ -215,6 +220,12 @@ class TestingTasksImpl extends TestingTasks {
     context.ant.delete(dir: snapshotsDir)
     context.ant.mkdir(dir: snapshotsDir)
     return snapshotsDir
+  }
+
+  @CompileDynamic
+  private void removeConfigAndSystemDirectories(String configPath, String systemPath) {
+    context.ant.delete(dir: configPath)
+    context.ant.delete(dir: systemPath)
   }
 
   @CompileDynamic
