@@ -176,7 +176,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final MessageBusConnection myConnection;
-  private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
+  private final Map<String, Element> myUninitializedPaneState = new THashMap<>();
   private final Map<String, SelectInTarget> mySelectInTargets = new LinkedHashMap<>();
   private ContentManager myContentManager;
 
@@ -1364,7 +1364,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return;
     }
     for (Attribute attribute : node.getAttributes()) {
-      options.put(attribute.getName(), Boolean.TRUE.toString().equals(attribute.getValue()) ? Boolean.TRUE : Boolean.FALSE);
+      options.put(attribute.getName(), Boolean.parseBoolean(attribute.getValue()));
     }
   }
 
@@ -1378,7 +1378,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       final String key = entry.getKey();
       //SCR48267
       if (key != null) {
-        e.setAttribute(key, Boolean.toString(entry.getValue().booleanValue()));
+        e.setAttribute(key, Boolean.toString(entry.getValue()));
       }
     }
 
@@ -1395,6 +1395,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         mySavedPaneId = ProjectViewPane.ID;
         mySavedPaneSubId = null;
       }
+
       readOption(navigatorElement.getChild(ELEMENT_FLATTEN_PACKAGES), myFlattenPackages);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MEMBERS), myShowMembers);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
@@ -1427,13 +1428,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     for (Element paneElement : paneElements) {
       String paneId = paneElement.getAttributeValue(ATTRIBUTE_ID);
+      if (StringUtil.isEmptyOrSpaces(paneId)) {
+        continue;
+      }
+
       final AbstractProjectViewPane pane = myId2Pane.get(paneId);
       if (pane != null) {
         try {
           pane.readExternal(paneElement);
         }
-        catch (InvalidDataException e) {
-          // ignore
+        catch (InvalidDataException ignore) {
         }
       }
       else {
@@ -1446,14 +1450,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public Element getState() {
     Element parentNode = new Element("projectView");
     Element navigatorElement = new Element(ELEMENT_NAVIGATOR);
+
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     if (currentPane != null) {
-      navigatorElement.setAttribute(ATTRIBUTE_CURRENT_VIEW, currentPane.getId());
       String subId = currentPane.getSubId();
-      if (subId != null) {
-        navigatorElement.setAttribute(ATTRIBUTE_CURRENT_SUBVIEW, subId);
+      if (subId != null || !currentPane.getId().equals(ProjectViewPane.ID)) {
+        navigatorElement.setAttribute(ATTRIBUTE_CURRENT_VIEW, currentPane.getId());
+        if (subId != null) {
+          navigatorElement.setAttribute(ATTRIBUTE_CURRENT_SUBVIEW, subId);
+        }
       }
     }
+
     writeOption(navigatorElement, myFlattenPackages, ELEMENT_FLATTEN_PACKAGES);
     writeOption(navigatorElement, myShowMembers, ELEMENT_SHOW_MEMBERS);
     writeOption(navigatorElement, myShowModules, ELEMENT_SHOW_MODULES);
@@ -1473,8 +1481,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     try {
       splitterProportions.writeExternal(navigatorElement);
     }
-    catch (WriteExternalException e) {
-      // ignore
+    catch (WriteExternalException ignored) {
     }
 
     if (!JDOMUtil.isEmpty(navigatorElement)) {

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.ide.projectView.impl;
 
@@ -130,9 +132,14 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public abstract String getTitle();
+
   public abstract Icon getIcon();
-  @NotNull public abstract String getId();
-  @Nullable public final String getSubId(){
+
+  @NotNull
+  public abstract String getId();
+
+  @Nullable
+  public final String getSubId() {
     return mySubId;
   }
 
@@ -443,7 +450,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return myTreeBuilder;
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element)  {
     List<Element> subPanes = element.getChildren(ELEMENT_SUBPANE);
     for (Element subPane : subPanes) {
       String subId = subPane.getAttributeValue(ATTRIBUTE_SUBID);
@@ -454,7 +461,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     saveExpandedPaths();
     for (String subId : myReadTreeState.keySet()) {
       TreeState treeState = myReadTreeState.get(subId);
