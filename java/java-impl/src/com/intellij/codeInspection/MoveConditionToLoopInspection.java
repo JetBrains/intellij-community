@@ -162,16 +162,13 @@ public class MoveConditionToLoopInspection extends AbstractBaseJavaLocalInspecti
       if (context == null) return;
       CommentTracker ct = new CommentTracker();
       PsiExpression conditionCopy = (PsiExpression)ct.markUnchanged(context.myCondition).copy();
-      ct.delete(context.myConditionStatement);
-      for (PsiElement element : context.myLoopBody.getChildren()) {
-        ct.markUnchanged(element);
-      }
       String loopText;
+      ct.delete(context.myConditionStatement);
       if (context.myConditionInTheBeginning) {
-        loopText = "while(" + BoolUtils.getNegatedExpressionText(conditionCopy, ct) + ")" + context.myLoopBody.getText();
+        loopText = "while(" + BoolUtils.getNegatedExpressionText(conditionCopy, ct) + ")" + ct.text(context.myLoopBody);
       }
       else {
-        loopText = "do" + context.myLoopBody.getText() + "while(" + BoolUtils.getNegatedExpressionText(conditionCopy, ct) + ");";
+        loopText = "do" + ct.text(context.myLoopBody) + "while(" + BoolUtils.getNegatedExpressionText(conditionCopy, ct) + ");";
       }
       ct.replaceAndRestoreComments(context.myLoopStatement, loopText);
     }
