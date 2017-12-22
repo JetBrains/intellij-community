@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
@@ -207,15 +208,18 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void acceptWordAsCorrect(@NotNull String word, Project project) {
-    acceptWordAsCorrect(word, project, PROJECT); // TODO: or default
+    acceptWordAsCorrect(word, project, DictionaryLevel.PROJECT); // TODO: or default
   }
 
-  public void acceptWordAsCorrect(@NotNull String word, @NotNull Project project, @NotNull String dictionaryName) {
+  public void acceptWordAsCorrect(@NotNull String word, @NotNull Project project, @NotNull DictionaryLevel dictionaryLevel) {
+    if (DictionaryLevel.NOT_SPECIFIED == dictionaryLevel) return;
+
     final String transformed = spellChecker.getTransformation().transform(word);
-    final EditableDictionary dictionary = PROJECT.equals(dictionaryName) ? myProjectDictionary: myAppDictionary;
+    final EditableDictionary dictionary = DictionaryLevel.PROJECT == dictionaryLevel ? myProjectDictionary : myAppDictionary;
     if (transformed != null) {
       dictionary.addToDictionary(word);
       restartInspections();
+      final String dictionaryName = dictionaryLevel.getName();
       final String title = SpellCheckerBundle.message("changed.dict.title", StringUtil.capitalize(dictionaryName));
       final String message = SpellCheckerBundle.message("new.word.description", word, dictionaryName);
       showNotification(project, title, message, new NotificationAction(SpellCheckerBundle.message("revert.action.title")) {
@@ -228,7 +232,7 @@ public class SpellCheckerManager implements Disposable {
       }, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          openDictionaryInEditor(PROJECT.equals(dictionaryName) ? getProjectDictionaryPath() : getAppDictionaryPath());
+          openDictionaryInEditor(DictionaryLevel.PROJECT == dictionaryLevel ? getProjectDictionaryPath() : getAppDictionaryPath());
           notification.expire();
         }
       });
@@ -325,6 +329,25 @@ public class SpellCheckerManager implements Disposable {
     final FileEditorManager fileManager = FileEditorManager.getInstance(project);
     if (fileManager != null) {
       fileManager.openFile(file, true);
+    }
+  }
+
+  public enum DictionaryLevel {
+    APP("application"), PROJECT("project"), NOT_SPECIFIED("not specified");
+    private String myName;
+    private final static Map<String, DictionaryLevel> DICTIONARY_LEVELS =
+      Maps.uniqueIndex(EnumSet.allOf(DictionaryLevel.class), DictionaryLevel::getName);
+
+    DictionaryLevel(String name) {
+      myName = name;
+    }
+
+    public String getName() {
+      return myName;
+    }
+
+    public static DictionaryLevel getLevelByName(@NotNull String name) {
+      return DICTIONARY_LEVELS.get(name);
     }
   }
 

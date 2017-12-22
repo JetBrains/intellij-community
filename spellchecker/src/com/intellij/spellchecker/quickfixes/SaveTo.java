@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
@@ -19,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.spellchecker.SpellCheckerManager.APP;
-import static com.intellij.spellchecker.SpellCheckerManager.PROJECT;
 
 
 public class SaveTo implements SpellCheckerQuickFix {
@@ -57,7 +55,7 @@ public class SaveTo implements SpellCheckerQuickFix {
     final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
     asyncResult.doWhenDone((Consumer<DataContext>)context -> {
       final SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-      final List<String> dictionaryList = Arrays.asList(PROJECT, APP);
+      final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
       if (myWord == null) {
         myWord = ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement());
       }
@@ -65,7 +63,8 @@ public class SaveTo implements SpellCheckerQuickFix {
       JBPopupFactory.getInstance()
         .createListPopupBuilder(dictList)
         .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
-        .setItemChoosenCallback(() -> spellCheckerManager.acceptWordAsCorrect(myWord, project, dictList.getSelectedValue()))
+        .setItemChoosenCallback(
+          () -> spellCheckerManager.acceptWordAsCorrect(myWord, project, DictionaryLevel.getLevelByName(dictList.getSelectedValue())))
         .createPopup()
         .showInBestPositionFor(context);
     });
