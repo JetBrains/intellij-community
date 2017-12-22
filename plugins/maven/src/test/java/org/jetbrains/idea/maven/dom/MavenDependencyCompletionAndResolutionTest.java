@@ -879,7 +879,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
                      "<dependencies>" +
                      "  <dependency>" +
-                     "    <groupId><error><</error>/groupId>" +
+                     "    <groupId><error></error></groupId>" +
                      "    <artifactId><error>junit</error></artifactId>" +
                      "    <version><error>4.0</error></version>" +
                      "  </dependency>" +
@@ -912,7 +912,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "<dependencies>" +
                      "  <dependency>" +
                      "    <groupId>junit</groupId>" +
-                     "    <artifactId><error><</error>/artifactId>" +
+                     "    <artifactId><error></error></artifactId>" +
                      "    <version><error>4.0</error></version>" +
                      "  </dependency>" +
                      "</dependencies>");
