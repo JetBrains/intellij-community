@@ -84,6 +84,7 @@ public class LeakHunter {
       UIUtil.pump();
     }
     PersistentEnumeratorBase.clearCacheForTests();
+    LaterInvocator.purgeExpiredItems();
     ApplicationManager.getApplication().runReadAction(() -> {
       DebugReflectionUtil.walkObjects(10000, roots, suspectClass, Conditions.alwaysTrue(), (value, backLink) -> {
         @SuppressWarnings("unchecked")
