@@ -104,19 +104,19 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
         }
       }
       if (message.type == MessageType.RESTART_IDE) {
-        restartIdeAndStartTestAgain(server)
+        restartIdeAndStartTestAgain(server, method)
         sendRunTestCommand(method, server)
       }
       if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
         val additionalInfoLabel = message.content
         if (additionalInfoLabel !is String) throw Exception("Additional info for a resuming test should have a String type!")
-        restartIdeAndStartTestAgain(server)
+        restartIdeAndStartTestAgain(server, method)
         sendResumeTestCommand(method, server, additionalInfoLabel)
       }
     }
   }
 
-  private fun restartIdeAndStartTestAgain(server: JUnitServer) {
+  private fun restartIdeAndStartTestAgain(server: JUnitServer, method: FrameworkMethod) {
     //close previous IDE
     server.send(TransportMessage(MessageType.CLOSE_IDE))
     //await to close previous process
@@ -124,7 +124,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     //restart JUnitServer to let accept a new connection
     server.stopServer()
     //start a new one IDE
-    val localIde = runner.ide ?: getIdeFromAnnotation(runner.javaClass)
+    val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
     runIde(port = server.getPort(), ide = localIde)
     server.start()
   }
