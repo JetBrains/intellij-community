@@ -2,7 +2,9 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +42,7 @@ import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
 import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
+import static com.intellij.spellchecker.SpellCheckerNotificationUtils.showNotification;
 
 public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
@@ -213,6 +216,16 @@ public class SpellCheckerManager implements Disposable {
     if (transformed != null) {
       dictionary.addToDictionary(word);
       restartInspections();
+      final String title = SpellCheckerBundle.message("changed.dict.title", StringUtil.capitalize(dictionaryName));
+      final String message = SpellCheckerBundle.message("new.word.description", word, dictionaryName);
+      showNotification(project, title, message, new NotificationAction(SpellCheckerBundle.message("revert.action.title")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          dictionary.removeFromDictionary(word);
+          restartInspections();
+          notification.expire();
+        }
+      });
     }
   }
 
