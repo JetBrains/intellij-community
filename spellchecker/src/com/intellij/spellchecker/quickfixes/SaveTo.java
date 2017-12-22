@@ -21,11 +21,19 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.getLevelByName;
 
 public class SaveTo implements SpellCheckerQuickFix {
+  private static final SaveTo SAVE_TO_APP_FIX = new SaveTo(DictionaryLevel.APP);
+  private static final SaveTo SAVE_TO_PROJECT_FIX = new SaveTo(DictionaryLevel.PROJECT);
+  private DictionaryLevel myLevel = DictionaryLevel.NOT_SPECIFIED;
   private String myWord;
 
   public static final String FIX_NAME = SpellCheckerBundle.message("add.to");
+
+  private SaveTo(DictionaryLevel level) {
+    myLevel = level;
+  }
 
   public SaveTo(String word) {
     myWord = word;
@@ -33,12 +41,17 @@ public class SaveTo implements SpellCheckerQuickFix {
 
   @NotNull
   public String getName() {
-    return myWord != null ? SpellCheckerBundle.message("add.0.to", myWord) : SpellCheckerBundle.message("add.to");
+    String name = myWord != null ? SpellCheckerBundle.message("add.0.to", myWord) : SpellCheckerBundle.message("add.to");
+    if (myLevel != DictionaryLevel.NOT_SPECIFIED) name += myLevel.getName();
+    return name;
   }
 
   @NotNull
   public String getFamilyName() {
-    return SpellCheckerBundle.message("add.to");
+    if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
+      return SpellCheckerBundle.message("add.to");
+    }
+    return SpellCheckerBundle.message("save.to.0", myLevel.getName());
   }
 
   @NotNull
@@ -55,21 +68,29 @@ public class SaveTo implements SpellCheckerQuickFix {
     final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
     asyncResult.doWhenDone((Consumer<DataContext>)context -> {
       final SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-      final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
       if (myWord == null) {
         myWord = ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement());
       }
-      final JBList<String> dictList = new JBList<>(dictionaryList);
-      JBPopupFactory.getInstance()
-        .createListPopupBuilder(dictList)
-        .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
-        .setItemChoosenCallback(
-          () -> spellCheckerManager.acceptWordAsCorrect(myWord, project, DictionaryLevel.getLevelByName(dictList.getSelectedValue())))
-        .createPopup()
-        .showInBestPositionFor(context);
+      if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
+        final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
+        final JBList<String> dictList = new JBList<>(dictionaryList);
+        JBPopupFactory.getInstance()
+          .createListPopupBuilder(dictList)
+          .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
+          .setItemChoosenCallback(
+            () -> spellCheckerManager.acceptWordAsCorrect(myWord, project, getLevelByName(dictList.getSelectedValue())))
+          .createPopup()
+          .showInBestPositionFor(context);
+      }
+      else {
+        spellCheckerManager.acceptWordAsCorrect(myWord, project, myLevel);
+      }
     });
   }
 
+  public static SaveTo getSaveToLevelFix(DictionaryLevel level) {
+    return DictionaryLevel.PROJECT == level ? SAVE_TO_PROJECT_FIX : SAVE_TO_APP_FIX;
+  }
 
   public Icon getIcon(int flags) {
     return SpellcheckerIcons.Spellcheck;
