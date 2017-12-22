@@ -791,6 +791,8 @@ public class Py3TypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> doTest("Any",
+                   "from typing import overload\n" +
+                   "\n" +
                    "class Base:\n" +
                    "    @overload\n" +
                    "    def test(self, param: int) -> int: pass\n" +

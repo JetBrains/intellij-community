@@ -110,7 +110,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
    * some synthetic values.
    */
   private static final ImmutableSet<String> OPAQUE_NAMES = ImmutableSet.<String>builder()
-    .add("typing.overload")
+    .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
     .add("typing.Any")
     .add("typing.TypeVar")
     .add(GENERIC)
@@ -260,9 +260,9 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       if (superFunction.getDecoratorList() != null) {
         if (StreamEx.of(superFunction.getDecoratorList().getDecorators())
-          .map(PyDecorator::getQualifiedName)
+          .map(PyDecorator::getName)
           .nonNull()
-          .anyMatch(decoratorName -> PyNames.OVERLOADMETHOD.equals(decoratorName.toString()))) {
+          .anyMatch(PyNames.OVERLOAD::equals)) {
           return null;
         }
       }
