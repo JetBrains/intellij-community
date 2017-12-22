@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -34,7 +36,7 @@ class UndoableGroup {
   private EditorAndState myStateAfter;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
-  private final boolean myTemporary;
+  private boolean myTemporary;
 
   private boolean myValid;
 
@@ -71,6 +73,10 @@ class UndoableGroup {
 
   public boolean isTemporary() {
     return myTemporary;
+  }
+
+  public void makePermanent() {
+    myTemporary = false;
   }
 
   public boolean isUndoable() {
