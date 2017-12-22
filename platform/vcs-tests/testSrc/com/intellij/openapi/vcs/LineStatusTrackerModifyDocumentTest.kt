@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vcs.ex.Range
 
-class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
+class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
   fun testSimpleInsert() {
     test("1234_2345_3456") {
       "12".insertAfter("a")
@@ -249,7 +249,7 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
 
   fun testMultiLineReplace1() {
     test("012a_012b_012c_012d_012e") {
-      (2 th "0").replace("a")
+      ("0" `in` "012b").replace("a")
       compareRanges()
 
       "_a12b_012c".replace("_x")
@@ -386,7 +386,7 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       assertTextContentIs("    public class_    _    bbb_")
       compareRanges()
 
-      ("    " at !17 - 21).delete()
+      ("    " after "public class_").delete()
       assertTextContentIs("    public class__    bbb_")
       compareRanges()
 
@@ -394,7 +394,7 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       assertTextContentIs("    public class__    _    bbb_")
       compareRanges()
 
-      ("    " at !18 - 22).delete()
+      ("    " after "public class__").delete()
       assertTextContentIs("    public class___    bbb_")
       compareRanges()
 
@@ -402,7 +402,7 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       assertTextContentIs("     class___    bbb_")
       compareRanges()
 
-      ("    " at !0 - 4).insertAfter("p")
+      " class___".insertBefore("p")
       assertTextContentIs("    p class___    bbb_")
       compareRanges()
 
@@ -493,11 +493,11 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
 
   fun testBug5() {
     test("_") {
-      ("" at !0 - 0).replace("__6406")
+      insertAtStart("__6406")
       ("_" at !1 - 2).delete()
       ("_" at !0 - 1).insertAfter("_11_5")
       "__1".insertAfter("130")
-      ("" at !8 - 8).replace("3")
+      "__11301_".insertAfter("3")
       "56406".replace("4__56_21_")
       "1301_34__56_21".replace(" 60246")
       "__1 602".insertAfter("01511")
@@ -509,6 +509,8 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       ("_" at !2 - 3).delete()
       "0_".delete()
       ("_" at !0 - 1).insertAfter("051")
+
+      assertTextContentIs("_051_34__31 6__")
     }
   }
 
@@ -594,6 +596,56 @@ class ModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       (1 th "X").replace("Y")
       "Y_X_X_".insertAfter("X_")
       assertRanges(Range(0, 1, 0, 1), Range(3, 4, 3, 3))
+    }
+  }
+
+  fun testInsertion8() {
+    test("X_X_X_") {
+      (3 th "X").replace("Y")
+      assertRanges(Range(2, 3, 2, 3))
+    }
+  }
+
+  fun testInsertion9() {
+    test("X_X_X") {
+      (3 th "X").replace("Y")
+      assertRanges(Range(2, 3, 2, 3))
+    }
+  }
+
+  fun testWhitespaceBlockMerging1() {
+    test("A_B_C_D_E_") {
+      "A".replace("C_D_E")
+      (2 th "C_D_E_").delete()
+      assertTextContentIs("C_D_E_B_")
+      assertRanges(Range(0, 3, 0, 1), Range(4, 4, 2, 5))
+    }
+  }
+
+  fun testWhitespaceBlockMerging2() {
+    test("A_ _C_D_E_") {
+      "A".replace("C_D_E")
+      (2 th "C_D_E_").delete()
+      assertTextContentIs("C_D_E_ _")
+      assertRanges(Range(0, 0, 0, 2), Range(3, 4, 5, 5))
+    }
+  }
+
+  fun testWhitespaceBlockMerging3() {
+    test("A_ _ _ _ _ _CCCCC_DDDDD_EEEEE_") {
+      "A".replace("CCCCC_DDDDD_EEEEE")
+      (2 th "CCCCC_DDDDD_EEEEE_").delete()
+      assertTextContentIs("CCCCC_DDDDD_EEEEE_ _ _ _ _ _")
+      assertRanges(Range(0, 0, 0, 6), Range(3, 8, 9, 9))
+    }
+  }
+
+  fun testWhitespaceBlockMerging4() {
+    test("A_ _ _ _ _ _C_D_E_") {
+      "A".replace("C_D_E")
+      (2 th "C_D_E_").delete()
+      assertTextContentIs("C_D_E_ _ _ _ _ _")
+      assertRanges(Range(0, 3, 0, 1), Range(8, 8, 6, 9))
     }
   }
 }

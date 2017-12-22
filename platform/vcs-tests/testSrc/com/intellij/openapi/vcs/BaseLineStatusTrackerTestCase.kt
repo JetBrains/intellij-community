@@ -27,8 +27,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
+import com.intellij.openapi.vcs.ex.Range
+import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.createRanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightPlatformTestCase.assertOrderedEquals
@@ -70,6 +73,11 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     val document: Document = tracker.document
     val vcsDocument: Document = tracker.vcsDocument
 
+
+    fun assertTextContentIs(expected: String) {
+      assertEquals(parseInput(expected), document.text)
+    }
+
     fun assertRangesEmpty() {
       assertRanges()
     }
@@ -78,6 +86,19 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
       assertEqualRanges(expected.toList(), tracker.getRanges()!!)
     }
 
+    fun compareRanges() {
+      val expected = createRanges(document, vcsDocument)
+      val actual = tracker.getRanges()!!
+      assertEqualRanges(expected, actual)
+    }
+
+
+    fun runCommand(task: () -> Unit) {
+      CommandProcessor.getInstance().executeCommand(getProject(), {
+        ApplicationManager.getApplication().runWriteAction(task)
+      }, "", null)
+      verify()
+    }
 
     fun insertAtStart(text: String) {
       runCommand { document.insertString(0, parseInput(text)) }
@@ -105,33 +126,17 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
 
     fun stripTrailingSpaces() {
       (document as DocumentImpl).stripTrailingSpaces(null, true)
+      verify()
     }
 
     fun rollbackLine(line: Int) {
-      val lines = BitSet()
-      lines.set(line)
-      rollbackLines(lines)
+      rollbackLines(BitSet().apply { set(line) })
     }
 
     fun rollbackLines(lines: BitSet) {
-      runCommand {
-        tracker.rollbackChanges(lines)
-      }
+      runCommand { tracker.rollbackChanges(lines) }
     }
 
-
-    class TestRange(val start: Int, val end: Int)
-
-
-    operator fun Int.not(): Helper = Helper(this)
-    operator fun Helper.minus(end: Int): TestRange = TestRange(this.start, end)
-    class Helper(val start: Int)
-
-    infix fun String.at(range: TestRange): TestRange {
-      assertEquals(parseInput(this), document.charsSequence.subSequence(range.start, range.end).toString())
-      return range
-    }
-    infix fun Int.th(text: String): TestRange = findPattern(text, this - 1)
 
     fun String.insertBefore(text: String) {
       findPattern(this).insertBefore(text)
@@ -149,32 +154,67 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
       findPattern(this).replace(text)
     }
 
-    private fun findPattern(text: String): TestRange {
-      val pattern = parseInput(text)
-      val firstOffset = document.immutableCharSequence.indexOf(pattern)
-      val lastOffset = document.immutableCharSequence.lastIndexOf(pattern)
-      assertTrue(firstOffset == lastOffset && firstOffset != -1)
-      return TestRange(firstOffset, firstOffset + pattern.length)
+
+    inner class TestRange(val start: Int, val end: Int) {
+      val text get() = document.charsSequence.subSequence(this.start, this.end).toString()
     }
 
-    private fun findPattern(text: String, index: Int): TestRange {
-      val pattern = parseInput(text)
+    operator fun Int.not(): Helper = Helper(this)
+    operator fun Helper.minus(end: Int): TestRange = TestRange(this.start, end)
+    class Helper(val start: Int)
+
+    infix fun String.at(range: TestRange): TestRange {
+      assertEquals(parseInput(this), range.text)
+      return range
+    }
+
+    infix fun String.before(pattern: String): TestRange {
+      val patternRange = findPattern(pattern)
+      val text = parseInput(this)
+      val range = TestRange(patternRange.start - text.length, patternRange.start)
+      assertEquals(text, range.text)
+      return range
+    }
+
+    infix fun String.after(pattern: String): TestRange {
+      val patternRange = findPattern(pattern)
+      val text = parseInput(this)
+      val range = TestRange(patternRange.end, patternRange.end + text.length)
+      assertEquals(text, range.text)
+      return range
+    }
+
+    infix fun String.`in`(pattern: String): TestRange {
+      val patternRange = findPattern(pattern)
+      val patternText = patternRange.text
+      val range = findPattern(this, patternText)
+      return TestRange(patternRange.start + range.start, patternRange.start + range.end)
+    }
+
+    infix fun Int.th(text: String): TestRange = findPattern(text, this - 1)
+
+
+    private fun findPattern(pattern: String): TestRange = findPattern(pattern, document.immutableCharSequence)
+
+    private fun findPattern(pattern: String, sequence: CharSequence): TestRange {
+      val text = parseInput(pattern)
+      val firstOffset = sequence.indexOf(text)
+      val lastOffset = sequence.lastIndexOf(text)
+      assertTrue(firstOffset == lastOffset && firstOffset != -1)
+      return TestRange(firstOffset, firstOffset + text.length)
+    }
+
+    private fun findPattern(pattern: String, index: Int): TestRange {
+      val text = parseInput(pattern)
       assertTrue(index >= 0)
 
       var offset = -1
       for (i in 0..index) {
-        val newOffset = document.immutableCharSequence.indexOf(pattern, offset + 1)
-        assertTrue(newOffset >= 0 && (offset == -1 || newOffset >= offset + pattern.length))
+        val newOffset = document.immutableCharSequence.indexOf(text, offset + 1)
+        assertTrue(newOffset >= 0 && (offset == -1 || newOffset >= offset + text.length))
         offset = newOffset
       }
-      return TestRange(offset, offset + text.length)
-    }
-
-    fun runCommand(task: () -> Unit) {
-      CommandProcessor.getInstance().executeCommand(getProject(), {
-        ApplicationManager.getApplication().runWriteAction(task)
-      }, "", null)
-      verify()
+      return TestRange(offset, offset + pattern.length)
     }
 
 
@@ -199,17 +239,6 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
       runCommand {
         tracker.rollbackChanges(this)
       }
-    }
-
-
-    fun compareRanges() {
-      val expected = createRanges(document, vcsDocument)
-      val actual = tracker.getRanges()!!
-      assertEqualRanges(expected, actual)
-    }
-
-    fun assertTextContentIs(expected: String) {
-      assertEquals(parseInput(expected), document.text)
     }
 
 

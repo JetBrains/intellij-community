@@ -17,7 +17,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.vcs.ex.Range
 
-class RollbackTest : BaseLineStatusTrackerTestCase() {
+class LineStatusTrackerRollbackTest : BaseLineStatusTrackerTestCase() {
   fun testUpToDateContent1() {
     test("_1_2_3_4_5_6_7") {
       "_1_2".delete()
