@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
@@ -51,8 +50,6 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   /* */
 
   private ShortenCommandLine myShortenCommandLine = null;
-
-  private final Map<String, String> myEnvs = new LinkedHashMap<>();
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
@@ -201,13 +198,12 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public Map<String, String> getEnvs() {
-    return myEnvs;
+    return getOptions().getEnv();
   }
 
   @Override
-  public void setEnvs(@NotNull final Map<String, String> envs) {
-    myEnvs.clear();
-    myEnvs.putAll(envs);
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    getOptions().setEnv(envs);
   }
 
   @Override
