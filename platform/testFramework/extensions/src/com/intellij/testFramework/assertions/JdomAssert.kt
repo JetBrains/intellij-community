@@ -3,6 +3,8 @@
  */
 package com.intellij.testFramework.assertions
 
+import com.intellij.configurationStore.deserialize
+import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.rt.execution.junit.FileComparisonFailure
@@ -11,6 +13,7 @@ import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
 import org.assertj.core.api.AbstractAssert
 import org.assertj.core.internal.Objects
+import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import java.io.File
 import java.nio.file.Path
@@ -62,4 +65,21 @@ class JdomAssert(actual: Element?) : AbstractAssert<JdomAssert, Element?>(actual
 
     return this
   }
+}
+
+fun <T : Any> doSerializerTest(@Language("XML") expectedText: String, bean: T): T {
+  // test deserializer
+  val expectedTrimmed = expectedText.trimIndent()
+  val element = assertSerializer(bean, expectedTrimmed)
+
+  // test deserializer
+  val o = (element ?: Element("state")).deserialize(bean.javaClass)
+  assertSerializer(o, expectedTrimmed, "Deserialization failure")
+  return o
+}
+
+private fun assertSerializer(bean: Any, expected: String, description: String = "Serialization failure"): Element? {
+  val element = bean.serialize()
+  Assertions.assertThat(element?.let { JDOMUtil.writeElement(element).trim() }).`as`(description).isEqualTo(expected)
+  return element
 }
