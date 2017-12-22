@@ -52,7 +52,7 @@ public class OwnerOptional {
 
     if (manager.isPopupWindow(owner)) {
 
-      manager.closeAllPopups();
+      //manager.closeAllPopups();
 
       if (!owner.isFocused()) {
         owner = owner.getOwner();
