@@ -136,9 +136,11 @@ public class IdeEventQueue extends EventQueue {
         FOCUS_AWARE_RUNNABLES_LOG.info("We have already have a runnable for the event: " + e);
         myRunnablesWaitingFocusChange.get(e).add(runnable);
       }
-      ArrayList<Runnable> runnables = new ArrayList<>();
-      runnables.add(runnable);
-      myRunnablesWaitingFocusChange.put(e, runnables);
+      else {
+        ArrayList<Runnable> runnables = new ArrayList<>();
+        runnables.add(runnable);
+        myRunnablesWaitingFocusChange.put(e, runnables);
+      }
     }, runnable);
   }
 
