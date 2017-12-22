@@ -49,7 +49,12 @@ public class ClosureParamsEnhancer extends AbstractClosureParameterEnhancer {
     GrCall call = findCall(closure);
     if (call == null) return Collections.emptyList();
 
-    List<PsiType[]> expectedSignatures = inferExpectedSignatures(call.advancedResolve(), call, closure);
+    List<PsiType[]> expectedSignatures = ContainerUtil.newArrayList();
+
+    GroovyResolveResult[] variants = call.getCallVariants(closure);
+    for (GroovyResolveResult variant : variants) {
+      expectedSignatures.addAll(inferExpectedSignatures(variant, call, closure));
+    }
 
     final GrParameter[] parameters = closure.getAllParameters();
     return ContainerUtil.findAll(expectedSignatures, types -> types.length == parameters.length);
