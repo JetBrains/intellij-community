@@ -17,16 +17,17 @@ package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.ui.DvcsBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.ConfigurableUi;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.EnumComboBoxModel;
@@ -38,7 +39,6 @@ import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +57,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
 
   @NotNull private final Project myProject;
-  private String myDetectedGitPath;
+  @NotNull private final GitExecutableManager myExecutableManager;
   private String myApplicationGitPath;
+  private volatile boolean versionCheckRequested = false;
 
   private JButton myTestButton; // Test git executable
   private JComponent myRootPanel;
@@ -74,8 +75,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JBLabel myProtectedBranchesLabel;
   private JComboBox myUpdateMethodComboBox;
 
-  public GitVcsPanel(@NotNull Project project) {
+  public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
+    myExecutableManager = executableManager;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
@@ -97,35 +99,33 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private void testExecutable() {
-    GitVersion version;
-    String executable = ObjectUtils.notNull(getCurrentExecutablePath(), myDetectedGitPath);
-    try {
-      version = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<GitVersion, Exception>() {
-        @Override
-        public GitVersion compute() throws Exception {
-          return GitVersion.identifyVersion(executable);
-        }
-      }, "Testing Git Executable...", true, myProject);
-    }
-    catch (ProcessCanceledException pce) {
-      return;
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(myRootPanel, e.getMessage(), GitBundle.getString("find.git.error.title"));
-      return;
-    }
+    String pathToGit = ObjectUtils.notNull(getCurrentExecutablePath(), myExecutableManager.getDetectedExecutable());
+    new Task.Modal(myProject, GitBundle.getString("git.executable.version.progress.title"), true) {
+      private GitVersion myVersion;
 
-    if (version.isSupported()) {
-      Messages.showInfoMessage(myRootPanel,
-                               String.format("<html>%s<br>Git version is %s</html>", GitBundle.getString("find.git.success.title"),
-                                             version.getPresentation()),
-                               GitBundle.getString("find.git.success.title"));
-    }
-    else {
-      Messages.showWarningDialog(myRootPanel, GitBundle
-                                   .message("find.git.unsupported.message", version.getPresentation(), GitVersion.MIN.getPresentation()),
-                                 GitBundle.getString("find.git.success.title"));
-    }
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        myVersion = myExecutableManager.identifyVersion(pathToGit);
+      }
+
+      @Override
+      public void onThrowable(@NotNull Throwable error) {
+        GitExecutableProblemsNotifier.showExecutionErrorDialog(error, pathToGit, myProject);
+      }
+
+      @Override
+      public void onSuccess() {
+        if (myVersion.isSupported()) {
+          Messages
+            .showInfoMessage(myRootPanel,
+                             GitBundle.message("git.executable.version.is", myVersion.getPresentation()),
+                             GitBundle.getString("git.executable.version.success.title"));
+        }
+        else {
+          GitExecutableProblemsNotifier.showUnsupportedVersionDialog(myVersion, myProject);
+        }
+      }
+    }.queue();
   }
 
   private void handleProjectOverrideStateChanged() {
@@ -169,8 +169,6 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myApplicationGitPath = applicationSettings.getSavedPathToGit();
     String projectSettingsPathToGit = projectSettings.getPathToGit();
     myGitField.setText(ObjectUtils.coalesce(projectSettingsPathToGit, myApplicationGitPath));
-    myDetectedGitPath = GitExecutableManager.getInstance().getDetectedExecutable();
-    ((JBTextField)myGitField.getTextField()).getEmptyText().setText("Auto-detected: " + myDetectedGitPath);
     myProjectGitPathCheckBox.setSelected(projectSettingsPathToGit != null);
     mySSHExecutableComboBox.setSelectedItem(projectSettings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
@@ -234,10 +232,25 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
 
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());
+    validateExecutableOnceAfterClose();
+  }
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> GitVcs.getInstance(myProject).checkVersion(),
-                                                                      "Testing Git Executable...", true, null,
-                                                                      myRootPanel);
+  /**
+   * Special method to check executable after it has been changed through settings
+   */
+  public void validateExecutableOnceAfterClose() {
+    if (!versionCheckRequested) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        new Task.Backgroundable(myProject, GitBundle.getString("git.executable.version.progress.title"), true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            myExecutableManager.testGitExecutableVersionValid(myProject);
+          }
+        }.queue();
+        versionCheckRequested = false;
+      }, ModalityState.NON_MODAL);
+      versionCheckRequested = true;
+    }
   }
 
   @NotNull
@@ -246,7 +259,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   }
 
   private void createUIComponents() {
-    myGitField = new TextFieldWithBrowseButton(new JBTextField());
+    JBTextField textField = new JBTextField();
+    textField.getEmptyText().setText("Auto-detected: " + myExecutableManager.getDetectedExecutable());
+    myGitField = new TextFieldWithBrowseButton(textField);
     myProtectedBranchesField = new ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER);
     myUpdateMethodComboBox = new ComboBox(new EnumComboBoxModel<>(UpdateMethod.class));
     myUpdateMethodComboBox.setRenderer(new ListCellRendererWrapper<UpdateMethod>() {

@@ -23,19 +23,22 @@ import org.jetbrains.annotations.NotNull;
 public class GitVcsConfigurable extends ConfigurableBase<GitVcsPanel, GitVcsConfigurable.GitVcsSettingsHolder> {
   private final Project myProject;
   private final GitVcsSettingsHolder mySettingsHolder;
+  @NotNull private final GitExecutableManager myExecutableManager;
 
   public GitVcsConfigurable(@NotNull GitVcsApplicationSettings applicationSettings,
                             @NotNull Project project,
                             @NotNull GitVcsSettings projectSettings,
-                            @NotNull GitSharedSettings sharedSettings) {
+                            @NotNull GitSharedSettings sharedSettings,
+                            @NotNull GitExecutableManager executableManager) {
     super("vcs." + GitVcs.NAME, GitVcs.NAME, "project.propVCSSupport.VCSs.Git");
     myProject = project;
+    myExecutableManager = executableManager;
     mySettingsHolder = new GitVcsSettingsHolder(applicationSettings, projectSettings, sharedSettings);
   }
 
   @Override
   protected GitVcsPanel createUi() {
-    return new GitVcsPanel(myProject);
+    return new GitVcsPanel(myProject, myExecutableManager);
   }
 
   @NotNull
