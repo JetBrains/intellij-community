@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.components
 
+import com.intellij.configurationStore.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList

@@ -1,8 +1,11 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-package com.intellij.openapi.components
+package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PrimitiveStoredPropertyBase
+import com.intellij.openapi.components.StoredProperty
 import kotlin.reflect.KProperty
 
 internal class NormalizedStringStoredProperty(override val defaultValue: String?) : PrimitiveStoredPropertyBase<String?>() {
@@ -22,7 +25,7 @@ internal class NormalizedStringStoredProperty(override val defaultValue: String?
 
   override fun hashCode() = value?.hashCode() ?: 0
 
-  override fun toString() = if (isEqualToDefault()) "" else value ?: super.toString()
+  override fun toString() ="$name = ${if (isEqualToDefault()) "" else value ?: super.toString()}"
 
   override fun setValue(other: StoredProperty): Boolean {
     val newValue = (other as NormalizedStringStoredProperty).value

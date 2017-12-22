@@ -1,8 +1,11 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-package com.intellij.openapi.components
+package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.PrimitiveStoredPropertyBase
+import com.intellij.openapi.components.StoredProperty
 import kotlin.reflect.KProperty
 
 internal class IntStoredProperty(override val defaultValue: Int) : PrimitiveStoredPropertyBase<Int>() {

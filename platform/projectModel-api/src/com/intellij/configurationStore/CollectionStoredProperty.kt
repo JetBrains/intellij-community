@@ -1,8 +1,11 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-package com.intellij.openapi.components
+package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.StoredProperty
+import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.util.SmartList
 import kotlin.reflect.KProperty
 
@@ -34,7 +37,7 @@ internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protec
 
   override fun hashCode() = value.hashCode()
 
-  override fun toString() = if (isEqualToDefault()) "" else value.joinToString(" ")
+  override fun toString() = "$name = ${if (isEqualToDefault()) "" else value.joinToString(" ")}"
 
   override fun setValue(other: StoredProperty): Boolean {
     @Suppress("UNCHECKED_CAST")

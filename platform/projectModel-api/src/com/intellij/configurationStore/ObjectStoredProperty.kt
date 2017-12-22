@@ -1,8 +1,11 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-package com.intellij.openapi.components
+package com.intellij.configurationStore
 
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.StoredProperty
+import com.intellij.openapi.components.StoredPropertyBase
 import com.intellij.openapi.util.ModificationTracker
 import kotlin.reflect.KProperty
 
@@ -32,7 +35,7 @@ internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T)
 
   override fun hashCode() = value?.hashCode() ?: 0
 
-  override fun toString() = if (isEqualToDefault()) "" else value?.toString() ?: super.toString()
+  override fun toString() = "$name = ${if (isEqualToDefault()) "" else value?.toString() ?: super.toString()}"
 }
 
 internal open class ObjectStoredProperty<T>(private val defaultValue: T) : ObjectStateStoredPropertyBase<T>(defaultValue) {

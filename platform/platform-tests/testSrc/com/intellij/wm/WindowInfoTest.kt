@@ -47,4 +47,12 @@ internal class WindowInfoTest {
     a.floatingBounds = Rectangle(1, 42, 23, 4)
     doSerializerTest("""<window_info x="1" y="42" width="23" height="4" id="a" />""", a)
   }
+
+  @Test
+  fun `weight`() {
+    val a = WindowInfoImpl()
+    a.id = "a"
+    a.weight = 0.3f
+    doSerializerTest("""<window_info id="a" />""", a)
+  }
 }
