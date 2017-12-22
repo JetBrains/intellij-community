@@ -82,4 +82,11 @@ public interface ViewSettings extends NodeOptions {
    * @return true if the modules are shown, false otherwise.
    */
   boolean isShowModules();
+
+  /**
+   * @return {@code true} if modules should be shown in a flat list without grouping accordingly to qualified names
+   */
+  default boolean isFlattenModules() {
+    return false;
+  }
 }

@@ -96,6 +96,10 @@ public abstract class ProjectView {
 
   public abstract void setShowModules(boolean showModules, @NotNull String paneId);
 
+  public abstract boolean isFlattenModules(String paneId);
+
+  public abstract void setFlattenModules(boolean flattenModules, @NotNull String paneId);
+
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);
@@ -118,7 +122,7 @@ public abstract class ProjectView {
 
   public abstract boolean isManualOrder(String paneId);
   public abstract void setManualOrder(@NotNull String paneId, final boolean enabled);
-  
+
   public abstract boolean isSortByType(String paneId);
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 
