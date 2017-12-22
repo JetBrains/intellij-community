@@ -53,6 +53,8 @@ internal class WindowInfoTest {
     val a = WindowInfoImpl()
     a.id = "a"
     a.weight = 0.3f
+    doSerializerTest("""<window_info id="a" weight="0.3" />""", a)
+    a.weight = WindowInfoImpl.DEFAULT_WEIGHT
     doSerializerTest("""<window_info id="a" />""", a)
   }
 }
