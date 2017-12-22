@@ -28,11 +28,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
-import com.intellij.spellchecker.inspections.TextSplitter;
-import com.intellij.spellchecker.quickfixes.AcceptWordAsCorrect;
-import com.intellij.spellchecker.quickfixes.ChangeTo;
-import com.intellij.spellchecker.quickfixes.RenameTo;
-import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
+import com.intellij.spellchecker.quickfixes.*;
 import org.jetbrains.annotations.NotNull;
 
 public class SpellcheckingStrategy {
@@ -97,6 +93,7 @@ public class SpellcheckingStrategy {
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
     return new SpellCheckerQuickFix[]{
       useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo),
+      new SaveTo(wordWithTypo),
       new AcceptWordAsCorrect(wordWithTypo)
     };
   }

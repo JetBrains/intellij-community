@@ -15,8 +15,6 @@ import com.intellij.openapi.util.Disposer;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.spellchecker.dictionary.*;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.engine.SpellCheckerEngine;
@@ -206,13 +204,15 @@ public class SpellCheckerManager implements Disposable {
   }
 
   public void acceptWordAsCorrect(@NotNull String word, Project project) {
+    acceptWordAsCorrect(word, project, PROJECT); // TODO: or default
+  }
+
+  public void acceptWordAsCorrect(@NotNull String word, @NotNull Project project, @NotNull String dictionaryName) {
     final String transformed = spellChecker.getTransformation().transform(word);
+    final EditableDictionary dictionary = PROJECT.equals(dictionaryName) ? myProjectDictionary: myAppDictionary;
     if (transformed != null) {
-      myProjectDictionary.addToDictionary(transformed);
-      myAppDictionary.addToDictionary(transformed);
-      final PsiModificationTrackerImpl modificationTracker =
-        (PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker();
-      modificationTracker.incCounter();
+      dictionary.addToDictionary(word);
+      restartInspections();
     }
   }
 
