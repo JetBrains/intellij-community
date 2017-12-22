@@ -281,7 +281,9 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
             if (c instanceof NodeRenderer) {
               ((NodeRenderer)c).setToolTipText(element == null ? null : element.getClass().getName());
             }
-            if (element instanceof PsiElement && FileContextUtil.getFileContext(((PsiElement)element).getContainingFile()) != null ||
+            if (element instanceof PsiElement
+                && ((PsiElement)element).isValid()
+                && FileContextUtil.getFileContext(((PsiElement)element).getContainingFile()) != null ||
                 element instanceof ViewerTreeStructure.Inject) {
               final TextAttributes attr =
                 EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
@@ -797,7 +799,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
         final PsiElement element = elementObject instanceof PsiElement
                                    ? (PsiElement)elementObject
                                    : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
-        if (element != null) {
+        if (element != null && element.isValid()) {
           TextRange rangeInHostFile = InjectedLanguageManager.getInstance(myProject).injectedToHost(element, element.getTextRange());
           int start = rangeInHostFile.getStartOffset();
           int end = rangeInHostFile.getEndOffset();

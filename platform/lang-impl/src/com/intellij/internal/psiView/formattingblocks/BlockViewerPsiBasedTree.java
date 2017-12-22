@@ -91,7 +91,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void selectNodeFromPsi(@Nullable PsiElement element) {
-    if (myBlockTreeBuilder != null && element != null) {
+    if (myBlockTreeBuilder != null && element != null && element.isValid()) {
       BlockTreeNode currentBlockNode = findBlockNode(element);
       if (currentBlockNode != null) {
         selectBlockNode(currentBlockNode);
