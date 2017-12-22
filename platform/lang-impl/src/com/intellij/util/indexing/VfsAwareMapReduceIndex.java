@@ -30,6 +30,7 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentHashMapValueStorage;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -224,7 +225,12 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     @NotNull
     @Override
     public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-      return createIdToDataKeysIndex(myIndexExtension);
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+      try {
+        return createIdToDataKeysIndex(myIndexExtension);
+      } finally {
+        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+      }
     }
 
     @NotNull
