@@ -93,11 +93,7 @@ public class SpellcheckingStrategy {
   }
 
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
-    return new SpellCheckerQuickFix[]{
-      useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo),
-      new SaveTo(wordWithTypo),
-      new AcceptWordAsCorrect(wordWithTypo)
-    };
+    return new SpellCheckerQuickFix[]{useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo), new SaveTo(wordWithTypo)};
   }
 
   public static SpellCheckerQuickFix[] getDefaultBatchFixes() {
