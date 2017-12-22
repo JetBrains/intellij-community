@@ -5,6 +5,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
@@ -50,6 +51,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
 
 import java.util.concurrent.ConcurrentMap;
+
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isAnnotationReference;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -121,14 +124,17 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    return shouldProcessCachedDeclarations(place)
+           ? processCachedDeclarations(processor, state, myResolveCache.getValue())
+           : processDeclarationsNoGuess(processor, state, lastParent, place);
+  }
 
-    if (isPhysical() && !isScript() &&
-        !ApplicationManager.getApplication().isDispatchThread() &&
-        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
-      return processCachedDeclarations(processor, state, myResolveCache.getValue());
-    }
-
-    return processDeclarationsNoGuess(processor, state, lastParent, place);
+  private boolean shouldProcessCachedDeclarations(@NotNull PsiElement place) {
+    if (!isPhysical()) return false;
+    if (isScript()) return false;
+    if (ApplicationManager.getApplication().isDispatchThread()) return false;
+    if (Registry.is("groovy.skip.file.cache.for.annotations") && isAnnotationReference(place)) return false;
+    return getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue();
   }
 
   private static boolean processCachedDeclarations(@NotNull PsiScopeProcessor processor,

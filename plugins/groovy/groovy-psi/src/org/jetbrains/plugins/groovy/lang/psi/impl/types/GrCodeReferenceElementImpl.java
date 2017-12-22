@@ -19,7 +19,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
@@ -39,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUp;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt.isAnnotationReference;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseProperties;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.collapseReflectedMethods;
 
@@ -318,7 +318,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           else {
             // if ref is an annotation name reference we should not process declarations of annotated elements
             // because inner annotations are not permitted and it can cause infinite recursion
-            PsiElement placeToStartWalking = isAnnotationRef(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
+            PsiElement placeToStartWalking = isAnnotationReference(ref) ? getContainingFileSkippingStubFiles(ref) : ref;
             if (placeToStartWalking != null) {
               treeWalkUp(placeToStartWalking, processor, ResolveState.initial(), ref);
               GroovyResolveResult[] candidates = processor.getCandidates();
@@ -406,11 +406,6 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
         file = context.getContainingFile();
       }
       return file;
-    }
-
-    private static boolean isAnnotationRef(GrCodeReferenceElement ref) {
-      final PsiElement parent = ref.getParent();
-      return parent instanceof GrAnnotation || parent instanceof GrCodeReferenceElement && isAnnotationRef((GrCodeReferenceElement)parent);
     }
 
     private static void processAccessors(GrCodeReferenceElementImpl ref,
