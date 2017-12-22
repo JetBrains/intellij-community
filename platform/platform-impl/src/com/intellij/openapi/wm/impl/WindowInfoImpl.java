@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.*;
 import org.jdom.Element;
@@ -258,7 +259,15 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
     catch (IllegalArgumentException ignored) {
     }
     try {
-      setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue(TYPE_ATTR)));
+      ToolWindowType type;
+      try {
+        String value = element.getAttributeValue(TYPE_ATTR);
+        type = StringUtil.isEmptyOrSpaces(value) ? ToolWindowType.DOCKED : ToolWindowType.valueOf(value);
+      }
+      catch (Exception e) {
+        type = ToolWindowType.DOCKED;
+      }
+      setTypeAndCheck(type);
     }
     catch (IllegalArgumentException ignored) {
     }
