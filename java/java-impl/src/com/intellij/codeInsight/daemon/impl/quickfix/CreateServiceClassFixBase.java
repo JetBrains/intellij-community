@@ -5,8 +5,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -14,12 +18,15 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.StringTokenizer;
+import java.util.*;
+
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox;
 
 /**
  * @author Pavel.Dolgov
  */
 public abstract class CreateServiceClassFixBase implements IntentionAction {
+  private static final Logger LOG = Logger.getInstance(CreateServiceClassFixBase.class);
 
   @Override
   public boolean startInWriteAction() {
@@ -68,7 +75,10 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
   }
 
   @Nullable
-  protected static PsiClass createClassInRootImpl(@NotNull String classFQN, @NotNull PsiDirectory rootDir, @Nullable String superClassName) {
+  protected static PsiClass createClassInRoot(@NotNull CreateClassKind classKind,
+                                              @NotNull String classFQN,
+                                              @NotNull PsiDirectory rootDir,
+                                              @Nullable String superClassName) {
     PsiDirectory directory = rootDir;
     String lastName;
     StringTokenizer st = new StringTokenizer(classFQN, ".");
@@ -82,18 +92,50 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
           directory = directory.createSubdirectory(lastName);
         }
         catch (IncorrectOperationException e) {
-          CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, true);
+          scheduleFileOrPackageCreationFailedMessageBox(e, lastName, directory, true);
           return null;
         }
       }
     }
 
-    PsiClass psiClass = JavaDirectoryService.getInstance().createClass(directory, lastName);
-    PsiUtil.setModifierProperty(psiClass, PsiModifier.PUBLIC, true);
-    if (superClassName != null) {
-      CreateFromUsageUtils.setupSuperClassReference(psiClass, superClassName);
+    PsiClass psiClass = createClass(classKind, lastName, directory);
+    if (psiClass != null) {
+      PsiUtil.setModifierProperty(psiClass, PsiModifier.PUBLIC, true);
+      if (superClassName != null) {
+        CreateFromUsageUtils.setupSuperClassReference(psiClass, superClassName);
+      }
     }
     return psiClass;
+  }
+
+  @Nullable
+  private static PsiClass createClass(@NotNull CreateClassKind classKind, String name, PsiDirectory directory) {
+    try {
+      switch (classKind) {
+        case CLASS:
+          return JavaDirectoryService.getInstance().createClass(directory, name);
+        case INTERFACE:
+          return JavaDirectoryService.getInstance().createInterface(directory, name);
+        default:
+          LOG.error("Unsupported kind of service class: " + classKind);
+      }
+    }
+    catch (final IncorrectOperationException e) {
+      scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
+    }
+    return null;
+  }
+
+  protected static PsiDirectory[] getModuleRootDirs(Module module) {
+    List<VirtualFile> roots = new ArrayList<>();
+    JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(module, roots);
+
+    PsiManager psiManager = PsiManager.getInstance(module.getProject());
+    return roots.stream()
+      .map(psiManager::findDirectory)
+      .filter(Objects::nonNull)
+      .sorted(Comparator.comparing(psiDir -> psiDir.getVirtualFile().getPresentableUrl()))
+      .toArray(PsiDirectory[]::new);
   }
 
   protected static void positionCursor(@Nullable PsiClass psiClass) {

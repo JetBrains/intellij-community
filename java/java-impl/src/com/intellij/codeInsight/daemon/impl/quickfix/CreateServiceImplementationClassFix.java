@@ -11,21 +11,23 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.JavaProjectRootsUtil;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.Optional;
 
 /**
  * @author Pavel.Dolgov
@@ -48,29 +50,23 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       if (providesStatement != null && providesStatement.getImplementationList() == parent) {
         myImplementationClassName = referenceElement.getQualifiedName();
         if (myImplementationClassName != null) {
-          mySuperClassName = getSuperClassName(providesStatement);
-          if (mySuperClassName != null) {
-            Module module = ModuleUtilCore.findModuleForFile(referenceElement.getContainingFile());
-            myModuleName = module != null ? module.getName() : null;
+          PsiJavaCodeReferenceElement interfaceReference = providesStatement.getInterfaceReference();
+          if (interfaceReference != null) {
+            PsiClass superClass = ObjectUtils.tryCast(interfaceReference.resolve(), PsiClass.class);
+            if (superClass != null) {
+              mySuperClassName = superClass.getQualifiedName();
+              if (mySuperClassName != null) {
+                myModuleName = Optional.of(referenceElement)
+                  .map(PsiElement::getContainingFile)
+                  .map(ModuleUtilCore::findModuleForFile)
+                  .map(Module::getName)
+                  .orElse(null);
+              }
+            }
           }
         }
       }
     }
-  }
-
-  @Nullable
-  private static String getSuperClassName(@NotNull PsiProvidesStatement providesStatement) {
-    PsiJavaCodeReferenceElement interfaceReference = providesStatement.getInterfaceReference();
-    if (interfaceReference != null) {
-      if (interfaceReference.isQualified()) {
-        return interfaceReference.getQualifiedName();
-      }
-      PsiClass superClass = ObjectUtils.tryCast(interfaceReference.resolve(), PsiClass.class);
-      if (superClass != null) {
-        return superClass.getQualifiedName();
-      }
-    }
-    return null;
   }
 
   @Nls
@@ -112,15 +108,30 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
         }
       }
 
-      List<VirtualFile> roots = new ArrayList<>();
-      JavaProjectRootsUtil.collectSuitableDestinationSourceRoots(module, roots);
-      PsiManager psiManager = file.getManager();
-      roots.stream() // todo UI for choosing source root similar to AddModuleDependencyFix
-        .map(psiManager::findDirectory)
-        .filter(Objects::nonNull)
-        .findAny()
-        .ifPresent(this::createClassInRoot);
+      PsiDirectory[] psiRootDirs = getModuleRootDirs(module);
+
+      CreateServiceImplementationDialog dialog = new CreateServiceImplementationDialog(project, psiRootDirs, mySuperClassName);
+      if (dialog.showAndGet()) {
+        PsiDirectory psiRootDir = dialog.getRootDir();
+        if (psiRootDir != null) {
+          boolean isSubclass = dialog.isSubclass();
+          PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(psiRootDir, isSubclass));
+          positionCursor(psiClass);
+        }
+      }
     }
+  }
+
+  private PsiClass createClassInRoot(@NotNull PsiDirectory psiRootDir, boolean isSubclass) {
+    Project project = psiRootDir.getProject();
+    PsiClass psiImplClass = createClassInRoot(CreateClassKind.CLASS, myImplementationClassName,
+                                              psiRootDir, isSubclass ? mySuperClassName : null);
+    if (psiImplClass != null && !isSubclass) {
+      String text = "public static " + mySuperClassName + " provider() { return null;}";
+      PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, psiImplClass.getLBrace());
+      psiImplClass.addAfter(method, psiImplClass.getLBrace());
+    }
+    return psiImplClass;
   }
 
   @Nullable
@@ -136,8 +147,68 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
     positionCursor(psiClass);
   }
 
-  private void createClassInRoot(PsiDirectory rootDir) {
-    PsiClass psiClass = WriteAction.compute(() -> createClassInRootImpl(myImplementationClassName, rootDir, mySuperClassName));
-    positionCursor(psiClass);
+  private static class CreateServiceImplementationDialog extends DialogWrapper {
+    private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
+    private final JRadioButton mySubclassButton = new JBRadioButton();
+    private final JRadioButton myProviderButton = new JBRadioButton();
+
+    protected CreateServiceImplementationDialog(@Nullable Project project,
+                                                @NotNull PsiDirectory[] psiRootDirs,
+                                                @NotNull String superClassName) {
+      super(project);
+      setTitle("Create Service Implementation");
+
+      mySubclassButton.setText("Subclass of '" + superClassName + "'");
+      mySubclassButton.setSelected(true);
+      myProviderButton.setText("With 'provider()' method");
+
+      ButtonGroup group = new ButtonGroup();
+      group.add(mySubclassButton);
+      group.add(myProviderButton);
+
+      myRootDirCombo.setRenderer(new ListCellRendererWrapper<PsiDirectory>() {
+        @Override
+        public void customize(JList list, PsiDirectory psiDir, int index, boolean selected, boolean hasFocus) {
+          setText(psiDir != null ? psiDir.getVirtualFile().getPresentableUrl() : "");
+        }
+      });
+      myRootDirCombo.setModel(new DefaultComboBoxModel<>(psiRootDirs));
+
+      init();
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      return new Action[]{getOKAction(), getCancelAction()};
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      JPanel radioButtons = JBPanelFactory.grid()
+        .add(JBPanelFactory.panel(mySubclassButton))
+        .add(JBPanelFactory.panel(myProviderButton))
+        .createPanel();
+
+      return JBPanelFactory.grid()
+        .add(JBPanelFactory.panel(radioButtons).withLabel("Implementation:"))
+        .add(JBPanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
+        .createPanel();
+    }
+
+    @Nullable
+    public PsiDirectory getRootDir() {
+      return (PsiDirectory)myRootDirCombo.getSelectedItem();
+    }
+
+    public boolean isSubclass() {
+      return mySubclassButton.isSelected();
+    }
   }
 }

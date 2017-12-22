@@ -4,19 +4,32 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.ide.actions.TemplateKindCombo;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.PlatformIcons;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
-import java.util.Objects;
+import java.util.Comparator;
+import java.util.Map;
 
 /**
  * @author Pavel.Dolgov
@@ -82,17 +95,37 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     while (psiPackage == null && !StringUtil.isEmpty(qualifierText));
 
     if (psiPackage != null) {
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-      PsiManager psiManager = PsiManager.getInstance(project);
-      PsiDirectory[] directories = psiPackage.getDirectories();
-      Arrays.stream(directories) // todo UI for choosing source root similar to AddModuleDependencyFix
-        .map(directory -> index.getSourceRootForFile(directory.getVirtualFile()))
-        .filter(Objects::nonNull)
-        .map(psiManager::findDirectory)
-        .filter(Objects::nonNull)
-        .findAny()
-        .ifPresent(this::createClassInRoot);
+      Map<Module, PsiDirectory[]> psiRootDirs = getModuleRootDirs(psiPackage);
+      if (!psiRootDirs.isEmpty()) {
+        CreateServiceInterfaceDialog dialog = new CreateServiceInterfaceDialog(project, psiRootDirs);
+        if (dialog.showAndGet()) {
+          PsiClass psiClass =
+            WriteAction.compute(() -> {
+              PsiDirectory rootDir = dialog.getRootDir();
+              if (rootDir != null) {
+                return createClassInRoot(dialog.getClassKind(), myInterfaceName, rootDir, null);
+              }
+              return null;
+            });
+          positionCursor(psiClass);
+        }
+      }
     }
+  }
+
+  @NotNull
+  private static Map<Module, PsiDirectory[]> getModuleRootDirs(@NotNull PsiPackage psiPackage) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(psiPackage.getProject());
+    return StreamEx.of(psiPackage.getDirectories())
+      .map(PsiDirectory::getVirtualFile)
+      .map(index::getSourceRootForFile)
+      .nonNull()
+      .map(index::getModuleForFile)
+      .nonNull()
+      .distinct()
+      .mapToEntry(CreateServiceClassFixBase::getModuleRootDirs)
+      .filterValues(dirs -> !ArrayUtil.isEmpty(dirs))
+      .toMap();
   }
 
   private void createClassInOuter(@NotNull String qualifierText, @NotNull PsiClass outerClass) {
@@ -101,8 +134,78 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     positionCursor(psiClass);
   }
 
-  private void createClassInRoot(@NotNull PsiDirectory rootDir) {
-    PsiClass psiClass = WriteAction.compute(() -> createClassInRootImpl(myInterfaceName, rootDir, null));
-    positionCursor(psiClass);
+  private static class CreateServiceInterfaceDialog extends DialogWrapper {
+    private final ComboBoxWithWidePopup<Module> myModuleCombo = new ComboBoxWithWidePopup<>();
+    private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
+    private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
+
+    protected CreateServiceInterfaceDialog(@Nullable Project project, @NotNull Map<Module, PsiDirectory[]> psiRootDirs) {
+      super(project);
+      setTitle("Create Service Interface or Class");
+
+      myModuleCombo.setRenderer(new ListCellRendererWrapper<Module>() {
+        @Override
+        public void customize(JList list, Module module, int index, boolean selected, boolean hasFocus) {
+          setText(module.getName());
+        }
+      });
+
+      myRootDirCombo.setRenderer(new ListCellRendererWrapper<PsiDirectory>() {
+        @Override
+        public void customize(JList list, PsiDirectory psiDir, int index, boolean selected, boolean hasFocus) {
+          setText(psiDir != null ? psiDir.getVirtualFile().getPresentableUrl() : "");
+        }
+      });
+      myModuleCombo.addActionListener(e -> updateRootDirsCombo(psiRootDirs));
+      Module[] modules = psiRootDirs.keySet().toArray(Module.EMPTY_ARRAY);
+      Arrays.sort(modules, Comparator.comparing(Module::getName));
+      myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
+      updateRootDirsCombo(psiRootDirs);
+
+
+      myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON,
+                          CreateClassKind.CLASS.name());
+      myKindCombo.addItem(CommonRefactoringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON,
+                          CreateClassKind.INTERFACE.name());
+
+      init();
+    }
+
+    private void updateRootDirsCombo(@NotNull Map<Module, PsiDirectory[]> psiRootDirs) {
+      Module module = (Module)myModuleCombo.getSelectedItem();
+      PsiDirectory[] moduleRootDirs = psiRootDirs.getOrDefault(module, PsiDirectory.EMPTY_ARRAY);
+      myRootDirCombo.setModel(new DefaultComboBoxModel<>(moduleRootDirs));
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      return new Action[]{getOKAction(), getCancelAction()};
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createNorthPanel() {
+      return JBPanelFactory.grid()
+        .add(JBPanelFactory.panel(myModuleCombo).withLabel("Module:"))
+        .add(JBPanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
+        .add(JBPanelFactory.panel(myKindCombo).withLabel("Kind:"))
+        .createPanel();
+    }
+
+    @Nullable
+    public PsiDirectory getRootDir() {
+      return (PsiDirectory)myRootDirCombo.getSelectedItem();
+    }
+
+    @NotNull
+    public CreateClassKind getClassKind() {
+      return CreateClassKind.valueOf(myKindCombo.getSelectedName());
+    }
   }
 }
