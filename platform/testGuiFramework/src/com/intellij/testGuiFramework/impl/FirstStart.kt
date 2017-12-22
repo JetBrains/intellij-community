@@ -179,6 +179,21 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
+  protected fun acceptDataSharing() {
+    with(myRobot) {
+      LOG.info("Accepting Data Sharing")
+      val title = "Data Sharing Options"
+      try {
+        dialog(title, timeoutSeconds = 5)
+        button("OK").click()
+        LOG.info("Data sharing accepted")
+      } catch (e: WaitTimedOutError) {
+        LOG.info("Data sharing dialog hasn't been shown")
+        return
+      }
+    }
+  }
+
   protected fun customizeIde(ideName: String = ideType.name) {
     if (!needToShowCustomizeWizard()) return
     with(myRobot) {
