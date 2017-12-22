@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
@@ -20,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -41,12 +28,15 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
+
 public class SpellCheckerSettingsPane implements Disposable {
   private JPanel root;
   private JPanel linkContainer;
   private JPanel myPanelForBundledDictionaries;
   private JPanel panelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
+  private JPanel userDictionariesPanel;
   private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
   private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
@@ -59,7 +49,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     manager = SpellCheckerManager.getInstance(project);
     HyperlinkLabel link = new HyperlinkLabel(SpellCheckerBundle.message("link.to.inspection.settings"));
     link.addHyperlinkListener(e -> {
-      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+      if (e.getEventType() == ACTIVATED) {
         Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
         if (allSettings != null) {
           final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
@@ -73,10 +63,30 @@ public class SpellCheckerSettingsPane implements Disposable {
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 
+    if (!project.isDefault()) {
+      userDictionariesPanel.setVisible(true);
+      userDictionariesPanel.setLayout(new VerticalFlowLayout());
+      final HyperlinkLabel projectDictionaryLink = new HyperlinkLabel(SpellCheckerBundle.message("project.dictionary"));
+      projectDictionaryLink.addHyperlinkListener(e -> {
+        if (e.getEventType() == ACTIVATED) {
+          manager.openDictionaryInEditor(manager.getProjectDictionaryPath());
+        }
+      });
+      userDictionariesPanel.add(projectDictionaryLink);
+
+      final HyperlinkLabel appDictionaryLink = new HyperlinkLabel(SpellCheckerBundle.message("app.dictionary"));
+      appDictionaryLink.addHyperlinkListener(e -> {
+        if (e.getEventType() == ACTIVATED) {
+          manager.openDictionaryInEditor(manager.getAppDictionaryPath());
+        }
+      });
+      userDictionariesPanel.add(appDictionaryLink);
+    }
+
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
     fillBundledDictionaries();
 
-    myDictionariesPanel = new CustomDictionariesPanel(settings, project);
+    myDictionariesPanel = new CustomDictionariesPanel(settings, project, manager);
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 

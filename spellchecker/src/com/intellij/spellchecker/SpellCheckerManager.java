@@ -7,10 +7,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
@@ -22,6 +25,7 @@ import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.CachedDictionaryState;
 import com.intellij.spellchecker.state.ProjectDictionaryState;
+import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,17 +36,20 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.application.PathManager.getOptionsPath;
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.openapi.util.io.FileUtilRt.toSystemDependentName;
 import static com.intellij.openapi.vfs.VfsUtilCore.visitChildrenRecursively;
+import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 
 public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
 
   private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
   private static final int MAX_METRICS = 1;
-
+  public static final String PROJECT = "project";
+  public static final String APP = "application";
   private final Project project;
   private SpellCheckerEngine spellChecker;
   private ProjectDictionary myProjectDictionary;
@@ -50,6 +57,10 @@ public class SpellCheckerManager implements Disposable {
   private final SuggestionProvider suggestionProvider = new BaseSuggestionProvider(this);
   private final SpellCheckerSettings settings;
   private final VirtualFileListener myCustomDictFileListener;
+  private final String myProjectDictinaryPath;
+  private final String myAppDictionaryPath;
+  public static final String PROJECT_DICTIONARY_PATH = "dictionaries" + File.separator + System.getProperty("user.name") + ".xml";
+  public static final String CACHED_DICTIONARY_FILE = "cachedDictionary.xml";
 
   public static SpellCheckerManager getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerManager.class);
@@ -61,7 +72,9 @@ public class SpellCheckerManager implements Disposable {
     fullConfigurationReload();
 
     Disposer.register(project, this);
-
+    final VirtualFile projectStoreDir = project.getBaseDir() != null ? getProjectStoreDirectory(project.getBaseDir()) : null;
+    myProjectDictinaryPath = projectStoreDir != null ? projectStoreDir.getPath() + File.separator + PROJECT_DICTIONARY_PATH : "";
+    myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
     myCustomDictFileListener = new CustomDictFileListener(settings);
     LocalFileSystem.getInstance().addVirtualFileListener(myCustomDictFileListener);
   }
@@ -268,6 +281,32 @@ public class SpellCheckerManager implements Disposable {
   @Override
   public void dispose() {
     LocalFileSystem.getInstance().removeVirtualFileListener(myCustomDictFileListener);
+  }
+
+  @NotNull
+  public String getProjectDictionaryPath() {
+    return myProjectDictinaryPath;
+  }
+
+  @NotNull
+  public String getAppDictionaryPath() {
+    return myAppDictionaryPath;
+  }
+
+  public void openDictionaryInEditor(@NotNull String dictPath) {
+    final VirtualFile file = StringUtil.isEmpty(dictPath) ? null : LocalFileSystem
+      .getInstance().refreshAndFindFileByPath(dictPath);
+    if (file == null) {
+      final String title = SpellCheckerBundle.message("dictionary.not.found.title");
+      final String message = SpellCheckerBundle.message("dictionary.not.found", dictPath);
+      Messages.showMessageDialog(project, message, title, Messages.getWarningIcon());
+      return;
+    }
+
+    final FileEditorManager fileManager = FileEditorManager.getInstance(project);
+    if (fileManager != null) {
+      fileManager.openFile(file, true);
+    }
   }
 
   private class CustomDictFileListener implements VirtualFileListener {

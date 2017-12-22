@@ -4,12 +4,9 @@ package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -37,7 +34,7 @@ public class CustomDictionariesPanel extends JPanel {
   @NotNull private final Project myProject;
   private final List<String> removedDictionaries = new ArrayList<>();
 
-  public CustomDictionariesPanel(@NotNull SpellCheckerSettings settings, @NotNull Project project) {
+  public CustomDictionariesPanel(@NotNull SpellCheckerSettings settings, @NotNull Project project, @NotNull SpellCheckerManager manager) {
     mySettings = settings;
     myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
                                                                     new ArrayList<>(settings.getDisabledDictionariesPaths()));
@@ -67,20 +64,7 @@ public class CustomDictionariesPanel extends JPanel {
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton anActionButton) {
-          final String filePath = myCustomDictionariesTableView.getSelectedObject();
-          final VirtualFile file = StringUtil.isEmpty(filePath) ? null : LocalFileSystem
-            .getInstance().refreshAndFindFileByPath(filePath);
-          if (file == null) {
-            final String title = SpellCheckerBundle.message("custom.dictionary.not.found.title");
-            final String message = SpellCheckerBundle.message("custom.dictionary.not.found", filePath);
-            Messages.showMessageDialog(myProject, message, title, Messages.getErrorIcon());
-            return;
-          }
-
-          final FileEditorManager fileManager = FileEditorManager.getInstance(myProject);
-          if (fileManager != null) {
-            fileManager.openFile(file, true);
-          }
+          manager.openDictionaryInEditor(myCustomDictionariesTableView.getSelectedObject());
         }
       })
 
