@@ -6,7 +6,7 @@ Method calls inspected are:
   <li>Calls to simple getters (which do nothing except return a field)</li>
   <li>Calls to methods specified in the settings of this inspection</li>
   <li>Calls to Methods annotated with <b>org.jetbrains.annotations.Contract(pure=true)</b></li>
-  <li>Calls to Methods annotated with <b>javax.annotation.CheckReturnValue</b></li>
+  <li>Calls to Methods annotated with .*.<b>CheckReturnValue</b></li>
   <li>Calls to Methods located in a class annotated with <b>javax.annotation.CheckReturnValue</b></li>
   <li>Calls to Methods located in a package annotated with <b>javax.annotation.CheckReturnValue</b></li>
   <li>Optionally all calls to non-library methods</li>
