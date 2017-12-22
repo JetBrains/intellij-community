@@ -406,6 +406,8 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("Maven Embedder"),
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
-    jetbrainsLibrary("KotlinJavaRuntime")
+    jetbrainsLibrary("KotlinJavaRuntime"),
+    jetbrainsLibrary("kotlinx-coroutines-core"),
+    jetbrainsLibrary("kotlinx-coroutines-jdk8")
   ] as List<LibraryLicense>
 }
