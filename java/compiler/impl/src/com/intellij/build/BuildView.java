@@ -138,7 +138,7 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
                              runContentDescriptor.getExecutionConsole() != this ?
                              runContentDescriptor.getExecutionConsole() : new BuildTextConsoleView(myProject);
       addView(executionConsoleView, CONSOLE_VIEW_NAME, myViewManager.isConsoleEnabledByDefault());
-      if(runContentDescriptor != null) {
+      if (runContentDescriptor != null && Disposer.findRegisteredObject(runContentDescriptor, this) == null) {
         Disposer.register(this, runContentDescriptor);
       }
     }

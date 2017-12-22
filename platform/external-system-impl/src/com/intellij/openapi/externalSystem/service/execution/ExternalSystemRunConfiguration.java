@@ -23,6 +23,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -87,7 +89,8 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getCon
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
-public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile,
+                                                                                          SMRunnerConsolePropertiesProvider {
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
 
@@ -196,6 +199,16 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       }
     }
     return scope;
+  }
+
+  @Override
+  public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(mySettings.getExternalSystemId());
+    if (manager != null) {
+      Object testConsoleProperties = manager.createTestConsoleProperties(getProject(), executor, this);
+      return testConsoleProperties instanceof SMTRunnerConsoleProperties ? (SMTRunnerConsoleProperties)testConsoleProperties : null;
+    }
+    return null;
   }
 
   public static class MyRunnableState extends UserDataHolderBase implements RunProfileState {
