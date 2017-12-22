@@ -1229,7 +1229,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-1182
-  public void testCollectionType() {
+  public void testListTypeByModifications() {
     doTest("List[int]",
            "def f():\n" +
            "    expr = []\n" +
@@ -1263,6 +1263,331 @@ public class PyTypeTest extends PyTestCase {
     doTest("List[int]",
            "expr = []\n" +
            "expr.index(42)");
+
+    doTest("List[int]",
+           "expr = [1, 2, 3]\n");
+
+    doTest("List[Union[int, Any]]",
+           "expr = [1, 2, 3]\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2, 3]\n" +
+           "expr[0] = 'a'\n" +
+           "expr[1] = 'b'\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2, 3]\n" +
+           "expr[0] = 'a'\n" +
+           "expr[1] = 'b'\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = [1, 2]\n" +
+           "t, expr[1] = 23, 'b'\n");
+
+    doTest("List[Union[int, str]]",
+           "def f():\n" +
+           "    expr, b = [1, 2, 3], 'abc'\n" +
+           "    expr.append('a')\n"
+    );
+
+    doTest("List[int]",
+           "def f():" +
+           "    expr = [1, 2, 3]\n" +
+           "    def inner():\n" +
+           "        expr.append('a')\n"
+    );
+  }
+
+  // PY-1182
+  public void testListTypeByModificationsConstructor() {
+    doTest("List[str]",
+           "expr = list()\n" +
+           "expr.append('a')\n"
+    );
+
+    doTest("List[Union[str, int]]",
+           "expr = list()\n" +
+           "expr.append('a')\n" +
+           "expr.append(1)\n"
+    );
+
+    doTest("List[Union[int, str]]",
+           "a = list([1, 2, 3])\n" +
+           "a.append('a')\n" +
+           "expr = a\n"
+    );
+
+    doTest("List[Union[str, Any]]",
+           "expr = list()\n" +
+           "expr.append('a')\n" +
+           "expr.append(var)\n"
+    );
+
+    doTest("List[Union[int, str]]",
+           "expr = list([1, 2])\n" +
+           "t, expr[1] = 23, 'b'\n");
+
+    doTest("List[Union[str, Any]]",
+           "expr = list(var)\n" +
+           "expr[0] = 'abc'\n");
+
+    doTest("List[Union[int, str]]",
+           "b, expr = 1, list([1, 2, 3])\n" +
+           "expr.append('a')\n"
+    );
+
+    doTest("List[int]",
+           "def f():" +
+           "    expr = list([1, 2, 3])\n" +
+           "    def inner():\n" +
+           "        expr.append('a')\n"
+    );
+  }
+
+  // PY-1182
+  public void testDictTypeByModifications() {
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['b'] = \"s\""
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['b'] = \"s\""
+    );
+
+    doTest("Dict[str, Union[int, List[int]]]",
+           "def f():\n" +
+           "    expr = {}\n" +
+           "    expr['a'] = 0\n" +
+           "    expr['c'] = [1, 2]"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "def f():\n" +
+           "    expr = {'b': D()}\n" +
+           "    expr['a'] = 2\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['b'], t = \"s\", 12"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr['a'] = var\n"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():\n" +
+           "    expr = {'a': 3, 'b': 4}\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr.update({'a': 'str'})\n"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "def f():\n" +
+           "    expr = {'a': 3}\n" +
+           "    expr.update({'b': var})\n"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():\n" +
+           "    expr = {}\n" +
+           "    expr.update(a=1, b=2)"
+    );
+
+    doTest("Dict[Union[int, str], Union[int, str]]",
+           "def f():\n" +
+           "    expr = {1: '3'}\n" +
+           "    expr.update(a=1, b=2)"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    expr = {}\n" +
+           "    expr['a'] = 23\n" +
+           "    expr.update(a='m', b='n')"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "def f():\n" +
+           "    b, expr = 23, {'a': 3}\n" +
+           "    expr['b'] = 'l'"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():" +
+           "    expr = {'a': 1}\n" +
+           "    def inner():\n" +
+           "        expr['b'] = 'a'\n"
+    );
+  }
+
+  // PY-1182
+  public void testDictTypeByModificationConstructor() {
+    doTest("Dict[str, int]",
+           "expr = dict()\n" +
+           "expr['d'] = 12\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict({'a': 1, 'b': 2})\n" +
+           "expr['a'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict(zip(['a', 'b', 'c'], [1, 2, 3]))\n" +
+           "expr['d'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict(zip(['a', 'b', 'c'], [1, 2, 3]))\n" +
+           "expr['d'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "expr = dict([('two', 2), ('one', 1), ('three', 3)])\n" +
+           "expr['d'] = '12'\n"
+    );
+
+    doTest("Dict[str, Union[int, Any]]",
+           "expr = dict({'a': 1, 'b': 2})\n" +
+           "expr['a'] = var\n"
+    );
+
+    doTest("Dict[Union[str, Any], Union[int, Any]]",
+           "expr = dict(var)\n" +
+           "expr.update({'c': 12})\n"
+    );
+
+    doTest("Dict[str, Union[int, str]]",
+           "a, expr = 23, dict({'a': 1})\n" +
+           "expr.update({'c': '34'})\n"
+    );
+
+    doTest("Dict[str, int]",
+           "def f():" +
+           "    expr = dict({'a': 1})\n" +
+           "    def inner():\n" +
+           "        expr['b'] = 'a'\n"
+    );
+  }
+
+  // PY-1182
+  public void testSetTypeByModifications() {
+    doTest("Set[Union[str, int]]",
+           "def f():\n" +
+           "    expr = {'abc'}\n" +
+           "    expr.add(1)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = {1, 2}\n" +
+           "    b = {'abc'}\n" +
+           "    expr.update(b)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = {1, 2}\n" +
+           "    b = {2, 3}\n" +
+           "    expr.update(b, ['a', 'b'], {1, 2})"
+    );
+
+    doTest("Set[str]",
+           "def f():\n" +
+           "    expr = {'m', 'n'}\n" +
+           "    expr.update({'a': 1, 'b': 2})"
+    );
+
+    doTest("Set[Union[Union[int, str], Any]]",
+           "def f():\n" +
+           "    expr = {1, 2}\n" +
+           "    b = {'a', 'b'}\n" +
+           "    expr.update(b, var)"
+    );
+
+    doTest("Set[str]",
+           "def f():\n" +
+           "    expr, var = {'a', 'b'}, 'lala'\n" +
+           "    expr.add('b')"
+    );
+
+    doTest("Set[int]",
+           "def f():" +
+           "    expr = {1, 2, 3}\n" +
+           "    def inner():\n" +
+           "        expr.add('a')\n"
+    );
+  }
+
+  // PY-1182
+  public void testSetTypeByModificationsConstructor() {
+    doTest("Set[int]",
+           "def f():\n" +
+           "    expr = set()\n" +
+           "    expr.add(1)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = set({1, 2})\n" +
+           "    expr.add('abc')"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = set({1, 2})\n" +
+           "    b = {'abc'}\n" +
+           "    expr.update(b)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr = set({1, 2})\n" +
+           "    b = {2, 3}\n" +
+           "    expr.update(b, ['a', 'b'], {1, 2})"
+    );
+
+    doTest("Set[Union[str, Any]]",
+           "def f():\n" +
+           "    expr = set()\n" +
+           "    b = {'a', 'b'}\n" +
+           "    expr.update(b, var)"
+    );
+
+    doTest("Set[Union[str, Any]]",
+           "def f():\n" +
+           "    expr = set(var)\n" +
+           "    b = {'a', 'b'}\n" +
+           "    expr.update(b)"
+    );
+
+    doTest("Set[Union[int, str]]",
+           "def f():\n" +
+           "    expr, var = set([1, 2, 3]), 'lala'\n" +
+           "    expr.add('b')"
+    );
+
+    doTest("Set[int]",
+           "def f():\n" +
+           "    expr = set()\n" +
+           "    expr.add(1)\n" +
+           "    def inner():\n" +
+           "        expr.add('a')\n"
+    );
   }
 
   // PY-20063
