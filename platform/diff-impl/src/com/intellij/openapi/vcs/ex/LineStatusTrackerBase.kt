@@ -136,6 +136,7 @@ abstract class LineStatusTrackerBase<R : Range> {
       if (isReleased) return@Runnable
       isReleased = true
 
+      updateHighlighters()
       Disposer.dispose(disposable)
     }
 
