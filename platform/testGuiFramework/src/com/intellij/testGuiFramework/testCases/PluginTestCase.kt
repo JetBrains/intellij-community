@@ -32,7 +32,7 @@ open class PluginTestCase : GuiTestCase() {
 
 
   private val MAC_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
-  private val WIN_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
+  private val WIN_PLUGIN_HOME = "C:\\WS-Plugins"
   private val LINUX_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
 
   private fun getPluginHomePath(): String {
