@@ -169,23 +169,25 @@ public final class TypeConstraint {
     Set<DfaPsiType> leftNotTypes = new HashSet<>(this.myNotInstanceofValues);
     Set<DfaPsiType> rightTypes = new HashSet<>(other.myInstanceofValues);
     Set<DfaPsiType> rightNotTypes = new HashSet<>(other.myNotInstanceofValues);
-    for (Iterator<DfaPsiType> iterator = leftTypes.iterator(); iterator.hasNext(); ) {
-      DfaPsiType type = iterator.next();
-      if(rightNotTypes.remove(type)) {
-        iterator.remove();
-      }
-    }
-    for (Iterator<DfaPsiType> iterator = rightTypes.iterator(); iterator.hasNext(); ) {
-      DfaPsiType type = iterator.next();
-      if(leftNotTypes.remove(type)) {
-        iterator.remove();
-      }
-    }
+    filter(leftTypes, rightTypes, rightNotTypes);
+    filter(rightTypes, leftTypes, leftNotTypes);
     TypeConstraint left = create(leftTypes, leftNotTypes);
     TypeConstraint right = create(rightTypes, rightNotTypes);
     if(left.isSuperStateOf(right)) return left;
     if(right.isSuperStateOf(left)) return right;
     return null;
+  }
+
+  private static void filter(Set<DfaPsiType> leftTypes, Set<DfaPsiType> rightTypes, Set<DfaPsiType> rightNotTypes) {
+    Set<DfaPsiType> addTypes = new HashSet<>();
+    for (Iterator<DfaPsiType> iterator = leftTypes.iterator(); iterator.hasNext(); ) {
+      DfaPsiType type = iterator.next();
+      if(rightNotTypes.remove(type)) {
+        iterator.remove();
+        StreamEx.of(rightTypes).filter(t -> t.isAssignableFrom(type)).into(addTypes);
+      }
+    }
+    leftTypes.addAll(addTypes);
   }
 
   @NotNull
