@@ -3,7 +3,7 @@
  */
 package com.intellij.openapi.components
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.properties.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
@@ -115,13 +115,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
-    val result = IntStoredProperty(defaultValue)
+    val result = IntStoredProperty(defaultValue, null)
     properties.add(result)
     return result
   }
 
   fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
-    val result = LongStoredProperty(defaultValue)
+    val result = LongStoredProperty(defaultValue, null)
     properties.add(result)
     return result
   }
