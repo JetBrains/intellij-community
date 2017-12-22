@@ -225,6 +225,12 @@ public class SpellCheckerManager implements Disposable {
           restartInspections();
           notification.expire();
         }
+      }, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          openDictionaryInEditor(PROJECT.equals(dictionaryName) ? getProjectDictionaryPath() : getAppDictionaryPath());
+          notification.expire();
+        }
       });
     }
   }
