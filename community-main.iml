@@ -126,6 +126,5 @@
     <orderEntry type="module" module-name="stats-collector" />
     <orderEntry type="module" module-name="stream-debugger" />
     <orderEntry type="module" module-name="jetCheck" scope="TEST" />
-    <orderEntry type="module" module-name="designer-tests" scope="TEST" />
   </component>
 </module>
