@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -28,15 +29,20 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.i18n.GitBundle;
+import git4idea.merge.GitMergeDialogHandler;
+import git4idea.stash.GitStashDialogHandler;
 import git4idea.ui.GitStashDialog;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Git stash action
  */
 public class GitStash extends GitRepositoryAction {
+  private static ExtensionPointName<GitStashDialogHandler> handlerPointName = ExtensionPointName.create("Git4Idea.GitStashDialogHandler");
+  private static List<GitStashDialogHandler> handlerList = Arrays.asList(handlerPointName.getExtensions());
 
   /**
    * {@inheritDoc}
@@ -47,6 +53,7 @@ public class GitStash extends GitRepositoryAction {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification("Can not stash changes now")) return;
     GitStashDialog d = new GitStashDialog(project, gitRoots, defaultRoot);
+    handlerList.forEach(handler -> handler.createDialog(d));
     if (!d.showAndGet()) {
       return;
     }
@@ -55,6 +62,9 @@ public class GitStash extends GitRepositoryAction {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project)) {
+          for (GitStashDialogHandler handler : handlerList) {
+            if (handler.beforeCheckin() == GitStashDialogHandler.ReturnResult.CANCEL) return;
+          }
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
             VcsNotifier.getInstance(project).notifyError(GitBundle.getString("stashing.title"),

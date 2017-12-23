@@ -15,19 +15,24 @@
  */
 package git4idea.actions;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeDialog;
+import git4idea.merge.GitMergeDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class GitMerge extends GitMergeAction {
+  private static ExtensionPointName<GitMergeDialogHandler> handlerPointName = ExtensionPointName.create("Git4Idea.GitMergeDialogHandler");
+  private static List<GitMergeDialogHandler> handlerList = Arrays.asList(handlerPointName.getExtensions());
 
   @Override
   @NotNull
@@ -49,8 +54,12 @@ public class GitMerge extends GitMergeAction {
       }
       return null;
     }
+    handlerList.forEach(handler -> handler.createDialog(dialog));
     if (!dialog.showAndGet()) {
       return null;
+    }
+    for (GitMergeDialogHandler handler : handlerList) {
+      if (handler.beforeCheckin() == GitMergeDialogHandler.ReturnResult.CANCEL) return null;
     }
     return new DialogState(dialog.getSelectedRoot(), GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
                            () -> dialog.handler());
