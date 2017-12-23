@@ -85,6 +85,24 @@ class KtUElementAsPsiInspectionTest : LightCodeInsightFixtureTestCase() {
 
   }
 
+  fun testCast() {
+    myFixture.configureByText("UastUsage.kt", """
+      import org.jetbrains.uast.*;
+      import com.intellij.psi.PsiClass;
+
+      class UastUsage {
+
+          constructor(uElement: UElement){
+             (<warning descr="Usage of UElement as PsiElement is not recommended">uElement</warning> as? PsiClass).toString();
+             (uElement as? UClass).toString();
+          }
+
+      }
+    """.trimIndent())
+    myFixture.testHighlighting("UastUsage.kt")
+
+  }
+
   fun testCallParentMethod() {
     myFixture.configureByText("UastUsage.kt", """
       import org.jetbrains.uast.UClass;
