@@ -23,6 +23,8 @@ import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.psiLanguageInjectionHost
 import org.jetbrains.uast.toUElement
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
@@ -42,6 +44,15 @@ abstract class UastReferenceProvider {
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
 
 }
+
+fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>) =
+  object : UastReferenceProvider() {
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+      val uLiteral = element as? ULiteralExpression ?: return PsiReference.EMPTY_ARRAY
+      val host = uLiteral.psiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
+      return provider(uLiteral, host)
+    }
+  }
 
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
 
