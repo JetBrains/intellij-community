@@ -89,7 +89,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
       CommitId commitId1 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex1);
       CommitId commitId2 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex2);
-      return graphColorManager.compareHeads(commitId2, commitId1);
+      return graphColorManager.compareHeads(commitId1, commitId2);
     });
 
     return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
