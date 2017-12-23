@@ -31,6 +31,12 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, Proc
   this.registerReferenceProvider(UastPatternAdapter(pattern), UastReferenceProviderAdapter(provider), priority)
 }
 
+fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<out UElement>,
+                                                        provider: UastReferenceProvider,
+                                                        priority: Double = PsiReferenceRegistrar.DEFAULT_PRIORITY) {
+  this.registerReferenceProvider(UastPatternAdapter(pattern::accepts), UastReferenceProviderAdapter(provider), priority)
+}
+
 abstract class UastReferenceProvider {
 
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>

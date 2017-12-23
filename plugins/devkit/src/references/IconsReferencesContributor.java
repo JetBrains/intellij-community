@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -51,12 +52,14 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.ULiteralExpression;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastLiteralUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -254,18 +257,12 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
-    UastReferenceRegistrar.registerUastReferenceProvider(registrar, new Function2<UElement, ProcessingContext, Boolean>() {
-      @Override
-      public Boolean invoke(UElement element, ProcessingContext context) {
-        if (!UastLiteralUtils.isStringLiteral(element)) return false;
-
-        final UNamedExpression namedExpression = UastUtils.getParentOfType(element, UNamedExpression.class);
-        if (namedExpression == null || !"icon".equals(namedExpression.getName())) return false;
-
-        final UAnnotation annotation = UastUtils.getParentOfType(namedExpression, UAnnotation.class);
-        return annotation != null && Presentation.class.getName().equals(annotation.getQualifiedName());
-      }
-    }, new UastReferenceProvider() {
+    UastReferenceRegistrar.registerUastReferenceProvider(
+      registrar,
+      UastPatterns.literalExpression()
+        .filter(UastLiteralUtils::isStringLiteral)
+        .annotationParam(Presentation.class.getName(), "icon"),
+      new UastReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final UElement uElement, @NotNull ProcessingContext context) {
