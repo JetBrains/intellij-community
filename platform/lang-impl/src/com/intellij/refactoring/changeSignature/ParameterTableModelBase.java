@@ -26,7 +26,6 @@ import com.intellij.refactoring.ui.StringTableCellEditor;
 import com.intellij.ui.*;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,10 +37,10 @@ import java.util.List;
 
 public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem extends ParameterTableModelItemBase<P>> extends ListTableModel<TableItem> implements RowEditableTableModel {
 
-  @NotNull protected final PsiElement myTypeContext;
+  protected final PsiElement myTypeContext;
   protected final PsiElement myDefaultValueContext;
 
-  public ParameterTableModelBase(@NotNull PsiElement typeContext,
+  public ParameterTableModelBase(PsiElement typeContext,
                                  PsiElement defaultValueContext,
                                  ColumnInfo... columnInfos) {
     super(columnInfos);
