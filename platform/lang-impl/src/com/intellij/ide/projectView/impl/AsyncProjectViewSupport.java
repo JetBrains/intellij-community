@@ -39,6 +39,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.Consumer;
@@ -288,7 +289,12 @@ class AsyncProjectViewSupport {
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
+    RestoreSelectionListener listener = new RestoreSelectionListener();
+    tree.addTreeSelectionListener(listener);
     tree.setModel(model);
-    Disposer.register(model, () -> tree.setModel(null));
+    Disposer.register(model, () -> {
+      tree.setModel(null);
+      tree.removeTreeSelectionListener(listener);
+    });
   }
 }
