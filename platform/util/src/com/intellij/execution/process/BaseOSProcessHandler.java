@@ -56,15 +56,16 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    *
    * @param task a task to run
    */
+  @Deprecated
   @NotNull
   protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
-    return ProcessIOExecutorService.INSTANCE.submit(task);
+    return executeTask(task);
   }
 
   @Override
   @NotNull
   public Future<?> executeTask(@NotNull Runnable task) {
-    return executeOnPooledThread(task);
+    return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 2018) */
@@ -182,36 +183,6 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
-  @Override
-  protected void destroyProcessImpl() {
-    try {
-      closeStreams();
-    }
-    finally {
-      doDestroyProcess();
-    }
-  }
-
-  @Override
-  protected void detachProcessImpl() {
-    final Runnable runnable = new Runnable() {
-      @Override
-      public void run() {
-        closeStreams();
-
-        myWaitFor.detach();
-        notifyProcessDetached();
-      }
-    };
-
-    executeOnPooledThread(runnable);
-  }
-
-  @Override
-  public boolean detachIsDefault() {
-    return false;
-  }
-
   /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 2018) */
   public static class ExecutorServiceHolder {
     public static Future<?> submit(@NotNull Runnable task) {
@@ -232,7 +203,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     @NotNull
     @Override
     protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-      return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
+      return BaseOSProcessHandler.this.executeTask(runnable);
     }
 
     @Override

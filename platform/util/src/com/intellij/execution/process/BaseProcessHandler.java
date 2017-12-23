@@ -65,6 +65,36 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
     getProcess().destroy();
   }
 
+  @Override
+  protected void destroyProcessImpl() {
+    try {
+      closeStreams();
+    }
+    finally {
+      doDestroyProcess();
+    }
+  }
+
+  @Override
+  protected void detachProcessImpl() {
+    final Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        closeStreams();
+
+        myWaitFor.detach();
+        notifyProcessDetached();
+      }
+    };
+
+    executeTask(runnable);
+  }
+
+  @Override
+  public boolean detachIsDefault() {
+    return false;
+  }
+
   protected void closeStreams() {
     try {
       myProcess.getOutputStream().close();

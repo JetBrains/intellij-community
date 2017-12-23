@@ -40,7 +40,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
   @Override
   protected void destroyProcessImpl() {
     if (!myProcess.killProcessTree()) {
-      baseDestroyProcessImpl();
+      super.destroyProcessImpl();
     }
   }
 
@@ -61,7 +61,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
             @NotNull
             @Override
             protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-              return BaseRemoteProcessHandler.executeOnPooledThread(runnable);
+              return BaseRemoteProcessHandler.this.executeTask(runnable);
             }
           };
 
@@ -74,7 +74,7 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
             @NotNull
             @Override
             protected Future<?> executeOnPooledThread(@NotNull Runnable runnable) {
-              return BaseRemoteProcessHandler.executeOnPooledThread(runnable);
+              return BaseRemoteProcessHandler.this.executeTask(runnable);
             }
           };
 
@@ -100,41 +100,15 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
     super.startNotify();
   }
 
+  @Deprecated
   protected void baseDestroyProcessImpl() {
-    try {
-      closeStreams();
-    }
-    finally {
-      doDestroyProcess();
-    }
-  }
-
-  @Override
-  protected void detachProcessImpl() {
-    final Runnable runnable = () -> {
-      closeStreams();
-
-      myWaitFor.detach();
-      notifyProcessDetached();
-    };
-
-    executeOnPooledThread(runnable);
-  }
-
-  @Override
-  public boolean detachIsDefault() {
-    return false;
-  }
-
-  @NotNull
-  private static Future<?> executeOnPooledThread(@NotNull Runnable task) {
-    return AppExecutorUtil.getAppExecutorService().submit(task);
+    super.destroyProcessImpl();
   }
 
   @NotNull
   @Override
   public Future<?> executeTask(@NotNull Runnable task) {
-    return executeOnPooledThread(task);
+    return AppExecutorUtil.getAppExecutorService().submit(task);
   }
 
   private abstract static class RemoteOutputReader extends BaseOutputReader {
