@@ -371,7 +371,7 @@ public class CompressedAppendableFile {
 
   @NotNull
   protected byte[] decompress(DataInputStream keysStream) throws IOException {
-    return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream);
+    return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream, myAppendBufferLength);
   }
 
   protected void saveChunk(BufferExposingByteArrayOutputStream compressedChunk, long endOfFileOffset) throws IOException {
