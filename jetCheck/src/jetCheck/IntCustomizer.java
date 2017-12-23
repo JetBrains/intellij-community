@@ -53,17 +53,22 @@ class CombinatorialIntCustomizer implements IntCustomizer {
   }
 
   private boolean registerDifferentRange(IntData data, BoundedIntDistribution current, BoundedIntDistribution original) {
+    if (currentCombination.containsKey(data.id)) {
+      changedDistributions.put(data.id, current);
+      return true;
+    }
+
     int oMax = original.getMax();
     int cMax = current.getMax();
     int oMin = original.getMin();
     int cMin = current.getMin();
     if (oMax != cMax || oMin != cMin) {
-      changedDistributions.put(data.id, current);
-
       addValueToTry(data, current, data.value);
       addValueToTry(data, current, (data.value - oMin) + cMin);
       addValueToTry(data, current, cMax - (oMax - data.value));
-      return true;
+      if (valuesToTry.containsKey(data.id)) {
+        return true;
+      }
     }
     return false;
   }
@@ -71,6 +76,7 @@ class CombinatorialIntCustomizer implements IntCustomizer {
   private void addValueToTry(IntData data, BoundedIntDistribution current, int value) {
     value = Math.min(Math.max(value, current.getMin()), current.getMax());
     if (current.isValidValue(value)) {
+      changedDistributions.put(data.id, current);
       valuesToTry.computeIfAbsent(data.id, __1 -> new LinkedHashSet<>()).add(value);
     }
   }
