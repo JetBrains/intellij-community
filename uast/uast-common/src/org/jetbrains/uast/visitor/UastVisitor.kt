@@ -266,7 +266,36 @@ interface UastVisitor {
   }
 }
 
-abstract class AbstractUastVisitor : UastVisitor {
+interface UastVisitorEx : UastVisitor {
+
+  fun visitDeclaration(node: UDeclaration) = visitElement(node)
+  override fun visitClass(node: UClass): Boolean = visitDeclaration(node)
+  override fun visitInitializer(node: UClassInitializer): Boolean = visitDeclaration(node)
+  override fun visitMethod(node: UMethod): Boolean = visitDeclaration(node)
+  override fun visitVariable(node: UVariable): Boolean = visitDeclaration(node)
+
+  fun afterVisitDeclaration(node: UDeclaration) {
+    afterVisitElement(node)
+  }
+
+  override fun afterVisitClass(node: UClass) {
+    afterVisitDeclaration(node)
+  }
+
+  override fun afterVisitInitializer(node: UClassInitializer) {
+    afterVisitDeclaration(node)
+  }
+
+  override fun afterVisitMethod(node: UMethod) {
+    afterVisitDeclaration(node)
+  }
+
+  override fun afterVisitVariable(node: UVariable) {
+    afterVisitDeclaration(node)
+  }
+}
+
+abstract class AbstractUastVisitor : UastVisitorEx {
   override fun visitElement(node: UElement): Boolean = false
 
 }
