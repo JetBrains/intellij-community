@@ -61,7 +61,7 @@ public class CompressedAppendableFile {
   static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
 
   public CompressedAppendableFile(File file) {
-    this(file, PersistentBTreeEnumerator.PAGE_SIZE);
+    this(file, 32768);
   }
 
   private CompressedAppendableFile(File file, int bufferSize) {
