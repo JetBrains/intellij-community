@@ -124,6 +124,11 @@ public class PyStringFormatInspectionTest extends PyInspectionTestCase {
   public void testNewStyleCallExpressionArgument() {
     doTest();
   }
+
+  // PY-27710
+  public void testNewStylePositionalSubstitutionAfterKeywordSubstitution() {
+    doTest();
+  }
   
   public void testPercentStringWithFormatStringReplacementSymbols() {
     doTest();
