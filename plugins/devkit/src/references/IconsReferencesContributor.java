@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.ULiteralExpression;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastLiteralUtils;
 
@@ -261,79 +260,68 @@ public class IconsReferencesContributor extends PsiReferenceContributor
       registrar,
       UastPatterns.literalExpression()
         .filter(UastLiteralUtils::isStringLiteral)
+        .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
         .annotationParam(Presentation.class.getName(), "icon"),
-      new UastReferenceProvider() {
-      @NotNull
-      @Override
-      public PsiReference[] getReferencesByElement(@NotNull final UElement uElement, @NotNull ProcessingContext context) {
-        final PsiElement psi = uElement.getPsi();
-        if (psi == null || !PsiUtil.isPluginProject(psi.getProject())) return PsiReference.EMPTY_ARRAY;
+      UastReferenceRegistrar.uastLiteralReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
+        new IconPsiReferenceBase(referencePsiElement) {
 
-        PsiElement referencePsiElement = UastLiteralUtils.getPsiLanguageInjectionHost((ULiteralExpression)uElement);
-        if (referencePsiElement == null) return PsiReference.EMPTY_ARRAY;
+          private UElement getUElement() {
+            return UastContextKt.toUElement(getElement());
+          }
 
-        return new PsiReference[]{
-          new IconPsiReferenceBase(referencePsiElement) {
+          @Override
+          public PsiElement resolve() {
+            final UElement uElement = getUElement();
+            if (uElement == null) return null;
 
-            private UElement getUElement() {
-              return UastContextKt.toUElement(getElement());
+            String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
+            return resolveIconPath(value, getElement());
+          }
+
+          @Override
+          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            PsiElement field = resolve();
+            PsiElement result = handleElement(field, newElementName);
+            if (result != null) {
+              return result;
             }
+            return super.handleElementRename(newElementName);
+          }
 
-            @Override
-            public PsiElement resolve() {
-              final UElement uElement = getUElement();
-              if (uElement == null) return null;
-
-              String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
-              return resolveIconPath(value, getElement());
-            }
-
-            @Override
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-              PsiElement field = resolve();
-              PsiElement result = handleElement(field, newElementName);
-              if (result != null) {
-                return result;
-              }
-              return super.handleElementRename(newElementName);
-            }
-
-            @Nullable
-            private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
-              if (element instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  String classQualifiedName = containingClass.getQualifiedName();
-                  if (classQualifiedName != null) {
-                    if (newElementName == null) {
-                      newElementName = ((PsiField)element).getName();
-                    }
-                    if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                      return replace(newElementName, classQualifiedName, "com.intellij.icons.");
-                    }
-                    if (classQualifiedName.startsWith("icons.")) {
-                      return replace(newElementName, classQualifiedName, "icons.");
-                    }
+          @Nullable
+          private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
+            if (element instanceof PsiField) {
+              PsiClass containingClass = ((PsiField)element).getContainingClass();
+              if (containingClass != null) {
+                String classQualifiedName = containingClass.getQualifiedName();
+                if (classQualifiedName != null) {
+                  if (newElementName == null) {
+                    newElementName = ((PsiField)element).getName();
+                  }
+                  if (classQualifiedName.startsWith("com.intellij.icons.")) {
+                    return replace(newElementName, classQualifiedName, "com.intellij.icons.");
+                  }
+                  if (classQualifiedName.startsWith("icons.")) {
+                    return replace(newElementName, classQualifiedName, "icons.");
                   }
                 }
               }
-              return null;
             }
-
-            private PsiElement replace(String newElementName, String fqn, String packageName) {
-              String newValue = fqn.substring(packageName.length()) + "." + newElementName;
-              return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
-            }
-
-            @NotNull
-            @Override
-            public Object[] getVariants() {
-              return EMPTY_ARRAY;
-            }
+            return null;
           }
-        };
-      }
-    }, PsiReferenceRegistrar.HIGHER_PRIORITY);
+
+          private PsiElement replace(String newElementName, String fqn, String packageName) {
+            String newValue = fqn.substring(packageName.length()) + "." + newElementName;
+            return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
+          }
+
+          @NotNull
+          @Override
+          public Object[] getVariants() {
+            return EMPTY_ARRAY;
+          }
+        }
+      }), PsiReferenceRegistrar.HIGHER_PRIORITY);
   }
 
 

@@ -26,6 +26,11 @@ class ULiteralExpressionPattern : ObjectPattern<ULiteralExpression, ULiteralExpr
       }
     })
 
+  fun sourcePsiFilter(filter: (PsiElement) -> Boolean) =
+    withSourcePsiCondition(object : PatternCondition<PsiElement>("sourcePsiFilter") {
+      override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean = filter(t)
+    })
+
   fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String) =
     this.with(object : PatternCondition<ULiteralExpression>("annotationParam") {
       override fun accepts(uElement: ULiteralExpression, context: ProcessingContext?): Boolean {
