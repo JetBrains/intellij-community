@@ -9,6 +9,8 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ObjectPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.jetbrains.annotations.NonNls
@@ -16,11 +18,12 @@ import org.jetbrains.uast.*
 
 fun literalExpression() = ULiteralExpressionPattern()
 
-class ULiteralExpressionPattern : ObjectPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java) {
+fun callExpression() = UCallExpressionPattern()
 
+open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>) =
-    this.with(object : PatternCondition<ULiteralExpression?>("withSourcePsiPattern") {
-      override fun accepts(t: ULiteralExpression, context: ProcessingContext?): Boolean {
+    this.with(object : PatternCondition<T>("withSourcePsiPattern") {
+      override fun accepts(t: T, context: ProcessingContext?): Boolean {
         val sourcePsiElement = t.sourcePsiElement ?: return false
         return pattern.accepts(sourcePsiElement, context)
       }
@@ -30,6 +33,27 @@ class ULiteralExpressionPattern : ObjectPattern<ULiteralExpression, ULiteralExpr
     withSourcePsiCondition(object : PatternCondition<PsiElement>("sourcePsiFilter") {
       override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean = filter(t)
     })
+
+  fun filter(filter: (T) -> Boolean) =
+    with(object : PatternCondition<T>(null) {
+      override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t)
+    })
+
+  fun inCall(callPattern: ElementPattern<UCallExpression>) =
+    filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
+
+}
+
+class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {
+
+  fun withReceiver(classPattern: ElementPattern<PsiClass>) =
+    filter { (it.receiverType as? PsiClassType)?.resolve()?.let { classPattern.accepts(it) } ?: false }
+
+  fun withMethodName(namePattern: ElementPattern<String>) = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
+
+}
+
+class ULiteralExpressionPattern : UElementPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java) {
 
   fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String) =
     this.with(object : PatternCondition<ULiteralExpression>("annotationParam") {
@@ -43,10 +67,5 @@ class ULiteralExpressionPattern : ObjectPattern<ULiteralExpression, ULiteralExpr
 
   fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String) =
     annotationParam(StandardPatterns.string().equalTo(annotationQualifiedName), parameterName)
-
-  fun filter(filter: (ULiteralExpression) -> Boolean) =
-    with(object : PatternCondition<ULiteralExpression>(null) {
-      override fun accepts(t: ULiteralExpression, context: ProcessingContext?): Boolean = filter.invoke(t)
-    })
 
 }
