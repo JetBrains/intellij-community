@@ -15,7 +15,6 @@
  */
 package com.intellij.xdebugger.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -29,7 +28,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -167,18 +168,16 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
     else {
-      RangeHighlighter waitForVariantsHighlighter = getWaitForVariantsHighlighter(editor, position);
       Promise<List<? extends XLineBreakpointType<P>.XLineBreakpointVariant>> variantsPromise = type.computeVariantsAsync(project, position);
       final AsyncPromise<XLineBreakpoint> res = new AsyncPromise<>();
       variantsPromise.done(variants -> ApplicationManager.getApplication().invokeLater(() -> {
-        boolean isActive = removeWaitForVariantsHighlighter(waitForVariantsHighlighter, editor);
         XLineBreakpoint<P> alreadyAddedBreakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
         if (alreadyAddedBreakpoint != null) {
           return;
         }
         if (!variants.isEmpty() && editor != null) {
           RelativePoint relativePoint = DebuggerUIUtil.getPositionForPopup(editor, line);
-          if (variants.size() > 1 && relativePoint != null && isActive) {
+          if (variants.size() > 1 && relativePoint != null) {
             class MySelectionListener implements ListSelectionListener {
               RangeHighlighter myHighlighter = null;
 
@@ -291,42 +290,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
         P properties = type.createBreakpointProperties(file, line);
         insertBreakpoint(properties, res, breakpointManager, file, line, type, temporary);
-      })).rejected(error -> ApplicationManager.getApplication().invokeLater(() -> {
-        removeWaitForVariantsHighlighter(waitForVariantsHighlighter, editor);
-        res.setError(error);
-      }));
+      })).rejected(error -> ApplicationManager.getApplication().invokeLater(() -> res.setError(error)));
 
       return res;
     }
     return rejectedPromise();
-  }
-
-  private static boolean removeWaitForVariantsHighlighter(@Nullable RangeHighlighter waitForVariantsHighlighter, Editor editor) {
-    if (editor == null || waitForVariantsHighlighter == null) {
-      return false;
-    }
-    editor.getMarkupModel().removeHighlighter(waitForVariantsHighlighter);
-    boolean isActive;
-    synchronized (myActiveBreakpointRequestHighlighterGuard) {
-      isActive = myActiveBreakpointRequestHighlighter == waitForVariantsHighlighter;
-      if (isActive) {
-        myActiveBreakpointRequestHighlighter = null;
-      }
-    }
-    return isActive;
-  }
-
-  @Nullable
-  private static RangeHighlighter getWaitForVariantsHighlighter(Editor editor, XSourcePosition position) {
-    if (editor == null) {
-      return null;
-    }
-    RangeHighlighter highlighter = editor.getMarkupModel().addLineHighlighter(position.getLine(), HighlighterLayer.LAST, null);
-    synchronized (myActiveBreakpointRequestHighlighterGuard) {
-      myActiveBreakpointRequestHighlighter = highlighter;
-    }
-    highlighter.setGutterIconRenderer(new BreakpointVariantsGutterRenderer());
-    return highlighter;
   }
 
   private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
@@ -337,30 +305,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                 XLineBreakpointType<P> type,
                                 Boolean temporary) {
     WriteAction.run(() -> res.setResult(breakpointManager.addLineBreakpoint(type, file.getUrl(), line, properties, temporary)));
-  }
-
-  static class BreakpointVariantsGutterRenderer extends GutterIconRenderer {
-    @NotNull
-    @Override
-    public Icon getIcon() {
-      return AllIcons.General.Hourglass;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj == this;
-    }
-
-    @Override
-    public int hashCode() {
-      return System.identityHashCode(this);
-    }
-
-    @NotNull
-    @Override
-    public Alignment getAlignment() {
-      return Alignment.RIGHT;
-    }
   }
 
   @Override
