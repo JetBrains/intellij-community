@@ -20,6 +20,8 @@ fun literalExpression() = ULiteralExpressionPattern()
 
 fun callExpression() = UCallExpressionPattern()
 
+fun <T : UElement> capture(clazz: Class<T>) = UElementPattern.Capture(clazz)
+
 open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz: Class<T>) : ObjectPattern<T, Self>(clazz) {
   fun withSourcePsiCondition(pattern: PatternCondition<PsiElement>) =
     this.with(object : PatternCondition<T>("withSourcePsiPattern") {
@@ -42,6 +44,7 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
   fun inCall(callPattern: ElementPattern<UCallExpression>) =
     filter { it.getUCallExpression()?.let { callPattern.accepts(it) } ?: false }
 
+  class Capture<T : UElement>(clazz: Class<T>) : UElementPattern<T, Capture<T>>(clazz)
 }
 
 class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {
@@ -55,15 +58,19 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
 class ULiteralExpressionPattern : UElementPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java) {
 
-  fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String) =
+  fun annotationParam(@NonNls parameterName: String, annotationPattern: ElementPattern<UAnnotation>) =
     this.with(object : PatternCondition<ULiteralExpression>("annotationParam") {
       override fun accepts(uElement: ULiteralExpression, context: ProcessingContext?): Boolean {
         val namedExpression = uElement.getParentOfType<UNamedExpression>(true) ?: return false
         if ((namedExpression.name ?: "value") != parameterName) return false
         val annotation = namedExpression.getParentOfType<UAnnotation>(true) ?: return false
-        return (annotationQualifiedName.accepts(annotation.qualifiedName, context))
+        return (annotationPattern.accepts(annotation, context))
       }
     })
+
+  fun annotationParam(annotationQualifiedName: ElementPattern<String>, @NonNls parameterName: String) =
+    annotationParam(parameterName, capture(UAnnotation::class.java)
+      .filter { it.qualifiedName?.let { annotationQualifiedName.accepts(it) } ?: false })
 
   fun annotationParam(@NonNls annotationQualifiedName: String, @NonNls parameterName: String) =
     annotationParam(StandardPatterns.string().equalTo(annotationQualifiedName), parameterName)
