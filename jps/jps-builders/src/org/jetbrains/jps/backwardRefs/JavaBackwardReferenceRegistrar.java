@@ -1,25 +1,25 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 import org.jetbrains.jps.javac.ast.api.JavacDef;
 import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.ast.api.JavacRef;
-import org.jetbrains.jps.javac.ast.api.JavacTypeCast;
 
 import java.util.Collection;
 
-public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar {
-  private volatile BackwardReferenceIndexWriter myWriter;
+public class JavaBackwardReferenceRegistrar implements JavacFileReferencesRegistrar {
+  private volatile JavaBackwardReferenceIndexWriter myWriter;
 
   @Override
   public void initialize() {
-    myWriter = BackwardReferenceIndexWriter.getInstance();
+    myWriter = JavaBackwardReferenceIndexWriter.getInstance();
   }
 
   @Override
   public boolean isEnabled() {
-    return BackwardReferenceIndexWriter.isEnabled() && BackwardReferenceIndexWriter.getInstance() != null;
+    return JavaBackwardReferenceIndexWriter.isEnabled() && JavaBackwardReferenceIndexWriter.getInstance() != null;
   }
 
   @Override
@@ -27,7 +27,7 @@ public class BackwardReferenceRegistrar implements JavacFileReferencesRegistrar 
     return false;
   }
 
-  @Override
+   @Override
   public void registerFile(String filePath,
                            TObjectIntHashMap<JavacRef> refs,
                            Collection<JavacDef> defs,

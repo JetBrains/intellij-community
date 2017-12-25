@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
@@ -7,7 +7,7 @@ import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.*;
@@ -63,15 +63,15 @@ public class ChainSearcher {
       // otherwise try to find chain continuation
       boolean updated = false;
       SortedSet<ChainOpAndOccurrences<MethodCall>> candidates = referenceServiceEx.findMethodReferenceOccurrences(head.getQualifierRawName(), SignatureData.ZERO_DIM, context);
-      LightRef ref = head.getLightRef();
+      CompilerRef ref = head.getCompilerRef();
       for (ChainOpAndOccurrences<MethodCall> candidate : candidates) {
         if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentChain.getChainWeight()) {
           break;
         }
         MethodCall sign = candidate.getOperation();
         if ((sign.isStatic() || !sign.getQualifierRawName().equals(context.getTarget().getClassQName())) &&
-            (!(ref instanceof LightRef.JavaLightMethodRef) ||
-             referenceServiceEx.mayHappen(candidate.getOperation().getLightRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
+            (!(ref instanceof CompilerRef.JavaCompilerMethodRef) ||
+             referenceServiceEx.mayHappen(candidate.getOperation().getCompilerRef(), ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD))) {
 
           OperationChain
             continuation = currentChain.continuationWithMethod(candidate.getOperation(), candidate.getOccurrenceCount(), context);
@@ -89,9 +89,9 @@ public class ChainSearcher {
         }
       }
 
-      if (ref instanceof LightRef.JavaLightMethodRef) {
-        LightRef.LightClassHierarchyElementDef def =
-          referenceServiceEx.mayCallOfTypeCast((LightRef.JavaLightMethodRef)ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
+      if (ref instanceof CompilerRef.JavaCompilerMethodRef) {
+        CompilerRef.CompilerClassHierarchyElementDef def =
+          referenceServiceEx.mayCallOfTypeCast((CompilerRef.JavaCompilerMethodRef)ref, ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD);
         if (def != null) {
           OperationChain
             continuation = currentChain.continuationWithCast(new TypeCast(def, head.getQualifierDef(), referenceServiceEx), context);
@@ -124,9 +124,9 @@ public class ChainSearcher {
     // type cast + introduced qualifier: it's too complex chain
     if (currentChain.hasCast()) return;
     if (!context.getTarget().getClassQName().equals(signature.getQualifierRawName())) {
-      Set<LightRef> references = context.getContextClassReferences();
+      Set<CompilerRef> references = context.getContextClassReferences();
       boolean isRelevantQualifier = false;
-      for (LightRef ref: references) {
+      for (CompilerRef ref: references) {
         if (referenceServiceEx.mayHappen(signature.getQualifierDef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
           isRelevantQualifier = true;
           break;
