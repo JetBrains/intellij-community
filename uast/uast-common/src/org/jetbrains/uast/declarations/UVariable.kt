@@ -37,6 +37,10 @@ interface UVariable : UDeclaration, PsiVariable {
    */
   val typeReference: UTypeReferenceExpression?
 
+  override fun getType(): PsiType
+
+  override fun getName(): String?
+
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitVariable(this)) return
     visitContents(visitor)

@@ -61,7 +61,7 @@ public abstract class ShowModulesAction extends ToggleAction {
     presentation.setVisible(hasModules() && Comparing.strEqual(projectView.getCurrentViewId(), getId()));
   }
 
-  private static boolean hasModules() {
+  public static boolean hasModules() {
     return PlatformUtils.isIntelliJ();
   }
 }

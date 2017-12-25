@@ -472,11 +472,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
           }
         }
-
-        if (comboBox.isEditable() && editor != null) {
-          Rectangle er = rectangleForCurrentValue();
-          editor.setBounds(er);
-        }
+        layoutEditor();
       }
     };
   }

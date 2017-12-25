@@ -44,6 +44,18 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
+    if (getSettings().isFlattenModules()) {
+      return ContainerUtil.mapNotNull(modules, moduleDescription -> {
+        try {
+          return createModuleNode(moduleDescription);
+        }
+        catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+          LOG.error(e);
+          return null;
+        }
+      });
+    }
+
     Set<String> topLevelGroups = new LinkedHashSet<>();
     Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modules);
     List<String> commonGroupsPath = null;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LogEntry;
 import org.jetbrains.idea.svn.history.LogEntryPath;
@@ -31,10 +20,6 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.integrate.MergeContext;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.tmatesoft.svn.core.*;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -47,14 +32,13 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.reverseOrder;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache.MergeCheckResult;
-import static org.tmatesoft.svn.core.internal.util.SVNPathUtil.isAncestor;
 
 public class OneShotMergeInfoHelper implements MergeChecker {
 
   @NotNull private final MergeContext myMergeContext;
   @NotNull private final Map<Long, Collection<String>> myPartiallyMerged;
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
-  @NotNull private final NavigableMap<String, Map<String, SVNMergeRangeList>> myMergeInfoMap;
+  @NotNull private final NavigableMap<String, Map<String, MergeRangeList>> myMergeInfoMap;
   @NotNull private final Object myMergeInfoLock;
 
   public OneShotMergeInfoHelper(@NotNull MergeContext mergeContext) {
@@ -70,7 +54,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     File file = myMergeContext.getWcInfo().getRootInfo().getIoFile();
 
     myMergeContext.getVcs().getFactory(file).createPropertyClient()
-      .getProperty(SvnTarget.fromFile(file), SvnPropertyKeys.MERGE_INFO, SVNRevision.WORKING, depth, createPropertyHandler());
+      .getProperty(Target.on(file), SvnPropertyKeys.MERGE_INFO, Revision.WORKING, depth, createPropertyHandler());
   }
 
   @Nullable
@@ -107,8 +91,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull
   public MergeCheckResult checkPath(@NotNull String repositoryRelativePath, long revisionNumber) {
     MergeCheckResult result = MergeCheckResult.NOT_EXISTS;
-    String sourceRelativePath =
-      SVNPathUtil.getRelativePath(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
+    String sourceRelativePath = Url.getRelative(myMergeContext.getRepositoryRelativeSourcePath(), ensureStartSlash(repositoryRelativePath));
 
     // TODO: SVNPathUtil.getRelativePath() is @NotNull - probably we need to check also isEmpty() here?
     if (sourceRelativePath != null) {
@@ -116,12 +99,12 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       String key = toKey(sourceRelativePath);
 
       synchronized (myMergeInfoLock) {
-        Map<String, SVNMergeRangeList> mergeInfo = myMergeInfoMap.get(key);
+        Map<String, MergeRangeList> mergeInfo = myMergeInfoMap.get(key);
         if (mergeInfo != null) {
           processor.process(key, mergeInfo);
         }
         else {
-          for (Map.Entry<String, Map<String, SVNMergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
+          for (Map.Entry<String, Map<String, MergeRangeList>> entry : myMergeInfoMap.tailMap(key).entrySet()) {
             if (isUnder(entry.getKey(), key) && processor.process(entry.getKey(), entry.getValue())) {
               break;
             }
@@ -136,10 +119,10 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   }
 
   private static boolean isUnder(@NotNull String parentUrl, @NotNull String childUrl) {
-    return ".".equals(parentUrl) || isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
+    return ".".equals(parentUrl) || Url.isAncestor(ensureStartSlash(parentUrl), ensureStartSlash(childUrl));
   }
 
-  private static class InfoProcessor implements PairProcessor<String, Map<String, SVNMergeRangeList>> {
+  private static class InfoProcessor implements PairProcessor<String, Map<String, MergeRangeList>> {
 
     @NotNull private final String myRepositoryRelativeSourcePath;
     private boolean myIsMerged;
@@ -157,7 +140,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     }
 
     // TODO: Try to unify with BranchInfo.processMergeinfoProperty()
-    public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, SVNMergeRangeList> mergedPathsMap) {
+    public boolean process(@NotNull String workingCopyRelativePath, @NotNull Map<String, MergeRangeList> mergedPathsMap) {
       boolean processed = false;
       boolean isCurrentPath = workingCopyRelativePath.equals(mySourceRelativePath);
 
@@ -167,14 +150,14 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       }
       else {
         String mergedPathAffectingSourcePath =
-          find(mergedPathsMap.keySet(), path -> isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
+          find(mergedPathsMap.keySet(), path -> Url.isAncestor(myRepositoryRelativeSourcePath, ensureStartSlash(path)));
 
         if (mergedPathAffectingSourcePath != null) {
-          SVNMergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
+          MergeRangeList mergeRangeList = mergedPathsMap.get(mergedPathAffectingSourcePath);
 
           processed = true;
-          myIsMerged = exists(mergeRangeList.getRanges(),
-                              range -> BranchInfo.isInRange(range, myRevisionNumber) && (range.isInheritable() || isCurrentPath));
+          myIsMerged =
+            exists(mergeRangeList.getRanges(), range -> range.contains(myRevisionNumber) && (range.isInheritable() || isCurrentPath));
         }
       }
 
@@ -185,29 +168,19 @@ public class OneShotMergeInfoHelper implements MergeChecker {
   @NotNull
   private PropertyConsumer createPropertyHandler() {
     return new PropertyConsumer() {
-      public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SVNException {
+      public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
         String workingCopyRelativePath = getWorkingCopyRelativePath(path);
-        Map<String, SVNMergeRangeList> mergeInfo = parseMergeInfo(property);
+        Map<String, MergeRangeList> mergeInfo = MergeRangeList.parseMergeInfo(notNull(property.getValue()).toString());
 
         synchronized (myMergeInfoLock) {
           myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);
         }
       }
 
-      public void handleProperty(SVNURL url, PropertyData property) {
+      public void handleProperty(Url url, PropertyData property) {
       }
 
       public void handleProperty(long revision, PropertyData property) {
-      }
-
-      @NotNull
-      private Map<String, SVNMergeRangeList> parseMergeInfo(@NotNull PropertyData property) throws SVNException {
-        try {
-          return BranchInfo.parseMergeInfo(notNull(property.getValue()));
-        }
-        catch (SvnBindException e) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.MERGE_INFO_PARSE_ERROR, e), e);
-        }
       }
     };
   }
@@ -268,10 +241,10 @@ public class OneShotMergeInfoHelper implements MergeChecker {
     boolean atLeastOneUnderBranch = false;
 
     for (LogEntryPath path : entry.getChangedPaths().values()) {
-      if (isAncestor(localURL, path.getPath())) {
+      if (Url.isAncestor(localURL, path.getPath())) {
         return true;
       }
-      if (!atLeastOneUnderBranch && isAncestor(relativeBranch, path.getPath())) {
+      if (!atLeastOneUnderBranch && Url.isAncestor(relativeBranch, path.getPath())) {
         atLeastOneUnderBranch = true;
       }
     }

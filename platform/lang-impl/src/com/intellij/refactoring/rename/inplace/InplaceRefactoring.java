@@ -130,7 +130,7 @@ public abstract class InplaceRefactoring {
           myElementToRename != null && myElementToRename.getTextRange() != null) {
         myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
         myRenameOffset.setGreedyToRight(true);
-        myRenameOffset.setGreedyToLeft(true); // todo not sure if we need this
+        myRenameOffset.setGreedyToLeft(true);
       }
     }
   }

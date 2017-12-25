@@ -96,6 +96,10 @@ public abstract class ProjectView {
 
   public abstract void setShowModules(boolean showModules, @NotNull String paneId);
 
+  public abstract boolean isFlattenModules(String paneId);
+
+  public abstract void setFlattenModules(boolean flattenModules, @NotNull String paneId);
+
   public abstract boolean isShowURL(String paneId);
 
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);

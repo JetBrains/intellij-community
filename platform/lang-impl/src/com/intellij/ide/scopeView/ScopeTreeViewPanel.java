@@ -316,7 +316,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     settings.UI_FLATTEN_PACKAGES = projectView.isFlattenPackages(ScopeViewPane.ID);
     settings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = projectView.isHideEmptyMiddlePackages(ScopeViewPane.ID);
     settings.UI_SHOW_MODULES = projectView.isShowModules(ScopeViewPane.ID);
-    settings.UI_SHOW_MODULE_GROUPS = projectView.isShowModules(ScopeViewPane.ID);
+    settings.UI_SHOW_MODULE_GROUPS = !projectView.isFlattenModules(ScopeViewPane.ID);
     myBuilder = new FileTreeModelBuilder(myProject, new Marker() {
       @Override
       public boolean isMarked(VirtualFile file) {

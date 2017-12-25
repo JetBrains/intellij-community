@@ -64,6 +64,9 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
       "    When when() default When.ALWAYS;\n" +
       "}",
 
+      "package a;\n" +
+      " public @interface CheckReturnValue {}",
+
       "package com.google.errorprone.annotations;" +
       "import java.lang.annotation.ElementType;\n" +
       "import java.lang.annotation.Retention;\n" +
@@ -89,6 +92,19 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void run() {\n" +
            "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
            "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
+           "  }\n" +
+           "}")
+  }
+
+  void testCustomCheckReturnValue() {
+    doTest("import a.CheckReturnValue;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  @CheckReturnValue\n" +
+           "  int lookAtMe() { return 1; }\n" +
+           "\n" +
+           "  void run() {\n" +
+           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/();\n" +
            "  }\n" +
            "}")
   }

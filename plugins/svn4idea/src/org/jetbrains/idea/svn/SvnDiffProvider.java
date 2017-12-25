@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.LatestExistentSearcher;
 import org.jetbrains.idea.svn.info.Info;
@@ -39,8 +41,6 @@ import org.jetbrains.idea.svn.info.InfoConsumer;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
@@ -74,7 +74,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     VcsRevisionNumber result = null;
 
     if (info != null) {
-      SVNRevision revision = SVNRevision.UNDEFINED.equals(info.getCommittedRevision()) && info.getCopyFromRevision() != null
+      Revision revision = Revision.UNDEFINED.equals(info.getCommittedRevision()) && info.getCopyFromRevision() != null
                              ? info.getCopyFromRevision()
                              : info.getRevision();
 
@@ -145,8 +145,8 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       return null;
     }
 
-    if (svnInfo.getCommittedRevision().equals(SVNRevision.UNDEFINED) &&
-        !svnInfo.getCopyFromRevision().equals(SVNRevision.UNDEFINED) &&
+    if (svnInfo.getCommittedRevision().equals(Revision.UNDEFINED) &&
+        !svnInfo.getCopyFromRevision().equals(Revision.UNDEFINED) &&
         svnInfo.getCopyFromURL() != null) {
       File localPath = myVcs.getSvnFileUrlMapping().getLocalPath(svnInfo.getCopyFromURL());
 
@@ -166,7 +166,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     try {
       PropertyValue property =
         myVcs.getFactory(path).createPropertyClient()
-          .getProperty(SvnTarget.fromFile(path), COMMIT_MESSAGE, true, info.getCommittedRevision());
+          .getProperty(Target.on(path), COMMIT_MESSAGE, true, info.getCommittedRevision());
 
       result = PropertyValue.toString(property);
     }
@@ -180,11 +180,11 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
 
   @NotNull
   private static ItemLatestState defaultResult() {
-    return createResult(SVNRevision.HEAD, true, true);
+    return createResult(Revision.HEAD, true, true);
   }
 
   @NotNull
-  private static ItemLatestState createResult(@NotNull SVNRevision revision, boolean exists, boolean defaultHead) {
+  private static ItemLatestState createResult(@NotNull Revision revision, boolean exists, boolean defaultHead) {
     return new ItemLatestState(new SvnRevisionNumber(revision), exists, defaultHead);
   }
 
@@ -198,18 +198,18 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @Override
   public ContentRevision createFileContent(@NotNull VcsRevisionNumber revisionNumber, @NotNull VirtualFile selectedFile) {
     FilePath filePath = VcsUtil.getFilePath(selectedFile);
-    SVNRevision svnRevision = ((SvnRevisionNumber)revisionNumber).getRevision();
+    Revision revision = ((SvnRevisionNumber)revisionNumber).getRevision();
 
-    if (!SVNRevision.HEAD.equals(svnRevision) && revisionNumber.equals(getCurrentRevision(selectedFile))) {
-      return SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision);
+    if (!Revision.HEAD.equals(revision) && revisionNumber.equals(getCurrentRevision(selectedFile))) {
+      return SvnContentRevision.createBaseRevision(myVcs, filePath, revision);
     }
 
     // not clear why we need it, with remote check..
     Status svnStatus = getFileStatus(virtualToIoFile(selectedFile), false);
 
-    return svnStatus != null && svnRevision.equals(svnStatus.getRevision())
-           ? SvnContentRevision.createBaseRevision(myVcs, filePath, svnRevision)
-           : SvnContentRevision.createRemote(myVcs, filePath, svnRevision);
+    return svnStatus != null && revision.equals(svnStatus.getRevision())
+           ? SvnContentRevision.createBaseRevision(myVcs, filePath, revision)
+           : SvnContentRevision.createRemote(myVcs, filePath, revision);
   }
 
   @Nullable
@@ -235,7 +235,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   @Nullable
   @Override
   public VcsRevisionNumber getLatestCommittedRevision(@NotNull VirtualFile vcsRoot) {
-    Info info = myVcs.getInfo(virtualToIoFile(vcsRoot), SVNRevision.HEAD);
+    Info info = myVcs.getInfo(virtualToIoFile(vcsRoot), Revision.HEAD);
 
     return info != null ? new SvnRevisionNumber(info.getCommittedRevision()) : null;
   }
@@ -244,9 +244,9 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   private ItemLatestState getLastRevision(@NotNull File file) {
     Status svnStatus = getFileStatus(file, true);
 
-    if (svnStatus == null || itemExists(svnStatus) && SVNRevision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
+    if (svnStatus == null || itemExists(svnStatus) && Revision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
       // IDEADEV-21785 (no idea why this can happen)
-      final Info info = myVcs.getInfo(file, SVNRevision.HEAD);
+      final Info info = myVcs.getInfo(file, Revision.HEAD);
       if (info == null || info.getURL() == null) {
         LOG.info("No SVN status returned for " + file.getPath());
         return defaultResult();
@@ -261,7 +261,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
   }
 
   @NotNull
-  private SVNRevision getLastExistingRevision(@NotNull File file, @NotNull Status svnStatus) {
+  private Revision getLastExistingRevision(@NotNull File file, @NotNull Status svnStatus) {
     WorkingCopyFormat format = myVcs.getWorkingCopyFormat(file);
     long revision = -1;
 
@@ -278,7 +278,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       }
     }
 
-    return SVNRevision.create(revision);
+    return Revision.of(revision);
   }
 
   private static boolean itemExists(@NotNull Status svnStatus) {

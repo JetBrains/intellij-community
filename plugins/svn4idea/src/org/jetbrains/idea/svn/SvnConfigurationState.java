@@ -28,9 +28,6 @@ public class SvnConfigurationState {
   @Attribute("maxAnnotateRevisions")
   public int maxAnnotateRevisions = SvnConfiguration.ourMaxAnnotateRevisionsDefault;
 
-  @Attribute("myUseAcceleration")
-  public SvnConfiguration.UseAcceleration accelerationType = SvnConfiguration.UseAcceleration.commandLine;
-
   public boolean runUnderTerminal;
 
   @Attribute("myAutoUpdateAfterCommit")

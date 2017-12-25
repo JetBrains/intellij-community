@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -187,7 +188,12 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         registerMethodCallOrRefError(call, aClass);
         return;
       }
-      final PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+
+      PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+      if (annotation == null) {
+        annotation = getAnnotationByShortNameCheckReturnValue(method);
+      }
+
       if (annotation != null) {
         final PsiElement owner = (PsiElement)annotation.getOwner();
         if (findAnnotationInTree(method, owner, Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue")) != null) {
@@ -198,6 +204,16 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       if (isHardcodedException(call)) return;
 
       registerMethodCallOrRefError(call, aClass);
+    }
+
+    private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
+      for (PsiAnnotation psiAnnotation : method.getAnnotations()) {
+        String qualifiedName = psiAnnotation.getQualifiedName();
+        if (qualifiedName != null && "CheckReturnValue".equals(StringUtil.getShortName(qualifiedName))) {
+          return psiAnnotation;
+        }
+      }
+      return null;
     }
 
     private boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {

@@ -1023,4 +1023,63 @@ module M {
 module M {
 }""")
   }
+
+  fun testRichHtml() {
+    getSettings().WRAP_COMMENTS = true
+    getSettings().RIGHT_MARGIN = 50
+    getJavaSettings().JD_ADD_BLANK_AFTER_DESCRIPTION = false
+    doTextTest(
+      """public class Test {
+    /**
+     * <h1>A description containing HTML tags</h1>
+     * <p>
+     *     There might be lists in descriptions like this one:
+     *     <ul>
+     *         <li>Item one</li>
+     *         <li>Item two</li>
+     *         <li>Item three</li>
+     *     </ul>
+     *     which should be left as is, without any tags merged.
+     * </p>
+     * @param a Parameter descriptions can also be long but tag
+     *          content should be left intact:
+     *          <ol>
+     *          <li>Another item one</li>
+     *          <li>Item two</li>
+     *          </ol>
+     */
+    void test(int a) {
+    }
+}
+""",
+
+      """public class Test {
+    /**
+     * <h1>A description containing HTML
+     * tags</h1>
+     * <p>
+     * There might be lists in descriptions like
+     * this one:
+     * <ul>
+     * <li>Item one</li>
+     * <li>Item two</li>
+     * <li>Item three</li>
+     * </ul>
+     * which should be left as is, without any
+     * tags merged.
+     * </p>
+     * @param a Parameter descriptions can also be
+     *          long but tag content should be
+     *          left intact:
+     *          <ol>
+     *          <li>Another item one</li>
+     *          <li>Item two</li>
+     *          </ol>
+     */
+    void test(int a) {
+    }
+}
+"""
+    )
+  }
 }

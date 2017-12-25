@@ -381,10 +381,23 @@ public class DarculaUIUtil {
     return JBUI.scale(2);
   }
 
+  public static double arc() {
+    return JBUI.scale(5.0f);
+  }
+
   public static Color getOutlineColor(boolean enabled) {
     if (UIUtil.isUnderDarcula()) {
       return enabled ? Gray._100 : Gray._83;
     }
     return Gray.xBC ;
+  }
+
+  public static Color getArrowButtonFillColor(boolean hasFocus, boolean enabled, Color defaultColor) {
+    Color color = UIManager.getColor(hasFocus ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
+    return color == null ? defaultColor : enabled ? color : getOutlineColor(false);
+  }
+
+  public static boolean isEmpty(Dimension d) {
+    return d == null || d.width == 0 && d.height == 0;
   }
 }

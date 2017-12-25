@@ -120,6 +120,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourSortByTypeDefaults = false;
   private final Map<String, Boolean> myShowModules = new THashMap<>();
   private static final boolean ourShowModulesDefaults = true;
+  private final Map<String, Boolean> myFlattenModules = new THashMap<>();
+  private static final boolean ourFlattenModulesDefaults = false;
   private final Map<String, Boolean> myShowLibraryContents = new THashMap<>();
   private static final boolean ourShowLibraryContentsDefaults = true;
   private final Map<String, Boolean> myHideEmptyPackages = new THashMap<>();
@@ -1661,6 +1663,23 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getGlobalOptions().setShowModules(showModules);
     }
     setPaneOption(myShowModules, showModules, paneId, true);
+  }
+
+  @Override
+  public boolean isFlattenModules(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getFlattenModules();
+    }
+
+    return getPaneOptionValue(myFlattenModules, paneId, ourFlattenModulesDefaults);
+  }
+
+  @Override
+  public void setFlattenModules(boolean flattenModules, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setFlattenModules(flattenModules);
+    }
+    setPaneOption(myFlattenModules, flattenModules, paneId, true);
   }
 
   @Override

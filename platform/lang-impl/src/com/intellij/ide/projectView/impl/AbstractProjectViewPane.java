@@ -10,6 +10,7 @@ import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.dnd.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.nodes.AbstractModuleNode;
@@ -19,10 +20,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -68,6 +66,7 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static final ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
@@ -263,6 +262,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   public void addToolbarActions(DefaultActionGroup actionGroup) {
+  }
+
+  protected ToggleAction createFlattenModulesAction(BooleanSupplier isApplicable) {
+    return new FlattenModulesToggleAction(myProject, () -> isApplicable.getAsBoolean() && ProjectView.getInstance(myProject).isShowModules(getId()),
+                                          () -> ProjectView.getInstance(myProject).isFlattenModules(getId()),
+                                          (value) -> ProjectView.getInstance(myProject).setFlattenModules(value, getId()));
   }
 
   @NotNull

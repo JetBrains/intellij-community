@@ -35,8 +35,10 @@ import com.intellij.diff.DiffTestCase
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.util.containers.ContainerUtil
 import java.io.File
+import java.util.*
 
 class DiffUtilTest : DiffTestCase() {
   fun `test getSortedIndexes`() {
@@ -153,5 +155,26 @@ class DiffUtilTest : DiffTestCase() {
       val actual = textToReadableFormat(patched)
       assertEquals(expected, actual, "$base\n$expected\n$actual")
     }
+  }
+
+  fun `test getLines`() {
+    fun doTest(text: String, expectedLines: List<String>) {
+      val document = DocumentImpl(text)
+      assertEquals(expectedLines, DiffUtil.getLines(document))
+
+      val lineOffsets = LineOffsetsUtil.create(text)
+      assertEquals(expectedLines, DiffUtil.getLines(text, lineOffsets))
+    }
+
+    doTest("", listOf(""))
+    doTest(" ", listOf(" "))
+    doTest("\n", listOf("", ""))
+    doTest("\na\n", listOf("", "a", ""))
+    doTest("\na", listOf("", "a"))
+    doTest("a\n\nb", listOf("a", "", "b"))
+    doTest("ab\ncd", listOf("ab", "cd"))
+    doTest("ab\ncd\n", listOf("ab", "cd", ""))
+    doTest("\nab\ncd", listOf("", "ab", "cd"))
+    doTest("\nab\ncd\n", listOf("", "ab", "cd", ""))
   }
 }

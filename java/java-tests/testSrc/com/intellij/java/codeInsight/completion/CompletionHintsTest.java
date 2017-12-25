@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -16,6 +18,8 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
@@ -787,6 +791,47 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><hint text=\", args:\"/>) } }");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
+  }
+
+  public void testBasicScenarioForConstructor() throws Exception {
+    enableConstructorVariantsCompletion();
+
+    // check hints appearance on completion
+    configureJava("class C { C(int a, int b) {} void m() { new C<caret> } }");
+    complete("C(int a, int b)");
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/>) } }");
+    // check that hints don't disappear after daemon highlighting passes
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/>) } }");
+
+    // test Tab/Shift+Tab navigation
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>, <HINT text=\"b:\"/><caret>) } }");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/>) } }");
+
+    // test hints remain shown while entering parameter values
+    myFixture.type("1");
+    next();
+    myFixture.type("2");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret>) } }");
+
+    // test hints don't disappear when caret moves out of parameter list
+    right();
+    right();
+    right();
+    right();
+
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2) } <caret>}");
+  }
+
+  private void enableConstructorVariantsCompletion() {
+    Registry.get("java.completion.show.constructors").setValue(true);
+    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
   }
 
   private void checkResult(String text) {

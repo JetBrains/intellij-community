@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -40,7 +39,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
-import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TLongArrayList;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledInBackground;
@@ -49,13 +47,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,7 +62,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
+import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
 public class TreeConflictRefreshablePanel implements Disposable {
@@ -158,8 +158,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @Nullable
-  private SVNRevision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
-    SVNRevision result = null;
+  private Revision getPegRevisionFromLeftSide(@NotNull TreeConflictDescription description) {
+    Revision result = null;
     if (description.getSourceLeftVersion() != null) {
       long committed = description.getSourceLeftVersion().getPegRevision();
       if (myCommittedRevision != null &&
@@ -167,7 +167,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
           myCommittedRevision.getRevision().isValid()) {
         committed = myCommittedRevision.getRevision().getNumber();
       }
-      result = SVNRevision.create(committed);
+      result = Revision.of(committed);
     }
     return result;
   }
@@ -178,7 +178,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   @NotNull
-  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable SVNRevision untilThisOther, boolean isLeft)
+  private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
     throws VcsException {
     ConflictSidePresentation result = EmptyConflictSide.getInstance();
     if (version != null &&
@@ -408,7 +408,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
                        ConflictVersion leftVersion, final String name, boolean directory) {
     final String leftPresentation = leftVersion == null ? name + ": (" + (directory ? "directory" : "file") +
                                                           (myChange.getBeforeRevision() == null ? ") added" : ") unversioned") :
-                                    name + ": " + FileUtil.toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
+                                    name + ": " + toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
     gb.insets.top = 10;
     main.add(new JLabel(leftPresentation), gb);
     ++gb.gridy;
@@ -474,22 +474,16 @@ public class TreeConflictRefreshablePanel implements Disposable {
     private final SvnHistoryProvider myProvider;
     private final FilePath myPath;
     private final SvnVcs myVcs;
-    private final SVNRevision myPeg;
+    private final Revision myPeg;
     private FileHistoryPanelImpl myFileHistoryPanel;
     private TLongArrayList myListToReportLoaded;
 
-    private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final SVNRevision peg) throws VcsException {
+    private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final Revision peg) throws VcsException {
       super(vcs.getProject(), version);
       myVcs = vcs;
       myPeg = peg;
-      try {
-        myPath = VcsUtil.getFilePathOnNonLocal(
-          version.getRepositoryRoot().appendPath(FileUtil.toSystemIndependentName(version.getPath()), true).toString(),
-          version.isDirectory());
-      }
-      catch (SVNException e) {
-        throw new VcsException(e);
-      }
+      myPath = getFilePathOnNonLocal(append(version.getRepositoryRoot(), toSystemIndependentName(version.getPath()), true).toString(),
+                                     version.isDirectory());
 
       mySessionAdapter = new VcsAppendableHistoryPartnerAdapter();
       /*mySessionAdapter.reportCreatedEmptySession(new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(),
@@ -508,7 +502,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
 
     @Override
     public void load() throws VcsException {
-      SVNRevision from = SVNRevision.create(myVersion.getPegRevision());
+      Revision from = Revision.of(myVersion.getPegRevision());
       myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, myPeg == null ? LIMIT : 0, myPeg, true);
       VcsAbstractHistorySession session = mySessionAdapter.getSession();
       if (myListToReportLoaded != null && session != null) {

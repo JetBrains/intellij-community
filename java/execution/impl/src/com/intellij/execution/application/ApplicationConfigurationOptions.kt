@@ -24,7 +24,6 @@ open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)
 
-  @get:OptionTag(tag = "envs", nameAttribute = "")
-  @get:MapAnnotation(surroundWithTag = false, entryTagName = "env", keyAttributeName = "name", sortBeforeSave = false)
+  @get:MapAnnotation(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name", sortBeforeSave = false)
   var env by property(LinkedHashMap<String, String>())
 }

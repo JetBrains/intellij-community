@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.i18n;
 
@@ -358,7 +360,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      final ProblemDescriptor[] descriptors = checkElement(initializer.getBody(), manager, isOnTheFly);
       if (descriptors != null) {
         ContainerUtil.addAll(result, descriptors);
       }
@@ -449,6 +451,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
 
     @Override
     public void visitMethod(PsiMethod method) {
+    }
+
+    @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
     }
 
     @Override

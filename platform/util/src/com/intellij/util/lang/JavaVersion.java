@@ -137,6 +137,7 @@ public final class JavaVersion {
    *
    * <p>Supports various sources, including (but not limited to):<br>
    *   - {@code "java.*version"} system properties (a version number without any decoration)<br>
+   *   - values of Java compiler -source/-target/--release options ("$MAJOR", "1.$MAJOR")</br>
    *   - output of "{@code java -version}" (usually "java version \"$VERSION\"")<br>
    *   - a second line of the above command (something like to "Java(TM) SE Runtime Environment (build $VERSION)")<br>
    *   - output of "{@code java --full-version}" ("java $VERSION")</p>
