@@ -18,6 +18,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -173,6 +174,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       }
       else {
         Disposer.dispose(this);
+        final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+        focusManager.doWhenFocusSettlesDown(() -> {
+          focusManager.requestDefaultFocus(true);
+        }, ModalityState.defaultModalityState());
       }
     }, getModalityState()));
     timer.setRepeats(false);
