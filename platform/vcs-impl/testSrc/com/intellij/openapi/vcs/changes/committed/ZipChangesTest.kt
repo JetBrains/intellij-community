@@ -21,9 +21,10 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.testFramework.UsefulTestCase
+import junit.framework.TestCase
 import java.util.*
 
-class ZipChangesTest : UsefulTestCase() {
+class ZipChangesTest : TestCase() {
   fun testTrivial() {
     test({
       !"A" - 0 - 1
