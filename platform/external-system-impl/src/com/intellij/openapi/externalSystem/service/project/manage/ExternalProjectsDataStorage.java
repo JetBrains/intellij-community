@@ -33,6 +33,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -72,6 +73,12 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   public ExternalProjectsDataStorage(@NotNull Project project) {
     myProject = project;
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
+  }
+
+  @TestOnly
+  public ExternalProjectsDataStorage(@NotNull Project project, @NotNull Alarm alarm) {
+    myProject = project;
+    myAlarm = alarm;
   }
 
   public synchronized void load() {
