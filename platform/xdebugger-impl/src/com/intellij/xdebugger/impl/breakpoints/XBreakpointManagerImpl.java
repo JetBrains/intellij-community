@@ -13,7 +13,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.vfs.ex.http.HttpVirtualFileListener;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -60,8 +59,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     myLineBreakpointManager = new XLineBreakpointManager(project, myDependentBreakpointManager, startupManager);
     if (!project.isDefault()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        HttpVirtualFileListener httpVirtualFileListener = this::updateBreakpointInFile;
-        HttpFileSystem.getInstance().addFileListener(httpVirtualFileListener, project);
+        HttpFileSystem.getInstance().addFileListener(this::updateBreakpointInFile, project);
       }
       XBreakpointUtil.breakpointTypes().forEach(this::addDefaultBreakpoint);
     }
