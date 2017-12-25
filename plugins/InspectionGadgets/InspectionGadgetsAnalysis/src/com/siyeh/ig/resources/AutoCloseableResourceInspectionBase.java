@@ -16,6 +16,7 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -28,6 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -197,8 +199,10 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
         return false;
       }
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      return !(variable instanceof PsiResourceVariable) &&
-             !isResourceEscapingFromMethod(variable, expression);
+      if(variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return false;
+      if (variable == null) return true;
+      return StreamEx.of(Extensions.getExtensions(ImplicitResourceCloser.EP_NAME))
+              .noneMatch(closer -> closer.isSafelyClosed(variable));
     }
   }
 }
