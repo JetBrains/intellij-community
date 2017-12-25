@@ -22,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.parseInt;
+
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   // For xml serialization
@@ -113,16 +115,16 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myDisabledDictionariesPaths.clear();
     try {
       // bundled
-      final int bundledDictionariesSize = Integer.valueOf(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME));
+      final int bundledDictionariesSize = parseInt(element.getAttributeValue(BUNDLED_DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < bundledDictionariesSize; i++) {
         myBundledDisabledDictionariesPaths.add(element.getAttributeValue(BUNDLED_DICTIONARY_ATTR_NAME + i));
       }
       // user
-      final int foldersSize = Integer.valueOf(element.getAttributeValue(FOLDERS_ATTR_NAME));
+      final int foldersSize = parseInt(element.getAttributeValue(FOLDERS_ATTR_NAME), 0);
       for (int i = 0; i < foldersSize; i++) {
         myCustomDictionariesPaths.add(element.getAttributeValue(FOLDER_ATTR_NAME + i));
       }
-      final int scriptsSize = Integer.valueOf(element.getAttributeValue(DICTIONARIES_ATTR_NAME));
+      final int scriptsSize = parseInt(element.getAttributeValue(DICTIONARIES_ATTR_NAME), 0);
       for (int i = 0; i < scriptsSize; i++) {
         myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
       }
