@@ -128,12 +128,18 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
-    actionGroup.addAction(createFlattenModulesAction(this::hasSeveralModuleNodes)).setAsSecondary(true);
+    //if there is a single content root in the project containing all other content roots (it's a rather common case) there will be no
+    // special module nodes so it's better to hide 'Flatten Modules' action to avoid confusion
+    actionGroup.addAction(createFlattenModulesAction(this::hasSeveralTopLevelModuleNodes)).setAsSecondary(true);
+
     actionGroup.addAction(new ShowExcludedFilesAction()).setAsSecondary(true);
     actionGroup.addAction(new ConfigureFilesNestingAction()).setAsSecondary(true);
   }
 
-  private boolean hasSeveralModuleNodes() {
+  /**
+   * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
+   */
+  private boolean hasSeveralTopLevelModuleNodes() {
     TreeModel treeModel = myTree.getModel();
     Object root = treeModel.getRoot();
     int count = treeModel.getChildCount(root);
