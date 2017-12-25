@@ -21,6 +21,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.codeInspection.ProblemDescriptorUtil.extractHighlightedText;
 import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.getLevelByName;
 
 public class SaveTo implements SpellCheckerQuickFix {
@@ -68,9 +69,7 @@ public class SaveTo implements SpellCheckerQuickFix {
     final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
     asyncResult.doWhenDone((Consumer<DataContext>)context -> {
       final SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
-      if (myWord == null) {
-        myWord = ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement());
-      }
+      final String wordToSave = myWord != null ? myWord : extractHighlightedText(descriptor, descriptor.getPsiElement());
       if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
         final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
         final JBList<String> dictList = new JBList<>(dictionaryList);
@@ -78,12 +77,12 @@ public class SaveTo implements SpellCheckerQuickFix {
           .createListPopupBuilder(dictList)
           .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
           .setItemChoosenCallback(
-            () -> spellCheckerManager.acceptWordAsCorrect(myWord, project, getLevelByName(dictList.getSelectedValue()), true))
+            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, project, getLevelByName(dictList.getSelectedValue()), true))
           .createPopup()
           .showInBestPositionFor(context);
       }
       else {
-        spellCheckerManager.acceptWordAsCorrect(myWord, project, myLevel, false);
+        spellCheckerManager.acceptWordAsCorrect(wordToSave, project, myLevel, false);
       }
     });
   }
