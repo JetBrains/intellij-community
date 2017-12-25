@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -24,7 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 
 import java.io.IOException;
@@ -34,18 +21,20 @@ import java.util.Set;
 /**
  * An interface to provide connection between compact internal representation of indexed elements and PSI
  */
-public interface LanguageLightRefAdapter  {
-  LanguageLightRefAdapter[] INSTANCES = new LanguageLightRefAdapter[]{new JavaLightUsageAdapter()};
+public interface LanguageCompilerRefAdapter {
+  ExtensionPointName<LanguageCompilerRefAdapter> EP_NAME = ExtensionPointName.create("com.intellij.languageCompilerRefAdapter");
+  
+  LanguageCompilerRefAdapter[] INSTANCES = EP_NAME.getExtensions();
 
   @Nullable
-  static LanguageLightRefAdapter findAdapter(@NotNull VirtualFile file) {
+  static LanguageCompilerRefAdapter findAdapter(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
     return findAdapter(fileType);
   }
 
   @Nullable
-  static LanguageLightRefAdapter findAdapter(@NotNull FileType fileType) {
-    for (LanguageLightRefAdapter adapter : INSTANCES) {
+  static LanguageCompilerRefAdapter findAdapter(@NotNull FileType fileType) {
+    for (LanguageCompilerRefAdapter adapter : INSTANCES) {
       if (adapter.getFileTypes().contains(fileType)) {
         return adapter;
       }
@@ -54,7 +43,7 @@ public interface LanguageLightRefAdapter  {
   }
 
   @Nullable
-  static LanguageLightRefAdapter findAdapter(@NotNull PsiElement element) {
+  static LanguageCompilerRefAdapter findAdapter(@NotNull PsiElement element) {
     final VirtualFile file = PsiUtilCore.getVirtualFile(element);
     return file == null ? null : findAdapter(file);
   }
@@ -68,33 +57,33 @@ public interface LanguageLightRefAdapter  {
    * @return
    */
   @Nullable
-  LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
+  CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
 
   /**
    * @return "hierarchy" of given element inside the libraries scope.
    */
   @NotNull
-  List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
-                                                      @NotNull PsiElement basePsi,
-                                                      @NotNull NameEnumerator names,
-                                                      @NotNull GlobalSearchScope libraryScope) throws IOException;
+  List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,
+                                                         @NotNull PsiElement basePsi,
+                                                         @NotNull NameEnumerator names,
+                                                         @NotNull GlobalSearchScope libraryScope) throws IOException;
 
   /**
    * class in java, class or object in some other jvm languages. used in direct inheritor search. This class object will be used to filter
    * inheritors of corresponding language among of other inheritors.
    *
-   * name of this LightUsage is always enumerated internal string name of language object, eg.: A$1$B
+   * name of this CompilerRef is always enumerated internal string name of language object, eg.: A$1$B
    */
   @NotNull
-  Class<? extends LightRef.LightClassHierarchyElementDef> getHierarchyObjectClass();
+  Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass();
 
   /**
    * functional expression: lambda or method reference. used in functional expression search
    *
-   * name of this LightUsage is always order-index inside source-code file
+   * name of this CompilerRef is always order-index inside source-code file
    */
   @NotNull
-  Class<? extends LightRef> getFunExprClass();
+  Class<? extends CompilerRef> getFunExprClass();
 
   /**
    * @return classes that can be inheritors of given superClass. This method shouldn't directly check are

@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
-import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
@@ -48,16 +33,16 @@ import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class DirtyScopeHolder extends UserDataHolderBase {
-  private final CompilerReferenceServiceImpl myService;
+  private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
   private final Object myLock = new Object();
@@ -71,9 +56,11 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
-  public DirtyScopeHolder(@NotNull CompilerReferenceServiceImpl service,
+  public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
                           FileDocumentManager fileDocumentManager,
-                          PsiDocumentManager psiDocumentManager){
+                          PsiDocumentManager psiDocumentManager,
+                          BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription
+                          ){
     myService = service;
     myFileDocManager = fileDocumentManager;
     myPsiDocManager = psiDocumentManager;
@@ -91,11 +78,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
         }
       });
 
-      connect.subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
-        if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
-          myCompilationAffectedModules.add(messageText);
-        }
-      });
+      compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
       connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
@@ -109,7 +92,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  void compilerActivityStarted() {
+  public void compilerActivityStarted() {
     final ExcludeEntryDescription[] excludeEntryDescriptions =
       CompilerConfiguration.getInstance(myService.getProject()).getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     synchronized (myLock) {
@@ -120,7 +103,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  void upToDateChecked(boolean isUpToDate) {
+  public void upToDateChecked(boolean isUpToDate) {
     final Module[] modules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -136,7 +119,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     });
   }
 
-  void compilerActivityFinished() {
+  public void compilerActivityFinished() {
     final List<Module> compiledModules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -165,7 +148,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
   }
 
-  GlobalSearchScope getDirtyScope() {
+  public GlobalSearchScope getDirtyScope() {
     final Project project = myService.getProject();
     return ReadAction.compute(() -> {
       synchronized (myLock) {
@@ -191,7 +174,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   @NotNull
-  Set<Module> getAllDirtyModules() {
+  public Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
@@ -210,11 +193,11 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     return dirtyModules;
   }
 
-  boolean contains(VirtualFile file) {
+  public boolean contains(VirtualFile file) {
     return getDirtyScope().contains(file);
   }
 
-  void installVFSListener() {
+  public void installVFSListener() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {

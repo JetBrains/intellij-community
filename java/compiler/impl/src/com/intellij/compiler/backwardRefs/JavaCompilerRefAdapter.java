@@ -16,7 +16,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 import org.jetbrains.jps.backwardRefs.NameEnumerator;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
+public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @NotNull
   @Override
   public Set<FileType> getFileTypes() {
@@ -33,7 +33,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
   }
 
   @Override
-  public LightRef asLightUsage(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException {
+  public CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException {
     if (mayBeVisibleOutsideOwnerFile(element)) {
       if (element instanceof PsiField) {
         final PsiField field = (PsiField)element;
@@ -46,7 +46,7 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
         if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
         if (nameId == 0) return null;
-        return new LightRef.JavaLightFieldRef(ownerId, nameId);
+        return new CompilerRef.JavaCompilerFieldRef(ownerId, nameId);
       }
       else if (element instanceof PsiMethod) {
         final PsiClass aClass = ((PsiMethod)element).getContainingClass();
@@ -60,14 +60,14 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
         if (ownerId == 0) return null;
         final int nameId = names.tryEnumerate(name);
         if (nameId == 0) return null;
-        return new LightRef.JavaLightMethodRef(ownerId, nameId, parametersCount);
+        return new CompilerRef.JavaCompilerMethodRef(ownerId, nameId, parametersCount);
       }
       else if (element instanceof PsiClass) {
         final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)element);
         if (jvmClassName != null) {
           final int nameId = names.tryEnumerate(jvmClassName);
           if (nameId != 0) {
-            return new LightRef.JavaLightClassRef(nameId);
+            return new CompilerRef.JavaCompilerClassRef(nameId);
           }
         }
       }
@@ -77,13 +77,13 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
 
   @NotNull
   @Override
-  public List<LightRef> getHierarchyRestrictedToLibraryScope(@NotNull LightRef baseRef,
-                                                             @NotNull PsiElement basePsi,
-                                                             @NotNull NameEnumerator names, @NotNull GlobalSearchScope libraryScope)
+  public List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,
+                                                                @NotNull PsiElement basePsi,
+                                                                @NotNull NameEnumerator names, @NotNull GlobalSearchScope libraryScope)
     throws IOException {
     final PsiClass baseClass = ObjectUtils.notNull(basePsi instanceof PsiClass ? (PsiClass)basePsi : ReadAction.compute(() -> (PsiMember)basePsi).getContainingClass());
 
-    final List<LightRef> overridden = new ArrayList<>();
+    final List<CompilerRef> overridden = new ArrayList<>();
     final IOException[] exception = new IOException[]{null};
     Processor<PsiClass> processor = c -> {
       if (c.hasModifierProperty(PsiModifier.PRIVATE)) return true;
@@ -111,14 +111,14 @@ public class JavaLightUsageAdapter implements LanguageLightRefAdapter {
 
   @NotNull
   @Override
-  public Class<? extends LightRef.LightClassHierarchyElementDef> getHierarchyObjectClass() {
-    return LightRef.LightClassHierarchyElementDef.class;
+  public Class<? extends CompilerRef.CompilerClassHierarchyElementDef> getHierarchyObjectClass() {
+    return CompilerRef.CompilerClassHierarchyElementDef.class;
   }
 
   @NotNull
   @Override
-  public Class<? extends LightRef> getFunExprClass() {
-    return LightRef.JavaLightFunExprDef.class;
+  public Class<? extends CompilerRef> getFunExprClass() {
+    return CompilerRef.JavaCompilerFunExprDef.class;
   }
 
   @NotNull

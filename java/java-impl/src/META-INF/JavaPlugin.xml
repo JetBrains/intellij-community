@@ -500,6 +500,7 @@
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
+    <languageCompilerRefAdapter implementation="com.intellij.compiler.backwardRefs.JavaCompilerRefAdapter"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Field assignment can be moved to initializer"

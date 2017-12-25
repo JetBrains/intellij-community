@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -23,8 +9,8 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public interface LightRef extends RW.Savable {
-  LightRef[] EMPTY_ARRAY = new LightRef[0];
+public interface CompilerRef extends RW.Savable {
+  CompilerRef[] EMPTY_ARRAY = new CompilerRef[0];
 
   byte CLASS_MARKER = 0x0;
   byte METHOD_MARKER = 0x1;
@@ -32,37 +18,37 @@ public interface LightRef extends RW.Savable {
   byte FUN_EXPR_MARKER = 0x3;
   byte ANONYMOUS_CLASS_MARKER = 0x4;
 
-  LightRef override(int newOwner);
+  CompilerRef override(int newOwner);
 
-  interface NamedLightRef extends LightRef {
-    NamedLightRef[] EMPTY_ARRAY = new NamedLightRef[0];
+  interface NamedCompilerRef extends CompilerRef {
+    NamedCompilerRef[] EMPTY_ARRAY = new NamedCompilerRef[0];
 
     int getName();
   }
 
-  interface LightClassHierarchyElementDef extends NamedLightRef {
-    LightClassHierarchyElementDef[] EMPTY_ARRAY = new LightClassHierarchyElementDef[0];
+  interface CompilerClassHierarchyElementDef extends NamedCompilerRef {
+    CompilerClassHierarchyElementDef[] EMPTY_ARRAY = new CompilerClassHierarchyElementDef[0];
 
   }
 
-  interface LightAnonymousClassDef extends LightClassHierarchyElementDef {
+  interface CompilerAnonymousClassDef extends CompilerClassHierarchyElementDef {
   }
 
-  interface LightFunExprDef extends LightRef {
+  interface CompilerFunExprDef extends CompilerRef {
     int getId();
   }
 
-  interface LightMember extends NamedLightRef {
+  interface CompilerMember extends NamedCompilerRef {
     @NotNull
-    LightClassHierarchyElementDef getOwner();
+    CompilerClassHierarchyElementDef getOwner();
   }
 
-  class JavaLightMethodRef implements LightMember {
+  class JavaCompilerMethodRef implements CompilerMember {
     private final int myOwner;
     private final int myName;
     private final int myParameterCount;
 
-    public JavaLightMethodRef(int owner, int name, int parameterCount) {
+    public JavaCompilerMethodRef(int owner, int name, int parameterCount) {
       myOwner = owner;
       myName = name;
       myParameterCount = parameterCount;
@@ -73,8 +59,8 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public LightRef override(int newOwner) {
-      return new JavaLightMethodRef(newOwner, myName, myParameterCount);
+    public CompilerRef override(int newOwner) {
+      return new JavaCompilerMethodRef(newOwner, myName, myParameterCount);
     }
 
     public int getParameterCount() {
@@ -83,8 +69,8 @@ public interface LightRef extends RW.Savable {
 
     @Override
     @NotNull
-    public LightClassHierarchyElementDef getOwner() {
-      return new JavaLightClassRef(myOwner);
+    public CompilerClassHierarchyElementDef getOwner() {
+      return new JavaCompilerClassRef(myOwner);
     }
 
     @Override
@@ -105,11 +91,11 @@ public interface LightRef extends RW.Savable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      JavaLightMethodRef usage = (JavaLightMethodRef)o;
+      JavaCompilerMethodRef methodRef = (JavaCompilerMethodRef)o;
 
-      if (myOwner != usage.myOwner) return false;
-      if (myName != usage.myName) return false;
-      if (myParameterCount != usage.myParameterCount) return false;
+      if (myOwner != methodRef.myOwner) return false;
+      if (myName != methodRef.myName) return false;
+      if (myParameterCount != methodRef.myParameterCount) return false;
 
       return true;
     }
@@ -123,11 +109,11 @@ public interface LightRef extends RW.Savable {
     }
   }
 
-  class JavaLightFieldRef implements LightMember {
+  class JavaCompilerFieldRef implements CompilerMember {
     private final int myOwner;
     private final int myName;
 
-    public JavaLightFieldRef(int owner, int name) {
+    public JavaCompilerFieldRef(int owner, int name) {
       myOwner = owner;
       myName = name;
     }
@@ -138,14 +124,14 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public LightRef override(int newOwner) {
-      return new JavaLightFieldRef(newOwner, myName);
+    public CompilerRef override(int newOwner) {
+      return new JavaCompilerFieldRef(newOwner, myName);
     }
 
     @NotNull
     @Override
-    public LightClassHierarchyElementDef getOwner() {
-      return new JavaLightClassRef(myOwner);
+    public CompilerClassHierarchyElementDef getOwner() {
+      return new JavaCompilerClassRef(myOwner);
     }
 
     @Override
@@ -165,10 +151,10 @@ public interface LightRef extends RW.Savable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      JavaLightFieldRef usage = (JavaLightFieldRef)o;
+      JavaCompilerFieldRef fieldRef = (JavaCompilerFieldRef)o;
 
-      if (myOwner != usage.myOwner) return false;
-      if (myName != usage.myName) return false;
+      if (myOwner != fieldRef.myOwner) return false;
+      if (myName != fieldRef.myName) return false;
 
       return true;
     }
@@ -179,13 +165,13 @@ public interface LightRef extends RW.Savable {
     }
   }
 
-  class JavaLightAnonymousClassRef implements LightAnonymousClassDef {
+  class JavaCompilerAnonymousClassRef implements CompilerAnonymousClassDef {
     private final int myName;
 
-    public JavaLightAnonymousClassRef(int name) {myName = name;}
+    public JavaCompilerAnonymousClassRef(int name) {myName = name;}
 
     @Override
-    public LightRef override(int newOwner) {
+    public CompilerRef override(int newOwner) {
       throw new UnsupportedOperationException();
     }
 
@@ -210,7 +196,7 @@ public interface LightRef extends RW.Savable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      JavaLightAnonymousClassRef ref = (JavaLightAnonymousClassRef)o;
+      JavaCompilerAnonymousClassRef ref = (JavaCompilerAnonymousClassRef)o;
 
       if (myName != ref.myName) return false;
 
@@ -223,10 +209,10 @@ public interface LightRef extends RW.Savable {
     }
   }
 
-  class JavaLightClassRef implements LightClassHierarchyElementDef {
+  class JavaCompilerClassRef implements CompilerClassHierarchyElementDef {
     private final int myName;
 
-    public JavaLightClassRef(int name) {
+    public JavaCompilerClassRef(int name) {
       myName = name;
     }
 
@@ -236,8 +222,8 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public LightRef override(int newOwner) {
-      return new JavaLightClassRef(newOwner);
+    public CompilerRef override(int newOwner) {
+      return new JavaCompilerClassRef(newOwner);
     }
 
     @Override
@@ -256,9 +242,9 @@ public interface LightRef extends RW.Savable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      JavaLightClassRef usage = (JavaLightClassRef)o;
+      JavaCompilerClassRef classRef = (JavaCompilerClassRef)o;
 
-      if (myName != usage.myName) return false;
+      if (myName != classRef.myName) return false;
 
       return true;
     }
@@ -269,10 +255,10 @@ public interface LightRef extends RW.Savable {
     }
   }
 
-  class JavaLightFunExprDef implements LightFunExprDef {
+  class JavaCompilerFunExprDef implements CompilerFunExprDef {
     private final int myId;
 
-    public JavaLightFunExprDef(int id) {
+    public JavaCompilerFunExprDef(int id) {
       myId = id;
     }
 
@@ -282,7 +268,7 @@ public interface LightRef extends RW.Savable {
     }
 
     @Override
-    public LightRef override(int newOwner) {
+    public CompilerRef override(int newOwner) {
       throw new UnsupportedOperationException();
     }
 
@@ -302,8 +288,8 @@ public interface LightRef extends RW.Savable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
-      JavaLightFunExprDef usage = (JavaLightFunExprDef)o;
-      return myId == usage.myId;
+      JavaCompilerFunExprDef funExprDef = (JavaCompilerFunExprDef)o;
+      return myId == funExprDef.myId;
     }
 
     @Override

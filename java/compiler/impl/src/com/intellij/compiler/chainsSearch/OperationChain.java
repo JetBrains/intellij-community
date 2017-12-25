@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
@@ -54,7 +54,7 @@ public class OperationChain {
     }
     else {
       TypeCast cast = (TypeCast)operation;
-      PsiClass operand = context.resolvePsiClass(cast.getLightRef());
+      PsiClass operand = context.resolvePsiClass(cast.getCompilerRef());
       PsiClass castType = context.resolvePsiClass(cast.getCastTypeRef());
       if (operand == null || castType == null) return null;
       return new OperationChain(operand, new ChainOperation[] {new ChainOperation.TypeCast(operand, castType)}, cast, null, weight);
