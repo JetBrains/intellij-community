@@ -853,7 +853,12 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
-  public void testReturnTypeInferenceInSubclassFromDocstring() {
+  /**
+   * TODO: activate when return type information from :rtype: will be available in subclasses.
+   *
+   * See {@code {@link com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider#getReturnTypeFromSupertype}} javadoc.
+   */
+  public void ignoreTestReturnTypeInferenceInSubclassFromDocstring() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> doTest("int",
@@ -871,7 +876,12 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
-  public void testReturnTypeInferenceInSubclassHierarchyFromDocstring() {
+  /**
+   * TODO: activate when return type information from :rtype: will be available in subclasses.
+   *
+   * See {@code {@link com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider#getReturnTypeFromSupertype}} javadoc.
+   */
+  public void ignoreTestReturnTypeInferenceInSubclassHierarchyFromDocstring() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> doTest("int",

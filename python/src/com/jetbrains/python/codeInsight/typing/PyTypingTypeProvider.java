@@ -251,26 +251,38 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyFunctionType getSuperFunctionType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+  private static PyFunction getOverriddenFunction(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     final Query<PsiElement> superMethodSearchQuery = PySuperMethodsSearch.search(function, context);
     final PsiElement firstSuperMethod = superMethodSearchQuery.findFirst();
 
-    if (firstSuperMethod instanceof PyFunction) {
-      final PyFunction superFunction = (PyFunction)firstSuperMethod;
+    if (!(firstSuperMethod instanceof PyFunction)) {
+      return null;
+    }
+    final PyFunction superFunction = (PyFunction)firstSuperMethod;
 
-      if (superFunction.getDecoratorList() != null) {
-        if (StreamEx.of(superFunction.getDecoratorList().getDecorators())
-          .map(PyDecorator::getName)
-          .nonNull()
-          .anyMatch(PyNames.OVERLOAD::equals)) {
-          return null;
-        }
+    if (superFunction.getDecoratorList() != null) {
+      if (StreamEx.of(superFunction.getDecoratorList().getDecorators())
+        .map(PyDecorator::getName)
+        .nonNull()
+        .anyMatch(PyNames.OVERLOAD::equals)) {
+        return null;
       }
+    }
 
-      final PyClass superClass = superFunction.getContainingClass();
-      if (superClass != null && !PyNames.OBJECT.equals(superClass.getName())) {
-        return (PyFunctionType)context.getType(superFunction);
-      }
+    final PyClass superClass = superFunction.getContainingClass();
+    if (superClass != null && !PyNames.OBJECT.equals(superClass.getName())) {
+      return superFunction;
+    }
+
+    return null;
+  }
+
+
+  @Nullable
+  private static PyFunctionType getOverriddenFunctionType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    final PyFunction overriddenFunction = getOverriddenFunction(function, context);
+    if (overriddenFunction != null) {
+      return (PyFunctionType)context.getType(overriddenFunction);
     }
 
     return null;
@@ -279,7 +291,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static Ref<PyType> getParameterTypeFromSupertype(
       @NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
-    final PyFunctionType superFunctionType = getSuperFunctionType(func, context);
+    final PyFunctionType superFunctionType = getOverriddenFunctionType(func, context);
 
     if (superFunctionType != null) {
       final PyFunctionType superFunctionTypeRemovedSelf = superFunctionType.dropSelf(context);
@@ -350,12 +362,30 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  /**
+   * Get function return type from supertype.
+   *
+   * The only source of type information in current implementation is annotation. This is to avoid false positives,
+   * that may arise from non direct type estimations (not from annotation, nor form type comments).
+   *
+   * TODO: switch to return type direct usage when type information source will be available.
+   *
+   * @param function
+   * @param context
+   * @return
+   */
   @Nullable
   private static Ref<PyType> getReturnTypeFromSupertype(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    final PyFunctionType superFunctionType = getSuperFunctionType(function, context);
+    final PyFunction overriddenFunction = getOverriddenFunction(function, context);
 
-    if (superFunctionType != null) {
-      return new Ref<>(context.getReturnType(superFunctionType.getCallable()));
+    if (overriddenFunction != null) {
+      PyExpression superFunctionAnnotation = getReturnTypeAnnotation(overriddenFunction, context);
+      if (superFunctionAnnotation != null) {
+        final Ref<PyType> typeRef = getType(superFunctionAnnotation, new Context(context));
+        if (typeRef != null) {
+          return Ref.create(toAsyncIfNeeded(function, typeRef.get()));
+        }
+      }
     }
 
     return null;
