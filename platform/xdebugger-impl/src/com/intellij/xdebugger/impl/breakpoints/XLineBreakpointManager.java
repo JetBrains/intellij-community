@@ -1,22 +1,9 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,12 +60,10 @@ public class XLineBreakpointManager {
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;
-  private final StartupManagerEx myStartupManager;
 
   public XLineBreakpointManager(@NotNull Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
     myProject = project;
     myDependentBreakpointManager = dependentBreakpointManager;
-    myStartupManager = (StartupManagerEx)startupManager;
 
     if (!myProject.isDefault()) {
       EditorEventMulticaster editorEventMulticaster = EditorFactory.getInstance().getEventMulticaster();
@@ -118,17 +103,9 @@ public class XLineBreakpointManager {
     project.getMessageBus().connect().subscribe(EditorColorsManager.TOPIC, new MyEditorColorsListener());
   }
 
-  public void updateBreakpointsUI() {
-    if (myProject.isDefault()) return;
-
-    DumbAwareRunnable runnable = () -> myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI);
-
-    if (ApplicationManager.getApplication().isUnitTestMode() || myStartupManager.startupActivityPassed()) {
-      runnable.run();
-    }
-    else {
-      myStartupManager.registerPostStartupActivity(runnable);
-    }
+  void updateBreakpointsUI() {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+      (DumbAwareRunnable)() -> myBreakpoints.keySet().forEach(XLineBreakpointImpl::updateUI));
   }
 
   public void registerBreakpoint(XLineBreakpointImpl breakpoint, final boolean initUI) {
