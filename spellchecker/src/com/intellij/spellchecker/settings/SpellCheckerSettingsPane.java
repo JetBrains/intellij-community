@@ -216,11 +216,11 @@ public class SpellCheckerSettingsPane implements Disposable {
       myListModel.removeAllElements();
     }
 
-    @Nullable
+    @NotNull
     public List<String> getWords() {
       Object[] pairs = getListItems();
       if (pairs == null) {
-        return null;
+        return new ArrayList<>();
       }
       List<String> words = new ArrayList<>();
       for (Object pair : pairs) {
@@ -232,9 +232,6 @@ public class SpellCheckerSettingsPane implements Disposable {
     public boolean isModified() {
       List<String> newWords = getWords();
       Set<String> words = manager.getUserDictionary().getEditableWords();
-      if (newWords == null) {
-        return false;
-      }
       if (newWords.size() != words.size()) {
         return true;
       }
