@@ -50,7 +50,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel myPanelForCustomDictionaries;
   private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
-  private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<>();
+  private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
@@ -75,24 +75,16 @@ public class SpellCheckerSettingsPane implements Disposable {
     linkContainer.add(link);
 
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
-    fillAllDictionaries();
+    fillBundledDictionaries();
 
     myDictionariesPanel = new CustomDictionariesPanel(settings, project);
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 
-    myBundledDictionariesChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
+    myBundledDictionariesChooserComponent = new OptionalChooserComponent<String>(bundledDictionaries) {
       @Override
       public JCheckBox createCheckBox(String path, boolean checked) {
-        if (isUserDictionary(path)) {
-          path = FileUtil.toSystemIndependentName(path);
-          final int i = path.lastIndexOf('/');
-          if (i != -1) {
-            final String name = path.substring(i + 1);
-            return new JCheckBox("[user] " + name, checked);
-          }
-        }
-        return new JCheckBox("[bundled] " + FileUtil.toSystemDependentName(path), checked);
+        return new JCheckBox(FileUtil.toSystemDependentName(path), checked);
       }
     };
 
@@ -126,36 +118,16 @@ public class SpellCheckerSettingsPane implements Disposable {
     myBundledDictionariesChooserComponent.apply();
     myDictionariesPanel.apply();
 
-    final HashSet<String> disabledDictionaries = new HashSet<>();
     final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
-    for (Pair<String, Boolean> pair : allDictionaries) {
+    for (Pair<String, Boolean> pair : bundledDictionaries) {
       if (!pair.second) {
-        final String scriptPath = pair.first;
-        if (isUserDictionary(scriptPath)) {
-          disabledDictionaries.add(scriptPath);
-        }
-        else {
-          bundledDisabledDictionaries.add(scriptPath);
-        }
+        bundledDisabledDictionaries.add(pair.first);
       }
 
     }
-    settings.setDisabledDictionariesPaths(disabledDictionaries);
     settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
 
     manager.updateBundledDictionaries(myDictionariesPanel.getRemovedDictionaries());
-  }
-
-  private boolean isUserDictionary(final String dictionary) {
-    boolean isUserDictionary = false;
-    for (String dictionaryFolder : myDictionariesPanel.getValues()) {
-      if (FileUtil.toSystemIndependentName(dictionary).startsWith(dictionaryFolder)) {
-        isUserDictionary = true;
-        break;
-      }
-    }
-    return isUserDictionary;
-
   }
 
   public void reset() {
@@ -164,10 +136,10 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
 
-  private void fillAllDictionaries() {
-    allDictionaries.clear();
+  private void fillBundledDictionaries() {
+    bundledDictionaries.clear();
     for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
-      allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
+      bundledDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
   }
 
