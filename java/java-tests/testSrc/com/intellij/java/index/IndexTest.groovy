@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -53,6 +54,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
+import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.JavaFileElementType
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.PsiFileWithStubSupport
@@ -460,6 +462,35 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("Foo3 class")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+  }
+
+  void "test no index stamp update when no change 2"() throws IOException {
+    final VirtualFile vFile = myFixture.configureByText(StdFileTypes.JAVA, """            
+            class Main111 {
+                static void staticMethod(Object o) {
+                  staticMethod(null);
+                }
+            }
+""").virtualFile
+    def stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaNullMethodArgumentIndex.INDEX_ID, project)
+    def data = new JavaNullMethodArgumentIndex.MethodCallData("staticMethod", 0)
+    def files = FileBasedIndex.instance.getContainingFiles(JavaNullMethodArgumentIndex.INDEX_ID, data, GlobalSearchScope.projectScope(project))
+    assertTrue(files.size() == 1)
+    assertEquals(files[0], vFile)
+
+    VfsUtil.saveText(vFile, """
+            class Main {
+                static void staticMethod(Object o) {
+                  staticMethod(null);
+                }
+            }
+""")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+    assertTrue(stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaNullMethodArgumentIndex.INDEX_ID, project))
+    files = FileBasedIndex.instance.getContainingFiles(JavaNullMethodArgumentIndex.INDEX_ID, data, GlobalSearchScope.projectScope(project))
+    assertTrue(files.size() == 1)
+    assertEquals(files[0], vFile)
   }
 
   void "test snapshot index in memory state after commit of unsaved document"() throws IOException {
