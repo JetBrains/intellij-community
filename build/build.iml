@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="jps-model-api" exported="" />
     <orderEntry type="module" module-name="jps-standalone-builder" exported="" />
     <orderEntry type="module-library" exported="" scope="PROVIDED">
-      <library>
+      <library name="commons-cli">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/commons-cli-1.2.jar!/" />
         </CLASSES>
