@@ -20,7 +20,6 @@ import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
 import com.intellij.compiler.chainsSearch.MethodCall;
 import com.intellij.compiler.chainsSearch.TypeCast;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.LightRef;
@@ -31,36 +30,33 @@ import java.util.SortedSet;
 /**
  * The service is used for / java completion sorting / java relevant chain completion / frequently used superclass inspection
  */
-public abstract class CompilerReferenceServiceEx extends CompilerReferenceService {
-  protected CompilerReferenceServiceEx(Project project) {
-    super(project);
-  }
-
+public interface CompilerReferenceServiceEx extends CompilerReferenceService {
   @NotNull
-  public abstract SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                              @SignatureData.IteratorKind byte iteratorKind,
-                                                                                              @NotNull ChainCompletionContext context)
+  SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                              @SignatureData.IteratorKind byte iteratorKind,
+                                                                              @NotNull ChainCompletionContext context)
     throws ReferenceIndexUnavailableException;
 
   @Nullable
-  public abstract ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
+  ChainOpAndOccurrences<TypeCast> getMostUsedTypeCast(@NotNull String operandQName)
     throws ReferenceIndexUnavailableException;
 
   @Nullable
-  public abstract LightRef.LightClassHierarchyElementDef mayCallOfTypeCast(@NotNull LightRef.JavaLightMethodRef method, int probabilityThreshold)
+  LightRef.LightClassHierarchyElementDef mayCallOfTypeCast(@NotNull LightRef.JavaLightMethodRef method, int probabilityThreshold)
     throws ReferenceIndexUnavailableException;
 
-  public abstract boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold)
+  boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold)
     throws ReferenceIndexUnavailableException;
 
   @NotNull
-  public abstract String getName(int idx)
+  String getName(int idx)
     throws ReferenceIndexUnavailableException;
 
-  public abstract int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException;
+  int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException;
 
   @NotNull
-  public abstract LightRef.LightClassHierarchyElementDef[] getDirectInheritors(LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException;
+  LightRef.LightClassHierarchyElementDef[] getDirectInheritors(LightRef.LightClassHierarchyElementDef baseClass)
+    throws ReferenceIndexUnavailableException;
 
-  public abstract int getInheritorCount(LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException;
+  int getInheritorCount(LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException;
 }

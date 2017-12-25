@@ -57,7 +57,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DirtyScopeHolder extends UserDataHolderBase {
-  private final CompilerReferenceServiceImpl myService;
+  private final CompilerReferenceServiceBase<?> myService;
   private final FileDocumentManager myFileDocManager;
   private final PsiDocumentManager myPsiDocManager;
   private final Object myLock = new Object();
@@ -71,7 +71,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
-  public DirtyScopeHolder(@NotNull CompilerReferenceServiceImpl service,
+  public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase service,
                           FileDocumentManager fileDocumentManager,
                           PsiDocumentManager psiDocumentManager){
     myService = service;

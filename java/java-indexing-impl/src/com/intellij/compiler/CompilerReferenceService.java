@@ -3,7 +3,7 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -20,14 +20,10 @@ import org.jetbrains.annotations.Nullable;
  * by {@link LanguageLightRefAdapter} extension. Any result provided by this service should be valid even if some part of a given project was
  * modified after compilation.
  */
-public abstract class CompilerReferenceService extends AbstractProjectComponent {
-  public static final RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
+public interface CompilerReferenceService extends ProjectComponent {
+  RegistryValue IS_ENABLED_KEY = Registry.get("compiler.ref.index");
 
-  protected CompilerReferenceService(Project project) {
-    super(project);
-  }
-
-  public static CompilerReferenceService getInstance(@NotNull Project project) {
+  static CompilerReferenceService getInstance(@NotNull Project project) {
     return project.getComponent(CompilerReferenceService.class);
   }
 
@@ -35,16 +31,16 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
    * @return a scope where given element has no references in code. This scope might be not a strict scope where element is not occurred.
    */
   @Nullable
-  public abstract GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element);
+  GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element);
 
   /**
    * @return a hierarchy of direct inheritors built on compilation time.
    * This hierarchy is restricted by searchFileType and searchScope.
    */
   @Nullable
-  public abstract CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                                  @NotNull GlobalSearchScope searchScope,
-                                                                  @NotNull FileType searchFileType);
+  CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                  @NotNull GlobalSearchScope searchScope,
+                                                  @NotNull FileType searchFileType);
 
 
   /**
@@ -52,19 +48,19 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
    * This hierarchy is restricted by searchFileType and searchScope.
    */
   @Nullable
-  public abstract CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
-                                                                @NotNull GlobalSearchScope searchScope,
-                                                                @NotNull FileType searchFileType);
+  CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
+                                                @NotNull GlobalSearchScope searchScope,
+                                                @NotNull FileType searchFileType);
 
   /**
    * @return count of references that were observed on compile-time (in the last compilation) or null if given element is not supported for some reason.
    */
   @Nullable
-  public abstract Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorCompletion);
+  Integer getCompileTimeOccurrenceCount(@NotNull PsiElement element, boolean isConstructorCompletion);
 
-  public abstract boolean isActive();
+  boolean isActive();
 
-  public static boolean isEnabled() {
+  static boolean isEnabled() {
     return IS_ENABLED_KEY.asBoolean();
   }
 }

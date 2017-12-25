@@ -18,10 +18,12 @@ package org.jetbrains.jps.backwardRefs;
 import com.intellij.util.Function;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.indexing.InvertedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
+import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndexUtil;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndexDescriptor;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -34,25 +36,15 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 
-public class BackwardReferenceIndexWriter {
+public class BackwardReferenceIndexWriter extends CompilerReferenceIndexWriter<CompiledFileData> {
   public static final String PROP_KEY = "jps.backward.ref.index.builder";
+  private static final CompilerIndexDescriptor<?> DESCRIPTOR = BackwardReferenceIndexDescriptor.INSTANCE;
 
   private static volatile BackwardReferenceIndexWriter ourInstance;
 
-  private final CompilerBackwardReferenceIndex myIndex;
-
   private BackwardReferenceIndexWriter(CompilerBackwardReferenceIndex index) {
-    myIndex = index;
-  }
-
-  Throwable getRebuildRequestCause() {
-    return myIndex.getRebuildRequestCause();
-  }
-
-  void setRebuildCause(Throwable e) {
-    myIndex.setRebuildRequestCause(e);
+    super(index);
   }
 
   public static void closeIfNeed(boolean clearIndex) {
@@ -80,26 +72,25 @@ public class BackwardReferenceIndexWriter {
       boolean isRebuild = isRebuildInAllJavaModules(context);
 
       if (!JavaCompilers.JAVAC_ID.equals(JavaBuilder.getUsedCompilerId(context)) || !JavaBuilder.IS_ENABLED.get(context, Boolean.TRUE)) {
-        CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
+        CompilerReferenceIndexUtil.removeIndexFiles(buildDir, DESCRIPTOR);
         return;
       }
       if (isRebuild) {
-        CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
-      }
-      else if (CompilerBackwardReferenceIndex.versionDiffers(buildDir)) {
-        CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
-        if ((attempt == 0 && areAllJavaModulesAffected(context)) ) {
+        CompilerReferenceIndexUtil.removeIndexFiles(buildDir, DESCRIPTOR);
+      } else if (CompilerReferenceIndexUtil.versionDiffers(buildDir, DESCRIPTOR)) {
+        CompilerReferenceIndexUtil.removeIndexFiles(buildDir, DESCRIPTOR);
+        if ((attempt == 0 && areAllJavaModulesAffected(context))) {
           throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
         } else {
           // do not request a rebuild if a project is affected incompletely and version is changed, just disable indices
         }
       }
 
-      if (CompilerBackwardReferenceIndex.exist(buildDir) || isRebuild) {
+      if (CompilerReferenceIndexUtil.exists(buildDir, DESCRIPTOR) || isRebuild) {
         ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false));
       }
     } else {
-      CompilerBackwardReferenceIndex.removeIndexFiles(buildDir);
+      CompilerReferenceIndexUtil.removeIndexFiles(buildDir, DESCRIPTOR);
     }
   }
 
@@ -109,26 +100,6 @@ public class BackwardReferenceIndexWriter {
 
   synchronized LightRef.JavaLightClassRef asClassUsage(JavacRef aClass) throws IOException {
     return new LightRef.JavaLightClassRef(id(aClass, myIndex.getByteSeqEum()));
-  }
-
-  void processDeletedFiles(Collection<String> files) throws IOException {
-    for (String file : files) {
-      writeData(enumeratePath(new File(file).getPath()), null);
-    }
-  }
-
-  void writeData(int id, CompiledFileData d) {
-    for (InvertedIndex<?, ?, CompiledFileData> index : myIndex.getIndices()) {
-      index.update(id, d).compute();
-    }
-  }
-
-  synchronized int enumeratePath(String file) throws IOException {
-    return myIndex.getFilePathEnumerator().enumerate(file);
-  }
-
-  private void close() {
-    myIndex.close();
   }
 
   @Nullable
