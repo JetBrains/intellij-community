@@ -4,9 +4,11 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.backwardRefs.BackwardReferenceIndexReaderFactory.BackwardReferenceReader;
+import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
@@ -15,6 +17,7 @@ import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
 import com.intellij.compiler.chainsSearch.TypeCast;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 import one.util.streamex.StreamEx;
@@ -28,7 +31,14 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceBase<B
   public CompilerReferenceServiceImpl(Project project,
                                       FileDocumentManager fileDocumentManager,
                                       PsiDocumentManager psiDocumentManager) {
-    super(project, fileDocumentManager, psiDocumentManager, BackwardReferenceIndexReaderFactory.INSTANCE);
+    super(project, fileDocumentManager, psiDocumentManager, BackwardReferenceIndexReaderFactory.INSTANCE, (compilationAffectedModules) -> {
+      MessageBusConnection connection = project.getMessageBus().connect();
+      connection.subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
+        if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
+          compilationAffectedModules.add(messageText);
+        }
+      }); 
+    });
   }
   @NotNull
   @Override

@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -84,13 +85,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   public CompilerReferenceServiceBase(Project project, FileDocumentManager fileDocumentManager,
                                       PsiDocumentManager psiDocumentManager, 
-                                      CompilerReferenceReaderFactory<? extends Reader> readerFactory) {
+                                      CompilerReferenceReaderFactory<? extends Reader> readerFactory,
+                                      Consumer<Set<String>> compilationAffectedModulesSubscription) {
     super(project);
 
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = Stream.of(LanguageLightRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    myDirtyScopeHolder = new DirtyScopeHolder(this, fileDocumentManager, psiDocumentManager);
+    myDirtyScopeHolder = new DirtyScopeHolder(this, fileDocumentManager, psiDocumentManager, compilationAffectedModulesSubscription);
   }
 
   @Override

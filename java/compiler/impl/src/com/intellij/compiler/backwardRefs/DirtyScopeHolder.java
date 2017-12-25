@@ -19,7 +19,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
-import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
@@ -33,6 +32,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -48,12 +49,12 @@ import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class DirtyScopeHolder extends UserDataHolderBase {
@@ -71,9 +72,11 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
-  public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase service,
+  public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
                           FileDocumentManager fileDocumentManager,
-                          PsiDocumentManager psiDocumentManager){
+                          PsiDocumentManager psiDocumentManager,
+                          Consumer<Set<String>> compilationAffectedModulesSubscription
+                          ){
     myService = service;
     myFileDocManager = fileDocumentManager;
     myPsiDocManager = psiDocumentManager;
@@ -91,11 +94,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
         }
       });
 
-      connect.subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
-        if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
-          myCompilationAffectedModules.add(messageText);
-        }
-      });
+      compilationAffectedModulesSubscription.accept(myCompilationAffectedModules);
 
       connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override
