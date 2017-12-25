@@ -60,7 +60,7 @@ class UndoableGroup {
     myTransparent = transparent;
     myValid = valid;
     composeStartFinishGroup(manager.getUndoStacksHolder());
-    myTemporary = !manager.getRedoStacksHolder().collectClashingActions(this).isEmpty();
+    myTemporary = transparent;
   }
 
   public boolean isGlobal() {
