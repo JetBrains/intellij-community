@@ -332,8 +332,9 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
       waitForCommit(document, i);
       WriteCommandAction.runWriteCommandAction(null, () -> document.deleteString(0, "/**/".length()));
       waitTenSecondsForCommit(document);
+      String dumpBefore = ThreadDumper.dumpThreadsToString();
       if (!getPsiDocumentManager().isCommitted(document)) {
-        printThreadDump();
+        System.err.println("Thread dump1:\n"+dumpBefore+"\n;Thread dump2:\n"+ThreadDumper.dumpThreadsToString());
         fail("Still not committed: " + document);
       }
     }
@@ -628,7 +629,8 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     waitForCommit(document, 10000);
   }
 
-  private void waitForCommit(Document document, int millis) {
+  private void waitForCommit(@NotNull Document document, int millis) {
+    assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed());
     long start = System.currentTimeMillis();
     while (System.currentTimeMillis() - start < millis && !getPsiDocumentManager().isCommitted(document)) {
       UIUtil.dispatchAllInvocationEvents();
