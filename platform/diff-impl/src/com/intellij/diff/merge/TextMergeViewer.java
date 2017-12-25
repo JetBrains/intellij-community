@@ -1320,8 +1320,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         List<AnAction> actions = new ArrayList<>();
         actions.add(new ShowPrevChangeMarkerAction(editor, range));
         actions.add(new ShowNextChangeMarkerAction(editor, range));
-        actions.add(new ShowLineStatusRangeDiffAction(range));
-        actions.add(new CopyLineStatusRangeAction(range));
+        actions.add(new ShowLineStatusRangeDiffAction(editor, range));
+        actions.add(new CopyLineStatusRangeAction(editor, range));
         actions.add(new ToggleByWordDiffAction(editor, range, mousePosition));
         return actions;
       }
