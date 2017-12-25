@@ -86,6 +86,24 @@ public class SpellCheckerSettingsPane implements Disposable {
       public JCheckBox createCheckBox(String path, boolean checked) {
         return new JCheckBox(FileUtil.toSystemDependentName(path), checked);
       }
+
+      @Override
+      public void apply() {
+        super.apply();
+        final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
+        for (Pair<String, Boolean> pair : bundledDictionaries) {
+          if (!pair.second) {
+            bundledDisabledDictionaries.add(pair.first);
+          }
+        }
+        settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
+      }
+
+      @Override
+      public void reset() {
+        super.reset();
+        fillBundledDictionaries();
+      }
     };
 
     myPanelForBundledDictionaries.setLayout(new BorderLayout());
@@ -117,15 +135,6 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     myBundledDictionariesChooserComponent.apply();
     myDictionariesPanel.apply();
-
-    final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
-    for (Pair<String, Boolean> pair : bundledDictionaries) {
-      if (!pair.second) {
-        bundledDisabledDictionaries.add(pair.first);
-      }
-
-    }
-    settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
 
     manager.updateBundledDictionaries(myDictionariesPanel.getRemovedDictionaries());
   }
