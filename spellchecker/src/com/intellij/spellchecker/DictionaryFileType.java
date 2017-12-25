@@ -36,8 +36,7 @@ public class DictionaryFileType implements FileType {
   @Nullable
   @Override
   public Icon getIcon() {
-    // TODO: request an icon DSGN-4790
-    return SpellcheckerIcons.Spellcheck;
+    return SpellcheckerIcons.Dictionary;
   }
 
   @Override
