@@ -29,6 +29,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import com.jetbrains.python.run.PyTargetType;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -199,7 +200,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
 
 
     protected void validateConfiguration() {
-      getConfiguration().getTarget().setTargetType(TestTargetType.PATH);
+      getConfiguration().getTarget().setTargetType(PyTargetType.PATH);
       getConfiguration().getTarget().setTarget("");
 
       getConfiguration().checkConfiguration();

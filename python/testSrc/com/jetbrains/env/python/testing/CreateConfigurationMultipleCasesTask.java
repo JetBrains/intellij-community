@@ -23,7 +23,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.run.PyTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -122,10 +122,10 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertEquals("Bad configuration target", "test_functions.test_test", target.getTarget());
     }
     else if (element instanceof PyFunction && elementName.endsWith("foo")) {
-      Assert.assertEquals("non-test function should lead to level-based test", TestTargetType.PATH, target.getTargetType());
+      Assert.assertEquals("non-test function should lead to level-based test", PyTargetType.PATH, target.getTargetType());
     }
     else if (element instanceof PyFile && elementName.endsWith("test_foo.py")) {
-      Assert.assertEquals("Wrong path for file-based target", TestTargetType.PATH, target.getTargetType());
+      Assert.assertEquals("Wrong path for file-based target", PyTargetType.PATH, target.getTargetType());
     }
     else {
       throw new AssertionError("Unexpected configuration " + configuration);

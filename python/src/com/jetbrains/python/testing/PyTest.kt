@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.ConfigField
+import com.jetbrains.python.run.PyTargetType
 
 /**
  * Py.test runner
@@ -31,7 +32,7 @@ import com.jetbrains.python.run.ConfigField
 class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration, PyTestSharedForm.CustomOption(
-      PyTestConfiguration::keywords.name, TestTargetType.PATH, TestTargetType.PYTHON)))
+      PyTestConfiguration::keywords.name, PyTargetType.PATH, PyTargetType.PYTHON)))
 
 class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyTestConfiguration>(configuration, environment) {

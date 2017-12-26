@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.ConfigField
+import com.jetbrains.python.run.PyTargetType
 
 /**
  * unittest
@@ -35,7 +36,7 @@ import com.jetbrains.python.run.ConfigField
 class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration,
-                            PyTestSharedForm.CustomOption(PyUnitTestConfiguration::pattern.name, TestTargetType.PATH)
+                            PyTestSharedForm.CustomOption(PyUnitTestConfiguration::pattern.name, PyTargetType.PATH)
     ))
 
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
@@ -67,7 +68,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String {
     // Pattern can only be used with folders ("all in folder" in legacy terms)
-    if ((!pattern.isNullOrEmpty()) && target.targetType != TestTargetType.CUSTOM) {
+    if ((!pattern.isNullOrEmpty()) && target.targetType != PyTargetType.CUSTOM) {
       val path = LocalFileSystem.getInstance().findFileByPath(target.target) ?: return ""
       // "Pattern" works only for "discovery" mode and for "rerun" we are using "python" targets ("concrete" tests)
       return if (path.isDirectory && !forRerun) "-p $pattern" else ""
@@ -82,7 +83,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
    * @return configuration should use runner for setup.py
    */
   internal fun isSetupPyBased(): Boolean {
-    val setupPy = target.targetType == TestTargetType.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
+    val setupPy = target.targetType == PyTargetType.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
     return setupPy
   }
 
@@ -91,7 +92,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    if (target.targetType == TestTargetType.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
+    if (target.targetType == PyTargetType.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
       throw RuntimeConfigurationWarning("Pattern can only be used to match files in folder. Can't use pattern for file.")
     }
   }

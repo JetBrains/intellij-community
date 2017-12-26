@@ -61,7 +61,6 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.*
 import com.jetbrains.reflection.DelegationProperty
-import com.jetbrains.reflection.getProperties
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
@@ -196,7 +195,7 @@ object PyTestsLocator : SMTestLocator {
       val pathNoParentheses = QualifiedName.fromComponents(
         qualifiedName.components.filter { !it.contains('(') }).toString()
       return listOf(
-        PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, TestTargetType.PYTHON), element))
+        PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, PyTargetType.PYTHON), element))
     }
     else {
       return listOf()
@@ -239,12 +238,6 @@ abstract class PyAbstractTestSettingsEditor(private val sharedForm: PyTestShared
   override fun createEditor(): javax.swing.JComponent = sharedForm.panel
 }
 
-enum class TestTargetType(private val customName: String? = null) {
-  PYTHON(PythonRunConfigurationForm.MODULE_NAME), PATH(PythonRunConfigurationForm.SCRIPT_PATH), CUSTOM;
-
-  fun getCustomName() = customName ?: name
-}
-
 /**
  * Default target path (run all tests ion project folder)
  */
@@ -254,7 +247,7 @@ private val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField var target: String,
-                               @ConfigField var targetType: TestTargetType) {
+                               @ConfigField var targetType: PyTargetType) {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -265,10 +258,10 @@ data class ConfigurationTarget(@ConfigField var target: String,
    * Validates configuration and throws exception if target is invalid
    */
   fun checkValid() {
-    if (targetType != TestTargetType.CUSTOM && target.isEmpty()) {
+    if (targetType != PyTargetType.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning("Target not provided")
     }
-    if (targetType == TestTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target)) {
+    if (targetType == PyTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target)) {
       throw RuntimeConfigurationWarning("Provide a qualified name of function, class or a module")
     }
   }
@@ -277,7 +270,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
    * Converts target to PSI element if possible resolving it against roots and working directory
    */
   fun asPsiElement(configuration: PyAbstractTestConfiguration): PsiElement? {
-    if (targetType == TestTargetType.PYTHON) {
+    if (targetType == PyTargetType.PYTHON) {
       val module = configuration.module ?: return null
       val context = TypeEvalContext.userInitiated(configuration.project, null)
       val workDir = configuration.getWorkingDirectoryAsVirtual()
@@ -291,7 +284,7 @@ data class ConfigurationTarget(@ConfigField var target: String,
    * Converts target to file if possible
    */
   fun asVirtualFile(): VirtualFile? {
-    if (targetType == TestTargetType.PATH) {
+    if (targetType == PyTargetType.PATH) {
       return LocalFileSystem.getInstance().findFileByPath(target)
     }
     return null
@@ -299,9 +292,9 @@ data class ConfigurationTarget(@ConfigField var target: String,
 
   fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
     when (targetType) {
-      TestTargetType.CUSTOM -> emptyList()
-      TestTargetType.PYTHON -> getArgumentsForPythonTarget(configuration)
-      TestTargetType.PATH -> listOf("--path", target.trim())
+      PyTargetType.CUSTOM -> emptyList()
+      PyTargetType.PYTHON -> getArgumentsForPythonTarget(configuration)
+      PyTargetType.PATH -> listOf("--path", target.trim())
     }
 
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> {
@@ -397,7 +390,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     RefactoringListenerProvider,
     ConfigurationWithFields {
   @DelegationProperty
-  val target = ConfigurationTarget(DEFAULT_PATH, TestTargetType.PATH)
+  val target = ConfigurationTarget(DEFAULT_PATH, PyTargetType.PATH)
   @ConfigField
   var additionalArguments = ""
 
@@ -526,7 +519,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     val qualifiedName = (location.psiElement as PyQualifiedNameOwner).qualifiedName ?: return emptyList()
 
     // Resolve name as python qname as last resort
-    return ConfigurationTarget(qualifiedName, TestTargetType.PYTHON).generateArgumentsLine(this)
+    return ConfigurationTarget(qualifiedName, PyTargetType.PYTHON).generateArgumentsLine(this)
   }
 
   override fun getTestSpec(location: Location<*>,
@@ -567,11 +560,11 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   override fun suggestedName() =
     when (target.targetType) {
-      TestTargetType.PATH -> {
+      PyTargetType.PATH -> {
         val name = target.asVirtualFile()?.name
         "$testFrameworkName in " + (name ?: target.target)
       }
-      TestTargetType.PYTHON -> {
+      PyTargetType.PYTHON -> {
         "$testFrameworkName for " + target.target
       }
       else -> {
@@ -587,7 +580,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   fun reset() {
     target.target = DEFAULT_PATH
-    target.targetType = TestTargetType.PATH
+    target.targetType = PyTargetType.PATH
     additionalArguments = ""
   }
 
@@ -611,8 +604,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
    * Checks if element could be test target for this config.
    * Function is used to create tests by context.
    *
-   * If yes, and element is [PsiElement] then it is [TestTargetType.PYTHON].
-   * If file then [TestTargetType.PATH]
+   * If yes, and element is [PsiElement] then it is [PyTargetType.PYTHON].
+   * If file then [PyTargetType.PATH]
    */
   fun couldBeTestTarget(element: PsiElement): Boolean {
 
@@ -741,7 +734,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
                                               folderToStart = workingDirectory.virtualFile)
             val parts = element.tryResolveAndSplit(context) ?: return null
             val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
-            return Pair(ConfigurationTarget(qualifiedName.toString(), TestTargetType.PYTHON),
+            return Pair(ConfigurationTarget(qualifiedName.toString(), PyTargetType.PYTHON),
                         workingDirectory.virtualFile.path)
           }
           is PsiFileSystemItem -> {
@@ -753,7 +746,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
                                      is PsiDirectory -> element
                                      else -> return null
                                    }?.virtualFile?.path ?: return null
-            return Pair(ConfigurationTarget(path.path, TestTargetType.PATH), workingDirectory)
+            return Pair(ConfigurationTarget(path.path, PyTargetType.PATH), workingDirectory)
           }
         }
       }
