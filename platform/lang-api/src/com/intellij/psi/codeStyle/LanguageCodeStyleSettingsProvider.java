@@ -97,7 +97,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    */
   @Nullable
   public CommonCodeStyleSettings getDefaultCommonSettings() {
-    return null;
+    return new CommonCodeStyleSettings(getLanguage());
   }
 
   /**
