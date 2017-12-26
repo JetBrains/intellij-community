@@ -20,11 +20,16 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.ui.SeparatorComponent;
@@ -45,6 +50,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +62,7 @@ import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresenta
 /**
  * @author Kirill Likhodedov
  */
-public class DetailsPanel extends JPanel implements EditorColorsListener {
+public class DetailsPanel extends JPanel implements EditorColorsListener, Disposable {
   private static final int MAX_ROWS = 50;
   private static final int MIN_SIZE = 20;
 
@@ -71,6 +77,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
   @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
+  @Nullable private ProgressIndicator myResolveIndicator = null;
 
   public DetailsPanel(@NotNull VcsLogData logData,
                       @NotNull VcsLogColorManager colorManager,
@@ -105,6 +112,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     add(myLoadingPanel, BorderLayout.CENTER);
 
     myEmptyText.setText("Commit details");
+    Disposer.register(parent, this);
   }
 
   @Override
@@ -172,8 +180,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
                              @NotNull Set<String> unResolvedHashes,
                              @NotNull Condition<Object> expired) {
     if (!unResolvedHashes.isEmpty()) {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
         Map<String, CommitId> resolvedHashes = ContainerUtil.newHashMap();
+
         for (String hashString : unResolvedHashes) {
           CommitId commitId = myLogData.getStorage().findCommitId(new CommitIdByStringCondition(hashString));
           if (commitId != null) {
@@ -183,8 +192,20 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
         List<CommitPresentation> resolvedPresentations = ContainerUtil.map2List(presentations,
                                                                                 presentation -> presentation.resolve(resolvedHashes));
-        ApplicationManager.getApplication().invokeLater(() -> setPresentations(ids, resolvedPresentations), expired);
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        ApplicationManager.getApplication().invokeLater(() -> {
+                                                          myResolveIndicator = null;
+                                                          setPresentations(ids, resolvedPresentations);
+                                                        },
+                                                        Conditions.or(o -> myResolveIndicator != indicator, expired));
       });
+    }
+  }
+
+  private void cancelResolve() {
+    if (myResolveIndicator != null) {
+      myResolveIndicator.cancel();
+      myResolveIndicator = null;
     }
   }
 
@@ -206,6 +227,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
   public Dimension getMinimumSize() {
     Dimension minimumSize = super.getMinimumSize();
     return new Dimension(Math.max(minimumSize.width, JBUI.scale(MIN_SIZE)), Math.max(minimumSize.height, JBUI.scale(MIN_SIZE)));
+  }
+
+  @Override
+  public void dispose() {
+    cancelResolve();
   }
 
   private class CommitSelectionListenerForDetails extends CommitSelectionListener {
@@ -235,6 +261,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     @Override
     protected void onSelection(@NotNull int[] selection) {
+      cancelResolve();
       rebuildCommitPanels(selection);
       final List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -255,6 +282,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     @Override
     protected void onEmptySelection() {
+      cancelResolve();
       setEmpty("No commits selected");
     }
 
