@@ -173,7 +173,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" filepath="$PROJECT_DIR$/java/jsp-spi/jsp-spi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit/junit.iml" filepath="$PROJECT_DIR$/plugins/junit/junit.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit5_rt/junit5_rt.iml" filepath="$PROJECT_DIR$/plugins/junit5_rt/junit5_rt.iml" group="plugins" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/junit5_rt_tests/junit5_rt_tests.iml" filepath="$PROJECT_DIR$/plugins/junit5_rt_tests/junit5_rt_tests.iml" group="community/plugins" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/junit5_rt_tests/junit5_rt_tests.iml" filepath="$PROJECT_DIR$/plugins/junit5_rt_tests/junit5_rt_tests.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/junit_rt/junit_rt.iml" filepath="$PROJECT_DIR$/plugins/junit_rt/junit_rt.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-api/lang-api.iml" filepath="$PROJECT_DIR$/platform/lang-api/lang-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" filepath="$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" group="platform" />
