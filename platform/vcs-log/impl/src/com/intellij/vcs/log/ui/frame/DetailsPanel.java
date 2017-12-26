@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.ui.SeparatorComponent;
@@ -34,10 +35,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +50,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
 /**
  * @author Kirill Likhodedov
@@ -161,6 +167,36 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
     repaint();
   }
 
+  private void resolveHashes(@NotNull List<CommitId> ids,
+                             @NotNull List<CommitPresentation> presentations,
+                             @NotNull Set<String> unResolvedHashes,
+                             @NotNull Condition<Object> expired) {
+    if (!unResolvedHashes.isEmpty()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        Map<String, CommitId> resolvedHashes = ContainerUtil.newHashMap();
+        for (String hashString : unResolvedHashes) {
+          CommitId commitId = myLogData.getStorage().findCommitId(new CommitIdByStringCondition(hashString));
+          if (commitId != null) {
+            resolvedHashes.put(hashString, commitId);
+          }
+        }
+
+        List<CommitPresentation> resolvedPresentations = ContainerUtil.map2List(presentations,
+                                                                                presentation -> presentation.resolve(resolvedHashes));
+        ApplicationManager.getApplication().invokeLater(() -> setPresentations(ids, resolvedPresentations), expired);
+      });
+    }
+  }
+
+  private void setPresentations(@NotNull List<CommitId> ids,
+                                @NotNull List<? extends CommitPresentation> presentations) {
+    assert ids.size() == presentations.size();
+    for (int i = 0; i < mySelection.size(); i++) {
+      CommitPanel commitPanel = getCommitPanel(i);
+      commitPanel.setCommit(ids.get(i), presentations.get(i));
+    }
+  }
+
   @NotNull
   private CommitPanel getCommitPanel(int index) {
     return (CommitPanel)myMainContentPanel.getComponent(2 * index);
@@ -179,16 +215,22 @@ public class DetailsPanel extends JPanel implements EditorColorsListener {
 
     @Override
     protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
-      Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
-      for (int i = 0; i < mySelection.size(); i++) {
-        CommitPanel commitPanel = getCommitPanel(i);
-        commitPanel.setCommit(detailsList.get(i));
-      }
+      List<CommitId> ids = ContainerUtil.map(detailsList,
+                                             detail -> new CommitId(detail.getId(), detail.getRoot()));
+      Set<String> unResolvedHashes = ContainerUtil.newHashSet();
+      List<CommitPresentation> presentations = ContainerUtil.map(detailsList,
+                                                                 detail -> buildPresentation(myLogData.getProject(), detail,
+                                                                                             unResolvedHashes));
+      setPresentations(ids, presentations);
 
+      Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
       if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
       myCommitDetails = newCommitDetails;
+
+      List<Integer> currentSelection = mySelection;
+      resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
     }
 
     @Override

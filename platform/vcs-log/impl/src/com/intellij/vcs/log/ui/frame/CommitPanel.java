@@ -15,10 +15,7 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.UI;
@@ -27,9 +24,8 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RectanglePainter;
@@ -67,7 +63,7 @@ public class CommitPanel extends JBPanel {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final Consumer<String> myNavigate;
 
-  @Nullable private VcsFullCommitDetails myCommit;
+  @Nullable private CommitId myCommit;
 
   public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<String> navigate) {
     myLogData = logData;
@@ -82,7 +78,7 @@ public class CommitPanel extends JBPanel {
     myBranchesPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
     myTagsPanel = new ReferencesPanel();
     myTagsPanel.setBorder(JBUI.Borders.emptyTop(REFERENCES_BORDER));
-    myDataPanel = new DataPanel(myLogData.getProject());
+    myDataPanel = new DataPanel();
     myContainingBranchesPanel = new BranchesPanel();
 
     add(myRootPanel);
@@ -94,20 +90,20 @@ public class CommitPanel extends JBPanel {
     setBorder(getDetailsBorder());
   }
 
-  public void setCommit(@NotNull VcsFullCommitDetails commitData) {
-    if (!Comparing.equal(myCommit, commitData)) {
-      myDataPanel.setData(commitData);
-      VirtualFile root = commitData.getRoot();
+  public void setCommit(@NotNull CommitId commit, @NotNull CommitPresentationUtil.CommitPresentation presentation) {
+    if (!commit.equals(myCommit) || presentation.isResolved()) {
+      myCommit = commit;
+      myDataPanel.setData(presentation);
+
       if (myColorManager.isMultipleRoots()) {
-        myRootPanel.setRoot(root.getName(), VcsLogGraphTable.getRootBackgroundColor(root, myColorManager));
+        myRootPanel.setRoot(commit.getRoot().getName(), VcsLogGraphTable.getRootBackgroundColor(commit.getRoot(), myColorManager));
       }
       else {
         myRootPanel.setRoot("", null);
       }
-      myCommit = commitData;
     }
 
-    List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
+    List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commit.getRoot(), commit.getHash());
     myContainingBranchesPanel.setBranches(branches);
 
     myDataPanel.update();
@@ -132,7 +128,7 @@ public class CommitPanel extends JBPanel {
   public void updateBranches() {
     if (myCommit != null) {
       myContainingBranchesPanel
-        .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getId()));
+        .setBranches(myLogData.getContainingBranchesGetter().getContainingBranchesFromCache(myCommit.getRoot(), myCommit.getHash()));
     }
     else {
       myContainingBranchesPanel.setBranches(null);
@@ -167,12 +163,9 @@ public class CommitPanel extends JBPanel {
   }
 
   private class DataPanel extends HtmlPanel {
-    @NotNull private final Project myProject;
-    @Nullable private String myMainText;
+    @Nullable private CommitPresentationUtil.CommitPresentation myPresentation;
 
-    DataPanel(@NotNull Project project) {
-      myProject = project;
-
+    DataPanel() {
       DefaultCaret caret = (DefaultCaret)getCaret();
       caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
 
@@ -195,13 +188,8 @@ public class CommitPanel extends JBPanel {
       }
     }
 
-    void setData(@Nullable VcsFullCommitDetails commit) {
-      if (commit == null) {
-        myMainText = null;
-      }
-      else {
-        myMainText = CommitPresentationUtil.getText(myProject, commit);
-      }
+    void setData(@Nullable CommitPresentationUtil.CommitPresentation presentation) {
+      myPresentation = presentation;
     }
 
     private void customizeLinksStyle() {
@@ -214,14 +202,14 @@ public class CommitPanel extends JBPanel {
     }
 
     void update() {
-      if (myMainText == null) {
+      if (myPresentation == null) {
         setText("");
       }
       else {
         setText("<html><head>" +
                 UIUtil.getCssFontDeclaration(getCommitDetailsFont()) +
                 "</head><body>" +
-                myMainText +
+                myPresentation.getText() +
                 "</body></html>");
       }
 
