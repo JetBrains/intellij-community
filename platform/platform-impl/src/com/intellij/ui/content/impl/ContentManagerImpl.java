@@ -98,8 +98,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       NonOpaquePanel contentComponent = new NonOpaquePanel();
       contentComponent.setContent(myUI.getComponent());
-      // If screen reader is active, allow TAB/Shift-TAB navigate outside the contents panel.
-      contentComponent.setFocusCycleRoot(!ScreenReader.isActive());
 
       myComponent.add(contentComponent, BorderLayout.CENTER);
     }
@@ -483,9 +481,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
         addSelectedContent(content);
 
-        if (requestFocus) {
-          return requestFocus(content, forcedFocus);
-        }
+        content.getComponent().transferFocus();
         return ActionCallback.DONE;
       }
     };
