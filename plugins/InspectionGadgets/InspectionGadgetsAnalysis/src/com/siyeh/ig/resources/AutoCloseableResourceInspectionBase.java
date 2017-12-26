@@ -27,6 +27,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
@@ -43,6 +45,8 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 public class AutoCloseableResourceInspectionBase extends ResourceInspection {
+
+  private static final CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close");
 
   private static final List<String> DEFAULT_IGNORED_TYPES =
     Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream");
@@ -198,6 +202,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       if (!isResourceCreation(expression)) {
         return false;
       }
+      if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return false;
       final PsiVariable variable = ResourceInspection.getVariable(expression);
       if(variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return false;
       if (variable == null) return true;

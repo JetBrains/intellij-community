@@ -163,6 +163,16 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testClosedResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X {\n" +
+           "  private static void example(int a) throws IOException {\n" +
+           "    new FileOutputStream(\"\").close();\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();
