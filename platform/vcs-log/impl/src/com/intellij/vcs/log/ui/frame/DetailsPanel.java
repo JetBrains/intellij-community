@@ -139,7 +139,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     }
   }
 
-  protected void navigate(@NotNull String hash) {
+  protected void navigate(@NotNull CommitId commitId) {
   }
 
   private void rebuildCommitPanels(int[] selection) {

@@ -16,7 +16,9 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -82,7 +84,7 @@ public class CommitPresentationUtil {
 
       CommitId commitId = resolvedHashes.get(hash);
       if (commitId != null) {
-        hash = "<a href=\"" + GO_TO_HASH + commitId.getHash().asString() + "\">" + hash + "</a>";
+        hash = "<a href=\"" + GO_TO_HASH + hash + "\">" + hash + "</a>";
       }
       matcher.appendReplacement(result, hash);
     }
@@ -268,7 +270,7 @@ public class CommitPresentationUtil {
     Set<String> unresolvedHashesForCommit = findHashes(project, subject, description);
     String text = formatCommitText(project, subject, description, hashAndAuthor, ContainerUtil.newHashMap());
     if (unresolvedHashesForCommit.isEmpty()) {
-      return new CommitPresentation(text);
+      return new CommitPresentation(text, Collections.emptyMap());
     }
 
     unresolvedHashes.addAll(unresolvedHashesForCommit);
@@ -286,7 +288,7 @@ public class CommitPresentationUtil {
                                   @NotNull String description,
                                   @NotNull String hashAndAuthor,
                                   @NotNull String text) {
-      super(text);
+      super(text, Collections.emptyMap());
       myProject = project;
       mySubject = subject;
       myDescription = description;
@@ -296,7 +298,7 @@ public class CommitPresentationUtil {
     @NotNull
     public CommitPresentation resolve(@NotNull Map<String, CommitId> resolvedHashes) {
       String text = formatCommitText(myProject, mySubject, myDescription, myHashAndAuthor, resolvedHashes);
-      return new CommitPresentation(text);
+      return new CommitPresentation(text, resolvedHashes);
     }
 
     @Override
@@ -307,14 +309,23 @@ public class CommitPresentationUtil {
 
   public static class CommitPresentation {
     @NotNull protected final String myText;
+    @NotNull private final Map<String, CommitId> myResolvedHashes;
 
-    public CommitPresentation(@NotNull String text) {
+    public CommitPresentation(@NotNull String text, @NotNull Map<String, CommitId> resolvedHashes) {
       myText = text;
+      myResolvedHashes = resolvedHashes;
     }
 
     @NotNull
     public String getText() {
       return myText;
+    }
+
+    @Nullable
+    public CommitId parseTargetCommit(@NotNull HyperlinkEvent e) {
+      if (!e.getDescription().startsWith(GO_TO_HASH)) return null;
+      String hash = e.getDescription().substring(GO_TO_HASH.length());
+      return myResolvedHashes.get(hash);
     }
 
     @NotNull

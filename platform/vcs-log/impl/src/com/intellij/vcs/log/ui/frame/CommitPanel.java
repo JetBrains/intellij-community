@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.GO_TO_HASH;
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.SHOW_HIDE_BRANCHES;
 
@@ -61,11 +62,11 @@ public class CommitPanel extends JBPanel {
   @NotNull private final BranchesPanel myContainingBranchesPanel;
   @NotNull private final RootPanel myRootPanel;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final Consumer<String> myNavigate;
+  @NotNull private final Consumer<CommitId> myNavigate;
 
   @Nullable private CommitId myCommit;
 
-  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<String> navigate) {
+  public CommitPanel(@NotNull VcsLogData logData, @NotNull VcsLogColorManager colorManager, @NotNull Consumer<CommitId> navigate) {
     myLogData = logData;
     myColorManager = colorManager;
     myNavigate = navigate;
@@ -181,7 +182,8 @@ public class CommitPanel extends JBPanel {
     @Override
     public void hyperlinkUpdate(@NotNull HyperlinkEvent e) {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && e.getDescription().startsWith(GO_TO_HASH)) {
-        myNavigate.consume(e.getDescription().substring(GO_TO_HASH.length()));
+        CommitId commitId = notNull(myPresentation).parseTargetCommit(e);
+        if (commitId != null) myNavigate.consume(commitId);
       }
       else {
         BrowserHyperlinkListener.INSTANCE.hyperlinkUpdate(e);

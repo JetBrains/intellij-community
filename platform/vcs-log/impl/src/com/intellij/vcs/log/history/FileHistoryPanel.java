@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
@@ -80,10 +81,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this) {
       @Override
-      protected void navigate(@NotNull String hash) {
+      protected void navigate(@NotNull CommitId commit) {
         VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(logData.getProject()).getMainLogUi();
         if (mainLogUi != null) {
-          mainLogUi.getVcsLog().jumpToReference(hash);
+          mainLogUi.jumpToCommit(commit.getHash(), commit.getRoot());
         }
       }
     };
