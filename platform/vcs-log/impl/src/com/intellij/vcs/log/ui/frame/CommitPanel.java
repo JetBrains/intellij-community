@@ -96,27 +96,18 @@ public class CommitPanel extends JBPanel {
 
   public void setCommit(@NotNull VcsFullCommitDetails commitData) {
     if (!Comparing.equal(myCommit, commitData)) {
-      if (commitData instanceof LoadingDetails) {
-        myDataPanel.setData(null);
-        myRootPanel.setRoot("", null);
+      myDataPanel.setData(commitData);
+      VirtualFile root = commitData.getRoot();
+      if (myColorManager.isMultipleRoots()) {
+        myRootPanel.setRoot(root.getName(), VcsLogGraphTable.getRootBackgroundColor(root, myColorManager));
       }
       else {
-        myDataPanel.setData(commitData);
-        VirtualFile root = commitData.getRoot();
-        if (myColorManager.isMultipleRoots()) {
-          myRootPanel.setRoot(root.getName(), VcsLogGraphTable.getRootBackgroundColor(root, myColorManager));
-        }
-        else {
-          myRootPanel.setRoot("", null);
-        }
+        myRootPanel.setRoot("", null);
       }
       myCommit = commitData;
     }
 
-    List<String> branches = null;
-    if (!(commitData instanceof LoadingDetails)) {
-      branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
-    }
+    List<String> branches = myLogData.getContainingBranchesGetter().requestContainingBranches(commitData.getRoot(), commitData.getId());
     myContainingBranchesPanel.setBranches(branches);
 
     myDataPanel.update();
