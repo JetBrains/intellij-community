@@ -44,7 +44,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testIsSorted() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                                                            34);
+                                                            20);
     List<Integer> value = failure.getMinimalCounterexample().getExampleValue();
     assertEquals(2, value.size());
     assertTrue(value.toString(), value.stream().allMatch(i -> Math.abs(i) < 2));
@@ -57,7 +57,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           44);
+                                                           35);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 

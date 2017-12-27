@@ -72,38 +72,35 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   }
 
   private void shrink() {
-    minimized.data.shrink(new ShrinkContext() {
-      @NotNull
-      @Override
-      StructureNode getCurrentMinimalRoot() {
-        return minimized.data;
+    ShrinkStep step = minimized.data.shrink();
+    eachShrink: 
+    while (step != null) {
+      StructureNode node = step.apply(minimized.data);
+      if (node == null || !iteration.session.generatedHashes.add(node.hashCode())) {
+        step = step.onFailure();
+        continue;
       }
 
-      @Override
-      boolean tryReplacement(@NotNull NodeId replacedId, @NotNull StructureElement replacement) {
-        StructureNode node = minimized.data.replace(replacedId, replacement);
-        if (!iteration.session.generatedHashes.add(node.hashCode())) return false;
+      CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();
+      while (customizer != null) {
+        try {
+          iteration.session.notifier.shrinkAttempt(this, iteration);
 
-        CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();
-        while (customizer != null) {
-          try {
-            iteration.session.notifier.shrinkAttempt(PropertyFailureImpl.this, iteration);
-
-            totalSteps++;
-            T value = iteration.generateValue(new ReplayDataStructure(node, iteration.sizeHint, customizer));
-            CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration, value, customizer.writeChanges(node));
-            if (example != null) {
-              minimized = example;
-              successfulSteps++;
-              return true;
-            }
+          totalSteps++;
+          T value = iteration.generateValue(new ReplayDataStructure(node, iteration.sizeHint, customizer));
+          CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration, value, customizer.writeChanges(node));
+          if (example != null) {
+            minimized = example;
+            successfulSteps++;
+            step = step.onSuccess(minimized.data);
+            continue eachShrink;
           }
-          catch (CannotRestoreValue ignored) {
-          }
-          customizer = customizer.nextAttempt();
         }
-        return false;
+        catch (CannotRestoreValue ignored) {
+        }
+        customizer = customizer.nextAttempt();
       }
-    });
+      step = step.onFailure();
+    }
   }
 }

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -19,7 +20,8 @@ abstract class StructureElement {
     this.id = id;
   }
 
-  abstract void shrink(ShrinkContext suitable);
+  @Nullable
+  abstract ShrinkStep shrink();
 
   @NotNull
   abstract StructureElement replace(NodeId id, StructureElement replacement);
@@ -62,63 +64,47 @@ class StructureNode extends StructureElement {
     children.remove(children.size() - 1);
   }
 
+  @Nullable
   @Override
-  void shrink(ShrinkContext context) {
-    if (shrinkProhibited) return;
+  ShrinkStep shrink() {
+    if (shrinkProhibited) return null;
 
-    StructureNode node = this;
-    boolean isList = isList();
-    if (isList) {
-      node = shrinkList(context, node);
-    }
-
-    for (int i = isList ? 1 : 0; i < node.children.size(); i++) {
-      node.children.get(i).shrink(context);
-    }
-
-    StructureElement latest = context.getCurrentMinimalRoot().findChildById(this.id);
-    if (latest instanceof StructureNode) {
-      ((StructureNode)latest).shrinkAlternativeListRecursion(context);
-    }
-  }
-
-  private static StructureNode shrinkList(ShrinkContext context, StructureNode node) {
-    int limit = node.children.size();
-    while (limit > 0) {
-      int start = 1;
-      int length = 1;
-      int lastSuccessfulRemove = -1;
-      while (start < limit && start < node.children.size()) {
-        // remove last items from the end first to decrease the number of variants in CombinatorialIntCustomizer
-        StructureNode withRemovedRange = node.removeRange(node.children, node.children.size() - start - length + 1, length);
-        if (withRemovedRange != null && context.tryReplacement(node.id, withRemovedRange)) {
-          node = (StructureNode)Objects.requireNonNull(context.getCurrentMinimalRoot().findChildById(node.id));
-          length = Math.min(length * 2, node.children.size() - start);
-          lastSuccessfulRemove = start;
-        } else {
-          if (length > 1) {
-            length /= 2;
-          } else {
-            start++;
-          }
-        }
-      }
-      limit = lastSuccessfulRemove;
-    }
-    return node;
+    return isList() ? new RemoveListRange(this) : shrinkChild(0);
   }
 
   @Nullable
-  private StructureNode removeRange(List<StructureElement> listChildren, int start, int length) {
-    int newSize = listChildren.size() - length - 1;
-    IntDistribution lengthDistribution = ((IntData)children.get(0)).distribution;
-    if (!lengthDistribution.isValidValue(newSize)) return null;
+  ShrinkStep shrinkChild(int index) {
+    for (; index < children.size(); index++) {
+      ShrinkStep childShrink = children.get(index).shrink();
+      if (childShrink != null) return shrinkNextChildAfter(index, childShrink);
+    }
+    
+    return shrinkAlternativeListRecursion();
+  }
 
-    List<StructureElement> lessItems = new ArrayList<>(newSize + 1);
-    lessItems.add(new IntData(children.get(0).id, newSize, lengthDistribution));
-    lessItems.addAll(listChildren.subList(1, start));
-    lessItems.addAll(listChildren.subList(start + length, listChildren.size()));
-    return new StructureNode(id, lessItems);
+  @Nullable
+  private ShrinkStep shrinkNextChildAfter(int index, @Nullable ShrinkStep step) {
+    if (step == null) return shrinkChild(index + 1);
+    
+    return new ShrinkStep() {
+      @Nullable
+      @Override
+      StructureNode apply(StructureNode root) {
+        return step.apply(root);
+      }
+
+      @Override
+      ShrinkStep onSuccess(StructureNode smallerRoot) {
+        StructureNode inheritor = (StructureNode)Objects.requireNonNull(smallerRoot.findChildById(id));
+        assert inheritor.children.size() == children.size();
+        return inheritor.shrinkNextChildAfter(index, step.onSuccess(smallerRoot));
+      }
+
+      @Override
+      ShrinkStep onFailure() {
+        return shrinkNextChildAfter(index, step.onFailure());
+      }
+    };
   }
 
   private boolean isList() {
@@ -132,16 +118,18 @@ class StructureNode extends StructureElement {
     return false;
   }
 
-  private void shrinkAlternativeListRecursion(ShrinkContext context) {
+  @Nullable
+  private ShrinkStep shrinkAlternativeListRecursion() {
     if (seemsAlternative(children)) {
       StructureElement child1 = deparenthesize(children.get(1));
       if (child1 instanceof StructureNode && ((StructureNode)child1).isList() && ((StructureNode)child1).children.size() == 2) {
         StructureElement singleListElement = deparenthesize(((StructureNode)child1).children.get(1));
         if (singleListElement instanceof StructureNode && seemsAlternative(((StructureNode)singleListElement).children)) {
-          context.tryReplacement(id, singleListElement);
+          return ShrinkStep.create(id, singleListElement, __ -> singleListElement.shrink(), null);
         }
       }
     }
+    return null;
   }
 
   private static StructureElement deparenthesize(StructureElement e) {
@@ -212,21 +200,27 @@ class IntData extends StructureElement {
     this.distribution = distribution;
   }
 
+  @Nullable
   @Override
-  void shrink(ShrinkContext context) {
-    if (value == 0 || tryInt(0, context)) return;
-
-    int value = this.value;
-    if (value < 0 && tryInt(-value, context)) {
-      value = -value;
-    }
-    while (value != 0 && tryInt(value / 2, context)) {
-      value /= 2;
-    }
+  ShrinkStep shrink() {
+    return value == 0 ? null : tryInt(0, () -> null, this::tryNegation);
   }
 
-  private boolean tryInt(int value, ShrinkContext context) {
-    return distribution.isValidValue(value) && context.tryReplacement(id, new IntData(id, value, distribution));
+  private ShrinkStep tryNegation() {
+    if (value < 0) {
+      return tryInt(-value, () -> divisionLoop(-value), () -> divisionLoop(value));
+    }
+    return divisionLoop(value);
+  }
+
+  private ShrinkStep divisionLoop(int value) {
+    if (value == 0) return null;
+    int divided = value / 2;
+    return tryInt(divided, () -> divisionLoop(divided / 2), null);
+  }
+
+  private ShrinkStep tryInt(int value, @NotNull Supplier<ShrinkStep> success, @Nullable Supplier<ShrinkStep> fail) {
+    return distribution.isValidValue(value) ? ShrinkStep.create(id, new IntData(id, value, distribution), __ -> success.get(), fail) : null;
   }
 
   @NotNull
