@@ -70,6 +70,7 @@ public class IntToIntBtree {
     }
 
     storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.ourByteBuffersUseNativeByteOrder);
+    storage.setRoundFactor(pageSize);
     root = new BtreeRootNode(this);
 
     if (initial) {

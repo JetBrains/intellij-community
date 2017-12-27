@@ -386,6 +386,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     try {
       resetImpl(settings);
     }
+    catch (Exception e) {
+      LOG.error(e);
+    }
     finally {
       myShouldUpdatePreview = true;
     }
