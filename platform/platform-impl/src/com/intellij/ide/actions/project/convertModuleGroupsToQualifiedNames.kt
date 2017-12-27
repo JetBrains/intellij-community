@@ -17,6 +17,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LineExtensionInfo
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -49,9 +51,11 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     get() = editorArea.document
   private lateinit var modules: List<Module>
   private val recordPreviousNamesCheckBox: JCheckBox
+  private var modified = false
 
   init {
     title = ProjectBundle.message("convert.module.groups.dialog.title")
+    isModal = false
     setOKButtonText(ProjectBundle.message("convert.module.groups.button.text"))
     editorArea = EditorTextFieldProvider.getInstance().getEditorField(StdLanguages.TEXT, project, listOf(EditorCustomization {
       it.settings.apply {
@@ -67,6 +71,11 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       (it as? EditorImpl)?.registerLineExtensionPainter(this::generateLineExtension)
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
+    document.addDocumentListener(object: DocumentListener {
+      override fun documentChanged(event: DocumentEvent?) {
+        modified = true
+      }
+    }, disposable)
     recordPreviousNamesCheckBox = JCheckBox(ProjectBundle.message("convert.module.groups.record.previous.names.text"), true)
     importRenamingScheme(emptyMap())
     init()
@@ -121,6 +130,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     runWriteAction {
       document.setText(modules.joinToString("\n") { names[it]!! })
     }
+    modified = false
   }
 
   fun getRenamingScheme(): Map<String, String> {
@@ -129,6 +139,24 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
     return modules.withIndex().filter { lines[it.index] != it.value.name }.associateByTo(LinkedHashMap(), { it.value.name }, {
       if (it.index in lines.indices) lines[it.index] else it.value.name
     })
+  }
+
+  override fun doCancelAction() {
+    if (modified) {
+      val answer = Messages.showYesNoCancelDialog(project,
+                                                  ProjectBundle.message("convert.module.groups.do.you.want.to.save.scheme"),
+                                                  ProjectBundle.message("convert.module.groups.dialog.title"), null)
+      when (answer) {
+        Messages.CANCEL -> return
+        Messages.YES -> {
+          if (!saveModuleRenamingScheme(this)) {
+            return
+          }
+        }
+      }
+    }
+    
+    super.doCancelAction()
   }
 
   override fun doOKAction() {
@@ -162,7 +190,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
   }
 
   override fun createActions(): Array<Action> {
-    return arrayOf(okAction, SaveModuleRenamingSchemeAction(this),
+    return arrayOf(okAction, SaveModuleRenamingSchemeAction(this, { modified = false }),
                    LoadModuleRenamingSchemeAction(this), cancelAction)
   }
 }
