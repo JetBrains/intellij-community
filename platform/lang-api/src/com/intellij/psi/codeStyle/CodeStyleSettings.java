@@ -1268,9 +1268,11 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   public int getRightMargin(@Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings langSettings = getCommonSettings(language);
-      if (langSettings != null) {
-        if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
+      if (LanguageCodeStyleSettingsProvider.forLanguage(language) != null) {
+        CommonCodeStyleSettings langSettings = getCommonSettings(language);
+        if (langSettings != null) {
+          if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
+        }
       }
     }
     return getDefaultRightMargin();
@@ -1406,9 +1408,11 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @NotNull
   public List<Integer> getSoftMargins(@Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings languageSettings = getCommonSettings(language);
-      if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
-        return languageSettings.getSoftMargins();
+      if (LanguageCodeStyleSettingsProvider.forLanguage(language) != null) {
+        CommonCodeStyleSettings languageSettings = getCommonSettings(language);
+        if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
+          return languageSettings.getSoftMargins();
+        }
       }
     }
     return getDefaultSoftMargins();
