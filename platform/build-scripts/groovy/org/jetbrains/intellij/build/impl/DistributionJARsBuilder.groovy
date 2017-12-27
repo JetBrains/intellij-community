@@ -189,8 +189,9 @@ class DistributionJARsBuilder {
       buildContext.messages.progress("Reordering *.jar files in $targetDirectory")
       File ignoredJarsFile = new File(buildContext.paths.temp, "reorder-jars/required_for_dist.txt")
       ignoredJarsFile.parentFile.mkdirs()
+      def moduleJars = platform.moduleJars.entrySet().collect(new HashSet()) { getActualModuleJarPath(it.key, it.value) }
       ignoredJarsFile.text = new File(buildContext.paths.distAll, "lib").list()
-        .findAll {it.endsWith(".jar") && !platform.moduleJars.containsKey(it)}
+        .findAll {it.endsWith(".jar") && !moduleJars.contains(it)}
         .join("\n")
 
       buildContext.ant.java(classname: "com.intellij.util.io.zip.ReorderJarsMain", fork: true, failonerror: true) {
@@ -301,17 +302,19 @@ class DistributionJARsBuilder {
       def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
       buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
+      def pluginZipFiles = new LinkedHashMap<PluginLayout, String>()
       pluginsToPublish.each { plugin ->
-        def directory = plugin.directoryName
+        def directory = getActualPluginDirectoryName(plugin, buildContext)
         String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${getPluginVersion(plugin)}"
         def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
+        pluginZipFiles[plugin] = destFile.toString()
         ant.zip(destfile: destFile) {
           zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
         }
         buildContext.notifyArtifactBuilt(destFile)
       }
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, nonBundledPluginsArtifacts)
+        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, pluginZipFiles, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
       }
     }
@@ -321,11 +324,24 @@ class DistributionJARsBuilder {
     return plugin.versionEvaluator.apply(buildContext)
   }
 
+  /**
+   * Returns name of directory in the product distribution where plugin will be placed. For plugins which use the main module name as the
+   * directory name return the old module name to temporary keep layout of plugins unchanged.
+   */
+  static String getActualPluginDirectoryName(PluginLayout plugin, BuildContext context) {
+    if (plugin.directoryName == plugin.mainModule && context.getOldModuleName(plugin.mainModule) != null) {
+      context.getOldModuleName(plugin.mainModule)
+    }
+    else {
+      plugin.directoryName
+    }
+  }
+
   static List<PluginLayout> getPluginsByModules(BuildContext buildContext, Collection<String> modules) {
     def allNonTrivialPlugins = buildContext.productProperties.productLayout.allNonTrivialPlugins
     def allOptionalModules = allNonTrivialPlugins.collectMany {it.optionalModules}
     def nonTrivialPlugins = allNonTrivialPlugins.groupBy { it.mainModule }
-    (modules - allOptionalModules).collect { nonTrivialPlugins[it]?.first() ?: PluginLayout.plugin(it) }
+    (modules - allOptionalModules).collect { (nonTrivialPlugins[it] ?: nonTrivialPlugins[buildContext.findModule(it)?.name])?.first() ?: PluginLayout.plugin(it) }
   }
 
   private void buildPlugins(LayoutBuilder layoutBuilder, List<PluginLayout> pluginsToInclude, String targetDirectory) {
@@ -337,7 +353,7 @@ class DistributionJARsBuilder {
         File resourceFile = it.first.generateResources(buildContext)
         resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
       }
-      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars, generatedResources)
+      buildByLayout(layoutBuilder, plugin, "$targetDirectory/${getActualPluginDirectoryName(plugin, buildContext)}", actualModuleJars, generatedResources)
     }
   }
 
@@ -364,6 +380,19 @@ class DistributionJARsBuilder {
   }
 
   /**
+   * Returns path to a JAR file in the product distribution where platform/plugin classes will be placed. If the JAR name corresponds to
+   * a module name and the module was renamed, return the old name to temporary keep the product layout unchanged.
+   */
+  private String getActualModuleJarPath(String relativeJarPath, Collection<String> moduleNames) {
+    for (String moduleName : moduleNames) {
+      if (relativeJarPath == "${moduleName}.jar" && buildContext.getOldModuleName(moduleName) != null) {
+        return "${buildContext.getOldModuleName(moduleName)}.jar"
+      }
+    }
+    return relativeJarPath
+  }
+
+  /**
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
@@ -378,7 +407,7 @@ class DistributionJARsBuilder {
       dir("lib") {
         moduleJars.entrySet().each {
           def modules = it.value
-          def jarPath = it.key
+          def jarPath = getActualModuleJarPath(it.key, modules)
           jar(jarPath, true) {
             modules.each { moduleName ->
               modulePatches([moduleName]) {
