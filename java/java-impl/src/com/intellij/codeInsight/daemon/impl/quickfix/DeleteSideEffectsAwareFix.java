@@ -100,6 +100,10 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
       PsiStatement lastAdded = BlockUtils.addBefore(statement, statements);
       statement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiStatement.class));
     }
-    statement.delete();
+    if (statement.getParent() instanceof PsiStatement) {
+      statement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", statement));
+    } else {
+      statement.delete();
+    }
   }
 }
