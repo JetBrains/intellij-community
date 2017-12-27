@@ -58,11 +58,11 @@ public class CommonCodeStyleSettings {
 
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
-  private IndentOptions       myIndentOptions;
+  private @Nullable IndentOptions       myIndentOptions;
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
-  protected SoftMargins mySoftMargins = new SoftMargins();
+  private SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -138,7 +138,7 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  protected static void copyPublicFields(Object from, Object to) {
+  static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
   }
@@ -168,6 +168,9 @@ public class CommonCodeStyleSettings {
     Set<String> supportedFields = getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("FORCE_REARRANGE_MODE");
+    }
+    else {
+      return;
     }
     DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
@@ -207,7 +210,7 @@ public class CommonCodeStyleSettings {
 
     @Override
     public boolean isAccept(@NotNull Field field) {
-      if (mySupportedFieldNames == null ||
+      if (mySupportedFieldNames != null &&
           mySupportedFieldNames.contains(field.getName())) {
         return super.isAccept(field);
       }

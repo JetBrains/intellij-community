@@ -16,12 +16,14 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Content;
@@ -48,6 +50,15 @@ public class CommonCodeStyleSettingsManager {
   @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
+  private static Logger LOG = Logger.getInstance(CommonCodeStyleSettingsManager.class);
+
+  private static class DefaultsHolder {
+    private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
+    static {
+      SETTINGS.setRootSettings(CodeStyleSettings.getDefaults());
+    }
+  }
+
   CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
   }
@@ -58,20 +69,21 @@ public class CommonCodeStyleSettingsManager {
    * @param lang The language to get settings for.
    * @return If the provider for the language exists and is able to create language-specific default settings
    *         ({@code LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()} doesn't return null)
-   *         returns the instance of settings for this language. Otherwise returns the instance of parent settings
-   *         shared between several languages.
+   *         returns the instance of settings for this language. Otherwise returns new instance of common code style settings
+   *         with default values.
    */
   public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
     Map<Language, CommonCodeStyleSettings> commonSettingsMap = getCommonSettingsMap();
-    CommonCodeStyleSettings settings = commonSettingsMap.get(lang);
-    while (settings == null && lang != null) {
-      lang = lang.getBaseLanguage();
-      settings = commonSettingsMap.get(lang);
+    Language baseLang = ObjectUtils.notNull(lang, Language.ANY);
+    while (baseLang != null) {
+      CommonCodeStyleSettings settings = commonSettingsMap.get(baseLang);
+      if (settings != null) return settings;
+      baseLang = baseLang.getBaseLanguage();
     }
-    if (settings != null) {
-      return settings;
+    if (lang != null) {
+      LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
     }
-    return myParentSettings;
+    return DefaultsHolder.SETTINGS;
   }
 
   @NotNull
@@ -95,7 +107,7 @@ public class CommonCodeStyleSettingsManager {
    * obtained by name.
    * 
    * @param langName The display name of the language whose settings must be returned.
-   * @return Common code style settings for the given language or parent (shared) settings if not found.
+   * @return Common code style settings for the given language or a new instance with default values if not found.
    */
   @NotNull
   public CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
@@ -105,7 +117,7 @@ public class CommonCodeStyleSettingsManager {
         return entry.getValue();
       }
     }
-    return myParentSettings;
+    return new CommonCodeStyleSettings(Language.ANY);
   }  
 
 

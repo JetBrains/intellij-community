@@ -35,6 +35,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+
 /**
  * <p>
  * A container for global, language and custom code style settings and indent options. Global options are default options for multiple
@@ -51,7 +53,7 @@ import java.util.regex.PatternSyntaxException;
  * <b>Note:</b> A direct use of any non-final public fields from {@code CodeStyleSettings} class is strongly discouraged. These fields,
  * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
  */
-public class CodeStyleSettings extends CommonCodeStyleSettings
+public class CodeStyleSettings extends LegacyCodeStyleSettings
   implements Cloneable, JDOMExternalizable, ImportsLayoutSettings, CodeStyleConstraints {
   public static final int CURR_VERSION = 173;
 
@@ -70,6 +72,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
+  private SoftMargins mySoftMargins = new SoftMargins();
+
   private int myVersion = CURR_VERSION;
 
   public CodeStyleSettings() {
@@ -77,7 +81,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   }
 
   public CodeStyleSettings(boolean loadExtensions) {
-    super(null);
     initTypeToName();
     initImportsByDefault();
 
@@ -181,9 +184,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   }
 
   public void copyFrom(CodeStyleSettings from) {
-    copyPublicFields(from, this);
-    copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
-    mySoftMargins.setValues(from.getSoftMargins());
+    CommonCodeStyleSettings.copyPublicFields(from, this);
+    CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
+    mySoftMargins.setValues(from.getDefaultSoftMargins());
     copyCustomSettingsFrom(from);
   }
 
@@ -897,7 +900,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
     return new IndentOptions();
   }
 
-  @Override
   @Nullable
   public IndentOptions getIndentOptions() {
     return OTHER_INDENT_OPTIONS;
@@ -1040,8 +1042,11 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
 
   @Nullable
   private IndentOptions getIndentOptions(Language lang) {
-    CommonCodeStyleSettings langSettings = getCommonSettings(lang);
-    return langSettings == this ? null : langSettings.getIndentOptions();
+    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(lang);
+    if (provider != null) {
+      return getCommonSettings(lang).getIndentOptions();
+    }
+    return null;
   }
 
   public boolean isSmartTabs(FileType fileType) {
@@ -1307,8 +1312,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
     if (language != null) {
       CommonCodeStyleSettings langSettings = getCommonSettings(language);
       if (langSettings != null) {
-        if (langSettings.WRAP_ON_TYPING != WrapOnTyping.DEFAULT.intValue) {
-          return langSettings.WRAP_ON_TYPING == WrapOnTyping.WRAP.intValue;
+        if (langSettings.WRAP_ON_TYPING != CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
+          return langSettings.WRAP_ON_TYPING == CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
         }
       }
     }
@@ -1425,7 +1430,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    */
   @NotNull
   public List<Integer> getDefaultSoftMargins() {
-    return getSoftMargins();
+    return mySoftMargins.getValues();
   }
 
   /**
@@ -1433,6 +1438,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    * @param softMargins The default soft margins.
    */
   public void setDefaultSoftMargins(List<Integer> softMargins) {
-    setSoftMargins(softMargins);
+    mySoftMargins.setValues(softMargins);
   }
 }
