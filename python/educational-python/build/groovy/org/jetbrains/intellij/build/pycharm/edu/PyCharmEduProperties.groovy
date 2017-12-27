@@ -1,5 +1,6 @@
 package org.jetbrains.intellij.build.pycharm.edu
 
+import com.intellij.util.SystemProperties
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.pycharm.PyCharmMacDistributionCustomizer
 import org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase
@@ -36,7 +37,10 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
 
-    def resourcesDir = new File("$pythonCommunityPath/educational-python/resources/")
+    def dependenciesProjectDir = new File("$pythonCommunityPath/educational-python/build/dependencies")
+    new GradleRunner(dependenciesProjectDir, context.messages, SystemProperties.getJavaHome()).run("Downloading EduTools plugin...", "setupEduPlugin")
+
+    def resourcesDir = new File("${dependenciesProjectDir.absolutePath}/build/edu/")
     def files = resourcesDir.listFiles(new FilenameFilter() {
       @Override
       boolean accept(File dir, String name) {

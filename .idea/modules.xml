@@ -245,6 +245,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/protocol-model-generator/protocol-model-generator.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/protocol-model-generator/protocol-model-generator.iml" group="plugins/JavaScript" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader/protocol-reader.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader/protocol-reader.iml" group="plugins/JavaScript" />
       <module fileurl="file://$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader-runtime/protocol-reader-runtime.iml" filepath="$PROJECT_DIR$/platform/script-debugger/protocol/protocol-reader-runtime/protocol-reader-runtime.iml" group="platform/script-debugger" />
+      <module fileurl="file://$PROJECT_DIR$/python/educational-python/build/dependencies/pycharm-edu-dependencies.iml" filepath="$PROJECT_DIR$/python/educational-python/build/dependencies/pycharm-edu-dependencies.iml" group="python/educational" />
       <module fileurl="file://$PROJECT_DIR$/python/python-community.iml" filepath="$PROJECT_DIR$/python/python-community.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/build/python-community-build.iml" filepath="$PROJECT_DIR$/python/build/python-community-build.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/python-community-configure/python-community-configure.iml" filepath="$PROJECT_DIR$/python/python-community-configure/python-community-configure.iml" group="python" />
