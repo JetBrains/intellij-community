@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.projectView.impl;
@@ -24,8 +12,7 @@ import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -37,9 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
 import org.jdom.Element;
@@ -47,7 +32,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import java.awt.*;
 
 import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
@@ -119,8 +106,9 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
+
     String showExcludedOption = JDOMExternalizerUtil.readField(element, SHOW_EXCLUDED_FILES_OPTION);
     myShowExcludedFiles = showExcludedOption == null || Boolean.parseBoolean(showExcludedOption);
     String useFileNestingRules = JDOMExternalizerUtil.readField(element, USE_FILE_NESTING_RULES);
@@ -128,7 +116,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(Element element) {
     super.writeExternal(element);
     if (!myShowExcludedFiles) {
       JDOMExternalizerUtil.writeField(element, SHOW_EXCLUDED_FILES_OPTION, String.valueOf(false));
@@ -140,8 +128,39 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
+    //if there is a single content root in the project containing all other content roots (it's a rather common case) there will be no
+    // special module nodes so it's better to hide 'Flatten Modules' action to avoid confusion
+    actionGroup.addAction(createFlattenModulesAction(this::hasSeveralTopLevelModuleNodes)).setAsSecondary(true);
+
     actionGroup.addAction(new ShowExcludedFilesAction()).setAsSecondary(true);
     actionGroup.addAction(new ConfigureFilesNestingAction()).setAsSecondary(true);
+  }
+
+  /**
+   * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
+   */
+  private boolean hasSeveralTopLevelModuleNodes() {
+    TreeModel treeModel = myTree.getModel();
+    Object root = treeModel.getRoot();
+    int count = treeModel.getChildCount(root);
+    if (count <= 1) return false;
+    int moduleNodes = 0;
+    for (int i = 0; i < count; i++) {
+      Object child = treeModel.getChild(root, i);
+      if (child instanceof DefaultMutableTreeNode) {
+        Object node = ((DefaultMutableTreeNode)child).getUserObject();
+        if (node instanceof ProjectViewModuleNode || node instanceof PsiDirectoryNode) {
+          moduleNodes++;
+          if (moduleNodes > 1) {
+            return true;
+          }
+        }
+        else if (node instanceof ModuleGroupNode) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public boolean isUseFileNestingRules() {
@@ -233,7 +252,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
       final ProjectView projectView = ProjectView.getInstance(myProject);

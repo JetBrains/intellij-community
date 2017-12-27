@@ -20,7 +20,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
+import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.jps.util.JpsPathUtil
@@ -28,31 +30,27 @@ import org.junit.Assert
 import java.io.File
 
 /**
- * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate the project libraries without
+ * Provides access to IntelliJ project configuration so the tests from IntelliJ project sources may locate project and module libraries without
  * hardcoding paths to their JARs.
  *
  * @author nik
  */
 class IntelliJProjectConfiguration {
   private val projectHome = PathManager.getHomePath()
-  private val projectLibraryClassesRoots: Map<String, List<File>>
-  private val projectLibrarySourcesUrls: Map<String, List<String>>
+  private val projectLibraries: Map<String, LibraryRoots>
+  private val moduleLibraries: Map<String, Map<String, LibraryRoots>>
 
   init {
     val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
     val project = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf("MAVEN_REPOSITORY" to m2Repo))
-    projectLibraryClassesRoots = project.libraryCollection.libraries.associateBy({ it.name }, { it.getFiles(JpsOrderRootType.COMPILED) })
-    projectLibrarySourcesUrls = project.libraryCollection.libraries.associateBy({ it.name }, { it.getRootUrls(JpsOrderRootType.SOURCES) })
-  }
-
-  private fun getProjectLibraryClassesRoots(libraryName: String): List<File> {
-    return instance.projectLibraryClassesRoots[libraryName]
-           ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
-  }
-
-  private fun getProjectLibrarySourceRoots(libraryName: String): List<String> {
-    return instance.projectLibrarySourcesUrls[libraryName]
-           ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
+    fun extractLibrariesRoots(collection: JpsLibraryCollection) = collection.libraries.associateBy({ it.name }, {
+      LibraryRoots(SmartList(it.getFiles(JpsOrderRootType.COMPILED)), SmartList(it.getFiles(JpsOrderRootType.SOURCES)))
+    })
+    projectLibraries = extractLibrariesRoots(project.libraryCollection)
+    moduleLibraries = project.modules.associateBy({it.name}, {
+      val libraries = extractLibrariesRoots(it.libraryCollection)
+      if (libraries.isNotEmpty()) libraries else emptyMap()
+    })
   }
 
   companion object {
@@ -60,17 +58,26 @@ class IntelliJProjectConfiguration {
 
     @JvmStatic
     fun getProjectLibraryClassesRootPaths(libraryName: String): List<String> {
-      return instance.getProjectLibraryClassesRoots(libraryName).map { FileUtil.toSystemIndependentName(it.absolutePath) }
+      return getProjectLibrary(libraryName).classesPaths
     }
 
     @JvmStatic
     fun getProjectLibraryClassesRootUrls(libraryName: String): List<String> {
-      return instance.getProjectLibraryClassesRoots(libraryName).map { JpsPathUtil.getLibraryRootUrl(it) }
+      return getProjectLibrary(libraryName).classesUrls
     }
 
     @JvmStatic
-    fun getProjectLibrarySourceRootUrls(libraryName: String): List<String> {
-      return instance.getProjectLibrarySourceRoots(libraryName)
+    fun getProjectLibrary(libraryName: String): LibraryRoots {
+      return instance.projectLibraries[libraryName]
+             ?: throw IllegalArgumentException("Cannot find project library '$libraryName' in ${instance.projectHome}")
+    }
+
+    @JvmStatic
+    fun getModuleLibrary(moduleName: String, libraryName: String): LibraryRoots {
+      val moduleLibraries = instance.moduleLibraries[moduleName]
+                            ?: throw IllegalArgumentException("Cannot find module '$moduleName' in ${instance.projectHome}")
+      return moduleLibraries[libraryName]
+             ?: throw IllegalArgumentException("Cannot find module library '$libraryName' in $moduleName")
     }
 
     @JvmStatic
@@ -80,6 +87,16 @@ class IntelliJProjectConfiguration {
       Assert.assertNotNull(jarRoot)
       return jarRoot!!
     }
+  }
 
+  class LibraryRoots(val classes: List<File>, val sources: List<File>) {
+    val classesPaths
+      get() = classes.map { FileUtil.toSystemIndependentName(it.absolutePath) }
+
+    val classesUrls
+      get() = classes.map { JpsPathUtil.getLibraryRootUrl(it) }
+
+    val sourcesUrls
+      get() = sources.map { JpsPathUtil.getLibraryRootUrl(it) }
   }
 }

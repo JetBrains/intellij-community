@@ -232,7 +232,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @MagicConstant(intValues = {VERTICAL_SCROLLBAR_LEFT, VERTICAL_SCROLLBAR_RIGHT})
   private int         myScrollBarOrientation;
-  private boolean     myMousePressedInsideSelection;
+  private boolean myMousePressedInsideSelectionForDrag;
 
   private boolean myUpdateCursor;
   private int myCaretUpdateVShift;
@@ -2172,7 +2172,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
 
-//    if (myMousePressedInsideSelection) getSelectionModel().removeSelection();
     final FoldRegion region = getFoldingModel().getFoldingPlaceholderAt(e.getPoint());
     if (e.getX() >= 0 && e.getY() >= 0 && region != null && region == myMouseSelectedRegion) {
       getFoldingModel().runBatchFoldingOperation(() -> {
@@ -2188,7 +2187,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // The general idea is to check if the user performed 'caret position change click' (left click most of the time) inside selection
     // and, in the case of the positive answer, clear selection. Please note that there is a possible case that mouse click
     // is performed inside selection but it triggers context menu. We don't want to drop the selection then.
-    if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelection
+    if (myMousePressedEvent != null && myMousePressedEvent.getClickCount() == 1 && myMousePressedInsideSelectionForDrag
         && !myMousePressedEvent.isShiftDown()
         && !myMousePressedEvent.isPopupTrigger()
         && !isToggleCaretEvent(myMousePressedEvent)
@@ -2402,7 +2401,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             return;
           }
 
-          if (!myMousePressedInsideSelection) {
+          if (!myMousePressedInsideSelectionForDrag) {
             // There is a possible case that lead selection position should be adjusted in accordance with the mouse move direction.
             // E.g. consider situation when user selects the whole line by clicking at 'line numbers' area. 'Line end' is considered
             // to be lead selection point then. However, when mouse is dragged down we want to consider 'line start' to be
@@ -3783,8 +3782,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int newEnd = mySelectionModel.getSelectionEnd();
 
       myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
-      myMousePressedInsideSelection = mySelectionModel.hasSelection() && caretOffset >= mySelectionModel.getSelectionStart() &&
-                                      caretOffset <= mySelectionModel.getSelectionEnd();
+      myMousePressedInsideSelectionForDrag = mySettings.isDndEnabled() && mySelectionModel.hasSelection() && 
+                                             caretOffset >= mySelectionModel.getSelectionStart() &&
+                                             caretOffset <= mySelectionModel.getSelectionEnd();
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
@@ -3814,7 +3814,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
         else {
-          if (!myMousePressedInsideSelection && getSelectionModel().hasSelection()) {
+          if (!myMousePressedInsideSelectionForDrag && getSelectionModel().hasSelection()) {
             setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
             mySelectionModel.setSelection(caretOffset, caretOffset);
           }

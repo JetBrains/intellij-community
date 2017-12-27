@@ -62,11 +62,11 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        double lw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
+        float lw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
         Insets i = c.getBorder().getBorderInsets(c); // ComboButton adds arrow width to the insets, so take the bare border.
 
         // Draw background
-        Shape outerRect = new RoundRectangle2D.Double(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom),
+        Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom),
                                                       ARC_SIZE, ARC_SIZE);
         Paint p;
         if (!b.isEnabled()) {
@@ -83,9 +83,9 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.fill(outerRect);
 
         // Draw  outline
-        Path2D outline = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(outerRect, false);
-        outline.append(new RoundRectangle2D.Double(i.left + lw, i.top + lw,
+        outline.append(new RoundRectangle2D.Float(i.left + lw, i.top + lw,
                                                    w - lw*2 - (i.left + i.right),
                                                    h - lw*2 - (i.top + i.bottom),
                                                    ARC_SIZE - lw, ARC_SIZE - lw), false);

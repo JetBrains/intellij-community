@@ -46,6 +46,7 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
                                  CommandLinePatcher... patchers) throws ExecutionException {
     Project project = myConfig.getProject();
 
-    if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
+    if (myConfig.showCommandLineAfterwards() && !emulateTerminal()) {
       if (executor.getId() != DefaultDebugExecutor.EXECUTOR_ID && executor.getId() != DefaultRunExecutor.EXECUTOR_ID) {
         // disable "Show command line" for all executors except of Run and Debug, because it's useless
         return super.execute(executor, processStarter, patchers);
@@ -138,7 +139,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
       return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));
     }
-    else if (myConfig.emulateTerminal()) {
+    else if (emulateTerminal()) {
       setRunWithPty(true);
 
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
@@ -157,10 +158,23 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
   }
 
+  /**
+   * {@link PythonRunConfiguration#emulateTerminal()} setting might stick from
+   * the Python Run configuration with a local interpreter used and running
+   * configuration with an interpreter later changed to the remote will fail
+   * with <cite>Works currently only with OSProcessHandler</cite> error.
+   *
+   * @return effective emulate terminal configuration option
+   * @see com.intellij.terminal.ProcessHandlerTtyConnector
+   */
+  private boolean emulateTerminal() {
+    return myConfig.emulateTerminal() && !PySdkUtil.isRemote(getSdk());
+  }
+
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
     super.customizeEnvironmentVars(envs, passParentEnvs);
-    if (myConfig.emulateTerminal()) {
+    if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", "xterm-256color");
       }
@@ -169,7 +183,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    if (myConfig.emulateTerminal()) {
+    if (emulateTerminal()) {
       return new OSProcessHandler(commandLine) {
         @NotNull
         @Override

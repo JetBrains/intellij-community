@@ -293,6 +293,11 @@
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">
       <add-to-group group-id="Internal.Dump"/>
     </action>
+
+    <action class="org.jetbrains.idea.devkit.actions.MigrateModuleNamesInSourcesAction" id="ReplaceModuleNamesInSources" internal="true">
+      <add-to-group group-id="FindMenuGroup" anchor="last"/>
+    </action>
+
   </actions>
 
 </idea-plugin>

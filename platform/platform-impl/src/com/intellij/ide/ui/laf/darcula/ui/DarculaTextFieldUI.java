@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -32,15 +33,17 @@ import java.awt.geom.RoundRectangle2D;
 public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
-  public static ComponentUI createUI(final JComponent c) {
+  public static ComponentUI createUI(JComponent c) {
     return new DarculaTextFieldUI();
   }
 
   @Override
   protected int getMinimumHeight() {
     Insets i = getComponent().getInsets();
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(getComponent()) ?
-           JBUI.scale(18) : JBUI.scale(16) + i.top + i.bottom;
+    JComponent c = getComponent();
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+           UIUtil.getParentOfType(JSpinner.class, c) != null ?
+            JBUI.scale(18) : JBUI.scale(16) + i.top + i.bottom;
   }
 
   @Override
@@ -76,6 +79,13 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
     }
   }
 
+  @Override
+  protected void updatePreferredSize(JComponent c, Dimension size) {
+    super.updatePreferredSize(c, size);
+    Insets i = c.getInsets();
+    size.width += i.left + i.right;
+  }
+
   protected void paintDarculaBackground(Graphics g, JTextComponent component) {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -88,19 +98,19 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.translate(r.x, r.y);
 
       float arc = isSearchField(component) ? JBUI.scale(6f) : 0.0f;
-      double bw = bw();
+      float bw = bw();
 
       if (component.isEnabled() && component.isEditable()) {
         g2.setColor(component.getBackground());
       }
 
-      g2.fill(new RoundRectangle2D.Double(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     } finally {
       g2.dispose();
     }
   }
 
-  protected double bw() {
+  protected float bw() {
     return DarculaUIUtil.bw();
   }
 }

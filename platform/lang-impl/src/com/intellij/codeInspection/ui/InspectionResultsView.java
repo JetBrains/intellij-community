@@ -78,7 +78,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
   private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused");
 
+  @NotNull
   private final InspectionTree myTree;
+  @NotNull
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfileImpl myInspectionProfile;
   private final boolean mySettingsEnabled;
@@ -97,6 +99,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @NotNull
   private final InspectionRVContentProvider myProvider;
+  @NotNull
   private final ExclusionHandler<InspectionTreeNode> myExclusionHandler;
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
@@ -353,40 +356,40 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
-    group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
-    group.add(actionsManager.createNextOccurenceAction(getOccurenceNavigator()));
+    group.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
+    group.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
 
     return createToolbar(group);
   }
 
   @Override
   public boolean hasNextOccurence() {
-    return getOccurenceNavigator().hasNextOccurence();
+    return myOccurenceNavigator.hasNextOccurence();
   }
 
   @Override
   public boolean hasPreviousOccurence() {
-    return getOccurenceNavigator().hasPreviousOccurence();
+    return myOccurenceNavigator.hasPreviousOccurence();
   }
 
   @Override
   public OccurenceInfo goNextOccurence() {
-    return getOccurenceNavigator().goNextOccurence();
+    return myOccurenceNavigator.goNextOccurence();
   }
 
   @Override
   public OccurenceInfo goPreviousOccurence() {
-    return getOccurenceNavigator().goPreviousOccurence();
+    return myOccurenceNavigator.goPreviousOccurence();
   }
 
   @Override
   public String getNextOccurenceActionName() {
-    return getOccurenceNavigator().getNextOccurenceActionName();
+    return myOccurenceNavigator.getNextOccurenceActionName();
   }
 
   @Override
   public String getPreviousOccurenceActionName() {
-    return getOccurenceNavigator().getPreviousOccurenceActionName();
+    return myOccurenceNavigator.getPreviousOccurenceActionName();
   }
 
   private static JComponent createToolbar(final DefaultActionGroup specialGroup) {
@@ -415,10 +418,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   Object getTreeStructureUpdateLock() {
     return myTreeStructureUpdateLock;
-  }
-
-  ExecutorService getTreeUpdater() {
-    return myTreeUpdater;
   }
 
   @Nullable
@@ -767,10 +766,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     });
   }
 
-  private OccurenceNavigator getOccurenceNavigator() {
-    return myOccurenceNavigator;
-  }
-
   @NotNull
   public Project getProject() {
     return myGlobalInspectionContext.getProject();
@@ -781,9 +776,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (PlatformDataKeys.HELP_ID.is(dataId)) return HELP_ID;
     if (DATA_KEY.is(dataId)) return this;
     if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
-    if (myTree == null) return null;
     TreePath[] paths = myTree.getSelectionPaths();
-
     if (paths == null || paths.length == 0) return null;
 
     if (paths.length > 1) {
@@ -794,7 +787,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     }
 
     TreePath path = paths[0];
-
     InspectionTreeNode selectedNode = (InspectionTreeNode)path.getLastPathComponent();
 
     if (!CommonDataKeys.NAVIGATABLE.is(dataId) && !CommonDataKeys.PSI_ELEMENT.is(dataId)) {
@@ -919,7 +911,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   public boolean isSingleToolInSelection() {
-    return myTree != null && myTree.getSelectedToolWrapper(true) != null;
+    return myTree.getSelectedToolWrapper(true) != null;
   }
 
   public boolean isRerun() {

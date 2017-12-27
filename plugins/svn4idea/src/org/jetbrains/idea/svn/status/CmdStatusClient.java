@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Ref;
@@ -21,13 +7,9 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -52,7 +34,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   public long doStatus(@NotNull File path,
-                       @Nullable SVNRevision revision,
+                       @Nullable Revision revision,
                        @NotNull Depth depth,
                        boolean remote,
                        boolean reportAll,
@@ -65,13 +47,13 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored);
 
-    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
+    CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null);
     parseResult(path, revision, handler, base, infoBase, command);
     return 0;
   }
 
   private void parseResult(@NotNull File path,
-                           @Nullable SVNRevision revision,
+                           @Nullable Revision revision,
                            @NotNull StatusConsumer handler,
                            @NotNull File base,
                            @Nullable Info infoBase,
@@ -89,7 +71,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
       parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get());
       if (!parsingHandler.get().isAnythingReported()) {
         if (!isSvnVersioned(myVcs, path)) {
-          throw new SvnBindException(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result);
+          throw new SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - " + command.getCommandText() + ". Result - " + result);
         } else {
           // return status indicating "NORMAL" state
           // typical output would be like
@@ -136,7 +118,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @NotNull
-  public SvnStatusHandler createStatusHandler(@Nullable SVNRevision revision,
+  public SvnStatusHandler createStatusHandler(@Nullable Revision revision,
                                               @NotNull StatusConsumer handler,
                                               @NotNull File base,
                                               @Nullable Info infoBase,
@@ -147,7 +129,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @NotNull
-  private Convertor<File, Info> createInfoGetter(@Nullable SVNRevision revision) {
+  private Convertor<File, Info> createInfoGetter(@Nullable Revision revision) {
     return file -> {
       try {
         return myFactory.createInfoClient().doInfo(file, revision);
@@ -202,7 +184,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     Ref<Status> status = Ref.create();
-    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
+    doStatus(path, Revision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
     return status.get();
   }
 }

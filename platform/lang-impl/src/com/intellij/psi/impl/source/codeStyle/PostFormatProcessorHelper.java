@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,15 @@ public class PostFormatProcessorHelper {
   private final CommonCodeStyleSettings mySettings;
   private int myDelta;
   private TextRange myResultTextRange;
+
+  /**
+   * @deprecated Use {@link #PostFormatProcessorHelper(CommonCodeStyleSettings)} first getting correct language settings
+   * with {@link CodeStyleSettings#getCommonSettings(Language)}!
+   */
+  @Deprecated
+  public PostFormatProcessorHelper(final CodeStyleSettings rootSettings) {
+    mySettings = rootSettings.getCommonSettings("");
+  }
 
   public PostFormatProcessorHelper(final CommonCodeStyleSettings settings) {
     mySettings = settings;

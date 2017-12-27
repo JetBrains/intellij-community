@@ -36,21 +36,21 @@ import java.awt.geom.RoundRectangle2D;
 public class MacIntelliJTextBorder extends DarculaTextBorder {
   private static final Color OUTLINE_COLOR = Gray.xBC;
 
-  private static double lwImpl(Graphics2D g2) {
+  private static float lwImpl(Graphics2D g2) {
     return JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
   }
 
-  private static double bwImpl() {
+  private static float bwImpl() {
     return JBUI.scale(3);
   }
 
   @Override
-  protected double lw(Graphics2D g2) {
+  protected float lw(Graphics2D g2) {
     return lwImpl(g2);
   }
 
   @Override
-  protected double bw() {
+  protected float bw() {
     return bwImpl();
   }
 
@@ -71,17 +71,17 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       g2.translate(r.x, r.y);
 
       float arc = JBUI.scale(6);
-      double lw = lwImpl(g2);
-      double bw = bwImpl();
-      Shape outerShape = new RoundRectangle2D.Double(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
+      float lw = lwImpl(g2);
+      float bw = bwImpl();
+      Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc);
       if (fillBackground) {
         g2.setColor(c.getBackground());
         g2.fill(outerShape);
       }
 
-      Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       path.append(outerShape, false);
-      path.append(new RoundRectangle2D.Double(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc-lw, arc-lw), false);
+      path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc-lw, arc-lw), false);
 
       g2.setColor(OUTLINE_COLOR);
       g2.fill(path);

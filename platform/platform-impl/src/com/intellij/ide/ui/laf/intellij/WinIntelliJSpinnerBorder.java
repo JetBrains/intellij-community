@@ -55,7 +55,7 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder implements Er
         JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(r, false);
 
       Rectangle innerRect = new Rectangle(r);

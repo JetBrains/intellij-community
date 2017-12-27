@@ -125,7 +125,8 @@ public class JUnitUtil {
     final PsiMethod psiMethod = location.getPsiElement();
     final PsiClass aClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() : psiMethod.getContainingClass();
     if (checkClass && (aClass == null || !isTestClass(aClass, checkAbstract, true))) return false;
-    if (isTestAnnotated(psiMethod)) return true;
+    if (isTestAnnotated(psiMethod, false)) return !psiMethod.hasModifierProperty(PsiModifier.STATIC);
+    if (MetaAnnotationUtil.isMetaAnnotated(psiMethod, Collections.singletonList(CUSTOM_TESTABLE_ANNOTATION))) return true;
     if (psiMethod.isConstructor()) return false;
     if (!psiMethod.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     if (psiMethod.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
@@ -295,11 +296,15 @@ public class JUnitUtil {
   }
 
   public static boolean isTestAnnotated(final PsiMethod method) {
+    return isTestAnnotated(method, true);
+  }
+
+  public static boolean isTestAnnotated(final PsiMethod method, boolean includeCustom) {
     if (AnnotationUtil.isAnnotated(method, TEST_ANNOTATION, 0) || JUnitRecognizer.willBeAnnotatedAfterCompilation(method)) {
       return true;
     }
 
-    return MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS);
+    return MetaAnnotationUtil.isMetaAnnotated(method, includeCustom ? TEST5_ANNOTATIONS : TEST5_JUPITER_ANNOTATIONS);
   }
 
 

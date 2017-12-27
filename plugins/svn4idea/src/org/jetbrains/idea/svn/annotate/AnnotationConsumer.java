@@ -18,11 +18,7 @@ package org.jetbrains.idea.svn.annotate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
-import org.tmatesoft.svn.core.SVNException;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public interface AnnotationConsumer {
 
   void consume(int lineNumber, @NotNull CommitInfo info, @Nullable CommitInfo mergeInfo);

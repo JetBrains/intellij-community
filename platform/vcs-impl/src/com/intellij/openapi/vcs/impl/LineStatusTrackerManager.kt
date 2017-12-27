@@ -39,19 +39,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.FileStatusListener
-import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileListener
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFilePropertyEvent
+import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -270,6 +264,13 @@ class LineStatusTrackerManager(
     if (tracker is PartialLocalLineStatusTracker) {
       val filePath = VcsUtil.getFilePath(tracker.virtualFile)
       changeListManager.unregisterChangeTracker(filePath, tracker)
+    }
+  }
+
+  private fun reregisterTrackerInCLM(tracker: LineStatusTracker<*>, oldPath: FilePath, newPath: FilePath) {
+    if (tracker is PartialLocalLineStatusTracker) {
+      changeListManager.unregisterChangeTracker(oldPath, tracker)
+      changeListManager.registerChangeTracker(newPath, tracker)
     }
   }
 
@@ -507,9 +508,39 @@ class LineStatusTrackerManager(
   }
 
   private inner class MyVirtualFileListener : VirtualFileListener {
-    override fun propertyChanged(event: VirtualFilePropertyEvent) {
+    override fun beforePropertyChange(event: VirtualFilePropertyEvent) {
       if (VirtualFile.PROP_ENCODING == event.propertyName) {
         onFileChanged(event.file)
+      }
+      if (VirtualFile.PROP_NAME == event.propertyName) {
+        val file = event.file
+        val parent = event.parent
+        if (parent != null) {
+          handleFileMovement(file) {
+            Pair(VcsUtil.getFilePath(parent, event.oldValue as String),
+                 VcsUtil.getFilePath(parent, event.newValue as String))
+          }
+        }
+      }
+    }
+
+    override fun beforeFileMovement(event: VirtualFileMoveEvent) {
+      val file = event.file
+      handleFileMovement(file) {
+        Pair(VcsUtil.getFilePath(event.oldParent, file.name),
+             VcsUtil.getFilePath(event.newParent, file.name))
+      }
+    }
+
+    private fun handleFileMovement(file: VirtualFile, getPaths: () -> Pair<FilePath, FilePath>) {
+      if (!partialChangeListsEnabled) return
+
+      synchronized(LOCK) {
+        val tracker = getLineStatusTracker(file)
+        if (tracker != null) {
+          val (oldPath, newPath) = getPaths()
+          reregisterTrackerInCLM(tracker, oldPath, newPath)
+        }
       }
     }
   }

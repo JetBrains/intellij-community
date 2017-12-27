@@ -25,7 +25,7 @@ import java.util.stream.Stream;
  */
 public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.gdpr.ConsentOptions");
-  
+  private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String BUNDLED_RESOURCE_PATH = "/consents.json";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
 
@@ -159,7 +159,8 @@ public final class ConsentOptions {
       }
     }
     Collections.sort(result, Comparator.comparing(o -> o.getId()));
-    return Pair.create(result, needReconfirm(allDefaults, allConfirmed));
+    final Boolean confirmationEnabled = Boolean.valueOf(System.getProperty(CONSENTS_CONFIRMATION_PROPERTY, "true"));
+    return Pair.create(result, confirmationEnabled && needReconfirm(allDefaults, allConfirmed));
   }
 
   public void setConsents(Collection<Consent> confirmedByUser) {

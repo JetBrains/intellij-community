@@ -60,7 +60,7 @@ public class PyKnownDecoratorUtil {
     UNITTEST_EXPECTED_FAILURE("unittest.case.expectedFailure"),
     UNITTEST_MOCK_PATCH("unittest.mock.patch"),
 
-    TYPING_OVERLOAD("typing.overload"),
+    TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
     TYPING_RUNTIME("typing.runtime"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),

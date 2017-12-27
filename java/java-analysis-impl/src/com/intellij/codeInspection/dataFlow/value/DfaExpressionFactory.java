@@ -135,7 +135,8 @@ public class DfaExpressionFactory {
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, var)) return constValue;
       }
 
-      if (ExpressionUtils.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
+      if (ExpressionUtils.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var) ||
+          (var instanceof PsiMethod && var.hasModifierProperty(PsiModifier.STATIC))) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 
@@ -199,9 +200,12 @@ public class DfaExpressionFactory {
           return sf.getCanonicalOwner(null, ((PsiMethod)target).getContainingClass());
         }
       }
-      if (method.getParameterList().getParametersCount() == 0 &&
-          AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
-        return method;
+      if (method.getParameterList().getParametersCount() == 0) {
+        if ((ControlFlowAnalyzer.isPure(method) ||
+            AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
+            ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
+          return method;
+        }
       }
     }
     return null;

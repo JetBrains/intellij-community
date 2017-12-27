@@ -35,6 +35,9 @@ public class ResizeableMappedFile implements Forceable {
   private final PagedFileStorage myStorage;
   private final int myInitialSize;
 
+  static final int DEFAULT_ALLOCATION_ROUND_FACTOR = 4096;
+  private int myRoundFactor = DEFAULT_ALLOCATION_ROUND_FACTOR;
+
   public ResizeableMappedFile(@NotNull File file, int initialSize, @Nullable PagedFileStorage.StorageLockContext lockContext, int pageSize,
                               boolean valuesAreBufferAligned) throws IOException {
     this(file, initialSize, lockContext, pageSize, valuesAreBufferAligned, false);
@@ -72,11 +75,15 @@ public class ResizeableMappedFile implements Forceable {
     expand(pos);
   }
 
+  public void setRoundFactor(int roundFactor) {
+    myRoundFactor = roundFactor;
+  }
+
   private void expand(final long max) {
     long realSize = realSize();
     if (max <= realSize) return;
     long suggestedSize;
-    
+
     if (realSize == 0) {
       suggestedSize = myInitialSize;
     } else {
@@ -92,7 +99,7 @@ public class ResizeableMappedFile implements Forceable {
         }
       }
 
-      int roundFactor = PersistentBTreeEnumerator.PAGE_SIZE;
+      int roundFactor = myRoundFactor;
       if (suggestedSize % roundFactor != 0) {
         suggestedSize = ((suggestedSize / roundFactor) + 1) * roundFactor;
       }

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.lang.properties.editor;
 
@@ -146,13 +148,15 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
   @Nullable
   @Override
   public IProperty[] getProperties() {
-    return new IProperty[0];
+    return IProperty.EMPTY_ARRAY;
   }
 
   @Nullable
   @Override
   public PsiFile[] getFiles() {
-    final List<PropertiesFile> files = getValue().getPropertiesFiles();
+    ResourceBundle rb = getValue();
+    if (rb == null) return null;
+    final List<PropertiesFile> files = rb.getPropertiesFiles();
     return ContainerUtil.map2Array(files, new PsiFile[files.size()], propertiesFile -> propertiesFile.getContainingFile());
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.branchConfig;
 
@@ -32,9 +18,9 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
+import org.jetbrains.idea.svn.dialogs.SelectLocationDialog;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -46,7 +32,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.ObjectUtils.notNull;
 import static java.lang.Math.min;
-import static org.jetbrains.idea.svn.dialogs.SelectLocationDialog.selectLocation;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class BranchConfigurationDialog extends DialogWrapper {
   private JPanel myTopPanel;
@@ -60,9 +46,9 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
   public BranchConfigurationDialog(@NotNull Project project,
                                    @NotNull SvnBranchConfigurationNew configuration,
-                                   @NotNull SVNURL rootUrl,
+                                   @NotNull Url rootUrl,
                                    @NotNull VirtualFile root,
-                                   @NotNull SVNURL url) {
+                                   @NotNull Url url) {
     super(project, true);
     myRoot = root;
     init();
@@ -76,7 +62,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
     myTrunkLocationTextField.setText(configuration.getTrunkUrl());
     myTrunkLocationTextField.addActionListener(e -> {
-      Pair<SVNURL, SVNURL> selectionData = selectLocation(project, rootUrl);
+      Pair<Url, Url> selectionData = SelectLocationDialog.selectLocationAndRoot(project, rootUrl);
 
       if (selectionData != null && selectionData.first != null) {
         myTrunkLocationTextField.setText(selectionData.first.toString());
@@ -97,17 +83,17 @@ public class BranchConfigurationDialog extends DialogWrapper {
   }
 
   @NotNull
-  private JPanel wrapLocationsWithToolbar(@NotNull Project project, @NotNull SVNURL rootUrl) {
+  private JPanel wrapLocationsWithToolbar(@NotNull Project project, @NotNull Url rootUrl) {
     return ToolbarDecorator.createDecorator(myBranchLocationsList)
       .setAddAction(new AnActionButtonRunnable() {
 
-        @Nullable private SVNURL usedRootUrl;
+        @Nullable private Url usedRootUrl;
 
         @Override
         public void run(AnActionButton button) {
-          Pair<SVNURL, SVNURL> result = selectLocation(project, notNull(usedRootUrl, rootUrl));
+          Pair<Url, Url> result = SelectLocationDialog.selectLocationAndRoot(project, notNull(usedRootUrl, rootUrl));
           if (result != null) {
-            SVNURL selectedUrl = result.first;
+            Url selectedUrl = result.first;
             usedRootUrl = result.second;
             if (selectedUrl != null) {
               String selectedUrlValue = selectedUrl.toString();
@@ -140,20 +126,19 @@ public class BranchConfigurationDialog extends DialogWrapper {
   }
 
   private class TrunkUrlValidator extends DocumentAdapter {
-    private final SVNURL myRootUrl;
+    private final Url myRootUrl;
     private final SvnBranchConfigurationNew myConfiguration;
 
-    private TrunkUrlValidator(final SVNURL rootUrl, final SvnBranchConfigurationNew configuration) {
+    private TrunkUrlValidator(final Url rootUrl, final SvnBranchConfigurationNew configuration) {
       myRootUrl = rootUrl;
       myConfiguration = configuration;
     }
 
     protected void textChanged(final DocumentEvent e) {
-      SVNURL url = parseUrl(myTrunkLocationTextField.getText());
+      Url url = parseUrl(myTrunkLocationTextField.getText());
 
       if (url != null) {
-        boolean isAncestor = SVNURLUtil.isAncestor(myRootUrl, url);
-        boolean areNotSame = isAncestor && !url.equals(myRootUrl);
+        boolean areNotSame = isAncestor(myRootUrl, url) && !url.equals(myRootUrl);
 
         if (areNotSame) {
           myConfiguration.setTrunkUrl(url.toDecodedString());
@@ -163,8 +148,8 @@ public class BranchConfigurationDialog extends DialogWrapper {
     }
 
     @Nullable
-    private SVNURL parseUrl(@NotNull String url) {
-      SVNURL result = null;
+    private Url parseUrl(@NotNull String url) {
+      Url result = null;
 
       try {
         result = SvnUtil.createUrl(url);

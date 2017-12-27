@@ -1747,16 +1747,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     cleanProcessedFlag(file);
 
     List<ID<?, ?>> nontrivialFileIndexedStates = IndexingStamp.getNontrivialFileIndexedStates(fileId);
-
-    if (!contentChanged) {
-      for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
-        if (myNotRequiringContentIndices.contains(indexId)) {
-          updateSingleIndex(indexId, null, fileId, null);
-        }
-      }
-      myChangedFilesCollector.removeScheduledFileFromUpdate(file); // no need to update it anymore
-    }
-
     Collection<ID<?, ?>> fileIndexedStatesToUpdate = ContainerUtil.intersection(nontrivialFileIndexedStates, myRequiringContentIndices);
 
     if (contentChanged) {
@@ -1777,11 +1767,23 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         if (file.isValid()) {
           if(!isTooLarge(file)) myChangedFilesCollector.scheduleForUpdate(file);
           else myChangedFilesCollector.scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+        } else {
+          LOG.info("Unexpected state in update:" + file);
         }
       }
     }
-    else if (!fileIndexedStatesToUpdate.isEmpty()) { // file was removed, its data should be (lazily) wiped for every index
-      myChangedFilesCollector.scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+    else { // file was removed
+      for (ID<?, ?> indexId : nontrivialFileIndexedStates) {
+        if (myNotRequiringContentIndices.contains(indexId)) {
+          updateSingleIndex(indexId, null, fileId, null);
+        }
+      }
+      if(!fileIndexedStatesToUpdate.isEmpty()) {
+        // its data should be (lazily) wiped for every index
+        myChangedFilesCollector.scheduleForUpdate(new DeletedVirtualFileStub((VirtualFileWithId)file));
+      } else {
+        myChangedFilesCollector.removeScheduledFileFromUpdate(file); // no need to update it anymore
+      }
     }
   }
 

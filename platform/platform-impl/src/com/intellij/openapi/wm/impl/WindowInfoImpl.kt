@@ -147,6 +147,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   }
 
   fun wasRead() = wasRead
+
+  override fun toString(): String {
+    return "id: $id, ${super.toString()}"
+  }
 }
 
 private class ContentUiTypeConverter : Converter<ToolWindowContentUiType>() {

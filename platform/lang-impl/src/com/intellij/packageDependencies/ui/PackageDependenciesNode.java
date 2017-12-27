@@ -17,9 +17,7 @@
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.analysis.AnalysisScopeBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -145,17 +143,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   @Override
   public void navigate(boolean focus) {
     if (canNavigate()) {
-      openTextEditor(focus);
+      PsiElement psiElement = getPsiElement();
+      if (psiElement != null) {
+        NavigationUtil.openFileWithPsiElement(psiElement, focus, focus);
+      }
     }
-  }
-
-  @Nullable
-  private Editor openTextEditor(boolean focus) {
-    final OpenFileDescriptor descriptor = getDescriptor();
-    if (descriptor != null) {
-      return FileEditorManager.getInstance(getProject()).openTextEditor(descriptor, focus);
-    }
-    return null;
   }
 
   @Override
@@ -179,16 +171,6 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
       return null;
     }
     return psiElement.getContainingFile().getProject();
-  }
-
-  @Nullable
-  private OpenFileDescriptor getDescriptor() {
-    if (getProject() == null) return null;
-    final PsiElement psiElement = getPsiElement();
-    if (psiElement == null) return null;
-    final VirtualFile virtualFile = psiElement.getContainingFile().getVirtualFile();
-    if (virtualFile == null || !virtualFile.isValid()) return null;
-    return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
   }
 
   @Override

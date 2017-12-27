@@ -2534,6 +2534,59 @@ public class PyTypeTest extends PyTestCase {
            "expr = Derived().cls()");
   }
 
+  // PY-26992
+  public void testInitializingInnerCallableClass() {
+    doTest("B",
+           "class A:\n" +
+           "    class B:\n" +
+           "        def __init__(self):\n" +
+           "            pass\n" +
+           "        def __call__(self, x):\n" +
+           "            pass\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "expr = A.B()");
+  }
+
+  // PY-26992
+  public void testInitializingInnerCallableClassThroughExplicitDunderInit() {
+    doTest("B",
+           "class A:\n" +
+           "    class B:\n" +
+           "        def __init__(self):\n" +
+           "            pass\n" +
+           "        def __call__(self, x):\n" +
+           "            pass\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "expr = A.B.__init__()");
+  }
+
+  // PY-26992
+  public void testInitializingInnerCallableClassThroughExplicitDunderNew() {
+    doTest("B",
+           "class A(object):\n" +
+           "    class B(object):\n" +
+           "        def __init__(self):\n" +
+           "            pass\n" +
+           "        def __call__(self, x):\n" +
+           "            pass\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "expr = A.B.__new__(A.B)");
+  }
+
+  // PY-26973
+  public void testSliceOnUnion() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Union[str, Any]",
+                   "from typing import Union\n" +
+                   "myvar: Union[str, int]\n" +
+                   "expr = myvar[0:3]")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

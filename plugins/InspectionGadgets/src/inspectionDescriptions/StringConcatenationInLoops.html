@@ -6,7 +6,8 @@ it with explicit calls to <b>StringBuilder.append()</b> or <b>StringBuffer.appen
 <p>
   Sometimes quick-fix actions are available which allow you to convert <code>String</code> variable to <code>StringBuilder</code> or
   introduce a new <code>StringBuilder</code>. Be careful if the original code handles <code>null</code> value specially: the replacement
-  might not be semantically correct after that. Also it's not guaranteed that the automatic replacement will always be more performant.
+  might not be semantically correct after that. If <code>null</code> value is possible, null-safe fixes are suggested which generate
+  necessary null-checks. Also it's not guaranteed that the automatic replacement will always be more performant.
 </p>
 </body>
 </html>

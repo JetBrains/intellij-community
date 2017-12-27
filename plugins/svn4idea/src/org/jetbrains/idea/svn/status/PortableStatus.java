@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Date;
@@ -80,11 +66,11 @@ public class PortableStatus extends Status {
    * @param treeConflict           tree conflict description
    * @since 1.3
    */
-  public PortableStatus(SVNURL url,
+  public PortableStatus(Url url,
                         File file,
                         @NotNull NodeKind kind,
-                        SVNRevision revision,
-                        SVNRevision committedRevision,
+                        Revision revision,
+                        Revision committedRevision,
                         Date committedDate,
                         String author,
                         StatusType contentsStatus,
@@ -111,7 +97,7 @@ public class PortableStatus extends Status {
 
   public PortableStatus() {
     myInfoGetter = () -> null;
-    setCommittedRevision(SVNRevision.UNDEFINED);
+    setCommittedRevision(Revision.UNDEFINED);
   }
 
   @Override
@@ -162,7 +148,7 @@ public class PortableStatus extends Status {
    * @return the item ancestor's URL
    */
   @Override
-  public SVNURL getCopyFromURL() {
+  public Url getCopyFromURL() {
     if (! isCopied()) return null;
     final Info info = initInfo();
     if (info == null) return null;
@@ -170,8 +156,8 @@ public class PortableStatus extends Status {
   }
 
   @Override
-  public SVNURL getURL() {
-    SVNURL url = super.getURL();
+  public Url getURL() {
+    Url url = super.getURL();
 
     if (url == null) {
       Info info = initInfo();
@@ -182,8 +168,8 @@ public class PortableStatus extends Status {
   }
 
   @Override
-  public SVNURL getRepositoryRootURL() {
-    SVNURL url = super.getRepositoryRootURL();
+  public Url getRepositoryRootURL() {
+    Url url = super.getRepositoryRootURL();
 
     if (url == null) {
       Info info = initInfo();
@@ -207,8 +193,8 @@ public class PortableStatus extends Status {
 
   @NotNull
   @Override
-  public SVNRevision getRevision() {
-    final SVNRevision revision = super.getRevision();
+  public Revision getRevision() {
+    final Revision revision = super.getRevision();
     if (revision.isValid()) return revision;
 
     final StatusType status = getContentsStatus();

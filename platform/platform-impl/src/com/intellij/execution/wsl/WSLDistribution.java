@@ -103,6 +103,25 @@ public class WSLDistribution {
     return Files.exists(fullPath, LinkOption.NOFOLLOW_LINKS) ? fullPath : null;
   }
 
+  @Nullable
+  public String readReleaseInfo() {
+    try {
+      final String key = "PRETTY_NAME";
+      final String releaseInfo = "/etc/os-release"; // available for all distributions
+      final ProcessOutput output = executeOnWsl(1000, "cat", releaseInfo);
+      for (String line : output.getStdoutLines(true)) {
+        if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
+          final String prettyName = line.substring(key.length() + 1);
+          return  StringUtil.nullize(StringUtil.unquoteString(prettyName));
+        }
+      }
+    }
+    catch (ExecutionException e) {
+      LOG.warn(e);
+    }
+    return null;
+  }
+
   /**
    * @return creates and patches command line from args. e.g:
    * {@code ruby -v} => {@code bash -c "ruby -v"}

@@ -25,7 +25,7 @@ import com.intellij.ui.UIBundle;
 public class GetFromVcsAction extends WelcomePopupAction{
 
   protected void fillActions(DefaultActionGroup group) {
-    group.addAll(new CheckoutActionGroup("WelcomeScreen.GetFromVcs"));
+    group.addAll(new CheckoutActionGroup("WelcomeScreen.GetFromVcs").getActions());
   }
 
   protected String getCaption() {

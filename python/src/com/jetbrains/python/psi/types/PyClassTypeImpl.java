@@ -410,10 +410,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
             if (Objects.equals(t1, t2)) {
               return 0;
             }
-            else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
+            else if (t2 == null || t1 != null && t1.getAncestorTypes(context).contains(t2)) {
               return 1;
             }
-            else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
+            else if (t1 == null || t2.getAncestorTypes(context).contains(t1)) {
               return -1;
             }
             else {
@@ -466,19 +466,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    if (isDefinition()) {
-      List<PyCallableParameter> params = getParametersOfMethod(PyNames.INIT, context);
-      if (params == null) {
-        // TODO better way to resolve the constructor method here
-        params = getParametersOfMethod(PyNames.NEW, context);
-      }
-      if (params != null) {
-        // Skip "self" for __init__ and "cls" for __new__
-        return params.subList(1, params.size());
-      }
-      return null;
-    }
-    return getParametersOfMethod(PyNames.CALL, context);
+    final List<String> methodNames = isDefinition() ? Arrays.asList(PyNames.INIT, PyNames.NEW) : Collections.singletonList(PyNames.CALL);
+
+    return StreamEx
+      .of(methodNames)
+      .map(name -> getParametersOfMethod(name, context))
+      .findFirst(Objects::nonNull)
+      // Skip "self" for __init__/__call__ and "cls" for __new__
+      .map(parameters -> ContainerUtil.subList(parameters, 1))
+      .orElse(null);
   }
 
   @Nullable

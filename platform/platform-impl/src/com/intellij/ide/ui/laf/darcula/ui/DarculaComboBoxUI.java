@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
@@ -74,11 +75,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           int w = getWidth();
           int h = getHeight();
-          double bw = bw();
-          double lw = lw(g2);
-          double arc = JBUI.scale(5.0f) - bw - lw;
+          float bw = bw();
+          float lw = lw(g2);
+          float arc = arc() - bw - lw;
 
-          Path2D innerShape = new Path2D.Double();
+          Path2D innerShape = new Path2D.Float();
           innerShape.moveTo(lw, bw + lw);
           innerShape.lineTo(w - bw - lw - arc, bw + lw);
           innerShape.quadTo(w - bw - lw, bw + lw , w - bw - lw, bw + lw + arc);
@@ -92,7 +93,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           // Paint vertical line
           g2.setColor(getArrowButtonFillColor(getOutlineColor(comboBox.isEnabled())));
-          g2.fill(new Rectangle2D.Double(0, bw + lw, lw(g2), getHeight() - (bw + lw) * 2));
+          g2.fill(new Rectangle2D.Float(0, bw + lw, lw(g2), getHeight() - (bw + lw) * 2));
 
           g2.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getOutlineColor(comboBox.isEnabled())));
           g2.fill(getArrowShape());
@@ -107,7 +108,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         int xU = (getWidth() - tW) / 2 - JBUI.scale(1);
         int yU = (getHeight() - tH) / 2 + JBUI.scale(1);
 
-        Path2D.Double path = new Path2D.Double();
+        Path2D path = new Path2D.Float();
         path.moveTo(xU, yU);
         path.lineTo(xU + tW, yU);
         path.lineTo(xU + tW/2, yU + tH);
@@ -122,14 +123,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
         return new Dimension(JBUI.scale(14) + i.left, JBUI.scale(18) + i.top + i.bottom);
       }
     };
-    button.setBorder(BorderFactory.createEmptyBorder());
+    button.setBorder(JBUI.Borders.empty());
     button.setOpaque(false);
     return button;
   }
 
   protected Color getArrowButtonFillColor(Color defaultColor) {
-    Color color = UIManager.getColor(comboBox.hasFocus() ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
-    return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? getOutlineColor(comboBox.isEnabled()) : color;
+    return DarculaUIUtil.getArrowButtonFillColor(comboBox.hasFocus(), comboBox.isEnabled(), defaultColor);
   }
 
   @Override
@@ -150,14 +150,14 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      double bw = bw();
-      double arc = JBUI.scale(5.0f);
+      float bw = bw();
+      float arc = arc();
 
       boolean editable = editor != null && comboBox.isEditable();
       Color background = editable && comboBox.isEnabled() ? editor.getBackground() : UIUtil.getPanelBackground();
       g2.setColor(background);
 
-      Shape innerShape = new RoundRectangle2D.Double(bw, bw, c.getWidth() - bw * 2, c.getHeight() - bw * 2, arc, arc);
+      Shape innerShape = new RoundRectangle2D.Float(bw, bw, c.getWidth() - bw * 2, c.getHeight() - bw * 2, arc, arc);
       g2.fill(innerShape);
     } finally {
       g2.dispose();
@@ -176,7 +176,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
-    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);;
+    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
     if (!hasFocus || isPopupVisible(comboBox)) {
       c.setBackground(UIManager.getColor("ComboBox.background"));
@@ -278,13 +278,13 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
       g2.translate(x, y);
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      double lw = lw(g2);
-      double bw = bw();
-      float arc = JBUI.scale(5.0f);
+      float lw = lw(g2);
+      float bw = bw();
+      float arc = arc();
 
-      border.append(new RoundRectangle2D.Double(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
-      border.append(new RoundRectangle2D.Double(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc - lw, arc - lw), false);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
+      border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc - lw, arc - lw), false);
 
       g2.setColor(getOutlineColor(c.isEnabled()));
       g2.fill(border);
@@ -433,18 +433,21 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
             arrowButton.setBounds(0, 0, aps.width, cb.getHeight());
           }
         }
-
-        if (comboBox.isEditable() && editor != null) {
-          Rectangle er = rectangleForCurrentValue();
-          Dimension eps = editor.getPreferredSize();
-          if (eps.height < er.height) {
-            int delta = (er.height - eps.height) / 2;
-            er.y += delta;
-            er.height = eps.height;
-          }
-          editor.setBounds(er);
-        }
+        layoutEditor();
       }
     };
+  }
+
+  protected void layoutEditor() {
+    if (comboBox.isEditable() && editor != null) {
+      Rectangle er = rectangleForCurrentValue();
+      Dimension eps = editor.getPreferredSize();
+      if (eps.height < er.height) {
+        int delta = (er.height - eps.height) / 2;
+        er.y += delta;
+        er.height = eps.height;
+      }
+      editor.setBounds(er);
+    }
   }
 }

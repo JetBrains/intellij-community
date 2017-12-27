@@ -176,4 +176,13 @@ public class CommonTest extends IncrementalTestCase {
   public void testIntegrateOnNonIncrementalMake() {
     doTest();
   }
+
+  // Disabled because now several classes with the same qName in different modules are not supporter
+  //
+  //public void testConflictingClasses() {
+  //  JpsModule module1 = addModule("module1", "module1/src");
+  //  JpsModule module2 = addModule("module2", "module2/src");
+  //  JpsModuleRootModificationUtil.addDependency(module2, module1);
+  //  doTestBuild(1).assertSuccessful();
+  //}
 }

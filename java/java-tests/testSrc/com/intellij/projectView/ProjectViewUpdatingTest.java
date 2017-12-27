@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.uiDesigner.projectView.FormMergerTreeStructureProvider;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -382,16 +383,14 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
     AbstractTreeBuilder builder = pane.getTreeBuilder();
     if (builder == null) {
-      pane.updateFromRoot(false);
-      PlatformTestUtil.waitWhileBusy(tree);
-      PlatformTestUtil.assertTreeEqual(tree, "-Project\n" +
-                                             " -1\n" +
-                                             "  +01.2\n" +
-                                             "  +1.1\n" +
-                                             "  +1.3\n", true);
-      return; // TODO:SAM new model loses selection of moved node for now
+      // TODO:SAM new model loses selection of moved node for now
+      TreeVisitor visitor = new TreeVisitor.ByTreePath<>(tree.getSelectionPath(), o -> o);
+      PlatformTestUtil.waitForCallback(pane.updateFromRoot(false));
+      tree.setSelectionPath(PlatformTestUtil.waitForPromise(TreeUtil.promiseMakeVisible(tree, visitor)));
     }
-    builder.updateFromRoot();
+    else {
+      builder.updateFromRoot();
+    }
 
     PlatformTestUtil.assertTreeEqual(tree, "-Project\n" +
                                            " -1\n" +

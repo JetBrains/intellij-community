@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -1035,6 +1036,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!isNegated) { //Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return true;
+      if (isUnstableValue(dfaLeft) || isUnstableValue(dfaRight)) return true;
       if (!uniteClasses(c1Index, c2Index)) return false;
 
       for (long encodedPair : myDistinctClasses.toArray()) {
@@ -1058,6 +1060,24 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myCachedHash = null;
     }
 
+    return true;
+  }
+
+  /**
+   * Returns true if value represents an "unstable" value. An unstable value is a value of an object type which could be
+   * a newly object every time it's accessed. Such value is still useful as its nullability is stable
+   *
+   * @param value to check.
+   * @return true if value might be unstable, false otherwise
+   */
+  private boolean isUnstableValue(DfaValue value) {
+    if (!(value instanceof DfaVariableValue)) return false;
+    DfaVariableValue var = (DfaVariableValue)value;
+    PsiModifierListOwner owner = var.getPsiVariable();
+    if (!(owner instanceof PsiMethod)) return false;
+    if (var.getVariableType() instanceof PsiPrimitiveType) return false;
+    if (PropertyUtilBase.isSimplePropertyGetter((PsiMethod)owner)) return false;
+    if (isNull(var)) return false;
     return true;
   }
 

@@ -170,7 +170,8 @@ final class BuildSession implements Runnable, CanceledStatus {
             int srcCount = message.getNumberOfProcessedSources();
             long time = message.getElapsedTimeMs();
             if (srcCount != 0 || time > 50) {
-              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed");
+              LOG.info("Build duration: '" + message.getBuilderName() + "' builder took " + time + " ms, " + srcCount + " sources processed" +
+                       (srcCount == 0 ? "" : " ("+ time/srcCount +"ms per file)"));
             }
             response = null;
           }

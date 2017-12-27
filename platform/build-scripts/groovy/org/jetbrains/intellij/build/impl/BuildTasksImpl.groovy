@@ -540,7 +540,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildUpdaterJar() {
-    new LayoutBuilder(buildContext.ant, buildContext.project, false).layout(buildContext.paths.artifacts) {
+    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater.jar") {
         module("updater")
       }
