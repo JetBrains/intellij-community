@@ -605,9 +605,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         }
 
         int bw = JBUI.scale(1);
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(new Rectangle2D.Double(0, 0, width, height), false);
-        border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new Rectangle2D.Float(0, 0, width, height), false);
+        border.append(new Rectangle2D.Float(bw, bw, width - bw*2, height - bw*2), false);
 
         g2.fill(border);
       } finally {

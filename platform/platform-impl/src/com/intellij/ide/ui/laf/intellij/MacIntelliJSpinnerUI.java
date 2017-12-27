@@ -53,8 +53,8 @@ public class MacIntelliJSpinnerUI extends DarculaSpinnerUI {
       Graphics2D g2 = (Graphics2D)g;
       g2.setColor(getBackground());
 
-      double arc = JBUI.scale(6f);
-      Path2D rect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      float arc = JBUI.scale(6f);
+      Path2D rect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       rect.moveTo(x, i.top);
       rect.lineTo(x, c.getHeight() - i.bottom);
       rect.lineTo(i.left + arc, c.getHeight() - i.bottom);

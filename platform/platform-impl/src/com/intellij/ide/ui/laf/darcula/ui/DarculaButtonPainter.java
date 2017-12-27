@@ -48,12 +48,12 @@ public class DarculaButtonPainter implements Border, UIResource {
         //JBInsets.removeFrom(r, JBUI.insets(1));
         g2.translate(r.x, r.y);
 
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        double lw = DarculaUIUtil.lw(g2);
-        double bw = DarculaUIUtil.bw();
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        float lw = DarculaUIUtil.lw(g2);
+        float bw = DarculaUIUtil.bw();
         float arc = JBUI.scale(2.0f);
-        border.append(new RoundRectangle2D.Double(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
-        border.append(new RoundRectangle2D.Double(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw),
+        border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw),
                       false);
 
         g2.setColor(DarculaUIUtil.getOutlineColor(c.isEnabled()));
@@ -72,7 +72,7 @@ public class DarculaButtonPainter implements Border, UIResource {
           }
           else {
             g2.translate(off, off);
-            DarculaUIUtil.paintFocusBorder(g2, width - off * 2, height - off * 2, (float)DarculaUIUtil.arc(), true);
+            DarculaUIUtil.paintFocusBorder(g2, width - off * 2, height - off * 2, DarculaUIUtil.arc(), true);
           }
         }
         else {

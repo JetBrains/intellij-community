@@ -69,11 +69,11 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
         //JBInsets.removeFrom(r, JBUI.insets(1, 0));
         g2.translate(r.x, r.y);
 
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        double lw = lw(g2);
-        double bw = bw();
-        border.append(new Rectangle2D.Double(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
-        border.append(new Rectangle2D.Double(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        float lw = lw(g2);
+        float bw = bw();
+        border.append(new Rectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2), false);
+        border.append(new Rectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2), false);
 
         boolean editable = !(c instanceof JTextComponent) || ((JTextComponent)c).isEditable();
         g2.setColor(getOutlineColor(c.isEnabled() && editable));
@@ -115,17 +115,17 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
       g2.translate(r.x, r.y);
 
       float arc = JBUI.scale(6f);
-      double lw = DarculaUIUtil.lw(g);
-      double bw = DarculaUIUtil.bw();
-      Shape outerShape = new RoundRectangle2D.Double(bw, bw, r.width - bw*2, r.height - bw*2, arc, arc);
+      float lw = DarculaUIUtil.lw(g);
+      float bw = DarculaUIUtil.bw();
+      Shape outerShape = new RoundRectangle2D.Float(bw, bw, r.width - bw*2, r.height - bw*2, arc, arc);
       if (fillBackground) {
         g2.setColor(c.getBackground());
         g2.fill(outerShape);
       }
 
-      Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       path.append(outerShape, false);
-      path.append(new RoundRectangle2D.Double(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc-lw, arc-lw), false);
+      path.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw)*2, r.height - (bw + lw)*2, arc-lw, arc-lw), false);
 
       g2.setColor(DarculaUIUtil.getOutlineColor(c.isEnabled() && c.isEditable()));
       g2.fill(path);
@@ -143,10 +143,10 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
   }
 
   protected void clipForBorder(Component c, Graphics2D g2, int width, int height) {
-    Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
-    double lw = lw(g2);
-    double bw = bw();
-    area.subtract(new Area(new Rectangle2D.Double(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2)));
+    Area area = new Area(new Rectangle2D.Float(0, 0, width, height));
+    float lw = lw(g2);
+    float bw = bw();
+    area.subtract(new Area(new Rectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2)));
     area.intersect(new Area(g2.getClip()));
     g2.setClip(area);
   }
@@ -155,11 +155,11 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     return true;
   }
 
-  protected double lw(Graphics2D g2) {
+  protected float lw(Graphics2D g2) {
     return DarculaUIUtil.lw(g2);
   }
 
-  protected double bw() {
+  protected float bw() {
     return DarculaUIUtil.bw();
   }
 

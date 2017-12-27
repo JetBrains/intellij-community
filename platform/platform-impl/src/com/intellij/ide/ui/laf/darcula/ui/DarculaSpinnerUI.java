@@ -101,11 +101,11 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      double bw = bw();
-      double arc = arc();
+      float bw = bw();
+      float arc = arc();
 
       g2.setColor(getBackground());
-      Shape innerShape = new RoundRectangle2D.Double(bw, bw, c.getWidth() - bw * 2, c.getHeight() - bw * 2, arc, arc);
+      Shape innerShape = new RoundRectangle2D.Float(bw, bw, c.getWidth() - bw * 2, c.getHeight() - bw * 2, arc, arc);
       g2.fill(innerShape);
     } finally {
       g2.dispose();
@@ -125,11 +125,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
     Dimension arrowSize = nextButton.getPreferredSize();
     Dimension minSize = new Dimension(i.left + JBUI.scale(20) + arrowSize.width, arrowSize.height * 2);
-    if (isEmpty(size)) {
-      size = minSize;
-    } else {
-      size = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
-    }
+    size = isEmpty(size) ? minSize : new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
 
     Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : JBUI.emptySize();
     return new Dimension(Math.max(size.width, i.left + editorSize.width + arrowSize.width),
@@ -211,16 +207,16 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
           g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                               MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-          double lw = lw(g2);
-          double bw = bw();
+          float lw = lw(g2);
+          float bw = bw();
 
           g2.setColor(getArrowButtonFillColor(spinner.hasFocus(), isEnabled, spinner.getBackground()));
           g2.fill(getInnerShape(lw, bw));
 
           // Paint side line
           Rectangle2D sideLine = direction == NORTH ?
-                                 new Rectangle2D.Double(0, bw + lw, lw, getHeight() - (bw + lw)) :
-                                 new Rectangle2D.Double(0, 0, lw, getHeight() - (bw + lw));
+                                 new Rectangle2D.Float(0, bw + lw, lw, getHeight() - (bw + lw)) :
+                                 new Rectangle2D.Float(0, 0, lw, getHeight() - (bw + lw));
 
           g2.setColor(getArrowButtonFillColor(spinner.hasFocus(), isEnabled, getOutlineColor(isEnabled)));
           g2.fill(sideLine);
@@ -235,11 +231,11 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
         }
       }
 
-      private Shape getInnerShape(double lw, double bw) {
-        Path2D shape = new Path2D.Double();
+      private Shape getInnerShape(float lw, float bw) {
+        Path2D shape = new Path2D.Float();
         int w = getWidth();
         int h = getHeight();
-        double arc = arc() - bw - lw;
+        float arc = arc() - bw - lw;
 
         switch (direction) {
           case SOUTH:
@@ -265,7 +261,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
       }
 
       private Shape getArrowShape() {
-        Path2D arrow = new Path2D.Double();
+        Path2D arrow = new Path2D.Float();
         int aw = JBUI.scale(ARROW_WIDTH);
         int ah = JBUI.scale(ARROW_HEIGHT);
 

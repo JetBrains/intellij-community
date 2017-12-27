@@ -98,19 +98,19 @@ public class DarculaTextFieldUI extends TextFieldWithPopupHandlerUI {
       g2.translate(r.x, r.y);
 
       float arc = isSearchField(component) ? JBUI.scale(6f) : 0.0f;
-      double bw = bw();
+      float bw = bw();
 
       if (component.isEnabled() && component.isEditable()) {
         g2.setColor(component.getBackground());
       }
 
-      g2.fill(new RoundRectangle2D.Double(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+      g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
     } finally {
       g2.dispose();
     }
   }
 
-  protected double bw() {
+  protected float bw() {
     return DarculaUIUtil.bw();
   }
 }

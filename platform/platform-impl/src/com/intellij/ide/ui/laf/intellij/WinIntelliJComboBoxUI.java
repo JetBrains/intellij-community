@@ -236,7 +236,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
           // paint border around button when combobox is editable
           if (comboBox.isEditable() && comboBox.isEnabled()) {
-            Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+            Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
             border.append(outerRect, false);
             border.append(innerRect, false);
 
@@ -409,7 +409,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         JBInsets.removeFrom(outerRect, JBUI.insets(1));
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(outerRect, false);
       border.append(innerRect, false);
       g2.fill(border);

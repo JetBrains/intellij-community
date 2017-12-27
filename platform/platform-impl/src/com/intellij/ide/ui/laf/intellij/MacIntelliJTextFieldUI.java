@@ -53,7 +53,7 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   @Override
-  protected double bw() {
+  protected float bw() {
     return JBUI.scale(3);
   }
 }

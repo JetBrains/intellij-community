@@ -44,22 +44,23 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
       //JBInsets.removeFrom(r, JBUI.insets(1, 0));
       g2.translate(x, y);
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-      double lw = lw(g2);
-      double bw = bw();
-      double arc = arc();
-      border.append(new RoundRectangle2D.Double(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
-      border.append(new RoundRectangle2D.Double(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc, arc), false);
+      float lw = lw(g2);
+      float bw = bw();
+      float arc = arc();
+
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
+      border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc, arc), false);
 
       g2.setColor(getOutlineColor(c.isEnabled()));
       g2.fill(border);
 
       Object op = ((JComponent)c).getClientProperty("JComponent.outline");
       if (op != null) {
-        paintOutlineBorder(g2, width, height, (float)arc, true, isFocused(c),
+        paintOutlineBorder(g2, width, height, arc, true, isFocused(c),
                                          Outline.valueOf(op.toString()));
       } else if (isFocused(c)) {
-        paintFocusBorder(g2, width, height, (float)arc, true);
+        paintFocusBorder(g2, width, height, arc, true);
       }
     } finally {
       g2.dispose();
