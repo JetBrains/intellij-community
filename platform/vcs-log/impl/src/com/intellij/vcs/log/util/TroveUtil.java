@@ -23,11 +23,9 @@ import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.IntFunction;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -72,6 +70,18 @@ public class TroveUtil {
 
     if (result == null) return ContainerUtil.newHashSet();
     return createJavaSet(result);
+  }
+
+  public static boolean intersects(@NotNull TIntHashSet set1, @NotNull TIntHashSet set2) {
+    if (set1.size() <= set2.size()) {
+      return !set1.forEach(value -> {
+        if (set2.contains(value)) {
+          return false;
+        }
+        return true;
+      });
+    }
+    return intersects(set2, set1);
   }
 
   @Nullable
@@ -126,6 +136,15 @@ public class TroveUtil {
   @NotNull
   public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static <T> TIntHashSet map2IntSet(@NotNull Collection<T> set, @NotNull ToIntFunction<T> function) {
+    TIntHashSet result = new TIntHashSet();
+    for (T t : set) {
+      result.add(function.applyAsInt(t));
+    }
+    return result;
   }
 
   public static void processBatches(@NotNull IntStream stream,

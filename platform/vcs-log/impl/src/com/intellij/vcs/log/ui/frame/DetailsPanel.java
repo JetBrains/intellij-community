@@ -48,6 +48,8 @@ import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.TroveUtil;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +77,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   @NotNull private final VcsLogColorManager myColorManager;
 
   @NotNull private List<Integer> mySelection = ContainerUtil.emptyList();
-  @NotNull private Set<VcsFullCommitDetails> myCommitDetails = Collections.emptySet();
+  @NotNull private TIntHashSet myCommitIds = new TIntHashSet();
   @Nullable private ProgressIndicator myResolveIndicator = null;
 
   public DetailsPanel(@NotNull VcsLogData logData,
@@ -254,11 +256,11 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
                                                                                              unResolvedHashes));
       setPresentations(ids, presentations);
 
-      Set<VcsFullCommitDetails> newCommitDetails = ContainerUtil.newHashSet(detailsList);
-      if (!ContainerUtil.intersects(myCommitDetails, newCommitDetails)) {
+      TIntHashSet newCommitDetails = TroveUtil.map2IntSet(detailsList, c -> myLogData.getStorage().getCommitIndex(c.getId(), c.getRoot()));
+      if (!TroveUtil.intersects(myCommitIds, newCommitDetails)) {
         myScrollPane.getVerticalScrollBar().setValue(0);
       }
-      myCommitDetails = newCommitDetails;
+      myCommitIds = newCommitDetails;
 
       List<Integer> currentSelection = mySelection;
       resolveHashes(ids, presentations, unResolvedHashes, o -> currentSelection != mySelection);
@@ -316,7 +318,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       myEmptyText.setText(text);
       myMainContentPanel.removeAll();
       mySelection = ContainerUtil.emptyList();
-      myCommitDetails = Collections.emptySet();
+      myCommitIds = new TIntHashSet();
     }
   }
 
