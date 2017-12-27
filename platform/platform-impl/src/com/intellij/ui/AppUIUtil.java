@@ -72,6 +72,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -419,7 +420,7 @@ public class AppUIUtil {
           );
         }
         body.setBorder(JBUI.Borders.empty(10));
-        return new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        return new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
       }
 
       @NotNull
@@ -480,7 +481,7 @@ public class AppUIUtil {
     };
     dialog.setModal(true);
     dialog.setTitle("Data Sharing Options");
-    dialog.setSize(JBUI.scale(530), JBUI.scale(395));
+    dialog.setSize(JBUI.scale(600), JBUI.scale(400));
     dialog.show();
 
     final Collection<Consent> result;
