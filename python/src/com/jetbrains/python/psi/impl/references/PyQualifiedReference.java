@@ -443,14 +443,14 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return false;
     }
     final String referencedName = myElement.getReferencedName();
-
-    final TypeEvalContext typeEvalContext;
-    PyResolveContext resolveContext = myContext.withoutImplicits();
+    final PyResolveContext resolveContext;
 
     // If origin is set it's reasonably safe to assume that action is initiated by user
-    if (resolveContext.getTypeEvalContext().getOrigin() != null) {
-      typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-      resolveContext = resolveContext.withTypeEvalContext(typeEvalContext);
+    if (myContext.getTypeEvalContext().getOrigin() != null) {
+      final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
+      resolveContext = myContext.withoutImplicits().withTypeEvalContext(typeEvalContext);
+    } else {
+      resolveContext = myContext.withoutImplicits();
     }
 
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
