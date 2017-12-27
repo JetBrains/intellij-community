@@ -545,9 +545,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             }
           }
 
-          PsiElement[] resolveResults =
-            StreamEx.of(multiResolve(false)).filter(result -> !(result instanceof ImplicitResolveResult)).map(result -> result.getElement())
-              .nonNull().toArray(PsiElement[]::new);
+          final List<PsiElement> resolveResults = StreamEx.of(multiResolve(false))
+            .filter(r -> !(r instanceof ImplicitResolveResult))
+            .map(r -> r.getElement())
+            .toList();
 
           for (PsiElement resolveResult : resolveResults) {
             if (resolveResult == element) {
