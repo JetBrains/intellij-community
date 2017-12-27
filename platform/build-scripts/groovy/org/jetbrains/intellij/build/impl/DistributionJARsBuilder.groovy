@@ -522,7 +522,7 @@ class DistributionJARsBuilder {
   }
 
   private LayoutBuilder createLayoutBuilder() {
-    new LayoutBuilder(buildContext.ant, buildContext.project, COMPRESS_JARS)
+    new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
   private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber, boolean setExactNumberInUntilBuild, boolean useRestrictedCompatibleBuildRange) {

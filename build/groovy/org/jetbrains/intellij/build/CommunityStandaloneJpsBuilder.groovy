@@ -29,7 +29,7 @@ class CommunityStandaloneJpsBuilder {
   }
 
   void layoutJps(String targetDir, String buildNumber, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
-    new LayoutBuilder(buildContext.ant, buildContext.project, false).layout(targetDir) {
+    new LayoutBuilder(buildContext, false).layout(targetDir) {
       zip("standalone-jps-${buildNumber}.zip") {
         jar("util.jar") {
           module("annotations-common")
