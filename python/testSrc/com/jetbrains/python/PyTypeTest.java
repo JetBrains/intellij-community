@@ -2705,6 +2705,20 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-26992
+  public void testImportedOrderedDict() {
+    doTest("OrderedDict[str, str]",
+           "from collections import OrderedDict\n" +
+           "expr = OrderedDict((('name', 'value'), ('another_name', 'another_value')))");
+  }
+
+  // PY-26992
+  public void testFullyQualifiedOrderedDict() {
+    doTest("OrderedDict[str, str]",
+           "import collections\n" +
+           "expr = collections.OrderedDict((('name', 'value'), ('another_name', 'another_value')))");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

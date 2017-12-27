@@ -45,7 +45,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
           qualifiedCallee.isQualified() &&
           isConstructorName.apply(resolvedCallee.getName()) &&
           !isConstructorName.apply(qualifiedCallee.getName())) {
-        return qualifiedCallee;
+        return null;
       }
 
       return qualifiedCallee.getQualifier();
