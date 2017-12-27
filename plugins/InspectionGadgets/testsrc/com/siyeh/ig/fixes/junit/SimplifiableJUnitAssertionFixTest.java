@@ -32,6 +32,7 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
   public void testDoublePrimitive() { doTest(); }
   public void testEqualsToTrueJUnit5() { doTest(); }
   public void testTrueToEqualsJUnit5() { doTest(); }
+  public void testFalseToNotEqualsJUnit4() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {
@@ -59,7 +60,10 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
     myFixture.addClass("package org.junit;" +
                        "public class Assert {" +
                        "    public static void assertTrue(boolean condition) {}" +
+                       "    public static void assertFalse(boolean condition) {}" +
                        "    public static void assertEquals(boolean expected, boolean actual) {}" +
+                       "    public static void assertNotEquals(long expected, long actual) {}" +
+                       "    public static void assertNotEquals(double expected, double actual, double delta) {}" +
                        "    public static void assertFalse(String message, boolean condition) {}" +
                        "}");
 
