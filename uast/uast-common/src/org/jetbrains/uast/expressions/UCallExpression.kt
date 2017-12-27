@@ -16,7 +16,6 @@
 package org.jetbrains.uast
 
 
-import com.intellij.lang.jvm.JvmParameter
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import org.jetbrains.uast.internal.acceptList
@@ -117,5 +116,5 @@ interface UCallExpression : UExpression, UResolvable {
 }
 
 interface UCallExpressionEx : UCallExpression {
-  fun resolveArgument(argument: UExpression): JvmParameter?
+  fun getArgumentForParameter(i: Int): UExpression?
 }
