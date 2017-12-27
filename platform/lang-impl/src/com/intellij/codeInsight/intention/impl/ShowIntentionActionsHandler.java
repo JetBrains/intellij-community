@@ -92,7 +92,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   // added for override into Rider
   @SuppressWarnings("WeakerAccess")
   protected void showIntentionHint(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull ShowIntentionsPass.IntentionsInfo intentions) {
-    if (!intentions.isEmpty() && editor.getSettings().isShowIntentionBulb()) {
+    if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }
   }
