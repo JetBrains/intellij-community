@@ -55,17 +55,18 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    * Override this method in order to execute the task with a custom pool
    *
    * @param task a task to run
+   * @deprecated override {@link #executeTask(Runnable)} instead of this method
    */
-  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
-    return executeTask(task);
+    return ProcessIOExecutorService.INSTANCE.submit(task);
   }
 
   @Override
   @NotNull
   public Future<?> executeTask(@NotNull Runnable task) {
-    return ProcessIOExecutorService.INSTANCE.submit(task);
+    return executeOnPooledThread(task);
   }
 
   /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 2018) */
