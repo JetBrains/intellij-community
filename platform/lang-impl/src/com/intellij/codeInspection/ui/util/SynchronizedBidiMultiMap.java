@@ -6,6 +6,7 @@ package com.intellij.codeInspection.ui.util;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -90,6 +91,9 @@ public abstract class SynchronizedBidiMultiMap<K, V> {
   public synchronized boolean isEmpty() {
     return myValue2Keys.isEmpty();
   }
+
+  @TestOnly
+  public Map<K, V[]> getMap() { return myKey2Values; }
 
   @NotNull
   protected abstract ArrayFactory<V> arrayFactory();

@@ -42,7 +42,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "git4idea", "remote-servers-git", "remote-servers-git-java", "svn4idea", "hg4idea", "github", "cvs-plugin",
     "jetgroovy", "junit", "testng", "xpath", "xslt-debugger", "android-plugin", "javaFX-CE",
     "java-i18n", "ant", "ui-designer", "ByteCodeViewer", "coverage", "java-decompiler-plugin", "devkit", "eclipse",
-    "IntelliLang", "IntelliLang-java", "IntelliLang-xml", "intellilang-jps-plugin", "stream-debugger"
+    "IntelliLang", "IntelliLang-java", "IntelliLang-xml", "intellilang-jps-plugin", "stream-debugger", "smali"
   ]
 
   BaseIdeaProperties() {
