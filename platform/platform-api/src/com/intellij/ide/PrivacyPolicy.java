@@ -27,7 +27,6 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 09-Mar-16
  */
 public final class PrivacyPolicy {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.PrivacyPolicy");
