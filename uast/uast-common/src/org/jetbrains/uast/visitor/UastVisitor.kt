@@ -273,6 +273,43 @@ interface UastVisitorEx : UastVisitor {
   override fun visitInitializer(node: UClassInitializer): Boolean = visitDeclaration(node)
   override fun visitMethod(node: UMethod): Boolean = visitDeclaration(node)
   override fun visitVariable(node: UVariable): Boolean = visitDeclaration(node)
+  override fun visitEnumConstant(node: UEnumConstant): Boolean = visitExpression(node)
+  fun visitExpression(node: UExpression) = visitElement(node)
+  override fun visitLabeledExpression(node: ULabeledExpression) = visitExpression(node)
+  override fun visitDeclarationsExpression(node: UDeclarationsExpression) = visitExpression(node)
+  override fun visitBlockExpression(node: UBlockExpression) = visitExpression(node)
+  override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression) = visitExpression(node)
+  override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression) = visitExpression(node)
+  override fun visitTypeReferenceExpression(node: UTypeReferenceExpression) = visitExpression(node)
+  override fun visitCallExpression(node: UCallExpression) = visitExpression(node)
+  override fun visitBinaryExpression(node: UBinaryExpression) = visitExpression(node)
+  override fun visitBinaryExpressionWithType(node: UBinaryExpressionWithType) = visitExpression(node)
+  override fun visitPolyadicExpression(node: UPolyadicExpression) = visitExpression(node)
+  override fun visitParenthesizedExpression(node: UParenthesizedExpression) = visitExpression(node)
+  override fun visitUnaryExpression(node: UUnaryExpression) = visitExpression(node)
+  override fun visitPrefixExpression(node: UPrefixExpression) = visitExpression(node)
+  override fun visitPostfixExpression(node: UPostfixExpression) = visitExpression(node)
+  override fun visitExpressionList(node: UExpressionList) = visitExpression(node)
+  override fun visitIfExpression(node: UIfExpression) = visitExpression(node)
+  override fun visitSwitchExpression(node: USwitchExpression) = visitExpression(node)
+  override fun visitSwitchClauseExpression(node: USwitchClauseExpression) = visitExpression(node)
+  override fun visitWhileExpression(node: UWhileExpression) = visitExpression(node)
+  override fun visitDoWhileExpression(node: UDoWhileExpression) = visitExpression(node)
+  override fun visitForExpression(node: UForExpression) = visitExpression(node)
+  override fun visitForEachExpression(node: UForEachExpression) = visitExpression(node)
+  override fun visitTryExpression(node: UTryExpression) = visitExpression(node)
+  override fun visitLiteralExpression(node: ULiteralExpression) = visitExpression(node)
+  override fun visitThisExpression(node: UThisExpression) = visitExpression(node)
+  override fun visitSuperExpression(node: USuperExpression) = visitExpression(node)
+  override fun visitReturnExpression(node: UReturnExpression) = visitExpression(node)
+  override fun visitBreakExpression(node: UBreakExpression) = visitExpression(node)
+  override fun visitContinueExpression(node: UContinueExpression) = visitExpression(node)
+  override fun visitThrowExpression(node: UThrowExpression) = visitExpression(node)
+  override fun visitArrayAccessExpression(node: UArrayAccessExpression) = visitExpression(node)
+  override fun visitCallableReferenceExpression(node: UCallableReferenceExpression) = visitExpression(node)
+  override fun visitClassLiteralExpression(node: UClassLiteralExpression) = visitExpression(node)
+  override fun visitLambdaExpression(node: ULambdaExpression) = visitExpression(node)
+  override fun visitObjectLiteralExpression(node: UObjectLiteralExpression) = visitExpression(node)
 
   fun afterVisitDeclaration(node: UDeclaration) {
     afterVisitElement(node)
@@ -292,6 +329,155 @@ interface UastVisitorEx : UastVisitor {
 
   override fun afterVisitVariable(node: UVariable) {
     afterVisitDeclaration(node)
+  }
+
+  override fun afterVisitEnumConstant(node: UEnumConstant) {
+    afterVisitExpression(node)
+  }
+
+  // Expressions
+  fun afterVisitExpression(node: UExpression) {
+    afterVisitElement(node)
+  }
+
+  override fun afterVisitLabeledExpression(node: ULabeledExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitDeclarationsExpression(node: UDeclarationsExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitBlockExpression(node: UBlockExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitQualifiedReferenceExpression(node: UQualifiedReferenceExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitTypeReferenceExpression(node: UTypeReferenceExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitCallExpression(node: UCallExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitBinaryExpression(node: UBinaryExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitBinaryExpressionWithType(node: UBinaryExpressionWithType) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitParenthesizedExpression(node: UParenthesizedExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitUnaryExpression(node: UUnaryExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitPrefixExpression(node: UPrefixExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitPostfixExpression(node: UPostfixExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitExpressionList(node: UExpressionList) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitIfExpression(node: UIfExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitSwitchExpression(node: USwitchExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitSwitchClauseExpression(node: USwitchClauseExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitWhileExpression(node: UWhileExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitDoWhileExpression(node: UDoWhileExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitForExpression(node: UForExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitForEachExpression(node: UForEachExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitTryExpression(node: UTryExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitLiteralExpression(node: ULiteralExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitThisExpression(node: UThisExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitSuperExpression(node: USuperExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitReturnExpression(node: UReturnExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitBreakExpression(node: UBreakExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitContinueExpression(node: UContinueExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitThrowExpression(node: UThrowExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitArrayAccessExpression(node: UArrayAccessExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitCallableReferenceExpression(node: UCallableReferenceExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitClassLiteralExpression(node: UClassLiteralExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitLambdaExpression(node: ULambdaExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitObjectLiteralExpression(node: UObjectLiteralExpression) {
+    afterVisitExpression(node)
+  }
+
+  override fun afterVisitPolyadicExpression(node: UPolyadicExpression) {
+    afterVisitExpression(node)
   }
 }
 
