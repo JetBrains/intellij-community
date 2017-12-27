@@ -443,16 +443,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return false;
     }
     final String referencedName = myElement.getReferencedName();
+
+    final TypeEvalContext typeEvalContext;
     PyResolveContext resolveContext = myContext.withoutImplicits();
-    // Guess type eval context origin for switching to local dataflow and return type analysis
-    if (resolveContext.getTypeEvalContext().getOrigin() == null) {
-      final PsiFile containingFile = myElement.getContainingFile();
-      if (containingFile instanceof StubBasedPsiElement) {
-        assert ((StubBasedPsiElement)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
-      }
-      final TypeEvalContext context = TypeEvalContext.userInitiated(containingFile.getProject(), containingFile);
-      resolveContext = resolveContext.withTypeEvalContext(context);
+
+    // If origin is set it's reasonably safe to assume that action is initiated by user
+    if (resolveContext.getTypeEvalContext().getOrigin() != null) {
+      typeEvalContext = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
+      resolveContext = resolveContext.withTypeEvalContext(typeEvalContext);
     }
+
     if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
         ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
       final PyExpression qualifier = myElement.getQualifier();
