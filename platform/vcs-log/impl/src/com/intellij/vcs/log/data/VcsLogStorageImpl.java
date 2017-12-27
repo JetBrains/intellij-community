@@ -126,26 +126,18 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   @Override
-  @Nullable
-  public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
+  public void iterateCommits(@NotNull Function<CommitId, Boolean> consumer) {
     checkDisposed();
     try {
-      final Ref<CommitId> hashRef = Ref.create();
       myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
         @Override
         protected boolean accept(CommitId commitId) {
-          boolean matches = condition.value(commitId);
-          if (matches) {
-            hashRef.set(commitId);
-          }
-          return matches;
+          return consumer.fun(commitId);
         }
       });
-      return hashRef.get();
     }
     catch (IOException e) {
       myExceptionReporter.consume(this, e);
-      return null;
     }
   }
 
@@ -246,10 +238,8 @@ public class VcsLogStorageImpl implements Disposable, VcsLogStorage {
       throw new UnsupportedOperationException("Illegal access to empty hash map by index " + commitIndex);
     }
 
-    @Nullable
     @Override
-    public CommitId findCommitId(@NotNull Condition<CommitId> string) {
-      return null;
+    public void iterateCommits(@NotNull Function<CommitId, Boolean> consumer) {
     }
 
     @Override

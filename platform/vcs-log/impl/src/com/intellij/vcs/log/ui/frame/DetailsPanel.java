@@ -43,7 +43,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
@@ -182,13 +181,19 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     if (!unResolvedHashes.isEmpty()) {
       myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
         Map<String, CommitId> resolvedHashes = ContainerUtil.newHashMap();
+        myLogData.getStorage().iterateCommits(commitId -> {
+          Set<String> found = ContainerUtil.newHashSet();
+          for (String hashString : unResolvedHashes) {
 
-        for (String hashString : unResolvedHashes) {
-          CommitId commitId = myLogData.getStorage().findCommitId(new CommitIdByStringCondition(hashString));
-          if (commitId != null) {
-            resolvedHashes.put(hashString, commitId);
+            if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
+              resolvedHashes.put(hashString, commitId);
+              found.add(hashString);
+              // do not break, check all hashes (we can have several substrings of the same hash)
+            }
           }
-        }
+          unResolvedHashes.removeAll(found);
+          return unResolvedHashes.isEmpty();
+        });
 
         List<CommitPresentation> resolvedPresentations = ContainerUtil.map2List(presentations,
                                                                                 presentation -> presentation.resolve(resolvedHashes));

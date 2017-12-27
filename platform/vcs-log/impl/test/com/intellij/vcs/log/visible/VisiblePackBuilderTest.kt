@@ -17,7 +17,6 @@ package com.intellij.vcs.log.visible
 
 import com.intellij.mock.MockVirtualFile
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.Function
@@ -239,7 +238,7 @@ class VisiblePackBuilderTest {
 
     override fun getRefIndex(ref: VcsRef): Int = refsReversed[ref]!!
 
-    override fun findCommitId(condition: Condition<CommitId>): CommitId? = throw UnsupportedOperationException()
+    override fun iterateCommits(consumer: Function<CommitId, Boolean>) = throw UnsupportedOperationException()
 
     override fun flush() {
     }
