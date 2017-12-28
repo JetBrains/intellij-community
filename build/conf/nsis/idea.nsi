@@ -1045,11 +1045,17 @@ HKLM:
 cant_find_installation:
   ;admin perm. is required to uninstall?
   ${If} ${RunningX64}
+look_at_program_files_64:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
+    StrCmp $R0 $INSTDIR HKLM look_at_program_files_32
   ${Else}
+look_at_program_files_32:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
+    StrCmp $R0 $INSTDIR HKCU uninstaller_relocated
   ${EndIf}
-  StrCmp $R0 $INSTDIR HKLM HKCU
+uninstaller_relocated:
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
+    Abort
 Done:
 FunctionEnd
 
