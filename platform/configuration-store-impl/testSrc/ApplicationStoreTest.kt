@@ -43,6 +43,7 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
@@ -162,14 +163,12 @@ internal class ApplicationStoreTest {
 
     val componentPath = configDir.resolve("a.xml")
     assertThat(componentPath).isRegularFile
-    val componentFile = componentPath
 
     // additional export path
     val additionalPath = configDir.resolve("foo")
     additionalPath.writeChild("bar.icls", "")
-    val additionalFile = additionalPath
     val exportedData = BufferExposingByteArrayOutputStream()
-    exportSettings(setOf(componentFile, additionalFile), exportedData, configPath)
+    exportSettings(setOf(componentPath, additionalPath), exportedData, configPath)
 
     val relativePaths = getPaths(ByteArrayInputStream(exportedData.internalBuffer, 0, exportedData.size()))
     assertThat(relativePaths).containsOnly("a.xml", "foo/", "foo/bar.icls", "IntelliJ IDEA Global Settings")
@@ -180,7 +179,8 @@ internal class ApplicationStoreTest {
     val componentKey = A::class.java.name
     picoContainer.registerComponent(InstanceComponentAdapter(componentKey, component))
     try {
-      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(componentFile.to(listOf(ExportableItem(componentFile, ""))), additionalFile.to(listOf(ExportableItem(additionalFile, " (schemes)"))))
+      assertThat(getExportableComponentsMap(false, false, storageManager, relativePaths)).containsOnly(
+        componentPath.to(listOf(ExportableItem(componentPath, ""))), additionalPath.to(listOf(ExportableItem(additionalPath, " (schemes)"))))
     }
     finally {
       picoContainer.unregisterComponent(componentKey)
@@ -252,12 +252,12 @@ internal class ApplicationStoreTest {
     open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
       var options = TestState()
 
-      var stateCalledCount = 0
+      val stateCalledCount = AtomicLong(0)
       var lastGetStateStackTrace: String? = null
 
       override fun getState(): TestState {
         lastGetStateStackTrace = ExceptionUtil.currentStackTrace()
-        stateCalledCount++
+        stateCalledCount.incrementAndGet()
         return options
       }
 
@@ -270,23 +270,23 @@ internal class ApplicationStoreTest {
     componentStore.initComponent(component, false)
 
     assertThat(component.modificationCount).isEqualTo(0)
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
     component.lastGetStateStackTrace = null
     saveStore()
     @Suppress("USELESS_CAST")
     assertThat(component.lastGetStateStackTrace as String?).isNull()
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     // test that store correctly save last modification time and doesn't call our state on next save
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     val componentFile = testAppConfig.resolve("a.xml")
     assertThat(componentFile).doesNotExist()
@@ -299,7 +299,7 @@ internal class ApplicationStoreTest {
 
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(2)
+    assertThat(component.stateCalledCount.get()).isEqualTo(2)
 
     assertThat(componentFile).hasContent("""
     <application>
@@ -314,16 +314,16 @@ internal class ApplicationStoreTest {
 
     @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))
     open class A : PersistentStateComponentWithModificationTracker<TestState> {
-      var modificationCount: Long = 0
+      var modificationCount = AtomicLong(0)
 
-      override fun getStateModificationCount() = modificationCount
+      override fun getStateModificationCount() = modificationCount.get()
 
       var options = TestState()
 
-      var stateCalledCount = 0
+      var stateCalledCount = AtomicLong(0)
 
       override fun getState(): TestState {
-        stateCalledCount++
+        stateCalledCount.incrementAndGet()
         return options
       }
 
@@ -332,28 +332,28 @@ internal class ApplicationStoreTest {
       }
 
       fun incModificationCount() {
-        modificationCount++
+        modificationCount.incrementAndGet()
       }
     }
 
     val component = A()
     componentStore.initComponent(component, false)
 
-    assertThat(component.modificationCount).isEqualTo(0)
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.modificationCount.get()).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // test that store correctly set last modification count to component modification count on init
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(0)
+    assertThat(component.stateCalledCount.get()).isEqualTo(0)
 
     // change modification count - store will be forced to check changes using serialization and A.getState will be called
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     // test that store correctly save last modification time and doesn't call our state on next save
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(1)
+    assertThat(component.stateCalledCount.get()).isEqualTo(1)
 
     val componentFile = testAppConfig.resolve("b.xml")
     assertThat(componentFile).doesNotExist()
@@ -366,7 +366,7 @@ internal class ApplicationStoreTest {
 
     component.incModificationCount()
     saveStore()
-    assertThat(component.stateCalledCount).isEqualTo(2)
+    assertThat(component.stateCalledCount.get()).isEqualTo(2)
 
     assertThat(componentFile).hasContent("""
     <application>

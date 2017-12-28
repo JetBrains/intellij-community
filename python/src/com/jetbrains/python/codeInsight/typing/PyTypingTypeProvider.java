@@ -282,7 +282,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   private static PyFunctionType getOverriddenFunctionType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     final PyFunction overriddenFunction = getOverriddenFunction(function, context);
     if (overriddenFunction != null) {
-      return (PyFunctionType)context.getType(overriddenFunction);
+      PyType type = context.getType(overriddenFunction);
+      if (type instanceof PyFunctionType) {
+        return (PyFunctionType)context.getType(overriddenFunction);
+      }
     }
 
     return null;

@@ -100,4 +100,22 @@ public class PullUpMultifileTest extends MultiFileTestCase {
    public void testReuseSuperSuperMethod() {
     doTest();
   }
+
+  public void testClassPackageConflict() {
+    doTest((rootDir, rootAfter) -> {
+      final PsiClass srcClass = myJavaFacade.findClass("a.a", GlobalSearchScope.allScope(myProject));
+      assertTrue("Source class not found", srcClass != null);
+
+      final PsiClass targetClass = myJavaFacade.findClass("a.B", GlobalSearchScope.allScope(myProject));
+      assertTrue("Target class not found", targetClass != null);
+
+      final PsiMethod[] methods = srcClass.getMethods();
+      assertTrue("No methods found", methods.length > 0);
+      final MemberInfo[] membersToMove = new MemberInfo[1];
+      final MemberInfo memberInfo = new MemberInfo(methods[0]);
+      memberInfo.setChecked(true);
+      membersToMove[0] = memberInfo;
+      new PullUpProcessor(srcClass, targetClass, membersToMove, new DocCommentPolicy(DocCommentPolicy.ASIS)).run();
+    });
+  }
 }

@@ -44,7 +44,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   @NonNls private static final String PATTERNS_EL_NAME = "patterns";
   @NonNls private static final String PATTERN_EL_NAME = "pattern";
   @NonNls private static final String TEST_CLASS_ATT_NAME = "testClass";
-  
+
   //private TestNGResultsContainer resultsContainer;
   protected TestData data;
   protected transient Project project;
@@ -155,7 +155,7 @@ public class TestNGConfiguration extends JavaTestConfigurationBase {
   }
 
   public String getWorkingDirectory() {
-    return data.getWorkingDirectory(project);
+    return data.getWorkingDirectory();
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {

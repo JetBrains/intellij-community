@@ -72,8 +72,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
+import static javax.swing.ScrollPaneConstants.*;
 
 /**
  * @author yole
@@ -362,7 +361,7 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Licence Agreement");
+    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
@@ -419,7 +418,7 @@ public class AppUIUtil {
           );
         }
         body.setBorder(JBUI.Borders.empty(10));
-        return new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        return new JBScrollPane(body, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_AS_NEEDED);
       }
 
       @NotNull
@@ -441,9 +440,7 @@ public class AppUIUtil {
             }
           }
         });
-        final String descr = consent.getText();
-        final String text = "<html>" + StringUtil.replace(descr, "\n", "<br>") + "</html>";
-        viewer.setText(text);
+        viewer.setText(consentTextToHtml(consent.getText()));
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
         //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
@@ -470,6 +467,11 @@ public class AppUIUtil {
         return pane;
       }
 
+      @NotNull
+      private String consentTextToHtml(String text) {
+        return "<html>" + StringUtil.replace(text, "\n", "<br>") + "</html>";
+      }
+      
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
@@ -480,7 +482,7 @@ public class AppUIUtil {
     };
     dialog.setModal(true);
     dialog.setTitle("Data Sharing Options");
-    dialog.setSize(JBUI.scale(530), JBUI.scale(395));
+    dialog.setSize(JBUI.scale(600), JBUI.scale(400));
     dialog.show();
 
     final Collection<Consent> result;

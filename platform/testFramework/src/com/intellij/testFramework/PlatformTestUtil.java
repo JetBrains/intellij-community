@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -89,6 +88,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.jar.JarFile;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+
 /**
  * @author yole
  */
@@ -98,8 +99,9 @@ public class PlatformTestUtil {
 
   public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
-  
+
   private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
+  private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
 
   @NotNull
   public static String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -164,7 +166,7 @@ public class PlatformTestUtil {
   public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
     return print(tree, tree.getModel().getRoot(), withSelection, null, nodePrintCondition);
   }
-  
+
   private static String print(JTree tree, Object root,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
@@ -255,6 +257,29 @@ public class PlatformTestUtil {
     waitForPromise(TreeUtil.promiseExpandAll(tree));
   }
 
+  private static long getMillisSince(long startTimeMillis) {
+    return System.currentTimeMillis() - startTimeMillis;
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis) {
+    assert getMillisSince(startTimeMillis) <= MAX_WAIT_TIME : "the waiting takes too long";
+  }
+
+  private static void assertDispatchThreadWithoutWriteAccess() {
+    assertDispatchThreadWithoutWriteAccess(getApplication());
+  }
+
+  private static void assertDispatchThreadWithoutWriteAccess(Application application) {
+    if (application != null) {
+      assert !application.isWriteAccessAllowed() : "do not wait under the write action to avoid possible deadlock";
+      assert application.isDispatchThread();
+    }
+    else {
+      // do not check for write access in simple tests
+      assert EventQueue.isDispatchThread();
+    }
+  }
+
   private static boolean isBusy(JTree tree) {
     UIUtil.dispatchAllInvocationEvents();
     TreeModel model = tree.getModel();
@@ -273,10 +298,26 @@ public class PlatformTestUtil {
 
   @TestOnly
   public static void waitWhileBusy(JTree tree) {
-    assert EventQueue.isDispatchThread();
-    long millis = 10000L + System.currentTimeMillis();
+    assertDispatchThreadWithoutWriteAccess();
+    long startTimeMillis = System.currentTimeMillis();
     while (isBusy(tree)) {
-      assert millis > System.currentTimeMillis() : "The tree is busy too long... aborting";
+      assertMaxWaitTimeSince(startTimeMillis);
+    }
+  }
+
+  @TestOnly
+  public static void pumpInvocationEventsFor(long duration, @NotNull TimeUnit unit) {
+    pumpInvocationEventsFor(unit.toMillis(duration));
+  }
+
+  @TestOnly
+  public static void pumpInvocationEventsFor(long millis) {
+    assert 0 <= millis && millis <= MAX_WAIT_TIME;
+    assertDispatchThreadWithoutWriteAccess();
+    long startTimeMillis = System.currentTimeMillis();
+    UIUtil.dispatchAllInvocationEvents();
+    while (getMillisSince(startTimeMillis) <= millis) {
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 
@@ -290,9 +331,7 @@ public class PlatformTestUtil {
   @TestOnly
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
-    Application app = ApplicationManager.getApplication();
-    assert !app.isWriteAccessAllowed() : "It's a bad idea to wait for a promise under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert app.isDispatchThread();
+    assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.processed(ignore -> complete.set(true));
     T result = null;
@@ -304,20 +343,20 @@ public class PlatformTestUtil {
       }
       catch (Exception ignore) {
       }
-      if (System.currentTimeMillis() - start > 100 * 1000) {
-        throw new AssertionError("The promise takes too long... aborting");
-      }
+      assertMaxWaitTimeSince(start);
     }
     while (!complete.get());
     UIUtil.dispatchAllInvocationEvents();
     return result;
   }
 
+  /**
+   * @see #pumpInvocationEventsFor(long)
+   */
   @TestOnly
   public static void waitForAlarm(final int delay) {
-    Application app = ApplicationManager.getApplication();
-    assert !app.isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
-    assert app.isDispatchThread();
+    @NotNull Application app = getApplication();
+    assertDispatchThreadWithoutWriteAccess();
 
     Disposable tempDisposable = Disposer.newDisposable();
 
@@ -345,13 +384,13 @@ public class PlatformTestUtil {
       boolean sleptAlready = false;
       while (!alarmInvoked2.get()) {
         AtomicBoolean laterInvoked = new AtomicBoolean();
-        ApplicationManager.getApplication().invokeLater(() -> laterInvoked.set(true));
+        app.invokeLater(() -> laterInvoked.set(true));
         UIUtil.dispatchAllInvocationEvents();
         Assert.assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
         sleptAlready = true;
-        if (System.currentTimeMillis() - start > 100 * 1000) {
+        if (getMillisSince(start) > MAX_WAIT_TIME) {
           throw new AssertionError("Couldn't await alarm" +
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
@@ -681,7 +720,7 @@ public class PlatformTestUtil {
     public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedReferenceCpuCores = maxCores; return this; }
 
     /**
-     * @deprecated tests are CPU-bound by default, so no need to call this method. 
+     * @deprecated tests are CPU-bound by default, so no need to call this method.
      */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     @Deprecated
@@ -978,7 +1017,7 @@ public class PlatformTestUtil {
     Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
     final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
     Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    getApplication().runWriteAction(() -> {
       dirAfter.refresh(false, true);
       dirBefore.refresh(false, true);
     });
@@ -1109,11 +1148,11 @@ public class PlatformTestUtil {
     });
     return refs;
   }
-  
+
   public static void registerProjectCleanup(@NotNull Runnable cleanup) {
     ourProjectCleanups.add(cleanup);
   }
-  
+
   public static void cleanupAllProjects() {
     for (Runnable each : ourProjectCleanups) {
       each.run();
@@ -1139,7 +1178,7 @@ public class PlatformTestUtil {
 
       cleanupAllProjects();
 
-      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+      ApplicationImpl application = (ApplicationImpl)getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
       System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
@@ -1160,7 +1199,7 @@ public class PlatformTestUtil {
     });
 
   }
-  
+
   public static void captureMemorySnapshot() {
     try {
       Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");

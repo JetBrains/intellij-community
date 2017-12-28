@@ -224,8 +224,8 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           return refresh(state, filterRequest, moreCommitsRequests);
         }
         else if (!indexingRequests.isEmpty()) {
-          if (myVisiblePackBuilder.affectedByIndexingRoots(state.getFilters(),
-                                                           ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
+          if (myVisiblePackBuilder.areFiltersAffectedByIndexing(state.getFilters(),
+                                                                ContainerUtil.map(indexingRequests, IndexingFinishedRequest::getRoot))) {
             return refresh(state, filterRequest, moreCommitsRequests);
           }
         }

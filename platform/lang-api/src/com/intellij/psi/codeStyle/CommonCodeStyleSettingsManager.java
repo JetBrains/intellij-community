@@ -16,7 +16,6 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
@@ -50,8 +49,6 @@ public class CommonCodeStyleSettingsManager {
   @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
-  private static Logger LOG = Logger.getInstance(CommonCodeStyleSettingsManager.class);
-
   private static class DefaultsHolder {
     private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
     static {
@@ -63,16 +60,8 @@ public class CommonCodeStyleSettingsManager {
     myParentSettings = parentSettings;
   }
 
-  /**
-   * Attempts to get language-specific common settings from {@code LanguageCodeStyleSettingsProvider}.
-   *
-   * @param lang The language to get settings for.
-   * @return If the provider for the language exists and is able to create language-specific default settings
-   *         ({@code LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()} doesn't return null)
-   *         returns the instance of settings for this language. Otherwise returns new instance of common code style settings
-   *         with default values.
-   */
-  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
+  @Nullable
+  CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
     Map<Language, CommonCodeStyleSettings> commonSettingsMap = getCommonSettingsMap();
     Language baseLang = ObjectUtils.notNull(lang, Language.ANY);
     while (baseLang != null) {
@@ -80,9 +69,10 @@ public class CommonCodeStyleSettingsManager {
       if (settings != null) return settings;
       baseLang = baseLang.getBaseLanguage();
     }
-    if (lang != null) {
-      LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
-    }
+    return null;
+  }
+
+  CommonCodeStyleSettings getDefaults() {
     return DefaultsHolder.SETTINGS;
   }
 
