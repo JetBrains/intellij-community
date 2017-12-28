@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -31,12 +30,16 @@ import java.util.List;
 import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
+
+  public static final int MIN_CORRECTIONS = 1;
+  public static final int MAX_CORRECTIONS = 15;
   private JPanel root;
   private JPanel linkContainer;
   private JPanel myPanelForBundledDictionaries;
   private JPanel panelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
   private JPanel userDictionariesPanel;
+  private JSpinner myMaxCorrectionsSpinner;
   private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
   private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
@@ -60,6 +63,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         }
       }
     });
+    myMaxCorrectionsSpinner.setModel(new SpinnerNumberModel(1, MIN_CORRECTIONS, MAX_CORRECTIONS, 1));
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 
@@ -131,12 +135,18 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public boolean isModified() {
-    return wordsPanel.isModified() || myBundledDictionariesChooserComponent.isModified() || myDictionariesPanel.isModified();
+    return wordsPanel.isModified() ||
+           myBundledDictionariesChooserComponent.isModified() ||
+           myDictionariesPanel.isModified() ||
+           settings.getCorrectionsLimit() != getLimit();
   }
 
   public void apply() throws ConfigurationException {
     if (wordsPanel.isModified()){
      manager.updateUserDictionary(wordsPanel.getWords());
+    }
+    if (settings.getCorrectionsLimit() != getLimit()) {
+      settings.setCorrectionsLimit(getLimit());
     }
     if (!myBundledDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()){
       return;
@@ -148,7 +158,12 @@ public class SpellCheckerSettingsPane implements Disposable {
     manager.updateBundledDictionaries(myDictionariesPanel.getRemovedDictionaries());
   }
 
+  private int getLimit() {
+    return ((SpinnerNumberModel)myMaxCorrectionsSpinner.getModel()).getNumber().intValue();
+  }
+
   public void reset() {
+    myMaxCorrectionsSpinner.setValue(settings.getCorrectionsLimit());
     myDictionariesPanel.reset();
     myBundledDictionariesChooserComponent.reset();
   }

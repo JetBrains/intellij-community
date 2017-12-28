@@ -48,7 +48,6 @@ import static com.intellij.spellchecker.SpellCheckerNotificationUtils.showNotifi
 public class SpellCheckerManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.SpellCheckerManager");
 
-  private static final int MAX_SUGGESTIONS_THRESHOLD = 5;
   private static final int MAX_METRICS = 1;
   public static final String PROJECT = "project";
   public static final String APP = "application";
@@ -269,7 +268,7 @@ public class SpellCheckerManager implements Disposable {
   @NotNull
   protected List<String> getRawSuggestions(@NotNull String word) {
     if (!spellChecker.isCorrect(word)) {
-      List<String> suggestions = spellChecker.getSuggestions(word, MAX_SUGGESTIONS_THRESHOLD, MAX_METRICS);
+      List<String> suggestions = spellChecker.getSuggestions(word, settings.getCorrectionsLimit(), MAX_METRICS);
       if (!suggestions.isEmpty()) {
         if (Strings.isCapitalized(word)) {
           Strings.capitalize(suggestions);
