@@ -28,8 +28,6 @@
     <psi.referenceContributor language="JAVA" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
     <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
-    <renamePsiElementProcessor implementation="org.jetbrains.idea.devkit.refactoring.InspectionClassRenameProcessor" order="before javaClass, before aliasingPomTarget"/>
-
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <antBuildGen implementation="org.jetbrains.idea.devkit.build.ant.ChunkBuildPluginExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>
