@@ -361,7 +361,7 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Licence Agreement");
+    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
