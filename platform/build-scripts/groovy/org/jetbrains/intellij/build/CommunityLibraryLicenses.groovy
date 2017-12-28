@@ -179,6 +179,8 @@ class CommunityLibraryLicenses {
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
     new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/FasterXML/jackson"),
+    new LibraryLicense(name: "javax inject", libraryName: "javax.inject:javax.inject:1", version: "1", license: "Apache 2.0",
+                       licenseUrl: "http://apache.org/licenses/LICENSE-2.0", url: "http://code.google.com/p/atinject/"),
     new LibraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/"),
     new LibraryLicense(name: "JGoodies Common", libraryName: "jgoodies-common", version: "1.4.0", license: "BSD",
