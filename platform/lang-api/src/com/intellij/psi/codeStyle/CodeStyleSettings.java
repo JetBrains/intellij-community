@@ -53,6 +53,7 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
  * <b>Note:</b> A direct use of any non-final public fields from {@code CodeStyleSettings} class is strongly discouraged. These fields,
  * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
  */
+@SuppressWarnings("deprecation")
 public class CodeStyleSettings extends LegacyCodeStyleSettings
   implements Cloneable, JDOMExternalizable, ImportsLayoutSettings, CodeStyleConstraints {
   public static final int CURR_VERSION = 173;
@@ -1042,11 +1043,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
   @Nullable
   private IndentOptions getIndentOptions(Language lang) {
-    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(lang);
-    if (provider != null) {
-      return getCommonSettings(lang).getIndentOptions();
-    }
-    return null;
+    CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
+    return settings != null ? settings.getIndentOptions() : null;
   }
 
   public boolean isSmartTabs(FileType fileType) {
@@ -1245,14 +1243,31 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     }
   }
 
-  public CommonCodeStyleSettings getCommonSettings(Language lang) {
-    return myCommonSettingsManager.getCommonSettings(lang);
+  /**
+   * Attempts to get language-specific common settings from {@code LanguageCodeStyleSettingsProvider}.
+   *
+   * @param lang The language to get settings for.
+   * @return If the provider for the language exists and is able to create language-specific default settings
+   *         ({@code LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()} doesn't return null)
+   *         returns the instance of settings for this language. Otherwise returns new instance of common code style settings
+   *         with default values.
+   */
+  @NotNull
+  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
+    CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
+    if (settings == null) {
+      settings = myCommonSettingsManager.getDefaults();
+      if (lang != null) {
+        LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
+      }
+    }
+    return settings;
   }
 
   /**
-   * @param langName The language name. 
+   * @param langName The language name.
    * @return Language-specific code style settings or shared settings if not found.
-   * @see CommonCodeStyleSettingsManager#getCommonSettings 
+   * @see CommonCodeStyleSettingsManager#getCommonSettings
    */
   public CommonCodeStyleSettings getCommonSettings(String langName) {
     return myCommonSettingsManager.getCommonSettings(langName);
@@ -1268,11 +1283,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   public int getRightMargin(@Nullable Language language) {
     if (language != null) {
-      if (LanguageCodeStyleSettingsProvider.forLanguage(language) != null) {
-        CommonCodeStyleSettings langSettings = getCommonSettings(language);
-        if (langSettings != null) {
-          if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
-        }
+      CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(language);
+      if (langSettings != null) {
+        if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
       }
     }
     return getDefaultRightMargin();
@@ -1286,7 +1299,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   public void setRightMargin(@Nullable Language language, int rightMargin) {
     if (language != null) {
-      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(language);
       if (langSettings != null) {
         langSettings.RIGHT_MARGIN = rightMargin;
         return;
@@ -1312,7 +1325,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    */
   public boolean isWrapOnTyping(@Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(language);
       if (langSettings != null) {
         if (langSettings.WRAP_ON_TYPING != CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
           return langSettings.WRAP_ON_TYPING == CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
@@ -1408,11 +1421,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @NotNull
   public List<Integer> getSoftMargins(@Nullable Language language) {
     if (language != null) {
-      if (LanguageCodeStyleSettingsProvider.forLanguage(language) != null) {
-        CommonCodeStyleSettings languageSettings = getCommonSettings(language);
-        if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
-          return languageSettings.getSoftMargins();
-        }
+      CommonCodeStyleSettings languageSettings = myCommonSettingsManager.getCommonSettings(language);
+      if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
+        return languageSettings.getSoftMargins();
       }
     }
     return getDefaultSoftMargins();
@@ -1424,7 +1435,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * @param softMargins The soft margins to set.
    */
   public void setSoftMargins(@NotNull Language language, List<Integer> softMargins) {
-    CommonCodeStyleSettings languageSettings = getCommonSettings(language);
+    CommonCodeStyleSettings languageSettings = myCommonSettingsManager.getCommonSettings(language);
     assert languageSettings != null : "Settings for language " + language.getDisplayName() + " do not exist";
     languageSettings.setSoftMargins(softMargins);
   }
