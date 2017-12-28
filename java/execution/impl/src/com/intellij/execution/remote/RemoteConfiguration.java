@@ -43,11 +43,11 @@ public class RemoteConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
-  public boolean USE_SOCKET_TRANSPORT;
+  public boolean USE_SOCKET_TRANSPORT = true;
   public boolean SERVER_MODE;
-  public String SHMEM_ADDRESS;
-  public String HOST;
-  public String PORT;
+  public String SHMEM_ADDRESS = "javadebug";
+  public String HOST = "localhost";
+  public String PORT = "5005";
 
   public RemoteConfiguration(final Project project, ConfigurationFactory configurationFactory) {
     super(new JavaRunConfigurationModule(project, true), configurationFactory);
