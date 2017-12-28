@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class VcsLogFilterer {
-
   private static final Logger LOG = Logger.getInstance(VcsLogFilterer.class);
 
   @NotNull protected final VcsLogStorage myStorage;
@@ -89,14 +88,12 @@ public class VcsLogFilterer {
                                                      @NotNull PermanentGraph.SortType sortType,
                                                      @Nullable Set<Integer> matchingHeads,
                                                      @Nullable Set<Integer> matchingCommits) {
-    VisibleGraph<Integer> visibleGraph;
     if (matchesNothing(matchingHeads) || matchesNothing(matchingCommits)) {
-      visibleGraph = EmptyVisibleGraph.getInstance();
+      return EmptyVisibleGraph.getInstance();
     }
     else {
-      visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, matchingCommits);
+      return dataPack.getPermanentGraph().createVisibleGraph(sortType, matchingHeads, matchingCommits);
     }
-    return visibleGraph;
   }
 
   @NotNull
@@ -168,10 +165,11 @@ public class VcsLogFilterer {
     return matchingSet != null && matchingSet.isEmpty();
   }
 
+  @NotNull
   private VisiblePack applyHashFilter(@NotNull DataPack dataPack,
                                       @NotNull Collection<String> hashes,
                                       @NotNull PermanentGraph.SortType sortType) {
-    final Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
+    Set<Integer> indices = ContainerUtil.map2SetNotNull(hashes, partOfHash -> {
       CommitId commitId = myStorage.findCommitId(new CommitIdByStringCondition(partOfHash));
       return commitId != null ? myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()) : null;
     });
@@ -190,27 +188,22 @@ public class VcsLogFilterer {
 
     if (branchFilter == null && rootFilter == null && structureFilter == null) return null;
 
-    Set<Integer> filteredByBranch = null;
-
-    if (branchFilter != null) {
-      filteredByBranch = getMatchingHeads(refs, branchFilter);
-    }
-
     Set<Integer> filteredByFile = getMatchingHeads(refs, roots);
+    if (branchFilter == null) return filteredByFile;
 
-    if (filteredByBranch == null) return filteredByFile;
-    if (filteredByFile == null) return filteredByBranch;
-
+    Set<Integer> filteredByBranch = getMatchingHeads(refs, branchFilter);
     return new HashSet<>(ContainerUtil.intersection(filteredByBranch, filteredByFile));
   }
 
-  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull final VcsLogBranchFilter filter) {
-    return new HashSet<>(ContainerUtil.mapNotNull(refs.getBranches(), ref -> {
+  @NotNull
+  private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull VcsLogBranchFilter filter) {
+    return ContainerUtil.map2SetNotNull(refs.getBranches(), ref -> {
       boolean acceptRef = filter.matches(ref.getName());
       return acceptRef ? myStorage.getCommitIndex(ref.getCommitHash(), ref.getRoot()) : null;
-    }));
+    });
   }
 
+  @NotNull
   private Set<Integer> getMatchingHeads(@NotNull VcsLogRefs refs, @NotNull Collection<VirtualFile> roots) {
     Set<Integer> result = new HashSet<>();
     for (VcsRef branch : refs.getBranches()) {
