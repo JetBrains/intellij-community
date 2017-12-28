@@ -156,7 +156,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
       killProcessTreeSync(process);
     }
     else {
-      executeOnPooledThread(() -> killProcessTreeSync(process));
+      executeTask(() -> killProcessTreeSync(process));
     }
   }
 
