@@ -1057,9 +1057,9 @@ FunctionEnd
 Function un.onInit
   SetRegView 32
   Call un.getRegKey
-  StrCmp $baseRegKey "HKLM" requred_admin_perm UAC_Done
+  StrCmp $baseRegKey "HKLM" required_admin_perm UAC_Done
 
-requred_admin_perm:
+required_admin_perm:
   ;the user has admin rights?
   UserInfo::GetAccountType
   Pop $R2

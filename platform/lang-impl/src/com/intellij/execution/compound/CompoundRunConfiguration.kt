@@ -13,6 +13,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import gnu.trove.THashSet
 import org.jdom.Element
 import java.util.*
@@ -111,23 +112,24 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
-        getConfigurationsWithEffectiveRunTargets().forEach { (config, target) -> ExecutionUtil.runConfiguration(config, executor, target) }
+        getConfigurationsWithEffectiveRunTargets().forEach { pair: Pair<RunnerAndConfigurationSettings, ExecutionTarget> -> ExecutionUtil.runConfiguration(pair.first, executor, pair.second) }
       }
       null
     }
   }
 
-  fun getConfigurationsWithEffectiveRunTargets() : List<Pair<RunnerAndConfigurationSettings, ExecutionTarget>> {
+  fun getConfigurationsWithEffectiveRunTargets() : List<com.intellij.openapi.util.Pair<RunnerAndConfigurationSettings, ExecutionTarget>> {
     val runManager = RunManagerImpl.getInstanceImpl(project)
     val activeTarget = ExecutionTargetManager.getActiveTarget(project)
     val defaultTarget = DefaultExecutionTarget.INSTANCE
 
-    return sortedConfigurationsWithTargets.mapNotNull { (configuration, specifiedTarget) ->
+    val transform: (Map.Entry<RunConfiguration, ExecutionTarget?>) -> com.intellij.openapi.util.Pair< RunnerAndConfigurationSettings, ExecutionTarget>? = { (configuration, specifiedTarget) ->
       runManager.getSettings(configuration)?.let {
         val effectiveTarget = specifiedTarget ?: if (ExecutionTargetManager.canRun(it, activeTarget)) activeTarget else defaultTarget
-        it to effectiveTarget
+        return@let com.intellij.openapi.util.Pair.create(it ,effectiveTarget)
       }
     }
+    return sortedConfigurationsWithTargets.mapNotNull(transform)
   }
 
   override fun readExternal(element: Element) {
