@@ -388,8 +388,8 @@ public class MarkerType {
     }
 
     @Override
-    public void onFinished() {
-      super.onFinished();
+    public void onSuccess() {
+      super.onSuccess();
       PsiElement oneElement = getTheOnlyOneElement();
       if (oneElement instanceof NavigatablePsiElement) {
         ((NavigatablePsiElement)oneElement).navigate(true);
@@ -445,8 +445,8 @@ public class MarkerType {
     }
 
     @Override
-    public void onFinished() {
-      super.onFinished();
+    public void onSuccess() {
+      super.onSuccess();
       PsiElement oneElement = getTheOnlyOneElement();
       if (oneElement instanceof NavigatablePsiElement) {
         ((NavigatablePsiElement)oneElement).navigate(true);
