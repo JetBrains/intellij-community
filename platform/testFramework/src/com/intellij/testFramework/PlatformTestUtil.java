@@ -281,6 +281,20 @@ public class PlatformTestUtil {
   }
 
   @TestOnly
+  public static void waitFor(long duration, @NotNull TimeUnit unit) {
+    waitFor(unit.toMillis(duration));
+  }
+
+  @TestOnly
+  public static void waitFor(long millis) {
+    assert millis > 0 && EventQueue.isDispatchThread();
+    long startTimeMillis = System.currentTimeMillis();
+    while (millis > (System.currentTimeMillis() - startTimeMillis)) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+  }
+
+  @TestOnly
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
     callback.doWhenDone(() -> promise.setResult(null));
