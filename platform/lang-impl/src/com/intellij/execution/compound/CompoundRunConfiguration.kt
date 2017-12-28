@@ -21,6 +21,8 @@ import javax.swing.Icon
 
 data class TypeNameTarget(val type: String, val name: String, val targetId: String?)
 
+data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
+
 class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationType, name: String) : RunConfigurationBase(project,
                                                                                                                           type.configurationFactories[0],
                                                                                                                           name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
@@ -108,24 +110,25 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
-        getConfigurationsWithEffectiveRunTargets().forEach { pair -> ExecutionUtil.runConfiguration(pair.first, executor, pair.second) }
+        for ((settings, target) in getConfigurationsWithEffectiveRunTargets()) {
+          ExecutionUtil.runConfiguration(settings, executor, target)
+        }
       }
       null
     }
   }
 
-  fun getConfigurationsWithEffectiveRunTargets() : List<com.intellij.openapi.util.Pair<RunnerAndConfigurationSettings, ExecutionTarget>> {
+  fun getConfigurationsWithEffectiveRunTargets() : List<SettingsAndEffectiveTarget> {
     val runManager = RunManagerImpl.getInstanceImpl(project)
     val activeTarget = ExecutionTargetManager.getActiveTarget(project)
     val defaultTarget = DefaultExecutionTarget.INSTANCE
 
-    val transform: (Map.Entry<RunConfiguration, ExecutionTarget?>) -> com.intellij.openapi.util.Pair< RunnerAndConfigurationSettings, ExecutionTarget>? = { (configuration, specifiedTarget) ->
+    return sortedConfigurationsWithTargets.mapNotNull { (configuration, specifiedTarget) ->
       runManager.getSettings(configuration)?.let {
         val effectiveTarget = specifiedTarget ?: if (ExecutionTargetManager.canRun(it, activeTarget)) activeTarget else defaultTarget
-        return@let com.intellij.openapi.util.Pair.create(it ,effectiveTarget)
+        SettingsAndEffectiveTarget(it, effectiveTarget)
       }
     }
-    return sortedConfigurationsWithTargets.mapNotNull(transform)
   }
 
   override fun readExternal(element: Element) {
