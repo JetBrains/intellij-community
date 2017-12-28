@@ -484,7 +484,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
 
   private static <T> T computeAndWaitFor(int millis, @NotNull Project project, @NotNull Computable<T> computable) {
     T result = WriteCommandAction.runWriteCommandAction(project, computable);
-    PlatformTestUtil.waitFor(millis);
+    PlatformTestUtil.pumpInvocationEventsFor(millis);
     return result;
   }
 }
