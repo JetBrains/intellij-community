@@ -16,6 +16,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -420,4 +421,70 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     };
   }
 
+  public void testHideEmptyMiddlePackages() {
+    myStructure.setProviders(new ClassesTreeStructureProvider(myProject));
+    myStructure.setHideEmptyMiddlePackages(true);
+    myStructure.setShowMembers(true);
+    myStructure.setShowLibraryContents(false);
+
+    PsiDirectory directory = getPackageDirectory("com/company");
+    AbstractProjectViewPSIPane pane = myStructure.createPane();
+    JTree tree = pane.getTree();
+
+    assertTreeEqual(tree, " +PsiDirectory: hideEmptyMiddlePackages\n");
+
+    TreeUtil.promiseExpandAll(tree);
+
+    assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
+                          "  -PsiDirectory: src\n" +
+                          "   -PsiDirectory: name\n" + // com.company.name
+                          "    -I\n" +
+                          "     m():void\n");
+
+    directory = createSubdirectory(directory, "a");
+    TreeUtil.promiseExpandAll(tree);
+
+    assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
+                          "  -PsiDirectory: src\n" +
+                          "   -PsiDirectory: company\n" + // com.company
+                          "    PsiDirectory: a\n" +
+                          "    -PsiDirectory: name\n" +
+                          "     -I\n" +
+                          "      m():void\n");
+
+    directory = createSubdirectory(directory, "b");
+
+    assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
+                          "  -PsiDirectory: src\n" +
+                          "   -PsiDirectory: company\n" + // com.company
+                          "    PsiDirectory: b\n" + // a.b
+                          "    -PsiDirectory: name\n" +
+                          "     -I\n" +
+                          "      m():void\n");
+
+    createSubdirectory(directory, "z");
+
+    assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
+                          "  -PsiDirectory: src\n" +
+                          "   -PsiDirectory: company\n" + // com.company
+                          "    PsiDirectory: z\n" + // a.b.z
+                          "    -PsiDirectory: name\n" +
+                          "     -I\n" +
+                          "      m():void\n");
+  }
+
+  private void assertTreeEqual(@NotNull JTree tree, @NotNull String expected) {
+    PlatformTestUtil.waitWhileBusy(tree);
+    PlatformTestUtil.assertTreeEqual(tree, "-Project\n" + expected + getRootFiles());
+  }
+
+  private static PsiDirectory createSubdirectory(@NotNull PsiDirectory directory, @NotNull String name) {
+    return computeAndWaitFor(100, directory.getProject(), () -> directory.createSubdirectory(name));
+  }
+
+  private static <T> T computeAndWaitFor(int millis, @NotNull Project project, @NotNull Computable<T> computable) {
+    T result = WriteCommandAction.runWriteCommandAction(project, computable);
+    PlatformTestUtil.waitFor(millis);
+    return result;
+  }
 }

@@ -237,9 +237,15 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
-    PsiDirectory directory = getValue();
-    if (directory == null) return false;
-    return ProjectViewDirectoryHelper.getInstance(getProject()).canRepresent(element, directory);
+    return ProjectViewDirectoryHelper.getInstance(getProject())
+      .canRepresent(element, getValue(), getParentValue(), getSettings());
+  }
+
+  @Override
+  public boolean isValid() {
+    if (!super.isValid()) return false;
+    return ProjectViewDirectoryHelper.getInstance(getProject())
+      .isValidDirectory(getValue(), getParentValue(), getSettings(), getFilter());
   }
 
   @Override

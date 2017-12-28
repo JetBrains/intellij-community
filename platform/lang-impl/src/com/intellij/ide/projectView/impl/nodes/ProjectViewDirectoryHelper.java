@@ -40,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -148,6 +149,57 @@ public class ProjectViewDirectoryHelper {
       return Comparing.equal(directory.getVirtualFile(), vFile);
     }
     return false;
+  }
+
+  public boolean canRepresent(Object element, PsiDirectory directory, Object owner, ViewSettings settings) {
+    if (directory != null) {
+      if (canRepresent(element, directory)) return true;
+      if (settings == null) return false; // unexpected
+      if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
+        if (element instanceof PsiDirectory) {
+          for (PsiDirectory dir : collectParents(directory, owner)) {
+            if (Comparing.equal(element, dir)) return true;
+          }
+        }
+        else if (element instanceof VirtualFile) {
+          for (PsiDirectory dir : collectParents(directory, owner)) {
+            if (Comparing.equal(element, dir.getVirtualFile())) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean isValidDirectory(PsiDirectory directory, Object owner, ViewSettings settings, PsiFileSystemItemFilter filter) {
+    if (directory == null || !directory.isValid()) return false;
+    if (settings == null) return true; // unexpected
+    if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
+      PsiDirectory parent = directory.getParent();
+      if (parent == null || skipDirectory(parent)) return true;
+      if (isEmptyMiddleDirectory(directory, true, filter)) return false;
+      for (PsiDirectory dir : collectParents(directory, owner)) {
+        if (!dir.isValid()) return false;
+        parent = dir.getParent();
+        if (parent == null || skipDirectory(parent)) return false;
+        if (!isEmptyMiddleDirectory(dir, true, filter)) return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  private static List<PsiDirectory> collectParents(PsiDirectory directory, Object owner) {
+    if (directory != null && owner instanceof PsiDirectory && PsiTreeUtil.isAncestor((PsiDirectory)owner, directory, true)) {
+      List<PsiDirectory> list = ContainerUtil.newSmartList();
+      while (true) {
+        directory = directory.getParent();
+        if (directory == null) break; // unexpected
+        if (directory.equals(owner)) return list;
+        list.add(directory);
+      }
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
