@@ -307,7 +307,7 @@ public class VcsLogFilterer {
     return ContainerUtil.map2Set(commits, commitId -> myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
   }
 
-  public boolean affectedByIndexingRoots(@NotNull VcsLogFilterCollection filters, @NotNull List<VirtualFile> roots) {
+  public boolean areFiltersAffectedByIndexing(@NotNull VcsLogFilterCollection filters, @NotNull List<VirtualFile> roots) {
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     if (detailsFilters.isEmpty()) return false;
 
