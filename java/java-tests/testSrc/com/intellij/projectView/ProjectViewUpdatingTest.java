@@ -442,6 +442,9 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "     m():void\n");
 
     directory = createSubdirectory(directory, "a");
+    // PSI listener is notified synchronously and starts modifying new tree model
+    // unfortunately this approach does not work for old tree builders
+    PlatformTestUtil.waitWhileBusy(tree);
     TreeUtil.promiseExpandAll(tree);
 
     assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
@@ -479,12 +482,10 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
   }
 
   private static PsiDirectory createSubdirectory(@NotNull PsiDirectory directory, @NotNull String name) {
-    return computeAndWaitFor(100, directory.getProject(), () -> directory.createSubdirectory(name));
+    return compute(directory.getProject(), () -> directory.createSubdirectory(name));
   }
 
-  private static <T> T computeAndWaitFor(int millis, @NotNull Project project, @NotNull Computable<T> computable) {
-    T result = WriteCommandAction.runWriteCommandAction(project, computable);
-    PlatformTestUtil.pumpInvocationEventsFor(millis);
-    return result;
+  private static <T> T compute(@NotNull Project project, @NotNull Computable<T> computable) {
+    return WriteCommandAction.runWriteCommandAction(project, computable);
   }
 }
