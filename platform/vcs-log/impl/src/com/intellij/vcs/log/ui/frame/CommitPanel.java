@@ -242,6 +242,7 @@ public class CommitPanel extends JBPanel {
                 myMainText +
                 "</body></html>");
       }
+
       customizeLinksStyle();
       revalidate();
       repaint();
