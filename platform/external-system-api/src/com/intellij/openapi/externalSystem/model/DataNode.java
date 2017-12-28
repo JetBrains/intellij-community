@@ -16,8 +16,10 @@
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +44,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = Logger.getInstance(DataNode.class);
+  private static final boolean AT_LEAST_JAVA_9 = SystemInfo.isJavaVersionAtLeast("9");
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
   @NotNull private transient List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
@@ -270,6 +273,18 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
   }
 
   private DataNodeSerializer<T> getSerializer() {
+    switch (Registry.stringValue("ext.project.data.serializer")) {
+      case "auto":
+        if (AT_LEAST_JAVA_9) {
+          return JDKSerializer.getInstance();
+        } else {
+          return FSTSerializer.getInstance();
+        }
+      case "jdk":
+        return JDKSerializer.getInstance();
+      case "fst":
+        return FSTSerializer.getInstance();
+    }
     return JDKSerializer.getInstance();
   }
 
