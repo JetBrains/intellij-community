@@ -44,7 +44,7 @@ class CombinatorialIntCustomizer implements IntCustomizer {
   }
 
   private int suggestCombinatorialVariant(IntData data, IntDistribution currentDistribution) {
-    int value = currentCombination.computeIfAbsent(data.id, __ -> data.value);
+    int value = currentCombination.computeIfAbsent(data.id, __ -> valuesToTry.get(data.id).iterator().next());
     if (currentDistribution.isValidValue(value)) {
       return value;
     }
@@ -106,5 +106,9 @@ class CombinatorialIntCustomizer implements IntCustomizer {
       result = result.replace(id, new IntData(id, currentCombination.get(id), entry.getValue()));
     }
     return result;
+  }
+
+  int countVariants() {
+    return valuesToTry.values().stream().mapToInt(Set::size).reduce(1, (a, b) -> a*b);
   }
 }

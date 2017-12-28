@@ -185,7 +185,8 @@ class StructureNode extends StructureElement {
 
   @Override
   public String toString() {
-    return "(" + children.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+    String inner = children.stream().map(Object::toString).collect(Collectors.joining(", "));
+    return isList() ? "[" + inner + "]" : "(" + inner + ")";
   }
 
 }
