@@ -16,7 +16,7 @@ internal class NormalizedStringStoredProperty(private val defaultValue: String?)
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: String?) {
     val newValue = if (value.isNullOrEmpty()) null else value
     if (this.value != newValue) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
       this.value = newValue
     }
   }

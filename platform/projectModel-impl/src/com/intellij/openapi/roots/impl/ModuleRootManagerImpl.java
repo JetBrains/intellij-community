@@ -44,7 +44,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   private final OrderRootsCache myOrderRootsCache;
   private final Map<RootModelImpl, Throwable> myModelCreations = new THashMap<>();
 
-  protected SimpleModificationTracker myModificationTracker;
+  protected final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public ModuleRootManagerImpl(@NotNull Module module,
                                @NotNull ProjectRootManagerImpl projectRootManager,

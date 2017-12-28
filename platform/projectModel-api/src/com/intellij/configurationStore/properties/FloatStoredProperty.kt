@@ -16,7 +16,7 @@ internal class FloatStoredProperty(private val defaultValue: Float, private val 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Float) {
     val newValue = valueNormalizer?.invoke(value) ?: value
     if (this.value != newValue) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
       this.value = newValue
     }
   }

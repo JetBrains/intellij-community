@@ -16,7 +16,7 @@ internal class IntStoredProperty(private val defaultValue: Int, private val valu
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Int) {
     val newValue = valueNormalizer?.invoke(value) ?: value
     if (this.value != newValue) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
       this.value = newValue
     }
   }
