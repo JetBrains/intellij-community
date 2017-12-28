@@ -406,12 +406,8 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       for (Module module : getModules()) {
         ModuleRootManagerImpl moduleRootManager = ObjectUtils.tryCast(ModuleRootManager.getInstance(module), ModuleRootManagerImpl.class);
         if (moduleRootManager != null) {
-          for (Module renamedModule : modules) {
-            if (moduleRootManager.isDependsOn(renamedModule)) {
-              moduleRootManager.stateChanged();
-              break;
-            }
-          }
+          // platform in any case will check that iml is actually modified
+          moduleRootManager.stateChanged();
         }
       }
     }
