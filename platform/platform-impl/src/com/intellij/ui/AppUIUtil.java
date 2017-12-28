@@ -72,9 +72,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.List;
 
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED;
-import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
+import static javax.swing.ScrollPaneConstants.*;
 
 /**
  * @author yole
@@ -442,9 +440,7 @@ public class AppUIUtil {
             }
           }
         });
-        final String descr = consent.getText();
-        final String text = "<html>" + StringUtil.replace(descr, "\n", "<br>") + "</html>";
-        viewer.setText(text);
+        viewer.setText(consentTextToHtml(consent.getText()));
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
         //styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
@@ -471,6 +467,11 @@ public class AppUIUtil {
         return pane;
       }
 
+      @NotNull
+      private String consentTextToHtml(String text) {
+        return "<html>" + StringUtil.replace(text, "\n", "<br>") + "</html>";
+      }
+      
       @Override
       protected void createDefaultActions() {
         super.createDefaultActions();
