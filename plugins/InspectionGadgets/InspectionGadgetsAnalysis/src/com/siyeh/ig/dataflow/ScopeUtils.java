@@ -60,15 +60,22 @@ class ScopeUtils {
   public static PsiElement getCommonParent(@NotNull List<? extends PsiElement> referenceElements) {
     PsiElement commonParent = null;
     for (PsiElement referenceElement : referenceElements) {
-      final PsiElement parent = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class);
+      final PsiElement parent = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
       if (parent != null && commonParent != null) {
         if (!commonParent.equals(parent)) {
           commonParent = PsiTreeUtil.findCommonParent(commonParent, parent);
-          commonParent = PsiTreeUtil.getNonStrictParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class);
+          commonParent = PsiTreeUtil.getNonStrictParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
         }
       }
       else {
         commonParent = parent;
+      }
+    }
+
+    if (commonParent instanceof PsiTryStatement) {
+      PsiElement referenceElement = referenceElements.get(0);
+      if (!PsiTreeUtil.isAncestor(((PsiTryStatement)commonParent).getResourceList(), referenceElement, false)) {
+        commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class);
       }
     }
 
