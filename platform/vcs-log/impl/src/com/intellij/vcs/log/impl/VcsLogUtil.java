@@ -122,7 +122,19 @@ public class VcsLogUtil {
     return selectedRoots;
   }
 
+  @NotNull
+  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
+    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
+    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
+    return getAllVisibleRoots(roots, filters);
+  }
 
+  @NotNull
+  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
+                                                    @NotNull VcsLogFilterCollection collection) {
+    return getAllVisibleRoots(roots, collection.getRootFilter(), collection.getStructureFilter());
+  }
+  
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
   @NotNull
@@ -168,13 +180,6 @@ public class VcsLogUtil {
   @NotNull
   public static <T> List<T> collectFirstPack(@NotNull List<T> list, int max) {
     return list.subList(0, Math.min(list.size(), max));
-  }
-
-  @NotNull
-  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
-    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
-    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
-    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
   }
 
   @Nullable

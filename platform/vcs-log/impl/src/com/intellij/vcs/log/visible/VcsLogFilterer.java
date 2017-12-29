@@ -71,8 +71,7 @@ public class VcsLogFilterer {
       return Pair.create(applyHashFilter(dataPack, hashFilter.getHashes(), sortType), commitCount);
     }
 
-    Collection<VirtualFile> visibleRoots =
-      VcsLogUtil.getAllVisibleRoots(dataPack.getLogProviders().keySet(), filters.getRootFilter(), filters.getStructureFilter());
+    Collection<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(dataPack.getLogProviders().keySet(), filters);
     Set<Integer> matchingHeads = getMatchingHeads(dataPack.getRefsModel(), visibleRoots, filters);
     FilterByDetailsResult filterResult = filterByDetails(dataPack, filters, commitCount, visibleRoots, matchingHeads);
 
@@ -264,8 +263,7 @@ public class VcsLogFilterer {
   private static Collection<CommitId> getFilteredDetailsFromTheVcs(@NotNull Map<VirtualFile, VcsLogProvider> providers,
                                                                    @NotNull VcsLogFilterCollection filterCollection,
                                                                    int maxCount) throws VcsException {
-    Set<VirtualFile> visibleRoots =
-      VcsLogUtil.getAllVisibleRoots(providers.keySet(), filterCollection.getRootFilter(), filterCollection.getStructureFilter());
+    Set<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(providers.keySet(), filterCollection);
 
     Collection<CommitId> commits = ContainerUtil.newArrayList();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
@@ -304,7 +302,7 @@ public class VcsLogFilterer {
     List<VcsLogDetailsFilter> detailsFilters = filters.getDetailsFilters();
     if (detailsFilters.isEmpty()) return false;
 
-    Set<VirtualFile> affectedRoots = VcsLogUtil.getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
+    Set<VirtualFile> affectedRoots = VcsLogUtil.getAllVisibleRoots(roots, filters);
     boolean needsIndex = !affectedRoots.isEmpty();
     if (needsIndex) {
       LOG.debug(filters + " are affected by indexing of " + affectedRoots);
