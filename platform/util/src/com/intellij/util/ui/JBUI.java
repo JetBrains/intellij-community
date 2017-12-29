@@ -221,7 +221,7 @@ public class JBUI {
 
   static {
     setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
-    LOG.info("System scale factor: " + String.format("%.02f", SYSTEM_SCALE_FACTOR) + " (" +
+    LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
              (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
   }
 

@@ -96,15 +96,6 @@ public class UIUtil {
 
     // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
-
-    if (SystemInfo.isLinux && Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI") != null) {
-      float dpi_factor = 96 / (float)72; // J2D factor
-      int gnome_base_font_size = 11;
-      DEF_SYSTEM_FONT_SIZE = gnome_base_font_size * dpi_factor;
-    }
-    else {
-      DEF_SYSTEM_FONT_SIZE = 12;
-    }
   }
 
   public static void decorateFrame(@NotNull JRootPane pane) {
@@ -343,7 +334,7 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData;
 
-  public static final float DEF_SYSTEM_FONT_SIZE;
+  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
