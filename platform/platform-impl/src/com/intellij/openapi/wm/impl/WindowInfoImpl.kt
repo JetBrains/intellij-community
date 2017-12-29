@@ -62,9 +62,9 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * tool window had when it was internal one.
    */
   @get:Attribute("internal_type")
-  var internalType by property<ToolWindowType?>()
+  var internalType by property(ToolWindowType.DOCKED)
 
-  override var type: ToolWindowType by property(ToolWindowType.DOCKED) { it == ToolWindowType.DOCKED }
+  override var type by property(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
   var isVisible by property(false)
