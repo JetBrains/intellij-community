@@ -473,6 +473,7 @@
                   order="first, before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.psi.search.PyClassReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralReferenceSearcher"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
