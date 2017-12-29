@@ -19,9 +19,9 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.util.BekUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -82,7 +82,7 @@ class GitBekParentFixer {
   }
 
   private static VcsLogFilterCollection createVcsLogFilterCollection() {
-    final VcsLogTextFilter textFilter = new VcsLogTextFilter() {
+    VcsLogTextFilter textFilter = new VcsLogTextFilter() {
       @Override
       public boolean matchesCase() {
         return false;
@@ -105,59 +105,6 @@ class GitBekParentFixer {
       }
     };
 
-    return new VcsLogFilterCollection() {
-      @Nullable
-      @Override
-      public VcsLogBranchFilter getBranchFilter() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public VcsLogUserFilter getUserFilter() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public VcsLogDateFilter getDateFilter() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public VcsLogTextFilter getTextFilter() {
-        return textFilter;
-      }
-
-      @Nullable
-      @Override
-      public VcsLogHashFilter getHashFilter() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public VcsLogStructureFilter getStructureFilter() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public VcsLogRootFilter getRootFilter() {
-        return null;
-      }
-
-      @Override
-      public boolean isEmpty() {
-        return false;
-      }
-
-      @NotNull
-      @Override
-      public List<VcsLogDetailsFilter> getDetailsFilters() {
-        return Collections.singletonList(textFilter);
-      }
-    };
+    return new VcsLogFilterCollectionBuilder().with(textFilter).build();
   }
 }
