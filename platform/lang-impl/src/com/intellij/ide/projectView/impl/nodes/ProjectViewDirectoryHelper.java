@@ -175,8 +175,9 @@ public class ProjectViewDirectoryHelper {
 
   @NotNull
   private static JBIterable<PsiDirectory> getParents(PsiDirectory directory, Object owner) {
+    if (directory != null) directory = directory.getParent(); // because JBIterable adds first parent without comparing with owner
     return directory != null && owner instanceof PsiDirectory && PsiTreeUtil.isAncestor((PsiDirectory)owner, directory, true)
-           ? JBIterable.generate(directory.getParent(), PsiDirectory::getParent).takeWhile(dir -> dir != null && !dir.equals(owner))
+           ? JBIterable.generate(directory, PsiDirectory::getParent).takeWhile(dir -> dir != null && !dir.equals(owner))
            : JBIterable.empty();
   }
 
