@@ -311,10 +311,14 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
       fail("Conflict was not detected");
     }
     catch (RuntimeException e) {
-      assertEquals(e.getMessage(), conflictMessage);
+      assertEquals(conflictMessage, e.getMessage());
     }
   }
 
+  public void testVariableInsideResourceList() {
+    doTest(false, "Cannot perform refactoring.\n" +
+                  "Variable is used as resource reference");
+  }
 
   private void doTest(final boolean inlineDef) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
