@@ -109,6 +109,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
+    myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);
