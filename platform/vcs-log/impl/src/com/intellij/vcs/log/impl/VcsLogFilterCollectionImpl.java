@@ -98,16 +98,10 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
     return myRootFilter;
   }
 
-
-  @Override
-  public boolean isEmpty() {
-    return myBranchFilter == null && myRootFilter == null && myHashFilter == null && getDetailsFilters().isEmpty();
-  }
-
   @NotNull
   @Override
-  public List<VcsLogDetailsFilter> getDetailsFilters() {
-    return ContainerUtil.skipNulls(Arrays.asList(myUserFilter, myDateFilter, myTextFilter, myStructureFilter));
+  public List<VcsLogFilter> getFilters() {
+    return ContainerUtil.skipNulls(Arrays.asList(myUserFilter, myDateFilter, myTextFilter, myStructureFilter, myBranchFilter, myHashFilter, myRootFilter));
   }
 
   @Override

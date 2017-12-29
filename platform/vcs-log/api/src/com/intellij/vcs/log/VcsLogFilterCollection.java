@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,10 +42,17 @@ public interface VcsLogFilterCollection {
   /**
    * Returns true if there are no filters in this collection.
    */
-  boolean isEmpty();
+  default boolean isEmpty() {
+    return getFilters().isEmpty();
+  }
 
   @NotNull
-  List<VcsLogDetailsFilter> getDetailsFilters();
+  List<VcsLogFilter> getFilters();
+
+  @NotNull
+  default List<VcsLogDetailsFilter> getDetailsFilters() {
+    return ContainerUtil.findAll(getFilters(), VcsLogDetailsFilter.class);
+  }
 
   class FilterKey<T extends VcsLogFilter> {
     @NotNull private final String myName;
