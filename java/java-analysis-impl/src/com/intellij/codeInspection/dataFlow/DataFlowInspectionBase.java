@@ -309,8 +309,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         if (assignment != null) {
           Object constValue = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
           if (constValue == PsiTypesUtil.getDefaultValue(expr.getType())) {
-            PsiElement target = ((PsiReferenceExpression)expr).resolve();
+            PsiReferenceExpression ref = (PsiReferenceExpression)expr;
+            PsiElement target = ref.resolve();
             if (target instanceof PsiField &&
+                (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isEffectivelyUnqualified(ref)) &&
                 ((PsiField)target).getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
               return;
             }
