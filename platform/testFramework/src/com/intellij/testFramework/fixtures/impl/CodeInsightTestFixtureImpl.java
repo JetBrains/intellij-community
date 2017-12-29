@@ -1237,6 +1237,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         myChooseByNamePopup = null;
       })
       // don't use method references here to make stack trace reading easier 
+      .append(() -> disposeRootDisposable()) 
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown())) 
       .append(() -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()))
       .append(() -> super.tearDown())
