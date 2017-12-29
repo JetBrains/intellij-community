@@ -94,7 +94,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       }
     }.build();
     ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup("Select branch to compare", actionGroup, event.getDataContext(), false, false, false, null, -1, null);
+      .createActionGroupPopup("Select Branch to Compare", actionGroup, event.getDataContext(), false, false, false, null, -1, null);
     InputEvent inputEvent = event.getInputEvent();
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
