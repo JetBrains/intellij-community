@@ -51,8 +51,8 @@ class StructureNode extends StructureElement {
     children.add(child);
   }
 
-  StructureNode subStructure() {
-    StructureNode e = new StructureNode(id.childId());
+  StructureNode subStructure(@NotNull Generator<?> generator) {
+    StructureNode e = new StructureNode(id.childId(generator));
     addChild(e);
     return e;
   }
@@ -79,7 +79,7 @@ class StructureNode extends StructureElement {
       if (childShrink != null) return shrinkNextChildAfter(index, childShrink);
     }
     
-    return shrinkAlternativeListRecursion();
+    return shrinkRecursion();
   }
 
   @Nullable
@@ -118,29 +118,37 @@ class StructureNode extends StructureElement {
     return false;
   }
 
-  @Nullable
-  private ShrinkStep shrinkAlternativeListRecursion() {
-    if (seemsAlternative(children)) {
-      StructureElement child1 = deparenthesize(children.get(1));
-      if (child1 instanceof StructureNode && ((StructureNode)child1).isList() && ((StructureNode)child1).children.size() == 2) {
-        StructureElement singleListElement = deparenthesize(((StructureNode)child1).children.get(1));
-        if (singleListElement instanceof StructureNode && seemsAlternative(((StructureNode)singleListElement).children)) {
-          return ShrinkStep.create(id, singleListElement, __ -> singleListElement.shrink(), null);
+  private void findChildrenWithGenerator(@NotNull Generator<?> generator, List<StructureNode> result) {
+    for (StructureElement child : children) {
+      if (child instanceof StructureNode) {
+        Generator<?> childGen = child.id.generator;
+        if (childGen != null && generator.getGeneratorFunction().equals(childGen.getGeneratorFunction())) {
+          result.add((StructureNode)child);
+        } else {
+          ((StructureNode)child).findChildrenWithGenerator(generator, result);
         }
       }
     }
+  }
+
+  @Nullable
+  private ShrinkStep shrinkRecursion() {
+    if (id.generator != null) {
+      List<StructureNode> sameGeneratorChildren = new ArrayList<>();
+      findChildrenWithGenerator(id.generator, sameGeneratorChildren);
+      return tryReplacing(sameGeneratorChildren, 0);
+    }
+    
     return null;
   }
 
-  private static StructureElement deparenthesize(StructureElement e) {
-    while (e instanceof StructureNode && ((StructureNode)e).children.size() == 1) {
-      e = ((StructureNode)e).children.get(0);
+  @Nullable
+  private ShrinkStep tryReplacing(List<StructureNode> candidates, int index) {
+    if (index < candidates.size()) {
+      StructureNode replacement = candidates.get(index);
+      return ShrinkStep.create(id, replacement, __ -> replacement.shrink(), () -> tryReplacing(candidates, index + 1));
     }
-    return e;
-  }
-
-  private static boolean seemsAlternative(List<StructureElement> children) {
-    return children.size() == 2 && deparenthesize(children.get(0)) instanceof IntData && children.get(1) instanceof StructureNode;
+    return null;
   }
 
   @NotNull

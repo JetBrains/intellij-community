@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package jetCheck;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -9,18 +12,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 class NodeId {
   private final AtomicInteger counter;
   final int number;
+  @Nullable final Generator<?> generator;
 
-  NodeId() {
-    this(new AtomicInteger());
+  NodeId(@NotNull Generator<?> generator) {
+    this(new AtomicInteger(), generator);
   }
 
-  private NodeId(AtomicInteger counter) {
+  private NodeId(AtomicInteger counter, @Nullable Generator<?> generator) {
     this.counter = counter;
+    this.generator = generator;
     number = counter.getAndIncrement();
   }
 
-  NodeId childId() {
-    return new NodeId(counter);
+  NodeId childId(@Nullable Generator<?> generator) {
+    return new NodeId(counter, generator);
   }
 
   @Override

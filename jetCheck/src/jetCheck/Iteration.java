@@ -40,7 +40,7 @@ class Iteration<T> {
   @Nullable
   private CounterExampleImpl<T> findCounterExample(Random random) {
     for (int i = 0; i < 100; i++) {
-      StructureNode node = new StructureNode(new NodeId());
+      StructureNode node = new StructureNode(new NodeId(session.generator));
       T value;
       try {
         value = session.generator.getGeneratorFunction().apply(new GenerativeDataStructure(random, node, sizeHint));

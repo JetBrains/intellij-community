@@ -20,19 +20,19 @@ class GenerativeDataStructure extends AbstractDataStructure {
   @Override
   public int drawInt(@NotNull IntDistribution distribution) {
     int i = distribution.generateInt(random);
-    node.addChild(new IntData(node.id.childId(), i, distribution));
+    node.addChild(new IntData(node.id.childId(null), i, distribution));
     return i;
   }
 
   @NotNull
   @Override
-  GenerativeDataStructure subStructure() {
-    return new GenerativeDataStructure(random, node.subStructure(), childSizeHint());
+  GenerativeDataStructure subStructure(@NotNull Generator<?> generator) {
+    return new GenerativeDataStructure(random, node.subStructure(generator), childSizeHint());
   }
 
   @Override
   public <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
-    GenerativeDataStructure data = subStructure();
+    GenerativeDataStructure data = subStructure(generator);
     data.node.shrinkProhibited = true;
     return generator.getGeneratorFunction().apply(data);
   }
@@ -40,7 +40,7 @@ class GenerativeDataStructure extends AbstractDataStructure {
   @Override
   public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
     for (int i = 0; i < 100; i++) {
-      GenerativeDataStructure structure = new GenerativeDataStructure(random, node.subStructure(), childSizeHint());
+      GenerativeDataStructure structure = new GenerativeDataStructure(random, node.subStructure(generator), childSizeHint());
       T value = generator.getGeneratorFunction().apply(structure);
       if (condition.test(value)) return value;
       

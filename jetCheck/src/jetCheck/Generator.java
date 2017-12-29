@@ -156,8 +156,8 @@ public class Generator<T> {
   @NotNull
   public static <T> Generator<T> recursive(@NotNull Function<Generator<T>, Generator<T>> createGenerator) {
     AtomicReference<Generator<T>> ref = new AtomicReference<>();
-    Generator<T> result = createGenerator.apply(from(data -> ref.get().getGeneratorFunction().apply(data)));
-    ref.set(result);
+    Generator<T> result = from(data -> ref.get().getGeneratorFunction().apply(data));
+    ref.set(createGenerator.apply(result));
     return result;
   }
 

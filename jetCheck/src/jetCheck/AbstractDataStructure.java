@@ -25,9 +25,9 @@ abstract class AbstractDataStructure implements DataStructure {
 
   @Override
   public <T> T generate(@NotNull Generator<T> generator) {
-    return generator.getGeneratorFunction().apply(subStructure());
+    return generator.getGeneratorFunction().apply(subStructure(generator));
   }
 
   @NotNull
-  abstract DataStructure subStructure();
+  abstract DataStructure subStructure(@NotNull Generator<?> generator);
 }

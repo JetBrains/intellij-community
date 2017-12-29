@@ -31,7 +31,7 @@ class ReplayDataStructure extends AbstractDataStructure {
 
   @NotNull
   @Override
-  DataStructure subStructure() {
+  DataStructure subStructure(@NotNull Generator<?> generator) {
     return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint(), customizer);
   }
 
