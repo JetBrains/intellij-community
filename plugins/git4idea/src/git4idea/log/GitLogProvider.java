@@ -436,7 +436,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     List<String> filterParameters = ContainerUtil.newArrayList();
 
-    VcsLogBranchFilter branchFilter = filterCollection.getBranchFilter();
+    VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (branchFilter != null) {
       GitRepository repository = getRepository(root);
       assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
@@ -462,32 +462,34 @@ public class GitLogProvider implements VcsLogProvider {
       filterParameters.addAll(GitLogUtil.LOG_ALL);
     }
 
-    if (filterCollection.getDateFilter() != null) {
+    VcsLogDateFilter dateFilter = filterCollection.get(VcsLogFilterCollection.DATE_FILTER);
+    if (dateFilter != null) {
       // assuming there is only one date filter, until filter expressions are defined
-      VcsLogDateFilter filter = filterCollection.getDateFilter();
-      if (filter.getAfter() != null) {
-        filterParameters.add(prepareParameter("after", filter.getAfter().toString()));
+      if (dateFilter.getAfter() != null) {
+        filterParameters.add(prepareParameter("after", dateFilter.getAfter().toString()));
       }
-      if (filter.getBefore() != null) {
-        filterParameters.add(prepareParameter("before", filter.getBefore().toString()));
+      if (dateFilter.getBefore() != null) {
+        filterParameters.add(prepareParameter("before", dateFilter.getBefore().toString()));
       }
     }
 
     boolean regexp = true;
     boolean caseSensitive = false;
-    if (filterCollection.getTextFilter() != null) {
-      regexp = filterCollection.getTextFilter().isRegex();
-      caseSensitive = filterCollection.getTextFilter().matchesCase();
-      String textFilter = filterCollection.getTextFilter().getText();
-      filterParameters.add(prepareParameter("grep", textFilter));
+    VcsLogTextFilter textFilter = filterCollection.get(VcsLogFilterCollection.TEXT_FILTER);
+    if (textFilter != null) {
+      regexp = textFilter.isRegex();
+      caseSensitive = textFilter.matchesCase();
+      String text = textFilter.getText();
+      filterParameters.add(prepareParameter("grep", text));
     }
     filterParameters.add(regexp ? "--extended-regexp" : "--fixed-strings");
     if (!caseSensitive) {
       filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter (except file filter)
     }
 
-    if (filterCollection.getUserFilter() != null) {
-      Collection<String> names = ContainerUtil.map(filterCollection.getUserFilter().getUsers(root), VcsUserUtil::toExactString);
+    VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
+    if (userFilter != null) {
+      Collection<String> names = ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString);
       if (regexp) {
         List<String> authors = ContainerUtil.map(names, UserNameRegex.EXTENDED_INSTANCE);
         if (GitVersionSpecialty.LOG_AUTHOR_FILTER_SUPPORTS_VERTICAL_BAR.existsIn(myVcs.getVersion())) {
@@ -507,8 +509,9 @@ public class GitLogProvider implements VcsLogProvider {
     }
 
     // note: structure filter must be the last parameter, because it uses "--" which separates parameters from paths
-    if (filterCollection.getStructureFilter() != null) {
-      Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
+    VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    if (structureFilter != null) {
+      Collection<FilePath> files = structureFilter.getFiles();
       if (!files.isEmpty()) {
         filterParameters.add("--full-history");
         filterParameters.add("--simplify-merges");

@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface VcsLogHashFilter {
+public interface VcsLogHashFilter extends VcsLogFilter {
 
   @NotNull
   Collection<String> getHashes();

@@ -201,7 +201,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
     String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
-    if (getFilters().getBranchFilter() != null) {
+    if (getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
       showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));

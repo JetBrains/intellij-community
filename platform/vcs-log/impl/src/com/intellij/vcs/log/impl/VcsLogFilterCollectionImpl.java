@@ -52,42 +52,48 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
 
   @Nullable
   @Override
+  public <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key) {
+    if (key.equals(BRANCH_FILTER)) return (T)myBranchFilter;
+    if (key.equals(USER_FILTER)) return (T)myUserFilter;
+    if (key.equals(HASH_FILTER)) return (T)myHashFilter;
+    if (key.equals(DATE_FILTER)) return (T)myDateFilter;
+    if (key.equals(TEXT_FILTER)) return (T)myTextFilter;
+    if (key.equals(STRUCTURE_FILTER)) return (T)myStructureFilter;
+    if (key.equals(ROOT_FILTER)) return (T)myRootFilter;
+    return null;
+  }
+
+  @Nullable
   public VcsLogBranchFilter getBranchFilter() {
     return myBranchFilter;
   }
 
-  @Override
   @Nullable
   public VcsLogHashFilter getHashFilter() {
     return myHashFilter;
   }
 
   @Nullable
-  @Override
   public VcsLogUserFilter getUserFilter() {
     return myUserFilter;
   }
 
   @Nullable
-  @Override
   public VcsLogDateFilter getDateFilter() {
     return myDateFilter;
   }
 
   @Nullable
-  @Override
   public VcsLogTextFilter getTextFilter() {
     return myTextFilter;
   }
 
   @Nullable
-  @Override
   public VcsLogStructureFilter getStructureFilter() {
     return myStructureFilter;
   }
 
   @Nullable
-  @Override
   public VcsLogRootFilter getRootFilter() {
     return myRootFilter;
   }
@@ -129,13 +135,13 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
     }
 
     public VcsLogFilterCollectionBuilder(@NotNull VcsLogFilterCollection filterCollection) {
-      myBranchFilter = filterCollection.getBranchFilter();
-      myUserFilter = filterCollection.getUserFilter();
-      myHashFilter = filterCollection.getHashFilter();
-      myDateFilter = filterCollection.getDateFilter();
-      myTextFilter = filterCollection.getTextFilter();
-      myStructureFilter = filterCollection.getStructureFilter();
-      myRootFilter = filterCollection.getRootFilter();
+      myBranchFilter = filterCollection.get(BRANCH_FILTER);
+      myUserFilter = filterCollection.get(USER_FILTER);
+      myHashFilter = filterCollection.get(HASH_FILTER);
+      myDateFilter = filterCollection.get(DATE_FILTER);
+      myTextFilter = filterCollection.get(TEXT_FILTER);
+      myStructureFilter = filterCollection.get(STRUCTURE_FILTER);
+      myRootFilter = filterCollection.get(ROOT_FILTER);
     }
 
     @NotNull

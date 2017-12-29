@@ -119,10 +119,10 @@ public class VcsLogUtil {
 
   @NotNull
   public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
-                                                    @NotNull VcsLogFilterCollection collection) {
-    return getAllVisibleRoots(roots, collection.getRootFilter(), collection.getStructureFilter());
+                                                    @NotNull VcsLogFilterCollection filters) {
+    return getAllVisibleRoots(roots, filters.get(VcsLogFilterCollection.ROOT_FILTER), filters.get(VcsLogFilterCollection.STRUCTURE_FILTER));
   }
-  
+
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
   @NotNull
@@ -156,8 +156,9 @@ public class VcsLogUtil {
   // so check that before calling this method
   @NotNull
   public static Set<FilePath> getFilteredFilesForRoot(@NotNull final VirtualFile root, @NotNull VcsLogFilterCollection filterCollection) {
-    if (filterCollection.getStructureFilter() == null) return Collections.emptySet();
-    Collection<FilePath> files = filterCollection.getStructureFilter().getFiles();
+    VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    if (structureFilter == null) return Collections.emptySet();
+    Collection<FilePath> files = structureFilter.getFiles();
 
     return new HashSet<>(ContainerUtil.filter(files, filePath -> {
       VirtualFile virtualFile = filePath.getVirtualFile();
@@ -172,7 +173,7 @@ public class VcsLogUtil {
 
   @Nullable
   public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
-    VcsLogBranchFilter filter = filters.getBranchFilter();
+    VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (filter == null) return null;
     
     String branchName = null;

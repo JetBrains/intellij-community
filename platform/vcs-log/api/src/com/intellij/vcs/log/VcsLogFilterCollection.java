@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Encapsulates filters which can be set to VCS Log commits.
@@ -26,27 +27,16 @@ import java.util.List;
  * All not-null filters are connected with AND, which means that commits should meet all of them. <br/>
  */
 public interface VcsLogFilterCollection {
+  FilterKey<VcsLogBranchFilter> BRANCH_FILTER = FilterKey.create("branch");
+  FilterKey<VcsLogUserFilter> USER_FILTER = FilterKey.create("user");
+  FilterKey<VcsLogHashFilter> HASH_FILTER = FilterKey.create("hash");
+  FilterKey<VcsLogDateFilter> DATE_FILTER = FilterKey.create("date");
+  FilterKey<VcsLogTextFilter> TEXT_FILTER = FilterKey.create("text");
+  FilterKey<VcsLogStructureFilter> STRUCTURE_FILTER = FilterKey.create("structure");
+  FilterKey<VcsLogRootFilter> ROOT_FILTER = FilterKey.create("root");
 
   @Nullable
-  VcsLogBranchFilter getBranchFilter();
-
-  @Nullable
-  VcsLogUserFilter getUserFilter();
-
-  @Nullable
-  VcsLogDateFilter getDateFilter();
-
-  @Nullable
-  VcsLogTextFilter getTextFilter();
-
-  @Nullable
-  VcsLogHashFilter getHashFilter();
-
-  @Nullable
-  VcsLogStructureFilter getStructureFilter();
-
-  @Nullable
-  VcsLogRootFilter getRootFilter();
+  <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key);
 
   /**
    * Returns true if there are no filters in this collection.
@@ -55,4 +45,34 @@ public interface VcsLogFilterCollection {
 
   @NotNull
   List<VcsLogDetailsFilter> getDetailsFilters();
+
+  class FilterKey<T extends VcsLogFilter> {
+    @NotNull private final String myName;
+
+    public FilterKey(@NotNull String name) {
+      myName = name;
+    }
+
+    @NotNull
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      FilterKey<?> key = (FilterKey<?>)o;
+      return Objects.equals(myName, key.myName);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myName);
+    }
+
+    public static <T extends VcsLogFilter> FilterKey<T> create(@NotNull String name) {
+      return new FilterKey<>(name);
+    }
+  }
 }
