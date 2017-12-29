@@ -152,6 +152,15 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
+  @Override
+  public void beforeNestedTransaction() {
+    // compute changes and remember them, to prevent lazy computation to happen in another transaction
+    // when more changes might have occurred but shouldn't count in this transaction 
+    for (TreeChangeImpl change : myChangedElements.values()) {
+      change.getAffectedChildren(); 
+    }
+  }
+
   public String toString() {
     return new ArrayList<>(myChangedElements.values()).toString();
   }

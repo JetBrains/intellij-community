@@ -26,14 +26,36 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
     WriteCommandAction.runWriteCommandAction(project) {
       // prepare
       val root = createEmptyFile().node
-      root.replaceChild(root.firstChildNode, createComposite(compositeTypes[0], listOf(createLeaf(leafTypes[0], "d"))))
+      root.replaceChild(root.firstChildNode, composite(compositeTypes[0], leaf(leafTypes[0], "d")))
       
       // actual composite change
       ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
         root.firstChildNode.removeChild(root.firstChildNode.firstChildNode) // remove "d" leaf
-        root.replaceChild(root.firstChildNode, createComposite(compositeTypes[0], listOf())) // replace now empty composite with another one 
+        root.replaceChild(root.firstChildNode, composite(compositeTypes[0])) // replace now empty composite with another one 
       }, root as FileElement)
       assertEquals("", root.text)
+    }
+  }
+
+  fun `test no excessive change merging between transactions if the second one has also a change higher in the tree`() {
+    val file = createEmptyFile()
+    WriteCommandAction.runWriteCommandAction(project) {
+      //prepare
+      val root = file.node as FileElement
+      root.addChild(composite(compositeTypes[0], leaf(leafTypes[0], "a")), root.firstChildNode)
+      
+      ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+        // change in root child
+        root.firstChildNode.replaceChild(root.firstChildNode.firstChildNode, leaf(leafTypes[0], "b"))
+        ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+          // change in root
+          root.removeChild(root.lastChildNode)
+          // change in the same root child as above
+          root.firstChildNode.addChild(leaf(leafTypes[0], "c"), null)
+        }, root)
+      }, root)
+      assertEquals("bc", root.text)
+      assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }
 
@@ -122,10 +144,10 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   private val compositeTypes = IntStreamEx.range(1, 5).mapToObj { i -> IElementType("Composite" + i, null) }.toList()
 
   private val leaves = Generator.zipWith(Generator.sampledFrom(leafTypes), Generator.asciiLetters()) { type, c ->
-    createLeaf(type, c.toString())
+    leaf(type, c.toString())
   }
 
-  private fun createLeaf(type: IElementType, text: String): TreeElement {
+  private fun leaf(type: IElementType, text: String): TreeElement {
     return withDummyHolder(object : LeafPsiElement(type, text) {
       override fun toString() = text
     })
@@ -133,11 +155,11 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
 
   private val composites : Generator<TreeElement> = Generator.sampledFrom(compositeTypes).flatMap { type ->
     Generator.listsOf(IntDistribution.uniform(0, 5), nodes).map { children ->
-      createComposite(type, children)
+      composite(type, *children.toTypedArray())
     }
   }
 
-  private fun createComposite(type: IElementType, children: List<TreeElement>): TreeElement {
+  private fun composite(type: IElementType, vararg children: TreeElement): TreeElement {
     val composite = withDummyHolder(object : CompositePsiElement(type) {
       override fun toString() = getChildren(null).asList().toString()
     })
