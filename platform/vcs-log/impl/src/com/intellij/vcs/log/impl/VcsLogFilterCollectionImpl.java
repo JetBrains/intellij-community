@@ -63,41 +63,6 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
     return null;
   }
 
-  @Nullable
-  public VcsLogBranchFilter getBranchFilter() {
-    return myBranchFilter;
-  }
-
-  @Nullable
-  public VcsLogHashFilter getHashFilter() {
-    return myHashFilter;
-  }
-
-  @Nullable
-  public VcsLogUserFilter getUserFilter() {
-    return myUserFilter;
-  }
-
-  @Nullable
-  public VcsLogDateFilter getDateFilter() {
-    return myDateFilter;
-  }
-
-  @Nullable
-  public VcsLogTextFilter getTextFilter() {
-    return myTextFilter;
-  }
-
-  @Nullable
-  public VcsLogStructureFilter getStructureFilter() {
-    return myStructureFilter;
-  }
-
-  @Nullable
-  public VcsLogRootFilter getRootFilter() {
-    return myRootFilter;
-  }
-
   @NotNull
   @Override
   public List<VcsLogFilter> getFilters() {
