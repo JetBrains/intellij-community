@@ -271,9 +271,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected void onFocusLost() {
-    if (myHistoryPropertyName != null && myNativeSearchPopup == null && myPopup == null) {
-      addCurrentTextToHistory();
-    }
+    addCurrentTextToHistory();
   }
 
   protected void onFocusGained() {
@@ -356,12 +354,7 @@ public class SearchTextField extends JPanel {
   }
 
   public void addCurrentTextToHistory() {
-    if ((myNativeSearchPopup != null && myNativeSearchPopup.isVisible()) || (myPopup != null && myPopup.isVisible())) {
-      return;
-    }
-    final String item = getText();
-    myModel.addElement(item);
-    if (myHistoryPropertyName != null) {
+    if (myModel.addElement(getText()) && myHistoryPropertyName != null) {
       PropertiesComponent.getInstance().setValue(myHistoryPropertyName, StringUtil.join(getHistory(), "\n"));
     }
   }
@@ -435,10 +428,10 @@ public class SearchTextField extends JPanel {
       return Math.min(myHistorySize, myFullList.size());
     }
 
-    public void addElement(String item) {
+    public boolean addElement(String item) {
       final String newItem = item.trim();
       if (newItem.isEmpty()) {
-        return;
+        return false;
       }
 
       final int length = myFullList.size();
@@ -451,7 +444,7 @@ public class SearchTextField extends JPanel {
       }
       if (index == 0) {
         // item is already at the top of the list
-        return;
+        return false;
       }
       else if (index > 0) {
         // move item to top of the list
@@ -462,6 +455,7 @@ public class SearchTextField extends JPanel {
         myFullList.remove(myFullList.size() - 1);
       }
       insertElementAt(newItem, 0);
+      return true;
     }
 
     public void insertElementAt(String item, int index) {
@@ -518,6 +512,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected void showPopup() {
+    addCurrentTextToHistory();
     if (myPopup == null || !myPopup.isVisible()) {
       final JList list = new JBList(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
