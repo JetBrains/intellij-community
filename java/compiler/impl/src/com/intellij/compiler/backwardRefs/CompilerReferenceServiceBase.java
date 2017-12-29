@@ -59,7 +59,7 @@ import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,7 +86,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   public CompilerReferenceServiceBase(Project project, FileDocumentManager fileDocumentManager,
                                       PsiDocumentManager psiDocumentManager, 
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
-                                      Consumer<Set<String>> compilationAffectedModulesSubscription) {
+                                      BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription) {
     super(project);
 
     myReaderFactory = readerFactory;
@@ -141,7 +141,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
           File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-          boolean indexExist = CompilerReferenceIndexUtil.existsUpToDate(buildDir, myReader.myIndex.getDescriptor());
+          boolean indexExist = CompilerReferenceIndexUtil.existsWithLatestVersion(buildDir, myReaderFactory.getReaderIndexDescriptor());
           if (indexExist) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);

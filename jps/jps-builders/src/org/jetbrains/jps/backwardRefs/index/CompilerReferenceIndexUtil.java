@@ -50,7 +50,7 @@ public class CompilerReferenceIndexUtil {
   }
 
 
-  public static boolean existsUpToDate(File buildDir, CompilerIndexDescriptor<?> descriptor) {
+  public static boolean existsWithLatestVersion(File buildDir, CompilerIndexDescriptor<?> descriptor) {
     if (buildDir == null || versionDiffers(buildDir, descriptor)) {
       return false;
     }

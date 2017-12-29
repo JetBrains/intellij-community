@@ -8,7 +8,6 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
@@ -27,19 +26,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CompilerReferenceServiceImpl extends CompilerReferenceServiceBase<BackwardReferenceReader> implements CompilerReferenceServiceEx {
+public class CompilerReferenceServiceImpl extends CompilerReferenceServiceBase<BackwardReferenceReader>
+  implements CompilerReferenceServiceEx {
   public CompilerReferenceServiceImpl(Project project,
                                       FileDocumentManager fileDocumentManager,
                                       PsiDocumentManager psiDocumentManager) {
-    super(project, fileDocumentManager, psiDocumentManager, BackwardReferenceIndexReaderFactory.INSTANCE, (compilationAffectedModules) -> {
-      MessageBusConnection connection = project.getMessageBus().connect();
-      connection.subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
-        if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
-          compilationAffectedModules.add(messageText);
-        }
-      }); 
-    });
+    super(project, fileDocumentManager, psiDocumentManager, BackwardReferenceIndexReaderFactory.INSTANCE,
+          (connection, compilationAffectedModules) -> connection
+            .subscribe(CustomBuilderMessageHandler.TOPIC, (builderId, messageType, messageText) -> {
+              if (BackwardReferenceIndexBuilder.BUILDER_ID.equals(builderId)) {
+                compilationAffectedModules.add(messageText);
+              }
+            }));
   }
+
   @NotNull
   @Override
   public SortedSet<ChainOpAndOccurrences<MethodCall>> findMethodReferenceOccurrences(@NotNull String rawReturnType,

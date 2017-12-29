@@ -36,11 +36,17 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
   
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexReaderFactory.class);
 
+  @NotNull
+  @Override
+  public BackwardReferenceIndexDescriptor getReaderIndexDescriptor() {
+    return BackwardReferenceIndexDescriptor.INSTANCE;
+  }
+
   @Override
   @Nullable
   public BackwardReferenceReader create(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    if (!CompilerReferenceIndexUtil.existsUpToDate(buildDir, BackwardReferenceIndexDescriptor.INSTANCE)) return null;
+    if (!CompilerReferenceIndexUtil.existsWithLatestVersion(buildDir, BackwardReferenceIndexDescriptor.INSTANCE)) return null;
     try {
       return new BackwardReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
     }

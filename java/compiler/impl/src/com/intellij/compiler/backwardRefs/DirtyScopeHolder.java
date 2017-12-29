@@ -32,8 +32,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -54,7 +52,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class DirtyScopeHolder extends UserDataHolderBase {
@@ -75,7 +73,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   public DirtyScopeHolder(@NotNull CompilerReferenceServiceBase<?> service,
                           FileDocumentManager fileDocumentManager,
                           PsiDocumentManager psiDocumentManager,
-                          Consumer<Set<String>> compilationAffectedModulesSubscription
+                          BiConsumer<MessageBusConnection, Set<String>> compilationAffectedModulesSubscription
                           ){
     myService = service;
     myFileDocManager = fileDocumentManager;
@@ -94,7 +92,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
         }
       });
 
-      compilationAffectedModulesSubscription.accept(myCompilationAffectedModules);
+      compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
       connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
         @Override

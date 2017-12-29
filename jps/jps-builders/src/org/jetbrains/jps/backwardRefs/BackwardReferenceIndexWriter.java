@@ -21,7 +21,6 @@ import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
-import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndexUtil;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndexDescriptor;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;

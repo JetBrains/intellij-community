@@ -2,7 +2,15 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndexDescriptor;
 
 public interface CompilerReferenceReaderFactory<Reader extends CompilerReferenceReader<?>> {
+  /**
+   *  Must be consistent with {@link Reader} type.
+   */
+  @NotNull
+  CompilerIndexDescriptor<?> getReaderIndexDescriptor();
+ 
   Reader create(Project project);
 }

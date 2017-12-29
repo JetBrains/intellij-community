@@ -49,9 +49,9 @@ public class CompilerReferenceIndex<Input> {
     }
   });
   private volatile Throwable myRebuildRequestCause;
-  private final CompilerIndexDescriptor<Input> myDescriptor;
+  private final CompilerIndexDescriptor<? extends Input> myDescriptor;
 
-  public CompilerReferenceIndex(CompilerIndexDescriptor<Input> descriptor,
+  public CompilerReferenceIndex(CompilerIndexDescriptor<? extends Input> descriptor,
                                 File buildDir, boolean readOnly) {
     myDescriptor = descriptor;
     myIndicesDir = descriptor.getIndicesDir(buildDir);
@@ -70,7 +70,7 @@ public class CompilerReferenceIndex<Input> {
       };
 
       myIndices = new HashMap<>();
-      for (IndexExtension<?, ?, Input> indexExtension : descriptor.getIndices()) {
+      for (IndexExtension<?, ?, ? extends Input> indexExtension : descriptor.getIndices()) {
         //noinspection unchecked
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
@@ -87,9 +87,9 @@ public class CompilerReferenceIndex<Input> {
     return myIndices.values();
   }
 
-  public <K, V> InvertedIndex<K, V, CompiledFileData> get(IndexId<K, V> key) {
+  public <K, V> InvertedIndex<K, V, ? extends Input> get(IndexId<K, V> key) {
     //noinspection unchecked
-    return (InvertedIndex<K, V, CompiledFileData>)myIndices.get(key);
+    return (InvertedIndex<K, V, ? extends Input>)myIndices.get(key);
   }
 
   @NotNull
@@ -108,7 +108,7 @@ public class CompilerReferenceIndex<Input> {
       new CommonProcessors.FindFirstProcessor<>();
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
-    for (InvertedIndex<?, ?, Input> index : myIndices.values()) {
+    for (InvertedIndex<?, ?, ?> index : myIndices.values()) {
       close(index, exceptionProc);
     }
     final Exception exception = exceptionProc.getFoundValue();
@@ -155,7 +155,7 @@ public class CompilerReferenceIndex<Input> {
     myRebuildRequestCause = e;
   }
 
-  public CompilerIndexDescriptor<Input> getDescriptor() {
+  public CompilerIndexDescriptor<? extends Input> getDescriptor() {
     return myDescriptor;
   }
 

@@ -7,7 +7,7 @@ import java.io.File;
 import java.util.Collection;
 
 /**
- * Provides access to information about underlying indices in {@link CompilerReferenceIndex} instance.
+ * Provides access to information about underlying indices in a {@link CompilerReferenceIndex} instance.
  */
 public interface CompilerIndexDescriptor<Input> {
   Collection<IndexExtension<?, ?, Input>> getIndices();
