@@ -549,4 +549,11 @@ public class EditorImplTest extends AbstractEditorTest {
     mouse.release();
     checkResultByText("a<selection>bcd<caret></selection>ef");
   }
+
+  public void testCreateRectangularSelectionWithDndDisabled() {
+    initText("ab\ncd<caret>");
+    myEditor.getSettings().setDndEnabled(false);
+    mouse().alt().shift().middle().clickAt(0, 0);
+    checkResultByText("<selection><caret>ab</selection>\n<selection><caret>cd</selection>");
+  }
 }
