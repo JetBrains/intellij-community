@@ -2587,6 +2587,13 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-22945
+  public void testNotInstalledTypingUsedInAnalysis() {
+    doTest("Pattern[str]",
+                    "from re import compile\n" +
+                    "expr = compile(\"str\")");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
