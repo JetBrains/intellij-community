@@ -444,6 +444,8 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     directory = createSubdirectory(directory, "a");
     // PSI listener is notified synchronously and starts modifying new tree model
     // unfortunately this approach does not work for old tree builders
+    AbstractTreeBuilder builder = pane.getTreeBuilder();
+    if (builder != null) builder.queueUpdateFrom(directory, true);
     PlatformTestUtil.waitWhileBusy(tree);
     TreeUtil.promiseExpandAll(tree);
 
@@ -456,6 +458,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "      m():void\n");
 
     directory = createSubdirectory(directory, "b");
+    if (builder != null) builder.queueUpdateFrom(directory, true);
 
     assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
                           "  -PsiDirectory: src\n" +
@@ -465,7 +468,8 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
                           "     -I\n" +
                           "      m():void\n");
 
-    createSubdirectory(directory, "z");
+    directory = createSubdirectory(directory, "z");
+    if (builder != null) builder.queueUpdateFrom(directory, true);
 
     assertTreeEqual(tree, " -PsiDirectory: hideEmptyMiddlePackages\n" +
                           "  -PsiDirectory: src\n" +
