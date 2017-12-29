@@ -244,7 +244,6 @@ public class PlatformTestUtil {
     Assert.assertEquals(expected, treeStringPresentation);
   }
 
-  @TestOnly
   public static void expand(JTree tree, int... rows) {
     for (int row : rows) {
       tree.expandRow(row);
@@ -252,7 +251,6 @@ public class PlatformTestUtil {
     }
   }
 
-  @TestOnly
   public static void expandAll(JTree tree) {
     waitForPromise(TreeUtil.promiseExpandAll(tree));
   }
@@ -296,7 +294,6 @@ public class PlatformTestUtil {
     return ui.hasPendingWork();
   }
 
-  @TestOnly
   public static void waitWhileBusy(JTree tree) {
     assertDispatchThreadWithoutWriteAccess();
     long startTimeMillis = System.currentTimeMillis();
@@ -305,12 +302,10 @@ public class PlatformTestUtil {
     }
   }
 
-  @TestOnly
   public static void pumpInvocationEventsFor(long duration, @NotNull TimeUnit unit) {
     pumpInvocationEventsFor(unit.toMillis(duration));
   }
 
-  @TestOnly
   public static void pumpInvocationEventsFor(long millis) {
     assert 0 <= millis && millis <= MAX_WAIT_TIME;
     assertDispatchThreadWithoutWriteAccess();
@@ -321,14 +316,12 @@ public class PlatformTestUtil {
     }
   }
 
-  @TestOnly
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
     callback.doWhenDone(() -> promise.setResult(null));
     waitForPromise(promise);
   }
 
-  @TestOnly
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
     assertDispatchThreadWithoutWriteAccess();
@@ -353,7 +346,6 @@ public class PlatformTestUtil {
   /**
    * @see #pumpInvocationEventsFor(long)
    */
-  @TestOnly
   public static void waitForAlarm(final int delay) {
     @NotNull Application app = getApplication();
     assertDispatchThreadWithoutWriteAccess();
@@ -417,7 +409,6 @@ public class PlatformTestUtil {
    * Dispatch all pending invocation events (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  @TestOnly
   public static void dispatchAllInvocationEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     while (true) {
@@ -434,7 +425,6 @@ public class PlatformTestUtil {
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  @TestOnly
   public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
     //noinspection StatementWithEmptyBody
@@ -445,7 +435,6 @@ public class PlatformTestUtil {
    * Dispatch one pending event (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  @TestOnly
   public static AWTEvent dispatchNextEventIfAny(@NotNull IdeEventQueue eventQueue) throws InterruptedException {
     assert SwingUtilities.isEventDispatchThread() : Thread.currentThread();
     AWTEvent event = eventQueue.peekEvent();
