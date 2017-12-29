@@ -173,7 +173,7 @@ public class VcsLogFilterer {
     });
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, indices);
     return new VisiblePack(dataPack, visibleGraph, false,
-                           new VcsLogFilterCollectionBuilder().with(new VcsLogHashFilterImpl(hashes)).build());
+                           new VcsLogFilterCollectionBuilder(new VcsLogHashFilterImpl(hashes)).build());
   }
 
   @Nullable

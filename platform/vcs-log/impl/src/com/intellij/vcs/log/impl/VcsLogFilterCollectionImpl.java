@@ -16,23 +16,17 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.vcs.log.*;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
   @NotNull public static final VcsLogFilterCollection EMPTY = new VcsLogFilterCollectionBuilder().build();
-
-  @Nullable private final VcsLogBranchFilter myBranchFilter;
-  @Nullable private final VcsLogUserFilter myUserFilter;
-  @Nullable private final VcsLogHashFilter myHashFilter;
-  @Nullable private final VcsLogDateFilter myDateFilter;
-  @Nullable private final VcsLogTextFilter myTextFilter;
-  @Nullable private final VcsLogStructureFilter myStructureFilter;
-  @Nullable private final VcsLogRootFilter myRootFilter;
+  @NotNull private final Map<FilterKey, VcsLogFilter> myFilters = new TreeMap<>(Comparator.comparing(key -> key.getName()));
 
   public VcsLogFilterCollectionImpl(@Nullable VcsLogBranchFilter branchFilter,
                                     @Nullable VcsLogUserFilter userFilter,
@@ -41,114 +35,70 @@ public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
                                     @Nullable VcsLogTextFilter textFilter,
                                     @Nullable VcsLogStructureFilter structureFilter,
                                     @Nullable VcsLogRootFilter rootFilter) {
-    myBranchFilter = branchFilter;
-    myUserFilter = userFilter;
-    myHashFilter = hashFilter;
-    myDateFilter = dateFilter;
-    myTextFilter = textFilter;
-    myStructureFilter = structureFilter;
-    myRootFilter = rootFilter;
+    this(ContainerUtil.skipNulls(Arrays.asList(branchFilter, userFilter, hashFilter, dateFilter, textFilter, structureFilter, rootFilter)));
+  }
+
+  public VcsLogFilterCollectionImpl(@NotNull Collection<VcsLogFilter> filters) {
+    for (VcsLogFilter filter : filters) {
+      myFilters.put(filter.getKey(), filter);
+    }
   }
 
   @Nullable
   @Override
   public <T extends VcsLogFilter> T get(@NotNull FilterKey<T> key) {
-    if (key.equals(BRANCH_FILTER)) return (T)myBranchFilter;
-    if (key.equals(USER_FILTER)) return (T)myUserFilter;
-    if (key.equals(HASH_FILTER)) return (T)myHashFilter;
-    if (key.equals(DATE_FILTER)) return (T)myDateFilter;
-    if (key.equals(TEXT_FILTER)) return (T)myTextFilter;
-    if (key.equals(STRUCTURE_FILTER)) return (T)myStructureFilter;
-    if (key.equals(ROOT_FILTER)) return (T)myRootFilter;
-    return null;
+    return (T)myFilters.get(key);
   }
 
   @NotNull
   @Override
-  public List<VcsLogFilter> getFilters() {
-    return ContainerUtil.skipNulls(Arrays.asList(myUserFilter, myDateFilter, myTextFilter, myStructureFilter, myBranchFilter, myHashFilter, myRootFilter));
+  public Collection<VcsLogFilter> getFilters() {
+    return myFilters.values();
   }
 
   @Override
   public String toString() {
-    return "filters: (" +
-           (myBranchFilter != null ? myBranchFilter + ", " : "") +
-           (myUserFilter != null ? myUserFilter + ", " : "") +
-           (myHashFilter != null ? myHashFilter + ", " : "") +
-           (myDateFilter != null ? myDateFilter + ", " : "") +
-           (myTextFilter != null ? myTextFilter + ", " : "") +
-           (myStructureFilter != null ? myStructureFilter + ", " : "") +
-           (myRootFilter != null ? myRootFilter : "") + ")";
+    return "filters: (" + myFilters + ")";
   }
 
   public static class VcsLogFilterCollectionBuilder {
-    @Nullable private VcsLogBranchFilter myBranchFilter;
-    @Nullable private VcsLogUserFilter myUserFilter;
-    @Nullable private VcsLogHashFilter myHashFilter;
-    @Nullable private VcsLogDateFilter myDateFilter;
-    @Nullable private VcsLogTextFilter myTextFilter;
-    @Nullable private VcsLogStructureFilter myStructureFilter;
-    @Nullable private VcsLogRootFilter myRootFilter;
+    @NotNull private final Collection<VcsLogFilter> myFilters = new OpenTHashSet<>(new FilterByKeyHashingStrategy());
 
     public VcsLogFilterCollectionBuilder() {
     }
 
     public VcsLogFilterCollectionBuilder(@NotNull VcsLogFilterCollection filterCollection) {
-      myBranchFilter = filterCollection.get(BRANCH_FILTER);
-      myUserFilter = filterCollection.get(USER_FILTER);
-      myHashFilter = filterCollection.get(HASH_FILTER);
-      myDateFilter = filterCollection.get(DATE_FILTER);
-      myTextFilter = filterCollection.get(TEXT_FILTER);
-      myStructureFilter = filterCollection.get(STRUCTURE_FILTER);
-      myRootFilter = filterCollection.get(ROOT_FILTER);
+      myFilters.addAll(filterCollection.getFilters());
+    }
+
+    public VcsLogFilterCollectionBuilder(VcsLogFilter... filters) {
+      myFilters.addAll(ContainerUtil.skipNulls(Arrays.asList(filters)));
     }
 
     @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogBranchFilter filter) {
-      myBranchFilter = filter;
-      return this;
-    }
-
-    @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogUserFilter filter) {
-      myUserFilter = filter;
-      return this;
-    }
-
-    @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogHashFilter filter) {
-      myHashFilter = filter;
-      return this;
-    }
-
-    @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogDateFilter filter) {
-      myDateFilter = filter;
-      return this;
-    }
-
-    @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogTextFilter filter) {
-      myTextFilter = filter;
-      return this;
-    }
-
-    @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogStructureFilter filter) {
-      myStructureFilter = filter;
-      return this;
-    }
-
-    @NotNull
-    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogRootFilter filter) {
-      myRootFilter = filter;
+    public VcsLogFilterCollectionBuilder with(@Nullable VcsLogFilter filter) {
+      if (filter != null) {
+        myFilters.remove(filter); // need to replace
+        myFilters.add(filter);
+      }
       return this;
     }
 
     @NotNull
     public VcsLogFilterCollection build() {
-      return new VcsLogFilterCollectionImpl(myBranchFilter, myUserFilter, myHashFilter, myDateFilter, myTextFilter, myStructureFilter,
-                                            myRootFilter);
+      return new VcsLogFilterCollectionImpl(myFilters);
+    }
+
+    private static class FilterByKeyHashingStrategy implements TObjectHashingStrategy<VcsLogFilter> {
+      @Override
+      public int computeHashCode(@NotNull VcsLogFilter object) {
+        return object.getKey().hashCode();
+      }
+
+      @Override
+      public boolean equals(@NotNull VcsLogFilter o1, @NotNull VcsLogFilter o2) {
+        return o1.getKey().equals(o2.getKey());
+      }
     }
   }
 }

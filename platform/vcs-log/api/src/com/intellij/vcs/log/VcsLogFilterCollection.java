@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -47,7 +48,7 @@ public interface VcsLogFilterCollection {
   }
 
   @NotNull
-  List<VcsLogFilter> getFilters();
+  Collection<VcsLogFilter> getFilters();
 
   @NotNull
   default List<VcsLogDetailsFilter> getDetailsFilters() {

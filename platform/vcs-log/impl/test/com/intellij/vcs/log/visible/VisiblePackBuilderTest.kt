@@ -177,10 +177,10 @@ class VisiblePackBuilderTest {
   fun noFilters(): VcsLogFilterCollection = VcsLogFilterCollectionBuilder().build()
 
   fun filters(branch: VcsLogBranchFilter? = null, user: VcsLogUserFilter? = null)
-      = VcsLogFilterCollectionBuilder().with(branch).with(user).build()
+      = VcsLogFilterCollectionBuilder(branch, user).build()
 
   fun filters(branch: List<String>? = null, user: VcsUser? = null)
-      = VcsLogFilterCollectionBuilder().with(branchFilter(branch)).with(userFilter(user)).build()
+      = VcsLogFilterCollectionBuilder(branchFilter(branch), userFilter(user)).build()
 
   fun branchFilter(branch: List<String>?): VcsLogBranchFilterImpl? {
     return if (branch != null) VcsLogBranchFilterImpl.fromTextPresentation(branch, branch.toHashSet()) else null

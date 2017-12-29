@@ -43,7 +43,7 @@ public class FileHistoryFilterUi implements VcsLogFilterUi {
     VcsLogStructureFilterImpl fileFilter = new VcsLogStructureFilterImpl(Collections.singleton(myPath));
     VcsLogBranchFilterImpl branchFilter =
       myProperties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES) ? null : VcsLogBranchFilterImpl.fromBranch("HEAD");
-    return new VcsLogFilterCollectionBuilder().with(fileFilter).with(branchFilter).build();
+    return new VcsLogFilterCollectionBuilder(fileFilter, branchFilter).build();
   }
 
   @Override

@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.vcs.log.VcsLogFilterCollection.USER_FILTER;
+
 /**
  * Filters commits by one or several users.
  */
@@ -20,4 +22,10 @@ public interface VcsLogUserFilter extends VcsLogDetailsFilter {
    */
   @NotNull
   Collection<VcsUser> getUsers(@NotNull VirtualFile root);
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogUserFilter> getKey() {
+    return USER_FILTER;
+  }
 }
