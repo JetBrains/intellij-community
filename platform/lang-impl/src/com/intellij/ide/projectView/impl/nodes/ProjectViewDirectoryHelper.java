@@ -146,10 +146,10 @@ public class ProjectViewDirectoryHelper {
       if (settings == null) return false; // unexpected
       if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
         if (element instanceof PsiDirectory) {
-          if (getParents(directory, owner).first(dir -> Comparing.equal(element, dir)) != null) return true;
+          if (getParents(directory, owner).find(dir -> Comparing.equal(element, dir)) != null) return true;
         }
         else if (element instanceof VirtualFile) {
-          if (getParents(directory, owner).first(dir -> Comparing.equal(element, dir.getVirtualFile())) != null) return true;
+          if (getParents(directory, owner).find(dir -> Comparing.equal(element, dir.getVirtualFile())) != null) return true;
         }
       }
     }
