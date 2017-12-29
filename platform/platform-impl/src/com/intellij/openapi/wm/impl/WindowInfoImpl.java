@@ -254,24 +254,24 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
     catch (IllegalArgumentException ignored) {
     }
     myAutoHide = Boolean.parseBoolean(element.getAttributeValue(AUTOHIDE_ATTR));
+
+    ToolWindowType type;
+    try {
+      String value = element.getAttributeValue(TYPE_ATTR);
+      type = StringUtil.isEmptyOrSpaces(value) ? ToolWindowType.DOCKED : ToolWindowType.valueOf(value);
+    }
+    catch (Exception e) {
+      type = ToolWindowType.DOCKED;
+    }
+    setTypeAndCheck(type);
+
     try {
       myInternalType = ToolWindowType.valueOf(element.getAttributeValue(INTERNAL_TYPE_ATTR));
     }
-    catch (IllegalArgumentException ignored) {
+    catch (Exception ignored) {
+      myInternalType = type;
     }
-    try {
-      ToolWindowType type;
-      try {
-        String value = element.getAttributeValue(TYPE_ATTR);
-        type = StringUtil.isEmptyOrSpaces(value) ? ToolWindowType.DOCKED : ToolWindowType.valueOf(value);
-      }
-      catch (Exception e) {
-        type = ToolWindowType.DOCKED;
-      }
-      setTypeAndCheck(type);
-    }
-    catch (IllegalArgumentException ignored) {
-    }
+
     myVisible = Boolean.parseBoolean(element.getAttributeValue(VISIBLE_ATTR)) && canActivateOnStart(myId);
     if (element.getAttributeValue(SHOW_STRIPE_BUTTON) != null) {
       myShowStripeButton = Boolean.parseBoolean(element.getAttributeValue(SHOW_STRIPE_BUTTON));
