@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -52,8 +53,10 @@ public class MergeCallSequenceToChainIntention extends Intention {
       return;
     }
     PsiMethodCallExpression methodCallExpression = getRootMethodCallExpression((PsiMethodCallExpression)expression1);
+    CommentTracker tracker = new CommentTracker();
     while (true) {
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
+      tracker.markUnchanged(argumentList);
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       newMethodCallExpression.append('.').append(methodName).append(argumentList.getText());
@@ -65,7 +68,7 @@ public class MergeCallSequenceToChainIntention extends Intention {
       methodCallExpression = (PsiMethodCallExpression)grandParent;
     }
     PsiReplacementUtil.replaceExpression(expression, newMethodCallExpression.toString());
-    nextSibling.delete();
+    tracker.deleteAndRestoreComments(nextSibling);
   }
 
   private static PsiMethodCallExpression getRootMethodCallExpression(PsiMethodCallExpression expression) {

@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -33,6 +34,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +58,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   }
 
   @Nullable
-  private static PsiMethod getTargetMethod(@NotNull Project project, Editor editor, PsiFile file) {
+  private static PsiMethod getTargetMethod(Editor editor, PsiFile file) {
     final PsiModifierListOwner owner =  AddAnnotationPsiFix.getContainer(file, editor.getCaretModel().getOffset());
     if (owner instanceof PsiMethod && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) {
       PsiElement original = owner.getOriginalElement();
@@ -67,7 +69,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiMethod method = getTargetMethod(project, editor, file);
+    final PsiMethod method = getTargetMethod(editor, file);
     if (method != null) {
       boolean hasContract = ControlFlowAnalyzer.findContractAnnotation(method) != null;
       setText(hasContract ? "Edit method contract of '" + method.getName() + "'" : "Add method contract to '" + method.getName() + "'");
@@ -78,33 +80,95 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiMethod method = getTargetMethod(project, editor, file);
+    final PsiMethod method = getTargetMethod(editor, file);
     assert method != null;
     Contract existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Contract.class);
     String oldContract = existingAnno == null ? null : existingAnno.value();
     boolean oldPure = existingAnno != null && existingAnno.pure();
+    String oldMutates = existingAnno == null ? null : existingAnno.mutates();
 
     JBTextField contractText = new JBTextField(oldContract);
+    JBTextField mutatesText = new JBTextField(oldMutates);
     JCheckBox pureCB = createPureCheckBox(oldPure);
-    DialogBuilder builder = createDialog(project, contractText, pureCB);
-    contractText.getDocument().addDocumentListener(new DocumentAdapter() {
+    DialogBuilder builder = createDialog(project, contractText, pureCB, mutatesText);
+    DocumentAdapter validator = new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        String error = getErrorMessage(contractText.getText(), method);
-        builder.setOkActionEnabled(error == null);
-        builder.setErrorText(error, contractText);
+        String contractError = getContractErrorMessage(contractText.getText(), method);
+        if (contractError != null) {
+          builder.setOkActionEnabled(false);
+          builder.setErrorText(contractError, contractText);
+        }
+        else {
+          String mutatesError = getMutatesErrorMessage(mutatesText.getText(), method);
+          if (mutatesError != null) {
+            builder.setOkActionEnabled(false);
+            builder.setErrorText(mutatesError, mutatesText);
+          }
+          else {
+            builder.setOkActionEnabled(true);
+            builder.setErrorText(null);
+          }
+        }
       }
-    });
+    };
+    Runnable updateControls = () -> {
+      if (pureCB.isSelected()) {
+        mutatesText.setText("");
+        mutatesText.setEnabled(false);
+      }
+      else {
+        mutatesText.setEnabled(true);
+      }
+    };
+    pureCB.addChangeListener(e -> updateControls.run());
+    contractText.getDocument().addDocumentListener(validator);
+    mutatesText.getDocument().addDocumentListener(validator);
+    updateControls.run();
     if (builder.showAndGet()) {
-      updateContract(method, contractText.getText(), pureCB.isSelected());
+      updateContract(method, contractText.getText(), pureCB.isSelected(), mutatesText.getText());
     }
   }
 
-  private static DialogBuilder createDialog(@NotNull Project project, JBTextField contractText, JCheckBox pureCB) {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(Messages.configureMessagePaneUi(new JTextPane(), ourPrompt), BorderLayout.NORTH);
-    panel.add(contractText, BorderLayout.CENTER);
-    panel.add(pureCB, BorderLayout.SOUTH);
+  private static DialogBuilder createDialog(@NotNull Project project,
+                                            JBTextField contractText,
+                                            JCheckBox pureCB,
+                                            JBTextField mutatesText) {
+    JPanel panel = new JPanel(new GridBagLayout());
+
+    GridBagConstraints constraints =
+      new GridBagConstraints(0, 0, 2, 1, 4.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2), 0, 0);
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), ourPrompt), constraints);
+    constraints.gridx = 0;
+    constraints.gridy = 1;
+    constraints.gridwidth = 1;
+    constraints.weightx = 1;
+    JLabel contractLabel = new JLabel("Contract:");
+    contractLabel.setDisplayedMnemonic('c');
+    contractLabel.setLabelFor(contractText);
+    panel.add(contractLabel, constraints);
+    constraints.gridx = 1;
+    constraints.weightx = 3;
+    panel.add(contractText, constraints);
+    constraints.gridx = 0;
+    constraints.gridy = 2;
+    constraints.gridwidth = 2;
+    constraints.weightx = 4;
+    panel.add(pureCB, constraints);
+    panel.add(pureCB, constraints);
+    if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      constraints.gridx = 0;
+      constraints.gridy = 3;
+      constraints.weightx = 1;
+      constraints.gridwidth = 1;
+      JLabel mutatesLabel = new JLabel("Mutates:");
+      mutatesLabel.setDisplayedMnemonic('m');
+      mutatesLabel.setLabelFor(mutatesText);
+      panel.add(mutatesLabel, constraints);
+      constraints.gridx = 1;
+      constraints.weightx = 3;
+      panel.add(mutatesText, constraints);
+    }
 
     DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Method Contract");
     builder.setPreferredFocusComponent(contractText);
@@ -118,11 +182,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     return pureCB;
   }
 
-  private static void updateContract(PsiMethod method, String contract, boolean pure) {
+  private static void updateContract(PsiMethod method, String contract, boolean pure, String mutates) {
     Project project = method.getProject();
     ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
     manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract);
+    PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract, mutates);
     if (mockAnno != null) {
       try {
         manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
@@ -134,7 +198,12 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   }
 
   @Nullable
-  private static String getErrorMessage(String contract, PsiMethod method) {
+  private static String getMutatesErrorMessage(String mutates, PsiMethod method) {
+    return StringUtil.isEmpty(mutates) ? null : MutationSignature.checkSignature(mutates, method);
+  }
+
+  @Nullable
+  private static String getContractErrorMessage(String contract, PsiMethod method) {
     return StringUtil.isEmpty(contract) ? null : ContractInspection.checkContract(method, contract);
   }
 

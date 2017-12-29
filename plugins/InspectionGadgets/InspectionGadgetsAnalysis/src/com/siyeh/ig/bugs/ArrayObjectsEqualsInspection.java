@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,8 +98,9 @@ public class ArrayObjectsEqualsInspection extends BaseInspection {
       else {
         newExpression.append("equals");
       }
-      newExpression.append(methodCallExpression.getArgumentList().getText());
-      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpression.toString());
+      CommentTracker commentTracker = new CommentTracker();
+      newExpression.append(commentTracker.markUnchanged(methodCallExpression.getArgumentList()).getText());
+      PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpression.toString(), commentTracker);
     }
   }
 

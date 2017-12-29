@@ -18,7 +18,10 @@ package com.intellij.psi.stubs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
@@ -36,7 +39,7 @@ import java.util.List;
 public abstract class StubProcessingHelperBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubProcessingHelperBase");
 
-  <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
+  public <Psi extends PsiElement> boolean processStubsInFile(@NotNull Project project,
                                                       @NotNull VirtualFile file,
                                                       @NotNull StubIdList value,
                                                       @NotNull Processor<? super Psi> processor,
@@ -103,6 +106,13 @@ public abstract class StubProcessingHelperBase {
                 StubTreeLoader.getFileViewProviderMismatchDiagnostics(psiFile.getViewProvider()));
       onInternalError(file);
       return true;
+    }
+
+    if (psiFile instanceof PsiBinaryFile) {
+      // a file can be indexed as containing stubs, 
+      // but then in a specific project FileViewProviderFactory can decide not to create stub-aware PSI 
+      // because the file isn't in expected location
+      return true; 
     }
 
     ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);

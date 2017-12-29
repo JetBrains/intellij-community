@@ -35,10 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,9 +91,15 @@ public class JavaReflectionReferenceUtil {
   public static final String NEW_INSTANCE = "newInstance";
   public static final String TYPE = "TYPE";
 
+  // Atomic field updaters
+  public static final String NEW_UPDATER = "newUpdater";
+  public static final String ATOMIC_LONG_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicLongFieldUpdater";
+  public static final String ATOMIC_INTEGER_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicIntegerFieldUpdater";
+  public static final String ATOMIC_REFERENCE_FIELD_UPDATER = "java.util.concurrent.atomic.AtomicReferenceFieldUpdater";
+
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
-  @Nullable
+  @Contract("null -> null")
   public static ReflectiveType getReflectiveType(@Nullable PsiExpression context) {
     context = ParenthesesUtils.stripParentheses(context);
     if (context == null) {
@@ -141,6 +144,24 @@ public class JavaReflectionReferenceUtil {
         }
       }
     }
+
+    if (context instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)context;
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiVariable) {
+        PsiVariable variable = (PsiVariable)resolved;
+        if (isJavaLangClass(PsiTypesUtil.getPsiClass(variable.getType()))) {
+          final PsiExpression definition = findVariableDefinition(reference, variable);
+          if (definition != null) {
+            ReflectiveType result = ourGuard.doPreventingRecursion(variable, false, () -> getReflectiveType(definition));
+            if (result != null) {
+              return result;
+            }
+          }
+        }
+      }
+    }
+
     final PsiType type = context.getType();
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
@@ -166,15 +187,6 @@ public class JavaReflectionReferenceUtil {
         final PsiClass argumentClass = PsiTypesUtil.getPsiClass(erasure);
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass, false);
-        }
-      }
-    }
-    if (context instanceof PsiReferenceExpression) {
-      final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
-      if (resolved instanceof PsiVariable) {
-        final PsiExpression definition = findVariableDefinition((PsiReferenceExpression)context, (PsiVariable)resolved);
-        if (definition != null) {
-          return ourGuard.doPreventingRecursion(resolved, false, () -> getReflectiveType(definition));
         }
       }
     }
@@ -338,6 +350,14 @@ public class JavaReflectionReferenceUtil {
     return member.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
+  static boolean isAtomicallyUpdateable(@NotNull PsiField field) {
+    if (field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.VOLATILE)) {
+      return false;
+    }
+    final PsiType type = field.getType();
+    return !(type instanceof PsiPrimitiveType) || PsiType.INT.equals(type) || PsiType.LONG.equals(type);
+  }
+
   @Nullable
   static String getParameterTypesText(@NotNull PsiMethod method) {
     final StringJoiner joiner = new StringJoiner(", ");
@@ -444,6 +464,9 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   public static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
+    if (ExpressionUtils.isNullLiteral(maybeArray)) {
+      return PsiExpression.EMPTY_ARRAY;
+    }
     if (isVarargAsArray(maybeArray)) {
       final PsiExpression argumentsDefinition = findDefinition(maybeArray);
       if (argumentsDefinition instanceof PsiArrayInitializerExpression) {

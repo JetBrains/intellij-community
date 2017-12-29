@@ -77,7 +77,14 @@ public abstract class StubTreeLoader {
     IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
     boolean upToDate = indexingStampInfo != null && indexingStampInfo.isUpToDate(document, file, psiFile);
 
+    boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
+
     String msg = _message + "\nPlease report the problem to JetBrains with the files attached\n";
+
+    if (canBePrebuilt) {
+      msg += "This stub can have pre-built origin\n";
+    }
+
     if (upToDate) {
       msg += "INDEXED VERSION IS THE CURRENT ONE";
     }
@@ -136,6 +143,8 @@ public abstract class StubTreeLoader {
     return upToDate ? handleUpToDateMismatch(msg, attachments) : new RuntimeExceptionWithAttachments(msg, attachments);
   }
 
+  protected abstract boolean isPrebuilt(@NotNull VirtualFile virtualFile);
+
   private static UpToDateStubIndexMismatch handleUpToDateMismatch(@NotNull String message, Attachment[] attachments) {
     return new UpToDateStubIndexMismatch(message, attachments);
   }
@@ -161,8 +170,7 @@ public abstract class StubTreeLoader {
     Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
       pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";
     List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(provider);
-    return "path = " + provider.getVirtualFile().getPath() +
-           ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
+    return ", stubBindingRoot = " + fileClassName.fun(provider.getStubBindingRoot()) +
            ", languages = [" + StringUtil.join(provider.getLanguages(), Language::getID, ", ") +
            "], fileTypes = [" + StringUtil.join(provider.getAllFiles(), file -> file.getFileType().getName(), ", ") +
            "], files = [" + StringUtil.join(provider.getAllFiles(), fileClassName, ", ") +

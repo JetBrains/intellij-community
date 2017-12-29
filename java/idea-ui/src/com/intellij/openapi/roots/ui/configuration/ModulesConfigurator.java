@@ -65,7 +65,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 15, 2003
  */
 public class ModulesConfigurator implements ModulesProvider, ModuleEditor.ChangeListener {
   private static final Logger LOG = Logger.getInstance(ModulesConfigurator.class);
@@ -473,7 +472,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
       }
 
-      ModuleDeleteProvider.removeModule(moduleToRemove, null, modifiableRootModels, myModuleModel);
+      ModuleDeleteProvider.removeModule(moduleToRemove, modifiableRootModels, myModuleModel);
       Disposer.dispose(editor);
     }
     processModuleCountChanged();

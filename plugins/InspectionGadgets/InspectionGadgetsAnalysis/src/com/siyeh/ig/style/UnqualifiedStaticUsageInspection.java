@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -136,8 +137,9 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
       final PsiClass containingClass = member.getContainingClass();
       assert containingClass != null;
       final String className = containingClass.getName();
-      final String text = expression.getText();
-      PsiReplacementUtil.replaceExpression(expression, className + '.' + text);
+      CommentTracker commentTracker = new CommentTracker();
+      final String text = commentTracker.markUnchanged(expression).getText();
+      PsiReplacementUtil.replaceExpression(expression, className + '.' + text, commentTracker);
     }
   }
 

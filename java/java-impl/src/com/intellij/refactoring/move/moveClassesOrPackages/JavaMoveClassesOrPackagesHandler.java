@@ -75,7 +75,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     for (PsiElement element : elements) {
       if (!isPackageOrDirectory(element) && invalid4Move(element)) return false;
     }
-    return super.canMove(elements, targetContainer);
+    return targetContainer == null || super.canMove(elements, targetContainer);
   }
 
   public static boolean invalid4Move(PsiElement element) {

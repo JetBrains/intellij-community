@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.text.CharArrayUtil;
@@ -31,9 +32,11 @@ public class JDParser {
   private static final String SELF_CLOSED_P_TAG = "<p/>";
 
   private final JavaCodeStyleSettings mySettings;
+  private final CommonCodeStyleSettings myCommonSettings;
 
   public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    myCommonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 
   public void formatCommentText(@NotNull PsiElement element, @NotNull CommentFormatter formatter) {
@@ -419,14 +422,8 @@ public class JDParser {
         result.add(Pair.create(s1, marks[i]));
       }
       else {
-        if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG)) {
-          if (sb.length() != 0) {
-            result.add(new Pair<>(sb.toString(), false));
-            sb.setLength(0);
-          }
-          result.add(Pair.create(s1, marks[i]));
-        }
-        else if (mySettings.JD_PRESERVE_LINE_FEEDS) {
+        if (s1.isEmpty() || s1.equals(SELF_CLOSED_P_TAG) || isKeepLineFeedsIn(s1)) {
+          endParagraph(result, sb);
           result.add(Pair.create(s1, marks[i]));
         }
         else {
@@ -439,6 +436,24 @@ public class JDParser {
       result.add(new Pair<>(sb.toString(), false));
     }
     return result;
+  }
+
+  private boolean isKeepLineFeedsIn(@NotNull String line) {
+    return mySettings.JD_PRESERVE_LINE_FEEDS || startsWithTag(line);
+  }
+
+  private static boolean startsWithTag(@NotNull String line) {
+    if (line.trim().startsWith("<")) {
+      return line.matches("\\s*</?\\w+>.*");
+    }
+    return false;
+  }
+
+  private static void endParagraph(@NotNull List<Pair<String, Boolean>> result, @NotNull StringBuilder sb) {
+    if (sb.length() > 0) {
+      result.add(new Pair<>(sb.toString(), false));
+      sb.setLength(0);
+    }
   }
 
   private interface TagParser {
@@ -565,7 +580,7 @@ public class JDParser {
   protected StringBuilder formatJDTagDescription(@Nullable String str,
                                                  @NotNull CharSequence firstLinePrefix,
                                                  @NotNull CharSequence continuationPrefix) {
-    final int rightMargin = mySettings.getContainer().getRightMargin(JavaLanguage.INSTANCE);
+    final int rightMargin = myCommonSettings.getRootSettings().getRightMargin(JavaLanguage.INSTANCE);
     final int maxCommentLength = rightMargin - continuationPrefix.length();
     final int firstLinePrefixLength = firstLinePrefix.length();
     final boolean firstLineShorter = firstLinePrefixLength > continuationPrefix.length();
@@ -576,7 +591,7 @@ public class JDParser {
     boolean canWrap = !mySettings.JD_PRESERVE_LINE_FEEDS || hasLineLongerThan(str, maxCommentLength);
 
     //If wrap comments selected, comments should be wrapped by the right margin
-    if (mySettings.getContainer().WRAP_COMMENTS && canWrap) {
+    if (myCommonSettings.WRAP_COMMENTS && canWrap) {
       list = toArrayWrapping(str, maxCommentLength);
 
       if (firstLineShorter

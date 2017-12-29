@@ -56,10 +56,6 @@ public class UpdaterTreeState {
     }
   }
 
-  public boolean isQueuedForSelection(Object element) {
-    return myToSelect.containsKey(element);
-  }
-
   private static void putAll(final Set<Object> source, final Map<Object, Object> target) {
     for (Object o : source) {
       target.put(o, o);

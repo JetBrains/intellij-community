@@ -35,7 +35,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 3, 2007
  */
 public abstract class ModuleInsight {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.importProject.ModuleInsight");

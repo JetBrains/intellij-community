@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -92,6 +93,7 @@ public abstract class FilterComponent extends JPanel {
     });
 
     myFilter.setHistorySize(historySize);
+    AccessibleContextUtil.setName(myFilter.getTextEditor(), "Message text filter");
     add(myFilter, BorderLayout.CENTER);    
   }
 

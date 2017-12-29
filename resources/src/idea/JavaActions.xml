@@ -216,6 +216,12 @@
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="Debugger.PopFrame"/>
+      </action>
+
+      <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
       </action>
 
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction" text="Add Stepping Filter...">
@@ -231,6 +237,8 @@
       <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction" text="Async Stacktraces">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
+      <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"
+              text="Switch to the next stopped breakpoint"/>
     </group>
 
     <action class="com.intellij.debugger.memory.action.ShowInstancesByClassAction"
@@ -464,7 +472,7 @@
     <action id="FileChooser.GotoJDK" class="com.intellij.openapi.projectRoots.JdkPopupAction" >
       <add-to-group group-id="FileChooserToolbar" anchor="last"/>
     </action>
-    
+
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFindUsagesAction" id="TestCompilerReferenceServiceFindUsages" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefFunctionalExpressionSearchAction" id="TestCompilerReferenceServiceFunctionalExpressionSearch" internal="true"/>
     <action class="com.intellij.compiler.backwardRefs.view.TestCompilerRefInheritanceAction" id="TestCompilerReferenceServiceInheritance" internal="true"/>

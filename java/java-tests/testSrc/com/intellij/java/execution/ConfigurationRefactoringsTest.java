@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.execution;
 
@@ -63,9 +51,9 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertTrue("Unexpected ConfigurationException: " + e ,false);
+      fail("Unexpected ConfigurationException: " + e);
     }
-    assertEquals("NewName", configuration.MAIN_CLASS_NAME);
+    assertEquals("NewName", configuration.getMainClassName());
   }
 
   public void testMoveApplication() throws IOException {
@@ -77,12 +65,12 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       configuration.checkConfiguration();
     }
     catch (RuntimeConfigurationException e) {
-      assertTrue("Unexpected ConfigurationException: " + e ,false);
+      fail("Unexpected ConfigurationException: " + e);
     }
 
-    assertEquals("pkg.Application", configuration.MAIN_CLASS_NAME);
+    assertEquals("pkg.Application", configuration.getMainClassName());
     rename(JavaPsiFacade.getInstance(myProject).findPackage("pkg"), "pkg2");
-    assertEquals("pkg2.Application", configuration.MAIN_CLASS_NAME);
+    assertEquals("pkg2.Application", configuration.getMainClassName());
   }
 
   public void testRenameJUnitPackage() {
@@ -178,7 +166,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
       assertEquals(expectedExceptionMessage, e.getLocalizedMessage());
       return;
     }
-    assertTrue("ConfigurationException expected", false);
+    fail("ConfigurationException expected");
   }
 
   public void testRefactorOtherClass() throws IOException {

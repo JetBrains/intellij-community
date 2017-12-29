@@ -50,7 +50,7 @@ public abstract class PyElementGenerator {
 
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);
 
-  public abstract PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped);
+  public abstract PyStringLiteralExpression createStringLiteral(@NotNull StringLiteralExpression oldElement, @NotNull String unescaped);
 
   public abstract PyListLiteralExpression createListLiteral();
 

@@ -43,7 +43,6 @@ import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY
 
 /**
  * @author mike
- * Date: Jul 18, 2002
  */
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private static final RegistryValue ourEnableCodeBlockTracker = Registry.get("psi.modification.tracker.code-block");
@@ -111,7 +110,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
     PsiTreeChangeEventImpl.PsiEventType code = event.getCode();
     boolean outOfCodeBlock =
-      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI :
+      code == PROPERTY_CHANGED ? event.getPropertyName() == PsiTreeChangeEvent.PROP_UNLOADED_PSI || event.getPropertyName() == PsiTreeChangeEvent.PROP_ROOTS :
       code == CHILD_MOVED ? event.getOldParent() instanceof PsiDirectory || event.getNewParent() instanceof PsiDirectory :
       event.getParent() instanceof PsiDirectory;
 

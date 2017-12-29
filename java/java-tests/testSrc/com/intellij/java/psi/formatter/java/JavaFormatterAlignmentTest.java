@@ -483,6 +483,28 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
     );
   }
 
+  public void testAlignFieldDeclarations() {
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    doClassTest(
+      "char a = '2';\n" +
+      "int aaaaa = 3;\n" +
+      "String b;",
+      "char   a     = '2';\n" +
+      "int    aaaaa = 3;\n" +
+      "String b;");
+  }
+
+  public void testAlignVarDeclarations() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    doMethodTest(
+      "char a = '2';\n" +
+      "int aaaaa = 3;\n" +
+      "String b;",
+      "char   a     = '2';\n" +
+      "int    aaaaa = 3;\n" +
+      "String b;");
+  }
+
   public void testDoNotAlignWhenBlankLine() {
     getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
     doMethodTest(

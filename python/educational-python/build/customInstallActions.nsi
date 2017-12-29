@@ -1,6 +1,7 @@
 !include "TextFunc.nsh"
 !define INSTALL_OPTION_ELEMENTS 8
 !define PYTHON_VERSIONS 4
+!define CUSTOM_SILENT_CONFIG 1
 
 ${StrTok}
 
@@ -40,6 +41,81 @@ checkPython3:
   Call updatePythonControls
 done:  
 FunctionEnd
+
+
+Function customSilentConfigReader
+  Call customPreInstallActions
+
+  ${GetParameters} $R0
+  ClearErrors
+
+  ${GetOptions} $R0 /CONFIG= $R1
+  IfErrors no_silent_config
+
+  ${ConfigRead} "$R1" "mode=" $R0
+  StrCpy $silentMode "user"
+  IfErrors run_in_user_mode
+  StrCpy $silentMode $R0
+
+run_in_user_mode:
+
+  ClearErrors
+  ${ConfigRead} "$R1" "launcher32=" $R3
+  IfErrors launcher_64
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "State" $R3
+
+launcher_64:
+  ClearErrors
+  ${ConfigRead} "$R1" "launcher64=" $R3
+  IfErrors download_jre32
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "State" $R3
+
+download_jre32:
+  ClearErrors
+  ${ConfigRead} "$R1" "jre32=" $R3
+  IfErrors download_python2
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $R3
+
+download_python2:
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "State" 0
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "State" 0
+  ClearErrors
+  ${ConfigRead} "$R1" "python2=" $R3
+  IfErrors download_python3
+  StrCmp $R3 "1" 0 download_python3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "State" $R3
+
+download_python3:
+  ClearErrors
+  ${ConfigRead} "$R1" "python3=" $R3
+  IfErrors associations
+  StrCmp $R3 "1" 0 associations
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "State" $R3
+
+associations:
+  StrCmp "${ASSOCIATION}" "NoAssociation" done
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Settings" "NumFields"
+  push "${ASSOCIATION}"
+loop:
+  call SplitStr
+  Pop $0
+  StrCmp $0 "" update_settings
+  ClearErrors
+  ${ConfigRead} "$R1" "$0=" $R3
+  IfErrors update_settings
+  IntOp $R0 $R0 + 1
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+  goto loop
+
+update_settings:
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
+no_silent_config:
+done:
+FunctionEnd
+
 
 Function customInstallActions
   ${LineSum} "$TEMP\python.txt" $R0

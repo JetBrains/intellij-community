@@ -89,8 +89,12 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
   @Override
   protected void tearDown() throws Exception {
-    Messages.setTestDialog(myOldTestDialogValue);
-    super.tearDown();
+    try {
+      Messages.setTestDialog(myOldTestDialogValue);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
@@ -124,28 +128,28 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
         final char c = expected.charAt(i);
         System.err.print(Integer.toHexString((int)c)+", ");
       }
-      System.err.println("");
+      System.err.println();
       System.err.print("expected bytes = ");
       byte[] expectedBytes = FileUtil.loadFileBytes(new File(xml.getPath()));
       for (int i=0; i<50;i++) {
         final byte c = expectedBytes[i];
         System.err.print(Integer.toHexString((int)c) + ", ");
       }
-      System.err.println("");
+      System.err.println();
 
       System.err.print("text = ");
       for (int i=0; i<50;i++) {
         final char c = text.charAt(i);
         System.err.print(Integer.toHexString((int)c)+", ");
       }
-      System.err.println("");
+      System.err.println();
       System.err.print("text bytes = ");
       byte[] textBytes = xml.contentsToByteArray();
       for (int i=0; i<50;i++) {
         final byte c = textBytes[i];
         System.err.print(Integer.toHexString((int)c) + ", ");
       }
-      System.err.println("");
+      System.err.println();
       String charsetFromProlog = XmlCharsetDetector.extractXmlEncodingFromProlog(xml.contentsToByteArray());
       System.err.println("charsetFromProlog = " + charsetFromProlog);
       Charset charset = xml.getCharset();
@@ -527,8 +531,8 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     assertNotNull(document);
     FileDocumentManager.getInstance().saveAllDocuments();
-    String pair = EncodingUtil.checkCanConvert(file);
-    assertNotNull(pair);
+    EncodingUtil.FailReason result = EncodingUtil.checkCanConvert(file);
+    assertNotNull(result);
   }
 
   public void testConvertReload() throws IOException {
@@ -541,54 +545,54 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     byte[] bytes = file.contentsToByteArray();
     String text = document.getText();
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
-    Assert.assertSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII), EncodingUtil.Magic8.NO_WAY);
-    String failReason = EncodingUtil.checkCanReload(file).second;
-    assertNotNull(failReason);
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
+    Assert.assertSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
+    EncodingUtil.FailReason result = EncodingUtil.checkCanReload(file, null);
+    assertNotNull(result);
 
     EncodingUtil.saveIn(document, null, file, WINDOWS_1251);
     bytes = file.contentsToByteArray();
     assertEquals(WINDOWS_1251, file.getCharset());
     assertNull(file.getBOM());
 
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, CharsetToolkit.UTF_16LE_CHARSET), EncodingUtil.Magic8.NO_WAY);
-    Assert.assertSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII), EncodingUtil.Magic8.NO_WAY);
-    failReason = EncodingUtil.checkCanReload(file).second;
-    assertNull(failReason);
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, CharsetToolkit.UTF_16LE_CHARSET));
+    Assert.assertSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
+    result = EncodingUtil.checkCanReload(file, null);
+    assertNull(result);
 
     EncodingUtil.saveIn(document, null, file, CharsetToolkit.UTF_16LE_CHARSET);
     bytes = file.contentsToByteArray();
     assertEquals(CharsetToolkit.UTF_16LE_CHARSET, file.getCharset());
     assertArrayEquals(CharsetToolkit.UTF16LE_BOM, file.getBOM());
 
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
-    Assert.assertSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII), EncodingUtil.Magic8.NO_WAY);
-    failReason = EncodingUtil.checkCanReload(file).second;
-    assertNotNull(failReason);
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
+    Assert.assertSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
+    result = EncodingUtil.checkCanReload(file, null);
+    assertNotNull(result);
 
     text = "xxx";
     setText(document, text);
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII), EncodingUtil.Magic8.NO_WAY);
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
 
     FileDocumentManager.getInstance().saveAllDocuments();
     bytes = file.contentsToByteArray();
-    failReason = EncodingUtil.checkCanReload(file).second;
-    assertNotNull(failReason);
+    result = EncodingUtil.checkCanReload(file, null);
+    assertNotNull(result);
 
     text = "qqq";
     setText(document, text);
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII), EncodingUtil.Magic8.NO_WAY);
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, US_ASCII));
 
     EncodingUtil.saveIn(document, null, file, US_ASCII);
     bytes = file.contentsToByteArray();
     assertEquals(US_ASCII, file.getCharset());
     assertNull(file.getBOM());
 
-    Assert.assertNotSame(EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251), EncodingUtil.Magic8.NO_WAY);
-    failReason = EncodingUtil.checkCanReload(file).second;
-    assertNull(failReason);
+    Assert.assertNotSame(EncodingUtil.Magic8.NO_WAY, EncodingUtil.isSafeToConvertTo(file, text, bytes, WINDOWS_1251));
+    result = EncodingUtil.checkCanReload(file, null);
+    assertNull(result);
   }
 
   public void testSetEncodingForDirectoryChangesEncodingsForEvenNotLoadedFiles() throws IOException {
@@ -616,12 +620,12 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     VirtualFile file = createTempFile("txt", null, THREE_RUSSIAN_LETTERS, CharsetToolkit.UTF8_CHARSET);
     getDocument(file);
 
-    assertEquals("auto-detected from bytes", LoadTextUtil.wasCharsetDetectedFromBytes(file));
+    assertEquals(LoadTextUtil.AutoDetectionReason.FROM_BYTES, LoadTextUtil.getCharsetAutoDetectionReason(file));
 
     setContentOnDisk(new File(file.getPath()), null, THREE_RUSSIAN_LETTERS, WINDOWS_1251);
     file.refresh(false, false);
 
-    Assert.assertNull(LoadTextUtil.wasCharsetDetectedFromBytes(file));
+    Assert.assertNull(LoadTextUtil.getCharsetAutoDetectionReason(file));
   }
 
   public void testSafeToConvert() throws IOException {

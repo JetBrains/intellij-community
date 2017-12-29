@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
@@ -45,7 +46,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     return myHolderType;
   }
 
-  public void addFile(final VirtualFile file) {
+  public void addFile(@NotNull final VirtualFile file) {
     if (! containsFile(file)) {
       myMap.put(file, null);
       if (file.isDirectory()) {
@@ -68,7 +69,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     return copyHolder;
   }
 
-  public boolean containsFile(final VirtualFile file) {
+  public boolean containsFile(@NotNull final VirtualFile file) {
     if (myMap.containsKey(file)) return true;
     final VirtualFile floor = myDirMap.floorKey(file);
     if (floor == null) return false;
@@ -81,12 +82,13 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     return false;
   }
 
+  @NotNull
   public Collection<VirtualFile> values() {
     return myMap.keySet();
   }
 
   @Override
-  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
+  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
     if (myProject.isDisposed()) return;
     final Iterator<VirtualFile> iterator = keys().iterator();
     while (iterator.hasNext()) {

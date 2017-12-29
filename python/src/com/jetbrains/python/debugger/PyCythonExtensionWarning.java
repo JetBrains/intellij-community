@@ -55,7 +55,6 @@ public class PyCythonExtensionWarning {
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
   private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";
   public static final String SETUP_CYTHON_PATH = "pydev/setup_cython.py";
-  public static final String[] CYTHON_ARGS = {"build_ext", "--inplace"};
 
 
   public static void showCythonExtensionWarning(@NotNull Project project) {
@@ -125,13 +124,18 @@ public class PyCythonExtensionWarning {
       final String sdkPath = runConfiguration.getSdkHome();
       final String helpersPath = PythonHelpersLocator.getHelpersRoot().getPath();
 
+      final String cythonExtensionsDir = PyDebugRunner.CYTHON_EXTENSIONS_DIR;
+      final String[] cythonArgs =
+        {"build_ext", "--build-lib", cythonExtensionsDir, "--build-temp", String.format("%s%sbuild", cythonExtensionsDir, File.separator)};
+
       final List<String> cmdline = new ArrayList<>();
       cmdline.add(sdkPath);
       cmdline.add(FileUtil.join(helpersPath, FileUtil.toSystemDependentName(SETUP_CYTHON_PATH)));
-      cmdline.addAll(Arrays.asList(CYTHON_ARGS));
+      cmdline.addAll(Arrays.asList(cythonArgs));
       LOG.info("Compile Cython Extensions " + StringUtil.join(cmdline, " "));
 
       final Map<String, String> environment = new HashMap<>(System.getenv());
+      PythonEnvUtil.addToPythonPath(environment, cythonExtensionsDir);
       PythonEnvUtil.setPythonUnbuffered(environment);
       PythonEnvUtil.setPythonDontWriteBytecode(environment);
       if (sdkPath != null) {

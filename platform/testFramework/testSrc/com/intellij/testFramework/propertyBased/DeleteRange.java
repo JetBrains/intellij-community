@@ -36,7 +36,7 @@ public class DeleteRange extends ActionOnRange {
     return Generator.from(data -> {
       if (psiFile.getTextLength() == 0) return new DeleteRange(psiFile, 0, 0);
 
-      int startOffset = Generator.integers(0, psiFile.getTextLength() - 1).generateValue(data);
+      int startOffset = data.generate(Generator.integers(0, psiFile.getTextLength() - 1));
       PsiElement start = psiFile.findElementAt(startOffset);
       PsiElement end = psiFile.findElementAt(startOffset + data.drawInt(IntDistribution.geometric(10)));
       if (start == null || end == null) return null;

@@ -165,9 +165,17 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
     doTest(0, "one", "two");
   }
 
-  public void testClassForNameNested() {
+  public void testClassForNameNestedAutocomplete() {
     myFixture.addClass("package foo.bar; public class PublicClass { public static class NestedClass {} }");
-    doTest(0, "NestedClass");
+    doTest(-1, () -> assertNull("Auto-completed", myFixture.getLookupElementStrings()));
+  }
+
+  public void testClassForNameNested() {
+    myFixture.addClass("package foo.bar; public class PublicClass {" +
+                       "  public static class NestedClass {}" +
+                       "  public class InnerClass {}" +
+                       "}");
+    doTest(1, "InnerClass", "NestedClass");
   }
 
   public void testWithClassLoader() {

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.openapi.diagnostic.logger
@@ -22,7 +20,7 @@ internal interface ExternalSystemStorage {
 
   fun read(name: String): Element?
 
-  fun write(name: String, element: Element, filter: JDOMUtil.ElementOutputFilter? = null)
+  fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter? = null)
 
   fun forceSave()
 
@@ -86,7 +84,12 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
     }
   }
 
-  override fun write(name: String, element: Element, filter: JDOMUtil.ElementOutputFilter?) {
+  override fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter?) {
+    if (element == null) {
+      remove(name)
+      return
+    }
+
     hasSomeData = true
     element.write(nameToPath(name), filter = filter)
   }

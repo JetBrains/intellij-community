@@ -27,8 +27,9 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,12 +132,12 @@ class GitOldChangesCollector extends GitChangesCollector {
   }
 
   private void updateIndex() throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.UPDATE_INDEX);
+    GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.UPDATE_INDEX);
     handler.addParameters("--refresh", "--ignore-missing");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     handler.ignoreErrorCode(1);
-    handler.run();
+    Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
   /**
@@ -158,14 +159,14 @@ class GitOldChangesCollector extends GitChangesCollector {
       if (!GitChangeUtils.isHeadMissing(ex)) {
         throw ex;
       }
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+      GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("--cached");
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
       // During init diff does not works because HEAD
       // will appear only after the first commit.
       // In that case added files are cached in index.
-      String output = handler.run();
+      String output = Git.getInstance().runCommand(handler).getOutputOrThrow();
       if (output.length() > 0) {
         StringTokenizer tokenizer = new StringTokenizer(output, "\n\r");
         while (tokenizer.hasMoreTokens()) {
@@ -188,28 +189,28 @@ class GitOldChangesCollector extends GitChangesCollector {
       return;
     }
     // prepare handler
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+    GitLineHandler handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--unmerged");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     // run handler and collect changes
-    parseFiles(handler.run());
+    parseFiles(Git.getInstance().runCommand(handler).getOutputOrThrow());
     // prepare handler
-    handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+    handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
     handler.addParameters("-v", "--others", "--exclude-standard");
     handler.setSilent(true);
     handler.setStdoutSuppressed(true);
     handler.endOptions();
     handler.addRelativePaths(dirtyPaths);
     if(handler.isLargeCommandLine()) {
-      handler = new GitSimpleHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
+      handler = new GitLineHandler(myProject, myVcsRoot, GitCommand.LS_FILES);
       handler.addParameters("-v", "--others", "--exclude-standard");
       handler.setSilent(true);
       handler.setStdoutSuppressed(true);
       handler.endOptions();
     }
     // run handler and collect changes
-    parseFiles(handler.run());
+    parseFiles(Git.getInstance().runCommand(handler).getOutputOrThrow());
   }
 
   private void parseFiles(String list) throws VcsException {

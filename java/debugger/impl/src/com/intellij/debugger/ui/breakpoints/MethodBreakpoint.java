@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -32,6 +20,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.PositionUtil;
+import com.intellij.debugger.jdi.ClassesByNameProvider;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.icons.AllIcons;
@@ -74,7 +63,7 @@ import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakpointProperties> implements MethodBreakpointBase {
@@ -133,7 +122,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     if (request != null) {
       requestsManager.registerRequest(breakpoint, request);
       request.enable();
-      debugProcess.getVirtualMachineProxy().clearCaches(); // to force reload classes available so far
     }
 
     AtomicReference<ProgressWindow> indicatorRef = new AtomicReference<>();
@@ -169,7 +157,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     XDebuggerManager.getInstance(debugProcess.getProject()).getBreakpointManager().addBreakpointListener(listener, indicator);
     ProgressManager.getInstance().executeProcessUnderProgress(
       () -> processPreparedSubTypes(baseType,
-                                    subType -> createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, false),
+                                    (subType, classesByName) ->
+                                      createRequestForPreparedClassEmulated(breakpoint, debugProcess, subType, classesByName, false),
                                     indicator),
       indicator);
     if (indicator.isCanceled() && !changed.get()) {
@@ -186,11 +175,19 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
                                                     @NotNull DebugProcessImpl debugProcess,
                                                     @NotNull ReferenceType classType,
                                                     boolean base) {
+    createRequestForPreparedClassEmulated(breakpoint, debugProcess, classType, debugProcess.getVirtualMachineProxy().getClassesByNameProvider(), base);
+  }
+
+  static void createRequestForPreparedClassEmulated(@NotNull MethodBreakpointBase breakpoint,
+                                                    @NotNull DebugProcessImpl debugProcess,
+                                                    @NotNull ReferenceType classType,
+                                                    @NotNull ClassesByNameProvider classesByName,
+                                                    boolean base) {
     if (!base && !shouldCreateRequest(breakpoint, breakpoint.getXBreakpoint(), debugProcess, true)) {
       return;
     }
     try {
-      Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, debugProcess.getVirtualMachineProxy());
+      Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
       if (lambdaMethod != null &&
           !breakpoint
             .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
@@ -207,13 +204,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
           breakpoint.disableEmulation();
           return;
         }
-        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, debugProcess.getVirtualMachineProxy());
+        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
         if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
           method = target;
         }
 
         List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (allLineLocations == null) { // no line numbers
+        if (allLineLocations == null && !method.isBridge()) { // no line numbers
           breakpoint.disableEmulation();
           return;
         }
@@ -453,10 +450,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
    * finds FQ method's class name and method's signature
    */
   @Nullable
-  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final PsiFile psiJavaFile, @NotNull final SourcePosition sourcePosition) {
-    final PsiDocumentManager docManager = PsiDocumentManager.getInstance(project);
-    final Document document = docManager.getDocument(psiJavaFile);
-    if(document == null) {
+  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project,
+                                                      @NotNull final PsiFile psiJavaFile,
+                                                      @Nullable final SourcePosition sourcePosition) {
+    if (sourcePosition == null) {
+      return null;
+    }
+    Document document = PsiDocumentManager.getInstance(project).getDocument(psiJavaFile);
+    if (document == null) {
       return null;
     }
     //final int endOffset = document.getLineEndOffset(sourcePosition);
@@ -575,11 +576,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return StreamEx.empty();
   }
 
-  private static void processPreparedSubTypes(ReferenceType classType, Consumer<ReferenceType> consumer, ProgressIndicator progressIndicator) {
+  private static void processPreparedSubTypes(ReferenceType classType,
+                                              BiConsumer<ReferenceType, ClassesByNameProvider> consumer,
+                                              ProgressIndicator progressIndicator) {
     long start = 0;
     if (LOG.isDebugEnabled()) {
       start = System.currentTimeMillis();
     }
+    progressIndicator.setIndeterminate(false);
     progressIndicator.start();
     progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.processing.classes"));
     try {
@@ -600,11 +604,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
       progressIndicator.setText(DebuggerBundle.message("label.method.breakpoints.setting.breakpoints"));
 
+      ClassesByNameProvider classesByName = ClassesByNameProvider.createCache(allTypes);
+
       for (int i = 0; i < types.size(); i++) {
         if (progressIndicator.isCanceled()) {
           return;
         }
-        consumer.accept(types.get(i));
+        consumer.accept(types.get(i), classesByName);
 
         progressIndicator.setText2(i + "/" + types.size());
         progressIndicator.setFraction((double)i / types.size());

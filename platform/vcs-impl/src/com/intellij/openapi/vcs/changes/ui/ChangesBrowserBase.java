@@ -210,7 +210,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      showDiff();
+      if (canShowDiff()) showDiff();
     }
   }
 

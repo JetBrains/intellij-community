@@ -83,7 +83,7 @@ public interface ValueEditor<T> {
    * Check the the given value is valid. For example, an integer number is within an expected range and so on.
    * @param value The value to check.
    */
-  void assertValid(@NotNull T value);
+  boolean isValid(@NotNull T value);
 
   void addListener(@NotNull Listener<T> editorListener);
 

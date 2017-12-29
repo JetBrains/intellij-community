@@ -24,6 +24,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
+import com.intellij.internal.statistic.customUsageCollectors.actions.ActionIdProvider;
 import com.intellij.internal.statistic.customUsageCollectors.actions.ActionsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -440,16 +441,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return new ActionPopupMenuImpl(place, group, this, presentationFactory);
   }
 
+  @NotNull
   @Override
   public ActionPopupMenu createActionPopupMenu(String place, @NotNull ActionGroup group) {
     return new ActionPopupMenuImpl(place, group, this, null);
   }
 
+  @NotNull
   @Override
   public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal) {
     return createActionToolbar(place, group, horizontal, false);
   }
 
+  @NotNull
   @Override
   public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal, final boolean decorateButtons) {
     return new ActionToolbarImpl(place, group, horizontal, decorateButtons, myDataManager, this, myKeymapManager);
@@ -537,6 +541,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return getActionImpl(actionId, true) instanceof ActionGroup;
   }
 
+  @NotNull
   @Override
   public JComponent createButtonToolbar(final String actionPlace, @NotNull final ActionGroup messageActionGroup) {
     return new ButtonToolbarImpl(actionPlace, messageActionGroup, myDataManager, this);
@@ -1166,6 +1171,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     if (action != null) {
       myPrevPerformedActionId = myLastPreformedActionId;
       myLastPreformedActionId = getId(action);
+      if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
+        myLastPreformedActionId = ((ActionIdProvider)action).getId();
+      }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
       ActionsCollector.getInstance().record(myLastPreformedActionId);

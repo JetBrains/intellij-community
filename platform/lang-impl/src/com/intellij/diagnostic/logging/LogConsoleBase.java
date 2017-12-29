@@ -43,6 +43,8 @@ import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,17 +167,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
     myFilter.reset();
     myFilter.setSelectedItem(customFilter != null ? customFilter : "");
-    new AnAction() {
-      {
-        registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
-                                  LogConsoleBase.this);
-      }
+    // Don't override Shift-TAB if screen reader is active. It is unclear why overriding
+    // Shift-TAB was necessary in the first place.
+    // See https://github.com/JetBrains/intellij-community/commit/a36a3a00db97e4d5b5c112bb4136a41d9435f667
+    if (!ScreenReader.isActive()) {
+      new AnAction() {
+        {
+          registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK)),
+                                    LogConsoleBase.this);
+        }
 
-      @Override
-      public void actionPerformed(final AnActionEvent e) {
-        myFilter.requestFocusInWindow();
-      }
-    };
+        @Override
+        public void actionPerformed(final AnActionEvent e) {
+          myFilter.requestFocusInWindow();
+        }
+      };
+    }
 
     if (myBuildInActions) {
       final JComponent tbComp =
@@ -555,6 +562,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         ProgressManager.getInstance().run(task);
       }
     });
+    AccessibleContextUtil.setName(myLogFilterCombo, "Message severity filter");
     myTextFilterWrapper.removeAll();
     myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;

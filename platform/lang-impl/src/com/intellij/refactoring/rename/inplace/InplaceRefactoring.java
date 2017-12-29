@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -144,7 +130,7 @@ public abstract class InplaceRefactoring {
           myElementToRename != null && myElementToRename.getTextRange() != null) {
         myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
         myRenameOffset.setGreedyToRight(true);
-        myRenameOffset.setGreedyToLeft(true); // todo not sure if we need this
+        myRenameOffset.setGreedyToLeft(true);
       }
     }
   }
@@ -392,8 +378,7 @@ public abstract class InplaceRefactoring {
     template.setToShortenLongNames(false);
     template.setToReformat(false);
     myHighlighters = new ArrayList<>();
-    int targetOffset = rangeMarker.getStartOffset();
-    topLevelEditor.getCaretModel().moveToLogicalPosition(topLevelEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
+    topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
@@ -428,8 +413,7 @@ public abstract class InplaceRefactoring {
   private void restoreOldCaretPositionAndSelection(final int offset) {
     //move to old offset
     Runnable runnable = () -> {
-      int targetOffset = restoreCaretOffset(offset);
-      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
+      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
       restoreSelection();
     };
 

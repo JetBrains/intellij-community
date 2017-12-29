@@ -31,8 +31,6 @@ import java.awt.*;
 * Created by IntelliJ IDEA.
 * @author amakeev
 * @author Irina.Chernushina
-* Date: 8/8/11
-* Time: 3:13 PM
 */
 class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());

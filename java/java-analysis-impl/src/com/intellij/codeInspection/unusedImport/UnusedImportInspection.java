@@ -16,7 +16,10 @@
 package com.intellij.codeInspection.unusedImport;
 
 import com.intellij.codeInspection.*;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportStatementBase;
+import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -37,22 +40,8 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
                         @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     if (!(file instanceof PsiJavaFile) || FileTypeUtils.isInServerPageFile(file)) return;
     PsiJavaFile javaFile = (PsiJavaFile)file;
-    final PsiPackageStatement packageStatement = javaFile.getPackageStatement();
-    final PsiModifierList annotationList;
-    if (packageStatement != null) {
-      annotationList = packageStatement.getAnnotationList();
-    }
-    else {
-      annotationList = null;
-    }
-
     final ImportsAreUsedVisitor visitor = new ImportsAreUsedVisitor(javaFile);
-    for (PsiClass aClass : javaFile.getClasses()) {
-      aClass.accept(visitor);
-    }
-    if (annotationList != null) {
-      annotationList.accept(visitor);
-    }
+    javaFile.accept(visitor);
     for (PsiImportStatementBase unusedImportStatement : visitor.getUnusedImportStatements()) {
       if (unusedImportStatement.getImportReference() != null &&
           !(PsiTreeUtil.skipWhitespacesForward(unusedImportStatement) instanceof PsiErrorElement)) {

@@ -242,12 +242,7 @@ public class ConvertFormatOperatorToMethodIntention extends PyBaseIntentionActio
     if (binaryExpression == null) {
       return false;
     }
-    final LanguageLevel languageLevel = LanguageLevel.forElement(binaryExpression);
-    if (languageLevel.isOlderThan(LanguageLevel.PYTHON26)) {
-      return false;
-    }
-    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression 
-        && binaryExpression.getOperator() == PyTokenTypes.PERC) {
+    if (binaryExpression.getLeftExpression() instanceof PyStringLiteralExpression && binaryExpression.getOperator() == PyTokenTypes.PERC) {
       final PyStringLiteralExpression str = (PyStringLiteralExpression)binaryExpression.getLeftExpression();
       if ((str.getText().length() > 0 && Character.toUpperCase(str.getText().charAt(0)) == 'B')) {
         return false;

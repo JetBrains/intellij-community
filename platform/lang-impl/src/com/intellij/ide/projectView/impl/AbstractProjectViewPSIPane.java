@@ -151,7 +151,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
-    myTree.setSelectionPath(new TreePath(myTree.getModel().getRoot()));
 
     EditSourceOnDoubleClickHandler.install(myTree);
 
@@ -218,7 +217,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       builder.addSubtreeToUpdate(builder.getRootNode(), afterUpdate);
     }
     else if (myAsyncSupport != null) {
-      myAsyncSupport.updateAll();
+      myAsyncSupport.updateAll(afterUpdate);
     }
     return cb;
   }

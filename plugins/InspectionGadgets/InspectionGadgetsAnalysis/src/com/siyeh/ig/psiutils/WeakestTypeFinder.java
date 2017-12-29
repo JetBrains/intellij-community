@@ -24,10 +24,8 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
@@ -246,8 +244,7 @@ public class WeakestTypeFinder {
     if (!hasUsages) {
       return Collections.emptyList();
     }
-    weakestTypeClasses = filterAccessibleClasses(weakestTypeClasses, variableOrMethodClass, variableOrMethod);
-    return weakestTypeClasses;
+    return filterAccessibleClasses(weakestTypeClasses, variableOrMethodClass, variableOrMethod);
   }
 
   private static boolean findWeakestType(PsiElement referenceElement,

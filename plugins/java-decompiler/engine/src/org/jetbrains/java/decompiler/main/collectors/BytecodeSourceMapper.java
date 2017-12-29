@@ -1,28 +1,15 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
 import java.util.Map.Entry;
 
 public class BytecodeSourceMapper {
-
   private int offset_total;
 
   // class, method, bytecode offset, source line
@@ -33,15 +20,8 @@ public class BytecodeSourceMapper {
   private final Set<Integer> unmappedLines = new TreeSet<>();
 
   public void addMapping(String className, String methodName, int bytecodeOffset, int sourceLine) {
-    Map<String, Map<Integer, Integer>> class_mapping = mapping.get(className);
-    if (class_mapping == null) {
-      mapping.put(className, class_mapping = new LinkedHashMap<>()); // need to preserve order
-    }
-
-    Map<Integer, Integer> method_mapping = class_mapping.get(methodName);
-    if (method_mapping == null) {
-      class_mapping.put(methodName, method_mapping = new HashMap<>());
-    }
+    Map<String, Map<Integer, Integer>> class_mapping = mapping.computeIfAbsent(className, k -> new LinkedHashMap<>()); // need to preserve order
+    Map<Integer, Integer> method_mapping = class_mapping.computeIfAbsent(methodName, k -> new HashMap<>());
 
     // don't overwrite
     if (!method_mapping.containsKey(bytecodeOffset)) {
@@ -110,14 +90,6 @@ public class BytecodeSourceMapper {
         }
       }
     }
-  }
-
-  public int getTotalOffset() {
-    return offset_total;
-  }
-
-  public void setTotalOffset(int offset_total) {
-    this.offset_total = offset_total;
   }
 
   public void addTotalOffset(int offset_total) {

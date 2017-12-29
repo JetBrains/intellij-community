@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="images" exported="" />
     <orderEntry type="module" module-name="community-resources" exported="" />
     <orderEntry type="module" module-name="util" />
+    <orderEntry type="module" module-name="platform-resources-en" />
   </component>
   <component name="copyright">
     <Base>

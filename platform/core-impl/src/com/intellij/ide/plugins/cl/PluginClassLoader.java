@@ -88,14 +88,20 @@ public class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
+    "kotlin.sequences.Sequence",
+    "kotlin.Unit",
+    "kotlin.Pair",
+    "kotlin.Triple",
+    "kotlin.jvm.internal.DefaultConstructorMarker",
+    "kotlin.reflect.KDeclarationContainer"
+  );
+
   private static boolean mustBeLoadedByPlatform(String className) {
     //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
-    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.")
-                                               || className.equals("kotlin.sequences.Sequence")
-                                               || className.equals("kotlin.Pair")
-                                               || className.equals("kotlin.Triple"));
+    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") || KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Nullable

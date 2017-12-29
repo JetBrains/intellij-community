@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
  */
 public class DomStubBuilderTest extends DomStubTest {
 

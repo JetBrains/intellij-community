@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
@@ -48,6 +49,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import gnu.trove.THashSet;
 import junit.framework.AssertionFailedError;
 import junit.framework.Test;
@@ -86,6 +88,7 @@ public abstract class UsefulTestCase extends TestCase {
   private static final Map<String, Long> TOTAL_TEARDOWN_COST_MILLIS = new HashMap<>();
 
   static {
+    IdeaForkJoinWorkerThreadFactory.setupPoisonFactory();
     Logger.setFactory(TestLoggerFactory.class);
   }
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
@@ -508,23 +511,39 @@ public abstract class UsefulTestCase extends TestCase {
     assertOrderedEquals(errorMsg, actual, Arrays.asList(expected));
   }
 
-  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertOrderedEquals(@NotNull Iterable<? extends T> actual, @NotNull Iterable<? extends T> expected) {
     assertOrderedEquals(null, actual, expected);
   }
 
   public static <T> void assertOrderedEquals(String errorMsg,
                                              @NotNull Iterable<? extends T> actual,
-                                             @NotNull Collection<? extends T> expected) {
-    List<T> list = new ArrayList<>();
-    for (T t : actual) {
-      list.add(t);
-    }
-    if (!list.equals(new ArrayList<T>(expected))) {
+                                             @NotNull Iterable<? extends T> expected) {
+    //noinspection unchecked
+    assertOrderedEquals(errorMsg, actual, expected, Equality.CANONICAL);
+  }
+
+  public static <T> void assertOrderedEquals(String errorMsg,
+                                             @NotNull Iterable<? extends T> actual,
+                                             @NotNull Iterable<? extends T> expected,
+                                             @NotNull Equality<? super T> comparator) {
+    if (!equals(actual, expected, comparator)) {
       String expectedString = toString(expected);
       String actualString = toString(actual);
       Assert.assertEquals(errorMsg, expectedString, actualString);
       Assert.fail("Warning! 'toString' does not reflect the difference.\nExpected: " + expectedString + "\nActual: " + actualString);
     }
+  }
+
+  private static <T> boolean equals(@NotNull Iterable<? extends T> a1,
+                                    @NotNull Iterable<? extends T> a2,
+                                    @NotNull Equality<? super T> comparator) {
+    Iterator<? extends T> it1 = a1.iterator();
+    Iterator<? extends T> it2 = a2.iterator();
+    while (it1.hasNext() || it2.hasNext()) {
+      if (!it1.hasNext() || !it2.hasNext()) return false;
+      if (!comparator.equals(it1.next(), it2.next())) return false;
+    }
+    return true;
   }
 
   @SafeVarargs

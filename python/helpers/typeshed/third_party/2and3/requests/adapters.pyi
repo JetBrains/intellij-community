@@ -44,10 +44,10 @@ DEFAULT_RETRIES = ...  # type: Any
 
 class BaseAdapter:
     def __init__(self) -> None: ...
-    def send(self, request: PreparedRequest, stream: bool=False,
-             timeout: Union[None, float, Tuple[float, float]]=None,
-             verify: bool=False,
-             cert: Union[None, Union[bytes, Text], Container[Union[bytes, Text]]]=None
+    def send(self, request: PreparedRequest, stream: bool = ...,
+             timeout: Union[None, float, Tuple[float, float]] = ...,
+             verify: bool = ...,
+             cert: Union[None, Union[bytes, Text], Container[Union[bytes, Text]]] = ...
              ) -> Response: ...
     def close(self) -> None: ...
 class HTTPAdapter(BaseAdapter):

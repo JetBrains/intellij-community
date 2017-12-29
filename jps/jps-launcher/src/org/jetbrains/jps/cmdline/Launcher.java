@@ -28,7 +28,6 @@ import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/27/13
  */
 public class Launcher {
 

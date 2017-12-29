@@ -93,6 +93,7 @@ public class JUnit4IntegrationTest extends JUnitAbstractIntegrationTest {
   @After
   public void after() {
     EdtTestUtil.runInEdtAndWait(() -> {
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
       tearDown();
     });
   }

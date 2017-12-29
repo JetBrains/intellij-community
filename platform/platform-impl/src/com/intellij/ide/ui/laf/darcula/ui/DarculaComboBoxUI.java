@@ -17,12 +17,11 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.JBInsets;
+import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,29 +30,22 @@ import sun.swing.DefaultLookup;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.DimensionUIResource;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Path2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorBorderCapable {
-
-  // Cached the size that the display needs to render the largest item
-  private Dimension myDisplaySizeCache = JBUI.emptySize();
-  private Insets myPadding;
-
-  public DarculaComboBoxUI() {}
-
-  @SuppressWarnings("unused")
-  public DarculaComboBoxUI(JComboBox ignored) {}
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(final JComponent c) {
@@ -67,7 +59,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected void installDefaults() {
     super.installDefaults();
     comboBox.setBorder(this);
-    myPadding = UIManager.getInsets("ComboBox.padding");
   }
 
   protected JButton createArrowButton() {
@@ -76,158 +67,117 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     JButton button = new BasicArrowButton(SwingConstants.SOUTH, bg, fg, fg, fg) {
 
       @Override
-      public void paint(Graphics g2) {
-        final Graphics2D g = (Graphics2D)g2;
-        final GraphicsConfig config = new GraphicsConfig(g);
+      public void paint(Graphics g) {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        final int w = getWidth();
-        final int h = getHeight();
-        if (!isTableCellEditor(comboBox)) {
-          g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
-          g.fillRect(0, 0, w, h);
+          int w = getWidth();
+          int h = getHeight();
+          float bw = bw();
+          float lw = lw(g2);
+          float arc = arc() - bw - lw;
+
+          Path2D innerShape = new Path2D.Float();
+          innerShape.moveTo(lw, bw + lw);
+          innerShape.lineTo(w - bw - lw - arc, bw + lw);
+          innerShape.quadTo(w - bw - lw, bw + lw , w - bw - lw, bw + lw + arc);
+          innerShape.lineTo(w - bw - lw, h - bw - lw - arc);
+          innerShape.quadTo(w - bw - lw, h - bw - lw, w - bw - lw - arc, h - bw - lw);
+          innerShape.lineTo(lw, h - bw - lw);
+          innerShape.closePath();
+
+          g2.setColor(getArrowButtonFillColor(comboBox.getBackground()));
+          g2.fill(innerShape);
+
+          // Paint vertical line
+          g2.setColor(getArrowButtonFillColor(getOutlineColor(comboBox.isEnabled())));
+          g2.fill(new Rectangle2D.Float(0, bw + lw, lw(g2), getHeight() - (bw + lw) * 2));
+
+          g2.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getOutlineColor(comboBox.isEnabled())));
+          g2.fill(getArrowShape());
+        } finally {
+          g2.dispose();
         }
-        g.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getBorderColor()));
-        config.setupRoundedBorderAntialiasing();
-        final int tW = JBUI.scale(8);
-        final int tH = JBUI.scale(6);
-        final int xU = (w - tW) / 2;
-        final int yU = (h - tH) / 2;
-        g.translate(JBUI.scale(2), JBUI.scale(1));
-        final Path2D.Double path = new Path2D.Double();
+      }
+
+      private Shape getArrowShape() {
+        int tW = JBUI.scale(8);
+        int tH = JBUI.scale(6);
+        int xU = (getWidth() - tW) / 2 - JBUI.scale(1);
+        int yU = (getHeight() - tH) / 2 + JBUI.scale(1);
+
+        Path2D path = new Path2D.Float();
         path.moveTo(xU, yU);
         path.lineTo(xU + tW, yU);
         path.lineTo(xU + tW/2, yU + tH);
         path.lineTo(xU, yU);
-        //path.moveTo(xU + 1, yU + 2);
-        //path.lineTo(3 * xU + 1, yU + 2);
-        //path.lineTo(2 * xU + 1, 3 * yU);
-        //path.lineTo(xU + 1, yU + 2);
         path.closePath();
-        g.fill(path);
-        g.translate(-JBUI.scale(2), -JBUI.scale(1));
-        if (!isTableCellEditor(comboBox)) {
-          g.setColor(getArrowButtonFillColor(getBorderColor()));
-          g.drawLine(0, -1, 0, h);
-        }
-        config.restore();
+        return path;
       }
 
       @Override
       public Dimension getPreferredSize() {
-        int size = getFont().getSize() + 4;
-        if (size%2==1) size++;
-        return new DimensionUIResource(size, size);
+        Insets i = comboBox.getInsets();
+        return new Dimension(JBUI.scale(14) + i.left, JBUI.scale(18) + i.top + i.bottom);
       }
     };
-    button.setBorder(BorderFactory.createEmptyBorder());
+    button.setBorder(JBUI.Borders.empty());
     button.setOpaque(false);
     return button;
   }
 
   protected Color getArrowButtonFillColor(Color defaultColor) {
-    Color color = UIManager.getColor(comboBox.hasFocus() ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
-    return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? new JBColor(getBorderColor(), UIUtil.getControlColor()) : color;
+    return DarculaUIUtil.getArrowButtonFillColor(comboBox.hasFocus(), comboBox.isEnabled(), defaultColor);
   }
 
   @Override
   protected Insets getInsets() {
-    return JBUI.insets(4, 7, 4, 5).asUIResource();
-  }
-
-  protected Dimension getDisplaySize() {
-    Dimension display = new Dimension();
-
-    ListCellRenderer renderer = comboBox.getRenderer();
-    if (renderer == null) {
-      renderer = new DefaultListCellRenderer();
-    }
-
-    boolean sameBaseline = true;
-
-    Object prototypeValue = comboBox.getPrototypeDisplayValue();
-    if (prototypeValue != null) {
-      display = getSizeForComponent(renderer.getListCellRendererComponent(listBox, prototypeValue, -1, false, false));
-    } else {
-      final ComboBoxModel model = comboBox.getModel();
-
-      int baseline = -1;
-      Dimension d;
-
-      if (model.getSize() > 0) {
-        for (int i = 0; i < model.getSize(); i++) {
-          Object value = model.getElementAt(i);
-          Component rendererComponent = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
-          d = getSizeForComponent(rendererComponent);
-          if (sameBaseline && value != null && (!(value instanceof String) || !"".equals(value))) {
-            int newBaseline = rendererComponent.getBaseline(d.width, d.height);
-            if (newBaseline == -1) {
-              sameBaseline = false;
-            }
-            else if (baseline == -1) {
-              baseline = newBaseline;
-            }
-            else if (baseline != newBaseline) {
-              sameBaseline = false;
-            }
-          }
-          display.width = Math.max(display.width, d.width);
-          display.height = Math.max(display.height, d.height);
-        }
-      }
-      else {
-        display = getDefaultSize();
-        if (comboBox.isEditable()) {
-          display.width = JBUI.scale(100);
-        }
-      }
-    }
-
-    JBInsets.addTo(display, myPadding);
-
-    myDisplaySizeCache.setSize(display.width, display.height);
-
-    return display;
-  }
-
-  protected Dimension getSizeForComponent(Component comp) {
-    currentValuePane.add(comp);
-    comp.setFont(comboBox.getFont());
-    Dimension d = comp.getPreferredSize();
-    currentValuePane.remove(comp);
-    return d;
+    return JBUI.insets(3, 8, 3, 3).asUIResource();
   }
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    final Container parent = c.getParent();
+    Container parent = c.getParent();
     if (parent != null) {
       g.setColor(isTableCellEditor(c) && editor != null ? editor.getBackground() : parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
-    Rectangle r = rectangleForCurrentValue();
-    if (!isTableCellEditor(c)) {
-      hasFocus = comboBox.hasFocus();
-      paintCurrentValueBackground(g, r, hasFocus);
+
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+      float bw = bw();
+      float arc = arc();
+
+      boolean editable = editor != null && comboBox.isEditable();
+      Color background = editable && comboBox.isEnabled() ? editor.getBackground() : UIUtil.getPanelBackground();
+      g2.setColor(background);
+
+      Shape innerShape = new RoundRectangle2D.Float(bw, bw, c.getWidth() - bw * 2, c.getHeight() - bw * 2, arc, arc);
+      g2.fill(innerShape);
+    } finally {
+      g2.dispose();
     }
-    paintCurrentValue(g, r, hasFocus);
+
+    if (!comboBox.isEditable()) {
+      checkFocus();
+      Rectangle r = rectangleForCurrentValue();
+      paintCurrentValue(g, r, hasFocus);
+    }
   }
 
   protected static boolean isTableCellEditor(JComponent c) {
     return Boolean.TRUE.equals(c.getClientProperty("JComboBox.isTableCellEditor")) || c.getParent() instanceof JTable;
   }
 
-  @Override
-  protected Rectangle rectangleForCurrentValue() {
-    final Rectangle r = super.rectangleForCurrentValue();
-    r.x-= JBUI.scale(2);
-    return r;
-  }
-
   public void paintCurrentValue(Graphics g, Rectangle bounds, boolean hasFocus) {
     ListCellRenderer renderer = comboBox.getRenderer();
-    Component c;
+    Component c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
 
-    c = renderer.getListCellRendererComponent(listBox, comboBox.getSelectedItem(), -1, false, false);
     if (!hasFocus || isPopupVisible(comboBox)) {
       c.setBackground(UIManager.getColor("ComboBox.background"));
     }
@@ -260,20 +210,25 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     }
 
     Rectangle r = new Rectangle(bounds);
-    JBInsets.removeFrom(r, myPadding);
+
+    Insets iPad = null;
+    if (c instanceof SimpleColoredComponent) {
+      SimpleColoredComponent scc = (SimpleColoredComponent)c;
+      iPad = scc.getIpad();
+      scc.setIpad(JBUI.emptyInsets());
+    }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, shouldValidate);
+
     // return opaque for combobox popup items painting
     if (changeOpaque) {
       ((JComponent)c).setOpaque(true);
     }
-  }
 
-
-
-  @Override
-  protected void installKeyboardActions() {
-    super.installKeyboardActions();
+    if (c instanceof SimpleColoredComponent) {
+      SimpleColoredComponent scc = (SimpleColoredComponent)c;
+      scc.setIpad(iPad);
+    }
   }
 
   @Override
@@ -318,62 +273,27 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       checkFocus();
-
-      final Rectangle arrowButtonBounds = arrowButton.getBounds();
-      final int xxx = arrowButtonBounds.x - JBUI.scale(5);
-      final int H = height - JBUI.scale(2);
-      final int W = width - JBUI.scale(2);
-
-      final Shape clip = g2.getClip();
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-      final int R = JBUI.scale(5);
-      if (hasFocus) {
-        g2.clipRect(JBUI.scale(2), JBUI.scale(2), comboBox.getWidth()- JBUI.scale(4), comboBox.getHeight() - JBUI.scale(4));
-      }
-      final Color background = editor != null && comboBox.isEditable()
-                               ? editor.getBackground()
-                               : UIUtil.getPanelBackground();
-      g2.setColor(background);
-      g2.fillRoundRect(x + JBUI.scale(1), y + JBUI.scale(1), W, H, R, R);
-      g2.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
-      g2.fillRoundRect(xxx, y + JBUI.scale(1), width - xxx, H, R, R);
-      g2.setColor(background);
-      g2.fillRect(xxx, y + JBUI.scale(1), JBUI.scale(5), H);
 
-      final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
-      g2.setColor(getArrowButtonFillColor(borderColor));
-      int off = JBUI.scale(hasFocus ? 1 : 0);
-      g2.drawLine(xxx + JBUI.scale(5), y + JBUI.scale(1) + off, xxx + JBUI.scale(5), height - JBUI.scale(2));
+      g2.translate(x, y);
 
-      Rectangle r = rectangleForCurrentValue();
-      paintCurrentValueBackground(g2, r, hasFocus);
-      paintCurrentValue(g2, r, false);
+      float lw = lw(g2);
+      float bw = bw();
+      float arc = arc();
+
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, height - bw * 2, arc, arc), false);
+      border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, width - (bw + lw) * 2, height - (bw + lw) * 2, arc - lw, arc - lw), false);
+
+      g2.setColor(getOutlineColor(c.isEnabled()));
+      g2.fill(border);
 
       Object op = comboBox.getClientProperty("JComponent.outline");
-      if (hasFocus) {
-        g2.setClip(clip);
-        if (op != null) {
-          DarculaUIUtil.paintOutlineBorder(g2, width, height, 0, true, true,
-                                           DarculaUIUtil.Outline.valueOf(op.toString()));
-        } else {
-          DarculaUIUtil.paintFocusRing(g2, new Rectangle(JBUI.scale(2), JBUI.scale(2), width - JBUI.scale(4), height - JBUI.scale(4)));
-        }
-      }
-      else {
-        if (op != null) {
-          DarculaUIUtil.paintOutlineBorder(g2, width, height, 0, true, false,
-                                           DarculaUIUtil.Outline.valueOf(op.toString()));
-        } else {
-          g2.setColor(borderColor);
-          g2.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
-          if (!UIUtil.isUnderDarcula() && comboBox.isEnabled()) {
-            g2.setColor(getArrowButtonFillColor(getBorderColor()));
-            final int offX = xxx + JBUI.scale(5);
-            g2.clipRect(offX, y, width - offX, height);
-            g2.drawRoundRect(JBUI.scale(1), JBUI.scale(1), width - JBUI.scale(2), height - JBUI.scale(2), R, R);
-          }
-        }
+      if (op != null) {
+        paintOutlineBorder(g2, width, height, arc, true, hasFocus, Outline.valueOf(op.toString()));
+      } else if (hasFocus){
+        paintFocusBorder(g2, width, height, arc, true);
       }
     } finally {
       g2.dispose();
@@ -401,16 +321,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
 
-  private Color getBorderColor() {
-    if (comboBox != null && comboBox.isEnabled()) {
-      return new JBColor(Gray._150, Gray._100);
-    }
-    return new JBColor(Gray._150, Gray._88);
-  }
-
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(4, 7, 4, 5);
+    return getInsets();
   }
 
   @Override
@@ -421,10 +334,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected Dimension getSizeWithButton(Dimension d) {
     Insets i = getInsets();
     Dimension abSize = arrowButton.getPreferredSize();
-    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
 
-    return new Dimension(Math.max(d.width, abSize.width + i.left + JBUI.scale(10)),
-                         Math.max(editorHeight, Math.max(abSize.height, d.height)));
+    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
+    int height = Math.max(Math.max(editorHeight, Math.max(abSize.height, d.height)), JBUI.scale(18) + i.top + i.bottom);
+    int width = Math.max(d.width, abSize.width + JBUI.scale(10));
+
+    return new Dimension(width, height);
   }
 
   @Override
@@ -441,7 +356,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected void configureEditor() {
     super.configureEditor();
 
-    if (editor != null) {
+    if (editor instanceof JComponent) {
+      JComponent jEditor = (JComponent)editor;
+      jEditor.setOpaque(false);
+      jEditor.setBorder(JBUI.Borders.empty());
+
       editorFocusListener = new FocusAdapter() {
         @Override public void focusGained(FocusEvent e) {
           update();
@@ -465,10 +384,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           etf.addFocusListener(editorFocusListener);
         }
       }
-    }
-
-    if (editor instanceof JComponent) {
-      ((JComponent)editor).setBorder(JBUI.Borders.empty());
     }
 
     if (Registry.is("ide.ui.composite.editor.for.combobox")) {
@@ -500,6 +415,39 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           etf.removeFocusListener(editorFocusListener);
         }
       }
+    }
+  }
+
+  @Override
+  protected LayoutManager createLayoutManager() {
+    return new ComboBoxLayoutManager() {
+      @Override
+      public void layoutContainer(Container parent) {
+        JComboBox cb = (JComboBox)parent;
+
+        if (arrowButton != null) {
+          Dimension aps = arrowButton.getPreferredSize();
+          if (cb.getComponentOrientation().isLeftToRight()) {
+            arrowButton.setBounds(cb.getWidth() - aps.width, 0, aps.width, cb.getHeight());
+          } else {
+            arrowButton.setBounds(0, 0, aps.width, cb.getHeight());
+          }
+        }
+        layoutEditor();
+      }
+    };
+  }
+
+  protected void layoutEditor() {
+    if (comboBox.isEditable() && editor != null) {
+      Rectangle er = rectangleForCurrentValue();
+      Dimension eps = editor.getPreferredSize();
+      if (eps.height < er.height) {
+        int delta = (er.height - eps.height) / 2;
+        er.y += delta;
+        er.height = eps.height;
+      }
+      editor.setBounds(er);
     }
   }
 }

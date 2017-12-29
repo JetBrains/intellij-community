@@ -25,7 +25,10 @@ abstract class SchemeManager<T> {
   open val isEmpty: Boolean
     get() = allSchemes.isEmpty()
 
-  abstract val currentScheme: T?
+  abstract val activeScheme: T?
+
+  @Deprecated(replaceWith = ReplaceWith("activeScheme"), message = "Use activeScheme")
+  open fun getCurrentScheme(): Scheme = activeScheme as Scheme
 
   /**
    * If schemes are lazy loaded, you can use this method to postpone scheme selection (scheme will be found by name on first use)
@@ -40,16 +43,15 @@ abstract class SchemeManager<T> {
 
   open fun reload() {}
 
-  abstract fun addNewScheme(scheme: T, replaceExisting: Boolean)
-
-  fun addScheme(scheme: T) {
-    addNewScheme(scheme, true)
+  @Deprecated("Use addScheme", ReplaceWith("addScheme(scheme, replaceExisting)"))
+  fun addNewScheme(scheme: Scheme, replaceExisting: Boolean) {
+    @Suppress("UNCHECKED_CAST")
+    addScheme(scheme as T, replaceExisting)
   }
 
-  /**
-   * Consider to use [.setSchemes]
-   */
-  abstract fun clearAllSchemes()
+  fun addScheme(scheme: T) = addScheme(scheme, true)
+
+  abstract fun addScheme(scheme: T, replaceExisting: Boolean)
 
   abstract fun findSchemeByName(schemeName: String): T?
 

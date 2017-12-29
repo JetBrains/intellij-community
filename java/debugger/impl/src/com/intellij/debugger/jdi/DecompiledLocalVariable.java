@@ -23,7 +23,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/7/13
  */
 public class DecompiledLocalVariable{
   public static final String PARAM_PREFIX = "param_";

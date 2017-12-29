@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("SSBasedInspection")
@@ -102,15 +103,26 @@ public class LaterInvocator {
   public static void removeModalityStateListener(@NotNull ModalityStateListener listener) {
     ourModalityStateMulticaster.removeListener(listener);
   }
+  
+  private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = ContainerUtil.createConcurrentWeakMap();
 
   @NotNull
   static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
-    for (ModalityStateEx state : ourModalityStack) {
-      if (state.getModalEntities().contains(window)) {
-        return state;
+    return ourWindowModalities.computeIfAbsent(window, __ -> {
+      for (ModalityStateEx state : ourModalityStack) {
+        if (state.getModalEntities().contains(window)) {
+          return state;
+        }
       }
-    }
-    return (ModalityStateEx)ModalityState.NON_MODAL;
+
+      Window owner = window.getOwner();
+      ModalityStateEx ownerState = owner == null ? (ModalityStateEx)ModalityState.NON_MODAL : modalityStateForWindow(owner);
+      return isModalDialog(window) ? ownerState.appendEntity(window) : ownerState;
+    });
+  }
+
+  private static boolean isModalDialog(@NotNull Object window) {
+    return window instanceof Dialog && ((Dialog)window).isModal();
   }
 
   @NotNull
@@ -187,7 +199,13 @@ public class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Object modalEntity) {
-    enterModal(modalEntity, getCurrentModalityState().appendEntity(modalEntity));
+    ModalityStateEx state = getCurrentModalityState().appendEntity(modalEntity);
+    if (isModalDialog(modalEntity)) {
+      List<Object> currentEntities = state.getModalEntities();
+      state = modalityStateForWindow((Window)modalEntity);
+      state.forceModalEntities(currentEntities);
+    }
+    enterModal(modalEntity, state);
   }
 
   public static void enterModal(@NotNull Object modalEntity, @NotNull ModalityStateEx appendedState) {
@@ -206,6 +224,9 @@ public class LaterInvocator {
     if (guard != null) {
       guard.enteredModality(appendedState);
     }
+
+    reincludeSkippedItems();
+    requestFlush();
   }
 
   public static void enterModal(Project project, Dialog dialog) {

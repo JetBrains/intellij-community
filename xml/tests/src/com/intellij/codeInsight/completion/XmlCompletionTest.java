@@ -28,6 +28,7 @@ import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -332,26 +333,26 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testInsertExtraRequiredAttributeSingleQuote() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.Single;
       configureByFile(getTestName(true) + ".html");
       checkResultByFile(getTestName(true) + "_after.html");
     } finally {
-      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+      settings .HTML_QUOTE_STYLE = quote;
     }
   }
 
   public void testInsertExtraRequiredAttributeNoneQuote() {
-    final CodeStyleSettings settings = getCurrentCodeStyleSettings();
+    final HtmlCodeStyleSettings settings = getHtmlSettings();
     final CodeStyleSettings.QuoteStyle quote = settings.HTML_QUOTE_STYLE;
     try {
       settings.HTML_QUOTE_STYLE = CodeStyleSettings.QuoteStyle.None;
       configureByFile(getTestName(true) + ".html");
       checkResultByFile(getTestName(true) + "_after.html");
     } finally {
-      CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE = quote;
+      settings.HTML_QUOTE_STYLE = quote;
     }
   }
 
@@ -789,5 +790,10 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       myFixture.getCompletionVariants("MultipleImports/agg.xsd", "MultipleImports/toimport1.xsd", "MultipleImports/toimport2.xsd");
     assertSameElements(variants, "int", "integer", "invisibleType");
   }
+
+  private HtmlCodeStyleSettings getHtmlSettings() {
+    return getCurrentCodeStyleSettings().getCustomSettings(HtmlCodeStyleSettings.class);
+  }
+
 }
 

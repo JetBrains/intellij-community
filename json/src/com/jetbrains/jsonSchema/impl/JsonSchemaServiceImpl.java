@@ -1,5 +1,5 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
-
 
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonFile;
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JsonSchemaServiceImpl implements JsonSchemaService {
@@ -50,7 +50,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
-    myState = new MyState(() -> getProvidersFromFactories(factory -> factory.getProviders(myProject)));
+    myState = new MyState(() -> getProvidersFromFactories());
     myModificationTracker = () -> myModificationCount.get();
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
@@ -62,12 +62,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return myAnySchemaChangeTracker;
   }
 
-  private List<JsonSchemaFileProvider> getProvidersFromFactories(
-    @NotNull final Function<JsonSchemaProviderFactory, List<JsonSchemaFileProvider>> function) {
-    return Arrays.stream(getProviderFactories())
-      .map(function)
-      .flatMap(List::stream)
-      .collect(Collectors.toList());
+  private List<JsonSchemaFileProvider> getProvidersFromFactories() {
+    List<JsonSchemaFileProvider> providers = new ArrayList<>();
+    for (JsonSchemaProviderFactory factory : getProviderFactories()) {
+      try {
+        providers.addAll(factory.getProviders(myProject));
+      }
+      catch (Exception e) {
+        Logger.getInstance(JsonSchemaService.class).error(e);
+      }
+    }
+    return providers;
   }
 
   @NotNull
@@ -148,10 +153,10 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
   }
 
-  private boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
+  private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
     final FileType type = file.getFileType();
     final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
-    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(myProject, file);
+    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(file);
   }
 
   @Nullable

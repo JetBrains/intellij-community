@@ -62,8 +62,8 @@ public class IntegerValueEditor extends TextFieldValueEditor<Integer> {
   }
 
   @Override
-  public void assertValid(@NotNull Integer value) {
-    assert value >= myMinValue && value <= myMaxValue : "Value is out of range " + myMinValue + ".." + myMaxValue;
+  public boolean isValid(@NotNull Integer value) {
+    return value >= myMinValue && value <= myMaxValue;
   }
 
   public int getMinValue() {

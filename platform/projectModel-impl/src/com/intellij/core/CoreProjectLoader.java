@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
+import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -35,9 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
-import java.util.TreeMap;
-
-import static com.intellij.util.JdomKt.loadElement;
 
 /**
  * @author yole
@@ -60,7 +58,7 @@ public class CoreProjectLoader {
     if (modulesXml == null)
       throw new FileNotFoundException("Missing 'modules.xml' in " + dotIdea.getPath());
 
-    TreeMap<String, Element> storageData = loadStorageFile(project, modulesXml);
+    Map<String, Element> storageData = loadStorageFile(project, modulesXml);
     final Element moduleManagerState = storageData.get("ProjectModuleManager");
     if (moduleManagerState == null) {
       throw new JDOMException("cannot find ProjectModuleManager state in modules.xml");
@@ -90,7 +88,7 @@ public class CoreProjectLoader {
   }
 
   @NotNull
-  public static TreeMap<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
-    return FileStorageCoreUtil.load(loadElement(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager), false);
+  static Map<String, Element> loadStorageFile(@NotNull ComponentManager componentManager, @NotNull VirtualFile modulesXml) throws JDOMException, IOException {
+    return FileStorageCoreUtil.load(JdomKt.loadElement(modulesXml.getInputStream()), PathMacroManager.getInstance(componentManager));
   }
 }

@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.*;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
@@ -43,10 +44,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
-import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -73,7 +72,7 @@ public class CodeFormatterFacade {
   /**
    * This key is used as a flag that indicates if {@code 'wrap long line during formatting'} activity is performed now.
    *
-   * @see CodeStyleSettings#WRAP_LONG_LINES
+   * @see CommonCodeStyleSettings#WRAP_LONG_LINES
    */
   public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY
     = new Key<>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");
@@ -166,7 +165,7 @@ public class CodeFormatterFacade {
     return element;
   }
 
-  public void processText(PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
+  public void processText(@NotNull PsiFile file, final FormatTextRanges ranges, boolean doPostponedFormatting) {
     final Project project = file.getProject();
     Document document = file.getViewProvider().getDocument();
     final List<FormatTextRange> textRanges = ranges.getRanges();
@@ -274,7 +273,7 @@ public class CodeFormatterFacade {
     final LinkedHashSet<TextRange> injectedFileRangesSet = ContainerUtilRt.newLinkedHashSet();
 
     if (!psi.getProject().isDefault()) {
-      List<DocumentWindow> injectedDocuments = InjectedLanguageUtil.getCachedInjectedDocuments(file);
+      List<DocumentWindow> injectedDocuments = InjectedLanguageManager.getInstance(file.getProject()).getCachedInjectedDocumentsInRange(file, file.getTextRange());
       if (!injectedDocuments.isEmpty()) {
         for (DocumentWindow injectedDocument : injectedDocuments) {
           injectedFileRangesSet.add(TextRange.from(injectedDocument.injectedToHost(0), injectedDocument.getTextLength()));
@@ -289,7 +288,7 @@ public class CodeFormatterFacade {
           }
         };
         for (PsiLanguageInjectionHost host : injectionHosts) {
-          InjectedLanguageUtil.enumerate(host, visitor);
+          InjectedLanguageManager.getInstance(file.getProject()).enumerate(host, visitor);
         }
       }
     }
@@ -424,7 +423,7 @@ public class CodeFormatterFacade {
       return;
     }
     
-    FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyleSettingsManager.getSettings(file.getProject()));
+    FormatterTagHandler formatterTagHandler = new FormatterTagHandler(CodeStyle.getSettings(file));
     List<TextRange> enabledRanges = formatterTagHandler.getEnabledRanges(file.getNode(), new TextRange(startOffset, endOffset));
 
     final VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);

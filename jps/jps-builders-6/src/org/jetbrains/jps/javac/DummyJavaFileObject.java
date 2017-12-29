@@ -23,7 +23,6 @@ import java.net.URI;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/23/12
 */
 class DummyJavaFileObject implements JavaFileObject {
   // todo: use proxy to handle possible interface changes?

@@ -203,7 +203,7 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myLoadingDecorator = new LoadingDecorator(myEditor, this, 10, true);
     myBanner = new Banner(myEditor.getResetAction());
     mySearchPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 10, 0, 10));
+    myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     mySearchPanel.addComponentListener(new ComponentAdapter() {

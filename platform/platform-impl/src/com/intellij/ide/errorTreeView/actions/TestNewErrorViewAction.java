@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 13, 2004
  */
 public class TestNewErrorViewAction extends TestErrorViewAction{
   protected ErrorTreeView createView(Project project) {

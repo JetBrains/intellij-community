@@ -1,5 +1,5 @@
 from asyncio import transports
-from typing import AnyStr, List
+from typing import AnyStr, List, Tuple
 
 __all__: List[str]
 
@@ -15,7 +15,7 @@ class Protocol(BaseProtocol):
     def eof_received(self) -> bool: ...
 
 class DatagramProtocol(BaseProtocol):
-    def datagram_received(self, data: AnyStr, addr: str) -> None: ...
+    def datagram_received(self, data: AnyStr, addr: Tuple[str, int]) -> None: ...
     def error_received(self, exc: Exception) -> None: ...
 
 class SubprocessProtocol(BaseProtocol):

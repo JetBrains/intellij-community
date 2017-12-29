@@ -31,14 +31,6 @@ public class CustomResourceBundlePropertiesFileNode extends PsiFileNode implemen
     data.setLocationString(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getResourceBundle().getBaseName()));
   }
 
-  @Override
-  public boolean equals(Object object) {
-    if (!(object instanceof CustomResourceBundlePropertiesFileNode)) {
-      return false;
-    }
-    return Comparing.equal(getValue(), ((CustomResourceBundlePropertiesFileNode)object).getValue());
-  }
-
   @NotNull
   @Override
   public ResourceBundle getResourceBundle() {

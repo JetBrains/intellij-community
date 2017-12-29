@@ -13,4 +13,12 @@ class Simple {
     setO.removeAll(someData.keySet());
 
   }
+
+  void testNull(List<String> list) {
+    list.removeAll(Collections.singleton(null));
+  }
+
+  void testNotNull(List<String> list) {
+    list.removeAll(<warning descr="'List<String>' may not contain objects of type 'Integer'">Collections.singleton(1)</warning>);
+  }
 }

@@ -23,16 +23,16 @@ import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
 import org.jetbrains.uast.UastErrorType
 
 class JavaUTypeCastExpression(
-        override val psi: PsiTypeCastExpression,
-        givenParent: UElement?
+  override val psi: PsiTypeCastExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UBinaryExpressionWithType {
-    override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
-    
-    override val type: PsiType
-        get() = psi.castType?.type ?: UastErrorType
-    
-    override val typeReference by lz { psi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
-    
-    override val operationKind: UastBinaryExpressionWithTypeKind.TypeCast
-        get() = UastBinaryExpressionWithTypeKind.TYPE_CAST
+  override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+
+  override val type: PsiType
+    get() = psi.castType?.type ?: UastErrorType
+
+  override val typeReference by lz { psi.castType?.let { JavaUTypeReferenceExpression(it, this) } }
+
+  override val operationKind: UastBinaryExpressionWithTypeKind.TypeCast
+    get() = UastBinaryExpressionWithTypeKind.TYPE_CAST
 }

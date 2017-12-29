@@ -27,10 +27,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,21 +125,23 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
           final PsiJavaToken sign = assignmentExpression.getOperationSign();
           if (!JavaTokenType.EQ.equals(sign.getTokenType())) {
-            final String lhsText = assignmentExpression.getLExpression().getText();
+            CommentTracker commentTracker = new CommentTracker();
+            final String lhsText = commentTracker.markUnchanged(assignmentExpression.getLExpression()).getText();
             final String newExpressionText =
-              lhsText + "=(" + expectedType.getCanonicalText() + ")(" + lhsText + sign.getText().charAt(0) + expression.getText() + ')';
-            PsiReplacementUtil.replaceExpression(assignmentExpression, newExpressionText);
+              lhsText + "=(" + expectedType.getCanonicalText() + ")(" + lhsText + sign.getText().charAt(0) + commentTracker.markUnchanged(expression).getText() + ')';
+            PsiReplacementUtil.replaceExpression(assignmentExpression, newExpressionText, commentTracker);
             return;
           }
         }
+        CommentTracker commentTracker = new CommentTracker();
         final String castExpression;
         if (ParenthesesUtils.getPrecedence(expression) <= ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-          castExpression = '(' + expectedType.getCanonicalText() + ')' + expression.getText();
+          castExpression = '(' + expectedType.getCanonicalText() + ')' + commentTracker.markUnchanged(expression).getText();
         }
         else {
-          castExpression = '(' + expectedType.getCanonicalText() + ")(" + expression.getText() + ')';
+          castExpression = '(' + expectedType.getCanonicalText() + ")(" + commentTracker.markUnchanged(expression).getText() + ')';
         }
-        PsiReplacementUtil.replaceExpression(expression, castExpression);
+        PsiReplacementUtil.replaceExpression(expression, castExpression, commentTracker);
       }
     }
 

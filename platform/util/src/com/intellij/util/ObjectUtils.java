@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,11 @@ public class ObjectUtils {
   @NotNull
   public static <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
     return value == null ? defaultValue : value;
+  }
+
+  @NotNull
+  public static <T> T notNull(@Nullable T value, @NotNull NotNullFactory<T> defaultValue) {
+    return value == null ? defaultValue.create() : value;
   }
 
   @Contract("null, _ -> null")

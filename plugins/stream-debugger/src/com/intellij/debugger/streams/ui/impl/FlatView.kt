@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -44,7 +30,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val mappingPane = MappingPane(nextCall.name, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
 
       val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext)
-      val view = PositionsAwareCollectionView(" ", tree, valuesBefore)
+      val view = PositionsAwareCollectionView(tree, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
@@ -84,7 +70,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       else {
         CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext)
       }
-      val view = PositionsAwareCollectionView(" ", tree, it)
+      val view = PositionsAwareCollectionView(tree, it)
       lastController.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
@@ -100,7 +86,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     if (controllers.size == 1) {
       val controller = controllers[0]
       val tree = CollectionTree(controller.values, controller.trace, evaluationContext)
-      val view = CollectionView("", tree)
+      val view = CollectionView(tree)
       add(view)
       controller.register(view)
     }

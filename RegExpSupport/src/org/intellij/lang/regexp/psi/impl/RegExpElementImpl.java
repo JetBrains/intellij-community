@@ -23,6 +23,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
@@ -85,9 +86,14 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
 
   public static boolean isLiteralExpression(@Nullable PsiElement context) {
     if (context == null) return false;
-    final ASTNode astNode = context.getNode();
+    ASTNode astNode = context.getNode();
     if (astNode == null) {
       return false;
+    }
+    if (astNode instanceof CompositeElement) { // in some languages token nodes are wrapped within a single-child composite
+      ASTNode[] children = astNode.getChildren(null);
+      if (children.length != 1) return false;
+      astNode = children[0];
     }
     final IElementType elementType = astNode.getElementType();
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());

@@ -101,10 +101,12 @@ def _patch_import_to_patch_pyqt_on_import(patch_qt_on_import, get_qt_core_module
             _internal_patch_qt(get_qt_core_module()) # Patch it only when the user would import the qt module
         return original_import(name, *args, **kwargs)
 
-    try:
-        import builtins
-    except ImportError:
+    import sys
+    if sys.version_info[0] >= 3:
+        import builtins # Py3
+    else:
         import __builtin__ as builtins
+
     builtins.__import__ = patched_import
 
 

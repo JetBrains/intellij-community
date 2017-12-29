@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -67,17 +55,19 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
 
   @Override
   @Nullable
-  public <P extends PsiElement> StubElement<P> findChildStubByType(@NotNull final IStubElementType<?, P> elementType) {
-    final List<StubElement> childrenStubs = getChildrenStubs();
-    final int size = childrenStubs.size();
+  public <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(@NotNull IStubElementType<S, P> elementType) {
+    List<StubElement> childrenStubs = getChildrenStubs();
+    int size = childrenStubs.size();
 
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < size; ++i) {
-      final StubElement childStub = childrenStubs.get(i);
+      StubElement childStub = childrenStubs.get(i);
       if (childStub.getStubType() == elementType) {
-        return childStub;
+        @SuppressWarnings("unchecked") S stub = (S)childStub;
+        return stub;
       }
     }
+
     return null;
   }
 

@@ -52,6 +52,8 @@ import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
 import static org.fest.assertions.Assertions.assertThat;
@@ -138,7 +140,7 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       @Nullable
-      protected Integer executeInEDT() throws Throwable {
+      protected Integer executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -195,7 +197,7 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -285,7 +287,7 @@ public class EditorFixture {
     return execute(new GuiQuery<String>() {
       @Override
       @Nullable
-      protected String executeInEDT() throws Throwable {
+      protected String executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -324,6 +326,29 @@ public class EditorFixture {
   }
 
   /**
+   * Returns content of the current editor's document with a given range.
+   *
+   * @param startOffset the content which starting right after this offset
+   * @param endOffset the end of content, symbol on the endOffset will be not included
+   * @return
+   */
+  public String getCurrentFileContents(int startOffset, int endOffset) {
+    return execute(new GuiQuery<String>() {
+      @Override
+      @Nullable
+      protected String executeInEDT() {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          Document document = editor.getDocument();
+          return document.getText(new TextRange(startOffset, endOffset));
+        }
+        return null;
+      }
+    });
+  }
+
+  /**
    * Type the given text into the editor
    *
    * @param text the text to type at the current editor position
@@ -348,7 +373,7 @@ public class EditorFixture {
     if (component != null && !text.isEmpty()) {
       execute(new GuiTask() {
         @Override
-        protected void executeInEDT() throws Throwable {
+        protected void executeInEDT() {
           // Simulate editing by sending the same IME events that we observe arriving from a real input method
           int characterCount = text.length();
           TextHitInfo caret = TextHitInfo.afterOffset(characterCount - 1);
@@ -424,7 +449,7 @@ public class EditorFixture {
     Editor editor = execute(new GuiQuery<Editor>() {
       @Override
       @Nullable
-      protected Editor executeInEDT() throws Throwable {
+      protected Editor executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         return manager.getSelectedTextEditor(); // Must be called from the EDT
       }
@@ -485,7 +510,7 @@ public class EditorFixture {
     assertThat(offset).isGreaterThanOrEqualTo(0);
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         assert editor != null;
@@ -521,7 +546,7 @@ public class EditorFixture {
   public EditorFixture select(final int firstOffset, final int secondOffset) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         // TODO: Do this via mouse drags!
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
@@ -585,7 +610,7 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       @Nullable
-      protected Integer executeInEDT() throws Throwable {
+      protected Integer executeInEDT() {
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
         Editor editor = manager.getSelectedTextEditor();
         if (editor != null) {
@@ -596,6 +621,36 @@ public class EditorFixture {
           String target = (prefix != null ? prefix : "") + (suffix != null ? suffix : "");
           int targetIndex = contents.indexOf(target, searchFromTop ? 0 : primaryCaret.getOffset());
           return targetIndex != -1 ? targetIndex + (prefix != null ? prefix.length() : 0) : -1;
+        }
+        return -1;
+      }
+    });
+  }
+
+  /**
+   * Finds the start position (if {@code returnStartIndex} is true or end position if {@code returnStartIndex} is false) in current editor's
+   * document by regex.
+   *
+   * @param regex
+   * @param returnStartIndex a flag that determines which index of found region should be returned: start index if it is true and end index if
+   *                         it is false
+   * @return the 0-based offset in the document, or -1 if not found.
+   */
+  public int findOffsetByRegex(@NotNull String regex, boolean returnStartIndex) {
+    return execute(new GuiQuery<Integer>() {
+      @Override
+      protected Integer executeInEDT() {
+        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+        Editor editor = manager.getSelectedTextEditor();
+        if (editor != null) {
+          String contents = editor.getDocument().getCharsSequence().toString();
+          Matcher matcher = Pattern.compile(regex).matcher(contents);
+          if (matcher.find()) {
+            if (returnStartIndex)
+              return matcher.start();
+            else
+              return matcher.end();
+          }
         }
         return -1;
       }
@@ -635,7 +690,7 @@ public class EditorFixture {
   public EditorFixture close() {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         if (currentFile != null) {
           FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
@@ -699,7 +754,7 @@ public class EditorFixture {
   public EditorFixture selectEditorView(@Nullable final String tabName) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         assertNotNull("Can't switch to tab " + tabName + " when no file is open in the editor", currentFile);
         FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
@@ -717,7 +772,7 @@ public class EditorFixture {
           method("setSelectedEditor").withParameterTypes(FileEditor.class).in(manager).invoke(target);
           return;
         }
-        List<String> tabNames = new ArrayList<String>();
+        List<String> tabNames = new ArrayList<>();
         for (FileEditor editor : editors) {
           tabNames.add(editor.getName());
         }
@@ -737,7 +792,7 @@ public class EditorFixture {
   public EditorFixture open(@NotNull final VirtualFile file, @NotNull final Tab tab) {
     execute(new GuiTask() {
       @Override
-      protected void executeInEDT() throws Throwable {
+      protected void executeInEDT() {
         // TODO: Use UI to navigate to the file instead
         Project project = myFrame.getProject();
         FileEditorManager manager = FileEditorManager.getInstance(project);
@@ -756,7 +811,7 @@ public class EditorFixture {
         //noinspection ConstantConditions
         return execute(new GuiQuery<Boolean>() {
           @Override
-          protected Boolean executeInEDT() throws Throwable {
+          protected Boolean executeInEDT() {
             FileEditor[] editors = FileEditorManager.getInstance(myFrame.getProject()).getEditors(file);
             if (editors.length == 0) return false;
             return editors[0].getComponent().isShowing();
@@ -967,7 +1022,7 @@ public class EditorFixture {
     for (HighlightInfo info : getCurrentFileFixture().getHighlightInfos(severity)) {
       infos.add(info.getDescription());
     }
-    assertThat(infos).containsOnly(highlights);
+    assertThat(infos).containsOnly((Object[])highlights);
     return this;
   }
 
@@ -1008,7 +1063,7 @@ public class EditorFixture {
       public boolean test() {
         virtualFileReference.set(execute(new GuiQuery<VirtualFile>() {
           @Override
-          protected VirtualFile executeInEDT() throws Throwable {
+          protected VirtualFile executeInEDT() {
             return getCurrentFile();
           }
         }));

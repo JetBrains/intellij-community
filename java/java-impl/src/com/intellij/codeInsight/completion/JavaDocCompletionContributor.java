@@ -25,6 +25,7 @@ import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
 import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
@@ -453,7 +454,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
         if (i < parameters.length - 1) {
           buffer.append(",");
-          if (styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
+          if (styleSettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) buffer.append(" ");
         }
       }
       buffer.append(")");

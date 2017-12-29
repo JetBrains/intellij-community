@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -175,7 +177,7 @@ public class JavaDebugProcess extends XDebugProcess {
           XSourcePosition position = frame.getSourcePosition();
           if (position != null) {
             VirtualFile file = position.getFile();
-            if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
+            if (!AlternativeSourceNotificationProvider.isFileProcessed(file)) {
               EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
             }
           }
@@ -357,7 +359,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
 
         final Content memoryViewContent =
-          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory View",
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory",
                            AllIcons.Debugger.MemoryView.Active, null);
 
         memoryViewContent.setCloseable(false);

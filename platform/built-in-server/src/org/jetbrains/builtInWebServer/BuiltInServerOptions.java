@@ -29,7 +29,7 @@ import java.util.Collections;
   storages = @Storage("other.xml")
 )
 public class BuiltInServerOptions implements PersistentStateComponent<BuiltInServerOptions>, Getter<BuiltInServerOptions> {
-  private static final int DEFAULT_PORT = 63342;
+  public static final int DEFAULT_PORT = 63342;
 
   @Attribute
   public int builtInServerPort = DEFAULT_PORT;

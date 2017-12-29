@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 28-Jul-15
  */
 public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile {
   public JShellFileImpl(FileViewProvider viewProvider) {
@@ -54,6 +53,7 @@ public class JShellFileImpl extends PsiJavaFileBaseImpl implements PsiJShellFile
     return JShellFileType.INSTANCE;
   }
 
+  @Override
   public boolean isPhysical() {
     return getViewProvider().isPhysical();
   }

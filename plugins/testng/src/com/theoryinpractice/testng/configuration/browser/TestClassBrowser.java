@@ -15,7 +15,6 @@
  */
 package com.theoryinpractice.testng.configuration.browser;
 
-import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
@@ -32,7 +31,7 @@ import com.theoryinpractice.testng.configuration.TestNGConfigurationType;
 import com.theoryinpractice.testng.model.TestClassFilter;
 
 /**
- * @author Hani Suleiman Date: Jul 20, 2005 Time: 2:02:00 PM
+ * @author Hani Suleiman
  */
 public class TestClassBrowser extends BrowseModuleValueActionListener
 {

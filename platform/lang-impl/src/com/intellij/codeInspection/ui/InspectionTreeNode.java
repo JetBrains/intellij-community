@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ui;
@@ -21,7 +9,9 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
+import com.intellij.util.containers.WeakInterner;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +29,18 @@ import java.util.Enumeration;
  * @author max
  */
 public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
+  private static final WeakInterner<LevelAndCount[]> LEVEL_AND_COUNT_INTERNER = new WeakInterner<>(new TObjectHashingStrategy<LevelAndCount[]>() {
+    @Override
+    public int computeHashCode(LevelAndCount[] object) {
+      return Arrays.hashCode(object);
+    }
+
+    @Override
+    public boolean equals(LevelAndCount[] o1, LevelAndCount[] o2) {
+      return Arrays.equals(o1, o2);
+    }
+  });
+
   protected final AtomicClearableLazyValue<LevelAndCount[]> myProblemLevels = new AtomicClearableLazyValue<LevelAndCount[]>() {
     @NotNull
     @Override
@@ -54,13 +56,19 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
           return true;
         }
       });
-      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity()).reversed());
-      return arr;
+      Arrays.sort(arr, Comparator.<LevelAndCount, HighlightSeverity>comparing(levelAndCount -> levelAndCount.getLevel().getSeverity())
+        .reversed());
+      return doesNeedInternProblemLevels() ? LEVEL_AND_COUNT_INTERNER.intern(arr) : arr;
     }
   };
   protected volatile InspectionTreeUpdater myUpdater;
-  protected InspectionTreeNode  (Object userObject) {
+
+  protected InspectionTreeNode(Object userObject) {
     super(userObject);
+  }
+
+  protected boolean doesNeedInternProblemLevels() {
+    return false;
   }
 
   @Nullable
@@ -88,7 +96,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return true;
   }
 
-  protected void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
+  protected void visitProblemSeverities(@NotNull TObjectIntHashMap<HighlightDisplayLevel> counter) {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
@@ -159,7 +167,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
         }
       }
       int index = TreeUtil.indexedBinarySearch(this, child, InspectionResultsViewComparator.getInstance());
-      if (!allowDuplication && index >= 0){
+      if (!allowDuplication && index >= 0) {
         return (InspectionTreeNode)getChildAt(index);
       }
       insert(child, Math.abs(index + 1));
@@ -187,6 +195,9 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
+  protected void nodeAddedToTree() {
+  }
+
   private void propagateUpdater(InspectionTreeUpdater updater) {
     if (myUpdater != null) return;
     myUpdater = updater;
@@ -194,6 +205,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.propagateUpdater(updater);
+      child.nodeAddedToTree();
     }
   }
 

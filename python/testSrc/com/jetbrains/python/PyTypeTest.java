@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
@@ -22,7 +8,6 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -196,28 +181,22 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testTypeAnno() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("str",
-             "def foo(x: str) -> list:\n" +
-             "    expr = x");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("str",
+                   "def foo(x: str) -> list:\n" +
+                   "    expr = x")
+    );
   }
 
   public void testReturnTypeAnno() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest("list",
-             "def foo(x) -> list:\n" +
-             "    return x\n" +
-             "expr = foo(None)");
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON30,
+      () -> doTest("list",
+                   "def foo(x) -> list:\n" +
+                   "    return x\n" +
+                   "expr = foo(None)")
+    );
   }
 
   public void testEpydocReturnType() {
@@ -785,34 +764,34 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testOpenDefault() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo')\n");
   }
 
   public void testOpenText() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo', 'r')\n");
   }
 
   public void testOpenBinary() {
-    doTest("file",
+    doTest("BinaryIO",
            "expr = open('foo', 'rb')\n");
   }
 
   public void testIoOpenDefault() {
-    doTest("TextIOWrapper[unicode]",
+    doTest("TextIO",
            "import io\n" +
            "expr = io.open('foo')\n");
   }
 
   public void testIoOpenText() {
-    doTest("TextIOWrapper[unicode]",
+    doTest("TextIO",
            "import io\n" +
            "expr = io.open('foo', 'r')\n");
   }
 
   public void testIoOpenBinary() {
-    doTest("FileIO[str]",
+    doTest("BinaryIO",
            "import io\n" +
            "expr = io.open('foo', 'rb')\n");
   }
@@ -929,16 +908,12 @@ public class PyTypeTest extends PyTestCase {
   public void testHomogeneousTupleSubstitution() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> {
-        myFixture.copyDirectoryToProject("typing", "");
-
-        doTest("Tuple[int, ...]",
-               "from typing import TypeVar, Tuple\n" +
-               "T = TypeVar('T')\n" +
-               "def foo(i: T) -> Tuple[T, ...]:\n" +
-               "    pass\n" +
-               "expr = foo(5)");
-      }
+      () -> doTest("Tuple[int, ...]",
+                   "from typing import TypeVar, Tuple\n" +
+                   "T = TypeVar('T')\n" +
+                   "def foo(i: T) -> Tuple[T, ...]:\n" +
+                   "    pass\n" +
+                   "expr = foo(5)")
     );
   }
 
@@ -1968,6 +1943,16 @@ public class PyTypeTest extends PyTestCase {
            "expr = my_list.count");
   }
 
+  // PY-26616
+  public void testClassMethodQualifiedWithDefinition() {
+    doTest("(x: str) -> Foo",
+           "class Foo:\n" +
+           "    @classmethod\n" +
+           "    def make_foo(cls, x: str) -> 'Foo':\n" +
+           "        pass\n" +
+           "expr = Foo.make_foo");
+  }
+
   public void testConstructingGenericClassWithNotFilledGenericValue() {
     doTest("MyIterator",
            "from typing import Iterator\n" +
@@ -2219,6 +2204,63 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-4351
+  public void testCollectionsNTInheritorField() {
+    // Seems that this case won't be supported because
+    // it requires to update ancestor, not class itself, for every `User(...)` call
+    doTest("Any",
+           "from collections import namedtuple\n" +
+           "class User(namedtuple(\"User\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = User(\"name\", 13).age");
+  }
+
+  // PY-4351
+  public void testCollectionsNTTargetField() {
+    doTest("int",
+           "from collections import namedtuple\n" +
+           "User = namedtuple(\"User\", \"name age\")\n" +
+           "expr = User(\"name\", 13).age");
+  }
+
+  // PY-4351
+  public void testTypingNTInheritorUnpacking() {
+    doTest("int",
+           "from typing import NamedTuple\n" +
+           "class User(NamedTuple(\"User\", [(\"name\", str), (\"age\", int)])):\n" +
+           "    pass\n" +
+           "y2, expr = User(\"name\", 13)");
+  }
+
+  // PY-4351
+  public void testTypingNTTargetUnpacking() {
+    doTest("int",
+           "from typing import NamedTuple\n" +
+           "Point2 = NamedTuple('Point', [('x', int), ('y', str)])\n" +
+           "p2 = Point2(1, \"1\")\n" +
+           "expr, y2 = p2");
+  }
+
+  // PY-4351
+  public void testCollectionsNTInheritorUnpacking() {
+    // Seems that this case won't be supported because
+    // it requires to update ancestor, not class itself, for every `User(...)` call
+    doTest("Any",
+           "from collections import namedtuple\n" +
+           "class User(namedtuple(\"User\", \"name ags\")):\n" +
+           "    pass\n" +
+           "y1, expr = User(\"name\", 13)");
+  }
+
+  // PY-4351
+  public void testCollectionsNTTargetUnpacking() {
+    doTest("int",
+           "from collections import namedtuple\n" +
+           "Point = namedtuple('Point', ['x', 'y'])\n" +
+           "p1 = Point(1, '1')\n" +
+           "expr, y1 = p1");
+  }
+
   // PY-18791
   public void testCallOnProperty() {
     runWithLanguageLevel(
@@ -2323,6 +2365,235 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-25751
+  public void testNotImportedModuleInDunderAll() {
+    doMultiFileTest("Union[aaa.py, Any]",
+                    "from pkg import *\n" +
+                    "expr = aaa");
+  }
+
+  // PY-25751
+  public void testNotImportedPackageInDunderAll() {
+    doMultiFileTest("Union[__init__.py, Any]",
+                    "from pkg import *\n" +
+                    "expr = aaa");
+  }
+
+  // PY-26269
+  public void testDontReplaceDictValueWithReceiverType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Dict[str, Any]",
+                   "from typing import Any, Dict\n" +
+                   "d: Dict[str, Dict[str, Any]]\n" +
+                   "expr = d[\"k\"]")
+    );
+  }
+
+  // PY-26493
+  public void testAssertAndStructuralType() {
+    doTest("str",
+           "def run_workloads(cfg):\n" +
+           "    assert isinstance(cfg, str)\n" +
+           "    cfg.split()\n" +
+           "    expr = cfg");
+  }
+
+  // PY-26061
+  public void testUnknownDictValues() {
+    doTest("list",
+           "expr = dict().values()");
+  }
+
+  // PY-26061
+  public void testUnresolvedGenericReplacement() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Any",
+                   "from typing import TypeVar, Generic, List\n" +
+                   "\n" +
+                   "T = TypeVar('T')\n" +
+                   "V = TypeVar('V')\n" +
+                   "\n" +
+                   "class B(Generic[T]):\n" +
+                   "    def f(self) -> T:\n" +
+                   "        ...\n" +
+                   "\n" +
+                   "class C(B[V], Generic[V]):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "expr = C().f()\n")
+    );
+  }
+
+  // PY-26643
+  public void testReplaceSelfInGenerator() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON33,
+      () -> doTest("Generator[B, Any, B]",
+                   "class A:\n" +
+                   "    def foo(self):\n" +
+                   "        yield self\n" +
+                   "        return self\n" +
+                   "class B(A):\n" +
+                   "    pass\n" +
+                   "expr = B().foo()")
+    );
+  }
+
+  public void testReplaceSelfInUnion() {
+    doTest("Union[B, int]",
+           "class A:\n" +
+           "    def foo(self, x):\n" +
+           "        if x:\n" +
+           "            return self\n" +
+           "        else:\n" +
+           "            return 1\n" +
+           "class B(A):\n" +
+           "    pass\n" +
+           "expr = B().foo(abc)");
+  }
+
+  // PY-27143
+  public void testReplaceInstanceInClassMethod() {
+    doTest("Derived",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def instance(cls):\n" +
+           "        return cls()\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.instance()");
+
+    doTest("Derived",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def instance(cls):\n" +
+           "        return cls()\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().instance()");
+  }
+
+  // PY-27143
+  public void testReplaceInstanceInMethod() {
+    doTest("Derived",
+           "class Base:\n" +
+           "    def instance(self):\n" +
+           "        return self\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.instance(Derived())");
+
+    doTest("Derived",
+           "class Base:\n" +
+           "    def instance(self):\n" +
+           "        return self\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().instance()");
+  }
+
+  // PY-27143
+  public void testReplaceDefinitionInClassMethod() {
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def cls(cls):\n" +
+           "        return cls\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.cls()");
+
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def cls(cls):\n" +
+           "        return cls\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().cls()");
+  }
+
+  // PY-27143
+  public void testReplaceDefinitionInMethod() {
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    def cls(self):\n" +
+           "        return self.__class__\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived.cls(Derived())");
+
+    doTest("Type[Derived]",
+           "class Base:\n" +
+           "    def cls(self):\n" +
+           "        return self.__class__\n" +
+           "class Derived(Base):\n" +
+           "    pass\n" +
+           "expr = Derived().cls()");
+  }
+
+  // PY-26992
+  public void testInitializingInnerCallableClass() {
+    doTest("B",
+           "class A:\n" +
+           "    class B:\n" +
+           "        def __init__(self):\n" +
+           "            pass\n" +
+           "        def __call__(self, x):\n" +
+           "            pass\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "expr = A.B()");
+  }
+
+  // PY-26992
+  public void testInitializingInnerCallableClassThroughExplicitDunderInit() {
+    doTest("B",
+           "class A:\n" +
+           "    class B:\n" +
+           "        def __init__(self):\n" +
+           "            pass\n" +
+           "        def __call__(self, x):\n" +
+           "            pass\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "expr = A.B.__init__()");
+  }
+
+  // PY-26992
+  public void testInitializingInnerCallableClassThroughExplicitDunderNew() {
+    doTest("B",
+           "class A(object):\n" +
+           "    class B(object):\n" +
+           "        def __init__(self):\n" +
+           "            pass\n" +
+           "        def __call__(self, x):\n" +
+           "            pass\n" +
+           "    def __init__(self):\n" +
+           "        pass\n" +
+           "expr = A.B.__new__(A.B)");
+  }
+
+  // PY-26973
+  public void testSliceOnUnion() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Union[str, Any]",
+                   "from typing import Union\n" +
+                   "myvar: Union[str, int]\n" +
+                   "expr = myvar[0:3]")
+    );
+  }
+
+  // PY-22945
+  public void testNotInstalledTypingUsedInAnalysis() {
+    doTest("Pattern[str]",
+                    "from re import compile\n" +
+                    "expr = compile(\"str\")");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
@@ -2342,10 +2613,11 @@ public class PyTypeTest extends PyTestCase {
     checkTypes(expectedType, parseExpr(text));
   }
 
-  private static void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
+  private void checkTypes(@NotNull String expectedType, @Nullable PyExpression expr) {
     assertNotNull(expr);
     for (TypeEvalContext context : getTypeEvalContexts(expr)) {
       assertType(expectedType, expr, context);
+      assertProjectFilesNotParsed(context);
     }
   }
 

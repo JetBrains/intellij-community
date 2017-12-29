@@ -108,7 +108,8 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createStringLiteralFromString(null, unescaped, true);
   }
 
-  public PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped) {
+  @Override
+  public PyStringLiteralExpression createStringLiteral(@NotNull StringLiteralExpression oldElement, @NotNull String unescaped) {
     Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(oldElement.getText());
     if (quotes != null) {
       return createStringLiteralAlreadyEscaped(quotes.first + unescaped + quotes.second);

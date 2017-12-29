@@ -19,6 +19,7 @@ package com.intellij.psi.search.searches;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -27,7 +28,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.QueryParameters;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The search is used in two IDE navigation functions namely Go To Implementation (Ctrl+Alt+B) and
@@ -69,7 +72,7 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(definitionsOf, searchScope, checkDeep));
   }
   
-  public static class SearchParameters {
+  public static class SearchParameters implements QueryParameters {
     private final PsiElement myElement;
     private final SearchScope myScope;
     private final boolean myCheckDeep;
@@ -96,6 +99,17 @@ public class DefinitionsScopedSearch extends ExtensibleQueryFactory<PsiElement, 
 
     public boolean isCheckDeep() {
       return myCheckDeep;
+    }
+
+    @Nullable
+    @Override
+    public Project getProject() {
+      return myElement.getProject();
+    }
+
+    @Override
+    public boolean isQueryValid() {
+      return myElement.isValid();
     }
 
     @NotNull

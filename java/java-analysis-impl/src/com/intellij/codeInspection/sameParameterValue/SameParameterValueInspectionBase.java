@@ -49,7 +49,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
         if (value != null) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
-          problems.add(registerProblem(manager, refParameter.getElement(), value));
+          problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
         }
       }
     }
@@ -228,7 +228,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             for (int i = 0, length = paramValues.length; i < length; i++) {
               String value = paramValues[i];
               if (value != null && value != NOT_CONST) {
-                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value));
+                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value, false));
               }
             }
           }
@@ -243,13 +243,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
 
   private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
                                             PsiParameter parameter,
-                                            String value) {
+                                            String value,
+                                            boolean usedForWriting) {
     final String name = parameter.getName();
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
                                                                      "<code>" + name + "</code>",
                                                                      "<code>" + StringUtil.unquoteString(value) + "</code>"),
-                                           createFix(name, value),
+                                           usedForWriting ? null : createFix(name, value),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.chain.positive;
 
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -24,87 +10,87 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class LocationBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
-  public void testAnonymousBody() throws Exception {
+  public void testAnonymousBody() {
     doTest();
   }
 
-  public void testAssignExpression() throws Exception {
+  public void testAssignExpression() {
     doTest();
   }
 
-  public void testFirstParameterOfFunction() throws Exception {
+  public void testFirstParameterOfFunction() {
     doTest();
   }
 
-  public void testLambdaBody() throws Exception {
+  public void testLambdaBody() {
     doTest();
   }
 
-  public void testParameterInAssignExpression() throws Exception {
+  public void testParameterInAssignExpression() {
     doTest();
   }
 
-  public void testParameterInReturnExpression() throws Exception {
+  public void testParameterInReturnExpression() {
     doTest();
   }
 
-  public void testReturnExpression() throws Exception {
+  public void testReturnExpression() {
     doTest();
   }
 
-  public void testSecondParameterOfFunction() throws Exception {
+  public void testSecondParameterOfFunction() {
     doTest();
   }
 
-  public void testSingleExpression() throws Exception {
+  public void testSingleExpression() {
     doTest();
   }
 
-  public void testBeforeStatement() throws Exception {
+  public void testBeforeStatement() {
     doTest();
   }
 
-  public void testAfterStatement() throws Exception {
+  public void testAfterStatement() {
     doTest();
   }
 
-  public void testBetweenChainCallsBeforeDot() throws Exception {
+  public void testBetweenChainCallsBeforeDot() {
     doTest();
   }
 
-  public void testBetweenChainCallsAfterDot() throws Exception {
+  public void testBetweenChainCallsAfterDot() {
     doTest();
   }
 
-  public void testInEmptyParameterList() throws Exception {
+  public void testInEmptyParameterList() {
     doTest();
   }
 
-  public void testBetweenParametersBeforeComma() throws Exception {
+  public void testBetweenParametersBeforeComma() {
     doTest();
   }
 
-  public void testBetweenParametersAfterComma() throws Exception {
+  public void testBetweenParametersAfterComma() {
     doTest();
   }
 
-  public void testInAnyLambda() throws Exception {
+  public void testInAnyLambda() {
     doTest();
   }
 
-  public void testInAnyAnonymous() throws Exception {
+  public void testInAnyAnonymous() {
     doTest();
   }
 
-  public void testInString() throws Exception {
+  public void testInString() {
     doTest();
   }
 
-  public void testInVariableName() throws Exception {
+  public void testInVariableName() {
     doTest();
   }
 
-  public void testInMethodReference() throws Exception {
+  public void testInMethodReference() {
     doTest();
   }
 

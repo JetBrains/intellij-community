@@ -60,6 +60,7 @@ public abstract class DependenciesHandlerBase {
       task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
         @Override
         public void run(@NotNull final ProgressIndicator indicator) {
+          indicator.setIndeterminate(false);
           perform(builders);
         }
 
@@ -72,6 +73,7 @@ public abstract class DependenciesHandlerBase {
       task = new Task.Modal(myProject, getProgressTitle(), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(false);
           perform(builders);
         }
 

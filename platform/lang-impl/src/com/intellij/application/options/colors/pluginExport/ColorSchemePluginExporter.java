@@ -19,8 +19,8 @@ import com.intellij.application.options.schemes.SerializableSchemeExporter;
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.ReadOnlyColorsScheme;
 import com.intellij.openapi.options.ConfigurableSchemeExporter;
-import com.intellij.openapi.options.SchemeManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +94,7 @@ public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<Plugin
   @NotNull
   private static PluginExportData getPluginExportData(@NotNull EditorColorsScheme scheme) {
     PluginExportData data = new PluginExportData(scheme.getMetaProperties());
-    if (data.isEmpty() && scheme instanceof AbstractColorsScheme) {
+    if (data.isEmpty() && scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme)) {
       EditorColorsScheme original = ((AbstractColorsScheme)scheme).getOriginal();
       if (original != null) {
         return getPluginExportData(original);

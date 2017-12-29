@@ -79,6 +79,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     for (final PsiElement element : changedItems) {
       if (!(element instanceof PsiTypeCastExpression)) {
         usages[i++] = new UsageInfo(element) {
+          @Override
           public String getTooltipText() {
             return myResult.getCookedType(element).getCanonicalText();
           }

@@ -159,11 +159,9 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     if (ref.isNull()) throw new RuntimeException("Unable to acquire remote proxy for: " + getName(target));
     RunningInfo info = ref.get();
     if (info.handler == null) {
-      String message = info.name;
-      if (message != null && message.startsWith("ERROR: transport error 202:")) {
-        message = "Unable to start java process in debug mode: -Xdebug parameters are already in use.";
-      }
-      throw new ExecutionException(message);
+      String message = info instanceof FailedInfo ? ((FailedInfo)info).stderr : null;
+      Throwable cause = info instanceof FailedInfo ? ((FailedInfo)info).cause : null;
+      throw new ExecutionException(message, cause);
     }
     return acquire(info);
   }
@@ -217,8 +215,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       //noinspection ConstantConditions
       processHandler = result.getProcessHandler();
     }
-    catch (Exception e) {
-      dropProcessInfo(key, e instanceof ExecutionException? e.getMessage() : ExceptionUtil.getUserStackTrace(e, LOG), null);
+    catch (Throwable e) {
+      dropProcessInfo(key, e, null);
       return;
     }
     processHandler.addProcessListener(getProcessListener(key));
@@ -357,7 +355,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     };
   }
 
-  private boolean dropProcessInfo(Pair<Target, Parameters> key, @Nullable String errorMessage, @Nullable ProcessHandler handler) {
+  private boolean dropProcessInfo(Pair<Target, Parameters> key, @Nullable Throwable error, @Nullable ProcessHandler handler) {
     Info info;
     synchronized (myProcMap) {
       info = myProcMap.get(key);
@@ -372,9 +370,8 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     if (info instanceof PendingInfo) {
       PendingInfo pendingInfo = (PendingInfo)info;
-      if (pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull()) {
-        if (errorMessage != null) pendingInfo.stderr.append(errorMessage);
-        pendingInfo.ref.set(new RunningInfo(null, -1, pendingInfo.stderr.toString()));
+      if (error != null || pendingInfo.stderr.length() > 0 || pendingInfo.ref.isNull()) {
+        pendingInfo.ref.set(new FailedInfo(error, pendingInfo.stderr.toString()));
       }
       synchronized (pendingInfo.ref) {
         pendingInfo.ref.notifyAll();
@@ -420,6 +417,22 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     @Override
     public String toString() {
       return port + "/" + name;
+    }
+  }
+
+  private static class FailedInfo extends RunningInfo {
+    final Throwable cause;
+    final String stderr;
+
+    FailedInfo(Throwable cause, String stderr) {
+      super(null, -1, null);
+      this.cause = cause;
+      this.stderr = stderr;
+    }
+
+    @Override
+    public String toString() {
+      return "FailedInfo{" + cause + '}';
     }
   }
 

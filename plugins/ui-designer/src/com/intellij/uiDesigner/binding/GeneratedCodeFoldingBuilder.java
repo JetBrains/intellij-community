@@ -70,7 +70,8 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
       if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName()) ||
           AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
           AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD.equals(method.getName()) ||
-          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(method.getName())) {
+          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(method.getName()) ||
+          AsmCodeGenerator.GET_FONT_METHOD_NAME.equals(method.getName())) {
         addFoldingData(method);
       }
     }

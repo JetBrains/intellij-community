@@ -26,7 +26,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -62,12 +64,17 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
         return false;
       }
       PsiType variableType = GenericsUtil.getVariableTypeByExpressionType(inType);
+      if (LambdaUtil.notInferredType(variableType)) return false;
+
       String typeText = variableType.getCanonicalText();
-      if(!variableType.equalsToText(typeText)) {
-        // Probably some incorrect type like PsiLambdaParameterType
-        return false;
-      }
-      PsiType resultType = createReplacement(context, "((" + typeText + ")null)").getType();
+      PsiExpression replacement = createReplacement(context, "((" + typeText + ")null)");
+      PsiDeclarationStatement declaration =
+        JavaPsiFacade.getElementFactory(context.getProject()).createVariableDeclarationStatement("x", outType, replacement, context);
+      PsiVariable var = ObjectUtils.tryCast(ArrayUtil.getFirstElement(declaration.getDeclaredElements()), PsiVariable.class);
+      if (var == null) return false;
+      PsiExpression initializer = var.getInitializer();
+      if (initializer == null) return false;
+      PsiType resultType = initializer.getType();
       return resultType != null && outType.isAssignableFrom(resultType);
     }
 
@@ -161,7 +168,6 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
     return myType != null &&
            myWrapper != null &&
            myType.isValid() &&
-           startElement.isValid() &&
            startElement.getManager().isInProject(startElement);
   }
 

@@ -61,7 +61,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return false;
 
-    return EncodingUtil.checkCanConvert(virtualFile) == null || EncodingUtil.checkCanReload(virtualFile).second == null;
+    return EncodingUtil.checkCanConvert(virtualFile) == null || EncodingUtil.checkCanReload(virtualFile, null) == null;
   }
 
   @Override

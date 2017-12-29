@@ -22,7 +22,10 @@ import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -75,8 +78,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (myMethod.isValid() &&
-        myMethod.getManager().isInProject(myMethod) &&
+    if (myMethod.getManager().isInProject(myMethod) &&
         myReturnType != null &&
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {
@@ -92,17 +94,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
     myReturnType.accept(searcher);
     Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
-    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, myMethod));
-  }
-
-  private static boolean isAccessibleAt(PsiTypeParameter parameter, PsiMethod method) {
-    PsiTypeParameterListOwner owner = parameter.getOwner();
-    if(owner == method) return true;
-    if(owner instanceof PsiClass) {
-      return PsiTreeUtil.isAncestor(owner, method, true) &&
-             InheritanceUtil.hasEnclosingInstanceInScope((PsiClass)owner, method, false, false);
-    }
-    return false;
+    return parameters.stream().allMatch(parameter -> PsiTypesUtil.isAccessibleAt(parameter, myMethod));
   }
 
   @Override

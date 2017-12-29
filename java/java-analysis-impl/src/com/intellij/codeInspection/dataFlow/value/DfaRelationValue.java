@@ -32,9 +32,9 @@ public class DfaRelationValue extends DfaValue {
     return myFactory.getRelationFactory().createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
   }
 
-  private DfaValue myLeftOperand;
-  private DfaValue myRightOperand;
-  private RelationType myRelation;
+  private @NotNull DfaValue myLeftOperand;
+  private @NotNull DfaValue myRightOperand;
+  private @NotNull RelationType myRelation;
 
   public enum RelationType {
     LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),
@@ -54,6 +54,20 @@ public class DfaRelationValue extends DfaValue {
 
     RelationType(String name) {
       myName = name;
+    }
+
+    public boolean isSubRelation(RelationType other) {
+      if (other == this) return true;
+      switch (this) {
+        case LE:
+          return other == LT || other == EQ;
+        case GE:
+          return other == GT || other == EQ;
+        case NE:
+          return other == LT || other == GT;
+        default:
+          return false;
+      }
     }
 
     @NotNull
@@ -134,18 +148,20 @@ public class DfaRelationValue extends DfaValue {
     }
   }
 
-  private DfaRelationValue(DfaValue leftOperand, DfaValue rightOperand, RelationType relationType,
+  private DfaRelationValue(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType,
                            DfaValueFactory factory) {
     super(factory);
-    this.myLeftOperand = leftOperand;
-    this.myRightOperand = rightOperand;
-    this.myRelation = relationType;
+    myLeftOperand = leftOperand;
+    myRightOperand = rightOperand;
+    myRelation = relationType;
   }
 
+  @NotNull
   public DfaValue getLeftOperand() {
     return myLeftOperand;
   }
 
+  @NotNull
   public DfaValue getRightOperand() {
     return myRightOperand;
   }
@@ -160,7 +176,8 @@ public class DfaRelationValue extends DfaValue {
     }
 
     public DfaRelationValue createRelation(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) && dfaRight instanceof DfaOptionalValue) {
+      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) &&
+          dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
@@ -171,10 +188,10 @@ public class DfaRelationValue extends DfaValue {
         }
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
-      if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaConstValue) {
+      if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
         return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
       }
-      else if (dfaRight instanceof DfaTypeValue && dfaLeft instanceof DfaConstValue) {
+      else if (dfaRight instanceof DfaFactMapValue && dfaLeft instanceof DfaConstValue) {
         return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaLeft);
       }
       return null;

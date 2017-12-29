@@ -377,16 +377,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected void applyLanguageSettings(Language lang, CodeStyleSettings rootSettings, CodeStyleSettings targetSettings) {
     CommonCodeStyleSettings sourceCommonSettings = rootSettings.getCommonSettings(lang);
     CommonCodeStyleSettings targetCommonSettings = targetSettings.getCommonSettings(getDefaultLanguage());
-    if (!(targetCommonSettings instanceof CodeStyleSettings)) {
-      CommonCodeStyleSettingsManager.copy(sourceCommonSettings, targetCommonSettings);
-    }
-    else {
-      Language targetLang = getDefaultLanguage();
-      LOG.error((targetLang != null ? targetLang.getDisplayName() : "Unknown") +
-                " language plug-in either uses an outdated API or does not initialize" +
-                " its own code style settings in LanguageCodeStyleSettingsProvider.getDefaultSettings()." +
-                " The operation can not be applied in this case.");
-    }
+    CommonCodeStyleSettingsManager.copy(sourceCommonSettings, targetCommonSettings);
   }
 
   private void applyPredefinedStyle(String styleName) {

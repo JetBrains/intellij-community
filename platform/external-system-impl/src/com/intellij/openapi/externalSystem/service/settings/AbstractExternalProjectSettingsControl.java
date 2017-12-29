@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.settings;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
@@ -117,7 +118,16 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     reset(false);
   }
 
+  @Override
+  public void reset(@Nullable WizardContext wizardContext) {
+    reset(false, wizardContext);
+  }
+
   public void reset(boolean isDefaultModuleCreation) {
+    reset(isDefaultModuleCreation, null);
+  }
+
+  public void reset(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext) {
     if (!myCustomizer.isUseAutoImportBoxHidden() && myUseAutoImportBox != null) {
       myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
     }
@@ -130,11 +140,17 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
     if (!isDefaultModuleCreation && !myCustomizer.isCreateEmptyContentRootDirectoriesBoxHidden() && myCreateEmptyContentRootDirectoriesBox != null) {
       myCreateEmptyContentRootDirectoriesBox.setSelected(getInitialSettings().isCreateEmptyContentRootDirectories());
     }
-    myUseModuleGroupsRadioButton.setSelected(getInitialSettings().isUseQualifiedModuleNames());
-    resetExtraSettings(isDefaultModuleCreation);
+    boolean useQualifiedModuleNames = getInitialSettings().isUseQualifiedModuleNames();
+    myUseModuleGroupsRadioButton.setSelected(!useQualifiedModuleNames);
+    myUseQualifiedModuleNamesRadioButton.setSelected(useQualifiedModuleNames);
+    resetExtraSettings(isDefaultModuleCreation, wizardContext);
   }
 
   protected abstract void resetExtraSettings(boolean isDefaultModuleCreation);
+
+  protected void resetExtraSettings(boolean isDefaultModuleCreation, @Nullable WizardContext wizardContext) {
+    resetExtraSettings(isDefaultModuleCreation);
+  }
 
   @Override
   public void apply(@NotNull S settings) {

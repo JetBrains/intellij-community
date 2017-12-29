@@ -38,6 +38,7 @@ public interface JsonLikePsiWalker {
   boolean isName(PsiElement element);
   boolean isPropertyWithValue(@NotNull PsiElement element);
   PsiElement goUpToCheckable(@NotNull final PsiElement element);
+  @Nullable
   List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition);
   boolean isNameQuoted();
   boolean onlyDoubleQuotesForStringLiterals();
@@ -49,6 +50,7 @@ public interface JsonLikePsiWalker {
   @Nullable
   JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
 
+  @Nullable
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
 

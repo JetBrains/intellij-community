@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 
 /**
@@ -32,6 +33,7 @@ import org.intellij.lang.annotations.Language
 class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
+    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter({ it.name != "module-info.java"})
 
     addFile("module-info.java", "module M2 { exports org.example.m2; }", ModuleDescriptor.M2)
     addFile("module-info.java", "module M4 { exports org.example.m4; }", ModuleDescriptor.M4)

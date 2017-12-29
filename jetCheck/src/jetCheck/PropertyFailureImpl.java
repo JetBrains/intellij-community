@@ -3,6 +3,10 @@ package jetCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 class PropertyFailureImpl<T> implements PropertyFailure<T> {
   private final CounterExampleImpl<T> initial;
   private CounterExampleImpl<T> minimized;
@@ -72,26 +76,83 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   }
 
   private void shrink() {
-    minimized.data.shrink(node -> {
-      if (!iteration.session.generatedHashes.add(node.hashCode())) return false;
+    ShrinkStep step = minimized.data.shrink();
+    while (step != null) {
+      step = findSuccessfulShrink(step);
+      if (step != null) {
+        step = step.onSuccess(minimized.data);
+      }
+    }
+  }
 
+  @Nullable
+  private ShrinkStep findSuccessfulShrink(ShrinkStep step) {
+    List<CustomizedNode> combinatorial = new ArrayList<>();
+
+    while (step != null) {
+      StructureNode node = step.apply(minimized.data);
+      if (node != null && iteration.session.generatedHashes.add(node.hashCode())) {
+        CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();
+        if (tryStep(node, customizer)) {
+          return step;
+        }
+        CombinatorialIntCustomizer next = customizer.nextAttempt();
+        if (next != null) {
+          combinatorial.add(new CustomizedNode(next, step));
+        }
+      }
+
+      step = step.onFailure();
+    }
+    return processDelayedCombinations(combinatorial);
+  }
+
+  @Nullable
+  private ShrinkStep processDelayedCombinations(List<CustomizedNode> delayed) {
+    Collections.sort(delayed);
+
+    for (CustomizedNode customizedNode : delayed) {
+      CombinatorialIntCustomizer customizer = customizedNode.customizer;
+      while (customizer != null) {
+        if (tryStep(customizedNode.step.apply(minimized.data), customizer)) {
+          return customizedNode.step;
+        }
+        customizer = customizer.nextAttempt();
+      }
+    }
+    return null;
+  }
+
+  private boolean tryStep(StructureNode node, CombinatorialIntCustomizer customizer) {
+    try {
       iteration.session.notifier.shrinkAttempt(this, iteration);
 
-      try {
-        T value = iteration.session.generator.getGeneratorFunction().apply(new ReplayDataStructure((StructureNode)node, iteration.sizeHint));
-        totalSteps++;
-        CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration.session.property, value, (StructureNode)node);
-        if (example != null) {
-          minimized = example;
-          successfulSteps++;
-          return true;
-        }
-        return false;
+      totalSteps++;
+      T value = iteration.generateValue(new ReplayDataStructure(node, iteration.sizeHint, customizer));
+      CounterExampleImpl<T> example = CounterExampleImpl.checkProperty(iteration, value, customizer.writeChanges(node));
+      if (example != null) {
+        minimized = example;
+        successfulSteps++;
+        return true;
       }
-      catch (CannotRestoreValue e) {
-        return false;
-      }
+    }
+    catch (CannotRestoreValue ignored) {
+    }
+    return false;
+  }
 
-    });
+  private static class CustomizedNode implements Comparable<CustomizedNode> {
+    final CombinatorialIntCustomizer customizer;
+    final ShrinkStep step;
+
+    CustomizedNode(CombinatorialIntCustomizer customizer, ShrinkStep step) {
+      this.customizer = customizer;
+      this.step = step;
+    }
+
+    @Override
+    public int compareTo(@NotNull CustomizedNode o) {
+      return Integer.compare(customizer.countVariants(), o.customizer.countVariants());
+    }
   }
 }

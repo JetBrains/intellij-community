@@ -45,7 +45,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/8/12
  */
 public class SaveProjectAsTemplateDialog extends DialogWrapper {
 

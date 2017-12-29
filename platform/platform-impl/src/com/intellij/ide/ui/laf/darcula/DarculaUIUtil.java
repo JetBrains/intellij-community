@@ -21,7 +21,10 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.ui.*;
+import com.intellij.ui.ComboBoxCompositeEditor;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -30,13 +33,13 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
@@ -50,8 +53,6 @@ import static javax.swing.SwingConstants.WEST;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  private static final Color GLOW_COLOR = new JBColor(new Color(31, 121, 212), new Color(96, 175, 255));
-
   @SuppressWarnings("UseJBColor")
   private static final Color MAC_ACTIVE_ERROR_COLOR = new Color(0x80f53b3b, true);
   private static final Color DEFAULT_ACTIVE_ERROR_COLOR = new JBColor(0xe53e4d, 0x8b3c3c);
@@ -74,11 +75,8 @@ public class DarculaUIUtil {
   public static final Color ACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_ACTIVE_WARNING_COLOR : DEFAULT_ACTIVE_WARNING_COLOR);
   public static final Color INACTIVE_WARNING_COLOR = new JBColor(() -> UIUtil.isUnderDefaultMacTheme() ? MAC_INACTIVE_WARNING_COLOR : DEFAULT_INACTIVE_WARNING_COLOR);
 
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_REGULAR_COLOR = new Color(0x80479cfc, true);
-
-  @SuppressWarnings("UseJBColor")
-  private static final Color MAC_GRAPHITE_COLOR = new Color(0x8099979d, true);
+  private static final Color REGULAR_COLOR = new JBColor(new Color(0x80479cfc, true), new Color(0x395d82));
+  private static final Color GRAPHITE_COLOR = new JBColor(new Color(0x8099979d, true), new Color(0x676869));
 
   public enum Outline {
     error {
@@ -96,63 +94,14 @@ public class DarculaUIUtil {
     abstract public void setGraphicsColor(Graphics2D g, boolean focused);
   }
 
-  public static void paintFocusRing(Graphics g, Rectangle bounds) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, bounds);
-  }
+  public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
+    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
 
-  public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
-  }
-
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component) {
-    paintSearchFocusRing(g, bounds, component, -1);
-  }
-
-  public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds, Component component, int maxArcSize) {
-    int correction = UIUtil.isUnderAquaLookAndFeel() ? 30 : UIUtil.isUnderDarcula() ? 50 : 0;
-    final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(GLOW_COLOR, 180 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 120 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 70  - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 100 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 50  - correction)
-    };
-
-    final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    final Object oldStrokeControlValue = g.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL);
-
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
-
-
-    final Rectangle r = new Rectangle(bounds.x - 3, bounds.y - 3, bounds.width + 6, bounds.height + 6);
-    int arcSize = r.height - 1;
-    if (maxArcSize>0) arcSize = Math.min(maxArcSize, arcSize);
-    if (arcSize %2 == 1) arcSize--;
-
-
-    g.setColor(component.getBackground());
-    g.fillRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize - 4, arcSize - 4);
-
-    g.setColor(colors[0]);
-    g.drawRoundRect(r.x + 2, r.y + 2, r.width - 5, r.height - 5, arcSize-4, arcSize-4);
-
-    g.setColor(colors[1]);
-    g.drawRoundRect(r.x + 1, r.y + 1, r.width - 3, r.height - 3, arcSize-2, arcSize-2);
-
-    g.setColor(colors[2]);
-    g.drawRoundRect(r.x, r.y, r.width - 1, r.height - 1, arcSize, arcSize);
-
-
-    g.setColor(colors[3]);
-    g.drawRoundRect(r.x+3, r.y+3, r.width - 7, r.height - 7, arcSize-6, arcSize-6);
-
-    g.setColor(colors[4]);
-    g.drawRoundRect(r.x+4, r.y+4, r.width - 9, r.height - 9, arcSize-8, arcSize-8);
-
-    // restore rendering hints
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAntialiasingValue);
-    g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldStrokeControlValue);
+    float blw = bw() + lw(g);
+    Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    shape.append(new Ellipse2D.Float(x - blw, y - blw, width + blw*2, height + blw*2), false);
+    shape.append(new Ellipse2D.Float(x, y, width, height), false);
+    g.fill(shape);
   }
 
   @Deprecated
@@ -170,21 +119,21 @@ public class DarculaUIUtil {
   }
 
   public static void paintFocusBorder(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    g.setPaint(IntelliJLaf.isGraphite() ? MAC_GRAPHITE_COLOR : MAC_REGULAR_COLOR);
+    g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
     doPaint(g, width, height, arc, symmetric);
   }
 
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, float arc, boolean symmetric) {
-    double bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : 0.0;
-    double lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
+    float bw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(3) : bw();
+    float lw = UIUtil.isUnderDefaultMacTheme() ? JBUI.scale(UIUtil.isRetina(g) ? 0.5f : 1.0f) : JBUI.scale(0.5f);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    double outerArc = arc > 0 ? arc + lw - JBUI.scale(2f) : lw;
-    double rightOuterArc = symmetric ? outerArc : JBUI.scale(6f);
-    Path2D outerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    float outerArc = arc > 0 ? arc + bw - JBUI.scale(2f) : bw;
+    float rightOuterArc = symmetric ? outerArc : JBUI.scale(6f);
+    Path2D outerRect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     outerRect.moveTo(width - rightOuterArc, 0);
     outerRect.quadTo(width, 0, width, rightOuterArc);
     outerRect.lineTo(width, height - rightOuterArc);
@@ -195,20 +144,20 @@ public class DarculaUIUtil {
     outerRect.quadTo(0, 0, outerArc, 0);
     outerRect.closePath();
 
-    lw += bw;
-    double rightInnerArc = symmetric ? outerArc : JBUI.scale(7f);
-    Path2D innerRect = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-    innerRect.moveTo(width - rightInnerArc, lw);
-    innerRect.quadTo(width - lw, lw , width - lw, rightInnerArc);
-    innerRect.lineTo(width - lw, height - rightInnerArc);
-    innerRect.quadTo(width - lw, height - lw, width - rightInnerArc, height - lw);
-    innerRect.lineTo(outerArc, height - lw);
-    innerRect.quadTo(lw, height - lw, lw, height - outerArc);
-    innerRect.lineTo(lw, outerArc);
-    innerRect.quadTo(lw, lw, outerArc, lw);
+    bw += lw;
+    float rightInnerArc = symmetric ? outerArc : JBUI.scale(7f);
+    Path2D innerRect = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+    innerRect.moveTo(width - rightInnerArc, bw);
+    innerRect.quadTo(width - bw, bw , width - bw, rightInnerArc);
+    innerRect.lineTo(width - bw, height - rightInnerArc);
+    innerRect.quadTo(width - bw, height - bw, width - rightInnerArc, height - bw);
+    innerRect.lineTo(outerArc, height - bw);
+    innerRect.quadTo(bw, height - bw, bw, height - outerArc);
+    innerRect.lineTo(bw, outerArc);
+    innerRect.quadTo(bw, bw, outerArc, bw);
     innerRect.closePath();
 
-    Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+    Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
     path.append(outerRect, false);
     path.append(innerRect, false);
     g.fill(path);
@@ -258,7 +207,7 @@ public class DarculaUIUtil {
           g2.fillRect(x, y, width, height);
         }
 
-        Rectangle2D rect = new Rectangle2D.Double(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
+        Rectangle2D rect = new Rectangle2D.Float(x + JBUI.scale(3), y + JBUI.scale(3), width - JBUI.scale(3)*2, height - JBUI.scale(3)*2);
         g2.setColor(c.getBackground());
         g2.fill(rect);
 
@@ -266,13 +215,13 @@ public class DarculaUIUtil {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
         }
 
-        double bw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
-        Path2D outline = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        float bw = UIUtil.isRetina(g2) ? 0.5f : 1.0f;
+        Path2D outline = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         outline.append(rect, false);
-        outline.append(new Rectangle2D.Double(rect.getX() + bw,
-                                              rect.getY() + bw,
-                                              rect.getWidth() - 2*bw,
-                                              rect.getHeight() - 2*bw), false);
+        outline.append(new Rectangle2D.Float((float)rect.getX() + bw,
+                                             (float)rect.getY() + bw,
+                                             (float)rect.getWidth() - 2*bw,
+                                             (float)rect.getHeight() - 2*bw), false);
         g2.setColor(Gray.xBC);
         g2.fill(outline);
 
@@ -292,7 +241,9 @@ public class DarculaUIUtil {
 
     @Override
     public Insets getBorderInsets(Component c) {
-      return isComboBoxEditor(c) ? new InsetsUIResource(1, 3, 2, 3) : new InsetsUIResource(6, 7, 6, 7);
+      return isComboBoxEditor(c) ?
+             JBUI.insets(1, 3, 2, 3).asUIResource() :
+             JBUI.insets(5, 8).asUIResource();
     }
   }
 
@@ -340,7 +291,7 @@ public class DarculaUIUtil {
         if (isBorderOpaque() || c.getParent() != null) {
           g2.setColor(c.getParent().getBackground());
 
-          Path2D borderArea = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+          Path2D borderArea = new Path2D.Float(Path2D.WIND_EVEN_ODD);
           borderArea.append(r, false);
 
           Rectangle innerRect = new Rectangle(r);
@@ -373,7 +324,7 @@ public class DarculaUIUtil {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.47f));
         }
 
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
         border.append(r, false);
 
         Rectangle innerRect = new Rectangle(r);
@@ -421,5 +372,33 @@ public class DarculaUIUtil {
         repaintComponent.repaint();
       }
     }
+  }
+
+  public static float lw(Graphics2D g2) {
+    return UIUtil.isJreHiDPI(g2) ? JBUI.scale(0.5f) : 1.0f;
+  }
+
+  public static float bw() {
+    return JBUI.scale(2);
+  }
+
+  public static float arc() {
+    return JBUI.scale(5.0f);
+  }
+
+  public static Color getOutlineColor(boolean enabled) {
+    if (UIUtil.isUnderDarcula()) {
+      return enabled ? Gray._100 : Gray._83;
+    }
+    return Gray.xBC ;
+  }
+
+  public static Color getArrowButtonFillColor(boolean hasFocus, boolean enabled, Color defaultColor) {
+    Color color = UIManager.getColor(hasFocus ? "ComboBox.darcula.arrowFocusedFillColor" : "ComboBox.darcula.arrowFillColor");
+    return color == null ? defaultColor : enabled ? color : getOutlineColor(false);
+  }
+
+  public static boolean isEmpty(Dimension d) {
+    return d == null || d.width == 0 && d.height == 0;
   }
 }

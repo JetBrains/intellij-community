@@ -12,6 +12,9 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionService"
                         serviceImplementation="com.intellij.codeInsight.completion.impl.CompletionServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInspection.actions.CleanupInspectionUtil"
+                        serviceImplementation="com.intellij.codeInspection.actions.CleanupInspectionUtilImpl"/>
+
     <applicationService serviceInterface="com.intellij.lang.cacheBuilder.CacheBuilderRegistry"
                         serviceImplementation="com.intellij.lang.cacheBuilder.CacheBuilderRegistryImpl"/>
 
@@ -202,8 +205,8 @@
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
-    <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
-                    serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
+    <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
+                        serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"
                     serviceImplementation="com.intellij.psi.codeStyle.ProjectCodeStyleSettingsManager"/>
@@ -253,7 +256,8 @@
     <projectService serviceInterface="com.intellij.facet.impl.invalid.InvalidFacetManager"
                     serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
-                    serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"/>
+                    serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"
+                    testServiceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier"/>
     <projectService serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloader"/>
 
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
@@ -606,6 +610,12 @@
 
     <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
 
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.ProjectScopeItemPresenter" id="project_scope" order="first"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.ModuleScopeItemPresenter" id="module_scope" order="after project_scope"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.VcsScopeItemPresenter" id="vcs_scope" order="after module_scope"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.OtherScopeItemPresenter" id="other_scope" order="after vcs_scope"/>
+    <modelScopeItemPresenter implementation="com.intellij.analysis.dialog.CustomScopeItemPresenter" id="custom_scope" order="after other_scope"/>
+
     <customPasteProvider implementation="com.intellij.ide.actions.PasteReferenceProvider"/>
 
     <referenceInjector implementation="com.intellij.codeInsight.daemon.impl.analysis.encoding.EncodingReferenceInjector"/>
@@ -892,6 +902,13 @@
     <statistics.usagesCollector implementation="com.intellij.openapi.fileTypes.FileTypeUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector$ProjectUsages"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$AllBundledToolsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$AllListedToolsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledBundledToolsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$EnabledListedToolsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledBundledToolsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.tools.AbstractToolsUsagesCollector$DisabledListedToolsUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
 
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last"/>
     <renameInputValidator implementation="com.intellij.refactoring.rename.RenameToIgnoredDirectoryFileInputValidator" order="last"/>
@@ -966,6 +983,7 @@
     <copyPastePostProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor"/>
      <!--the following binding uses 'first' order to make sure it captures raw text before any other processor modifies it -->
     <copyPastePreProcessor implementation="com.intellij.openapi.editor.richcopy.TextWithMarkupProcessor$RawTextSetter" order="first" id="richcopy"/>
+    <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.LineCommentCopyPastePreProcessor"/>
 
     <!-- Postfix templates -->
     <applicationService serviceImplementation="com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings"/>

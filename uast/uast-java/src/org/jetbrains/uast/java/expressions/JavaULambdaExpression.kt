@@ -24,22 +24,22 @@ import org.jetbrains.uast.ULambdaExpression
 import org.jetbrains.uast.UastEmptyExpression
 
 class JavaULambdaExpression(
-        override val psi: PsiLambdaExpression,
-        givenParent: UElement?
+  override val psi: PsiLambdaExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULambdaExpression {
-    override val functionalInterfaceType: PsiType?
-        get() = psi.functionalInterfaceType
+  override val functionalInterfaceType: PsiType?
+    get() = psi.functionalInterfaceType
 
-    override val valueParameters by lz {
-        psi.parameterList.parameters.map { JavaUParameter(it, this) }
-    }
+  override val valueParameters by lz {
+    psi.parameterList.parameters.map { JavaUParameter(it, this) }
+  }
 
-    override val body by lz {
-        val b = psi.body
-        when (b) {
-            is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
-            is PsiExpression -> JavaConverter.convertOrEmpty(b, this)
-            else -> UastEmptyExpression
-        }
+  override val body by lz {
+    val b = psi.body
+    when (b) {
+      is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
+      is PsiExpression -> JavaConverter.convertOrEmpty(b, this)
+      else -> UastEmptyExpression(this)
     }
+  }
 }

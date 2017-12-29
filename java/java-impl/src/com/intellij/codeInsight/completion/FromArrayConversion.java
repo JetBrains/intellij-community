@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -56,7 +57,8 @@ class FromArrayConversion {
 
         int startOffset = context.getStartOffset() - qualifierText.length();
         final Project project = element.getProject();
-        final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(project).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+        final String callSpace = getSpace(
+          CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
         final String newText = "java.util.Arrays." + methodName + "(" + callSpace + qualifierText + prefix + callSpace + ")";
         context.getDocument().replaceString(startOffset, context.getTailOffset(), newText);
 

@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -122,5 +123,10 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     for (int i=0; i<getTabCount(); i++) {
       getComponentAt(i).removeHierarchyListener(this);
     }
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 }

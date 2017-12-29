@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -58,12 +57,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
     final int localId = System.identityHashCode(data);
     myDataMap.put(localId, data);
 
-    perform(new IndexRetriable<Object>() {
-      @Override
-      public Object execute() throws RemoteException, MavenServerIndexerException {
-        return getRemoteId(localId);
-      }
-    });
+    perform(() -> getRemoteId(localId));
 
     return localId;
   }
@@ -100,65 +94,44 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
   }
 
   public int getIndexCount() {
-    return perform(new Retriable<Integer>() {
-      @Override
-      public Integer execute() throws RemoteException {
-        return getOrCreateWrappee().getIndexCount();
-      }
-    });
+    return perform(() -> getOrCreateWrappee().getIndexCount());
   }
 
   public void updateIndex(final int localId,
                           final MavenGeneralSettings settings,
                           final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
                                                                          MavenServerIndexerException {
-    perform(new IndexRetriableCancelable<Object>() {
-      @Override
-      public Object execute() throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
-        MavenServerProgressIndicator indicatorWrapper = MavenServerManager.wrapAndExport(indicator);
-        try {
-          getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenServerManager.convertSettings(settings), indicatorWrapper);
-        }
-        finally {
-          UnicastRemoteObject.unexportObject(indicatorWrapper, true);
-        }
-        return null;
+    performCancelable(() -> {
+      MavenServerProgressIndicator indicatorWrapper = MavenServerManager.wrapAndExport(indicator);
+      try {
+        getOrCreateWrappee().updateIndex(getRemoteId(localId), MavenServerManager.convertSettings(settings), indicatorWrapper);
       }
+      finally {
+        UnicastRemoteObject.unexportObject(indicatorWrapper, true);
+      }
+      return null;
     });
   }
 
   public void processArtifacts(final int indexId, final MavenIndicesProcessor processor) throws MavenServerIndexerException {
-    perform(new IndexRetriable<Object>() {
-      @Override
-      public Object execute() throws RemoteException, MavenServerIndexerException {
-        MavenServerIndicesProcessor processorWrapper = MavenServerManager.wrapAndExport(processor);
-        try {
-          getOrCreateWrappee().processArtifacts(getRemoteId(indexId), processorWrapper);
-        }
-        finally {
-          UnicastRemoteObject.unexportObject(processorWrapper, true);
-        }
-        return null;
+    perform(() -> {
+      MavenServerIndicesProcessor processorWrapper = MavenServerManager.wrapAndExport(processor);
+      try {
+        getOrCreateWrappee().processArtifacts(getRemoteId(indexId), processorWrapper);
       }
+      finally {
+        UnicastRemoteObject.unexportObject(processorWrapper, true);
+      }
+      return null;
     });
   }
 
-  public MavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
-    return perform(new IndexRetriable<MavenId>() {
-      @Override
-      public MavenId execute() throws RemoteException, MavenServerIndexerException {
-        return getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile);
-      }
-    });
+  public IndexedMavenId addArtifact(final int localId, final File artifactFile) throws MavenServerIndexerException {
+    return perform(() -> getOrCreateWrappee().addArtifact(getRemoteId(localId), artifactFile));
   }
 
   public Set<MavenArtifactInfo> search(final int localId, final Query query, final int maxResult) throws MavenServerIndexerException {
-    return perform(new IndexRetriable<Set<MavenArtifactInfo>>() {
-      @Override
-      public Set<MavenArtifactInfo> execute() throws RemoteException, MavenServerIndexerException {
-        return getOrCreateWrappee().search(getRemoteId(localId), query, maxResult);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().search(getRemoteId(localId), query, maxResult));
   }
 
   private synchronized int getRemoteId(int localId) throws RemoteException, MavenServerIndexerException {
@@ -172,12 +145,7 @@ public abstract class MavenIndexerWrapper extends RemoteObjectWrapper<MavenServe
   }
 
   public Collection<MavenArchetype> getArchetypes() {
-    return perform(new Retriable<Collection<MavenArchetype>>() {
-      @Override
-      public Collection<MavenArchetype> execute() throws RemoteException {
-        return getOrCreateWrappee().getArchetypes();
-      }
-    });
+    return perform(() -> getOrCreateWrappee().getArchetypes());
   }
 
   @TestOnly

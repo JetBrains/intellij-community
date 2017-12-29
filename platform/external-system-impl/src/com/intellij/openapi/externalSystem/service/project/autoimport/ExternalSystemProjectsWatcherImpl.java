@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.ProjectTopics;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -62,6 +51,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashSet;
@@ -69,7 +59,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,6 +81,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private static final Key<Long> CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT =
     Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT");
   private static final int DOCUMENT_SAVE_DELAY = 1000;
+  private static final int REFRESH_MERGING_TIME_SPAN = 2000;
 
   private final Project myProject;
   private final Set<Document> myChangedDocuments = new THashSet<>();
@@ -110,7 +100,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                                                      DOCUMENT_SAVE_DELAY, false, ANY_COMPONENT, myProject);
 
     myRefreshRequestsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Refresh requests queue",
-                                                    0, false, ANY_COMPONENT, myProject, null, false);
+                                                    REFRESH_MERGING_TIME_SPAN, false, ANY_COMPONENT, myProject, null, false);
 
     myImportAwareManagers = ContainerUtil.newArrayList();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
@@ -127,17 +117,18 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
     myNotificationMap = ContainerUtil.newConcurrentMap();
 
-    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
-      @Override
-      public void batchChangeStarted(Project project) {
-        myRefreshRequestsQueue.suspend();
-      }
+    ApplicationManager.getApplication().getMessageBus().connect(myProject)
+      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+        @Override
+        public void batchChangeStarted(Project project) {
+          myRefreshRequestsQueue.suspend();
+        }
 
-      @Override
-      public void batchChangeCompleted(Project project) {
-        myRefreshRequestsQueue.resume();
-      }
-    });
+        @Override
+        public void batchChangeCompleted(Project project) {
+          myRefreshRequestsQueue.resume();
+        }
+      });
   }
 
   @Override
@@ -251,15 +242,23 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private void scheduleUpdate(String projectPath) {
+    scheduleUpdate(projectPath, true);
+  }
+
+  private void scheduleUpdate(String projectPath, boolean reportRefreshError) {
     if (ExternalSystemUtil.isNoBackgroundMode()) {
       return;
     }
     Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject = findLinkedProjectSettings(projectPath);
     if (linkedProject == null) return;
-    scheduleUpdate(linkedProject);
+    scheduleUpdate(linkedProject, reportRefreshError);
   }
 
   private void scheduleUpdate(@NotNull Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject) {
+    scheduleUpdate(linkedProject, true);
+  }
+
+  private void scheduleUpdate(@NotNull Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject, boolean reportRefreshError) {
     if (ExternalSystemUtil.isNoBackgroundMode()) {
       return;
     }
@@ -273,9 +272,20 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         .findTask(ExternalSystemTaskType.RESOLVE_PROJECT, systemId, projectPath);
       final ExternalSystemTaskState taskState = resolveTask == null ? null : resolveTask.getState();
       if (taskState == null || taskState.isStopped()) {
-        addToRefreshQueue(projectPath, systemId);
+        addToRefreshQueue(projectPath, systemId, reportRefreshError);
       }
       else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
+        if (manager instanceof ExternalSystemAutoImportAware) {
+          Long lastTimestamp =
+            (Long)manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps().get(projectPath);
+          if (lastTimestamp != null) {
+            List<File> affectedFiles = ((ExternalSystemAutoImportAware)manager).getAffectedExternalProjectFiles(projectPath, myProject);
+            long currentTimeStamp = affectedFiles.stream().mapToLong(File::lastModified).sum();
+            if (lastTimestamp != currentTimeStamp) {
+              return;
+            }
+          }
+        }
         // re-schedule to wait for the active project import task end
         final ExternalSystemProgressNotificationManager progressManager =
           ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
@@ -283,7 +293,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           @Override
           public void onEnd(@NotNull ExternalSystemTaskId id) {
             progressManager.removeNotificationListener(this);
-            addToRefreshQueue(projectPath, systemId);
+            addToRefreshQueue(projectPath, systemId, reportRefreshError);
           }
         };
         progressManager.addNotificationListener(resolveTask.getId(), taskListener);
@@ -299,11 +309,11 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
   }
 
-  private void addToRefreshQueue(String projectPath, ProjectSystemId systemId) {
+  private void addToRefreshQueue(String projectPath, ProjectSystemId systemId, boolean reportRefreshError) {
     myRefreshRequestsQueue.queue(new Update(Pair.create(systemId, projectPath)) {
       @Override
       public void run() {
-        scheduleRefresh(myProject, projectPath, systemId, false);
+        scheduleRefresh(myProject, projectPath, systemId, reportRefreshError);
       }
     });
   }
@@ -324,16 +334,16 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
           timeStamp += file.lastModified();
         }
         Map<String, Long> modificationStamps = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps();
-        if (isProjectOpen && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
+        if (isProjectOpen &&
+            myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
+            myProject.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
           Long affectedFilesTimestamp = modificationStamps.get(settings.getExternalProjectPath());
           affectedFilesTimestamp = affectedFilesTimestamp == null ? -1L : affectedFilesTimestamp;
-          if (timeStamp != affectedFilesTimestamp.longValue()) {
+          if (timeStamp != affectedFilesTimestamp) {
             scheduleUpdate(settings.getExternalProjectPath());
           }
         }
-        else {
-          modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
-        }
+        modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
 
         for (File file : files) {
           if (file == null) continue;
@@ -353,6 +363,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               Long crc = virtualFile.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
               if (crc != null) {
                 modificationStamps.put(path, crc);
+              }
+              else {
+                UIUtil.invokeLaterIfNeeded(() -> {
+                  Long newCrc = calculateCrc(virtualFile);
+                  virtualFile.putUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT, newCrc);
+                  modificationStamps.put(path, newCrc);
+                });
               }
             }
           }
@@ -407,7 +424,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private static void scheduleRefresh(@NotNull final Project project,
                                       String projectPath,
                                       ProjectSystemId systemId,
-                                      final boolean reportRefreshError) {
+                                      boolean reportRefreshError) {
     ExternalSystemUtil.refreshProject(
       project, systemId, projectPath, new ExternalProjectRefreshCallback() {
         @Override
@@ -483,35 +500,21 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                           ProjectSystemId systemId,
                           String projectPath) {
       super(systemId.getReadableName() + " Import",
-            ExternalSystemBundle.message("import.needed", systemId.getReadableName()),
-            "<a href='reimport'>" + ExternalSystemBundle.message("import.importChanged") + "</a>" +
-            " &nbsp;&nbsp;" +
-            "<a href='autoImport'>" + ExternalSystemBundle.message("import.enableAutoImport") + "</a>",
+            ExternalSystemBundle.message("import.needed", systemId.getReadableName()), "",
             NotificationType.INFORMATION, null);
-
       mySystemId = systemId;
       myNotificationMap = notificationMap;
       projectPaths = ContainerUtil.newHashSet(projectPath);
-      setListener(new NotificationListener.Adapter() {
+      addAction(new NotificationAction(ExternalSystemBundle.message("import.importChanged")) {
         @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          boolean isReimport = event.getDescription().equals("reimport");
-          boolean isAutoImport = event.getDescription().equals("autoImport");
-
-          projectPaths.stream()
-            .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
-            .distinct()
-            .filter(Objects::nonNull)
-            .forEach(settings -> {
-              if (isReimport) {
-                scheduleRefresh(project, settings.getExternalProjectPath(), systemId, true);
-              }
-              if (isAutoImport) {
-                settings.setUseAutoImport(true);
-                scheduleRefresh(project, settings.getExternalProjectPath(), systemId, false);
-              }
-            });
-          notification.expire();
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          doAction(notification, project, systemId, false);
+        }
+      });
+      addAction(new NotificationAction(ExternalSystemBundle.message("import.enableAutoImport")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          doAction(notification, project, systemId, true);
         }
       });
     }
@@ -521,6 +524,23 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       super.expire();
       projectPaths.clear();
       myNotificationMap.remove(mySystemId);
+    }
+
+    private void doAction(@NotNull Notification notification,
+                          Project project,
+                          ProjectSystemId systemId,
+                          boolean isAutoImport) {
+      projectPaths.stream()
+        .map(path -> ExternalSystemApiUtil.getSettings(project, systemId).getLinkedProjectSettings(path))
+        .distinct()
+        .filter(Objects::nonNull)
+        .forEach(settings -> {
+          if (isAutoImport) {
+            settings.setUseAutoImport(true);
+          }
+          scheduleRefresh(project, settings.getExternalProjectPath(), systemId, !isAutoImport);
+        });
+      notification.expire();
     }
   }
 
@@ -642,7 +662,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       filesToUpdate.stream()
         .flatMap(f -> myKnownFiles.get(f.getPath()).stream())
         .distinct()
-        .forEach(path -> myWatcher.scheduleUpdate(path));
+        .forEach(path -> myWatcher.scheduleUpdate(path, false));
     }
 
     private void init() {

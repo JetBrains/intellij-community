@@ -11,7 +11,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import java.util.Collections;
 
 public class SSRCodeInsightTest extends UsefulTestCase {
-   protected CodeInsightTestFixture myFixture;
+  protected CodeInsightTestFixture myFixture;
   private SSBasedInspection myInspection;
 
   @Override
@@ -20,8 +20,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
     myFixture.setUp();
     myFixture.enableInspections(myInspection);
@@ -57,11 +56,9 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     //display name
     configuration.setName(patternName);
 
-    //search pattern
-    final MatchOptions options = new MatchOptions();
+    final MatchOptions options = configuration.getMatchOptions();
     options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern(searchPattern);
-    configuration.setMatchOptions(options);
 
     myInspection.setConfigurations(Collections.singletonList(configuration), myFixture.getProject());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");

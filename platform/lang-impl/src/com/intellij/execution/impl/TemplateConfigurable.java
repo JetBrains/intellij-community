@@ -20,7 +20,6 @@ import org.jdom.Element;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 10/6/11
 */
 class TemplateConfigurable extends BaseRCSettingsConfigurable {
   private final RunnerAndConfigurationSettings myTemplate;

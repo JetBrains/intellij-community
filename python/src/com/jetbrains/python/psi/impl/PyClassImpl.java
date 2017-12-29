@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -22,15 +8,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.*;
 import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -504,7 +489,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                                                                                          @NotNull Class<T> childrenClass,
                                                                                          @NotNull ArrayFactory<T> factory) {
     final List<T> result = new ArrayList<>();
-    processClassLevelDeclarations(new BaseScopeProcessor() {
+    processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement)element).getElementType())) {
@@ -656,13 +641,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   /**
    * @param name            name of the property
    * @param property_filter returns true if the property is acceptable
-   * @param advanced        is @foo.setter syntax allowed
    * @return the first property that both filters accepted.
    */
   @Nullable
-  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter, boolean advanced) {
+  private Property processPropertiesInClass(@Nullable String name, @Nullable Processor<Property> property_filter) {
     // NOTE: fast enough to be rerun every time
-    Property prop = processDecoratedProperties(name, property_filter, advanced);
+    Property prop = processDecoratedProperties(name, property_filter);
     if (prop != null) return prop;
     if (getStub() != null) {
       prop = processStubProperties(name, property_filter);
@@ -683,7 +667,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean useAdvancedSyntax) {
+  private Property processDecoratedProperties(@Nullable String name, @Nullable Processor<Property> filter) {
     // look at @property decorators
     Map<String, List<PyFunction>> grouped = new HashMap<>();
     // group suitable same-named methods, each group defines a property
@@ -718,16 +702,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                 }
               }
               if (PyNames.PROPERTY.equals(decoName) ||
-                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject()))) {
+                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
+                  qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.GETTER)) {
-                getter = new Maybe<>(method);
-              }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.SETTER)) {
+              else if (qname.matches(decoratorName, PyNames.SETTER)) {
                 setter = new Maybe<>(method);
               }
-              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.DELETER)) {
+              else if (qname.matches(decoratorName, PyNames.DELETER)) {
                 deleter = new Maybe<>(method);
               }
             }
@@ -842,14 +824,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   private Property processProperties(@Nullable String name, @Nullable Processor<Property> filter, boolean inherited) {
     PyPsiUtils.assertValid(this);
-    LanguageLevel level = LanguageLevel.getDefault();
-    // EA-32381: A tree-based instance may not have a parent element somehow, so getContainingFile() may be not appropriate
-    final PsiFile file = getParentByStub() != null ? getContainingFile() : null;
-    if (file != null) {
-      level = LanguageLevel.forElement(file);
-    }
-    final boolean useAdvancedSyntax = level.isAtLeast(LanguageLevel.PYTHON26);
-    final Property local = processPropertiesInClass(name, filter, useAdvancedSyntax);
+    final Property local = processPropertiesInClass(name, filter);
     if (local != null) {
       return local;
     }
@@ -858,7 +833,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return null;
       }
       for (PyClass cls : getAncestorClasses(null)) {
-        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter, useAdvancedSyntax);
+        final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter);
         if (property != null) {
           return property;
         }

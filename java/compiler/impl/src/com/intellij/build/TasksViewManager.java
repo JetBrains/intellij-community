@@ -46,7 +46,7 @@ public abstract class TasksViewManager extends AbstractViewManager {
   }
 
   @Override
-  protected boolean isConsoleEnabledByDefault() {
+  public boolean isConsoleEnabledByDefault() {
     return true;
   }
 }

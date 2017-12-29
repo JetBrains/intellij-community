@@ -79,12 +79,12 @@ class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  void buildProvidedModulesList(String targetFilePath, List<String> modules, List<String> pathsToLicenses) {
+  void buildProvidedModulesList(String targetFilePath, List<String> modules) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
       buildContext.messages.progress("Building provided modules list for modules $modules")
       FileUtil.delete(new File(targetFilePath))
       // Start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister.
-      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, pathsToLicenses, ['listBundledPlugins', targetFilePath])
+      runApplicationStarter("$buildContext.paths.temp/builtinModules", modules, ['listBundledPlugins', targetFilePath])
       if (!new File(targetFilePath).exists()) {
         buildContext.messages.error("Failed to build provided modules list: $targetFilePath doesn't exist")
       }
@@ -95,21 +95,21 @@ class BuildTasksImpl extends BuildTasks {
   /**
    * Build index which is used to search options in the Settings dialog.
    */
-  void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
+  void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex) {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       buildContext.messages.progress("Building searchable options for modules $modulesToIndex")
       String targetFile = "${targetDirectory.absolutePath}/search/searchableOptions.xml"
       FileUtil.delete(new File(targetFile))
       // Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter.
       // It'll process all UI elements in Settings dialog and build index for them.
-      runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, pathsToLicenses, ['traverseUI', targetFile])
+      runApplicationStarter("$buildContext.paths.temp/searchableOptions", modulesToIndex, ['traverseUI', targetFile])
       if (!new File(targetFile).exists()) {
         buildContext.messages.error("Failed to build searchable options index: $targetFile doesn't exist")
       }
     })
   }
 
-  private void runApplicationStarter(String tempDir, List<String> modules, List<String> pathsToLicenses, List<String> arguments) {
+  private void runApplicationStarter(String tempDir, List<String> modules, List<String> arguments) {
     def javaRuntimeClasses = "${buildContext.getModuleOutputPath(buildContext.findModule("java-runtime"))}"
     if (!new File(javaRuntimeClasses).exists()) {
       buildContext.messages.error("Cannot run application starter ${arguments}, 'java-runtime' module isn't compiled ($javaRuntimeClasses doesn't exist)")
@@ -118,10 +118,6 @@ class BuildTasksImpl extends BuildTasks {
     buildContext.ant.mkdir(dir: tempDir)
     String systemPath = "$tempDir/system"
     String configPath = "$tempDir/config"
-    pathsToLicenses.each {
-      //todo[nik] previously licenses were copied to systemPath
-      buildContext.ant.copy(file: it, todir: "$tempDir/config")
-    }
   
     def ideClasspath = new LinkedHashSet<String>()
     modules.collectMany(ideClasspath) { buildContext.getModuleRuntimeClasspath(buildContext.findModule(it), false) }
@@ -264,7 +260,10 @@ idea.fatal.error.notification=disabled
     def productLayout = buildContext.productProperties.productLayout
     def bundledPlugins = productLayout.bundledPluginModules as Set<String>
     def moduleNames = productLayout.getIncludedPluginModules(bundledPlugins) +
-                      productLayout.platformApiModules + productLayout.platformImplementationModules +
+                      DistributionJARsBuilder.getPlatformApiModules(productLayout) +
+                      DistributionJARsBuilder.getPlatformImplModules(productLayout) +
+                      DistributionJARsBuilder.getProductApiModules(productLayout) +
+                      DistributionJARsBuilder.getProductImplModules(productLayout) +
                       productLayout.additionalPlatformJars.values() +
                       DistributionJARsBuilder.toolModules + buildContext.productProperties.additionalModulesToCompile
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
@@ -273,7 +272,7 @@ idea.fatal.error.notification=disabled
     def pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)
     if (buildContext.shouldBuildDistributions()) {
       def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
-      buildProvidedModulesList(providedModulesFilePath, moduleNames, productLayout.licenseFilesToBuildSearchableOptions)
+      buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
@@ -404,7 +403,6 @@ idea.fatal.error.notification=disabled
 
     List<PluginLayout> nonTrivialPlugins = layout.allNonTrivialPlugins
     def optionalModules = nonTrivialPlugins.collectMany { it.optionalModules } as Set<String>
-    checkPaths(layout.licenseFilesToBuildSearchableOptions, "productProperties.productLayout.licenseFilesToBuildSearchableOptions")
     checkPluginModules(layout.bundledPluginModules, "productProperties.productLayout.bundledPluginModules", optionalModules)
     checkPluginModules(layout.pluginModulesToPublish, "productProperties.productLayout.pluginModulesToPublish", optionalModules)
 
@@ -423,6 +421,14 @@ idea.fatal.error.notification=disabled
 
     checkModules(layout.platformApiModules, "productProperties.productLayout.platformApiModules")
     checkModules(layout.platformImplementationModules, "productProperties.productLayout.platformImplementationModules")
+    checkModules(layout.productApiModules, "productProperties.productLayout.productApiModules")
+    checkModules(layout.productImplementationModules, "productProperties.productLayout.productImplementationModules")
+    if (!layout.productApiModules.isEmpty() && !layout.platformApiModules.isEmpty()) {
+      buildContext.messages.error("Products which set productProperties.productLayout.productApiModules must not use deprecated platformApiModules.")
+    }
+    if (!layout.productImplementationModules.isEmpty() && !layout.platformImplementationModules.isEmpty()) {
+      buildContext.messages.error("Products which set productProperties.productLayout.productImplementationModules must not use deprecated platformImplementationModules.")
+    }
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
@@ -534,7 +540,7 @@ idea.fatal.error.notification=disabled
 
   @Override
   void buildUpdaterJar() {
-    new LayoutBuilder(buildContext.ant, buildContext.project, false).layout(buildContext.paths.artifacts) {
+    new LayoutBuilder(buildContext, false).layout(buildContext.paths.artifacts) {
       jar("updater.jar") {
         module("updater")
       }

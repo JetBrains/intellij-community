@@ -40,8 +40,9 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(GroovyTokenTypes.mSEMI, GroovyTokenTypes.mLCURLY, GroovyTokenTypes.mRCURLY);
   private boolean myJavaLTTyped;
 
+  @NotNull
   @Override
-  public Result beforeCharTyped(final char c, final Project project, final Editor editor, final PsiFile file, final FileType fileType) {
+  public Result beforeCharTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final FileType fileType) {
     int offsetBefore = editor.getCaretModel().getOffset();
 
     //important to calculate before inserting charTyped
@@ -86,8 +87,9 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   }
 
 
+  @NotNull
   @Override
-  public Result charTyped(final char c, final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public Result charTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
       JavaTypedHandler.handleAfterJavaLT(editor, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE);

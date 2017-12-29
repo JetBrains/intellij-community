@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 06-Jun-17
  */
 class DropJShellStateAction extends AnAction{
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.jshell.ExecuteJShellAction");

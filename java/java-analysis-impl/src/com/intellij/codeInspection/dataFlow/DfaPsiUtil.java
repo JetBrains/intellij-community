@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -25,6 +26,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -32,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
@@ -103,6 +106,10 @@ public class DfaPsiUtil {
       return Nullness.NOT_NULL;
     }
 
+    if (owner instanceof PsiMethod && isMapGet((PsiMethod)owner)) {
+      return Nullness.UNKNOWN;
+    }
+
     Nullness fromType = getTypeNullability(resultType);
     if (fromType != Nullness.UNKNOWN) return fromType;
 
@@ -120,6 +127,12 @@ public class DfaPsiUtil {
     return Nullness.UNKNOWN;
   }
 
+  private static boolean isMapGet(@NotNull PsiMethod method) {
+    if (!"get".equals(method.getName())) return false;
+    PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
+    return "java.util.Map.get".equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
+  }
+
   @NotNull
   public static Nullness inferParameterNullability(@NotNull PsiParameter parameter) {
     PsiElement parent = parameter.getParent();
@@ -127,13 +140,30 @@ public class DfaPsiUtil {
       return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
     }
     if (parent instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)parent).getIteratedValue();
-      if (iteratedValue != null) {
-        return getTypeNullability(JavaGenericsUtil.getCollectionItemType(iteratedValue));
-      }
+      return getTypeNullability(inferLoopParameterTypeWithNullability((PsiForeachStatement)parent));
     }
     return Nullness.UNKNOWN;
   }
+
+  @Nullable
+  private static PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
+    PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue());
+    if (iteratedValue == null) return null;
+
+    PsiType iteratedType = iteratedValue.getType();
+    if (iteratedValue instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
+      if (target instanceof PsiParameter && target.getParent() instanceof PsiForeachStatement) {
+        PsiForeachStatement targetLoop = (PsiForeachStatement)target.getParent();
+        if (PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
+            !HighlightControlFlowUtil.isReassigned((PsiParameter)target, new HashMap<>())) {
+          iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
+        }
+      }
+    }
+    return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
+  }
+
 
   @NotNull
   public static Nullness getTypeNullability(@Nullable PsiType type) {
@@ -369,8 +399,7 @@ public class DfaPsiUtil {
 
   private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
     if (psiClass instanceof PsiCompiledElement) {
-      //noinspection unchecked
-      return MultiMap.EMPTY;
+      return MultiMap.empty();
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {

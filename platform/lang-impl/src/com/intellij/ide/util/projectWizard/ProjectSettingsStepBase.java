@@ -80,6 +80,12 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   @NotNull
+  @Override
+  public JButton getActionButton() {
+    return myCreateButton;
+  }
+
+  @NotNull
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return myProjectGenerator.createLazyPeer();
   }

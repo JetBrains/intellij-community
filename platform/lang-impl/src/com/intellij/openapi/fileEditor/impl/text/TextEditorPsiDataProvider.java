@@ -20,7 +20,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.InjectedCaret;
+import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;

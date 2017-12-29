@@ -103,12 +103,29 @@ public class StreamChainInliner implements CallInliner {
     .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
     .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new);
 
+  private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
+    @Override
+    void before(CFGBuilder builder) {
+      builder.flushFields();
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.pop();
+    }
+
+    @Override
+    void pushResult(CFGBuilder builder) {
+      builder.pushUnknown();
+    }
+  };
+
   static abstract class Step {
     final Step myNext;
-    final @NotNull PsiMethodCallExpression myCall;
+    final PsiMethodCallExpression myCall;
     final PsiExpression myFunction;
 
-    Step(@NotNull PsiMethodCallExpression call, Step next, PsiExpression function) {
+    Step(PsiMethodCallExpression call, Step next, PsiExpression function) {
       myNext = next;
       myCall = call;
       myFunction = function;
@@ -221,7 +238,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getOptionalFactory().getOptional(false));
+      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
     }
 
     @Override
@@ -229,7 +246,7 @@ public class StreamChainInliner implements CallInliner {
       if (myFunction != null) {
         builder.pushUnknown().invokeFunction(2, myFunction);
       }
-      builder.pushVariable(myResult).push(builder.getFactory().getOptionalFactory().getOptional(true)).assign().splice(2);
+      builder.pushVariable(myResult).push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true)).assign().splice(2);
     }
   }
 
@@ -243,7 +260,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getOptionalFactory().getOptional(false));
+      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
     }
 
     @Override
@@ -255,7 +272,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       myComparatorModel.invoke(builder);
-      builder.pushVariable(myResult).push(builder.getFactory().getOptionalFactory().getOptional(true)).assign().pop();
+      builder.pushVariable(myResult).push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true)).assign().pop();
     }
 
     @Override
@@ -369,7 +386,7 @@ public class StreamChainInliner implements CallInliner {
     void before(CFGBuilder builder) {
       if (myStreamSource == null) {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
-        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblem.passingNullableToNotNullParameter).pop();
+        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter).pop();
       }
       super.before(builder);
     }
@@ -382,10 +399,13 @@ public class StreamChainInliner implements CallInliner {
       } else {
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
         builder.pop()
+          .pushUnknown()
+          .ifConditionIs(true)
           .doWhile()
           .push(builder.getFactory().createTypeValue(outType, Nullness.UNKNOWN))
           .chain(myNext::iteration)
-          .endWhileUnknown();
+          .endWhileUnknown()
+          .endIf();
       }
     }
   }
@@ -480,9 +500,30 @@ public class StreamChainInliner implements CallInliner {
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
-    if (!TERMINAL_CALL.test(call)) {
+    if (TERMINAL_CALL.test(call)) {
+      return inlineCompleteStream(builder, call);
+    }
+    else {
+      return inlinePartialStream(builder, call);
+    }
+  }
+
+  private static boolean inlinePartialStream(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
+    Step firstStep = buildChain(call, NULL_TERMINAL_STEP);
+    if (firstStep == NULL_TERMINAL_STEP) {
       return false;
     }
+    PsiExpression originalQualifier = firstStep.myCall.getMethodExpression().getQualifierExpression();
+    if (originalQualifier == null) return false;
+    builder.pushUnknown()
+      .ifConditionIs(true)
+      .chain(b -> buildStreamCFG(b, firstStep, originalQualifier))
+      .endIf()
+      .push(builder.getFactory().createTypeValue(call.getType(), Nullness.NOT_NULL));
+    return true;
+  }
+
+  private static boolean inlineCompleteStream(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {
     PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
     Step terminalStep = createTerminalStep(call);
     Step firstStep = buildChain(qualifierCall, terminalStep);
@@ -549,7 +590,7 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierValue != null) {
         builder.pushExpression(qualifierExpression)
           .chain(firstStep::before)
-          .checkNotNull(qualifierExpression, NullabilityProblem.passingNullableToNotNullParameter)
+          .checkNotNull(qualifierExpression, NullabilityProblemKind.passingNullableToNotNullParameter)
           .pop()
           .push(SpecialField.ARRAY_LENGTH.createValue(builder.getFactory(), qualifierValue))
           .push(builder.getFactory().getInt(0))
@@ -565,7 +606,7 @@ public class StreamChainInliner implements CallInliner {
       if (qualifierValue != null) {
         builder.pushExpression(qualifierExpression)
           .chain(firstStep::before)
-          .checkNotNull(sourceCall, NullabilityProblem.callNPE)
+          .checkNotNull(sourceCall, NullabilityProblemKind.callNPE)
           .pop()
           .push(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), qualifierValue))
           .push(builder.getFactory().getInt(0))
@@ -577,7 +618,7 @@ public class StreamChainInliner implements CallInliner {
     }
     builder
       .pushExpression(originalQualifier)
-      .checkNotNull(firstStep.myCall, NullabilityProblem.callNPE)
+      .checkNotNull(firstStep.myCall, NullabilityProblemKind.callNPE)
       .pop()
       .chain(firstStep::before)
       .pushUnknown()

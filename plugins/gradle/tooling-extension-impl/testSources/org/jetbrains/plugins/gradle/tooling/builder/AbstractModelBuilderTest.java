@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.tooling.builder;
 
-import com.google.common.collect.Multimap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -24,6 +23,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
+import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.tooling.BuildActionExecuter;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
@@ -68,16 +68,10 @@ import static org.junit.Assume.assumeThat;
 public abstract class AbstractModelBuilderTest {
 
   public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {
-    // temporary turn off testing against 1.x versions
-    // because incompatible platform guava library pollutes the classpath
-    // (and hence the guava from gradle plugin ignored)
-    // the issue affects only test and running IDEA using IDEA
-    // should be uncomment when the proper plugin classloader will be used for tests
-    //{"1.9"}, /*{"1.10"}, {"1.11"},*/ {"1.12"},
-    //
-    {"2.0"}, /*{"2.1"}, {"2.2"} , {"2.3"}, {"2.4"}, */{"2.5"}, /*{"2.6"}, {"2.7"}, {"2.8"},*/ {"2.9"}, /*{"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
+    // Support for builds using Gradle older than 2.6 was deprecated and will be removed in Gradle 5.0.
+    {"2.6"}, /*{"2.7"}, {"2.8"},*/ {"2.9"}, /*{"2.10"}, {"2.11"}, {"2.12"}, {"2.13"}, */{"2.14.1"},
     {"3.0"}, /*{"3.1"}, {"3.2"}, {"3.3"}, {"3.4"},*/ {"3.5"},
-    {"4.0"}
+    {"4.0"}, /*{"4.1"}, {"4.2"}, {"4.3"},*/ {"4.4"},
   };
   public static final String BASE_GRADLE_VERSION = String.valueOf(SUPPORTED_GRADLE_VERSIONS[SUPPORTED_GRADLE_VERSIONS.length - 1][0]);
 

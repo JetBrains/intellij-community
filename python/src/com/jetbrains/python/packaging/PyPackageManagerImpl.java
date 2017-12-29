@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
@@ -32,7 +18,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -51,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -58,10 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author vlan
  */
 public class PyPackageManagerImpl extends PyPackageManager {
-  // Python 2.4-2.5 compatible versions
-  private static final String SETUPTOOLS_PRE_26_VERSION = "1.4.2";
-  private static final String PIP_PRE_26_VERSION = "1.1";
-  private static final String VIRTUALENV_PRE_26_VERSION = "1.7.2";
 
   private static final String SETUPTOOLS_VERSION = "28.8.0";
   private static final String PIP_VERSION = "9.0.1";
@@ -101,15 +84,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void installManagement() throws ExecutionException {
-    final Sdk sdk = getSdk();
-    final boolean pre26 = PythonSdkType.getLanguageLevelForSdk(sdk).isOlderThan(LanguageLevel.PYTHON26);
     if (!refreshAndCheckForSetuptools()) {
-      final String name = PyPackageUtil.SETUPTOOLS + "-" + (pre26 ? SETUPTOOLS_PRE_26_VERSION : SETUPTOOLS_VERSION);
-      installManagement(name);
+      installManagement(PyPackageUtil.SETUPTOOLS + "-" + SETUPTOOLS_VERSION);
     }
     if (PyPackageUtil.findPackage(refreshAndGetPackages(false), PyPackageUtil.PIP) == null) {
-      final String name = PyPackageUtil.PIP + "-" + (pre26 ? PIP_PRE_26_VERSION : PIP_VERSION);
-      installManagement(name);
+      installManagement(PyPackageUtil.PIP + "-" + PIP_VERSION);
     }
   }
 
@@ -245,7 +224,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (canModify) {
           final String location = pkg.getLocation();
           if (location != null) {
-            canModify = ensureCanCreateFile(new File(location));
+            canModify = Files.isWritable(Paths.get(location));
           }
         }
         args.add(pkg.getName());
@@ -259,29 +238,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
       refreshPackagesSynchronously();
     }
-  }
-
-  // TODO: Move to FileUtil.ensureCanCreateFile ?
-
-  /**
-   * When file it protected with UAC on Windows, you can't relay on {@link File#canWrite()}.
-   *
-   * @param file file to check if writable (works in UAC too)
-   */
-  private static boolean ensureCanCreateFile(@NotNull final File file) {
-    if (SystemInfo.isWinVistaOrNewer) {
-      try {
-        final File folder = (file.isFile() ? file.getParentFile() : file);
-        final File tmpFile = File.createTempFile("pycharm", null, folder);
-        tmpFile.deleteOnExit();
-        tmpFile.delete();
-      }
-      catch (final IOException ignored) {
-        return false;
-      }
-      return true;
-    }
-    return FileUtil.ensureCanCreateFile(file);
   }
 
 
@@ -350,8 +306,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         args.add("--system-site-packages");
       }
       args.add(destinationDir);
-      final boolean pre26 = languageLevel.isOlderThan(LanguageLevel.PYTHON26);
-      final String name = "virtualenv-" + (pre26 ? VIRTUALENV_PRE_26_VERSION : VIRTUALENV_VERSION);
+      final String name = "virtualenv-" + VIRTUALENV_VERSION;
       final String dirName = extractHelper(name + ".tar.gz");
       try {
         final String fileName = dirName + name + File.separatorChar + "virtualenv.py";
@@ -388,6 +343,11 @@ public class PyPackageManagerImpl extends PyPackageManager {
       .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
   }
 
+  @NotNull
+  @Override
+  public List<PyRequirement> parseRequirements(@NotNull String text) {
+    return PyPackageUtil.fix(PyRequirement.fromText(text));
+  }
 
   //   public List<PyPackage> refreshAndGetPackagesIfNotInProgress(boolean alwaysRefresh) throws ExecutionException
 
@@ -476,7 +436,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-    final boolean canCreate = ensureCanCreateFile(new File(homePath));
+    final boolean canCreate = Files.isWritable(Paths.get(homePath));
     final boolean useSudo = !canCreate && askForSudo;
 
     try {
@@ -555,7 +515,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.fromText(requiresSpec));
+        requirements.addAll(PyPackageUtil.fix(PyRequirement.fromText(requiresSpec)));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, location, requirements));

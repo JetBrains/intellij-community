@@ -67,6 +67,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       protected boolean isSpeedSearchEnabled() {
         return true;
       }
+
+      @Override
+      protected void updateEmptyText() {
+        getEmptyText().setText("File history");
+      }
     };
     myGraphTable.setCompactReferencesView(true);
     myGraphTable.setShowTagNames(false);

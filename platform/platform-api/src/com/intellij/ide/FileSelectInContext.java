@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ArrayUtil.getFirstElement;
 
@@ -35,7 +36,7 @@ public class FileSelectInContext implements SelectInContext {
     this(project, file, getFileEditorProvider(project, file));
   }
 
-  public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file, FileEditorProvider provider) {
+  public FileSelectInContext(@NotNull Project project, @NotNull VirtualFile file, @Nullable FileEditorProvider provider) {
     myProject = project;
     myFile = file;
     myProvider = provider;
@@ -53,11 +54,13 @@ public class FileSelectInContext implements SelectInContext {
     return myFile;
   }
 
+  @Nullable
   @Override
   public Object getSelectorInFile() {
     return null;
   }
 
+  @Nullable
   @Override
   public FileEditorProvider getFileEditorProvider() {
     return myProvider;

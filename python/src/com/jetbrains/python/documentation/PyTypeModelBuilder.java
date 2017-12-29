@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Collections2;
@@ -21,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.*;
@@ -233,19 +220,22 @@ public class PyTypeModelBuilder {
     myVisited.put(type, null); //mark as evaluating
 
     TypeModel result = null;
-    if (type instanceof PyTupleType) {
+    if (type instanceof PyNamedTupleType) {
+      result = NamedType.nameOrAny(type);
+    }
+    else if (type instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)type;
 
       final List<PyType> elementTypes = tupleType.isHomogeneous()
                                         ? Collections.singletonList(tupleType.getIteratedItemType())
-                                        : tupleType.getElementTypes(myContext);
+                                        : tupleType.getElementTypes();
 
       final List<TypeModel> elementModels = ContainerUtil.map(elementTypes, elementType -> build(elementType, true));
       result = new TupleType(elementModels, tupleType.isHomogeneous());
     }
     else if (type instanceof PyCollectionType) {
       final String name = type.getName();
-      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes(myContext);
+      final List<PyType> elementTypes = ((PyCollectionType)type).getElementTypes();
       boolean nullOnlyTypes = true;
       for (PyType elementType : elementTypes) {
         if (elementType != null) {

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
@@ -21,10 +9,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
-import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
-import com.intellij.psi.impl.java.stubs.PsiMethodStub;
-import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
-import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -111,7 +95,7 @@ public class GrTraitUtil {
   @Contract("null -> false")
   public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
-           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, false);
+           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0);
   }
 
   @NotNull
@@ -125,29 +109,14 @@ public class GrTraitUtil {
 
   private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<PsiMethod> result) {
     for (PsiMethod method : trait.getMethods()) {
-      if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, false)) {
+      if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, 0)) {
         result.add(method);
       }
     }
 
-    VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
-    if (traitFile == null) return;
-    VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitMethodsFileIndex.HELPER_SUFFIX);
-    if (helperFile == null) return;
-    int key = FileBasedIndex.getFileId(helperFile);
-    List<PsiJavaFileStub> values = FileBasedIndex.getInstance().getValues(
-      GroovyTraitMethodsFileIndex.INDEX_ID, key, trait.getResolveScope()
-    );
-    values.forEach(root -> ((PsiJavaFileStubImpl)root).setPsi((PsiJavaFile)trait.getContainingFile()));
-    values.stream().map(
-      root -> root.getChildrenStubs().get(0).getChildrenStubs()
-    ).<StubElement>flatMap(
-      Collection::stream
-    ).filter(
-      stub -> stub instanceof PsiMethodStub
-    ).forEach(
-      stub -> result.add(createTraitMethodFromCompiledHelperMethod(((PsiMethodStub)stub).getPsi(), trait))
-    );
+    for (PsiMethod staticMethod : GroovyTraitMethodsFileIndex.getStaticTraitMethods(trait)) {
+      result.add(createTraitMethodFromCompiledHelperMethod(staticMethod, trait));
+    }
   }
 
   private static PsiMethod createTraitMethodFromCompiledHelperMethod(PsiMethod compiledMethod, ClsClassImpl trait) {

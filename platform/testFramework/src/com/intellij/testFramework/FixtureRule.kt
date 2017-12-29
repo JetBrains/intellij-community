@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -31,10 +17,8 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.SmartList
 import com.intellij.util.containers.forEachGuaranteed
@@ -294,18 +278,17 @@ fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirecto
   createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
 }
 
-fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String), task: (Project) -> Unit) {
+fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
   createOrLoadProject(tempDirManager, task, projectCreator, false)
 }
 
 private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
   runInEdtAndWait {
-    val filePath: String
-    if (projectCreator == null) {
-      filePath = tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}").systemIndependentPath
+    val filePath = if (projectCreator == null) {
+      tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
     }
     else {
-      filePath = runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
+      runUndoTransparentWriteAction { projectCreator(tempDirManager.newVirtualDirectory()) }
     }
 
     val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!

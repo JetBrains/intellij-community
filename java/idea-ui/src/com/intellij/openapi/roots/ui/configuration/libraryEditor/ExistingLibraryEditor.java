@@ -189,11 +189,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public void removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
-    boolean removed;
-    do {
-      removed = getModel().removeRoot(url, rootType);
-    }
-    while (removed);
+    getModel().removeRoot(url, rootType);
   }
 
   @Override

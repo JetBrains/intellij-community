@@ -414,6 +414,9 @@ public class TypeConversionUtil {
     }
     if (type instanceof PsiClassType) {
       final PsiClass psiClass = ((PsiClassType)type).resolve();
+      if (psiClass instanceof PsiTypeParameter) {
+        return InheritanceUtil.isInheritor(psiClass, true, CommonClassNames.JAVA_LANG_ENUM);
+      }
       return psiClass != null && psiClass.isEnum();
     }
     return false;

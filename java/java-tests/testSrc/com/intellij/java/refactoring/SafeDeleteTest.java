@@ -168,6 +168,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("B");
   }
 
+  public void testSafeDeleteImportsOnInnerClasses() {
+    doTest("p.B");
+  }
+
   public void testRemoveOverridersInspiteOfUnsafeUsages() {
     try {
       BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
@@ -205,7 +209,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("class <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 
@@ -217,7 +221,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       String message = e.getMessage();
-      assertEquals("class <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
+      assertEquals("interface <b><code>SAM</code></b> has 1 usage that is not safe to delete.", message);
     }
   }
 

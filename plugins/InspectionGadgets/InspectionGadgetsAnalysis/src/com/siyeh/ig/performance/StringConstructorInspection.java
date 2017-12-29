@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -118,14 +119,16 @@ public class StringConstructorInspection extends BaseInspection {
       final PsiExpressionList argList = expression.getArgumentList();
       assert argList != null;
       final PsiExpression[] args = argList.getExpressions();
+      CommentTracker commentTracker = new CommentTracker();
       final String argText;
       if (args.length == 1) {
-        argText = args[0].getText();
+        argText = commentTracker.markUnchanged(args[0]).getText();
       }
       else {
         argText = "\"\"";
       }
-      PsiReplacementUtil.replaceExpression(expression, argText);
+
+      PsiReplacementUtil.replaceExpression(expression, argText, commentTracker);
     }
   }
 

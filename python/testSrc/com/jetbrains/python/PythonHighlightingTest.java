@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -24,7 +10,6 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -35,7 +20,6 @@ import java.awt.*;
  * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
-  private static final String TEST_PATH = "/highlighting/";
 
   public void testBuiltins() {
     EditorColorsScheme scheme = createTemporaryColorScheme();
@@ -73,13 +57,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(true, false);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest(true, false));
   }
 
   public void testAssignmentTargetWith() {  // PY-7529
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest(true, false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(true, false));
   }
 
   public void testAssignmentTargets3K() {
@@ -364,6 +346,11 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, true);
   }
 
+  // PY-25381
+  public void testBuiltinDecorator() {
+    doTest(true, true);
+  }
+
   // PY-11418
   public void testFunctionCalls() {
     doTest();
@@ -379,6 +366,21 @@ public class PythonHighlightingTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
+  // PY-26491
+  public void testMultiplePositionalContainers() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-26491
+  public void testMultipleKeywordContainers() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-26510
+  public void testEmptyRaise() {
+    doTest(false, false);
+  }
+
   @NotNull
   private static EditorColorsScheme createTemporaryColorScheme() {
     EditorColorsManager manager = EditorColorsManager.getInstance();
@@ -390,13 +392,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
-    try {
-      doTest(checkWarnings, checkInfos);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
   }
 
   private void doTest() {

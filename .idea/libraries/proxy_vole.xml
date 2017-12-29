@@ -5,8 +5,7 @@
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/proxy-vole-proxy-vole-1.0.3-src.zip!/proxy-vole-proxy-vole-1.0.3/src/main/java" />
-      <root url="jar://$PROJECT_DIR$/lib/src/proxy-vole-proxy-vole-1.0.3-src.zip!/proxy-vole-proxy-vole-1.0.3/src/test/java" />
+      <root url="jar://$PROJECT_DIR$/lib/src/proxy-vole-proxy-vole-1.0.3-src.zip!/" />
     </SOURCES>
   </library>
 </component>

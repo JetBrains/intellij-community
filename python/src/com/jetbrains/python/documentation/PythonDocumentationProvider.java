@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
@@ -530,6 +531,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       final Module module = ModuleUtilCore.findModuleForPsiElement(element);
       if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
       PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
+      if (file instanceof PyiFile) {
+        return null;
+      }
       if (file == null) return null;
       if (PyNames.INIT_DOT_PY.equals(file.getName())) {
         file = file.getParent();
@@ -566,6 +570,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         document.select("a.headerlink").remove();
         final Elements parents = document.getElementsByAttributeValue("id", elementId).parents();
         if (parents.isEmpty()) {
+          final Elements moduleElement = document.getElementsByAttributeValue("id", "module-" + moduleQName.toString());
+          if (moduleElement != null) {
+            return moduleElement.toString();
+          }
           return document.toString();
         }
         return parents.get(0).toString();

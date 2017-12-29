@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.diagnostic.IdeMessagePanel;
@@ -20,6 +6,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.impl.IdeNotificationArea;
@@ -28,10 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -78,7 +63,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
 
-  private static boolean myUpdatingTitle;
+  private static boolean ourUpdatingTitle;
 
   private String myTitle;
   private String myFileTitle;
@@ -90,6 +75,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
   private boolean myRestoreFullScreen;
+  private LafManagerListener myLafListener;
 
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
@@ -97,6 +83,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     myRootPane = createRootPane(actionManager, dataManager, application);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
+    LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
     AppUIUtil.updateWindowIcon(this);
 
     Dimension size = ScreenUtil.getMainScreenBounds().getSize();
@@ -203,9 +190,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
   @Override
   public void setTitle(final String title) {
-    if (myUpdatingTitle) {
+    if (ourUpdatingTitle) {
       super.setTitle(title);
-    } else {
+    }
+    else {
       myTitle = title;
     }
 
@@ -234,21 +222,24 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
-    if (myUpdatingTitle) return;
+    if (ourUpdatingTitle) return;
 
     try {
-      myUpdatingTitle = true;
+      ourUpdatingTitle = true;
 
       frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
 
       Builder builder = new Builder().append(title).append(fileTitle);
-      if (!SystemInfo.isMac || builder.isEmpty()) {
+      if (Boolean.getBoolean("ide.ui.version.in.title")) {
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+      }
+      else if (!SystemInfo.isMac || builder.isEmpty()) {
         builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
       }
       frame.setTitle(builder.toString());
     }
     finally {
-      myUpdatingTitle = false;
+      ourUpdatingTitle = false;
     }
   }
 
@@ -423,6 +414,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
+    if (myLafListener != null) LafManager.getInstance().removeLafManagerListener(myLafListener);
 
     FocusTrackback.release(this);
 

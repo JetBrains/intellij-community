@@ -198,31 +198,33 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return javaParameters;
   }
 
-  public static void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException{
+  public void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException{
     final PathsList classPath = javaParameters.getClassPath();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
+    String launcherVersion = ObjectUtils.notNull(getVersion(classFromCommon), "1.0.0");
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
-      
-      PsiClass classFromCommon = psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope);
-      String version = ObjectUtils.notNull(getVersion(classFromCommon), "1.0.0");
       downloadDependenciesWhenRequired(project, classPath,
-                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", version));
+                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
     }
 
     //add standard engines only if no engine api is present
-    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope)) {
+    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
+        !isCustomJUnit5(globalSearchScope)) {
 
+      PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
+      String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
       if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-        PsiClass testAnnotation = psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope);
-        String version = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
         downloadDependenciesWhenRequired(project, classPath,
-                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", version));
+                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
       }
 
       if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
           hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-        String version = "4.12.0"; //todo
+        String version = StringUtil.compareVersionNumbers(launcherVersion, "1.1.0") < 0 
+                         ? "4.12." + StringUtil.getShortName(launcherVersion) 
+                         : jupiterVersion;
         downloadDependenciesWhenRequired(project, classPath,
                                          new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
       }
@@ -284,14 +286,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
-    final String repeatMode = getConfiguration().getRepeatMode();
-    if (!RepeatCount.ONCE.equals(repeatMode)) {
-      final int repeatCount = getConfiguration().getRepeatCount();
-      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
-                                 ? RepeatCount.getCountString(repeatCount)
-                                 : repeatMode;
-      getJavaParameters().getProgramParametersList().add(countString);
-    }
+    appendRepeatMode();
 
     final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
     ProcessTerminatedListener.attach(processHandler);
@@ -300,6 +295,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
+  }
+
+  public void appendRepeatMode() throws ExecutionException {
+    final String repeatMode = getConfiguration().getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      final int repeatCount = getConfiguration().getRepeatCount();
+      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
+                                 ? RepeatCount.getCountString(repeatCount)
+                                 : repeatMode;
+      getJavaParameters().getProgramParametersList().add(countString);
+    }
   }
 
   @Override

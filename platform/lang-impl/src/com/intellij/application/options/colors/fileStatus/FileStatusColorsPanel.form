@@ -55,7 +55,8 @@
               <component id="46f7e" class="javax.swing.JButton" binding="myRestoreButton">
                 <constraints/>
                 <properties>
-                  <horizontalAlignment value="2"/>
+                  <horizontalAlignment value="0"/>
+                  <horizontalTextPosition value="0"/>
                   <text value="Restore Default"/>
                 </properties>
               </component>

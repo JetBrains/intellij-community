@@ -198,11 +198,11 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
-      buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
+      buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
-          filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
-          filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
+          filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
+          filter(token: "SCRIPT", value: customizer.snapName)
           filter(token: "WM_CLASS", value: getFrameClass())
         }
       }
@@ -210,7 +210,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.ant.copy(file: customizer.iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
 
       def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
-      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${buildContext.applicationInfo.isEAP ? " EAP" : ""}"
+      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${buildContext.applicationInfo.isEAP ? "-EAP" : ""}"
       buildContext.ant.copy(file: snapcraftTemplate, tofile: "${snapDir}/snapcraft.yaml") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: customizer.snapName)
@@ -220,10 +220,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "GRADE", value: buildContext.applicationInfo.isEAP ? "devel" : "stable")
           filter(token: "SCRIPT", value: "bin/${buildContext.productProperties.baseFileName}.sh")
         }
-      }
-
-      buildContext.ant.concat(destfile: "${unixDistPath}/bin/idea.properties", append: true) {
-        filelist(dir: "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap", files: "idea-snap.properties")
       }
 
       buildContext.ant.delete(quiet: true) {
@@ -246,11 +242,17 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
+      buildContext.ant.mkdir(dir: "${snapDir}/result")
       buildContext.messages.progress("Building package")
 
+      def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
       buildContext.ant.exec(executable: "docker", dir: snapDir, failonerror: true) {
         arg(value: "run")
-        arg(value: "--volume=${snapDir}:/build")
+        arg(value: "--rm")
+        arg(value: "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro")
+        arg(value: "--volume=${snapDir}/${customizer.snapName}.desktop:/build/snap/gui/${customizer.snapName}.desktop:ro")
+        arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
+        arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
         arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
@@ -258,10 +260,12 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--env=SNAPCRAFT_SETUP_CORE=1")
         arg(value: "snapcore/snapcraft")
         arg(value: "snapcraft")
+        arg(value: "snap")
+        arg(value: "-o")
+        arg(value: "result/$snapArtifact")
       }
 
-      def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
-      buildContext.ant.move(file: "${snapDir}/${snapArtifact}", todir: buildContext.paths.artifacts)
+      buildContext.ant.move(file: "${snapDir}/result/${snapArtifact}", todir: buildContext.paths.artifacts)
       buildContext.notifyArtifactBuilt("${buildContext.paths.artifacts}/" + snapArtifact)
     }
   }

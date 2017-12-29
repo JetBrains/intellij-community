@@ -23,6 +23,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.impl.PackagesPaneSelectInTarget;
+import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
@@ -58,7 +59,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
-public final class PackageViewPane extends AbstractProjectViewPSIPane {
+import static com.intellij.openapi.application.Experiments.isFeatureEnabled;
+
+public class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
@@ -204,6 +207,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
         return PackageViewPane.this.getId();
       }
     }).setAsSecondary(true);
+    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
   }
 
@@ -234,7 +238,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   protected ProjectViewTree createTree(DefaultTreeModel treeModel) {
-    return new ProjectViewTree(myProject, treeModel) {
+    return new ProjectViewTree(treeModel) {
       public String toString() {
         return getTitle() + " " + super.toString();
       }
@@ -353,5 +357,10 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
         a.finish();
       }
     }
+  }
+
+  @Override
+  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel model) {
+    return isFeatureEnabled("package.view.async.tree.model") ? null : super.createBuilder(model);
   }
 }

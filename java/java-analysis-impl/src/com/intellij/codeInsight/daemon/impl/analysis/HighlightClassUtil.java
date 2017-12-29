@@ -17,7 +17,6 @@
 /*
  * Checks and Highlights problems with classes
  * User: cdr
- * Date: Aug 19, 2002
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
@@ -480,7 +479,7 @@ public class HighlightClassUtil {
   static HighlightInfo checkCannotInheritFromFinal(PsiClass superClass, PsiElement elementToHighlight) {
     HighlightInfo errorResult = null;
     if (superClass.hasModifierProperty(PsiModifier.FINAL) || superClass.isEnum()) {
-      String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName());
+      String message = JavaErrorMessages.message("inheritance.from.final.class", superClass.getQualifiedName(), superClass.isEnum() ? PsiKeyword.ENUM : PsiKeyword.FINAL);
       errorResult =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(elementToHighlight).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(errorResult,

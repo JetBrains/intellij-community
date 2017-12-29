@@ -17,13 +17,6 @@
 
 package org.jetbrains.plugins.gradle.tooling.util;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -43,6 +36,13 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 import org.gradle.api.tasks.compile.AbstractCompile;
+import org.gradle.internal.impldep.com.google.common.base.Function;
+import org.gradle.internal.impldep.com.google.common.base.Predicate;
+import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
+import org.gradle.internal.impldep.com.google.common.collect.Lists;
+import org.gradle.internal.impldep.com.google.common.collect.Multimap;
+import org.gradle.internal.impldep.com.google.common.collect.Sets;
+import org.gradle.internal.impldep.com.google.common.io.Files;
 import org.gradle.language.base.artifact.SourcesArtifact;
 import org.gradle.language.java.artifact.JavadocArtifact;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
@@ -62,10 +62,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Predicates.isNull;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
 import static org.codehaus.groovy.runtime.StringGroovyMethods.capitalize;
+import static org.gradle.internal.impldep.com.google.common.base.Predicates.isNull;
+import static org.gradle.internal.impldep.com.google.common.base.Predicates.not;
+import static org.gradle.internal.impldep.com.google.common.collect.Iterables.filter;
 
 /**
  * @author Vladislav.Soroka
@@ -227,7 +227,8 @@ public class DependencyResolverImpl implements DependencyResolver {
           }
 
           for (ProjectDependency dep : configurationProjectDependencies.values()) {
-            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, dep.resolve()));
+            Set<File> depFiles = getTargetConfiguration(dep).getAllArtifacts().getFiles().getFiles();
+            final Set<File> intersection = new HashSet<File>(Sets.intersection(fileDeps, depFiles));
             if (!intersection.isEmpty()) {
               DefaultFileCollectionDependency fileCollectionDependency = new DefaultFileCollectionDependency(intersection);
               fileCollectionDependency.setScope(scope);

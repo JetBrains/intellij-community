@@ -286,7 +286,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;
-      return wrapper.change.equals(change);
+      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change);
     }
 
     @Override

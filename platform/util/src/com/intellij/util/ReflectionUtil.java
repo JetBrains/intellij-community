@@ -580,7 +580,7 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static Class forName(@NotNull String fqn) {
+  public static Class<?> forName(@NotNull String fqn) {
     try {
       return Class.forName(fqn);
     }

@@ -24,7 +24,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2004
  */
 public class FilePathClipper implements ComponentListener {
   private final File myFile;

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.completion;
@@ -99,8 +87,11 @@ public class FilePathCompletionContributor extends CompletionContributor {
           if (first == null) return;
 
           final FileReferenceSet set = first.getFileReferenceSet();
-          String prefix = set.getPathString()
-            .substring(0, parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement());
+          int end = parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement();
+          String pathString = set.getPathString();
+          if (pathString.length() < end) return;
+
+          String prefix = pathString.substring(0, end);
 
           List<String> pathPrefixParts = null;
           int lastSlashIndex;
@@ -275,7 +266,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
       myHelpers = helpers;
 
       myInfo = FileInfoManager.getFileAdditionalInfo(file);
-      myIcon = file.getFileType().getIcon();
+      myIcon = file.getIcon(0);
 
       myFile = file;
     }
@@ -290,7 +281,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     @Override
     public Object getObject() {
       return myFile;
-    }                                                                   
+    }
 
     @Override
     @NotNull
@@ -350,8 +341,8 @@ public class FilePathCompletionContributor extends CompletionContributor {
       final VirtualFile virtualFile = myFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       for (FileReferenceHelper helper : myHelpers) {
-        final PsiFileSystemItem root = helper.findRoot(myFile.getProject(), virtualFile);
-        String path = PsiFileSystemItemUtil.getRelativePath(root, helper.getPsiFileSystemItem(myFile.getProject(), virtualFile));
+        PsiFileSystemItem root = helper.findRoot(myFile.getProject(), virtualFile);
+        String path = PsiFileSystemItemUtil.findRelativePath(root, helper.getPsiFileSystemItem(myFile.getProject(), virtualFile));
         if (path != null) return path;
       }
       return null;

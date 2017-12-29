@@ -96,6 +96,7 @@ cmake
 cmdline
 cname
 codebase
+codecs
 codeinsight
 codesign
 commandline
@@ -142,6 +143,7 @@ decompiling
 dedent
 deduplicate
 deferrable
+deferrer
 deque
 dereference
 dereferences
@@ -181,8 +183,8 @@ externalizer
 facebook
 facelet
 facelets
-fastcall
 fallthrough
+fastcall
 favicon
 filename
 fileset
@@ -315,6 +317,7 @@ keymap
 keymaps
 keystore
 kotlin
+kubernetes
 kryo
 labeler
 labelers
@@ -458,6 +461,7 @@ nullptr
 nvarchar
 oauth
 objc
+objenesis
 oidindex
 onchange
 onclick
@@ -732,6 +736,7 @@ toplink
 trebuchet
 trie
 tuple
+tuples
 twitter
 typedef
 typedefs
@@ -769,6 +774,7 @@ utf
 util
 utils
 uuid
+valgrind
 validator
 validators
 vararg

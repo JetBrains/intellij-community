@@ -31,6 +31,7 @@ import com.intellij.vcs.CommittedChangeListForRevision;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +122,19 @@ public class VcsLogUtil {
     return selectedRoots;
   }
 
+  @NotNull
+  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
+    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
+    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
+    return getAllVisibleRoots(roots, filters);
+  }
 
+  @NotNull
+  public static Set<VirtualFile> getAllVisibleRoots(@NotNull Collection<VirtualFile> roots,
+                                                    @NotNull VcsLogFilterCollection collection) {
+    return getAllVisibleRoots(roots, collection.getRootFilter(), collection.getStructureFilter());
+  }
+  
   // collect absolutely all roots that might be visible
   // if filters unset returns just all roots
   @NotNull
@@ -169,13 +182,6 @@ public class VcsLogUtil {
     return list.subList(0, Math.min(list.size(), max));
   }
 
-  @NotNull
-  public static Set<VirtualFile> getVisibleRoots(@NotNull VcsLogUi logUi) {
-    VcsLogFilterCollection filters = logUi.getFilterUi().getFilters();
-    Set<VirtualFile> roots = logUi.getDataPack().getLogProviders().keySet();
-    return getAllVisibleRoots(roots, filters.getRootFilter(), filters.getStructureFilter());
-  }
-
   @Nullable
   public static String getSingleFilteredBranch(@NotNull VcsLogBranchFilter filter, @NotNull VcsLogRefs refs) {
     String branchName = null;
@@ -200,12 +206,16 @@ public class VcsLogUtil {
   public static void triggerUsage(@NotNull AnActionEvent e) {
     String text = e.getPresentation().getText();
     if (text != null) {
-      triggerUsage(text);
+      triggerUsage(text, e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null);
     }
   }
 
   public static void triggerUsage(@NotNull String text) {
-    UsageTrigger.trigger("vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
+    triggerUsage(text, false);
+  }
+
+  public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
+    UsageTrigger.trigger(isFromHistory ? "vcs.history." : "vcs.log." + ConvertUsagesUtil.ensureProperKey(text).replace(" ", ""));
   }
 
   public static boolean maybeRegexp(@NotNull String text) {

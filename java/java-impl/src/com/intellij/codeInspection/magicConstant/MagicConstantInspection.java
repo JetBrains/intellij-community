@@ -11,9 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.JdkUtils;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -167,16 +165,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     PsiMethod getModifiers = methods[0];
     PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
     if (annotation != null) return;
-    final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(getModifiers);
-    if (virtualFile == null) return; // no jdk to attach
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
-    Sdk jdk = null;
-    for (OrderEntry orderEntry : entries) {
-      if (orderEntry instanceof JdkOrderEntry) {
-        jdk = ((JdkOrderEntry)orderEntry).getJdk();
-        if (jdk != null) break;
-      }
-    }
+    Sdk jdk = JdkUtils.getJdkForElement(getModifiers);
     if (jdk == null) return; // no jdk to attach
 
     if (!holder.isOnTheFly()) {
@@ -802,7 +791,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
                                @NotNull PsiFile file,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
-      boolean allValid = !myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).anyMatch(p -> p == null || !p.isValid());
+      boolean allValid = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).allMatch(p -> p != null && p.isValid());
       return allValid && super.isAvailable(project, file, startElement, endElement);
     }
   }

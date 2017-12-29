@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.maven.utils;
 
@@ -161,7 +149,7 @@ public class MavenUtil {
       ApplicationManager.getApplication().invokeAndWait(DisposeAwareRunnable.create(r, p), state);
     }
   }
-  
+
   public static void smartInvokeAndWait(final Project p, final ModalityState state, final Runnable r) {
     if (isNoBackgroundMode() || ApplicationManager.getApplication().isDispatchThread()) {
       r.run();
@@ -327,11 +315,9 @@ public class MavenUtil {
         VirtualFile modulePath = file.getParent();
         VirtualFile parentModulePath = parentFile.getParent();
 
-        if (!Comparing.equal(modulePath.getParent(), parentModulePath)) {
-          String relativePath = VfsUtil.getPath(file, parentModulePath, '/');
+        if (!Comparing.equal(modulePath.getParent(), parentModulePath) || !FileUtil.namesEqual(MavenConstants.POM_XML, parentFile.getName())) {
+          String relativePath = VfsUtilCore.findRelativePath(file, parentModulePath, '/');
           if (relativePath != null) {
-            relativePath = StringUtil.trimEnd(relativePath, "/");
-
             conditions.setProperty("HAS_RELATIVE_PATH", "true");
             properties.setProperty("PARENT_RELATIVE_PATH", relativePath);
           }
@@ -1012,7 +998,8 @@ public class MavenUtil {
     });
   }
 
-  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @NotNull VirtualFile root) {
+  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @Nullable VirtualFile root) {
+    if (root == null) return Stream.empty();
     return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 }

@@ -1,7 +1,8 @@
 import os
+import platform
 import unittest
-
 import sys
+
 import time
 
 try:
@@ -9,13 +10,13 @@ try:
 except:
     sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-from tests_pydevd_python import debugger_unittest
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func
-
-IS_FRAME_EVAL_AVAILABLE = frame_eval_func is not None
+IS_CPYTHON = platform.python_implementation() == 'CPython'
+IS_PY36 = sys.version_info[0] == 3 and sys.version_info[1] == 6
+TEST_CYTHON = os.getenv('PYDEVD_USE_CYTHON', None) == 'YES'
 
 
 class WriterThreadStepAndResume(debugger_unittest.AbstractWriterThread):
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
@@ -50,6 +51,7 @@ class WriterThreadStepAndResume(debugger_unittest.AbstractWriterThread):
 
 
 class WriterThreadStepReturn(debugger_unittest.AbstractWriterThread):
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case56.py')
 
     def run(self):
@@ -85,6 +87,7 @@ class WriterThreadStepReturn(debugger_unittest.AbstractWriterThread):
 
 
 class WriterThreadAddLineBreakWhileRun(debugger_unittest.AbstractWriterThread):
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case3.py')
 
     def run(self):
@@ -118,6 +121,7 @@ class WriterThreadAddLineBreakWhileRun(debugger_unittest.AbstractWriterThread):
 
 
 class WriterThreadExceptionBreak(debugger_unittest.AbstractWriterThread):
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
@@ -139,6 +143,7 @@ class WriterThreadExceptionBreak(debugger_unittest.AbstractWriterThread):
 
 
 class WriterThreadAddExceptionBreakWhileRunning(debugger_unittest.AbstractWriterThread):
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
@@ -171,6 +176,7 @@ class WriterThreadAddExceptionBreakWhileRunning(debugger_unittest.AbstractWriter
 
 
 class WriterThreadAddTerminationExceptionBreak(debugger_unittest.AbstractWriterThread):
+
     TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case10.py')
 
     def run(self):
@@ -191,8 +197,7 @@ class WriterThreadAddTerminationExceptionBreak(debugger_unittest.AbstractWriterT
         self.finished_ok = True
 
 
-@unittest.skipIf(not IS_FRAME_EVAL_AVAILABLE, "Frame evaluation debugger isn't available "
-                                              "in the current environment")
+@unittest.skipIf(not IS_PY36 or not IS_CPYTHON or not TEST_CYTHON, reason='Test requires Python 3.6')
 class TestFrameEval(unittest.TestCase, debugger_unittest.DebuggerRunner):
     def get_command_line(self):
         return [sys.executable, '-u']
@@ -214,7 +219,3 @@ class TestFrameEval(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_add_termination_exc_break(self):
         self.check_case(WriterThreadAddTerminationExceptionBreak)
-
-
-if __name__ == '__main__':
-    unittest.main()

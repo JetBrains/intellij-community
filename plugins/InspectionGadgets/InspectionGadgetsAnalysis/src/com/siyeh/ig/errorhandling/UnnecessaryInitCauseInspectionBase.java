@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,7 +75,7 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
       assert cause.getTextOffset() > newLocation.getTextOffset();
       final PsiCodeBlock block = PsiTreeUtil.getParentOfType(cause, PsiCodeBlock.class);
       final PsiCodeBlock newBlock = PsiTreeUtil.getParentOfType(newLocation, PsiCodeBlock.class);
-      if (block == null || newBlock == null || !PsiTreeUtil.isAncestor(block, newBlock, false)) return false;
+      if (newBlock == null || !PsiTreeUtil.isAncestor(block, newBlock, false)) return false;
       final int offset = newLocation.getTextOffset();
       final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
       cause.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -144,9 +131,10 @@ public class UnnecessaryInitCauseInspectionBase extends BaseInspection {
             }
           }
           final PsiParameter lastParameter = parameters[parameters.length - 1];
-          if (lastParameter.getType().isAssignableFrom(causeType)) {
-            return true;
+          if (!lastParameter.getType().isAssignableFrom(causeType) || !PsiUtil.isAccessible(constructor1, newExpression, null)) {
+            continue;
           }
+          return true;
         }
       }
       return false;

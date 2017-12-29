@@ -28,48 +28,60 @@ import java.util.Set;
 
 public class JUnit5IdeaTestRunner implements IdeaTestRunner {
   private TestPlan myTestPlan;
-  private JUnit5TestExecutionListener myListener;
+  private List<JUnit5TestExecutionListener> myExecutionListeners = new ArrayList<>();
   private ArrayList myListeners;
   private Launcher myLauncher;
 
   @Override
-  public void createListeners(ArrayList listeners) {
+  public void createListeners(ArrayList listeners, int count) {
     myListeners = listeners;
-    myListener = new JUnit5TestExecutionListener();
+    do {
+      myExecutionListeners.add(new JUnit5TestExecutionListener());
+    }
+    while (--count > 0);
     myLauncher = LauncherFactory.create();
   }
 
   @Override
   public int startRunnerWithArgs(String[] args, String name, int count, boolean sendTree) {
     try {
-      myListener.initialize(!sendTree);
+      JUnit5TestExecutionListener listener = myExecutionListeners.get(0);
+      listener.initializeIdSuffix(!sendTree);
       final String[] packageNameRef = new String[1];
       final LauncherDiscoveryRequest discoveryRequest = JUnit5TestRunnerUtil.buildRequest(args, packageNameRef);
       myTestPlan = myLauncher.discover(discoveryRequest);
       List<TestExecutionListener> listeners = new ArrayList<>();
-      listeners.add(myListener);
+      listeners.add(listener);
       for (Object listenerClassName : myListeners) {
         final IDEAJUnitListener junitListener = (IDEAJUnitListener)Class.forName((String)listenerClassName).newInstance();
         listeners.add(new MyCustomListenerWrapper(junitListener));
       }
       if (sendTree) {
+        int i = 0;
         do {
-          myListener.sendTree(myTestPlan, packageNameRef[0]);
+          JUnit5TestExecutionListener currentListener = myExecutionListeners.get(i);
+          if (i > 0) {
+            currentListener.initializeIdSuffix(i);
+          }
+          currentListener.sendTree(myTestPlan, packageNameRef[0]);
         }
-        while (--count > 0);
+        while (++ i < myExecutionListeners.size());
       }
       else {
-        myListener.setTestPlan(myTestPlan);
+        listener.setTestPlan(myTestPlan);
       }
 
       myLauncher.execute(discoveryRequest, listeners.toArray(new TestExecutionListener[0]));
 
-      return myListener.wasSuccessful() ? 0 : -1;
+      return listener.wasSuccessful() ? 0 : -1;
     }
     catch (Exception e) {
       System.err.println("Internal Error occurred.");
       e.printStackTrace(System.err);
       return -2;
+    }
+    finally {
+      if (count > 0) myExecutionListeners.remove(0);
     }
   }
 

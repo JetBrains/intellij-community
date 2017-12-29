@@ -276,6 +276,22 @@ public class MavenModuleImporter {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
+        if ("bundle".equals(dependencyType)) {
+          artifact = new MavenArtifact(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getVersion(),
+            artifact.getBaseVersion(),
+            "jar",
+            artifact.getClassifier(),
+            artifact.getScope(),
+            artifact.isOptional(),
+            "jar",
+            null,
+            myMavenProject.getLocalRepository(),
+            false, false
+          );
+        }
         LibraryOrderEntry libraryOrderEntry =
           myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
         myModifiableModelsProvider.trySubstitute(
@@ -372,7 +388,11 @@ public class MavenModuleImporter {
     }
 
     if (level == null) {
-      level = LanguageLevel.parse(myMavenProject.getSourceLevel());
+      String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
+      level = LanguageLevel.parse(mavenProjectSourceLevel);
+      if (level == null && StringUtil.isNotEmpty(mavenProjectSourceLevel)) {
+        level = LanguageLevel.JDK_X;
+      }
     }
 
     // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin

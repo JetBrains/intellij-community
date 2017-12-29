@@ -11,5 +11,6 @@ class Test {
       System.out.println("Hi!" + 7);
       System.out.println("Hi!" + 8);
       System.out.println("Hi!" + 9);
+      // line comment
   }
 }

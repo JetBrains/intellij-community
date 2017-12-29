@@ -53,19 +53,22 @@ public class EqualsOnSuspiciousObjectInspection extends BaseInspection {
     return new BaseEqualsVisitor() {
       @Override
       void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType type1, @NotNull PsiType type2) {
-        checkType(expression, type1);
-        checkType(expression, type2);
+        if (!checkType(expression, type1)) {
+          checkType(expression, type2);
+        }
       }
 
-      private void checkType(PsiReferenceExpression expression, PsiType type) {
+      private boolean checkType(PsiReferenceExpression expression, PsiType type) {
         PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
         if (psiClass != null) {
           String qualifiedName = psiClass.getQualifiedName();
           if (myClasses.contains(qualifiedName)) {
             PsiElement name = expression.getReferenceNameElement();
             registerError(name == null ? expression : name, qualifiedName);
+            return true;
           }
         }
+        return false;
       }
     };
   }

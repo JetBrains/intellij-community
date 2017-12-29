@@ -202,7 +202,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
     // else url has come from VirtualFile.getPath() and is good enough
-    VirtualFilePointerImpl pointer = getOrCreate(path, Pair.create(file, url), listener);
+    VirtualFilePointerImpl pointer = getOrCreate(path, file, url, listener);
     DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     return pointer;
   }
@@ -248,10 +248,12 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   private VirtualFilePointerImpl getOrCreate(@NotNull String path,
-                                             @NotNull Pair<VirtualFile, String> fileAndUrl,
+                                             @Nullable VirtualFile file,
+                                             @NotNull String url,
                                              @Nullable VirtualFilePointerListener listener) {
     FilePointerPartNode root = myPointers.get(listener);
     FilePointerPartNode node;
+    Pair<VirtualFile, String> fileAndUrl = Pair.create(file, url);
     if (root == null) {
       root = new FilePointerPartNode(path, null, fileAndUrl, 1);
       myPointers.put(listener, root);
@@ -371,6 +373,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     List<FilePointerPartNode> toFireEvents = new ArrayList<>();
     List<FilePointerPartNode> toUpdateUrl = new ArrayList<>();
     VirtualFilePointer[] toFirePointers;
+    List<EventDescriptor> eventList;
 
     synchronized (this) {
       incModificationCount();
@@ -424,7 +427,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
       }
 
-      myEvents = new ArrayList<>();
+      myEvents = eventList = new ArrayList<>();
       toFirePointers = toPointers(toFireEvents);
       for (final VirtualFilePointerListener listener : myPointers.keySet()) {
         if (listener == null) continue;
@@ -437,7 +440,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
 
-    for (EventDescriptor descriptor : myEvents) {
+    for (EventDescriptor descriptor : eventList) {
       descriptor.fireBefore();
     }
 
@@ -445,8 +448,10 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myBus.syncPublisher(VirtualFilePointerListener.TOPIC).beforeValidityChanged(toFirePointers);
     }
 
-    myNodesToFire = toFireEvents;
-    myNodesToUpdateUrl = toUpdateUrl;
+    synchronized (this) {
+      myNodesToFire = toFireEvents;
+      myNodesToUpdateUrl = toUpdateUrl;
+    }
 
     assertConsistency();
   }
@@ -461,8 +466,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   public void after(@NotNull final List<? extends VFileEvent> events) {
     incModificationCount();
 
-    for (FilePointerPartNode node : myNodesToUpdateUrl) {
-      synchronized (this) {
+    synchronized (this) {
+      for (FilePointerPartNode node : myNodesToUpdateUrl) {
         String urlBefore = node.myFileAndUrl.second;
         Pair<VirtualFile,String> after = node.update();
         assert after != null : "can't invalidate inside modification";
@@ -491,12 +496,17 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
 
-    VirtualFilePointer[] pointersToFireArray = toPointers(myNodesToFire);
+    VirtualFilePointer[] pointersToFireArray;
+    List<EventDescriptor> eventList;
+    synchronized (this) {
+      pointersToFireArray = toPointers(myNodesToFire);
+      eventList = myEvents;
+    }
     for (VirtualFilePointer pointer : pointersToFireArray) {
       ((VirtualFilePointerImpl)pointer).myNode.update();
     }
 
-    for (EventDescriptor event : myEvents) {
+    for (EventDescriptor event : eventList) {
       event.fireAfter();
     }
 
@@ -504,9 +514,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myBus.syncPublisher(VirtualFilePointerListener.TOPIC).validityChanged(pointersToFireArray);
     }
 
-    myNodesToUpdateUrl = Collections.emptyList();
-    myEvents = Collections.emptyList();
-    myNodesToFire = Collections.emptyList();
+    synchronized (this) {
+      myNodesToUpdateUrl = Collections.emptyList();
+      myEvents = Collections.emptyList();
+      myNodesToFire = Collections.emptyList();
+    }
     assertConsistency();
   }
 

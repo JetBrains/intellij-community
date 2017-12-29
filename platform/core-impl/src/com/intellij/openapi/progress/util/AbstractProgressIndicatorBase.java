@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +51,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile boolean myRunning;
   private volatile boolean myFinished;
 
-  private volatile boolean myIndeterminate;
+  private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
   private volatile Object myMacActivity;
   private volatile boolean myShouldStartActivity = true;
 
@@ -178,6 +179,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void setFraction(final double fraction) {
+    if (isIndeterminate()) {
+      LOG.warn("This progress indicator is indeterminate, this may lead to visual inconsistency. Please call setIndeterminate(false) before you start progress.");
+      setIndeterminate(false);
+    }
     myFraction = fraction;
   }
 
@@ -192,11 +197,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public synchronized void popState() {
     LOG.assertTrue(!myTextStack.isEmpty());
     String oldText = myTextStack.pop();
-    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
     String oldText2 = myText2Stack.pop();
     setText(oldText);
-    setFraction(oldFraction);
     setText2(oldText2);
+
+    double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+    if (!isIndeterminate()) {
+      setFraction(oldFraction);
+    }
   }
 
   @Override

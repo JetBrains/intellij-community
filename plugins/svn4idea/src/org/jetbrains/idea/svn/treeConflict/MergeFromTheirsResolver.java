@@ -33,7 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
+import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
@@ -58,10 +58,10 @@ import org.jetbrains.idea.svn.SvnContentRevision;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -408,7 +408,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private void preloadForFile() throws VcsException {
     SvnContentRevision base = SvnContentRevision.createBaseRevision(myVcs, myNewFilePath, myCommittedRevision.getRevision());
     SvnContentRevision remote =
-      SvnContentRevision.createRemote(myVcs, myOldFilePath, SVNRevision.create(myDescription.getSourceRightVersion().getPegRevision()));
+      SvnContentRevision.createRemote(myVcs, myOldFilePath, Revision.of(myDescription.getSourceRightVersion().getPegRevision()));
     myTheirsChanges.add(new Change(toSimpleRevision(base, false), toSimpleRevision(remote, false)));
   }
 

@@ -1,25 +1,17 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +19,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.configurationStore.XmlSerializer.serialize;
+
 /**
  * @author Vladimir Kondratyev
  */
 public final class DesktopLayout {
+  private static final Logger LOG = Logger.getInstance(DesktopLayout.class);
+
   @NonNls static final String TAG = "layout";
   /**
    * Map between {@code id}s and registered {@code WindowInfo}s.
@@ -39,7 +35,7 @@ public final class DesktopLayout {
   /**
    * Map between {@code id}s and unregistered {@code WindowInfo}s.
    */
-  private final Map<String, WindowInfoImpl> myUnregisteredId2Info = new HashMap<>();
+  private final Map<String, WindowInfoImpl> myUnregisteredId2Info = new THashMap<>();
   /**
    *
    */
@@ -62,8 +58,6 @@ public final class DesktopLayout {
    * if the cached data is invalid.
    */
   private WindowInfoImpl[] myAllInfos;
-  @NonNls private static final String ID_ATTR = "id";
-
 
   /**
    * Copies itself from the passed
@@ -78,11 +72,11 @@ public final class DesktopLayout {
         continue;
       }
       info = myUnregisteredId2Info.get(info1.getId());
-      if (info != null) {
-        info.copyFrom(info1);
+      if (info == null) {
+        myUnregisteredId2Info.put(info1.getId(), info1.copy());
       }
       else {
-        myUnregisteredId2Info.put(info1.getId(), info1.copy());
+        info.copyFrom(info1);
       }
     }
     // invalidate caches
@@ -105,20 +99,22 @@ public final class DesktopLayout {
    */
   final WindowInfoImpl register(@NotNull String id, @NotNull ToolWindowAnchor anchor, final boolean splitMode) {
     WindowInfoImpl info = myUnregisteredId2Info.get(id);
-    if (info != null) { // tool window has been already registered some time
-      myUnregisteredId2Info.remove(id);
-    }
-    else { // tool window is being registered first time
-      info = new WindowInfoImpl(id);
+    if (info == null) {
+      // tool window is being registered first time
+      info = new WindowInfoImpl();
+      info.setId(id);
       info.setAnchor(anchor);
       info.setSplit(splitMode);
+    }
+    else {
+      // tool window has been already registered some time
+      myUnregisteredId2Info.remove(id);
     }
     myRegisteredId2Info.put(id, info);
     // invalidate caches
     myRegisteredInfos = null;
     myUnregisteredInfos = null;
     myAllInfos = null;
-    //
     return info;
   }
 
@@ -136,7 +132,7 @@ public final class DesktopLayout {
    *         If {@code onlyRegistered} is {@code true} then returns not {@code null}
    *         value if and only if window with {@code id} is registered one.
    */
-  final WindowInfoImpl getInfo(String id, final boolean onlyRegistered) {
+  final WindowInfoImpl getInfo(@NotNull String id, final boolean onlyRegistered) {
     final WindowInfoImpl info = myRegisteredId2Info.get(id);
     if (onlyRegistered || info != null) {
       return info;
@@ -216,11 +212,11 @@ public final class DesktopLayout {
     }
   }
 
-  final boolean isToolWindowRegistered(final String id) {
+  final boolean isToolWindowRegistered(@NotNull String id) {
     return myRegisteredId2Info.containsKey(id);
   }
 
-  final boolean isToolWindowUnregistered(final String id) {
+  final boolean isToolWindowUnregistered(@NotNull String id) {
     return myUnregisteredId2Info.containsKey(id);
   }
 
@@ -287,17 +283,18 @@ public final class DesktopLayout {
 
   public final void readExternal(@NotNull Element layoutElement) {
     myUnregisteredInfos = null;
-    for (Element e : layoutElement.getChildren()) {
-      if (WindowInfoImpl.TAG.equals(e.getName())) {
-        String id = e.getAttributeValue(ID_ATTR);
-        assert id != null;
-        final WindowInfoImpl info = new WindowInfoImpl(id);
-        info.readExternal(e);
-        if (info.getOrder() == -1) { // if order isn't defined then window's button will be the last one in the stripe
-          info.setOrder(getMaxOrder(info.getAnchor()) + 1);
-        }
-        myUnregisteredId2Info.put(info.getId(), info);
+    for (Element e : layoutElement.getChildren(WindowInfoImpl.TAG)) {
+      WindowInfoImpl info = XmlSerializer.deserialize(e, WindowInfoImpl.class);
+      if (info.getId() == null) {
+        LOG.warn("Skip invalid window info (no id): " + JDOMUtil.writeElement(e));
+        continue;
       }
+
+      if (info.getOrder() == -1) {
+        // if order isn't defined then window's button will be the last one in the stripe
+        info.setOrder(getMaxOrder(info.getAnchor()) + 1);
+      }
+      myUnregisteredId2Info.put(info.getId(), info);
     }
   }
 
@@ -310,9 +307,10 @@ public final class DesktopLayout {
 
     Element state = new Element(tagName);
     for (WindowInfoImpl info : infos) {
-      Element element = new Element(WindowInfoImpl.TAG);
-      info.writeExternal(element);
-      state.addContent(element);
+      Element element = serialize(info);
+      if (element != null) {
+        state.addContent(element);
+      }
     }
     return state;
   }

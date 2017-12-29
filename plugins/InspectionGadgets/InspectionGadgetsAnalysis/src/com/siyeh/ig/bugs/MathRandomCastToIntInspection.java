@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,6 +97,7 @@ public class MathRandomCastToIntInspection extends BaseInspection {
         return;
       }
       @NonNls final StringBuilder newExpression = new StringBuilder();
+      CommentTracker commentTracker = new CommentTracker();
       newExpression.append("(").append(type.getCanonicalText()).append(")(");
       final PsiExpression[] operands = polyadicExpression.getOperands();
       for (final PsiExpression expression : operands) {
@@ -104,14 +106,14 @@ public class MathRandomCastToIntInspection extends BaseInspection {
           newExpression.append(token.getText());
         }
         if (typeCastExpression.equals(expression)) {
-          newExpression.append(operand.getText());
+          newExpression.append(commentTracker.markUnchanged(operand).getText());
         }
         else {
-          newExpression.append(expression.getText());
+          newExpression.append(commentTracker.markUnchanged(expression).getText());
         }
       }
       newExpression.append(')');
-      PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString());
+      PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), commentTracker);
     }
   }
 

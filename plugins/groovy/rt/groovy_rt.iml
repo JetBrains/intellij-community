@@ -10,7 +10,16 @@
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="groovy-rt-constants" />
-    <orderEntry type="library" scope="PROVIDED" name="griffon-rt" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="griffon-rt">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../testdata/griffon/griffon-rt-1.1.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../testdata/griffon/griffon-cli-1.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" scope="PROVIDED" name="Slf4j" level="project" />
   </component>
 </module>

@@ -3,6 +3,7 @@
 from typing import Any, Text, Union
 from . import compat
 from . import cookies
+from . import models
 from . import utils
 from . import status_codes
 
@@ -17,7 +18,7 @@ CONTENT_TYPE_MULTI_PART = ...  # type: Any
 def _basic_auth_str(username: Union[bytes, Text], password: Union[bytes, Text]) -> str: ...
 
 class AuthBase:
-    def __call__(self, r): ...
+    def __call__(self, r: models.Request) -> models.Request: ...
 
 class HTTPBasicAuth(AuthBase):
     username = ...  # type: Any

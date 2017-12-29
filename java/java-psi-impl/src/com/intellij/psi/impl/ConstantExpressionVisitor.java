@@ -30,12 +30,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
+@SuppressWarnings("UnnecessaryBoxing")
 class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstantEvaluationHelper.AuxEvaluator {
   
   private final StringInterner myInterner = new StringInterner();
 
   private Set<PsiVariable> myVisitedVars;
-  private Map<PsiElement, Object> myCachedValues = new HashMap<>();
+  private final Map<PsiElement, Object> myCachedValues = new HashMap<>();
   private final boolean myThrowExceptionOnOverflow;
 
   private Object myResult;
@@ -447,11 +448,9 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       if (operandValue instanceof Number) {
         if (operandValue instanceof Double) {
           value = new Double(-((Number)operandValue).doubleValue());
-          checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operandValue instanceof Float) {
           value = new Float(-((Number)operandValue).floatValue());
-          checkRealNumberOverflow(value, null, null, expression);
         }
         else if (operandValue instanceof Long) {
           value = Long.valueOf(-((Number)operandValue).longValue());
@@ -546,7 +545,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       catch (Throwable ignore) { }
       return;
     }
-    else if (resolvedExpression instanceof PsiVariable) {
+    if (resolvedExpression instanceof PsiVariable) {
       PsiVariable variable = (PsiVariable) resolvedExpression;
       // avoid cycles
       if (myVisitedVars != null && myVisitedVars.contains(variable)) {

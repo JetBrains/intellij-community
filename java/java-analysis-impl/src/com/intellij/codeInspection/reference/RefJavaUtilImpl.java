@@ -304,7 +304,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
   @Override
   @Nullable
   public String getPackageName(RefEntity refEntity) {
-    if (refEntity instanceof RefProject) {
+    if (refEntity instanceof RefProject || refEntity instanceof RefJavaModule) {
       return null;
     }
     RefPackage refPackage = getPackage(refEntity);

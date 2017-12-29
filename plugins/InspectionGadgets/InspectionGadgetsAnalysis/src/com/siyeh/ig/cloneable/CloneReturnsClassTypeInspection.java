@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CloneUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +61,7 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
 
   private static class CloneReturnsClassTypeFix extends InspectionGadgetsFix {
 
-    private final String myClassName;
+    final String myClassName;
 
     public CloneReturnsClassTypeFix(String className) {
       myClassName = className;
@@ -100,15 +101,12 @@ public class CloneReturnsClassTypeInspection extends BaseInspection {
           if (owner != parent) {
             return;
           }
-          final PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue == null) {
+          final PsiExpression returnValue = PsiUtil.deparenthesizeExpression(statement.getReturnValue());
+          if (returnValue == null || newType.equals(returnValue.getType())) {
             return;
           }
-          final PsiType type = returnValue.getType();
-          if (newType.equals(type)) {
-            return;
-          }
-          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + returnValue.getText() + ';');
+          CommentTracker commentTracker = new CommentTracker();
+          PsiReplacementUtil.replaceStatement(statement, "return (" + myClassName + ')' + commentTracker.markUnchanged(returnValue).getText() + ';', commentTracker);
         }
       });
       element.replace(newTypeElement);

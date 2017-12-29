@@ -12,11 +12,11 @@ public interface ProcessOutputConsumer extends Disposable {
   void process(String text, Key outputType);
 
   /**
-   * @deprecated use {@link #flushBufferBeforeTerminating(int)}
+   * @deprecated use {@link #flushBufferOnProcessTermination(int)}
    */
   default void flushBufferBeforeTerminating() {}
 
-  default void flushBufferBeforeTerminating(int exitCode) {
+  default void flushBufferOnProcessTermination(int exitCode) {
     flushBufferBeforeTerminating();
   }
 }

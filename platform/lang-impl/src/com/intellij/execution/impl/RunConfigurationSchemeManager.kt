@@ -1,10 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.execution.RunConfigurationConverter
+import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.util.attribute
 import org.jdom.Element
@@ -12,10 +17,16 @@ import java.util.function.Function
 
 private val LOG = logger<RunConfigurationSchemeManager>()
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
+
+  private val converters by lazy {
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
+  }
+
   override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
-    return scheme.name
+    // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
+    return if (isShared) scheme.name else "${scheme.type.id}-${scheme.name}"
   }
 
   override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
@@ -30,6 +41,10 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
     if (isShared && element.name == "component") {
       element = element.getChild("configuration")
+    }
+
+    converters.any {
+      LOG.runAndLogException { it.convertRunConfigurationOnDemand(element) } ?: false
     }
 
     try {
@@ -53,7 +68,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     return element
   }
 
-  override fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
+  override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     var name = attributeProvider.apply("name")
     if (name == "<template>" || name == null) {
       attributeProvider.apply("type")?.let {
@@ -63,6 +78,12 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
         name += " of type ${it}"
       }
     }
+    else if (name != null && !isShared) {
+      val typeId = attributeProvider.apply("type")
+      LOG.assertTrue(typeId != null)
+      return "$typeId-${name}"
+    }
+
     return name
   }
 
@@ -83,7 +104,7 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
 
   override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element {
     val result = super.writeScheme(scheme)
-    if (isShared) {
+    if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
         .attribute("name", "ProjectRunConfigurationManager")
         .addContent(result)

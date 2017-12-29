@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.execution
 
+import com.intellij.build.BuildView
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
@@ -23,9 +24,9 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.GenericProgramRunner
 import com.intellij.execution.runners.RunContentBuilder
+import com.intellij.execution.testframework.sm.runner.history.ImportedTestRunnableState
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import javax.swing.JComponent
 
 /**
  * @author Vladislav.Soroka
@@ -42,12 +43,22 @@ class ExternalSystemTaskRunner : GenericProgramRunner<RunnerSettings>() {
 
   @Throws(ExecutionException::class)
   override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-    if (state !is ExternalSystemRunConfiguration.MyRunnableState) return null
+    if (state !is ExternalSystemRunConfiguration.MyRunnableState && state !is ImportedTestRunnableState) {
+      return null
+    }
 
     val executionResult = state.execute(environment.executor, this) ?: return null
     val runContentDescriptor = RunContentBuilder(executionResult, environment).showRunContent(environment.contentToReuse) ?: return null
 
-    state.setContentDescriptor(runContentDescriptor)
+    if (state is ImportedTestRunnableState) {
+      return runContentDescriptor
+    }
+
+    (state as ExternalSystemRunConfiguration.MyRunnableState).setContentDescriptor(runContentDescriptor)
+    if (executionResult.executionConsole is BuildView) {
+      return runContentDescriptor
+    }
+
     val descriptor = object : RunContentDescriptor(runContentDescriptor.executionConsole, runContentDescriptor.processHandler,
                                                    runContentDescriptor.component, runContentDescriptor.displayName,
                                                    runContentDescriptor.icon, null,

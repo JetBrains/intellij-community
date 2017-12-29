@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableList;
@@ -39,7 +37,6 @@ import java.util.function.Predicate;
  * Checks that arguments to property() and @property and friends are ok.
  * <br/>
  * User: dcheryasov
- * Date: Jun 30, 2010 2:53:05 PM
  */
 public class PyPropertyDefinitionInspection extends PyInspection {
 
@@ -188,33 +185,31 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       super.visitPyFunction(node);
-      if (myLevel.isAtLeast(LanguageLevel.PYTHON26)) {
-        // check @foo.setter and @foo.deleter
-        PyClass cls = node.getContainingClass();
-        if (cls != null) {
-          final PyDecoratorList decos = node.getDecoratorList();
-          if (decos != null) {
-            String name = node.getName();
-            for (PyDecorator deco : decos.getDecorators()) {
-              final QualifiedName qName = deco.getQualifiedName();
-              if (qName != null) {
-                List<String> nameParts = qName.getComponents();
-                if (nameParts.size() == 2) {
-                  final int suffixIndex = SUFFIXES.indexOf(nameParts.get(1));
-                  if (suffixIndex >= 0) {
-                    if (Comparing.equal(name, nameParts.get(0))) {
-                      // names are ok, what about signatures?
-                      PsiElement markable = getFunctionMarkingElement(node);
-                      if (suffixIndex == 0) {
-                        checkSetter(node, markable);
-                      }
-                      else {
-                        checkDeleter(node, markable);
-                      }
+      // check @foo.setter and @foo.deleter
+      PyClass cls = node.getContainingClass();
+      if (cls != null) {
+        final PyDecoratorList decos = node.getDecoratorList();
+        if (decos != null) {
+          String name = node.getName();
+          for (PyDecorator deco : decos.getDecorators()) {
+            final QualifiedName qName = deco.getQualifiedName();
+            if (qName != null) {
+              List<String> nameParts = qName.getComponents();
+              if (nameParts.size() == 2) {
+                final int suffixIndex = SUFFIXES.indexOf(nameParts.get(1));
+                if (suffixIndex >= 0) {
+                  if (Comparing.equal(name, nameParts.get(0))) {
+                    // names are ok, what about signatures?
+                    PsiElement markable = getFunctionMarkingElement(node);
+                    if (suffixIndex == 0) {
+                      checkSetter(node, markable);
                     }
                     else {
-                      registerProblem(deco, PyBundle.message("INSP.func.property.name.mismatch"));
+                      checkDeleter(node, markable);
                     }
+                  }
+                  else {
+                    registerProblem(deco, PyBundle.message("INSP.func.property.name.mismatch"));
                   }
                 }
               }
@@ -294,7 +289,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (callable instanceof PyFunction) {
         final PyFunction function = (PyFunction)callable;
 
-        if (PyUtil.isDecoratedAsAbstract(function)) {
+        if (PyKnownDecoratorUtil.hasAbstractDecorator(function, myTypeEvalContext)) {
           return;
         }
 

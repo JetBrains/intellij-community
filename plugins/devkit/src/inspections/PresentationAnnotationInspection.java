@@ -15,52 +15,43 @@
  */
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UAnnotation;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 public class PresentationAnnotationInspection extends DevKitUastInspectionBase {
-  private static final Logger LOG = Logger.getInstance(PresentationAnnotationInspection.class);
 
-  @NotNull
+  @Nullable
   @Override
-  protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new PsiElementVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        UAnnotation annotation = UastContextKt.toUElement(element, UAnnotation.class);
-        if (annotation == null) {
-          return;
-        }
-        if (!Presentation.class.getCanonicalName().equals(annotation.getQualifiedName())) {
-          return;
-        }
+  public ProblemDescriptor[] checkClass(@NotNull UClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    final UAnnotation annotation = aClass.findAnnotation(Presentation.class.getCanonicalName());
+    if (annotation == null) {
+      return null;
+    }
 
-        UExpression iconExpression = annotation.findDeclaredAttributeValue("icon");
-        if (iconExpression == null) {
-          return;
-        }
+    UExpression iconExpression = annotation.findDeclaredAttributeValue("icon");
+    if (!(iconExpression instanceof ULiteralExpression)) {
+      return null;
+    }
 
-        PsiElement iconExpressionPsi = iconExpression.getPsi();
-        if (iconExpressionPsi == null) {
-          LOG.error("Unexpected null value of @Presentation#icon expression PSI: " + element);
-          return;
-        }
+    PsiElement iconExpressionPsi = UastLiteralUtils.getPsiLanguageInjectionHost((ULiteralExpression)iconExpression);
+    if (iconExpressionPsi == null) {
+      return null;
+    }
 
-        PsiReference[] references = iconExpressionPsi.getReferences();
-        for (PsiReference reference : references) {
-          if (reference.resolve() == null) {
-            holder.registerProblem(reference);
-          }
-        }
+    ProblemsHolder holder = new ProblemsHolder(manager, iconExpressionPsi.getContainingFile(), isOnTheFly);
+    PsiReference[] references = iconExpressionPsi.getReferences();
+    for (PsiReference reference : references) {
+      if (reference.resolve() == null) {
+        holder.registerProblem(reference);
       }
-    };
+    }
+    return holder.getResultsArray();
   }
 }

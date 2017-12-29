@@ -13,13 +13,14 @@
       <with attribute="implementationClass" implements="com.intellij.spellchecker.tokenizer.SpellcheckingStrategy"/>
     </extensionPoint>
     <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider"/>
+    <extensionPoint name="spellchecker.dictionary.customDictionaryProvider" interface="com.intellij.spellchecker.dictionary.CustomDictionaryProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"
                         serviceImplementation="com.intellij.spellchecker.ui.SpellCheckingEditorCustomizationProviderImpl"
                         overrides="true"/>
-
+    <fileTypeFactory implementation="com.intellij.spellchecker.DictionaryFileTypeFactory"/>
     <projectService serviceInterface="com.intellij.spellchecker.settings.SpellCheckerSettings"
                     serviceImplementation="com.intellij.spellchecker.settings.SpellCheckerSettings"/>
     <projectService serviceInterface="com.intellij.spellchecker.SpellCheckerManager"

@@ -93,6 +93,10 @@ class BaseStdIn:
     def close(self, *args, **kwargs):
         pass  # expected in StdIn
 
+    def __iter__(self):
+        # BaseStdIn would not be considered as Iterable in Python 3 without explicit `__iter__` implementation
+        return self.original_stdin.__iter__()
+
     def __getattr__(self, item):
         # it's called if the attribute wasn't found
         if hasattr(self.original_stdin, item):
@@ -122,6 +126,8 @@ class StdIn(BaseStdIn):
             if not requested_input:
                 return '\n'  # Yes, a readline must return something (otherwise we can get an EOFError on the input() call).
             return requested_input
+        except KeyboardInterrupt:
+            raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
         except:
             return '\n'
 
@@ -172,19 +178,29 @@ class CodeFragment:
 # BaseInterpreterInterface
 # =======================================================================================================================
 class BaseInterpreterInterface:
-    def __init__(self, mainThread):
+    def __init__(self, mainThread, connect_status_queue=None):
         self.mainThread = mainThread
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
         self.banner_shown = False
-        self.default_banner = ''
+        self.connect_status_queue = connect_status_queue
+        self.mpl_modules_for_patching = {}
+        self.init_mpl_modules_for_patching()
 
     def build_banner(self):
-        return 'print({})\n'.format(repr(self.get_greeting_msg()))
+        return 'print({0})\n'.format(repr(self.get_greeting_msg()))
 
     def get_greeting_msg(self):
         return 'PyDev console: starting.\n'
+
+    def init_mpl_modules_for_patching(self):
+        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+        self.mpl_modules_for_patching = {
+            "matplotlib": lambda: activate_matplotlib(self.enableGui),
+            "matplotlib.pyplot": activate_pyplot,
+            "pylab": activate_pylab
+        }
 
     def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
@@ -583,6 +599,14 @@ class BaseInterpreterInterface:
         self.exec_queue.put(do_connect_to_debugger)
 
         return ('connect complete',)
+
+    def handshake(self):
+        if self.connect_status_queue is not None:
+            self.connect_status_queue.put(True)
+        return "PyCharm"
+
+    def get_connect_status_queue(self):
+        return self.connect_status_queue
 
     def hello(self, input_str):
         # Don't care what the input string is

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,6 +195,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void removeNotify() {
+    if (myRollover) {
+      onMousePresenceChanged(false);
+    }
     if (myPresentationListener != null) {
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
@@ -227,6 +231,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myLook != null) {
       myLook.updateUI();
     }
+    updateToolTipText();
   }
 
   @Override public Dimension getPreferredSize() {
@@ -281,6 +286,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
       String shortcut = KeymapUtil.getFirstKeyboardShortcutText(myAction);
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
         HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(shortcut).setLocation(getTooltipLocation());
@@ -310,7 +316,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void paintButtonLook(Graphics g) {
     ActionButtonLook look = getButtonLook();
-    look.paintBackground(g, this);
+    if (isEnabled() || !UIUtil.isUnderDarcula()) {
+      look.paintBackground(g, this);
+    }
     look.paintIcon(g, this, getIcon());
     look.paintBorder(g, this);
   }
@@ -332,7 +340,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
     if (e.isConsumed()) return;
-    boolean skipPress = e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
+    boolean skipPress = checkSkipPressForEvent(e);
     switch (e.getID()) {
       case MouseEvent.MOUSE_PRESSED:
         if (skipPress || !isButtonEnabled()) return;
@@ -365,6 +373,10 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         onMousePresenceChanged(false);
         break;
     }
+  }
+
+  protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
+    return e.isMetaDown() || e.getButton() != MouseEvent.BUTTON1;
   }
 
   private int getPopState(boolean isPushed) {
@@ -442,6 +454,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       }
 
       return name;
+    }
+
+    @Override
+    public String getAccessibleDescription() {
+      return AccessibleContextUtil.getUniqueDescription(this, super.getAccessibleDescription());
     }
 
     @Override

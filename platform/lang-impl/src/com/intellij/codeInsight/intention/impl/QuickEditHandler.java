@@ -124,7 +124,8 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
-    myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, shreds.getHostPointer());
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
+    myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
     myNewDocument = PsiDocumentManager.getInstance(project).getDocument(myNewFile);
     assert myNewDocument != null;
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
@@ -245,12 +246,11 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       // allow undo/redo up until 'creation stamp' back in time
       // and check it after action is completed
       if (e.getDocument() == myOrigDocument) {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(() -> {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (myOrigCreationStamp > myOrigDocument.getModificationStamp()) {
             closeEditor();
           }
-        });
+        }, myProject.getDisposed());
       }
     }
     else if (e.getDocument() == myNewDocument) {

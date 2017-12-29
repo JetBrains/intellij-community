@@ -42,7 +42,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
   private final Map<SingletonDeploymentSourceType, SingletonTypeConfigurationFactory> myPerTypeFactories = new HashMap<>();
 
   public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
-    super(serverType.getId() + "-deploy", serverType.getPresentableName() + " Deployment",
+    super(serverType.getId() + "-deploy", serverType.getDeploymentConfigurationTypePresentableName(),
           "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
 
     myServerType = serverType;

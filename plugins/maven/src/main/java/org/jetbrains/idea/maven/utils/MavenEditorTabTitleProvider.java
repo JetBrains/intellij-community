@@ -19,12 +19,13 @@ import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
   @Override
-  public String getEditorTabTitle(Project project, VirtualFile file) {
+  public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     if (projectsManager.isMavenizedProject()) {
       MavenProject mavenProject = projectsManager.findProject(file);

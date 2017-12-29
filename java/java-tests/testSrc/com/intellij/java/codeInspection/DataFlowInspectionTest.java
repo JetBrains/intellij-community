@@ -233,6 +233,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }
+  public void testTryWithResourcesCloseException() { doTest(); }
+  public void testTryWithResourceExpressions() { doTest(); }
+
   public void testOmnipresentExceptions() { doTest(); }
 
   public void testEqualsHasNoSideEffects() { doTest(); }
@@ -485,6 +488,26 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Remove 'for' statement");
   }
 
+  public void testSideEffectReturn() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
+  }
+
+  public void testSideEffectNoBrace() {
+    doTest();
+    checkIntentionResult("Simplify 'Test.valueOf(value) != null' to true extracting side effects");
+  }
+
+  public void testSimplifyConcatWithParentheses() {
+    doTest();
+    checkIntentionResult("Simplify 'f' to false");
+  }
+
+  public void testSideEffectWhile() {
+    doTest();
+    checkIntentionResult("Remove 'while' statement extracting side effects");
+  }
+
   public void testUsingInterfaceConstant() { doTest();}
 
   //https://youtrack.jetbrains.com/issue/IDEA-162184
@@ -547,6 +570,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testGetterOfNullableFieldIsNotNull() { doTest(); }
 
-  public void testTryWithResourceExpressions() { doTest(); }
   public void testArrayStoreProblems() { doTest(); }
+
+  public void testNestedScopeComplexity() { doTest(); }
+
+  public void testNullableReturn() { doTest(); }
+  public void testManyBooleans() { doTest(); }
+  public void testPureNoArgMethodAsVariable() { doTest(); }
+  public void testRedundantAssignment() { doTest(); }
 }

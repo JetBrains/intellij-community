@@ -16,10 +16,12 @@
 package com.jetbrains.python;
 
 import com.intellij.testFramework.ParsingTestCase;
+import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect;
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition;
-import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
+import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
+import com.jetbrains.python.inspections.PythonVisitorFilter;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,14 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDocstringTokenSetContributor());
     PythonDialectsTokenSetProvider.reset();
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    // clear cached extensions
+    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
+    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyFunctionTypeAnnotationDialect.INSTANCE, (visitorClass, file) -> false);
+    super.tearDown();
   }
 
   protected void doCodeTest(@NotNull String typeAnnotation) {

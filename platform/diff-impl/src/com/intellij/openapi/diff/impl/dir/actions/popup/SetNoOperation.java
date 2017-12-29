@@ -25,7 +25,6 @@ import javax.swing.*;
 
 /**
  * @author lene
- *         Date: 23.04.12
  */
 public class SetNoOperation extends DumbAwareAction {
   @Override
@@ -43,7 +42,7 @@ public class SetNoOperation extends DumbAwareAction {
   public final void update(AnActionEvent e) {
     final DirDiffTableModel model = SetOperationToBase.getModel(e);
     final JTable table = SetOperationToBase.getTable(e);
-    if (table != null && model != null) {
+    if (table != null && model != null && model.isOperationsEnabled()) {
       for (DirDiffElementImpl element : model.getSelectedElements()) {
         if (element.getOperation() != DirDiffOperation.NONE) {
           e.getPresentation().setEnabled(true);

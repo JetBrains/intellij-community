@@ -20,8 +20,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider;
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider;
+import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider;
+import org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +41,7 @@ public class GradleFrameworksWizardStep extends ModuleWizardStep implements Disp
   private JPanel myFrameworksPanelPlaceholder;
   private JPanel myOptionsPanel;
   @SuppressWarnings("unused") private JBLabel myFrameworksLabel;
+  private JCheckBox kdslCheckBox;
 
   public GradleFrameworksWizardStep(WizardContext context, final GradleModuleBuilder builder) {
 
@@ -53,10 +58,8 @@ public class GradleFrameworksWizardStep extends ModuleWizardStep implements Disp
     myFrameworksPanel =
       new AddSupportForFrameworksPanel(Collections.emptyList(), model, true, null);
 
-    List<FrameworkSupportInModuleProvider> providers = ContainerUtil.newArrayList();
-    Collections.addAll(providers, GradleFrameworkSupportProvider.EP_NAME.getExtensions());
+    setGradleFrameworkSupportProviders();
 
-    myFrameworksPanel.setProviders(providers, Collections.emptySet(), Collections.singleton(GradleJavaFrameworkSupportProvider.ID));
     Disposer.register(this, myFrameworksPanel);
     myFrameworksPanelPlaceholder.add(myFrameworksPanel.getMainPanel());
 
@@ -69,6 +72,32 @@ public class GradleFrameworksWizardStep extends ModuleWizardStep implements Disp
     builder.addModuleConfigurationUpdater(configurationUpdater);
 
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, "frameworks card");
+
+    kdslCheckBox.addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        builder.setUseKotlinDsl(kdslCheckBox.isSelected());
+
+        if (kdslCheckBox.isSelected()) {
+          setKotlinDslGradleFrameworkSupportProviders();
+        } else {
+          setGradleFrameworkSupportProviders();
+        }
+      }
+    });
+  }
+
+  private void setKotlinDslGradleFrameworkSupportProviders() {
+    List<FrameworkSupportInModuleProvider> providers = ContainerUtil.newArrayList();
+    Collections.addAll(providers, KotlinDslGradleFrameworkSupportProvider.EP_NAME.getExtensions());
+    myFrameworksPanel.setProviders(providers, Collections.emptySet(), Collections.singleton(
+      KotlinDslGradleJavaFrameworkSupportProvider.ID));
+  }
+
+  private void setGradleFrameworkSupportProviders() {
+    List<FrameworkSupportInModuleProvider> providers = ContainerUtil.newArrayList();
+    Collections.addAll(providers, GradleFrameworkSupportProvider.EP_NAME.getExtensions());
+    myFrameworksPanel.setProviders(providers, Collections.emptySet(), Collections.singleton(GradleJavaFrameworkSupportProvider.ID));
   }
 
   @Override

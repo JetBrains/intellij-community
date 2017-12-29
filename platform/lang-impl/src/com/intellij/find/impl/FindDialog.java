@@ -161,6 +161,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
   @Override
   public void doCancelAction() { // doCancel disposes fields and then calls dispose
+    FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
     rememberResultsPreviewWasOpen();
     super.doCancelAction();
@@ -740,7 +741,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
     if (validationInfo == null) {
       myHelper.getModel().copyFrom(validateModel);
-      myHelper.updateFindSettings();
 
       rememberResultsPreviewWasOpen();
       super.doOKAction();

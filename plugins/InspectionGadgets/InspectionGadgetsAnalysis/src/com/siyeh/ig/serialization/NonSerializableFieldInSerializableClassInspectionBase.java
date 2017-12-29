@@ -86,7 +86,7 @@ public class NonSerializableFieldInSerializableClassInspectionBase extends Seria
       if (isIgnoredSubclass(aClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(field, ignorableAnnotations, 0)) {
         return;
       }
       registerFieldError(field, field);

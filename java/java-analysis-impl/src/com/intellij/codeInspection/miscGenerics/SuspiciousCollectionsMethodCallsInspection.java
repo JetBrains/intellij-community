@@ -2,10 +2,12 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -97,10 +99,13 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
     final String plainMessage = SuspiciousMethodCallUtil
       .getSuspiciousMethodCallMessage(methodCall, args[0], argType, exactType || reportConvertibleMethodCalls, patternMethods, indices);
     if (plainMessage != null && !exactType) {
-      final PsiType dfaType = GuessManager.getInstance(methodCall.getProject()).getControlFlowExpressionType(args[0]);
-      if (dfaType != null && SuspiciousMethodCallUtil
-                               .getSuspiciousMethodCallMessage(methodCall, args[0], dfaType, reportConvertibleMethodCalls, patternMethods, indices) == null) {
-        return null;
+      TypeConstraint constraint = CommonDataflow.getExpressionFact(args[0], DfaFactType.TYPE_CONSTRAINT);
+      if (constraint != null) {
+        PsiType type = constraint.getPsiType();
+        if (type != null && SuspiciousMethodCallUtil
+              .getSuspiciousMethodCallMessage(methodCall, args[0], type, reportConvertibleMethodCalls, patternMethods, indices) == null) {
+          return null;
+        }
       }
     }
 

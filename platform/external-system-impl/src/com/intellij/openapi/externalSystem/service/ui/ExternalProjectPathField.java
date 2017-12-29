@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.externalSystem.service.ui;
 
@@ -148,7 +136,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
     
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    AbstractExternalSystemLocalSettings<?> settings = manager.getLocalSettingsProvider().fun(project);
     Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects = settings.getAvailableProjects();
     List<ExternalProjectPojo> rootProjects = ContainerUtilRt.newArrayList(projects.keySet());
     ContainerUtil.sort(rootProjects);
@@ -162,7 +150,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   private static EditorTextField createTextField(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    final AbstractExternalSystemLocalSettings<?> settings = manager.getLocalSettingsProvider().fun(project);
     final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
     TextFieldCompletionProvider provider = new TextFieldCompletionProviderDumbAware() {
       @Override
@@ -212,7 +200,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
   {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     assert manager != null;
-    final AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    final AbstractExternalSystemLocalSettings<?> settings = manager.getLocalSettingsProvider().fun(project);
     final ExternalSystemUiAware uiAware = ExternalSystemUiUtil.getUiAware(externalSystemId);
 
     String rawText = editor.getDocument().getText();
@@ -303,7 +291,7 @@ public class ExternalProjectPathField extends ComponentWithBrowseButton<External
       myTextField = textField;
       myRegisteredProjectsButton = registeredProjectsButton;
       add(myTextField, new GridBag().weightx(1).fillCellHorizontally());
-      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 0));
+      add(myRegisteredProjectsButton, new GridBag().insets(0, 3, 0, 1));
     }
 
     @NotNull

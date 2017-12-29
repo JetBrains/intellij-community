@@ -16,7 +16,6 @@
 package com.jetbrains.env.python.console;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.execution.process.ProcessAdapter;
@@ -25,8 +24,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,14 +35,13 @@ import com.jetbrains.python.console.*;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyDebuggerException;
-import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 
 /**
  * @author traff
@@ -93,32 +89,42 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void tearDown() {
+  public void tearDown() throws Exception {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       try {
         if (myConsoleView != null) {
           disposeConsole();
-          myCommunication.waitForTerminate();
         }
-        super.tearDown();
       }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
     });
+    super.tearDown();
   }
 
-  private void disposeConsole() {
+  /**
+   * Disposes Python console and waits for Python console server thread to die.
+   */
+  private void disposeConsole() throws InterruptedException, ExecutionException, TimeoutException {
+    disposeConsoleAsync().get(30L, TimeUnit.SECONDS);
+  }
+
+  @NotNull
+  private Future<Void> disposeConsoleAsync() {
+    Future<Void> shutdownFuture;
     if (myCommunication != null) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      shutdownFuture = UIUtil.invokeAndWaitIfNeeded(() -> {
         try {
-          myCommunication.close();
+          return myCommunication.closeAsync();
         }
-        catch (Exception e) {
-          e.printStackTrace();
+        finally {
+          myCommunication = null;
         }
-        myCommunication = null;
       });
+    }
+    else {
+      shutdownFuture = CompletableFuture.completedFuture(null);
     }
 
     disposeConsoleProcess();
@@ -136,26 +142,15 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         }
       }.execute();
     }
+
+    return shutdownFuture;
   }
 
   @Override
   public void runTestOn(final String sdkHome) throws Exception {
-    final Project project = getProject();
-
-    final Sdk sdk = createTempSdk(sdkHome, SdkCreationType.EMPTY_SDK);
-
     setProcessCanTerminate(false);
 
-    PydevConsoleRunner consoleRunner =
-      new PydevConsoleRunnerImpl(project, sdk, PyConsoleType.PYTHON, myFixture.getTempDirPath(), Maps.newHashMap(),
-                                 PyConsoleOptions.getInstance(project).getPythonConsoleSettings(),
-                                 (s) -> {
-                                 }, PydevConsoleRunnerImpl.CONSOLE_START_COMMAND) {
-        protected void showContentDescriptor(RunContentDescriptor contentDescriptor) {
-          myContentDescriptorRef.set(contentDescriptor);
-          super.showContentDescriptor(contentDescriptor);
-        }
-      };
+    PydevConsoleRunner consoleRunner = PythonConsoleRunnerFactory.getInstance().createConsoleRunner(getProject(), myFixture.getModule());
 
     before();
 

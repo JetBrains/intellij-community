@@ -17,8 +17,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.junit.Test;
 
@@ -113,7 +112,7 @@ public class UrlClassLoaderTest {
       UrlClassLoader.CachePool pool = UrlClassLoader.createCachePool();
       for (int attempt = 0; attempt < attemptCount; attempt++) {
         // fails also without cache pool (but with cache enabled), but takes much longer
-        UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).useCache(pool, (url) -> true).get();
+        UrlClassLoader loader = UrlClassLoader.build().urls(urls).parent(null).allowLock(true).useCache(pool, (url) -> true).get();
         List<String> namesToLoad = ContainerUtil.newArrayList();
         for (int j = 0; j < resourceCount; j++) {
           namesToLoad.add(resourceNames.get(random.nextInt(resourceNames.size())));
@@ -217,5 +216,44 @@ public class UrlClassLoaderTest {
     else {
       return loader.findResource(name);
     }
+  }
+
+  @Test
+  public void testFindDirWhenUsingCache() throws IOException {
+    int counter = 1;
+    for (String dirName : new String[]{ "dir", "dir/", "dir.class", "dir.class/"}) {
+      for(String resourceName: new String[] {"a.class", "a.txt"} ) {
+        File root = FileUtil.createTempDirectory("testFindDirWhenUsingCache", String.valueOf(counter++));
+        File subDir = createTestDir(root, dirName);
+        createTestFile(subDir, resourceName);
+
+        URL url = root.toURI().toURL();
+        URLClassLoader standardCl = new URLClassLoader(new URL[] {url});
+
+        try {
+          Enumeration<URL> resources = standardCl.findResources(dirName);
+          assertTrue(resources.hasMoreElements());
+          URL expectedResourceUrl = resources.nextElement();
+
+          withCustomCachedClassloader(url, (customCl) -> {
+            assertNull(customCl.findResource("SomeNonExistentResource.resource"));
+            checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl);
+          });
+          withCustomCachedClassloader(url, (customCl) -> checkResourceUrlIsTheSame(customCl, dirName, expectedResourceUrl));
+        } finally {
+          standardCl.close();
+        }
+      }
+    }
+  }
+
+  private static void checkResourceUrlIsTheSame(UrlClassLoader customCl, String resourceName, URL expectedResourceUrl) throws IOException {
+    Enumeration<URL> customClResources = customCl.findResources(resourceName);
+    assertTrue(customClResources.hasMoreElements());
+    assertEquals(expectedResourceUrl, customClResources.nextElement());
+  }
+
+  private static void withCustomCachedClassloader(URL url, ThrowableConsumer<UrlClassLoader, IOException> testAction) throws IOException {
+    testAction.consume(UrlClassLoader.build().useCache().urls(url).get());
   }
 }

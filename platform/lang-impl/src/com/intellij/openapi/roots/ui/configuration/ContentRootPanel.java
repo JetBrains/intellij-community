@@ -57,7 +57,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 19, 2004
  */
 public abstract class ContentRootPanel extends JPanel {
   private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);

@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -38,8 +37,7 @@ import java.io.IOException;
  */
 
 public class PyDynamicTypesTest extends PyEnvTestCase {
-  
-  @Staging
+
   @Test
   public void test1() {
     doTest(getTestName(true) + ".py");

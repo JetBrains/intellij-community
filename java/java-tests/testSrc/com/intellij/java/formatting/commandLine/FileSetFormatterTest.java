@@ -40,6 +40,7 @@ public class FileSetFormatterTest extends LightPlatformTestCase {
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.getIndentOptions().INDENT_SIZE = 2;
     javaSettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    javaSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS;
     File sourceDir = createSourceDir("original");
     String fileSpec = sourceDir.getCanonicalPath();
     MessageOutput messageOutput = new MessageOutput(new PrintWriter(System.out), new PrintWriter(System.err));

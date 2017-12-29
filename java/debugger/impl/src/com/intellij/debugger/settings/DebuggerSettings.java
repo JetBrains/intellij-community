@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -16,9 +18,8 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -200,8 +201,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
     return Collections.emptyList();
   }
 
-  @Tag("capture-points")
-  @AbstractCollection(surroundWithTag = false)
+  @XCollection(propertyElementName = "capture-points")
   public List<CapturePoint> getCapturePoints() {
     return myCapturePoints;
   }

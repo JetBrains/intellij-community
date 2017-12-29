@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -193,7 +196,11 @@ public class MalformedFormatStringInspectionBase extends BaseInspection {
           continue;
         }
         if (validator != null && !validator.valid(argumentType)) {
-          registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
+          TypeConstraint fact = CommonDataflow.getExpressionFact(argument, DfaFactType.TYPE_CONSTRAINT);
+          PsiType preciseType = fact != null ? fact.getPsiType() : null;
+          if (preciseType == null || !validator.valid(preciseType)) {
+            registerError(argument, validators, Integer.valueOf(argumentCount), argumentType, validator);
+          }
         }
       }
     }

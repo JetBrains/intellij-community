@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import com.google.common.base.Predicate;
 import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.PathManager;
@@ -48,7 +49,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/12/11
  */
 public class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.ClasspathBootstrap");
@@ -80,7 +80,8 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(ArtifactRepositoryManager.class));  // aether-dependency-resolver
     final String aetherPath = getResourcePath(Artifact.class); // aether-1.1.0-all.jar
     cp.add(aetherPath);
-    cp.add(FileUtil.toSystemIndependentName(new File(new File(aetherPath).getParentFile(), "maven-aether-provider-3.3.9-all.jar").getAbsolutePath())); 
+    cp.add(FileUtil.toSystemIndependentName(new File(new File(aetherPath).getParentFile(), "maven-aether-provider-3.3.9-all.jar").getAbsolutePath()));
+    cp.add(getResourcePath(Predicate.class));  // guava
     cp.add(getResourcePath(HttpClient.class));  // httpclient
     cp.add(getResourcePath(HttpConnection.class));  // httpcore
     //noinspection UnnecessaryFullyQualifiedName

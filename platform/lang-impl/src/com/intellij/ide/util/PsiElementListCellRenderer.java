@@ -22,7 +22,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
@@ -42,6 +41,7 @@ import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.UIUtil;
@@ -53,9 +53,11 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.regex.Pattern;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
   private static final String LEFT = BorderLayout.WEST;
+  private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
 
   private boolean myFocusBorderEnabled = Registry.is("psi.element.list.cell.renderer.focus.border.enabled");
   protected int myRightComponentWidth;
@@ -153,10 +155,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         TextAttributes attributes = element.isValid() ? getNavigationItemAttributes(value) : null;
 
-        if (isProblemFile) {
-          attributes = TextAttributes.merge(new TextAttributes(color, null, JBColor.RED, EffectType.WAVE_UNDERSCORE, Font.PLAIN), attributes);
-        }
-
         SimpleTextAttributes nameAttributes = attributes != null ? SimpleTextAttributes.fromTextAttributes(attributes) : null;
 
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
@@ -171,8 +169,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         String containerText = getContainerTextForLeftComponent(element, name + (myModuleName != null ? myModuleName + "        " : ""));
         if (containerText != null) {
-          SimpleTextAttributes locationAttrs = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY);
-          SpeedSearchUtil.appendColoredFragmentForMatcher(" " + containerText, this, locationAttrs, myMatchers.locationMatcher, bgColor, selected);
+          appendLocationText(selected, bgColor, isProblemFile, containerText);
         }
       }
       else if (!customizeNonPsiElementLeftRenderer(this, list, value, index, selected, hasFocus)) {
@@ -180,6 +177,29 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, list.getForeground()));
       }
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
+    }
+
+    private void appendLocationText(boolean selected, Color bgColor, boolean isProblemFile, String containerText) {
+      SimpleTextAttributes locationAttrs = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.GRAY);
+      if (isProblemFile) {
+        SimpleTextAttributes wavedAttributes = SimpleTextAttributes.merge(new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, JBColor.GRAY, JBColor.RED), locationAttrs);
+        java.util.regex.Matcher matcher = CONTAINER_PATTERN.matcher(containerText);
+        if (matcher.matches()) {
+          String prefix = matcher.group(1);
+          SpeedSearchUtil.appendColoredFragmentForMatcher(" " + ObjectUtils.notNull(prefix, ""), this, locationAttrs, myMatchers.locationMatcher, bgColor, selected);
+
+          String strippedContainerText = matcher.group(2);
+          SpeedSearchUtil.appendColoredFragmentForMatcher(ObjectUtils.notNull(strippedContainerText, ""), this, wavedAttributes, myMatchers.locationMatcher, bgColor, selected);
+
+          String suffix = matcher.group(3);
+          if (suffix != null) {
+            SpeedSearchUtil.appendColoredFragmentForMatcher(suffix, this, locationAttrs, myMatchers.locationMatcher, bgColor, selected);
+          }
+          return;
+        }
+        locationAttrs = wavedAttributes;
+      }
+      SpeedSearchUtil.appendColoredFragmentForMatcher(" " + containerText, this, locationAttrs, myMatchers.locationMatcher, bgColor, selected);
     }
   }
 

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.util;
 
@@ -78,7 +66,7 @@ public final class IconLoader {
 
   private IconLoader() { }
 
-  public static void installPathPatcher(IconPathPatcher patcher) {
+  public static void installPathPatcher(@NotNull IconPathPatcher patcher) {
     ourPatchers.add(patcher);
     clearCache();
   }
@@ -318,7 +306,13 @@ public final class IconLoader {
       if (icon instanceof CachedImageIcon) {
         disabledIcon = ((CachedImageIcon)icon).asDisabledIcon();
       } else {
-        final float scale = UIUtil.isJreHiDPI() ? JBUI.sysScale() : 1f;  // [tav] todo: no screen available
+        final float scale;
+        if (icon instanceof JBUI.ScaleContextAware) {
+          scale = (float)((JBUI.ScaleContextAware)icon).getScale(SYS_SCALE);
+        }
+        else {
+          scale = UIUtil.isJreHiDPI() ? JBUI.sysScale() : 1f;  // [tav] todo: no screen available
+        }
         @SuppressWarnings("UndesirableClassUsage")
         BufferedImage image = new BufferedImage((int)(scale * icon.getIconWidth()), (int)(scale * icon.getIconHeight()), BufferedImage.TYPE_INT_ARGB);
         final Graphics2D graphics = image.createGraphics();
@@ -346,7 +340,6 @@ public final class IconLoader {
 
   public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new RetrievableIcon() {
-      @Nullable
       @Override
       public Icon retrieveIcon() {
         return icon;
@@ -396,7 +389,7 @@ public final class IconLoader {
       icon = ((LazyIcon)icon).getOrComputeIcon();
     }
     if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1d), SYS_SCALE.of(1d)));
+      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.create(USR_SCALE.of(1), SYS_SCALE.of(1)));
       if (img != null) {
         icon = new ImageIcon(img);
       }
@@ -412,7 +405,7 @@ public final class IconLoader {
     private URL myUrl;
     private volatile boolean dark;
     private volatile int numberOfPatchers = ourPatchers.size();
-    private boolean svg;
+    private final boolean svg;
     private boolean useCacheOnLoad = true;
 
     private ImageFilter[] myFilters;
@@ -436,7 +429,7 @@ public final class IconLoader {
       dark = icon.dark;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
-      svg = myOriginalPath != null ? myOriginalPath.toLowerCase().endsWith("svg") : false;
+      svg = myOriginalPath != null && myOriginalPath.toLowerCase().endsWith("svg");
       useCacheOnLoad = icon.useCacheOnLoad;
     }
 
@@ -467,9 +460,6 @@ public final class IconLoader {
 
     @NotNull
     private synchronized ImageIcon getRealIcon(ScaleContext ctx) {
-      if (updateScaleContext(ctx)) {
-        myRealIcon = null;
-      }
       if (!isValid()) {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myRealIcon = null;
@@ -492,32 +482,23 @@ public final class IconLoader {
           }
         }
       }
-      Object realIcon = myRealIcon;
-      if (realIcon instanceof Icon) return (ImageIcon)realIcon;
-
-      ImageIcon icon;
-      if (realIcon instanceof Reference) {
-        icon = ((Reference<ImageIcon>)realIcon).get();
-        if (icon != null) return icon;
+      if (!updateScaleContext(ctx) && myRealIcon != null) {
+        // try returning the current icon as the context is up-to-date
+        Object icon = myRealIcon;
+        if (icon instanceof Reference) icon = ((Reference<ImageIcon>)icon).get();
+        if (icon instanceof ImageIcon) return (ImageIcon)icon;
       }
 
-      icon = myScaledIconsCache.getOrScaleIcon(1f);
-
+      ImageIcon icon = myScaledIconsCache.getOrScaleIcon(1f);
       if (icon != null) {
-        if (icon.getIconWidth() < 50 && icon.getIconHeight() < 50) {
-          realIcon = icon;
-        }
-        else {
-          realIcon = new SoftReference<ImageIcon>(icon);
-        }
-        myRealIcon = realIcon;
+        myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<ImageIcon>(icon);
+        return icon;
       }
-
-      return icon == null ? EMPTY_ICON : icon;
+      return EMPTY_ICON;
     }
 
     private boolean isValid() {
-      return myRealIcon != null && dark == USE_DARK_ICONS && getGlobalFilter() == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
+      return dark == USE_DARK_ICONS && getGlobalFilter() == IMAGE_FILTER && numberOfPatchers == ourPatchers.size();
     }
 
     @Override
@@ -575,7 +556,7 @@ public final class IconLoader {
       private static final int SCALED_ICONS_CACHE_LIMIT = 5;
 
       // Map {pixel scale -> icon}
-      private Map<Double, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Double, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
+      private final Map<Double, SoftReference<ImageIcon>> scaledIconsCache = Collections.synchronizedMap(new LinkedHashMap<Double, SoftReference<ImageIcon>>(SCALED_ICONS_CACHE_LIMIT) {
         @Override
         public boolean removeEldestEntry(Map.Entry<Double, SoftReference<ImageIcon>> entry) {
           return size() > SCALED_ICONS_CACHE_LIMIT;
@@ -585,7 +566,7 @@ public final class IconLoader {
       /**
        * Retrieves the orig icon scaled by the provided scale.
        */
-      public ImageIcon getOrScaleIcon(final float scale) {
+      ImageIcon getOrScaleIcon(final float scale) {
         updateScale(OBJ_SCALE.of(scale));
 
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(getScale(PIX_SCALE)));
@@ -606,7 +587,7 @@ public final class IconLoader {
         }
         icon = checkIcon(image, myUrl);
 
-        if (icon != null && (icon.getIconWidth() * icon.getIconHeight() * 4) < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
+        if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
           scaledIconsCache.put(getScale(PIX_SCALE), new SoftReference<ImageIcon>(icon));
         }
         return icon;

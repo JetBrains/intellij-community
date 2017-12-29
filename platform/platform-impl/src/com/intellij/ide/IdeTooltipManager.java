@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -25,6 +11,8 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -56,9 +44,11 @@ import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
 public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
+  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
+  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
+
   private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
   private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
-  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
@@ -395,7 +385,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
-    return UIUtil.getToolTipBackground();
+    Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
+    return color != null ? color : UIUtil.getToolTipBackground();
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
@@ -657,12 +648,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
     final boolean opaque = hintHint.isOpaqueAllowed();
     pane.setOpaque(opaque);
-    if (UIUtil.isUnderNimbusLookAndFeel() && !opaque) {
-      pane.setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
-    else {
-      pane.setBackground(hintHint.getTextBackground());
-    }
+    pane.setBackground(hintHint.getTextBackground());
 
     return pane;
   }

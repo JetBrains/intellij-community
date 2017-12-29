@@ -37,8 +37,9 @@ public class NamedScope {
     return myValue;
   }
 
+  @NotNull
   public NamedScope createCopy() {
-    return new NamedScope(myName, myValue != null ? myValue.createCopy() : null);
+    return new NamedScope(myName, myValue == null ? null : myValue.createCopy());
   }
 
   public static class UnnamedScope extends NamedScope {

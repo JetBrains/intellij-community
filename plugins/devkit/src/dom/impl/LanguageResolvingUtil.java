@@ -35,6 +35,7 @@ import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomJavaUtil;
@@ -75,7 +76,7 @@ class LanguageResolvingUtil {
         return Result.create(allInheritors, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       });
     if (allLanguages.isEmpty()) {
-      return Collections.emptyList();
+      return new SmartList<>();
     }
 
     final List<LanguageDefinition> libraryDefinitions = collectLibraryLanguages(context, allLanguages);

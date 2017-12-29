@@ -21,23 +21,23 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 class JavaUClassInitializer(
-        psi: PsiClassInitializer,
-        uastParent: UElement?
+  psi: PsiClassInitializer,
+  uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UClassInitializer, JavaUElementWithComments, PsiClassInitializer by psi {
-    override val psi
-        get() = javaPsi
+  override val psi
+    get() = javaPsi
 
-    override val javaPsi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
+  override val javaPsi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
 
-    override val uastAnchor: UElement?
-        get() = null
-    
-    override val uastBody by lz {
-        getLanguagePlugin().convertElement(psi.body, this, null) as? UExpression ?: UastEmptyExpression
-    }
+  override val uastAnchor: UElement?
+    get() = null
 
-    override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+  override val uastBody by lz {
+    getLanguagePlugin().convertElement(psi.body, this, null) as? UExpression ?: UastEmptyExpression(this)
+  }
 
-    override fun equals(other: Any?) = this === other
-    override fun hashCode() = psi.hashCode()
+  override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
+
+  override fun equals(other: Any?) = this === other
+  override fun hashCode() = psi.hashCode()
 }

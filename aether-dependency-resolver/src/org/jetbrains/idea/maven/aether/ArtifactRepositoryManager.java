@@ -41,7 +41,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 20-Jun-16
  *
  * Aether-based repository manager and dependency resolver using maven implementation of this functionality.
  *
@@ -51,17 +50,15 @@ import java.util.*;
  */
 public class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
+  private static final JreProxySelector ourProxySelector = new JreProxySelector();
   private final DefaultRepositorySystemSession mySession;
 
-  public static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
+  private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
     "central", "http://repo1.maven.org/maven2/"
   );
-  public static final RemoteRepository JBOSS_COMMUNITY_REPOSITORY = createRemoteRepository(
+  private static final RemoteRepository JBOSS_COMMUNITY_REPOSITORY = createRemoteRepository(
     "jboss.community", "https://repository.jboss.org/nexus/content/repositories/public/"
   );
-  public static final List<RemoteRepository> PREDEFINED_REMOTE_REPOSITORIES = Collections.unmodifiableList(Arrays.asList(
-    MAVEN_CENTRAL_REPOSITORY, JBOSS_COMMUNITY_REPOSITORY
-  ));
 
   private static final RepositorySystem ourSystem;
   static {
@@ -86,7 +83,8 @@ public class ArtifactRepositoryManager {
   }
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, @NotNull final ProgressConsumer progressConsumer) {
-    this(localRepositoryPath, PREDEFINED_REMOTE_REPOSITORIES, progressConsumer);
+    // recreate remote repository objects to ensure the latest proxy settings are used
+    this(localRepositoryPath, Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY)), progressConsumer);
   }
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer) {
@@ -115,10 +113,10 @@ public class ArtifactRepositoryManager {
     // setup session here
 
     session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
+    session.setProxySelector(ourProxySelector);
     session.setReadOnly();
     mySession = session;
   }
-
 
   public void addRemoteRepository(final String id, final String url) {
     myRemoteRepositories.add(createRemoteRepository(id, url));
@@ -202,7 +200,12 @@ public class ArtifactRepositoryManager {
 
   public static RemoteRepository createRemoteRepository(final String id, final String url) {
     // for maven repos repository type should be 'default'
-    return new RemoteRepository.Builder(id, "default", url).build();
+    return new RemoteRepository.Builder(id, "default", url).setProxy(ourProxySelector.getProxy(url)).build();
+  }
+
+  public static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
+    final String url = prototype.getUrl();
+    return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
   }
 
   private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, final Set<ArtifactKind> kinds) {

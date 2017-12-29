@@ -85,7 +85,7 @@ public class TypesDistinctProver {
         }
 
         final PsiType bound = ((PsiWildcardType)type1).getBound();
-        return bound != null && !bound.equals(psiClass2);
+        return bound != null && !bound.equals(type2);
       }
       
       if (type2 instanceof PsiArrayType) {

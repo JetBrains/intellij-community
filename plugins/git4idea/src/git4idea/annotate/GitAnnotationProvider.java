@@ -43,8 +43,9 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.annotate.GitFileAnnotation.LineInfo;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitHistoryUtils;
@@ -127,7 +128,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
                                      @Nullable final VcsRevisionNumber revision,
                                      @NotNull final VirtualFile file) throws VcsException {
     GitVcs vcs = GitVcs.getInstance(myProject);
-    assert vcs != null;
 
     VcsRevisionNumber actualRevision = revision != null ? revision : vcs.getDiffProvider().getCurrentRevision(file);
 
@@ -152,7 +152,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     setProgressIndicatorText(GitBundle.message("computing.annotation", file.getName()));
 
     VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
-    GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.BLAME);
+    GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
     h.addParameters("--porcelain", "-l", "-t", "-w");
     h.addParameters("--encoding=UTF-8");
@@ -164,7 +164,7 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     }
     h.endOptions();
     h.addRelativePaths(repositoryFilePath);
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
     GitFileAnnotation fileAnnotation = parseAnnotations(revision, file, root, output);
 
@@ -176,22 +176,24 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
       () -> {
-        try {
-          VirtualFile file = fileAnnotation.getFile();
-          FilePath filePath = VcsUtil.getFilePath(file);
-          VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
+        return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+          try {
+            VirtualFile file = fileAnnotation.getFile();
+            FilePath filePath = VcsUtil.getFilePath(file);
+            VcsRevisionNumber currentRevision = fileAnnotation.getCurrentRevision();
 
-          if (file.isInLocalFileSystem() || currentRevision == null) {
-            return loadFileHistory(filePath);
+            if (file.isInLocalFileSystem() || currentRevision == null) {
+              return loadFileHistory(filePath);
+            }
+            else {
+              return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
+            }
           }
-          else {
-            return GitFileHistory.collectHistoryForRevision(myProject, filePath, currentRevision);
+          catch (VcsException e) {
+            LOG.error(e);
+            return null;
           }
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-          return null;
-        }
+        });
       },
       (revisions) -> {
         if (revisions == null) return;
@@ -212,7 +214,6 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
   @Nullable
   private List<VcsFileRevision> loadFileHistory(@NotNull FilePath filePath) throws VcsException {
     GitVcs vcs = GitVcs.getInstance(myProject);
-    if (vcs == null) return null;
     GitHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
 
     VcsAbstractHistorySession cachedSession = myCache.getFull(filePath, vcs.getKeyInstanceMethod(), historyProvider);

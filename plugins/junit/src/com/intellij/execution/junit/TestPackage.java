@@ -249,7 +249,11 @@ public class TestPackage extends TestObject {
       }
       //junit 3
       if (testCaseClass != null && testCaseClass.isAssignableFrom(aClass)) {
-        return hasSingleConstructor(aClass);
+        return Arrays.stream(aClass.getConstructors()).anyMatch(constructor -> {
+          Class<?>[] parameterTypes = constructor.getParameterTypes();
+          return parameterTypes.length == 0 ||
+                 parameterTypes.length == 1 && CommonClassNames.JAVA_LANG_STRING.equals(parameterTypes[0].getName());
+        });
       }
       else {
         //junit 4 & suite

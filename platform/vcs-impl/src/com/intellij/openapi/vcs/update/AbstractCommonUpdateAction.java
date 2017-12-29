@@ -343,7 +343,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
       myLocalHistoryAction = LocalHistory.getInstance().startAction(LOCAL_HISTORY_ACTION);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-
+      if (progressIndicator != null) {
+        progressIndicator.setIndeterminate(false);
+      }
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;

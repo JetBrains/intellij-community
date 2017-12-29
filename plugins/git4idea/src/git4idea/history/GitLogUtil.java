@@ -18,9 +18,7 @@ package git4idea.history;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +71,7 @@ public class GitLogUtil {
       return Collections.emptyList();
     }
 
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
     h.setSilent(true);
@@ -83,7 +81,7 @@ public class GitLogUtil {
     h.addParameters(new ArrayList<>(hashes));
     h.endOptions();
 
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogRecord> records = parser.parse(output);
 
     return ContainerUtil.map(records, record -> {
@@ -119,24 +117,18 @@ public class GitLogUtil {
     handler.addParameters(parameters);
     handler.endOptions();
 
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, output -> {
-      List<GitLogRecord> records = parser.parse(output);
-      for (GitLogRecord record : records) {
-        if (record == null) continue;
-        record.setUsedHandler(handler);
+    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, record -> {
+      Hash hash = HashImpl.build(record.getHash());
+      List<Hash> parents = getParentHashes(factory, record);
+      commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
-        Hash hash = HashImpl.build(record.getHash());
-        List<Hash> parents = getParentHashes(factory, record);
-        commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
-
-        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
-          refConsumer.consume(ref);
-        }
-
-        userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
+      for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+        refConsumer.consume(ref);
       }
+
+      userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
-    handler.runInCurrentThread(null);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
   }
 
@@ -186,7 +178,7 @@ public class GitLogUtil {
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      readRecords(project, root, true, false, false, record -> commits.add(converter.fun(record)), parameters);
+      readRecords(project, root, true, false, DiffRenameLimit.GIT_CONFIG, record -> commits.add(converter.fun(record)), parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -211,13 +203,19 @@ public class GitLogUtil {
   @NotNull
   private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
                                         @NotNull VcsLogObjectsFactory factory) {
+    return createCommit(project, root, records, factory, DiffRenameLimit.GIT_CONFIG);
+  }
+
+  @NotNull
+  private static GitCommit createCommit(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<GitLogRecord> records,
+                                        @NotNull VcsLogObjectsFactory factory, @NotNull DiffRenameLimit renameLimit) {
     GitLogRecord record = notNull(ContainerUtil.getLastItem(records));
     List<Hash> parents = getParentHashes(factory, record);
 
     return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getCommitTime(), root, record.getSubject(),
                          factory.createUser(record.getAuthorName(), record.getAuthorEmail()), record.getFullMessage(),
                          factory.createUser(record.getCommitterName(), record.getCommitterEmail()), record.getAuthorTimeStamp(),
-                         ContainerUtil.map(records, GitLogRecord::getStatusInfos));
+                         ContainerUtil.map(records, GitLogRecord::getStatusInfos), renameLimit);
   }
 
   @NotNull
@@ -259,7 +257,7 @@ public class GitLogUtil {
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
     };
-    readRecords(project, root, false, true, true, recordCollector, parameters);
+    readRecords(project, root, false, true, DiffRenameLimit.REGISTRY, recordCollector, parameters);
     recordCollector.finish();
   }
 
@@ -278,10 +276,10 @@ public class GitLogUtil {
                                   @NotNull VirtualFile root,
                                   boolean withRefs,
                                   boolean withChanges,
-                                  boolean fast,
+                                  @NotNull DiffRenameLimit renameLimit,
                                   @NotNull Consumer<GitLogRecord> converter,
                                   String... parameters) throws VcsException {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(withChanges, fast));
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(withChanges, renameLimit));
     readRecordsFromHandler(project, root, withRefs, withChanges, converter, handler, parameters);
   }
 
@@ -297,32 +295,10 @@ public class GitLogUtil {
 
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
-    Ref<Throwable> parseError = new Ref<>();
-    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, output -> {
-      try {
-        GitLogRecord record = parser.parseOneRecord(output);
-        if (record != null) {
-          record.setUsedHandler(handler);
-          converter.consume(record);
-        }
-      }
-      catch (ProcessCanceledException pce) {
-        throw pce;
-      }
-      catch (Throwable t) {
-        if (parseError.isNull()) {
-          parseError.set(t);
-          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(output) + "\"\n" +
-                    "Command " + handler.printableCommandLine(), t);
-        }
-      }
-    });
-    handler.runInCurrentThread(null);
+    GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
+    Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
 
-    if (!parseError.isNull()) {
-      throw new VcsException(parseError.get());
-    }
     sw.report();
   }
 
@@ -359,7 +335,8 @@ public class GitLogUtil {
                                               @NotNull VirtualFile root,
                                               @NotNull GitVcs vcs,
                                               @NotNull Consumer<? super GitCommit> commitConsumer,
-                                              @NotNull List<String> hashes, boolean fast) throws VcsException {
+                                              @NotNull List<String> hashes,
+                                              @NotNull DiffRenameLimit renameLimit) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
@@ -369,10 +346,10 @@ public class GitLogUtil {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
         assertCorrectNumberOfRecords(records);
-        commitConsumer.consume(createCommit(project, root, records, factory));
+        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
       }
     };
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true, fast));
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true, renameLimit));
     sendHashesToStdin(vcs, hashes, handler);
 
     readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
@@ -386,14 +363,16 @@ public class GitLogUtil {
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     String separator = getSeparator(vcs);
     handler.setInputProcessor(stream -> {
-      try (OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset())) {
-        for (String hash : hashes) {
-          writer.write(hash);
-          writer.write(separator);
-        }
+      @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+      OutputStreamWriter writer = new OutputStreamWriter(stream, handler.getCharset());
+      // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
+      // see RunnerMediator.sendCtrlEventThroughStream
+      for (String hash : hashes) {
+        writer.write(hash);
         writer.write(separator);
-        writer.flush();
       }
+      writer.write(separator);
+      writer.flush();
     });
   }
 
@@ -411,13 +390,35 @@ public class GitLogUtil {
   }
 
   @NotNull
-  private static List<String> createConfigParameters(boolean withChanges, boolean fast) {
+  private static List<String> createConfigParameters(boolean withChanges, @NotNull DiffRenameLimit renameLimit) {
     if (!withChanges) return Collections.emptyList();
-    return fast ? renameLimit(Registry.intValue("git.diff.renameLimit")) : Collections.emptyList();
+    switch (renameLimit) {
+      case INFINITY:
+        return renameLimit(0);
+      case REGISTRY:
+        return renameLimit(Registry.intValue("git.diff.renameLimit"));
+      case GIT_CONFIG:
+    }
+    return Collections.emptyList();
   }
 
   @NotNull
   private static List<String> renameLimit(int limit) {
     return Collections.singletonList("diff.renameLimit=" + limit);
+  }
+
+  public enum DiffRenameLimit {
+    /**
+     * Use zero value
+     */
+    INFINITY,
+    /**
+     * Use value set in registry (usually 1000)
+     */
+    REGISTRY,
+    /**
+     * Use value set in users git.config
+     */
+    GIT_CONFIG
   }
 }

@@ -118,6 +118,13 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testNullableSiblingOverriding() { doTest(); }
+  
+  public void testNonAnnotatedSiblingOverriding() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
+    doTest(); 
+  }
+
   public void testHonorSuperParameterDefault() {
     DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
@@ -236,6 +243,17 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testNullableTypeArgumentSOE() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeUseNotNullField() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testTypeUseNotNullOverriding() {
+    myInspection.REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED = true;
     DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }

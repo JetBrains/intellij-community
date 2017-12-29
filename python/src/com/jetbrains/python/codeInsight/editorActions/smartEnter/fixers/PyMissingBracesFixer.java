@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   15.04.2010
- * Time:   17:55:46
  */
 public class PyMissingBracesFixer extends PyFixer<PyElement> {
   public PyMissingBracesFixer() {

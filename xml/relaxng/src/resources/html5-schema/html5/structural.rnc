@@ -26,6 +26,32 @@
 			|	common.attrs.aria.landmark.main
 			|	common.attrs.aria.landmark.navigation
 			|	common.attrs.aria.landmark.search
+			|	common.attrs.aria.role.doc-abstract
+			|	common.attrs.aria.role.doc-acknowledgments
+			|	common.attrs.aria.role.doc-afterword
+			|	common.attrs.aria.role.doc-appendix
+			|	common.attrs.aria.role.doc-bibliography
+			|	common.attrs.aria.role.doc-chapter
+			|	common.attrs.aria.role.doc-colophon
+			|	common.attrs.aria.role.doc-conclusion
+			|	common.attrs.aria.role.doc-credit
+			|	common.attrs.aria.role.doc-credits
+			|	common.attrs.aria.role.doc-dedication
+			|	common.attrs.aria.role.doc-endnotes
+			|	common.attrs.aria.role.doc-epilogue
+			|	common.attrs.aria.role.doc-errata
+			|	common.attrs.aria.role.doc-example
+			|	common.attrs.aria.role.doc-foreword
+			|	common.attrs.aria.role.doc-index
+			|	common.attrs.aria.role.doc-introduction
+			|	common.attrs.aria.role.doc-notice
+			|	common.attrs.aria.role.doc-pagelist
+			|	common.attrs.aria.role.doc-part
+			|	common.attrs.aria.role.doc-preface
+			|	common.attrs.aria.role.doc-prologue
+			|	common.attrs.aria.role.doc-pullquote
+			|	common.attrs.aria.role.doc-qna
+			|	common.attrs.aria.role.doc-toc
 			)?
 		)
 	section.inner =
@@ -41,6 +67,9 @@
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.navigation
 			|	common.attrs.aria.landmark.navigation
+			|	common.attrs.aria.role.doc-index
+			|	common.attrs.aria.role.doc-pagelist
+			|	common.attrs.aria.role.doc-toc
 			)?
 		)
 	nav.inner =
@@ -84,6 +113,10 @@
 			|	common.attrs.aria.role.feed
 			|	common.attrs.aria.role.region
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-example
+			|	common.attrs.aria.role.doc-footnote
+			|	common.attrs.aria.role.doc-pullquote
+			|	common.attrs.aria.role.doc-tip
 			)?
 		)
 	aside.inner =
@@ -103,6 +136,7 @@
 			|	common.attrs.aria.landmark.banner
 			|	common.attrs.aria.role.group
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-footnote
 			)?
 		)
 	header.inner =
@@ -120,6 +154,7 @@
 			|	common.attrs.aria.landmark.contentinfo
 			|	common.attrs.aria.role.group
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-footnote
 			)?
 		)
 	footer.inner =

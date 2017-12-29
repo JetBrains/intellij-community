@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.vcs;
 
@@ -25,14 +13,18 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @State(
   name = "VcsManagerConfiguration",
@@ -81,8 +73,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
 
-  @AbstractCollection(surroundWithTag = false, elementTag = "path")
-  @Tag("ignored-roots")
+  @XCollection(elementName = "path", propertyElementName = "ignored-roots")
   public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
 
   public enum StandardOption {
@@ -123,7 +114,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(elementTag = "MESSAGE", elementValueAttribute = "value", surroundWithTag = false)
+  @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
@@ -133,7 +124,8 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
-  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<>();
+  @Transient
+  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new THashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;

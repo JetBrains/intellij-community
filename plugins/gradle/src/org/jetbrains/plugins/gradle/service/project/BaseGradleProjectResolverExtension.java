@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.google.common.io.InputSupplier;
 import com.google.gson.GsonBuilder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
@@ -35,7 +34,10 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
@@ -52,6 +54,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.text.CharArrayUtil;
 import groovy.lang.GroovyObject;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
+import org.gradle.internal.impldep.com.google.common.collect.Multimap;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
@@ -469,19 +472,19 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     moduleData.setInheritProjectCompileOutputPath(inheritOutputDirs);
   }
 
-  private void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
+  private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {
     ContentRootData excludedContentRootData;
     DataNode<ContentRootData> contentRootDataDataNode = ExternalSystemApiUtil.find(ideModule, ProjectKeys.CONTENT_ROOT);
     if (contentRootDataDataNode == null ||
         !FileUtil.isAncestor(new File(contentRootDataDataNode.getData().getRootPath()), ideaOutDir, false)) {
       excludedContentRootData = new ContentRootData(GradleConstants.SYSTEM_ID, ideaOutDir.getAbsolutePath());
+      ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
     }
     else {
       excludedContentRootData = contentRootDataDataNode.getData();
     }
 
     excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getAbsolutePath());
-    ideModule.createChild(ProjectKeys.CONTENT_ROOT, excludedContentRootData);
   }
 
   @Nullable
@@ -520,6 +523,12 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (dependencies == null) return;
 
     List<String> orphanModules = ContainerUtil.newArrayList();
+    Map<String, ModuleData> modulesIndex = ContainerUtil.newHashMap();
+
+    for (DataNode<ModuleData> dataNode : ExternalSystemApiUtil.getChildren(ideProject, ProjectKeys.MODULE)) {
+      modulesIndex.put(dataNode.getData().getExternalName(), dataNode.getData());
+    }
+
     for (int i = 0; i < dependencies.size(); i++) {
       IdeaDependency dependency = dependencies.get(i);
       if (dependency == null) {
@@ -528,7 +537,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       DependencyScope scope = parseScope(dependency.getScope());
 
       if (dependency instanceof IdeaModuleDependency) {
-        ModuleDependencyData d = buildDependency(resolverCtx, ideModule, (IdeaModuleDependency)dependency, ideProject);
+        ModuleDependencyData d = buildDependency(resolverCtx, ideModule, (IdeaModuleDependency)dependency, modulesIndex);
         d.setExported(dependency.getExported());
         if (scope != null) {
           d.setScope(scope);
@@ -657,9 +666,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ProjectImportAction.class,
       // gradle-tooling-extension-impl jar
       ModelBuildScriptClasspathBuilderImpl.class,
-      // guava-jdk5-17.0.jar, removed (in future guava versions) class has to be used
-      // to prevent populating gradle daemon classpath with incompatible guava
-      InputSupplier.class,
+      // repacked gradle guava
+      Multimap.class,
       GsonBuilder.class,
       ShortTypeHandling.class
     );
@@ -870,7 +878,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   private static ModuleDependencyData buildDependency(@NotNull ProjectResolverContext resolverContext,
                                                       @NotNull DataNode<ModuleData> ownerModule,
                                                       @NotNull IdeaModuleDependency dependency,
-                                                      @NotNull DataNode<ProjectData> ideProject)
+                                                      @NotNull Map<String, ModuleData>  registeredModulesIndex)
     throws IllegalStateException {
     IdeaModule module = dependency.getDependencyModule();
     if (module == null) {
@@ -904,18 +912,14 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
       ));
     }
 
-    Set<String> registeredModuleNames = ContainerUtilRt.newHashSet();
-    Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemApiUtil.getChildren(ideProject, ProjectKeys.MODULE);
-    for (DataNode<ModuleData> moduleDataNode : modulesDataNode) {
-      String name = moduleDataNode.getData().getExternalName();
-      registeredModuleNames.add(name);
-      if (name.equals(moduleName)) {
-        return new ModuleDependencyData(ownerModule.getData(), moduleDataNode.getData());
-      }
+    ModuleData moduleData = registeredModulesIndex.get(moduleName);
+    if (moduleData != null) {
+      return new ModuleDependencyData(ownerModule.getData(), moduleData);
     }
+
     throw new IllegalStateException(String.format(
       "Can't parse gradle module dependency '%s'. Reason: no module with such name (%s) is found. Registered modules: %s",
-      dependency, moduleName, registeredModuleNames
+      dependency, moduleName, registeredModulesIndex.keySet()
     ));
   }
 

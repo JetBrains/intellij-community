@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.application.options.InitialConfigurationDialog;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.ui.UISettings;
@@ -24,14 +23,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
-
-import javax.swing.*;
 
 /**
  * Initialize PyCharm.
@@ -52,7 +48,6 @@ public class PyCharmInitialConfigurator {
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V2")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V2", true);
       final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
-      settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       UISettings.getInstance().setShowDirectoryForNonUniqueFilenames(true);
     }
@@ -74,9 +69,9 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V6", true);
       CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
     }
+
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration.V7")) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V7", true);
-      Registry.get("dumb.aware.run.configurations").setValue(true);
     }
 
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
@@ -85,18 +80,11 @@ public class PyCharmInitialConfigurator {
         public void welcomeScreenDisplayed() {
           ApplicationManager.getApplication().invokeLater(() -> {
             propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
-            showInitialConfigurationDialog();
           });
         }
       });
     }
 
-    Registry.get("ide.scratch.enabled").setValue(true);
     Registry.get("ide.ssh.one.time.password").setValue(true);
-  }
-
-  private static void showInitialConfigurationDialog() {
-    final JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    new InitialConfigurationDialog(frame, "Python").show();
   }
 }

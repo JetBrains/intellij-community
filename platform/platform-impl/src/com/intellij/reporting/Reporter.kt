@@ -59,7 +59,7 @@ object StatsSender {
     try {
       val response = createRequest(info, text, compress).execute()
       val code = response.handleResponse { it.statusLine.statusCode }
-      if (code >= 200 && code < 300) {
+      if (code in 200..299) {
         return true
       }
     }
@@ -92,9 +92,9 @@ private object Base64GzipCompressor {
   }
 }
 
-fun <T> createReportLine(recorderId: String, data: T): String {
+fun <T> createReportLine(recorderId: String, sessionId: String, data: T): String {
   val json = Utils.gson.toJson(data)
   val userUid = PermanentInstallationID.get()
   val stamp = System.currentTimeMillis()
-  return "$stamp\t$recorderId\t$userUid\trandom_session_id\t$json"
+  return "$stamp\t$recorderId\t$userUid\t$sessionId\t$json"
 }

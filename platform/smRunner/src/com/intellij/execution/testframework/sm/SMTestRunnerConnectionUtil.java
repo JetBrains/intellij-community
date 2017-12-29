@@ -202,7 +202,7 @@ public class SMTestRunnerConnectionUtil {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          outputConsumer.flushBufferBeforeTerminating(event.getExitCode());
+          outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
           outputConsumer.finishTesting();
           Disposer.dispose(outputConsumer);
         });

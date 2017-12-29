@@ -26,7 +26,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/6/12
  */
 public class MavenImportWizardTest extends ProjectWizardTestCase {
   @Override

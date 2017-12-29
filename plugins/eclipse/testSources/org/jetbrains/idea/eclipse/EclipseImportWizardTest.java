@@ -34,7 +34,6 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/7/12
  */
 public class EclipseImportWizardTest extends ProjectWizardTestCase {
 

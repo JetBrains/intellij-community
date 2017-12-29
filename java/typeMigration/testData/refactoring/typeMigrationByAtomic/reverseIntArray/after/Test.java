@@ -9,7 +9,7 @@ class Test {
         System.out.println(++a[0]);
         a[0]--;
         if (--a[0] == 0) {
-            a[0] += ((2));
+            a[0] += 2;
             a[0] = a[0] * 2;
             if (a[0] == 0) {
                 System.out.println(a[0] + 7);

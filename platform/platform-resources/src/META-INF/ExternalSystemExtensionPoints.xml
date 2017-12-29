@@ -21,6 +21,8 @@
                     interface="com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener"/>
     <extensionPoint name="externalSystemExecutionConsoleManager"
                     interface="com.intellij.openapi.externalSystem.execution.ExternalSystemExecutionConsoleManager"/>
+    <extensionPoint name="externalSystemOutputParserProvider"
+                    interface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputParserProvider"/>
     <extensionPoint name="externalSystemViewContributor" interface="com.intellij.openapi.externalSystem.view.ExternalSystemViewContributor"/>
     <extensionPoint name="externalProjectStructureCustomizer" interface="com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer"/>
     <extensionPoint name="externalProjectWatcherContributor"

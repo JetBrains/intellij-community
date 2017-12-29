@@ -47,30 +47,24 @@ public class ProcessOutputType extends Key {
   }
 
   @NotNull
-  private ProcessOutputType getStreamType() {
+  public ProcessOutputType getBaseOutputType() {
     return myStreamType != null ? myStreamType : this;
   }
 
   public boolean isStdout() {
-    return getStreamType() == ProcessOutputTypes.STDOUT;
+    return getBaseOutputType() == ProcessOutputTypes.STDOUT;
   }
 
   public boolean isStderr() {
-    return getStreamType() == ProcessOutputTypes.STDERR;
+    return getBaseOutputType() == ProcessOutputTypes.STDERR;
   }
 
   public static boolean isStderr(@NotNull Key key) {
-    if (key instanceof ProcessOutputType) {
-      return ((ProcessOutputType)key).isStderr();
-    }
-    return false;
+    return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStderr();
   }
 
   public static boolean isStdout(@NotNull Key key) {
-    if (key instanceof ProcessOutputType) {
-      return ((ProcessOutputType)key).isStdout();
-    }
-    return false;
+    return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
 
   @Nullable

@@ -24,8 +24,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.PsiReferenceService.Hints;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
@@ -313,9 +317,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return PyBuiltinCache.getInstance(this).getBytesType(LanguageLevel.forElement(this));
   }
 
+  @Override
   @NotNull
-  public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS);
+  public final PsiReference[] getReferences() {
+    return CachedValuesManager.getCachedValue(this, () -> Result.create(
+      ReferenceProvidersRegistry.getReferencesFromProviders(this, Hints.NO_HINTS),
+      PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override
@@ -341,10 +348,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     };
   }
 
+  @Override
   public PsiLanguageInjectionHost updateText(@NotNull String text) {
     return ElementManipulators.handleContentChange(this, text);
   }
 
+  @Override
   @NotNull
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new StringLiteralTextEscaper(this);
@@ -439,7 +448,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   private boolean isVerboseInjection() {
-    List<Pair<PsiElement,TextRange>> files = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(this);
+    List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(this);
     if (files != null) {
       for (Pair<PsiElement, TextRange> file : files) {
         Language language = file.getFirst().getLanguage();

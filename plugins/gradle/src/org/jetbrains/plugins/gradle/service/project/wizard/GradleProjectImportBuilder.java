@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
 import com.intellij.externalSystem.JavaProjectData;
@@ -25,35 +11,49 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ObjectUtils;
+import gnu.trove.THashSet;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.ImportFromGradleControl;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
- * @author Denis Zhdanov
  * @since 4/15/13 2:29 PM
  */
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
+
+  private static final Pattern JAVA_VERSION = Pattern.compile("java version \"(\\d.*)\"");
 
   /**
    * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
@@ -77,6 +77,46 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     return GradleIcons.Gradle;
   }
 
+  @Nullable
+  @Override
+  protected Sdk resolveProjectJdk(@NotNull WizardContext context) {
+    // gradle older than 4.2.1 doesn't support new java the version number format like 9.0.1, see https://github.com/gradle/gradle/issues/2992
+    Condition<Sdk> sdkCondition = sdk -> {
+      String version = getVersion(sdk);
+      return StringUtil.compareVersionNumbers(version, "1.6") > 0 &&
+             StringUtil.compareVersionNumbers(version, "9") < 0 &&
+             ExternalSystemJdkUtil.isValidJdk(sdk.getHomePath());
+    };
+
+    Sdk mostRecentSdk = ProjectJdkTable.getInstance().findMostRecentSdk(
+      sdk -> sdk.getSdkType() == JavaSdk.getInstance() && sdkCondition.value(sdk));
+    if (mostRecentSdk != null) {
+      return mostRecentSdk;
+    }
+
+    Set<String> existingPaths =
+      new THashSet<>(Arrays.stream(ProjectJdkTable.getInstance().getAllJdks()).map(sdk -> sdk.getHomePath()).collect(Collectors.toSet()),
+                     FileUtil.PATH_HASHING_STRATEGY);
+
+    for (String javaHome : JavaSdk.getInstance().suggestHomePaths()) {
+      if (!existingPaths.contains(FileUtil.toCanonicalPath(javaHome))) {
+        JavaSdk javaSdk = JavaSdk.getInstance();
+        Sdk jdk = javaSdk.createJdk(ObjectUtils.notNull(javaSdk.suggestSdkName(null, javaHome), ""), javaHome);
+        if (sdkCondition.value(jdk)) {
+          ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().addJdk(jdk));
+          return jdk;
+        }
+      }
+    }
+
+    Project project = context.getProject() != null ? context.getProject() : ProjectManager.getInstance().getDefaultProject();
+    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+    if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
+      return sdkPair.second;
+    }
+    return null;
+  }
+
   @Override
   protected void doPrepare(@NotNull WizardContext context) {
     String pathToUse = getFileToImport();
@@ -87,10 +127,6 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
     final ImportFromGradleControl importFromGradleControl = getControl(context.getProject());
     importFromGradleControl.setLinkedProjectPath(pathToUse);
-    final Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(context.getProject());
-    if (sdkPair != null && !ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first)) {
-      importFromGradleControl.getProjectSettings().setGradleJvm(sdkPair.first);
-    }
   }
 
   @Override
@@ -191,5 +227,27 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdk) {
     return sdk == JavaSdk.getInstance();
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if (project != null) {
+      GradleProjectSettings settings = getControl(project).getProjectSettings();
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(settings.isStoreProjectFilesExternally());
+    }
+    return project;
+  }
+
+  @Nullable
+  private static String getVersion(Sdk sdk) {
+    String versionString = sdk.getVersionString();
+    if (versionString == null) return null;
+    Matcher matcher = JAVA_VERSION.matcher(versionString.trim());
+    if (matcher.matches()) {
+      return matcher.group(1);
+    }
+    return versionString;
   }
 }

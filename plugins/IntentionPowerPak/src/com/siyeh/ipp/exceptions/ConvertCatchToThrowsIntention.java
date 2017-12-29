@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
@@ -77,8 +78,8 @@ public class ConvertCatchToThrowsIntention extends Intention {
         if (tryBlock == null) {
           return;
         }
-        final PsiCodeBlock parentCodeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class);
-        if (parentCodeBlock == null || !DeclarationSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
+        final PsiCodeBlock parentCodeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class, true, PsiStatement.class);
+        if (parentCodeBlock != null && !DeclarationSearchUtils.containsConflictingDeclarations(tryBlock, parentCodeBlock)) {
           final PsiElement first = tryBlock.getFirstBodyElement();
           final PsiElement last = tryBlock.getLastBodyElement();
           if (first != null && last != null) {
@@ -87,7 +88,7 @@ public class ConvertCatchToThrowsIntention extends Intention {
           tryStatement.delete();
         }
         else {
-          tryStatement.replace(tryBlock);
+          CodeStyleManager.getInstance(tryStatement.getProject()).reformat(tryStatement.replace(tryBlock));
         }
       }
     });

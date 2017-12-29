@@ -363,7 +363,13 @@ public class AboutPopup {
 
     @NotNull
     protected String getCopyrightText() {
-      return "\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " JetBrains s.r.o. All rights reserved.";
+      ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
+      return "Copyright \u00A9 " + 
+             ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() + 
+             "\u2013" + 
+             Calendar.getInstance(Locale.US).get(Calendar.YEAR) + 
+             " " + 
+             applicationInfo.getCompanyName();
     }
 
     @NotNull

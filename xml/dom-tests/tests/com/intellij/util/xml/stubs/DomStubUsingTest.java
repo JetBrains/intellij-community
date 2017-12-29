@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/8/12
  */
 public class DomStubUsingTest extends DomStubTest {
 

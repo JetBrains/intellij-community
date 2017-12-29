@@ -35,6 +35,7 @@ public class AssertEqualsMayBeAssertSameInspectionTest extends LightInspectionTe
   }
 
   public void testDelegatingAssertMethods() {
+    //noinspection ALL
     doTest("class Test extends junit.framework.TestCase {" +
            "  public void testOne() {" +
            "    /*'assertEquals()' may be 'assertSame()'*/assertEquals/**/(A.a, A.b);" +

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectGeneratorPeer;
 import org.jetbrains.annotations.NotNull;
@@ -34,23 +35,22 @@ import javax.swing.*;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 9/27/12
 */
 public class WebModuleBuilder<T> extends ModuleBuilder {
   public static final String GROUP_NAME = "Static Web";
   public static final Icon ICON = AllIcons.Nodes.PpWeb;
 
   private final WebProjectTemplate<T> myTemplate;
-  private final ProjectGeneratorPeer<T> myGeneratorPeer;
+  private final NotNullLazyValue<ProjectGeneratorPeer<T>> myGeneratorPeerLazyValue;
 
   public WebModuleBuilder(@NotNull WebProjectTemplate<T> template) {
     myTemplate = template;
-    myGeneratorPeer = myTemplate.createLazyPeer().getValue();
+    myGeneratorPeerLazyValue = myTemplate.createLazyPeer();
   }
 
   public WebModuleBuilder() {
     myTemplate = null;
-    myGeneratorPeer = null;
+    myGeneratorPeerLazyValue = null;
   }
 
   @Override
@@ -100,7 +100,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     if (contentRoots.length > 0 && contentRoots[0] != null) {
       dir = contentRoots[0];
     }
-    template.generateProject(module.getProject(), dir, myGeneratorPeer.getSettings(), module);
+    template.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
   }
 
   @Nullable
@@ -109,7 +109,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
     if (myTemplate == null) {
       return super.modifySettingsStep(settingsStep);
     }
-    myGeneratorPeer.buildUI(settingsStep);
+    myGeneratorPeerLazyValue.getValue().buildUI(settingsStep);
     return new ModuleWizardStep() {
       @Override
       public JComponent getComponent() {
@@ -122,7 +122,7 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
 
       @Override
       public boolean validate() throws ConfigurationException {
-        ValidationInfo info = myGeneratorPeer.validate();
+        ValidationInfo info = myGeneratorPeerLazyValue.getValue().validate();
         if (info != null) throw new ConfigurationException(info.message);
         return true;
       }

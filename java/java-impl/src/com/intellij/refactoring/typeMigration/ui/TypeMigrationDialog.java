@@ -46,7 +46,6 @@ import java.util.List;
 
 /**
  * @author anna
- * Date: 25-Mar-2008
  */
 public abstract class TypeMigrationDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);

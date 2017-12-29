@@ -278,7 +278,7 @@ public class CustomizationUtil {
   @NotNull
   public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
     ActionManager actionManager = ActionManager.getInstance();
-    ActionGroup group = (ActionGroup)actionManager.getAction(groupId);
+    ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
     return PopupHandler.installPopupHandler(component, group, place, actionManager);
   }
 }

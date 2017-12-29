@@ -1,6 +1,6 @@
 try:
     from contextlib2 import contextmanager
-except:
+except Exception:
     from contextlib import contextmanager
 
 

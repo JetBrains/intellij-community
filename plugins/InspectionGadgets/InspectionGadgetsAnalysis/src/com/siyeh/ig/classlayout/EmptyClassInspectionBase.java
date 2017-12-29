@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -61,7 +47,9 @@ public class EmptyClassInspectionBase extends BaseInspection {
       return InspectionGadgetsBundle.message("empty.anonymous.class.problem.descriptor");
     }
     else if (element instanceof PsiClass) {
-      return InspectionGadgetsBundle.message("empty.class.problem.descriptor");
+      return ((PsiClass)element).isEnum() ?
+             InspectionGadgetsBundle.message("empty.enum.problem.descriptor"):
+             InspectionGadgetsBundle.message("empty.class.problem.descriptor");
     }
     else {
       return InspectionGadgetsBundle.message("empty.class.file.without.class.problem.descriptor");
@@ -96,7 +84,7 @@ public class EmptyClassInspectionBase extends BaseInspection {
         return;
       }
       @NonNls final String fileName = javaFile.getName();
-      if ("package-info.java".equals(fileName)) {
+      if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName) || PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
         return;
       }
       registerError(file, file);
@@ -108,10 +96,10 @@ public class EmptyClassInspectionBase extends BaseInspection {
       if (FileTypeUtils.isInServerPageFile(aClass.getContainingFile())) {
         return;
       }
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }
-      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
         for (PsiClass superClass : aClass.getSupers()) {
           if (superClass.isInterface() || superClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             return;
@@ -143,7 +131,7 @@ public class EmptyClassInspectionBase extends BaseInspection {
       if (ignoreClassWithParameterization && isSuperParametrization(aClass)) {
         return;
       }
-      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
+      if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations, 0)) {
         return;
       }
       if (ignoreThrowables && InheritanceUtil.isInheritor(aClass, "java.lang.Throwable")) {

@@ -15,10 +15,11 @@
  */
 package com.intellij.ui.tree;
 
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.TreePath;
-import java.util.function.Function;
 
 public interface TreeVisitor {
   /**
@@ -48,59 +49,120 @@ public interface TreeVisitor {
   }
 
 
-  abstract class Finder implements TreeVisitor {
+  /**
+   * Represents a tree model that accepts a tree visitor and promises a result.
+   */
+  interface Acceptor {
+    /**
+     * @param visitor an object that controls visiting a tree structure
+     * @return a promise that will be resolved when visiting is finished
+     */
     @NotNull
-    @Override
-    public Action visit(@NotNull TreePath path) {
-      return found(path) ? Action.INTERRUPT : contains(path) ? Action.CONTINUE : Action.SKIP_CHILDREN;
-    }
-
-    /**
-     * @param path a currently visited path
-     * @return {@code true} if the specified path is found and visiting can be interrupted
-     */
-    protected abstract boolean found(@NotNull TreePath path);
-
-    /**
-     * @param path a currently visited path
-     * @return {@code true} if the specified path may contain a seeking path
-     */
-    protected abstract boolean contains(@NotNull TreePath path);
+    Promise<TreePath> accept(@NotNull TreeVisitor visitor);
   }
 
 
-  class PathFinder implements TreeVisitor {
-    private final Function<Object, Object> converter;
-    private final TreePath path;
+  abstract class ByComponent<C, T> implements TreeVisitor {
+    private final Function<TreePath, T> converter;
+    private final C component;
 
-    public PathFinder(@NotNull TreePath path) {
-      this(path, object -> object);
-    }
-
-    public PathFinder(@NotNull TreePath path, @NotNull Function<Object, Object> converter) {
-      this.converter = converter;
-      this.path = path;
+    public ByComponent(@NotNull C component, @NotNull Function<Object, T> converter) {
+      this.converter = currentPath -> converter.fun(currentPath.getLastPathComponent());
+      this.component = component;
     }
 
     @NotNull
     @Override
     public Action visit(@NotNull TreePath path) {
-      Object component = converter.apply(path.getLastPathComponent());
+      return visit(converter.fun(path));
+    }
+
+    /**
+     * @param component a last component of the current path
+     * @return an action that controls visiting a tree
+     */
+    @NotNull
+    protected Action visit(T component) {
       if (component == null) return Action.SKIP_CHILDREN;
+      if (matches(component, this.component)) return Action.INTERRUPT;
+      if (contains(component, this.component)) return Action.CONTINUE;
+      return Action.SKIP_CHILDREN;
+    }
 
-      int pathCount = path.getPathCount();
-      int thisCount = this.path.getPathCount();
-      if (thisCount < pathCount) return Action.SKIP_CHILDREN;
+    /**
+     * @param pathComponent a last component of the current path
+     * @param thisComponent a seeking component
+     * @return {@code true} if both components match each other
+     */
+    protected boolean matches(@NotNull T pathComponent, @NotNull C thisComponent) {
+      return pathComponent.equals(thisComponent);
+    }
 
-      Action action = thisCount == pathCount ? Action.INTERRUPT : Action.CONTINUE;
+    /**
+     * @param pathComponent a last component of the current path
+     * @param thisComponent a seeking component
+     * @return {@code true} if the first component may contain the second one
+     */
+    protected abstract boolean contains(@NotNull T pathComponent, @NotNull C thisComponent);
+  }
 
-      TreePath value = this.path;
-      while (thisCount > pathCount) {
-        thisCount--;
-        value = value.getParentPath();
-        if (value == null) return Action.SKIP_CHILDREN;
+
+  class ByTreePath<T> implements TreeVisitor {
+    private final Function<TreePath, T> converter;
+    private final boolean ignoreRoot;
+    private final TreePath path;
+    private final int count;
+
+    public ByTreePath(@NotNull TreePath path, @NotNull Function<Object, T> converter) {
+      this(false, path, converter);
+    }
+
+    public ByTreePath(boolean ignoreRoot, @NotNull TreePath path, @NotNull Function<Object, T> converter) {
+      this.converter = currentPath -> converter.fun(currentPath.getLastPathComponent());
+      this.ignoreRoot = ignoreRoot;
+      this.path = path;
+      this.count = ignoreRoot
+                   ? path.getPathCount() + 1
+                   : path.getPathCount();
+    }
+
+    @NotNull
+    @Override
+    public Action visit(@NotNull TreePath path) {
+      return ignoreRoot && null == path.getParentPath() ? Action.CONTINUE : visit(path, converter.fun(path));
+    }
+
+    /**
+     * @param path      a currently visited path
+     * @param component a corresponding component
+     * @return an action that controls visiting a tree
+     */
+    @NotNull
+    protected Action visit(@NotNull TreePath path, T component) {
+      if (component == null) return Action.SKIP_CHILDREN;
+      int count = path.getPathCount();
+      if (count < this.count) {
+        TreePath parent = this.path.getParentPath();
+        while (++count < this.count && parent != null) parent = parent.getParentPath();
+        boolean found = parent != null && matches(component, parent.getLastPathComponent());
+        return !found ? Action.SKIP_CHILDREN : Action.CONTINUE;
       }
-      return matches(component, value.getLastPathComponent()) ? action : Action.SKIP_CHILDREN;
+      else {
+        boolean found = count > this.count || matches(component, this.path.getLastPathComponent());
+        return !found ? Action.SKIP_CHILDREN : visit(path, component, count - this.count);
+      }
+    }
+
+    /**
+     * @param path      a currently visited path
+     * @param component a corresponding component
+     * @param depth     a depth starting from the found node
+     * @return an action that controls visiting a tree
+     */
+    @NotNull
+    @SuppressWarnings("unused")
+    protected Action visit(@NotNull TreePath path, @NotNull T component, int depth) {
+      return depth == 0 ? Action.INTERRUPT : Action.SKIP_CHILDREN;
     }
 
     /**
@@ -108,7 +170,7 @@ public interface TreeVisitor {
      * @param thisComponent a component of the seeking path at the same level
      * @return {@code true} if both components match each other
      */
-    protected boolean matches(@NotNull Object pathComponent, @NotNull Object thisComponent) {
+    protected boolean matches(@NotNull T pathComponent, @NotNull Object thisComponent) {
       return pathComponent.equals(thisComponent);
     }
   }

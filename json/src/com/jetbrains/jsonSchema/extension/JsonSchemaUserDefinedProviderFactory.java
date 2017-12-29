@@ -9,6 +9,7 @@ import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Collections;
@@ -27,26 +28,30 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
 
     final Map<String, UserDefinedJsonSchemaConfiguration> map = configuration.getStateMap();
     final List<JsonSchemaFileProvider> providers = map.values().stream()
-      .map(schema -> new MyProvider(schema.getName(), new File(project.getBasePath(), schema.getRelativePathToSchema()),
+      .map(schema -> new MyProvider(project, schema.getName(), new File(project.getBasePath(), schema.getRelativePathToSchema()),
                                     schema.getCalculatedPatterns())).collect(Collectors.toList());
 
     return providers.isEmpty() ? Collections.emptyList() : providers;
   }
 
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
+    @NotNull private final Project myProject;
     @NotNull private final String myName;
     @NotNull private final File myFile;
     private VirtualFile myVirtualFile;
     @NotNull private final List<PairProcessor<Project, VirtualFile>> myPatterns;
 
-    public MyProvider(@NotNull String name,
-                      @NotNull File file,
-                      @NotNull List<PairProcessor<Project, VirtualFile>> patterns) {
+    public MyProvider(@NotNull final Project project,
+                      @NotNull final String name,
+                      @NotNull final File file,
+                      @NotNull final List<PairProcessor<Project, VirtualFile>> patterns) {
+      myProject = project;
       myName = name;
       myFile = file;
       myPatterns = patterns;
     }
 
+    @Nullable
     @Override
     public VirtualFile getSchemaFile() {
       if (myVirtualFile != null && myVirtualFile.isValid()) return myVirtualFile;
@@ -58,6 +63,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       return myVirtualFile;
     }
 
+    @NotNull
     @Override
     public SchemaType getSchemaType() {
       return SchemaType.userSchema;
@@ -70,10 +76,11 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
+    public boolean isAvailable(@NotNull VirtualFile file) {
+      //noinspection SimplifiableIfStatement
       if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null ||
-          JsonSchemaService.Impl.get(project).isSchemaFile(file)) return false;
-      return myPatterns.stream().anyMatch(processor -> processor.process(project, file));
+          JsonSchemaService.Impl.get(myProject).isSchemaFile(file)) return false;
+      return myPatterns.stream().anyMatch(processor -> processor.process(myProject, file));
     }
 
     @Override
@@ -84,6 +91,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       MyProvider provider = (MyProvider)o;
 
       if (!myName.equals(provider.myName)) return false;
+      //noinspection RedundantIfStatement
       if (!FileUtil.filesEqual(myFile, provider.myFile)) return false;
 
       return true;

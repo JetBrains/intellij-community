@@ -25,11 +25,9 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
-import java.util.List;
 
 public abstract class CodeInsightUtilCore extends FileModificationService {
   public static <T extends PsiElement> T findElementInRange(@NotNull PsiFile file,
@@ -98,9 +96,8 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
     return parseStringCharacters(chars, outChars, sourceOffsets, '"', '\'');
   }
 
-  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets, Character... endChars) {
+  public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, @Nullable int[] sourceOffsets, @NotNull char... endChars) {
     assert sourceOffsets == null || sourceOffsets.length == chars.length()+1;
-    List<Character> endCharList = Arrays.asList(endChars);
     if (chars.indexOf('\\') < 0) {
       outChars.append(chars);
       if (sourceOffsets != null) {
@@ -207,9 +204,10 @@ public abstract class CodeInsightUtilCore extends FileModificationService {
           break;
 
         default:
-          if (endCharList.contains(c)) {
+          if (CharArrayUtil.indexOf(endChars, c, 0, endChars.length) != -1) {
             outChars.append(c);
-          } else {
+          }
+          else {
             return false;
           }
       }

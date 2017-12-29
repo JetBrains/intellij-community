@@ -19,6 +19,7 @@ import com.intellij.build.events.*;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -29,6 +30,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.content.Content;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public abstract class AbstractViewManager implements BuildProgressListener, Disposable {
+public abstract class AbstractViewManager implements ViewManager, BuildProgressListener, Disposable {
   private static final Key<Boolean> PINNED_EXTRACTED_CONTENT = new Key<>("PINNED_EXTRACTED_CONTENT");
 
   protected final Project myProject;
@@ -68,6 +72,16 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       }
     };
     myPinnedViews = ContainerUtil.newConcurrentSet();
+  }
+
+  @Override
+  public boolean isConsoleEnabledByDefault() {
+    return false;
+  }
+
+  @Override
+  public boolean isBuildContentView() {
+    return true;
   }
 
   protected abstract String getViewName();
@@ -118,12 +132,19 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
   protected void onBuildFinish(BuildDescriptor buildDescriptor) {
     BuildInfo buildInfo = (BuildInfo)buildDescriptor;
     if (buildInfo.result instanceof FailureResult) {
-      myBuildContentManager.setSelectedContent(buildInfo.content, true, true, true, null);
+      boolean activate = buildInfo.activateToolWindowWhenFailed;
+      myBuildContentManager.setSelectedContent(buildInfo.content, activate, activate, activate, null);
+      List<? extends Failure>
+        failures = ((FailureResult)buildInfo.result).getFailures();
+      if (failures.isEmpty()) return;
+      Failure failure = failures.get(0);
+      Notification notification = failure.getNotification();
+      if (notification != null) {
+        final String title = notification.getTitle();
+        final String content = notification.getContent();
+        SystemNotifications.getInstance().notify(ToolWindowId.BUILD, title, content);
+      }
     }
-  }
-
-  protected boolean isConsoleEnabledByDefault() {
-    return false;
   }
 
   @Override
@@ -139,7 +160,8 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
     long endTime = -1;
     EventResult result;
     Content content;
-    public boolean activateToolWindowWhenAdded;
+    boolean activateToolWindowWhenAdded;
+    boolean activateToolWindowWhenFailed = true;
 
     public BuildInfo(@NotNull Object id,
                      @NotNull String title,
@@ -173,7 +195,7 @@ public abstract class AbstractViewManager implements BuildProgressListener, Disp
       String tabName = getPinnedTabName(buildsView);
       UIUtil.invokeLaterIfNeeded(() -> {
         content.setPinnable(false);
-        if(content.getIcon() == null) {
+        if (content.getIcon() == null) {
           content.setIcon(EmptyIcon.ICON_8);
         }
         content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);

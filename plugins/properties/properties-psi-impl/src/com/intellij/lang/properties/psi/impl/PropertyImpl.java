@@ -43,6 +43,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return "Property{ key = " + getKey() + ", value = " + getValue() + "}";
   }
 
+  @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), name, "xxx", null);
     ASTNode keyNode = getKeyNode();
@@ -57,6 +58,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return this;
   }
 
+  @Override
   public void setValue(@NotNull String value) throws IncorrectOperationException {
     ASTNode node = getValueNode();
     PropertyImpl property = (PropertyImpl)PropertiesElementFactory.createProperty(getProject(), "xxx", value, getKeyValueDelimiter());
@@ -76,10 +78,12 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     }
   }
 
+  @Override
   public String getName() {
     return getUnescapedKey();
   }
 
+  @Override
   public String getKey() {
     final PropertyStub stub = getStub();
     if (stub != null) {
@@ -103,6 +107,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return getNode().findChildByType(PropertiesTokenTypes.VALUE_CHARACTERS);
   }
 
+  @Override
   public String getValue() {
     final ASTNode node = getValueNode();
     if (node == null) {
@@ -111,6 +116,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return node.getText();
   }
 
+  @Override
   @Nullable
   public String getUnescapedValue() {
     return unescape(getValue());
@@ -335,6 +341,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return startSpaces == -1 ? null : new TextRange(startSpaces, len);
   }
 
+  @Override
   @Nullable
   public String getUnescapedKey() {
     return unescape(getKey());
@@ -346,6 +353,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return PlatformIcons.PROPERTY_ICON;
   }
 
+  @Override
   public void delete() throws IncorrectOperationException {
     final ASTNode parentNode = getParent().getNode();
     assert parentNode != null;
@@ -360,10 +368,12 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     }
   }
 
+  @Override
   public PropertiesFile getPropertiesFile() {
     return (PropertiesFile)super.getContainingFile();
   }
 
+  @Override
   public String getDocCommentText() {
     StringBuilder text = new StringBuilder();
     for (PsiElement doc = getPrevSibling(); doc != null; doc = doc.getPrevSibling()) {
@@ -389,22 +399,27 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     return this;
   }
 
+  @Override
   @NotNull
   public SearchScope getUseScope() {
     // property ref can occur in any file
     return GlobalSearchScope.allScope(getProject());
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return getName();
       }
 
+      @Override
       public String getLocationString() {
         return getPropertiesFile().getName();
       }
 
+      @Override
       public Icon getIcon(final boolean open) {
         return null;
       }

@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,9 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
@@ -44,20 +41,15 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
     myToggleChangeDiffAction = new ToggleChangeDiffAction();
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
+    myViewer.setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
     myViewer.rebuildTree();
   }
 
   @Override
   public void dispose() {
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
   @NotNull
@@ -83,7 +75,26 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
 
   public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
-    myViewer.setIncludedChanges(changes);
+    List<Change> changesToInclude = new ArrayList<>(changes);
+
+    Set<Change> otherChanges = new HashSet<>();
+    for (Change change : changes) {
+      if (!(change instanceof ChangeListChange)) {
+        otherChanges.add(change);
+      }
+    }
+
+    // include all related ChangeListChange by a simple Change
+    if (!otherChanges.isEmpty()) {
+      for (Change change : getAllChanges()) {
+        if (change instanceof ChangeListChange &&
+            otherChanges.contains(change)) {
+          changesToInclude.add(change);
+        }
+      }
+    }
+
+    myViewer.setIncludedChanges(changesToInclude);
   }
 
   public List<Change> getAllChanges() {
@@ -149,32 +160,8 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
       });
     }
 
-    public void changeListAdded(ChangeList list) {
-      doUpdate();
-    }
-
     @Override
-    public void changeListRemoved(ChangeList list) {
-      doUpdate();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesAdded(Collection<Change> changes, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    public void changeListsChanged() {
       doUpdate();
     }
   }

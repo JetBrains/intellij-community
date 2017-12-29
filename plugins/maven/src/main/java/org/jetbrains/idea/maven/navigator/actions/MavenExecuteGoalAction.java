@@ -107,7 +107,7 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
     }
 
     MavenRunnerParameters parameters =
-      new MavenRunnerParameters(true, workDirectory, Arrays.asList(ParametersList.parse(goals)), Collections.emptyList());
+      new MavenRunnerParameters(true, workDirectory, (String)null, Arrays.asList(ParametersList.parse(goals)), Collections.emptyList());
 
     MavenGeneralSettings generalSettings = new MavenGeneralSettings();
     generalSettings.setMavenHome(mavenHome.getPath());

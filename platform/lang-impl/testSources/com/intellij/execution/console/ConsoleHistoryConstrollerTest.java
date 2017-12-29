@@ -97,7 +97,18 @@ public class ConsoleHistoryConstrollerTest extends LightPlatformCodeInsightTestC
     setCaretWithText("Statement<caret> 4");
     consoleNext();
     consolePrev();
-    checkResultByText("Statement 4<caret>");
+    checkResultByText("Statement<caret> 4");
+  }
+
+  //PY-26413
+  public void testNavigateDown2() {
+    execStatementList1();
+    setCaretWithText("<caret>Statement 4");
+    consoleNext();
+    consoleNext();
+    setCaretWithText("Statement<caret> 3");
+    consolePrev();
+    checkResultByText("<caret>Different Prefix");
   }
 
   public void testNavigateUpNoPrefix() {

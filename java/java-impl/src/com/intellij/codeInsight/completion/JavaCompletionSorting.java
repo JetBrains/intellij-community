@@ -103,9 +103,9 @@ public class JavaCompletionSorting {
       return ExpectedTypeInfo.EMPTY_ARRAY;
     }
 
-    ExpectedTypeInfo castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
-    if (castExpectation != null) {
-      return new ExpectedTypeInfo[]{castExpectation};
+    List<ExpectedTypeInfo> castExpectation = SmartCastProvider.getParenthesizedCastExpectationByOperandType(position);
+    if (!castExpectation.isEmpty()) {
+      return castExpectation.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
     return JavaSmartCompletionContributor.getExpectedTypes(parameters);
   }
@@ -457,7 +457,7 @@ public class JavaCompletionSorting {
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod) {
+      if (object instanceof PsiMethod && FunctionalExpressionCompletionProvider.FUNCTIONAL_EXPR_ITEM.get(element) == null) {
         PsiType type = ((PsiMethod)object).getReturnType();
         final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (callItem != null) {
@@ -621,7 +621,11 @@ public class JavaCompletionSorting {
         @Override
         public boolean shouldLift(LookupElement shorterElement, LookupElement longerElement) {
           Object object = shorterElement.getObject();
-          if (object instanceof PsiClass && longerElement.getObject() instanceof PsiClass) {
+          if (!(object instanceof PsiClass)) return false;
+
+          if (longerElement.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) return true;
+          
+          if (longerElement.getObject() instanceof PsiClass) {
             PsiClass psiClass = (PsiClass)object;
             PsiFile file = psiClass.getContainingFile();
             if (file != null) {

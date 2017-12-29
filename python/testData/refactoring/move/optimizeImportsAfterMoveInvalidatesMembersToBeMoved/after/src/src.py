@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Serviceform.  If not, see <http://www.gnu.org/licenses/>.
 import datetime
-
-import logging
 import string
+import logging
+from enum import Enum
+from typing import Tuple, Set, Optional, Sequence, Iterator, Iterable, TYPE_CHECKING
+
 from colorful.fields import RGBColorField
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -30,18 +32,18 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
-from enum import Enum
 from guardian.shortcuts import get_users_with_perms
 from select2 import fields as select2_fields
-from serviceform.tasks.models import Task
-from typing import Tuple, Set, Optional, Sequence, Iterator, Iterable, TYPE_CHECKING
 
-from .email import EmailTemplate
-from .mixins import CopyMixin
-from .participation import QuestionAnswer
-from .people import Participant, ResponsibilityPerson
+from serviceform.tasks.models import Task
+
 from .. import emails, utils
 from ..utils import ColorStr
+
+from .mixins import CopyMixin
+from .people import Participant, ResponsibilityPerson
+from .email import EmailTemplate
+from .participation import QuestionAnswer
 
 if TYPE_CHECKING:
     from .participation import ParticipationActivity, ParticipationActivityChoice

@@ -30,10 +30,12 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRemote;
@@ -172,7 +174,9 @@ public class GitPullDialog extends DialogWrapper {
   public GitLineHandler makeHandler(@NotNull List<String> urls) {
     GitLineHandler h = new GitLineHandler(myProject, gitRoot(), GitCommand.PULL);
     h.setUrls(urls);
-    h.addProgressParameter();
+    if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(GitVcs.getInstance(myProject).getVersion())) {
+      h.addParameters("--progress");
+    }
     h.addParameters("--no-stat");
     if (myNoCommitCheckBox.isSelected()) {
       h.addParameters("--no-commit");
@@ -193,7 +197,9 @@ public class GitPullDialog extends DialogWrapper {
       h.addParameters("--strategy", strategy);
     }
     h.addParameters("-v");
-    h.addProgressParameter();
+    if(GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(GitVcs.getInstance(myProject).getVersion())) {
+      h.addParameters("--progress");
+    }
 
     final List<String> markedBranches = myBranchChooser.getMarkedElements();
     String remote = getRemote();

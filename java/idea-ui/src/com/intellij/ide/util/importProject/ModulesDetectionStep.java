@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 18, 2007
  */
 public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDescriptor>> {
   private final ProjectStructureDetector myDetector;

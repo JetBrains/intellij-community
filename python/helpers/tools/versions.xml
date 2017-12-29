@@ -1,2293 +1,11 @@
 <?xml version="1.0" ?>
 <root>
-	<python version="2.3">
-		<module>CDROM</module>
-		<module>DLFCN</module>
-		<module>TYPES</module>
-		<module>_LWPCookieJar</module>
-		<module>_MozillaCookieJar</module>
-		<module>_abcoll</module>
-		<module>_ast</module>
-		<module>_bisect</module>
-		<module>_bootlocale</module>
-		<module>_bytesio</module>
-		<module>_bz2</module>
-		<module>_codecs_cn</module>
-		<module>_codecs_hk</module>
-		<module>_codecs_iso2022</module>
-		<module>_codecs_jp</module>
-		<module>_codecs_kr</module>
-		<module>_codecs_tw</module>
-		<module>_collections</module>
-		<module>_collections_abc</module>
-		<module>_compat_pickle</module>
-		<module>_compression</module>
-		<module>_crypt</module>
-		<module>_ctypes</module>
-		<module>_ctypes_test</module>
-		<module>_curses</module>
-		<module>_curses_panel</module>
-		<module>_datetime</module>
-		<module>_dbm</module>
-		<module>_decimal</module>
-		<module>_dummy_thread</module>
-		<module>_elementtree</module>
-		<module>_fileio</module>
-		<module>_functools</module>
-		<module>_gdbm</module>
-		<module>_hashlib</module>
-		<module>_heapq</module>
-		<module>_imp</module>
-		<module>_io</module>
-		<module>_json</module>
-		<module>_lsprof</module>
-		<module>_lzma</module>
-		<module>_markupbase</module>
-		<module>_md5</module>
-		<module>_multibytecodec</module>
-		<module>_multiprocessing</module>
-		<module>_opcode</module>
-		<module>_operator</module>
-		<module>_osx_support</module>
-		<module>_pickle</module>
-		<module>_posixsubprocess</module>
-		<module>_pydecimal</module>
-		<module>_pyio</module>
-		<module>_sha</module>
-		<module>_sha1</module>
-		<module>_sha256</module>
-		<module>_sha512</module>
-		<module>_signal</module>
-		<module>_sitebuiltins</module>
-		<module>_sqlite3</module>
-		<module>_ssl</module>
-		<module>_stat</module>
-		<module>_string</module>
-		<module>_stringio</module>
-		<module>_struct</module>
-		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m</module>
-		<module>_testbuffer</module>
-		<module>_testimportmultiple</module>
-		<module>_testmultiphase</module>
-		<module>_thread</module>
-		<module>_threading_local</module>
-		<module>_tkinter</module>
-		<module>_tracemalloc</module>
-		<module>_types</module>
-		<module>_warnings</module>
-		<module>_weakrefset</module>
-		<module>abc</module>
-		<module>antigravity</module>
-		<module>argparse</module>
-		<module>ast</module>
-		<module>asyncio</module>
-		<module>asyncio.base_events</module>
-		<module>asyncio.base_subprocess</module>
-		<module>asyncio.compat</module>
-		<module>asyncio.constants</module>
-		<module>asyncio.coroutines</module>
-		<module>asyncio.events</module>
-		<module>asyncio.futures</module>
-		<module>asyncio.locks</module>
-		<module>asyncio.log</module>
-		<module>asyncio.proactor_events</module>
-		<module>asyncio.protocols</module>
-		<module>asyncio.queues</module>
-		<module>asyncio.selector_events</module>
-		<module>asyncio.sslproto</module>
-		<module>asyncio.streams</module>
-		<module>asyncio.subprocess</module>
-		<module>asyncio.tasks</module>
-		<module>asyncio.test_utils</module>
-		<module>asyncio.transports</module>
-		<module>asyncio.unix_events</module>
-		<module>asyncio.windows_events</module>
-		<module>asyncio.windows_utils</module>
-		<module>audioop</module>
-		<module>bsddb.test.test_1413192</module>
-		<module>bsddb.test.test_compare</module>
-		<module>bsddb.test.test_cursor_pget_bug</module>
-		<module>bsddb.test.test_db</module>
-		<module>bsddb.test.test_dbenv</module>
-		<module>bsddb.test.test_distributed_transactions</module>
-		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_fileid</module>
-		<module>bsddb.test.test_pickle</module>
-		<module>bsddb.test.test_replication</module>
-		<module>bsddb.test.test_sequence</module>
-		<module>build_class</module>
-		<module>builtins</module>
-		<module>cProfile</module>
-		<module>collections</module>
-		<module>collections.__main__</module>
-		<module>collections.abc</module>
-		<module>concurrent</module>
-		<module>concurrent.futures</module>
-		<module>concurrent.futures._base</module>
-		<module>concurrent.futures.process</module>
-		<module>concurrent.futures.thread</module>
-		<module>configparser</module>
-		<module>contextlib</module>
-		<module>cookielib</module>
-		<module>copyreg</module>
-		<module>crypt</module>
-		<module>ctypes</module>
-		<module>ctypes._endian</module>
-		<module>ctypes.macholib</module>
-		<module>ctypes.macholib.dyld</module>
-		<module>ctypes.macholib.dylib</module>
-		<module>ctypes.macholib.framework</module>
-		<module>ctypes.test</module>
-		<module>ctypes.test.__main__</module>
-		<module>ctypes.test.runtests</module>
-		<module>ctypes.test.test_anon</module>
-		<module>ctypes.test.test_array_in_pointer</module>
-		<module>ctypes.test.test_arrays</module>
-		<module>ctypes.test.test_as_parameter</module>
-		<module>ctypes.test.test_bitfields</module>
-		<module>ctypes.test.test_buffers</module>
-		<module>ctypes.test.test_bytes</module>
-		<module>ctypes.test.test_byteswap</module>
-		<module>ctypes.test.test_callbacks</module>
-		<module>ctypes.test.test_cast</module>
-		<module>ctypes.test.test_cfuncs</module>
-		<module>ctypes.test.test_checkretval</module>
-		<module>ctypes.test.test_delattr</module>
-		<module>ctypes.test.test_errcheck</module>
-		<module>ctypes.test.test_errno</module>
-		<module>ctypes.test.test_find</module>
-		<module>ctypes.test.test_frombuffer</module>
-		<module>ctypes.test.test_funcptr</module>
-		<module>ctypes.test.test_functions</module>
-		<module>ctypes.test.test_incomplete</module>
-		<module>ctypes.test.test_init</module>
-		<module>ctypes.test.test_integers</module>
-		<module>ctypes.test.test_internals</module>
-		<module>ctypes.test.test_keeprefs</module>
-		<module>ctypes.test.test_libc</module>
-		<module>ctypes.test.test_loading</module>
-		<module>ctypes.test.test_macholib</module>
-		<module>ctypes.test.test_memfunctions</module>
-		<module>ctypes.test.test_numbers</module>
-		<module>ctypes.test.test_objects</module>
-		<module>ctypes.test.test_parameters</module>
-		<module>ctypes.test.test_pep3118</module>
-		<module>ctypes.test.test_pickling</module>
-		<module>ctypes.test.test_pointers</module>
-		<module>ctypes.test.test_prototypes</module>
-		<module>ctypes.test.test_python_api</module>
-		<module>ctypes.test.test_random_things</module>
-		<module>ctypes.test.test_refcounts</module>
-		<module>ctypes.test.test_repr</module>
-		<module>ctypes.test.test_returnfuncptrs</module>
-		<module>ctypes.test.test_simplesubclasses</module>
-		<module>ctypes.test.test_sizes</module>
-		<module>ctypes.test.test_slicing</module>
-		<module>ctypes.test.test_stringptr</module>
-		<module>ctypes.test.test_strings</module>
-		<module>ctypes.test.test_struct_fields</module>
-		<module>ctypes.test.test_structures</module>
-		<module>ctypes.test.test_unaligned_structures</module>
-		<module>ctypes.test.test_unicode</module>
-		<module>ctypes.test.test_values</module>
-		<module>ctypes.test.test_varsize_struct</module>
-		<module>ctypes.test.test_win32</module>
-		<module>ctypes.test.test_wintypes</module>
-		<module>ctypes.util</module>
-		<module>ctypes.wintypes</module>
-		<module>dbm</module>
-		<module>dbm.dumb</module>
-		<module>dbm.gnu</module>
-		<module>dbm.ndbm</module>
-		<module>decimal</module>
-		<module>distutils._msvccompiler</module>
-		<module>distutils.command.bdist_msi</module>
-		<module>distutils.command.check</module>
-		<module>distutils.command.install_egg_info</module>
-		<module>distutils.command.upload</module>
-		<module>distutils.config</module>
-		<module>distutils.msvc9compiler</module>
-		<module>distutils.tests</module>
-		<module>distutils.tests.setuptools_build_ext</module>
-		<module>distutils.tests.setuptools_extension</module>
-		<module>distutils.tests.support</module>
-		<module>distutils.tests.test_archive_util</module>
-		<module>distutils.tests.test_bdist</module>
-		<module>distutils.tests.test_bdist_dumb</module>
-		<module>distutils.tests.test_bdist_msi</module>
-		<module>distutils.tests.test_bdist_rpm</module>
-		<module>distutils.tests.test_bdist_wininst</module>
-		<module>distutils.tests.test_build</module>
-		<module>distutils.tests.test_build_clib</module>
-		<module>distutils.tests.test_build_ext</module>
-		<module>distutils.tests.test_build_py</module>
-		<module>distutils.tests.test_build_scripts</module>
-		<module>distutils.tests.test_ccompiler</module>
-		<module>distutils.tests.test_check</module>
-		<module>distutils.tests.test_clean</module>
-		<module>distutils.tests.test_cmd</module>
-		<module>distutils.tests.test_config</module>
-		<module>distutils.tests.test_config_cmd</module>
-		<module>distutils.tests.test_core</module>
-		<module>distutils.tests.test_cygwinccompiler</module>
-		<module>distutils.tests.test_dep_util</module>
-		<module>distutils.tests.test_dir_util</module>
-		<module>distutils.tests.test_dist</module>
-		<module>distutils.tests.test_extension</module>
-		<module>distutils.tests.test_file_util</module>
-		<module>distutils.tests.test_filelist</module>
-		<module>distutils.tests.test_install</module>
-		<module>distutils.tests.test_install_data</module>
-		<module>distutils.tests.test_install_headers</module>
-		<module>distutils.tests.test_install_lib</module>
-		<module>distutils.tests.test_install_scripts</module>
-		<module>distutils.tests.test_log</module>
-		<module>distutils.tests.test_msvc9compiler</module>
-		<module>distutils.tests.test_msvccompiler</module>
-		<module>distutils.tests.test_register</module>
-		<module>distutils.tests.test_sdist</module>
-		<module>distutils.tests.test_spawn</module>
-		<module>distutils.tests.test_sysconfig</module>
-		<module>distutils.tests.test_text_file</module>
-		<module>distutils.tests.test_unixccompiler</module>
-		<module>distutils.tests.test_upload</module>
-		<module>distutils.tests.test_util</module>
-		<module>distutils.tests.test_version</module>
-		<module>distutils.tests.test_versionpredicate</module>
-		<module>distutils.versionpredicate</module>
-		<module>django_fetch_doc_urls</module>
-		<module>email.FeedParser</module>
-		<module>email._encoded_words</module>
-		<module>email._header_value_parser</module>
-		<module>email._policybase</module>
-		<module>email.base64mime</module>
-		<module>email.charset</module>
-		<module>email.contentmanager</module>
-		<module>email.encoders</module>
-		<module>email.errors</module>
-		<module>email.feedparser</module>
-		<module>email.generator</module>
-		<module>email.header</module>
-		<module>email.headerregistry</module>
-		<module>email.iterators</module>
-		<module>email.message</module>
-		<module>email.mime</module>
-		<module>email.mime.application</module>
-		<module>email.mime.audio</module>
-		<module>email.mime.base</module>
-		<module>email.mime.image</module>
-		<module>email.mime.message</module>
-		<module>email.mime.multipart</module>
-		<module>email.mime.nonmultipart</module>
-		<module>email.mime.text</module>
-		<module>email.parser</module>
-		<module>email.policy</module>
-		<module>email.quoprimime</module>
-		<module>email.test.test_email_codecs_renamed</module>
-		<module>email.test.test_email_renamed</module>
-		<module>email.utils</module>
-		<module>encodings.big5</module>
-		<module>encodings.big5hkscs</module>
-		<module>encodings.bz2_codec</module>
-		<module>encodings.cp1125</module>
-		<module>encodings.cp273</module>
-		<module>encodings.cp65001</module>
-		<module>encodings.cp720</module>
-		<module>encodings.cp858</module>
-		<module>encodings.cp932</module>
-		<module>encodings.cp949</module>
-		<module>encodings.cp950</module>
-		<module>encodings.euc_jis_2004</module>
-		<module>encodings.euc_jisx0213</module>
-		<module>encodings.euc_jp</module>
-		<module>encodings.euc_kr</module>
-		<module>encodings.gb18030</module>
-		<module>encodings.gb2312</module>
-		<module>encodings.gbk</module>
-		<module>encodings.hp_roman8</module>
-		<module>encodings.hz</module>
-		<module>encodings.iso2022_jp</module>
-		<module>encodings.iso2022_jp_1</module>
-		<module>encodings.iso2022_jp_2</module>
-		<module>encodings.iso2022_jp_2004</module>
-		<module>encodings.iso2022_jp_3</module>
-		<module>encodings.iso2022_jp_ext</module>
-		<module>encodings.iso2022_kr</module>
-		<module>encodings.iso8859_11</module>
-		<module>encodings.iso8859_16</module>
-		<module>encodings.johab</module>
-		<module>encodings.koi8_t</module>
-		<module>encodings.kz1048</module>
-		<module>encodings.mac_arabic</module>
-		<module>encodings.mac_centeuro</module>
-		<module>encodings.mac_croatian</module>
-		<module>encodings.mac_farsi</module>
-		<module>encodings.mac_romanian</module>
-		<module>encodings.ptcp154</module>
-		<module>encodings.shift_jis</module>
-		<module>encodings.shift_jis_2004</module>
-		<module>encodings.shift_jisx0213</module>
-		<module>encodings.tis_620</module>
-		<module>encodings.utf_32</module>
-		<module>encodings.utf_32_be</module>
-		<module>encodings.utf_32_le</module>
-		<module>encodings.utf_8_sig</module>
-		<module>ensurepip</module>
-		<module>ensurepip.__main__</module>
-		<module>ensurepip._uninstall</module>
-		<module>enum</module>
-		<module>faulthandler</module>
-		<module>fractions</module>
-		<module>functools</module>
-		<module>future_builtins</module>
-		<module>genericpath</module>
-		<module>hashlib</module>
-		<module>html</module>
-		<module>html.entities</module>
-		<module>html.parser</module>
-		<module>http</module>
-		<module>http.client</module>
-		<module>http.cookiejar</module>
-		<module>http.cookies</module>
-		<module>http.server</module>
-		<module>idlelib.AutoComplete</module>
-		<module>idlelib.AutoCompleteWindow</module>
-		<module>idlelib.CodeContext</module>
-		<module>idlelib.HyperParser</module>
-		<module>idlelib.MultiCall</module>
-		<module>idlelib.RstripExtension</module>
-		<module>idlelib.__main__</module>
-		<module>idlelib.autocomplete</module>
-		<module>idlelib.autocomplete_w</module>
-		<module>idlelib.autoexpand</module>
-		<module>idlelib.browser</module>
-		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
-		<module>idlelib.codecontext</module>
-		<module>idlelib.colorizer</module>
-		<module>idlelib.config</module>
-		<module>idlelib.config_key</module>
-		<module>idlelib.configdialog</module>
-		<module>idlelib.debugger</module>
-		<module>idlelib.debugger_r</module>
-		<module>idlelib.debugobj</module>
-		<module>idlelib.debugobj_r</module>
-		<module>idlelib.delegator</module>
-		<module>idlelib.dynoption</module>
-		<module>idlelib.editor</module>
-		<module>idlelib.filelist</module>
-		<module>idlelib.grep</module>
-		<module>idlelib.help</module>
-		<module>idlelib.help_about</module>
-		<module>idlelib.history</module>
-		<module>idlelib.hyperparser</module>
-		<module>idlelib.idle_test</module>
-		<module>idlelib.idle_test.htest</module>
-		<module>idlelib.idle_test.mock_idle</module>
-		<module>idlelib.idle_test.mock_tk</module>
-		<module>idlelib.idle_test.test_autocomplete</module>
-		<module>idlelib.idle_test.test_autoexpand</module>
-		<module>idlelib.idle_test.test_calltips</module>
-		<module>idlelib.idle_test.test_colorizer</module>
-		<module>idlelib.idle_test.test_config</module>
-		<module>idlelib.idle_test.test_config_key</module>
-		<module>idlelib.idle_test.test_config_name</module>
-		<module>idlelib.idle_test.test_configdialog</module>
-		<module>idlelib.idle_test.test_debugger</module>
-		<module>idlelib.idle_test.test_delegator</module>
-		<module>idlelib.idle_test.test_editmenu</module>
-		<module>idlelib.idle_test.test_editor</module>
-		<module>idlelib.idle_test.test_formatparagraph</module>
-		<module>idlelib.idle_test.test_grep</module>
-		<module>idlelib.idle_test.test_help</module>
-		<module>idlelib.idle_test.test_help_about</module>
-		<module>idlelib.idle_test.test_history</module>
-		<module>idlelib.idle_test.test_hyperparser</module>
-		<module>idlelib.idle_test.test_idlehistory</module>
-		<module>idlelib.idle_test.test_io</module>
-		<module>idlelib.idle_test.test_iomenu</module>
-		<module>idlelib.idle_test.test_macosx</module>
-		<module>idlelib.idle_test.test_paragraph</module>
-		<module>idlelib.idle_test.test_parenmatch</module>
-		<module>idlelib.idle_test.test_pathbrowser</module>
-		<module>idlelib.idle_test.test_percolator</module>
-		<module>idlelib.idle_test.test_query</module>
-		<module>idlelib.idle_test.test_redirector</module>
-		<module>idlelib.idle_test.test_replace</module>
-		<module>idlelib.idle_test.test_rstrip</module>
-		<module>idlelib.idle_test.test_scrolledlist</module>
-		<module>idlelib.idle_test.test_search</module>
-		<module>idlelib.idle_test.test_searchbase</module>
-		<module>idlelib.idle_test.test_searchdialogbase</module>
-		<module>idlelib.idle_test.test_searchengine</module>
-		<module>idlelib.idle_test.test_text</module>
-		<module>idlelib.idle_test.test_textview</module>
-		<module>idlelib.idle_test.test_tree</module>
-		<module>idlelib.idle_test.test_undo</module>
-		<module>idlelib.idle_test.test_warning</module>
-		<module>idlelib.idle_test.test_widgetredir</module>
-		<module>idlelib.iomenu</module>
-		<module>idlelib.macosx</module>
-		<module>idlelib.macosxSupport</module>
-		<module>idlelib.mainmenu</module>
-		<module>idlelib.multicall</module>
-		<module>idlelib.outwin</module>
-		<module>idlelib.paragraph</module>
-		<module>idlelib.parenmatch</module>
-		<module>idlelib.pathbrowser</module>
-		<module>idlelib.percolator</module>
-		<module>idlelib.pyparse</module>
-		<module>idlelib.pyshell</module>
-		<module>idlelib.query</module>
-		<module>idlelib.redirector</module>
-		<module>idlelib.replace</module>
-		<module>idlelib.rstrip</module>
-		<module>idlelib.runscript</module>
-		<module>idlelib.scrolledlist</module>
-		<module>idlelib.search</module>
-		<module>idlelib.searchbase</module>
-		<module>idlelib.searchengine</module>
-		<module>idlelib.stackviewer</module>
-		<module>idlelib.statusbar</module>
-		<module>idlelib.tabbedpages</module>
-		<module>idlelib.textview</module>
-		<module>idlelib.tooltip</module>
-		<module>idlelib.tree</module>
-		<module>idlelib.undo</module>
-		<module>idlelib.windows</module>
-		<module>idlelib.zoomheight</module>
-		<module>importlib</module>
-		<module>importlib._bootstrap</module>
-		<module>importlib._bootstrap_external</module>
-		<module>importlib.abc</module>
-		<module>importlib.machinery</module>
-		<module>importlib.test</module>
-		<module>importlib.test.__main__</module>
-		<module>importlib.test.abc</module>
-		<module>importlib.test.benchmark</module>
-		<module>importlib.test.builtin</module>
-		<module>importlib.test.builtin.test_finder</module>
-		<module>importlib.test.builtin.test_loader</module>
-		<module>importlib.test.builtin.util</module>
-		<module>importlib.test.extension</module>
-		<module>importlib.test.extension.test_case_sensitivity</module>
-		<module>importlib.test.extension.test_finder</module>
-		<module>importlib.test.extension.test_loader</module>
-		<module>importlib.test.extension.test_path_hook</module>
-		<module>importlib.test.extension.util</module>
-		<module>importlib.test.frozen</module>
-		<module>importlib.test.frozen.test_finder</module>
-		<module>importlib.test.frozen.test_loader</module>
-		<module>importlib.test.import_</module>
-		<module>importlib.test.import_.test___package__</module>
-		<module>importlib.test.import_.test_api</module>
-		<module>importlib.test.import_.test_caching</module>
-		<module>importlib.test.import_.test_fromlist</module>
-		<module>importlib.test.import_.test_meta_path</module>
-		<module>importlib.test.import_.test_packages</module>
-		<module>importlib.test.import_.test_path</module>
-		<module>importlib.test.import_.test_relative_imports</module>
-		<module>importlib.test.import_.util</module>
-		<module>importlib.test.regrtest</module>
-		<module>importlib.test.source</module>
-		<module>importlib.test.source.test_abc_loader</module>
-		<module>importlib.test.source.test_case_sensitivity</module>
-		<module>importlib.test.source.test_file_loader</module>
-		<module>importlib.test.source.test_finder</module>
-		<module>importlib.test.source.test_path_hook</module>
-		<module>importlib.test.source.test_source_encoding</module>
-		<module>importlib.test.source.util</module>
-		<module>importlib.test.test_abc</module>
-		<module>importlib.test.test_api</module>
-		<module>importlib.test.test_util</module>
-		<module>importlib.test.util</module>
-		<module>importlib.util</module>
-		<module>io</module>
-		<module>ipaddress</module>
-		<module>json</module>
-		<module>json.decoder</module>
-		<module>json.encoder</module>
-		<module>json.scanner</module>
-		<module>json.tests</module>
-		<module>json.tests.test_check_circular</module>
-		<module>json.tests.test_decode</module>
-		<module>json.tests.test_default</module>
-		<module>json.tests.test_dump</module>
-		<module>json.tests.test_encode_basestring_ascii</module>
-		<module>json.tests.test_fail</module>
-		<module>json.tests.test_float</module>
-		<module>json.tests.test_indent</module>
-		<module>json.tests.test_pass1</module>
-		<module>json.tests.test_pass2</module>
-		<module>json.tests.test_pass3</module>
-		<module>json.tests.test_recursion</module>
-		<module>json.tests.test_scanstring</module>
-		<module>json.tests.test_separators</module>
-		<module>json.tests.test_speedups</module>
-		<module>json.tests.test_tool</module>
-		<module>json.tests.test_unicode</module>
-		<module>json.tool</module>
-		<module>lib2to3</module>
-		<module>lib2to3.__main__</module>
-		<module>lib2to3.btm_matcher</module>
-		<module>lib2to3.btm_utils</module>
-		<module>lib2to3.fixer_base</module>
-		<module>lib2to3.fixer_util</module>
-		<module>lib2to3.fixes</module>
-		<module>lib2to3.fixes.fix_apply</module>
-		<module>lib2to3.fixes.fix_asserts</module>
-		<module>lib2to3.fixes.fix_basestring</module>
-		<module>lib2to3.fixes.fix_buffer</module>
-		<module>lib2to3.fixes.fix_callable</module>
-		<module>lib2to3.fixes.fix_dict</module>
-		<module>lib2to3.fixes.fix_except</module>
-		<module>lib2to3.fixes.fix_exec</module>
-		<module>lib2to3.fixes.fix_execfile</module>
-		<module>lib2to3.fixes.fix_exitfunc</module>
-		<module>lib2to3.fixes.fix_filter</module>
-		<module>lib2to3.fixes.fix_funcattrs</module>
-		<module>lib2to3.fixes.fix_future</module>
-		<module>lib2to3.fixes.fix_getcwdu</module>
-		<module>lib2to3.fixes.fix_has_key</module>
-		<module>lib2to3.fixes.fix_idioms</module>
-		<module>lib2to3.fixes.fix_import</module>
-		<module>lib2to3.fixes.fix_imports</module>
-		<module>lib2to3.fixes.fix_imports2</module>
-		<module>lib2to3.fixes.fix_input</module>
-		<module>lib2to3.fixes.fix_intern</module>
-		<module>lib2to3.fixes.fix_isinstance</module>
-		<module>lib2to3.fixes.fix_itertools</module>
-		<module>lib2to3.fixes.fix_itertools_imports</module>
-		<module>lib2to3.fixes.fix_long</module>
-		<module>lib2to3.fixes.fix_map</module>
-		<module>lib2to3.fixes.fix_metaclass</module>
-		<module>lib2to3.fixes.fix_methodattrs</module>
-		<module>lib2to3.fixes.fix_ne</module>
-		<module>lib2to3.fixes.fix_next</module>
-		<module>lib2to3.fixes.fix_nonzero</module>
-		<module>lib2to3.fixes.fix_numliterals</module>
-		<module>lib2to3.fixes.fix_operator</module>
-		<module>lib2to3.fixes.fix_paren</module>
-		<module>lib2to3.fixes.fix_print</module>
-		<module>lib2to3.fixes.fix_raise</module>
-		<module>lib2to3.fixes.fix_raw_input</module>
-		<module>lib2to3.fixes.fix_reduce</module>
-		<module>lib2to3.fixes.fix_reload</module>
-		<module>lib2to3.fixes.fix_renames</module>
-		<module>lib2to3.fixes.fix_repr</module>
-		<module>lib2to3.fixes.fix_set_literal</module>
-		<module>lib2to3.fixes.fix_standarderror</module>
-		<module>lib2to3.fixes.fix_sys_exc</module>
-		<module>lib2to3.fixes.fix_throw</module>
-		<module>lib2to3.fixes.fix_tuple_params</module>
-		<module>lib2to3.fixes.fix_types</module>
-		<module>lib2to3.fixes.fix_unicode</module>
-		<module>lib2to3.fixes.fix_urllib</module>
-		<module>lib2to3.fixes.fix_ws_comma</module>
-		<module>lib2to3.fixes.fix_xrange</module>
-		<module>lib2to3.fixes.fix_xreadlines</module>
-		<module>lib2to3.fixes.fix_zip</module>
-		<module>lib2to3.main</module>
-		<module>lib2to3.patcomp</module>
-		<module>lib2to3.pgen2</module>
-		<module>lib2to3.pgen2.conv</module>
-		<module>lib2to3.pgen2.driver</module>
-		<module>lib2to3.pgen2.grammar</module>
-		<module>lib2to3.pgen2.literals</module>
-		<module>lib2to3.pgen2.parse</module>
-		<module>lib2to3.pgen2.pgen</module>
-		<module>lib2to3.pgen2.token</module>
-		<module>lib2to3.pgen2.tokenize</module>
-		<module>lib2to3.pygram</module>
-		<module>lib2to3.pytree</module>
-		<module>lib2to3.refactor</module>
-		<module>lib2to3.tests</module>
-		<module>lib2to3.tests.__main__</module>
-		<module>lib2to3.tests.pytree_idempotency</module>
-		<module>lib2to3.tests.support</module>
-		<module>lib2to3.tests.test_all_fixers</module>
-		<module>lib2to3.tests.test_fixers</module>
-		<module>lib2to3.tests.test_main</module>
-		<module>lib2to3.tests.test_parser</module>
-		<module>lib2to3.tests.test_pytree</module>
-		<module>lib2to3.tests.test_refactor</module>
-		<module>lib2to3.tests.test_util</module>
-		<module>linuxaudiodev</module>
-		<module>lzma</module>
-		<module>multiprocessing</module>
-		<module>multiprocessing.connection</module>
-		<module>multiprocessing.context</module>
-		<module>multiprocessing.dummy</module>
-		<module>multiprocessing.dummy.connection</module>
-		<module>multiprocessing.forking</module>
-		<module>multiprocessing.forkserver</module>
-		<module>multiprocessing.heap</module>
-		<module>multiprocessing.managers</module>
-		<module>multiprocessing.pool</module>
-		<module>multiprocessing.popen_fork</module>
-		<module>multiprocessing.popen_forkserver</module>
-		<module>multiprocessing.popen_spawn_posix</module>
-		<module>multiprocessing.popen_spawn_win32</module>
-		<module>multiprocessing.process</module>
-		<module>multiprocessing.queues</module>
-		<module>multiprocessing.reduction</module>
-		<module>multiprocessing.resource_sharer</module>
-		<module>multiprocessing.semaphore_tracker</module>
-		<module>multiprocessing.sharedctypes</module>
-		<module>multiprocessing.spawn</module>
-		<module>multiprocessing.synchronize</module>
-		<module>multiprocessing.util</module>
-		<module>nis</module>
-		<module>numbers</module>
-		<module>ossaudiodev</module>
-		<module>pathlib</module>
-		<module>plistlib</module>
-		<module>pydoc_data</module>
-		<module>pydoc_data.topics</module>
-		<module>pydoc_topics</module>
-		<module>pypi_download_install</module>
-		<module>queue</module>
-		<module>readline</module>
-		<module>repack_pypi_cache</module>
-		<module>reprlib</module>
-		<module>runpy</module>
-		<module>secrets</module>
-		<module>selectors</module>
-		<module>socketserver</module>
-		<module>spwd</module>
-		<module>sqlite3</module>
-		<module>sqlite3.dbapi2</module>
-		<module>sqlite3.dump</module>
-		<module>sqlite3.test</module>
-		<module>sqlite3.test.dbapi</module>
-		<module>sqlite3.test.dump</module>
-		<module>sqlite3.test.factory</module>
-		<module>sqlite3.test.hooks</module>
-		<module>sqlite3.test.py25tests</module>
-		<module>sqlite3.test.regression</module>
-		<module>sqlite3.test.transactions</module>
-		<module>sqlite3.test.types</module>
-		<module>sqlite3.test.userfunctions</module>
-		<module>ssl</module>
-		<module>statistics</module>
-		<module>subprocess</module>
-		<module>sysconfig</module>
-		<module>tkinter</module>
-		<module>tkinter.__main__</module>
-		<module>tkinter._fix</module>
-		<module>tkinter.colorchooser</module>
-		<module>tkinter.commondialog</module>
-		<module>tkinter.constants</module>
-		<module>tkinter.dialog</module>
-		<module>tkinter.dnd</module>
-		<module>tkinter.filedialog</module>
-		<module>tkinter.font</module>
-		<module>tkinter.messagebox</module>
-		<module>tkinter.scrolledtext</module>
-		<module>tkinter.simpledialog</module>
-		<module>tkinter.test</module>
-		<module>tkinter.test.runtktests</module>
-		<module>tkinter.test.support</module>
-		<module>tkinter.test.test_tkinter</module>
-		<module>tkinter.test.test_tkinter.test_font</module>
-		<module>tkinter.test.test_tkinter.test_geometry_managers</module>
-		<module>tkinter.test.test_tkinter.test_images</module>
-		<module>tkinter.test.test_tkinter.test_loadtk</module>
-		<module>tkinter.test.test_tkinter.test_misc</module>
-		<module>tkinter.test.test_tkinter.test_text</module>
-		<module>tkinter.test.test_tkinter.test_variables</module>
-		<module>tkinter.test.test_tkinter.test_widgets</module>
-		<module>tkinter.test.test_ttk</module>
-		<module>tkinter.test.test_ttk.test_extensions</module>
-		<module>tkinter.test.test_ttk.test_functions</module>
-		<module>tkinter.test.test_ttk.test_style</module>
-		<module>tkinter.test.test_ttk.test_widgets</module>
-		<module>tkinter.test.widget_tests</module>
-		<module>tkinter.tix</module>
-		<module>tkinter.ttk</module>
-		<module>tracemalloc</module>
-		<module>ttk</module>
-		<module>turtledemo</module>
-		<module>turtledemo.__main__</module>
-		<module>turtledemo.bytedesign</module>
-		<module>turtledemo.chaos</module>
-		<module>turtledemo.clock</module>
-		<module>turtledemo.colormixer</module>
-		<module>turtledemo.forest</module>
-		<module>turtledemo.fractalcurves</module>
-		<module>turtledemo.lindenmayer</module>
-		<module>turtledemo.minimal_hanoi</module>
-		<module>turtledemo.nim</module>
-		<module>turtledemo.paint</module>
-		<module>turtledemo.peace</module>
-		<module>turtledemo.penrose</module>
-		<module>turtledemo.planet_and_moon</module>
-		<module>turtledemo.round_dance</module>
-		<module>turtledemo.sorting_animate</module>
-		<module>turtledemo.tree</module>
-		<module>turtledemo.two_canvases</module>
-		<module>turtledemo.wikipedia</module>
-		<module>turtledemo.yinyang</module>
-		<module>typing</module>
-		<module>unittest.__main__</module>
-		<module>unittest.case</module>
-		<module>unittest.loader</module>
-		<module>unittest.main</module>
-		<module>unittest.mock</module>
-		<module>unittest.result</module>
-		<module>unittest.runner</module>
-		<module>unittest.signals</module>
-		<module>unittest.suite</module>
-		<module>unittest.test</module>
-		<module>unittest.test.__main__</module>
-		<module>unittest.test._test_warnings</module>
-		<module>unittest.test.dummy</module>
-		<module>unittest.test.support</module>
-		<module>unittest.test.test_assertions</module>
-		<module>unittest.test.test_break</module>
-		<module>unittest.test.test_case</module>
-		<module>unittest.test.test_discovery</module>
-		<module>unittest.test.test_functiontestcase</module>
-		<module>unittest.test.test_loader</module>
-		<module>unittest.test.test_program</module>
-		<module>unittest.test.test_result</module>
-		<module>unittest.test.test_runner</module>
-		<module>unittest.test.test_setups</module>
-		<module>unittest.test.test_skipping</module>
-		<module>unittest.test.test_suite</module>
-		<module>unittest.test.testmock</module>
-		<module>unittest.test.testmock.__main__</module>
-		<module>unittest.test.testmock.support</module>
-		<module>unittest.test.testmock.testcallable</module>
-		<module>unittest.test.testmock.testhelpers</module>
-		<module>unittest.test.testmock.testmagicmethods</module>
-		<module>unittest.test.testmock.testmock</module>
-		<module>unittest.test.testmock.testpatch</module>
-		<module>unittest.test.testmock.testsentinel</module>
-		<module>unittest.test.testmock.testwith</module>
-		<module>unittest.util</module>
-		<module>unsupported_modules</module>
-		<module>urllib.error</module>
-		<module>urllib.parse</module>
-		<module>urllib.request</module>
-		<module>urllib.response</module>
-		<module>urllib.robotparser</module>
-		<module>uuid</module>
-		<module>venv</module>
-		<module>venv.__main__</module>
-		<module>wsgiref</module>
-		<module>wsgiref.handlers</module>
-		<module>wsgiref.headers</module>
-		<module>wsgiref.simple_server</module>
-		<module>wsgiref.util</module>
-		<module>wsgiref.validate</module>
-		<module>xml.etree</module>
-		<module>xml.etree.ElementInclude</module>
-		<module>xml.etree.ElementPath</module>
-		<module>xml.etree.ElementTree</module>
-		<module>xml.etree.cElementTree</module>
-		<module>xmlrpc</module>
-		<module>xmlrpc.client</module>
-		<module>xmlrpc.server</module>
-		<module>xxlimited</module>
-		<module>zipapp</module>
-		<module>zlib</module>
-		<func>BaseException</func>
-		<func>BlockingIOError</func>
-		<func>BrokenPipeError</func>
-		<func>BufferError</func>
-		<func>BytesWarning</func>
-		<func>ChildProcessError</func>
-		<func>ConnectionAbortedError</func>
-		<func>ConnectionError</func>
-		<func>ConnectionRefusedError</func>
-		<func>ConnectionResetError</func>
-		<func>FileExistsError</func>
-		<func>FileNotFoundError</func>
-		<func>GeneratorExit</func>
-		<func>ImportWarning</func>
-		<func>InterruptedError</func>
-		<func>IsADirectoryError</func>
-		<func>NotADirectoryError</func>
-		<func>PermissionError</func>
-		<func>ProcessLookupError</func>
-		<func>RecursionError</func>
-		<func>ResourceWarning</func>
-		<func>StopAsyncIteration</func>
-		<func>TimeoutError</func>
-		<func>UnicodeWarning</func>
-		<func>__build_class__</func>
-		<func>__loader__</func>
-		<func>__package__</func>
-		<func>__spec__</func>
-		<func>all</func>
-		<func>any</func>
-		<func>ascii</func>
-		<func>bin</func>
-		<func>bytearray</func>
-		<func>bytes</func>
-		<func>exec</func>
-		<func>format</func>
-		<func>frozenset</func>
-		<func>memoryview</func>
-		<func>next</func>
-		<func>print</func>
-		<func>reversed</func>
-		<func>set</func>
-		<func>sorted</func>
-	</python>
-	<python version="2.4">
-		<module>CDROM</module>
-		<module>DLFCN</module>
-		<module>FCNTL</module>
-		<module>TERMIOS</module>
-		<module>TYPES</module>
-		<module>_abcoll</module>
-		<module>_ast</module>
-		<module>_bootlocale</module>
-		<module>_bytesio</module>
-		<module>_bz2</module>
-		<module>_collections</module>
-		<module>_collections_abc</module>
-		<module>_compat_pickle</module>
-		<module>_compression</module>
-		<module>_crypt</module>
-		<module>_ctypes</module>
-		<module>_ctypes_test</module>
-		<module>_curses</module>
-		<module>_curses_panel</module>
-		<module>_datetime</module>
-		<module>_dbm</module>
-		<module>_decimal</module>
-		<module>_dummy_thread</module>
-		<module>_elementtree</module>
-		<module>_fileio</module>
-		<module>_functools</module>
-		<module>_gdbm</module>
-		<module>_hashlib</module>
-		<module>_imp</module>
-		<module>_io</module>
-		<module>_json</module>
-		<module>_lsprof</module>
-		<module>_lzma</module>
-		<module>_markupbase</module>
-		<module>_md5</module>
-		<module>_multiprocessing</module>
-		<module>_opcode</module>
-		<module>_operator</module>
-		<module>_osx_support</module>
-		<module>_pickle</module>
-		<module>_posixsubprocess</module>
-		<module>_pydecimal</module>
-		<module>_pyio</module>
-		<module>_sha</module>
-		<module>_sha1</module>
-		<module>_sha256</module>
-		<module>_sha512</module>
-		<module>_signal</module>
-		<module>_sitebuiltins</module>
-		<module>_sqlite3</module>
-		<module>_ssl</module>
-		<module>_stat</module>
-		<module>_string</module>
-		<module>_stringio</module>
-		<module>_struct</module>
-		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m</module>
-		<module>_testbuffer</module>
-		<module>_testimportmultiple</module>
-		<module>_testmultiphase</module>
-		<module>_thread</module>
-		<module>_tkinter</module>
-		<module>_tracemalloc</module>
-		<module>_types</module>
-		<module>_warnings</module>
-		<module>_weakrefset</module>
-		<module>abc</module>
-		<module>antigravity</module>
-		<module>argparse</module>
-		<module>ast</module>
-		<module>asyncio</module>
-		<module>asyncio.base_events</module>
-		<module>asyncio.base_subprocess</module>
-		<module>asyncio.compat</module>
-		<module>asyncio.constants</module>
-		<module>asyncio.coroutines</module>
-		<module>asyncio.events</module>
-		<module>asyncio.futures</module>
-		<module>asyncio.locks</module>
-		<module>asyncio.log</module>
-		<module>asyncio.proactor_events</module>
-		<module>asyncio.protocols</module>
-		<module>asyncio.queues</module>
-		<module>asyncio.selector_events</module>
-		<module>asyncio.sslproto</module>
-		<module>asyncio.streams</module>
-		<module>asyncio.subprocess</module>
-		<module>asyncio.tasks</module>
-		<module>asyncio.test_utils</module>
-		<module>asyncio.transports</module>
-		<module>asyncio.unix_events</module>
-		<module>asyncio.windows_events</module>
-		<module>asyncio.windows_utils</module>
-		<module>bsddb.test.test_compare</module>
-		<module>bsddb.test.test_cursor_pget_bug</module>
-		<module>bsddb.test.test_db</module>
-		<module>bsddb.test.test_dbenv</module>
-		<module>bsddb.test.test_distributed_transactions</module>
-		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_fileid</module>
-		<module>bsddb.test.test_replication</module>
-		<module>bsddb.test.test_sequence</module>
-		<module>build_class</module>
-		<module>builtins</module>
-		<module>cProfile</module>
-		<module>collections.__main__</module>
-		<module>collections.abc</module>
-		<module>concurrent</module>
-		<module>concurrent.futures</module>
-		<module>concurrent.futures._base</module>
-		<module>concurrent.futures.process</module>
-		<module>concurrent.futures.thread</module>
-		<module>configparser</module>
-		<module>contextlib</module>
-		<module>copyreg</module>
-		<module>crypt</module>
-		<module>ctypes</module>
-		<module>ctypes._endian</module>
-		<module>ctypes.macholib</module>
-		<module>ctypes.macholib.dyld</module>
-		<module>ctypes.macholib.dylib</module>
-		<module>ctypes.macholib.framework</module>
-		<module>ctypes.test</module>
-		<module>ctypes.test.__main__</module>
-		<module>ctypes.test.runtests</module>
-		<module>ctypes.test.test_anon</module>
-		<module>ctypes.test.test_array_in_pointer</module>
-		<module>ctypes.test.test_arrays</module>
-		<module>ctypes.test.test_as_parameter</module>
-		<module>ctypes.test.test_bitfields</module>
-		<module>ctypes.test.test_buffers</module>
-		<module>ctypes.test.test_bytes</module>
-		<module>ctypes.test.test_byteswap</module>
-		<module>ctypes.test.test_callbacks</module>
-		<module>ctypes.test.test_cast</module>
-		<module>ctypes.test.test_cfuncs</module>
-		<module>ctypes.test.test_checkretval</module>
-		<module>ctypes.test.test_delattr</module>
-		<module>ctypes.test.test_errcheck</module>
-		<module>ctypes.test.test_errno</module>
-		<module>ctypes.test.test_find</module>
-		<module>ctypes.test.test_frombuffer</module>
-		<module>ctypes.test.test_funcptr</module>
-		<module>ctypes.test.test_functions</module>
-		<module>ctypes.test.test_incomplete</module>
-		<module>ctypes.test.test_init</module>
-		<module>ctypes.test.test_integers</module>
-		<module>ctypes.test.test_internals</module>
-		<module>ctypes.test.test_keeprefs</module>
-		<module>ctypes.test.test_libc</module>
-		<module>ctypes.test.test_loading</module>
-		<module>ctypes.test.test_macholib</module>
-		<module>ctypes.test.test_memfunctions</module>
-		<module>ctypes.test.test_numbers</module>
-		<module>ctypes.test.test_objects</module>
-		<module>ctypes.test.test_parameters</module>
-		<module>ctypes.test.test_pep3118</module>
-		<module>ctypes.test.test_pickling</module>
-		<module>ctypes.test.test_pointers</module>
-		<module>ctypes.test.test_prototypes</module>
-		<module>ctypes.test.test_python_api</module>
-		<module>ctypes.test.test_random_things</module>
-		<module>ctypes.test.test_refcounts</module>
-		<module>ctypes.test.test_repr</module>
-		<module>ctypes.test.test_returnfuncptrs</module>
-		<module>ctypes.test.test_simplesubclasses</module>
-		<module>ctypes.test.test_sizes</module>
-		<module>ctypes.test.test_slicing</module>
-		<module>ctypes.test.test_stringptr</module>
-		<module>ctypes.test.test_strings</module>
-		<module>ctypes.test.test_struct_fields</module>
-		<module>ctypes.test.test_structures</module>
-		<module>ctypes.test.test_unaligned_structures</module>
-		<module>ctypes.test.test_unicode</module>
-		<module>ctypes.test.test_values</module>
-		<module>ctypes.test.test_varsize_struct</module>
-		<module>ctypes.test.test_win32</module>
-		<module>ctypes.test.test_wintypes</module>
-		<module>ctypes.util</module>
-		<module>ctypes.wintypes</module>
-		<module>dbm</module>
-		<module>dbm.dumb</module>
-		<module>dbm.gnu</module>
-		<module>dbm.ndbm</module>
-		<module>distutils._msvccompiler</module>
-		<module>distutils.command.bdist_msi</module>
-		<module>distutils.command.check</module>
-		<module>distutils.command.install_egg_info</module>
-		<module>distutils.command.upload</module>
-		<module>distutils.config</module>
-		<module>distutils.msvc9compiler</module>
-		<module>distutils.tests.setuptools_build_ext</module>
-		<module>distutils.tests.setuptools_extension</module>
-		<module>distutils.tests.test_archive_util</module>
-		<module>distutils.tests.test_bdist</module>
-		<module>distutils.tests.test_bdist_dumb</module>
-		<module>distutils.tests.test_bdist_msi</module>
-		<module>distutils.tests.test_bdist_rpm</module>
-		<module>distutils.tests.test_bdist_wininst</module>
-		<module>distutils.tests.test_build</module>
-		<module>distutils.tests.test_build_clib</module>
-		<module>distutils.tests.test_build_ext</module>
-		<module>distutils.tests.test_ccompiler</module>
-		<module>distutils.tests.test_check</module>
-		<module>distutils.tests.test_clean</module>
-		<module>distutils.tests.test_cmd</module>
-		<module>distutils.tests.test_config</module>
-		<module>distutils.tests.test_config_cmd</module>
-		<module>distutils.tests.test_core</module>
-		<module>distutils.tests.test_cygwinccompiler</module>
-		<module>distutils.tests.test_dep_util</module>
-		<module>distutils.tests.test_dir_util</module>
-		<module>distutils.tests.test_extension</module>
-		<module>distutils.tests.test_file_util</module>
-		<module>distutils.tests.test_filelist</module>
-		<module>distutils.tests.test_install_data</module>
-		<module>distutils.tests.test_install_headers</module>
-		<module>distutils.tests.test_install_lib</module>
-		<module>distutils.tests.test_log</module>
-		<module>distutils.tests.test_msvc9compiler</module>
-		<module>distutils.tests.test_msvccompiler</module>
-		<module>distutils.tests.test_register</module>
-		<module>distutils.tests.test_sdist</module>
-		<module>distutils.tests.test_spawn</module>
-		<module>distutils.tests.test_sysconfig</module>
-		<module>distutils.tests.test_text_file</module>
-		<module>distutils.tests.test_unixccompiler</module>
-		<module>distutils.tests.test_upload</module>
-		<module>distutils.tests.test_util</module>
-		<module>distutils.tests.test_version</module>
-		<module>distutils.tests.test_versionpredicate</module>
-		<module>distutils.versionpredicate</module>
-		<module>django_fetch_doc_urls</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
-		<module>email._encoded_words</module>
-		<module>email._header_value_parser</module>
-		<module>email._policybase</module>
-		<module>email.base64mime</module>
-		<module>email.charset</module>
-		<module>email.contentmanager</module>
-		<module>email.encoders</module>
-		<module>email.errors</module>
-		<module>email.feedparser</module>
-		<module>email.generator</module>
-		<module>email.header</module>
-		<module>email.headerregistry</module>
-		<module>email.iterators</module>
-		<module>email.message</module>
-		<module>email.mime</module>
-		<module>email.mime.application</module>
-		<module>email.mime.audio</module>
-		<module>email.mime.base</module>
-		<module>email.mime.image</module>
-		<module>email.mime.message</module>
-		<module>email.mime.multipart</module>
-		<module>email.mime.nonmultipart</module>
-		<module>email.mime.text</module>
-		<module>email.parser</module>
-		<module>email.policy</module>
-		<module>email.quoprimime</module>
-		<module>email.test.test_email_codecs_renamed</module>
-		<module>email.test.test_email_renamed</module>
-		<module>email.utils</module>
-		<module>encodings.cp1125</module>
-		<module>encodings.cp273</module>
-		<module>encodings.cp65001</module>
-		<module>encodings.cp720</module>
-		<module>encodings.cp858</module>
-		<module>encodings.koi8_t</module>
-		<module>encodings.kz1048</module>
-		<module>encodings.mac_arabic</module>
-		<module>encodings.mac_centeuro</module>
-		<module>encodings.mac_croatian</module>
-		<module>encodings.mac_farsi</module>
-		<module>encodings.mac_romanian</module>
-		<module>encodings.utf_32</module>
-		<module>encodings.utf_32_be</module>
-		<module>encodings.utf_32_le</module>
-		<module>encodings.utf_8_sig</module>
-		<module>ensurepip</module>
-		<module>ensurepip.__main__</module>
-		<module>ensurepip._uninstall</module>
-		<module>enum</module>
-		<module>faulthandler</module>
-		<module>fractions</module>
-		<module>functools</module>
-		<module>future_builtins</module>
-		<module>genericpath</module>
-		<module>hashlib</module>
-		<module>html</module>
-		<module>html.entities</module>
-		<module>html.parser</module>
-		<module>http</module>
-		<module>http.client</module>
-		<module>http.cookiejar</module>
-		<module>http.cookies</module>
-		<module>http.server</module>
-		<module>idlelib.AutoComplete</module>
-		<module>idlelib.AutoCompleteWindow</module>
-		<module>idlelib.HyperParser</module>
-		<module>idlelib.MultiCall</module>
-		<module>idlelib.RstripExtension</module>
-		<module>idlelib.__main__</module>
-		<module>idlelib.autocomplete</module>
-		<module>idlelib.autocomplete_w</module>
-		<module>idlelib.autoexpand</module>
-		<module>idlelib.browser</module>
-		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
-		<module>idlelib.codecontext</module>
-		<module>idlelib.colorizer</module>
-		<module>idlelib.config</module>
-		<module>idlelib.config_key</module>
-		<module>idlelib.configdialog</module>
-		<module>idlelib.debugger</module>
-		<module>idlelib.debugger_r</module>
-		<module>idlelib.debugobj</module>
-		<module>idlelib.debugobj_r</module>
-		<module>idlelib.delegator</module>
-		<module>idlelib.dynoption</module>
-		<module>idlelib.editor</module>
-		<module>idlelib.filelist</module>
-		<module>idlelib.grep</module>
-		<module>idlelib.help</module>
-		<module>idlelib.help_about</module>
-		<module>idlelib.history</module>
-		<module>idlelib.hyperparser</module>
-		<module>idlelib.idle_test</module>
-		<module>idlelib.idle_test.htest</module>
-		<module>idlelib.idle_test.mock_idle</module>
-		<module>idlelib.idle_test.mock_tk</module>
-		<module>idlelib.idle_test.test_autocomplete</module>
-		<module>idlelib.idle_test.test_autoexpand</module>
-		<module>idlelib.idle_test.test_calltips</module>
-		<module>idlelib.idle_test.test_colorizer</module>
-		<module>idlelib.idle_test.test_config</module>
-		<module>idlelib.idle_test.test_config_key</module>
-		<module>idlelib.idle_test.test_config_name</module>
-		<module>idlelib.idle_test.test_configdialog</module>
-		<module>idlelib.idle_test.test_debugger</module>
-		<module>idlelib.idle_test.test_delegator</module>
-		<module>idlelib.idle_test.test_editmenu</module>
-		<module>idlelib.idle_test.test_editor</module>
-		<module>idlelib.idle_test.test_formatparagraph</module>
-		<module>idlelib.idle_test.test_grep</module>
-		<module>idlelib.idle_test.test_help</module>
-		<module>idlelib.idle_test.test_help_about</module>
-		<module>idlelib.idle_test.test_history</module>
-		<module>idlelib.idle_test.test_hyperparser</module>
-		<module>idlelib.idle_test.test_idlehistory</module>
-		<module>idlelib.idle_test.test_io</module>
-		<module>idlelib.idle_test.test_iomenu</module>
-		<module>idlelib.idle_test.test_macosx</module>
-		<module>idlelib.idle_test.test_paragraph</module>
-		<module>idlelib.idle_test.test_parenmatch</module>
-		<module>idlelib.idle_test.test_pathbrowser</module>
-		<module>idlelib.idle_test.test_percolator</module>
-		<module>idlelib.idle_test.test_query</module>
-		<module>idlelib.idle_test.test_redirector</module>
-		<module>idlelib.idle_test.test_replace</module>
-		<module>idlelib.idle_test.test_rstrip</module>
-		<module>idlelib.idle_test.test_scrolledlist</module>
-		<module>idlelib.idle_test.test_search</module>
-		<module>idlelib.idle_test.test_searchbase</module>
-		<module>idlelib.idle_test.test_searchdialogbase</module>
-		<module>idlelib.idle_test.test_searchengine</module>
-		<module>idlelib.idle_test.test_text</module>
-		<module>idlelib.idle_test.test_textview</module>
-		<module>idlelib.idle_test.test_tree</module>
-		<module>idlelib.idle_test.test_undo</module>
-		<module>idlelib.idle_test.test_warning</module>
-		<module>idlelib.idle_test.test_widgetredir</module>
-		<module>idlelib.iomenu</module>
-		<module>idlelib.macosx</module>
-		<module>idlelib.macosxSupport</module>
-		<module>idlelib.mainmenu</module>
-		<module>idlelib.multicall</module>
-		<module>idlelib.outwin</module>
-		<module>idlelib.paragraph</module>
-		<module>idlelib.parenmatch</module>
-		<module>idlelib.pathbrowser</module>
-		<module>idlelib.percolator</module>
-		<module>idlelib.pyparse</module>
-		<module>idlelib.pyshell</module>
-		<module>idlelib.query</module>
-		<module>idlelib.redirector</module>
-		<module>idlelib.replace</module>
-		<module>idlelib.rstrip</module>
-		<module>idlelib.runscript</module>
-		<module>idlelib.scrolledlist</module>
-		<module>idlelib.search</module>
-		<module>idlelib.searchbase</module>
-		<module>idlelib.searchengine</module>
-		<module>idlelib.stackviewer</module>
-		<module>idlelib.statusbar</module>
-		<module>idlelib.tabbedpages</module>
-		<module>idlelib.textview</module>
-		<module>idlelib.tooltip</module>
-		<module>idlelib.tree</module>
-		<module>idlelib.undo</module>
-		<module>idlelib.windows</module>
-		<module>idlelib.zoomheight</module>
-		<module>importlib</module>
-		<module>importlib._bootstrap</module>
-		<module>importlib._bootstrap_external</module>
-		<module>importlib.abc</module>
-		<module>importlib.machinery</module>
-		<module>importlib.test</module>
-		<module>importlib.test.__main__</module>
-		<module>importlib.test.abc</module>
-		<module>importlib.test.benchmark</module>
-		<module>importlib.test.builtin</module>
-		<module>importlib.test.builtin.test_finder</module>
-		<module>importlib.test.builtin.test_loader</module>
-		<module>importlib.test.builtin.util</module>
-		<module>importlib.test.extension</module>
-		<module>importlib.test.extension.test_case_sensitivity</module>
-		<module>importlib.test.extension.test_finder</module>
-		<module>importlib.test.extension.test_loader</module>
-		<module>importlib.test.extension.test_path_hook</module>
-		<module>importlib.test.extension.util</module>
-		<module>importlib.test.frozen</module>
-		<module>importlib.test.frozen.test_finder</module>
-		<module>importlib.test.frozen.test_loader</module>
-		<module>importlib.test.import_</module>
-		<module>importlib.test.import_.test___package__</module>
-		<module>importlib.test.import_.test_api</module>
-		<module>importlib.test.import_.test_caching</module>
-		<module>importlib.test.import_.test_fromlist</module>
-		<module>importlib.test.import_.test_meta_path</module>
-		<module>importlib.test.import_.test_packages</module>
-		<module>importlib.test.import_.test_path</module>
-		<module>importlib.test.import_.test_relative_imports</module>
-		<module>importlib.test.import_.util</module>
-		<module>importlib.test.regrtest</module>
-		<module>importlib.test.source</module>
-		<module>importlib.test.source.test_abc_loader</module>
-		<module>importlib.test.source.test_case_sensitivity</module>
-		<module>importlib.test.source.test_file_loader</module>
-		<module>importlib.test.source.test_finder</module>
-		<module>importlib.test.source.test_path_hook</module>
-		<module>importlib.test.source.test_source_encoding</module>
-		<module>importlib.test.source.util</module>
-		<module>importlib.test.test_abc</module>
-		<module>importlib.test.test_api</module>
-		<module>importlib.test.test_util</module>
-		<module>importlib.test.util</module>
-		<module>importlib.util</module>
-		<module>io</module>
-		<module>ipaddress</module>
-		<module>json</module>
-		<module>json.decoder</module>
-		<module>json.encoder</module>
-		<module>json.scanner</module>
-		<module>json.tests</module>
-		<module>json.tests.test_check_circular</module>
-		<module>json.tests.test_decode</module>
-		<module>json.tests.test_default</module>
-		<module>json.tests.test_dump</module>
-		<module>json.tests.test_encode_basestring_ascii</module>
-		<module>json.tests.test_fail</module>
-		<module>json.tests.test_float</module>
-		<module>json.tests.test_indent</module>
-		<module>json.tests.test_pass1</module>
-		<module>json.tests.test_pass2</module>
-		<module>json.tests.test_pass3</module>
-		<module>json.tests.test_recursion</module>
-		<module>json.tests.test_scanstring</module>
-		<module>json.tests.test_separators</module>
-		<module>json.tests.test_speedups</module>
-		<module>json.tests.test_tool</module>
-		<module>json.tests.test_unicode</module>
-		<module>json.tool</module>
-		<module>lib2to3</module>
-		<module>lib2to3.__main__</module>
-		<module>lib2to3.btm_matcher</module>
-		<module>lib2to3.btm_utils</module>
-		<module>lib2to3.fixer_base</module>
-		<module>lib2to3.fixer_util</module>
-		<module>lib2to3.fixes</module>
-		<module>lib2to3.fixes.fix_apply</module>
-		<module>lib2to3.fixes.fix_asserts</module>
-		<module>lib2to3.fixes.fix_basestring</module>
-		<module>lib2to3.fixes.fix_buffer</module>
-		<module>lib2to3.fixes.fix_callable</module>
-		<module>lib2to3.fixes.fix_dict</module>
-		<module>lib2to3.fixes.fix_except</module>
-		<module>lib2to3.fixes.fix_exec</module>
-		<module>lib2to3.fixes.fix_execfile</module>
-		<module>lib2to3.fixes.fix_exitfunc</module>
-		<module>lib2to3.fixes.fix_filter</module>
-		<module>lib2to3.fixes.fix_funcattrs</module>
-		<module>lib2to3.fixes.fix_future</module>
-		<module>lib2to3.fixes.fix_getcwdu</module>
-		<module>lib2to3.fixes.fix_has_key</module>
-		<module>lib2to3.fixes.fix_idioms</module>
-		<module>lib2to3.fixes.fix_import</module>
-		<module>lib2to3.fixes.fix_imports</module>
-		<module>lib2to3.fixes.fix_imports2</module>
-		<module>lib2to3.fixes.fix_input</module>
-		<module>lib2to3.fixes.fix_intern</module>
-		<module>lib2to3.fixes.fix_isinstance</module>
-		<module>lib2to3.fixes.fix_itertools</module>
-		<module>lib2to3.fixes.fix_itertools_imports</module>
-		<module>lib2to3.fixes.fix_long</module>
-		<module>lib2to3.fixes.fix_map</module>
-		<module>lib2to3.fixes.fix_metaclass</module>
-		<module>lib2to3.fixes.fix_methodattrs</module>
-		<module>lib2to3.fixes.fix_ne</module>
-		<module>lib2to3.fixes.fix_next</module>
-		<module>lib2to3.fixes.fix_nonzero</module>
-		<module>lib2to3.fixes.fix_numliterals</module>
-		<module>lib2to3.fixes.fix_operator</module>
-		<module>lib2to3.fixes.fix_paren</module>
-		<module>lib2to3.fixes.fix_print</module>
-		<module>lib2to3.fixes.fix_raise</module>
-		<module>lib2to3.fixes.fix_raw_input</module>
-		<module>lib2to3.fixes.fix_reduce</module>
-		<module>lib2to3.fixes.fix_reload</module>
-		<module>lib2to3.fixes.fix_renames</module>
-		<module>lib2to3.fixes.fix_repr</module>
-		<module>lib2to3.fixes.fix_set_literal</module>
-		<module>lib2to3.fixes.fix_standarderror</module>
-		<module>lib2to3.fixes.fix_sys_exc</module>
-		<module>lib2to3.fixes.fix_throw</module>
-		<module>lib2to3.fixes.fix_tuple_params</module>
-		<module>lib2to3.fixes.fix_types</module>
-		<module>lib2to3.fixes.fix_unicode</module>
-		<module>lib2to3.fixes.fix_urllib</module>
-		<module>lib2to3.fixes.fix_ws_comma</module>
-		<module>lib2to3.fixes.fix_xrange</module>
-		<module>lib2to3.fixes.fix_xreadlines</module>
-		<module>lib2to3.fixes.fix_zip</module>
-		<module>lib2to3.main</module>
-		<module>lib2to3.patcomp</module>
-		<module>lib2to3.pgen2</module>
-		<module>lib2to3.pgen2.conv</module>
-		<module>lib2to3.pgen2.driver</module>
-		<module>lib2to3.pgen2.grammar</module>
-		<module>lib2to3.pgen2.literals</module>
-		<module>lib2to3.pgen2.parse</module>
-		<module>lib2to3.pgen2.pgen</module>
-		<module>lib2to3.pgen2.token</module>
-		<module>lib2to3.pgen2.tokenize</module>
-		<module>lib2to3.pygram</module>
-		<module>lib2to3.pytree</module>
-		<module>lib2to3.refactor</module>
-		<module>lib2to3.tests</module>
-		<module>lib2to3.tests.__main__</module>
-		<module>lib2to3.tests.pytree_idempotency</module>
-		<module>lib2to3.tests.support</module>
-		<module>lib2to3.tests.test_all_fixers</module>
-		<module>lib2to3.tests.test_fixers</module>
-		<module>lib2to3.tests.test_main</module>
-		<module>lib2to3.tests.test_parser</module>
-		<module>lib2to3.tests.test_pytree</module>
-		<module>lib2to3.tests.test_refactor</module>
-		<module>lib2to3.tests.test_util</module>
-		<module>linuxaudiodev</module>
-		<module>lzma</module>
-		<module>multiprocessing</module>
-		<module>multiprocessing.connection</module>
-		<module>multiprocessing.context</module>
-		<module>multiprocessing.dummy</module>
-		<module>multiprocessing.dummy.connection</module>
-		<module>multiprocessing.forking</module>
-		<module>multiprocessing.forkserver</module>
-		<module>multiprocessing.heap</module>
-		<module>multiprocessing.managers</module>
-		<module>multiprocessing.pool</module>
-		<module>multiprocessing.popen_fork</module>
-		<module>multiprocessing.popen_forkserver</module>
-		<module>multiprocessing.popen_spawn_posix</module>
-		<module>multiprocessing.popen_spawn_win32</module>
-		<module>multiprocessing.process</module>
-		<module>multiprocessing.queues</module>
-		<module>multiprocessing.reduction</module>
-		<module>multiprocessing.resource_sharer</module>
-		<module>multiprocessing.semaphore_tracker</module>
-		<module>multiprocessing.sharedctypes</module>
-		<module>multiprocessing.spawn</module>
-		<module>multiprocessing.synchronize</module>
-		<module>multiprocessing.util</module>
-		<module>nis</module>
-		<module>numbers</module>
-		<module>ossaudiodev</module>
-		<module>pathlib</module>
-		<module>pcre</module>
-		<module>plistlib</module>
-		<module>pre</module>
-		<module>pydoc_data</module>
-		<module>pydoc_data.topics</module>
-		<module>pydoc_topics</module>
-		<module>pypi_download_install</module>
-		<module>queue</module>
-		<module>readline</module>
-		<module>repack_pypi_cache</module>
-		<module>reprlib</module>
-		<module>rotor</module>
-		<module>runpy</module>
-		<module>secrets</module>
-		<module>selectors</module>
-		<module>socketserver</module>
-		<module>spwd</module>
-		<module>sqlite3</module>
-		<module>sqlite3.dbapi2</module>
-		<module>sqlite3.dump</module>
-		<module>sqlite3.test</module>
-		<module>sqlite3.test.dbapi</module>
-		<module>sqlite3.test.dump</module>
-		<module>sqlite3.test.factory</module>
-		<module>sqlite3.test.hooks</module>
-		<module>sqlite3.test.py25tests</module>
-		<module>sqlite3.test.regression</module>
-		<module>sqlite3.test.transactions</module>
-		<module>sqlite3.test.types</module>
-		<module>sqlite3.test.userfunctions</module>
-		<module>ssl</module>
-		<module>statistics</module>
-		<module>sysconfig</module>
-		<module>tkinter</module>
-		<module>tkinter.__main__</module>
-		<module>tkinter._fix</module>
-		<module>tkinter.colorchooser</module>
-		<module>tkinter.commondialog</module>
-		<module>tkinter.constants</module>
-		<module>tkinter.dialog</module>
-		<module>tkinter.dnd</module>
-		<module>tkinter.filedialog</module>
-		<module>tkinter.font</module>
-		<module>tkinter.messagebox</module>
-		<module>tkinter.scrolledtext</module>
-		<module>tkinter.simpledialog</module>
-		<module>tkinter.test</module>
-		<module>tkinter.test.runtktests</module>
-		<module>tkinter.test.support</module>
-		<module>tkinter.test.test_tkinter</module>
-		<module>tkinter.test.test_tkinter.test_font</module>
-		<module>tkinter.test.test_tkinter.test_geometry_managers</module>
-		<module>tkinter.test.test_tkinter.test_images</module>
-		<module>tkinter.test.test_tkinter.test_loadtk</module>
-		<module>tkinter.test.test_tkinter.test_misc</module>
-		<module>tkinter.test.test_tkinter.test_text</module>
-		<module>tkinter.test.test_tkinter.test_variables</module>
-		<module>tkinter.test.test_tkinter.test_widgets</module>
-		<module>tkinter.test.test_ttk</module>
-		<module>tkinter.test.test_ttk.test_extensions</module>
-		<module>tkinter.test.test_ttk.test_functions</module>
-		<module>tkinter.test.test_ttk.test_style</module>
-		<module>tkinter.test.test_ttk.test_widgets</module>
-		<module>tkinter.test.widget_tests</module>
-		<module>tkinter.tix</module>
-		<module>tkinter.ttk</module>
-		<module>tracemalloc</module>
-		<module>ttk</module>
-		<module>turtledemo</module>
-		<module>turtledemo.__main__</module>
-		<module>turtledemo.bytedesign</module>
-		<module>turtledemo.chaos</module>
-		<module>turtledemo.clock</module>
-		<module>turtledemo.colormixer</module>
-		<module>turtledemo.forest</module>
-		<module>turtledemo.fractalcurves</module>
-		<module>turtledemo.lindenmayer</module>
-		<module>turtledemo.minimal_hanoi</module>
-		<module>turtledemo.nim</module>
-		<module>turtledemo.paint</module>
-		<module>turtledemo.peace</module>
-		<module>turtledemo.penrose</module>
-		<module>turtledemo.planet_and_moon</module>
-		<module>turtledemo.round_dance</module>
-		<module>turtledemo.sorting_animate</module>
-		<module>turtledemo.tree</module>
-		<module>turtledemo.two_canvases</module>
-		<module>turtledemo.wikipedia</module>
-		<module>turtledemo.yinyang</module>
-		<module>typing</module>
-		<module>unittest.__main__</module>
-		<module>unittest.case</module>
-		<module>unittest.loader</module>
-		<module>unittest.main</module>
-		<module>unittest.mock</module>
-		<module>unittest.result</module>
-		<module>unittest.runner</module>
-		<module>unittest.signals</module>
-		<module>unittest.suite</module>
-		<module>unittest.test</module>
-		<module>unittest.test.__main__</module>
-		<module>unittest.test._test_warnings</module>
-		<module>unittest.test.dummy</module>
-		<module>unittest.test.support</module>
-		<module>unittest.test.test_assertions</module>
-		<module>unittest.test.test_break</module>
-		<module>unittest.test.test_case</module>
-		<module>unittest.test.test_discovery</module>
-		<module>unittest.test.test_functiontestcase</module>
-		<module>unittest.test.test_loader</module>
-		<module>unittest.test.test_program</module>
-		<module>unittest.test.test_result</module>
-		<module>unittest.test.test_runner</module>
-		<module>unittest.test.test_setups</module>
-		<module>unittest.test.test_skipping</module>
-		<module>unittest.test.test_suite</module>
-		<module>unittest.test.testmock</module>
-		<module>unittest.test.testmock.__main__</module>
-		<module>unittest.test.testmock.support</module>
-		<module>unittest.test.testmock.testcallable</module>
-		<module>unittest.test.testmock.testhelpers</module>
-		<module>unittest.test.testmock.testmagicmethods</module>
-		<module>unittest.test.testmock.testmock</module>
-		<module>unittest.test.testmock.testpatch</module>
-		<module>unittest.test.testmock.testsentinel</module>
-		<module>unittest.test.testmock.testwith</module>
-		<module>unittest.util</module>
-		<module>unsupported_modules</module>
-		<module>urllib.error</module>
-		<module>urllib.parse</module>
-		<module>urllib.request</module>
-		<module>urllib.response</module>
-		<module>urllib.robotparser</module>
-		<module>uuid</module>
-		<module>venv</module>
-		<module>venv.__main__</module>
-		<module>wsgiref</module>
-		<module>wsgiref.handlers</module>
-		<module>wsgiref.headers</module>
-		<module>wsgiref.simple_server</module>
-		<module>wsgiref.util</module>
-		<module>wsgiref.validate</module>
-		<module>xml.etree</module>
-		<module>xml.etree.ElementInclude</module>
-		<module>xml.etree.ElementPath</module>
-		<module>xml.etree.ElementTree</module>
-		<module>xml.etree.cElementTree</module>
-		<module>xmlrpc</module>
-		<module>xmlrpc.client</module>
-		<module>xmlrpc.server</module>
-		<module>xreadlines</module>
-		<module>xxlimited</module>
-		<module>zipapp</module>
-		<module>zlib</module>
-		<func>BaseException</func>
-		<func>BlockingIOError</func>
-		<func>BrokenPipeError</func>
-		<func>BufferError</func>
-		<func>BytesWarning</func>
-		<func>ChildProcessError</func>
-		<func>ConnectionAbortedError</func>
-		<func>ConnectionError</func>
-		<func>ConnectionRefusedError</func>
-		<func>ConnectionResetError</func>
-		<func>FileExistsError</func>
-		<func>FileNotFoundError</func>
-		<func>GeneratorExit</func>
-		<func>ImportWarning</func>
-		<func>InterruptedError</func>
-		<func>IsADirectoryError</func>
-		<func>NotADirectoryError</func>
-		<func>PermissionError</func>
-		<func>ProcessLookupError</func>
-		<func>RecursionError</func>
-		<func>ResourceWarning</func>
-		<func>StopAsyncIteration</func>
-		<func>TimeoutError</func>
-		<func>UnicodeWarning</func>
-		<func>__build_class__</func>
-		<func>__loader__</func>
-		<func>__package__</func>
-		<func>__spec__</func>
-		<func>all</func>
-		<func>any</func>
-		<func>ascii</func>
-		<func>bin</func>
-		<func>bytearray</func>
-		<func>bytes</func>
-		<func>exec</func>
-		<func>format</func>
-		<func>memoryview</func>
-		<func>next</func>
-		<func>print</func>
-	</python>
-	<python version="2.5">
-		<module>CDROM</module>
-		<module>DLFCN</module>
-		<module>FCNTL</module>
-		<module>TERMIOS</module>
-		<module>TYPES</module>
-		<module>_abcoll</module>
-		<module>_bootlocale</module>
-		<module>_bytesio</module>
-		<module>_bz2</module>
-		<module>_collections</module>
-		<module>_collections_abc</module>
-		<module>_compat_pickle</module>
-		<module>_compression</module>
-		<module>_crypt</module>
-		<module>_datetime</module>
-		<module>_dbm</module>
-		<module>_decimal</module>
-		<module>_dummy_thread</module>
-		<module>_fileio</module>
-		<module>_gdbm</module>
-		<module>_imp</module>
-		<module>_io</module>
-		<module>_json</module>
-		<module>_lzma</module>
-		<module>_markupbase</module>
-		<module>_multiprocessing</module>
-		<module>_opcode</module>
-		<module>_operator</module>
-		<module>_osx_support</module>
-		<module>_pickle</module>
-		<module>_posixsubprocess</module>
-		<module>_pydecimal</module>
-		<module>_pyio</module>
-		<module>_sha1</module>
-		<module>_sha256</module>
-		<module>_sha512</module>
-		<module>_signal</module>
-		<module>_sitebuiltins</module>
-		<module>_sqlite3</module>
-		<module>_stat</module>
-		<module>_string</module>
-		<module>_stringio</module>
-		<module>_sysconfigdata</module>
-		<module>_sysconfigdata_m</module>
-		<module>_testbuffer</module>
-		<module>_testimportmultiple</module>
-		<module>_testmultiphase</module>
-		<module>_thread</module>
-		<module>_tkinter</module>
-		<module>_tracemalloc</module>
-		<module>_warnings</module>
-		<module>_weakrefset</module>
-		<module>abc</module>
-		<module>antigravity</module>
-		<module>argparse</module>
-		<module>ast</module>
-		<module>asyncio</module>
-		<module>asyncio.base_events</module>
-		<module>asyncio.base_subprocess</module>
-		<module>asyncio.compat</module>
-		<module>asyncio.constants</module>
-		<module>asyncio.coroutines</module>
-		<module>asyncio.events</module>
-		<module>asyncio.futures</module>
-		<module>asyncio.locks</module>
-		<module>asyncio.log</module>
-		<module>asyncio.proactor_events</module>
-		<module>asyncio.protocols</module>
-		<module>asyncio.queues</module>
-		<module>asyncio.selector_events</module>
-		<module>asyncio.sslproto</module>
-		<module>asyncio.streams</module>
-		<module>asyncio.subprocess</module>
-		<module>asyncio.tasks</module>
-		<module>asyncio.test_utils</module>
-		<module>asyncio.transports</module>
-		<module>asyncio.unix_events</module>
-		<module>asyncio.windows_events</module>
-		<module>asyncio.windows_utils</module>
-		<module>bsddb.test.test_db</module>
-		<module>bsddb.test.test_dbenv</module>
-		<module>bsddb.test.test_distributed_transactions</module>
-		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_fileid</module>
-		<module>bsddb.test.test_replication</module>
-		<module>build_class</module>
-		<module>builtins</module>
-		<module>collections.__main__</module>
-		<module>collections.abc</module>
-		<module>concurrent</module>
-		<module>concurrent.futures</module>
-		<module>concurrent.futures._base</module>
-		<module>concurrent.futures.process</module>
-		<module>concurrent.futures.thread</module>
-		<module>configparser</module>
-		<module>copyreg</module>
-		<module>ctypes.test.__main__</module>
-		<module>ctypes.test.test_bytes</module>
-		<module>ctypes.test.test_errno</module>
-		<module>ctypes.test.test_frombuffer</module>
-		<module>ctypes.test.test_pep3118</module>
-		<module>ctypes.test.test_pickling</module>
-		<module>ctypes.test.test_wintypes</module>
-		<module>dbm</module>
-		<module>dbm.dumb</module>
-		<module>dbm.gnu</module>
-		<module>dbm.ndbm</module>
-		<module>distutils._msvccompiler</module>
-		<module>distutils.command.check</module>
-		<module>distutils.config</module>
-		<module>distutils.msvc9compiler</module>
-		<module>distutils.tests.setuptools_build_ext</module>
-		<module>distutils.tests.setuptools_extension</module>
-		<module>distutils.tests.test_archive_util</module>
-		<module>distutils.tests.test_bdist</module>
-		<module>distutils.tests.test_bdist_dumb</module>
-		<module>distutils.tests.test_bdist_msi</module>
-		<module>distutils.tests.test_bdist_rpm</module>
-		<module>distutils.tests.test_bdist_wininst</module>
-		<module>distutils.tests.test_build</module>
-		<module>distutils.tests.test_build_clib</module>
-		<module>distutils.tests.test_build_ext</module>
-		<module>distutils.tests.test_ccompiler</module>
-		<module>distutils.tests.test_check</module>
-		<module>distutils.tests.test_clean</module>
-		<module>distutils.tests.test_cmd</module>
-		<module>distutils.tests.test_config</module>
-		<module>distutils.tests.test_config_cmd</module>
-		<module>distutils.tests.test_core</module>
-		<module>distutils.tests.test_cygwinccompiler</module>
-		<module>distutils.tests.test_dep_util</module>
-		<module>distutils.tests.test_dir_util</module>
-		<module>distutils.tests.test_extension</module>
-		<module>distutils.tests.test_file_util</module>
-		<module>distutils.tests.test_filelist</module>
-		<module>distutils.tests.test_install_data</module>
-		<module>distutils.tests.test_install_headers</module>
-		<module>distutils.tests.test_install_lib</module>
-		<module>distutils.tests.test_log</module>
-		<module>distutils.tests.test_msvc9compiler</module>
-		<module>distutils.tests.test_msvccompiler</module>
-		<module>distutils.tests.test_register</module>
-		<module>distutils.tests.test_sdist</module>
-		<module>distutils.tests.test_spawn</module>
-		<module>distutils.tests.test_sysconfig</module>
-		<module>distutils.tests.test_text_file</module>
-		<module>distutils.tests.test_unixccompiler</module>
-		<module>distutils.tests.test_upload</module>
-		<module>distutils.tests.test_util</module>
-		<module>distutils.tests.test_version</module>
-		<module>django_fetch_doc_urls</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
-		<module>email._encoded_words</module>
-		<module>email._header_value_parser</module>
-		<module>email._policybase</module>
-		<module>email.base64MIME</module>
-		<module>email.contentmanager</module>
-		<module>email.headerregistry</module>
-		<module>email.policy</module>
-		<module>email.quopriMIME</module>
-		<module>encodings.cp1125</module>
-		<module>encodings.cp273</module>
-		<module>encodings.cp65001</module>
-		<module>encodings.cp720</module>
-		<module>encodings.cp858</module>
-		<module>encodings.koi8_t</module>
-		<module>encodings.kz1048</module>
-		<module>encodings.utf_32</module>
-		<module>encodings.utf_32_be</module>
-		<module>encodings.utf_32_le</module>
-		<module>ensurepip</module>
-		<module>ensurepip.__main__</module>
-		<module>ensurepip._uninstall</module>
-		<module>enum</module>
-		<module>faulthandler</module>
-		<module>fractions</module>
-		<module>future_builtins</module>
-		<module>genericpath</module>
-		<module>html</module>
-		<module>html.entities</module>
-		<module>html.parser</module>
-		<module>http</module>
-		<module>http.client</module>
-		<module>http.cookiejar</module>
-		<module>http.cookies</module>
-		<module>http.server</module>
-		<module>idlelib.RstripExtension</module>
-		<module>idlelib.__main__</module>
-		<module>idlelib.autocomplete</module>
-		<module>idlelib.autocomplete_w</module>
-		<module>idlelib.autoexpand</module>
-		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
-		<module>idlelib.calltip_w</module>
-		<module>idlelib.calltips</module>
-		<module>idlelib.codecontext</module>
-		<module>idlelib.colorizer</module>
-		<module>idlelib.config</module>
-		<module>idlelib.config_key</module>
-		<module>idlelib.configdialog</module>
-		<module>idlelib.debugger</module>
-		<module>idlelib.debugger_r</module>
-		<module>idlelib.debugobj</module>
-		<module>idlelib.debugobj_r</module>
-		<module>idlelib.delegator</module>
-		<module>idlelib.dynoption</module>
-		<module>idlelib.editor</module>
-		<module>idlelib.filelist</module>
-		<module>idlelib.grep</module>
-		<module>idlelib.help</module>
-		<module>idlelib.help_about</module>
-		<module>idlelib.history</module>
-		<module>idlelib.hyperparser</module>
-		<module>idlelib.idle_test</module>
-		<module>idlelib.idle_test.htest</module>
-		<module>idlelib.idle_test.mock_idle</module>
-		<module>idlelib.idle_test.mock_tk</module>
-		<module>idlelib.idle_test.test_autocomplete</module>
-		<module>idlelib.idle_test.test_autoexpand</module>
-		<module>idlelib.idle_test.test_calltips</module>
-		<module>idlelib.idle_test.test_colorizer</module>
-		<module>idlelib.idle_test.test_config</module>
-		<module>idlelib.idle_test.test_config_key</module>
-		<module>idlelib.idle_test.test_config_name</module>
-		<module>idlelib.idle_test.test_configdialog</module>
-		<module>idlelib.idle_test.test_debugger</module>
-		<module>idlelib.idle_test.test_delegator</module>
-		<module>idlelib.idle_test.test_editmenu</module>
-		<module>idlelib.idle_test.test_editor</module>
-		<module>idlelib.idle_test.test_formatparagraph</module>
-		<module>idlelib.idle_test.test_grep</module>
-		<module>idlelib.idle_test.test_help</module>
-		<module>idlelib.idle_test.test_help_about</module>
-		<module>idlelib.idle_test.test_history</module>
-		<module>idlelib.idle_test.test_hyperparser</module>
-		<module>idlelib.idle_test.test_idlehistory</module>
-		<module>idlelib.idle_test.test_io</module>
-		<module>idlelib.idle_test.test_iomenu</module>
-		<module>idlelib.idle_test.test_macosx</module>
-		<module>idlelib.idle_test.test_paragraph</module>
-		<module>idlelib.idle_test.test_parenmatch</module>
-		<module>idlelib.idle_test.test_pathbrowser</module>
-		<module>idlelib.idle_test.test_percolator</module>
-		<module>idlelib.idle_test.test_query</module>
-		<module>idlelib.idle_test.test_redirector</module>
-		<module>idlelib.idle_test.test_replace</module>
-		<module>idlelib.idle_test.test_rstrip</module>
-		<module>idlelib.idle_test.test_scrolledlist</module>
-		<module>idlelib.idle_test.test_search</module>
-		<module>idlelib.idle_test.test_searchbase</module>
-		<module>idlelib.idle_test.test_searchdialogbase</module>
-		<module>idlelib.idle_test.test_searchengine</module>
-		<module>idlelib.idle_test.test_text</module>
-		<module>idlelib.idle_test.test_textview</module>
-		<module>idlelib.idle_test.test_tree</module>
-		<module>idlelib.idle_test.test_undo</module>
-		<module>idlelib.idle_test.test_warning</module>
-		<module>idlelib.idle_test.test_widgetredir</module>
-		<module>idlelib.iomenu</module>
-		<module>idlelib.macosx</module>
-		<module>idlelib.mainmenu</module>
-		<module>idlelib.multicall</module>
-		<module>idlelib.outwin</module>
-		<module>idlelib.paragraph</module>
-		<module>idlelib.parenmatch</module>
-		<module>idlelib.pathbrowser</module>
-		<module>idlelib.percolator</module>
-		<module>idlelib.pyparse</module>
-		<module>idlelib.pyshell</module>
-		<module>idlelib.query</module>
-		<module>idlelib.redirector</module>
-		<module>idlelib.replace</module>
-		<module>idlelib.rstrip</module>
-		<module>idlelib.runscript</module>
-		<module>idlelib.scrolledlist</module>
-		<module>idlelib.search</module>
-		<module>idlelib.searchbase</module>
-		<module>idlelib.searchengine</module>
-		<module>idlelib.stackviewer</module>
-		<module>idlelib.statusbar</module>
-		<module>idlelib.tabbedpages</module>
-		<module>idlelib.textview</module>
-		<module>idlelib.tooltip</module>
-		<module>idlelib.tree</module>
-		<module>idlelib.undo</module>
-		<module>idlelib.windows</module>
-		<module>idlelib.zoomheight</module>
-		<module>importlib</module>
-		<module>importlib._bootstrap</module>
-		<module>importlib._bootstrap_external</module>
-		<module>importlib.abc</module>
-		<module>importlib.machinery</module>
-		<module>importlib.test</module>
-		<module>importlib.test.__main__</module>
-		<module>importlib.test.abc</module>
-		<module>importlib.test.benchmark</module>
-		<module>importlib.test.builtin</module>
-		<module>importlib.test.builtin.test_finder</module>
-		<module>importlib.test.builtin.test_loader</module>
-		<module>importlib.test.builtin.util</module>
-		<module>importlib.test.extension</module>
-		<module>importlib.test.extension.test_case_sensitivity</module>
-		<module>importlib.test.extension.test_finder</module>
-		<module>importlib.test.extension.test_loader</module>
-		<module>importlib.test.extension.test_path_hook</module>
-		<module>importlib.test.extension.util</module>
-		<module>importlib.test.frozen</module>
-		<module>importlib.test.frozen.test_finder</module>
-		<module>importlib.test.frozen.test_loader</module>
-		<module>importlib.test.import_</module>
-		<module>importlib.test.import_.test___package__</module>
-		<module>importlib.test.import_.test_api</module>
-		<module>importlib.test.import_.test_caching</module>
-		<module>importlib.test.import_.test_fromlist</module>
-		<module>importlib.test.import_.test_meta_path</module>
-		<module>importlib.test.import_.test_packages</module>
-		<module>importlib.test.import_.test_path</module>
-		<module>importlib.test.import_.test_relative_imports</module>
-		<module>importlib.test.import_.util</module>
-		<module>importlib.test.regrtest</module>
-		<module>importlib.test.source</module>
-		<module>importlib.test.source.test_abc_loader</module>
-		<module>importlib.test.source.test_case_sensitivity</module>
-		<module>importlib.test.source.test_file_loader</module>
-		<module>importlib.test.source.test_finder</module>
-		<module>importlib.test.source.test_path_hook</module>
-		<module>importlib.test.source.test_source_encoding</module>
-		<module>importlib.test.source.util</module>
-		<module>importlib.test.test_abc</module>
-		<module>importlib.test.test_api</module>
-		<module>importlib.test.test_util</module>
-		<module>importlib.test.util</module>
-		<module>importlib.util</module>
-		<module>io</module>
-		<module>ipaddress</module>
-		<module>json</module>
-		<module>json.decoder</module>
-		<module>json.encoder</module>
-		<module>json.scanner</module>
-		<module>json.tests</module>
-		<module>json.tests.test_check_circular</module>
-		<module>json.tests.test_decode</module>
-		<module>json.tests.test_default</module>
-		<module>json.tests.test_dump</module>
-		<module>json.tests.test_encode_basestring_ascii</module>
-		<module>json.tests.test_fail</module>
-		<module>json.tests.test_float</module>
-		<module>json.tests.test_indent</module>
-		<module>json.tests.test_pass1</module>
-		<module>json.tests.test_pass2</module>
-		<module>json.tests.test_pass3</module>
-		<module>json.tests.test_recursion</module>
-		<module>json.tests.test_scanstring</module>
-		<module>json.tests.test_separators</module>
-		<module>json.tests.test_speedups</module>
-		<module>json.tests.test_tool</module>
-		<module>json.tests.test_unicode</module>
-		<module>json.tool</module>
-		<module>lib2to3</module>
-		<module>lib2to3.__main__</module>
-		<module>lib2to3.btm_matcher</module>
-		<module>lib2to3.btm_utils</module>
-		<module>lib2to3.fixer_base</module>
-		<module>lib2to3.fixer_util</module>
-		<module>lib2to3.fixes</module>
-		<module>lib2to3.fixes.fix_apply</module>
-		<module>lib2to3.fixes.fix_asserts</module>
-		<module>lib2to3.fixes.fix_basestring</module>
-		<module>lib2to3.fixes.fix_buffer</module>
-		<module>lib2to3.fixes.fix_callable</module>
-		<module>lib2to3.fixes.fix_dict</module>
-		<module>lib2to3.fixes.fix_except</module>
-		<module>lib2to3.fixes.fix_exec</module>
-		<module>lib2to3.fixes.fix_execfile</module>
-		<module>lib2to3.fixes.fix_exitfunc</module>
-		<module>lib2to3.fixes.fix_filter</module>
-		<module>lib2to3.fixes.fix_funcattrs</module>
-		<module>lib2to3.fixes.fix_future</module>
-		<module>lib2to3.fixes.fix_getcwdu</module>
-		<module>lib2to3.fixes.fix_has_key</module>
-		<module>lib2to3.fixes.fix_idioms</module>
-		<module>lib2to3.fixes.fix_import</module>
-		<module>lib2to3.fixes.fix_imports</module>
-		<module>lib2to3.fixes.fix_imports2</module>
-		<module>lib2to3.fixes.fix_input</module>
-		<module>lib2to3.fixes.fix_intern</module>
-		<module>lib2to3.fixes.fix_isinstance</module>
-		<module>lib2to3.fixes.fix_itertools</module>
-		<module>lib2to3.fixes.fix_itertools_imports</module>
-		<module>lib2to3.fixes.fix_long</module>
-		<module>lib2to3.fixes.fix_map</module>
-		<module>lib2to3.fixes.fix_metaclass</module>
-		<module>lib2to3.fixes.fix_methodattrs</module>
-		<module>lib2to3.fixes.fix_ne</module>
-		<module>lib2to3.fixes.fix_next</module>
-		<module>lib2to3.fixes.fix_nonzero</module>
-		<module>lib2to3.fixes.fix_numliterals</module>
-		<module>lib2to3.fixes.fix_operator</module>
-		<module>lib2to3.fixes.fix_paren</module>
-		<module>lib2to3.fixes.fix_print</module>
-		<module>lib2to3.fixes.fix_raise</module>
-		<module>lib2to3.fixes.fix_raw_input</module>
-		<module>lib2to3.fixes.fix_reduce</module>
-		<module>lib2to3.fixes.fix_reload</module>
-		<module>lib2to3.fixes.fix_renames</module>
-		<module>lib2to3.fixes.fix_repr</module>
-		<module>lib2to3.fixes.fix_set_literal</module>
-		<module>lib2to3.fixes.fix_standarderror</module>
-		<module>lib2to3.fixes.fix_sys_exc</module>
-		<module>lib2to3.fixes.fix_throw</module>
-		<module>lib2to3.fixes.fix_tuple_params</module>
-		<module>lib2to3.fixes.fix_types</module>
-		<module>lib2to3.fixes.fix_unicode</module>
-		<module>lib2to3.fixes.fix_urllib</module>
-		<module>lib2to3.fixes.fix_ws_comma</module>
-		<module>lib2to3.fixes.fix_xrange</module>
-		<module>lib2to3.fixes.fix_xreadlines</module>
-		<module>lib2to3.fixes.fix_zip</module>
-		<module>lib2to3.main</module>
-		<module>lib2to3.patcomp</module>
-		<module>lib2to3.pgen2</module>
-		<module>lib2to3.pgen2.conv</module>
-		<module>lib2to3.pgen2.driver</module>
-		<module>lib2to3.pgen2.grammar</module>
-		<module>lib2to3.pgen2.literals</module>
-		<module>lib2to3.pgen2.parse</module>
-		<module>lib2to3.pgen2.pgen</module>
-		<module>lib2to3.pgen2.token</module>
-		<module>lib2to3.pgen2.tokenize</module>
-		<module>lib2to3.pygram</module>
-		<module>lib2to3.pytree</module>
-		<module>lib2to3.refactor</module>
-		<module>lib2to3.tests</module>
-		<module>lib2to3.tests.__main__</module>
-		<module>lib2to3.tests.pytree_idempotency</module>
-		<module>lib2to3.tests.support</module>
-		<module>lib2to3.tests.test_all_fixers</module>
-		<module>lib2to3.tests.test_fixers</module>
-		<module>lib2to3.tests.test_main</module>
-		<module>lib2to3.tests.test_parser</module>
-		<module>lib2to3.tests.test_pytree</module>
-		<module>lib2to3.tests.test_refactor</module>
-		<module>lib2to3.tests.test_util</module>
-		<module>linuxaudiodev</module>
-		<module>lzma</module>
-		<module>multiprocessing</module>
-		<module>multiprocessing.connection</module>
-		<module>multiprocessing.context</module>
-		<module>multiprocessing.dummy</module>
-		<module>multiprocessing.dummy.connection</module>
-		<module>multiprocessing.forking</module>
-		<module>multiprocessing.forkserver</module>
-		<module>multiprocessing.heap</module>
-		<module>multiprocessing.managers</module>
-		<module>multiprocessing.pool</module>
-		<module>multiprocessing.popen_fork</module>
-		<module>multiprocessing.popen_forkserver</module>
-		<module>multiprocessing.popen_spawn_posix</module>
-		<module>multiprocessing.popen_spawn_win32</module>
-		<module>multiprocessing.process</module>
-		<module>multiprocessing.queues</module>
-		<module>multiprocessing.reduction</module>
-		<module>multiprocessing.resource_sharer</module>
-		<module>multiprocessing.semaphore_tracker</module>
-		<module>multiprocessing.sharedctypes</module>
-		<module>multiprocessing.spawn</module>
-		<module>multiprocessing.synchronize</module>
-		<module>multiprocessing.util</module>
-		<module>numbers</module>
-		<module>ossaudiodev</module>
-		<module>pathlib</module>
-		<module>pcre</module>
-		<module>plistlib</module>
-		<module>pre</module>
-		<module>pydoc_data</module>
-		<module>pydoc_data.topics</module>
-		<module>pydoc_topics</module>
-		<module>pypi_download_install</module>
-		<module>queue</module>
-		<module>readline</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
-		<module>repack_pypi_cache</module>
-		<module>reprlib</module>
-		<module>rotor</module>
-		<module>secrets</module>
-		<module>selectors</module>
-		<module>socketserver</module>
-		<module>sqlite3.dump</module>
-		<module>sqlite3.test.dump</module>
-		<module>sqlite3.test.py25tests</module>
-		<module>ssl</module>
-		<module>statcache</module>
-		<module>statistics</module>
-		<module>sysconfig</module>
-		<module>timing</module>
-		<module>tkinter</module>
-		<module>tkinter.__main__</module>
-		<module>tkinter._fix</module>
-		<module>tkinter.colorchooser</module>
-		<module>tkinter.commondialog</module>
-		<module>tkinter.constants</module>
-		<module>tkinter.dialog</module>
-		<module>tkinter.dnd</module>
-		<module>tkinter.filedialog</module>
-		<module>tkinter.font</module>
-		<module>tkinter.messagebox</module>
-		<module>tkinter.scrolledtext</module>
-		<module>tkinter.simpledialog</module>
-		<module>tkinter.test</module>
-		<module>tkinter.test.runtktests</module>
-		<module>tkinter.test.support</module>
-		<module>tkinter.test.test_tkinter</module>
-		<module>tkinter.test.test_tkinter.test_font</module>
-		<module>tkinter.test.test_tkinter.test_geometry_managers</module>
-		<module>tkinter.test.test_tkinter.test_images</module>
-		<module>tkinter.test.test_tkinter.test_loadtk</module>
-		<module>tkinter.test.test_tkinter.test_misc</module>
-		<module>tkinter.test.test_tkinter.test_text</module>
-		<module>tkinter.test.test_tkinter.test_variables</module>
-		<module>tkinter.test.test_tkinter.test_widgets</module>
-		<module>tkinter.test.test_ttk</module>
-		<module>tkinter.test.test_ttk.test_extensions</module>
-		<module>tkinter.test.test_ttk.test_functions</module>
-		<module>tkinter.test.test_ttk.test_style</module>
-		<module>tkinter.test.test_ttk.test_widgets</module>
-		<module>tkinter.test.widget_tests</module>
-		<module>tkinter.tix</module>
-		<module>tkinter.ttk</module>
-		<module>tracemalloc</module>
-		<module>ttk</module>
-		<module>turtledemo</module>
-		<module>turtledemo.__main__</module>
-		<module>turtledemo.bytedesign</module>
-		<module>turtledemo.chaos</module>
-		<module>turtledemo.clock</module>
-		<module>turtledemo.colormixer</module>
-		<module>turtledemo.forest</module>
-		<module>turtledemo.fractalcurves</module>
-		<module>turtledemo.lindenmayer</module>
-		<module>turtledemo.minimal_hanoi</module>
-		<module>turtledemo.nim</module>
-		<module>turtledemo.paint</module>
-		<module>turtledemo.peace</module>
-		<module>turtledemo.penrose</module>
-		<module>turtledemo.planet_and_moon</module>
-		<module>turtledemo.round_dance</module>
-		<module>turtledemo.sorting_animate</module>
-		<module>turtledemo.tree</module>
-		<module>turtledemo.two_canvases</module>
-		<module>turtledemo.wikipedia</module>
-		<module>turtledemo.yinyang</module>
-		<module>typing</module>
-		<module>tzparse</module>
-		<module>unittest.__main__</module>
-		<module>unittest.case</module>
-		<module>unittest.loader</module>
-		<module>unittest.main</module>
-		<module>unittest.mock</module>
-		<module>unittest.result</module>
-		<module>unittest.runner</module>
-		<module>unittest.signals</module>
-		<module>unittest.suite</module>
-		<module>unittest.test</module>
-		<module>unittest.test.__main__</module>
-		<module>unittest.test._test_warnings</module>
-		<module>unittest.test.dummy</module>
-		<module>unittest.test.support</module>
-		<module>unittest.test.test_assertions</module>
-		<module>unittest.test.test_break</module>
-		<module>unittest.test.test_case</module>
-		<module>unittest.test.test_discovery</module>
-		<module>unittest.test.test_functiontestcase</module>
-		<module>unittest.test.test_loader</module>
-		<module>unittest.test.test_program</module>
-		<module>unittest.test.test_result</module>
-		<module>unittest.test.test_runner</module>
-		<module>unittest.test.test_setups</module>
-		<module>unittest.test.test_skipping</module>
-		<module>unittest.test.test_suite</module>
-		<module>unittest.test.testmock</module>
-		<module>unittest.test.testmock.__main__</module>
-		<module>unittest.test.testmock.support</module>
-		<module>unittest.test.testmock.testcallable</module>
-		<module>unittest.test.testmock.testhelpers</module>
-		<module>unittest.test.testmock.testmagicmethods</module>
-		<module>unittest.test.testmock.testmock</module>
-		<module>unittest.test.testmock.testpatch</module>
-		<module>unittest.test.testmock.testsentinel</module>
-		<module>unittest.test.testmock.testwith</module>
-		<module>unittest.util</module>
-		<module>unsupported_modules</module>
-		<module>urllib.error</module>
-		<module>urllib.parse</module>
-		<module>urllib.request</module>
-		<module>urllib.response</module>
-		<module>urllib.robotparser</module>
-		<module>venv</module>
-		<module>venv.__main__</module>
-		<module>whrandom</module>
-		<module>xmlrpc</module>
-		<module>xmlrpc.client</module>
-		<module>xmlrpc.server</module>
-		<module>xreadlines</module>
-		<module>xxlimited</module>
-		<module>zipapp</module>
-		<func>BlockingIOError</func>
-		<func>BrokenPipeError</func>
-		<func>BufferError</func>
-		<func>BytesWarning</func>
-		<func>ChildProcessError</func>
-		<func>ConnectionAbortedError</func>
-		<func>ConnectionError</func>
-		<func>ConnectionRefusedError</func>
-		<func>ConnectionResetError</func>
-		<func>FileExistsError</func>
-		<func>FileNotFoundError</func>
-		<func>InterruptedError</func>
-		<func>IsADirectoryError</func>
-		<func>NotADirectoryError</func>
-		<func>OverflowWarning</func>
-		<func>PermissionError</func>
-		<func>ProcessLookupError</func>
-		<func>RecursionError</func>
-		<func>ResourceWarning</func>
-		<func>StopAsyncIteration</func>
-		<func>TimeoutError</func>
-		<func>__build_class__</func>
-		<func>__loader__</func>
-		<func>__package__</func>
-		<func>__spec__</func>
-		<func>ascii</func>
-		<func>bin</func>
-		<func>bytearray</func>
-		<func>bytes</func>
-		<func>exec</func>
-		<func>format</func>
-		<func>memoryview</func>
-		<func>next</func>
-		<func>print</func>
-	</python>
 	<python version="2.6">
 		<module>CDROM</module>
 		<module>DLFCN</module>
-		<module>FCNTL</module>
-		<module>TERMIOS</module>
 		<module>TYPES</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bootlocale</module>
 		<module>_bz2</module>
 		<module>_collections_abc</module>
@@ -2315,6 +33,7 @@
 		<module>_pyio</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
+		<module>_sha3</module>
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
@@ -2325,19 +44,23 @@
 		<module>_stringio</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
 		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
-		<module>_types</module>
+		<module>_uuid</module>
 		<module>_weakrefset</module>
+		<module>_xxtestfuzz</module>
 		<module>antigravity</module>
 		<module>argparse</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
+		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
@@ -2358,10 +81,8 @@
 		<module>asyncio.unix_events</module>
 		<module>asyncio.windows_events</module>
 		<module>asyncio.windows_utils</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_db</module>
 		<module>bsddb.test.test_dbenv</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>build_class</module>
 		<module>builtins</module>
@@ -2378,6 +99,7 @@
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_bytes</module>
 		<module>ctypes.test.test_wintypes</module>
+		<module>dataclasses</module>
 		<module>dbm</module>
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
@@ -2409,33 +131,12 @@
 		<module>distutils.tests.test_text_file</module>
 		<module>distutils.tests.test_version</module>
 		<module>django_fetch_doc_urls</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
-		<module>email.base64MIME</module>
 		<module>email.contentmanager</module>
 		<module>email.headerregistry</module>
 		<module>email.policy</module>
-		<module>email.quopriMIME</module>
 		<module>encodings.cp1125</module>
 		<module>encodings.cp273</module>
 		<module>encodings.cp65001</module>
@@ -2443,12 +144,12 @@
 		<module>encodings.cp858</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
 		<module>ensurepip._uninstall</module>
 		<module>enum</module>
 		<module>faulthandler</module>
-		<module>gopherlib</module>
 		<module>html</module>
 		<module>html.entities</module>
 		<module>html.parser</module>
@@ -2463,7 +164,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -2490,6 +190,7 @@
 		<module>idlelib.idle_test.mock_tk</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_calltips</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
@@ -2510,6 +211,7 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
@@ -2518,6 +220,7 @@
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
 		<module>idlelib.idle_test.test_rstrip</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -2551,13 +254,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
@@ -2627,27 +330,18 @@
 		<module>nis</module>
 		<module>ossaudiodev</module>
 		<module>pathlib</module>
-		<module>pcre</module>
-		<module>pre</module>
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
 		<module>pypi_download_install</module>
 		<module>queue</module>
 		<module>readline</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>socketserver</module>
-		<module>statcache</module>
 		<module>statistics</module>
 		<module>sysconfig</module>
-		<module>timing</module>
 		<module>tkinter</module>
 		<module>tkinter.__main__</module>
 		<module>tkinter._fix</module>
@@ -2705,7 +399,6 @@
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
 		<module>typing</module>
-		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
 		<module>unittest.loader</module>
@@ -2740,6 +433,7 @@
 		<module>unittest.test.testmock.testmagicmethods</module>
 		<module>unittest.test.testmock.testmock</module>
 		<module>unittest.test.testmock.testpatch</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
@@ -2751,11 +445,9 @@
 		<module>urllib.robotparser</module>
 		<module>venv</module>
 		<module>venv.__main__</module>
-		<module>whrandom</module>
 		<module>xmlrpc</module>
 		<module>xmlrpc.client</module>
 		<module>xmlrpc.server</module>
-		<module>xreadlines</module>
 		<module>xxlimited</module>
 		<module>zipapp</module>
 		<module>zlib</module>
@@ -2770,8 +462,8 @@
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
 		<func>IsADirectoryError</func>
+		<func>ModuleNotFoundError</func>
 		<func>NotADirectoryError</func>
-		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
 		<func>RecursionError</func>
@@ -2782,12 +474,13 @@
 		<func>__loader__</func>
 		<func>__spec__</func>
 		<func>ascii</func>
+		<func>breakpoint</func>
 		<func>exec</func>
 		<func>memoryview</func>
 	</python>
 	<python version="2.7">
-		<module>FCNTL</module>
-		<module>TERMIOS</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
 		<module>_bz2</module>
@@ -2813,6 +506,7 @@
 		<module>_sha</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
+		<module>_sha3</module>
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
@@ -2821,16 +515,20 @@
 		<module>_string</module>
 		<module>_stringio</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
 		<module>_testmultiphase</module>
 		<module>_thread</module>
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
+		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
@@ -2851,8 +549,6 @@
 		<module>asyncio.unix_events</module>
 		<module>asyncio.windows_events</module>
 		<module>asyncio.windows_utils</module>
-		<module>bsddb.test.test_1413192</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>build_class</module>
 		<module>builtins</module>
 		<module>collections.__main__</module>
@@ -2869,6 +565,7 @@
 		<module>ctypes.test.test_bytes</module>
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
+		<module>dataclasses</module>
 		<module>dbm</module>
 		<module>dbm.dumb</module>
 		<module>dbm.gnu</module>
@@ -2880,44 +577,23 @@
 		<module>distutils.tests.test_log</module>
 		<module>distutils.tests.test_msvccompiler</module>
 		<module>django_fetch_doc_urls</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
-		<module>email.base64MIME</module>
 		<module>email.contentmanager</module>
 		<module>email.headerregistry</module>
 		<module>email.policy</module>
-		<module>email.quopriMIME</module>
 		<module>encodings.cp1125</module>
 		<module>encodings.cp273</module>
 		<module>encodings.cp65001</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
 		<module>ensurepip._uninstall</module>
 		<module>enum</module>
 		<module>faulthandler</module>
-		<module>gopherlib</module>
 		<module>html</module>
 		<module>html.entities</module>
 		<module>html.parser</module>
@@ -2931,7 +607,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -2952,6 +627,7 @@
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
@@ -2965,11 +641,13 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_percolator</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -2999,13 +677,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>importlib._bootstrap</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.abc</module>
@@ -3067,24 +745,15 @@
 		<module>multiprocessing.spawn</module>
 		<module>nis_failed</module>
 		<module>pathlib</module>
-		<module>pcre</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
 		<module>pypi_download_install</module>
 		<module>queue</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>reprlib</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>socketserver</module>
-		<module>statcache</module>
 		<module>statistics</module>
-		<module>timing</module>
 		<module>tkinter</module>
 		<module>tkinter.__main__</module>
 		<module>tkinter._fix</module>
@@ -3141,7 +810,6 @@
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
 		<module>typing</module>
-		<module>tzparse</module>
 		<module>unittest.mock</module>
 		<module>unittest.test.__main__</module>
 		<module>unittest.test._test_warnings</module>
@@ -3153,6 +821,7 @@
 		<module>unittest.test.testmock.testmagicmethods</module>
 		<module>unittest.test.testmock.testmock</module>
 		<module>unittest.test.testmock.testpatch</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unsupported_modules</module>
@@ -3163,11 +832,9 @@
 		<module>urllib.robotparser</module>
 		<module>venv</module>
 		<module>venv.__main__</module>
-		<module>whrandom</module>
 		<module>xmlrpc</module>
 		<module>xmlrpc.client</module>
 		<module>xmlrpc.server</module>
-		<module>xreadlines</module>
 		<module>xxlimited</module>
 		<module>zipapp</module>
 		<func>BlockingIOError</func>
@@ -3181,8 +848,8 @@
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
 		<func>IsADirectoryError</func>
+		<func>ModuleNotFoundError</func>
 		<func>NotADirectoryError</func>
-		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
 		<func>RecursionError</func>
@@ -3193,6 +860,7 @@
 		<func>__loader__</func>
 		<func>__spec__</func>
 		<func>ascii</func>
+		<func>breakpoint</func>
 		<func>exec</func>
 	</python>
 	<python version="3.0">
@@ -3206,7 +874,6 @@
 		<module>DLFCN</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -3218,7 +885,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>TYPES</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
@@ -3230,6 +896,8 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bootlocale</module>
 		<module>_bz2</module>
 		<module>_collections_abc</module>
@@ -3257,6 +925,7 @@
 		<module>_sha</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
+		<module>_sha3</module>
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
@@ -3266,17 +935,21 @@
 		<module>_string</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
 		<module>_testmultiphase</module>
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>argparse</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
+		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
@@ -3306,7 +979,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -3320,7 +992,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -3358,6 +1029,7 @@
 		<module>crypt</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_wintypes</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils._msvccompiler</module>
@@ -3396,33 +1068,12 @@
 		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
-		<module>email.base64MIME</module>
 		<module>email.contentmanager</module>
 		<module>email.headerregistry</module>
 		<module>email.policy</module>
-		<module>email.quopriMIME</module>
 		<module>email.test.test_email_renamed</module>
 		<module>encodings.base64_codec</module>
 		<module>encodings.bz2_codec</module>
@@ -3434,6 +1085,7 @@
 		<module>encodings.hex_codec</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>encodings.quopri_codec</module>
 		<module>encodings.rot_13</module>
 		<module>encodings.string_escape</module>
@@ -3447,7 +1099,6 @@
 		<module>faulthandler</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -3461,7 +1112,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -3488,6 +1138,7 @@
 		<module>idlelib.idle_test.mock_tk</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_calltips</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
@@ -3508,6 +1159,7 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
@@ -3516,6 +1168,7 @@
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
 		<module>idlelib.idle_test.test_rstrip</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -3549,13 +1202,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib</module>
 		<module>importlib._bootstrap</module>
@@ -3638,24 +1291,17 @@
 		<module>nis</module>
 		<module>ossaudiodev</module>
 		<module>pathlib</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_data</module>
 		<module>pydoc_data.topics</module>
 		<module>pypi_download_install</module>
 		<module>readline</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>sets</module>
@@ -3663,7 +1309,6 @@
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statistics</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -3671,7 +1316,6 @@
 		<module>sunaudio</module>
 		<module>sysconfig</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -3723,7 +1367,6 @@
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
 		<module>typing</module>
-		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
 		<module>unittest.loader</module>
@@ -3758,6 +1401,7 @@
 		<module>unittest.test.testmock.testmagicmethods</module>
 		<module>unittest.test.testmock.testmock</module>
 		<module>unittest.test.testmock.testpatch</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
@@ -3768,10 +1412,8 @@
 		<module>venv</module>
 		<module>venv.__main__</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
 		<module>xxlimited</module>
 		<module>zipapp</module>
 		<module>zlib</module>
@@ -3786,8 +1428,8 @@
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
 		<func>IsADirectoryError</func>
+		<func>ModuleNotFoundError</func>
 		<func>NotADirectoryError</func>
-		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
 		<func>RecursionError</func>
@@ -3799,6 +1441,7 @@
 		<func>__spec__</func>
 		<func>apply</func>
 		<func>basestring</func>
+		<func>breakpoint</func>
 		<func>buffer</func>
 		<func>callable</func>
 		<func>cmp</func>
@@ -3825,7 +1468,6 @@
 		<module>DLFCN</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -3837,7 +1479,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>TYPES</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
@@ -3849,6 +1490,8 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
 		<module>_bz2</module>
@@ -3872,6 +1515,7 @@
 		<module>_sha</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
+		<module>_sha3</module>
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
@@ -3881,17 +1525,21 @@
 		<module>_stringio</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
 		<module>_testmultiphase</module>
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>argparse</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
+		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
@@ -3921,7 +1569,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -3935,7 +1582,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -3974,6 +1620,7 @@
 		<module>crypt_failed</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_wintypes</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils._msvccompiler</module>
@@ -3988,33 +1635,12 @@
 		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
-		<module>email.base64MIME</module>
 		<module>email.contentmanager</module>
 		<module>email.headerregistry</module>
 		<module>email.policy</module>
-		<module>email.quopriMIME</module>
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>encodings.base64_codec</module>
@@ -4027,6 +1653,7 @@
 		<module>encodings.hex_codec</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>encodings.quopri_codec</module>
 		<module>encodings.rot_13</module>
 		<module>encodings.string_escape</module>
@@ -4040,7 +1667,6 @@
 		<module>faulthandler</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -4053,7 +1679,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -4080,6 +1705,7 @@
 		<module>idlelib.idle_test.mock_tk</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_calltips</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
@@ -4100,6 +1726,7 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
@@ -4108,6 +1735,7 @@
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
 		<module>idlelib.idle_test.test_rstrip</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -4141,13 +1769,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.test.__main__</module>
@@ -4183,23 +1811,16 @@
 		<module>nis_failed</module>
 		<module>ossaudiodev</module>
 		<module>pathlib</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
 		<module>pypi_download_install</module>
 		<module>readline</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>sets</module>
@@ -4207,7 +1828,6 @@
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statistics</module>
 		<module>statvfs</module>
 		<module>stringold</module>
@@ -4215,7 +1835,6 @@
 		<module>sunaudio</module>
 		<module>sysconfig</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -4255,7 +1874,6 @@
 		<module>turtledemo.wikipedia</module>
 		<module>turtledemo.yinyang</module>
 		<module>typing</module>
-		<module>tzparse</module>
 		<module>unittest.__main__</module>
 		<module>unittest.case</module>
 		<module>unittest.loader</module>
@@ -4290,6 +1908,7 @@
 		<module>unittest.test.testmock.testmagicmethods</module>
 		<module>unittest.test.testmock.testmock</module>
 		<module>unittest.test.testmock.testpatch</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unittest.util</module>
@@ -4300,10 +1919,8 @@
 		<module>venv</module>
 		<module>venv.__main__</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
 		<module>xxlimited</module>
 		<module>zipapp</module>
 		<func>BlockingIOError</func>
@@ -4317,8 +1934,8 @@
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
 		<func>IsADirectoryError</func>
+		<func>ModuleNotFoundError</func>
 		<func>NotADirectoryError</func>
-		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
 		<func>RecursionError</func>
@@ -4330,6 +1947,7 @@
 		<func>__spec__</func>
 		<func>apply</func>
 		<func>basestring</func>
+		<func>breakpoint</func>
 		<func>buffer</func>
 		<func>callable</func>
 		<func>cmp</func>
@@ -4354,7 +1972,6 @@
 		<module>Cookie</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -4366,7 +1983,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
 		<module>Tkdnd</module>
@@ -4377,6 +1993,8 @@
 		<module>_LWPCookieJar</module>
 		<module>_MozillaCookieJar</module>
 		<module>__builtin__</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
 		<module>_bz2</module>
@@ -4397,6 +2015,7 @@
 		<module>_sha</module>
 		<module>_sha1</module>
 		<module>_sha256</module>
+		<module>_sha3</module>
 		<module>_sha512</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
@@ -4405,16 +2024,20 @@
 		<module>_stringio</module>
 		<module>_sysconfigdata</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testbuffer</module>
 		<module>_testimportmultiple</module>
 		<module>_testmultiphase</module>
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
+		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
@@ -4444,7 +2067,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -4458,7 +2080,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -4492,6 +2113,7 @@
 		<module>crypt_failed</module>
 		<module>ctypes.test.__main__</module>
 		<module>ctypes.test.test_wintypes</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils._msvccompiler</module>
@@ -4503,33 +2125,12 @@
 		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
 		<module>email._encoded_words</module>
 		<module>email._header_value_parser</module>
 		<module>email._policybase</module>
-		<module>email.base64MIME</module>
 		<module>email.contentmanager</module>
 		<module>email.headerregistry</module>
 		<module>email.policy</module>
-		<module>email.quopriMIME</module>
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>encodings.cp1125</module>
@@ -4537,6 +2138,7 @@
 		<module>encodings.cp65001</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>encodings.string_escape</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
@@ -4546,7 +2148,6 @@
 		<module>faulthandler</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -4559,7 +2160,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -4586,6 +2186,7 @@
 		<module>idlelib.idle_test.mock_tk</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_calltips</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
@@ -4606,6 +2207,7 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_pathbrowser</module>
@@ -4614,6 +2216,7 @@
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
 		<module>idlelib.idle_test.test_rstrip</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -4647,13 +2250,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._bootstrap_external</module>
 		<module>imputil</module>
@@ -4701,23 +2304,16 @@
 		<module>new</module>
 		<module>nis_failed</module>
 		<module>pathlib</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
 		<module>pypi_download_install</module>
 		<module>readline</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>sets</module>
@@ -4725,14 +2321,12 @@
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statistics</module>
 		<module>statvfs</module>
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -4749,7 +2343,6 @@
 		<module>ttk</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>typing</module>
-		<module>tzparse</module>
 		<module>unittest.mock</module>
 		<module>unittest.test.__main__</module>
 		<module>unittest.test.testmock</module>
@@ -4760,6 +2353,7 @@
 		<module>unittest.test.testmock.testmagicmethods</module>
 		<module>unittest.test.testmock.testmock</module>
 		<module>unittest.test.testmock.testpatch</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unittest.test.testmock.testsentinel</module>
 		<module>unittest.test.testmock.testwith</module>
 		<module>unsupported_modules</module>
@@ -4769,10 +2363,8 @@
 		<module>venv</module>
 		<module>venv.__main__</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
 		<module>xxlimited</module>
 		<module>zipapp</module>
 		<func>BlockingIOError</func>
@@ -4786,8 +2378,8 @@
 		<func>FileNotFoundError</func>
 		<func>InterruptedError</func>
 		<func>IsADirectoryError</func>
+		<func>ModuleNotFoundError</func>
 		<func>NotADirectoryError</func>
-		<func>OverflowWarning</func>
 		<func>PermissionError</func>
 		<func>ProcessLookupError</func>
 		<func>RecursionError</func>
@@ -4798,6 +2390,7 @@
 		<func>__spec__</func>
 		<func>apply</func>
 		<func>basestring</func>
+		<func>breakpoint</func>
 		<func>buffer</func>
 		<func>cmp</func>
 		<func>coerce</func>
@@ -4821,7 +2414,6 @@
 		<module>Cookie</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -4833,7 +2425,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
 		<module>Tkdnd</module>
@@ -4846,6 +2437,8 @@
 		<module>__builtin__</module>
 		<module>__main__</module>
 		<module>_abcoll</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bootlocale</module>
 		<module>_bytesio</module>
 		<module>_collections_abc</module>
@@ -4859,21 +2452,26 @@
 		<module>_operator</module>
 		<module>_pydecimal</module>
 		<module>_sha</module>
+		<module>_sha3</module>
 		<module>_signal</module>
 		<module>_sitebuiltins</module>
 		<module>_sqlite3</module>
 		<module>_stat</module>
 		<module>_stringio</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testimportmultiple</module>
 		<module>_testmultiphase</module>
 		<module>_tkinter</module>
 		<module>_tracemalloc</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
 		<module>asyncio</module>
 		<module>asyncio.base_events</module>
+		<module>asyncio.base_futures</module>
 		<module>asyncio.base_subprocess</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.constants</module>
 		<module>asyncio.coroutines</module>
@@ -4903,7 +2501,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -4917,7 +2514,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -4949,6 +2545,7 @@
 		<module>crypt_failed</module>
 		<module>ctypes.test.__main__</module>
 		<module>curses.wrapper</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils._msvccompiler</module>
@@ -4960,28 +2557,7 @@
 		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
-		<module>email.base64MIME</module>
 		<module>email.contentmanager</module>
-		<module>email.quopriMIME</module>
 		<module>email.test</module>
 		<module>email.test.test_email</module>
 		<module>email.test.test_email_codecs</module>
@@ -4992,6 +2568,7 @@
 		<module>encodings.cp273</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>encodings.string_escape</module>
 		<module>ensurepip</module>
 		<module>ensurepip.__main__</module>
@@ -5000,7 +2577,6 @@
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -5012,7 +2588,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -5036,6 +2611,7 @@
 		<module>idlelib.idle_test.htest</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
@@ -5050,12 +2626,14 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_percolator</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -5086,13 +2664,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.test</module>
@@ -5177,22 +2755,15 @@
 		<module>new</module>
 		<module>nis_failed</module>
 		<module>pathlib</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
 		<module>pypi_download_install</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>selectors</module>
 		<module>sets</module>
@@ -5200,14 +2771,12 @@
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statistics</module>
 		<module>statvfs</module>
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -5221,26 +2790,25 @@
 		<module>ttk</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>typing</module>
-		<module>tzparse</module>
 		<module>unittest.test.__main__</module>
 		<module>unittest.test.testmock.__main__</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
 		<module>zipapp</module>
-		<func>OverflowWarning</func>
+		<func>ModuleNotFoundError</func>
 		<func>RecursionError</func>
 		<func>StandardError</func>
 		<func>StopAsyncIteration</func>
 		<func>__spec__</func>
 		<func>apply</func>
 		<func>basestring</func>
+		<func>breakpoint</func>
 		<func>buffer</func>
 		<func>cmp</func>
 		<func>coerce</func>
@@ -5264,7 +2832,6 @@
 		<module>Cookie</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -5276,7 +2843,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
 		<module>Tkdnd</module>
@@ -5289,6 +2855,8 @@
 		<module>__builtin__</module>
 		<module>__main__</module>
 		<module>_abcoll</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bytesio</module>
 		<module>_compression</module>
 		<module>_dbm</module>
@@ -5298,14 +2866,19 @@
 		<module>_lzma</module>
 		<module>_pydecimal</module>
 		<module>_sha</module>
+		<module>_sha3</module>
 		<module>_signal</module>
 		<module>_sqlite3</module>
 		<module>_stringio</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_testmultiphase</module>
 		<module>_tkinter</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
+		<module>asyncio.base_futures</module>
+		<module>asyncio.base_tasks</module>
 		<module>asyncio.compat</module>
 		<module>asyncio.coroutines</module>
 		<module>asyncio.sslproto</module>
@@ -5318,7 +2891,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -5332,7 +2904,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -5364,6 +2935,7 @@
 		<module>crypt_failed</module>
 		<module>ctypes.test.__main__</module>
 		<module>curses.wrapper</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils._msvccompiler</module>
@@ -5376,27 +2948,6 @@
 		<module>django_fetch_doc_urls</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
-		<module>email.base64MIME</module>
-		<module>email.quopriMIME</module>
 		<module>email.test</module>
 		<module>email.test.test_email</module>
 		<module>email.test.test_email_codecs</module>
@@ -5405,11 +2956,11 @@
 		<module>email.test.test_email_torture</module>
 		<module>encodings.koi8_t</module>
 		<module>encodings.kz1048</module>
+		<module>encodings.oem</module>
 		<module>encodings.string_escape</module>
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -5421,7 +2972,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -5444,6 +2994,7 @@
 		<module>idlelib.hyperparser</module>
 		<module>idlelib.idle_test.test_autocomplete</module>
 		<module>idlelib.idle_test.test_autoexpand</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
@@ -5458,12 +3009,14 @@
 		<module>idlelib.idle_test.test_io</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_parenmatch</module>
 		<module>idlelib.idle_test.test_percolator</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -5494,13 +3047,13 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
 		<module>idlelib.tree</module>
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib._bootstrap_external</module>
 		<module>importlib.test</module>
@@ -5575,35 +3128,26 @@
 		<module>new</module>
 		<module>nis_failed</module>
 		<module>os2emxpath</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
 		<module>pypi_download_install</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repack_pypi_cache</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statvfs</module>
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -5615,23 +3159,22 @@
 		<module>ttk</module>
 		<module>turtledemo.sorting_animate</module>
 		<module>typing</module>
-		<module>tzparse</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>unsupported_modules</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
 		<module>zipapp</module>
-		<func>OverflowWarning</func>
+		<func>ModuleNotFoundError</func>
 		<func>RecursionError</func>
 		<func>StandardError</func>
 		<func>StopAsyncIteration</func>
 		<func>apply</func>
 		<func>basestring</func>
+		<func>breakpoint</func>
 		<func>buffer</func>
 		<func>cmp</func>
 		<func>coerce</func>
@@ -5655,7 +3198,6 @@
 		<module>Cookie</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -5667,7 +3209,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
 		<module>Tkdnd</module>
@@ -5680,6 +3221,8 @@
 		<module>__builtin__</module>
 		<module>__main__</module>
 		<module>_abcoll</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bytesio</module>
 		<module>_dbm</module>
 		<module>_fileio</module>
@@ -5687,12 +3230,17 @@
 		<module>_hotshot</module>
 		<module>_lzma</module>
 		<module>_sha</module>
+		<module>_sha3</module>
 		<module>_sqlite3</module>
 		<module>_stringio</module>
 		<module>_sysconfigdata_m</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
 		<module>_tkinter</module>
-		<module>_types</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
+		<module>asyncio.base_futures</module>
+		<module>asyncio.base_tasks</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -5702,7 +3250,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -5716,7 +3263,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -5750,6 +3296,7 @@
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
 		<module>curses.wrapper</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils.emxccompiler</module>
@@ -5759,38 +3306,17 @@
 		<module>distutils.tests.test_ccompiler</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
-		<module>email.base64MIME</module>
-		<module>email.quopriMIME</module>
 		<module>email.test</module>
 		<module>email.test.test_email</module>
 		<module>email.test.test_email_codecs</module>
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>email.test.test_email_torture</module>
+		<module>encodings.oem</module>
 		<module>encodings.string_escape</module>
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -5802,7 +3328,6 @@
 		<module>idlelib.autocomplete_w</module>
 		<module>idlelib.autoexpand</module>
 		<module>idlelib.browser</module>
-		<module>idlelib.buildapp</module>
 		<module>idlelib.calltip_w</module>
 		<module>idlelib.calltips</module>
 		<module>idlelib.codecontext</module>
@@ -5822,6 +3347,7 @@
 		<module>idlelib.help_about</module>
 		<module>idlelib.history</module>
 		<module>idlelib.hyperparser</module>
+		<module>idlelib.idle_test.test_browser</module>
 		<module>idlelib.idle_test.test_colorizer</module>
 		<module>idlelib.idle_test.test_config</module>
 		<module>idlelib.idle_test.test_config_key</module>
@@ -5832,11 +3358,13 @@
 		<module>idlelib.idle_test.test_history</module>
 		<module>idlelib.idle_test.test_iomenu</module>
 		<module>idlelib.idle_test.test_macosx</module>
+		<module>idlelib.idle_test.test_outwin</module>
 		<module>idlelib.idle_test.test_paragraph</module>
 		<module>idlelib.idle_test.test_percolator</module>
 		<module>idlelib.idle_test.test_query</module>
 		<module>idlelib.idle_test.test_redirector</module>
 		<module>idlelib.idle_test.test_replace</module>
+		<module>idlelib.idle_test.test_run</module>
 		<module>idlelib.idle_test.test_scrolledlist</module>
 		<module>idlelib.idle_test.test_search</module>
 		<module>idlelib.idle_test.test_searchbase</module>
@@ -5864,7 +3392,6 @@
 		<module>idlelib.searchengine</module>
 		<module>idlelib.stackviewer</module>
 		<module>idlelib.statusbar</module>
-		<module>idlelib.tabpage</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textview</module>
 		<module>idlelib.tooltip</module>
@@ -5872,6 +3399,7 @@
 		<module>idlelib.undo</module>
 		<module>idlelib.windows</module>
 		<module>idlelib.zoomheight</module>
+		<module>idlelib.zzdummy</module>
 		<module>ihooks</module>
 		<module>importlib.test</module>
 		<module>importlib.test.__main__</module>
@@ -5944,33 +3472,24 @@
 		<module>new</module>
 		<module>nis_failed</module>
 		<module>os2emxpath</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>secrets</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statvfs</module>
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -5980,20 +3499,19 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
-		<module>tzparse</module>
+		<module>unittest.test.testmock.testsealable</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
 		<module>versions_updater</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
-		<func>OverflowWarning</func>
+		<func>ModuleNotFoundError</func>
 		<func>StandardError</func>
 		<func>apply</func>
 		<func>basestring</func>
+		<func>breakpoint</func>
 		<func>buffer</func>
 		<func>cmp</func>
 		<func>coerce</func>
@@ -6018,7 +3536,6 @@
 		<module>Cookie</module>
 		<module>Dialog</module>
 		<module>DocXMLRPCServer</module>
-		<module>FCNTL</module>
 		<module>FileDialog</module>
 		<module>FixTk</module>
 		<module>HTMLParser</module>
@@ -6030,7 +3547,6 @@
 		<module>SimpleXMLRPCServer</module>
 		<module>SocketServer</module>
 		<module>StringIO</module>
-		<module>TERMIOS</module>
 		<module>Tix</module>
 		<module>Tkconstants</module>
 		<module>Tkdnd</module>
@@ -6043,14 +3559,21 @@
 		<module>__builtin__</module>
 		<module>__main__</module>
 		<module>_abcoll</module>
+		<module>_asyncio</module>
+		<module>_blake2</module>
 		<module>_bytesio</module>
 		<module>_fileio</module>
 		<module>_hotshot</module>
 		<module>_sha</module>
+		<module>_sha3</module>
 		<module>_stringio</module>
 		<module>_sysconfigdata</module>
-		<module>_types</module>
+		<module>_sysconfigdata_m_linux_x86_64-linux-gnu</module>
+		<module>_uuid</module>
+		<module>_xxtestfuzz</module>
 		<module>anydbm</module>
+		<module>asyncio.base_futures</module>
+		<module>asyncio.base_tasks</module>
 		<module>audiodev</module>
 		<module>bsddb</module>
 		<module>bsddb.db</module>
@@ -6060,7 +3583,6 @@
 		<module>bsddb.dbtables</module>
 		<module>bsddb.dbutils</module>
 		<module>bsddb.test</module>
-		<module>bsddb.test.test_1413192</module>
 		<module>bsddb.test.test_all</module>
 		<module>bsddb.test.test_associate</module>
 		<module>bsddb.test.test_basics</module>
@@ -6074,7 +3596,6 @@
 		<module>bsddb.test.test_dbtables</module>
 		<module>bsddb.test.test_distributed_transactions</module>
 		<module>bsddb.test.test_early_close</module>
-		<module>bsddb.test.test_env_close</module>
 		<module>bsddb.test.test_fileid</module>
 		<module>bsddb.test.test_get_none</module>
 		<module>bsddb.test.test_join</module>
@@ -6108,6 +3629,7 @@
 		<module>ctypes.test.test_errcheck</module>
 		<module>ctypes.test.test_integers</module>
 		<module>curses.wrapper</module>
+		<module>dataclasses</module>
 		<module>dbhash</module>
 		<module>dircache</module>
 		<module>distutils.emxccompiler</module>
@@ -6117,38 +3639,17 @@
 		<module>distutils.tests.test_ccompiler</module>
 		<module>dumbdbm</module>
 		<module>dummy_thread</module>
-		<module>email.Charset</module>
-		<module>email.Encoders</module>
-		<module>email.Errors</module>
-		<module>email.FeedParser</module>
-		<module>email.Generator</module>
-		<module>email.Header</module>
-		<module>email.Iterators</module>
-		<module>email.MIMEAudio</module>
-		<module>email.MIMEBase</module>
-		<module>email.MIMEImage</module>
-		<module>email.MIMEMessage</module>
-		<module>email.MIMEMultipart</module>
-		<module>email.MIMENonMultipart</module>
-		<module>email.MIMEText</module>
-		<module>email.Message</module>
-		<module>email.Parser</module>
-		<module>email.Utils</module>
-		<module>email._compat21</module>
-		<module>email._compat22</module>
-		<module>email.base64MIME</module>
-		<module>email.quopriMIME</module>
 		<module>email.test</module>
 		<module>email.test.test_email</module>
 		<module>email.test.test_email_codecs</module>
 		<module>email.test.test_email_codecs_renamed</module>
 		<module>email.test.test_email_renamed</module>
 		<module>email.test.test_email_torture</module>
+		<module>encodings.oem</module>
 		<module>encodings.string_escape</module>
 		<module>exceptions</module>
 		<module>fpformat</module>
 		<module>future_builtins</module>
-		<module>gopherlib</module>
 		<module>hotshot</module>
 		<module>hotshot.log</module>
 		<module>hotshot.stats</module>
@@ -6200,7 +3701,325 @@
 		<module>idlelib.WindowList</module>
 		<module>idlelib.ZoomHeight</module>
 		<module>idlelib.aboutDialog</module>
-		<module>idlelib.buildapp</module>
+		<module>idlelib.configDialog</module>
+		<module>idlelib.configHandler</module>
+		<module>idlelib.configHelpSourceEdit</module>
+		<module>idlelib.configSectionNameDialog</module>
+		<module>idlelib.dynOptionMenuWidget</module>
+		<module>idlelib.idle_test.test_browser</module>
+		<module>idlelib.idle_test.test_config_name</module>
+		<module>idlelib.idle_test.test_formatparagraph</module>
+		<module>idlelib.idle_test.test_idlehistory</module>
+		<module>idlelib.idle_test.test_io</module>
+		<module>idlelib.idle_test.test_outwin</module>
+		<module>idlelib.idle_test.test_run</module>
+		<module>idlelib.idle_test.test_searchdialogbase</module>
+		<module>idlelib.idle_test.test_widgetredir</module>
+		<module>idlelib.idlever</module>
+		<module>idlelib.keybindingDialog</module>
+		<module>idlelib.macosxSupport</module>
+		<module>idlelib.testcode</module>
+		<module>idlelib.textView</module>
+		<module>idlelib.zzdummy</module>
+		<module>ihooks</module>
+		<module>importlib.test</module>
+		<module>importlib.test.__main__</module>
+		<module>importlib.test.abc</module>
+		<module>importlib.test.benchmark</module>
+		<module>importlib.test.builtin</module>
+		<module>importlib.test.builtin.test_finder</module>
+		<module>importlib.test.builtin.test_loader</module>
+		<module>importlib.test.builtin.util</module>
+		<module>importlib.test.extension</module>
+		<module>importlib.test.extension.test_case_sensitivity</module>
+		<module>importlib.test.extension.test_finder</module>
+		<module>importlib.test.extension.test_loader</module>
+		<module>importlib.test.extension.test_path_hook</module>
+		<module>importlib.test.extension.util</module>
+		<module>importlib.test.frozen</module>
+		<module>importlib.test.frozen.test_finder</module>
+		<module>importlib.test.frozen.test_loader</module>
+		<module>importlib.test.import_</module>
+		<module>importlib.test.import_.test___package__</module>
+		<module>importlib.test.import_.test_api</module>
+		<module>importlib.test.import_.test_caching</module>
+		<module>importlib.test.import_.test_fromlist</module>
+		<module>importlib.test.import_.test_meta_path</module>
+		<module>importlib.test.import_.test_packages</module>
+		<module>importlib.test.import_.test_path</module>
+		<module>importlib.test.import_.test_relative_imports</module>
+		<module>importlib.test.import_.util</module>
+		<module>importlib.test.regrtest</module>
+		<module>importlib.test.source</module>
+		<module>importlib.test.source.test_abc_loader</module>
+		<module>importlib.test.source.test_case_sensitivity</module>
+		<module>importlib.test.source.test_file_loader</module>
+		<module>importlib.test.source.test_finder</module>
+		<module>importlib.test.source.test_path_hook</module>
+		<module>importlib.test.source.test_source_encoding</module>
+		<module>importlib.test.source.util</module>
+		<module>importlib.test.test_abc</module>
+		<module>importlib.test.test_api</module>
+		<module>importlib.test.test_util</module>
+		<module>importlib.test.util</module>
+		<module>imputil</module>
+		<module>json.tests</module>
+		<module>json.tests.test_check_circular</module>
+		<module>json.tests.test_decode</module>
+		<module>json.tests.test_default</module>
+		<module>json.tests.test_dump</module>
+		<module>json.tests.test_encode_basestring_ascii</module>
+		<module>json.tests.test_fail</module>
+		<module>json.tests.test_float</module>
+		<module>json.tests.test_indent</module>
+		<module>json.tests.test_pass1</module>
+		<module>json.tests.test_pass2</module>
+		<module>json.tests.test_pass3</module>
+		<module>json.tests.test_recursion</module>
+		<module>json.tests.test_scanstring</module>
+		<module>json.tests.test_separators</module>
+		<module>json.tests.test_speedups</module>
+		<module>json.tests.test_tool</module>
+		<module>json.tests.test_unicode</module>
+		<module>linuxaudiodev</module>
+		<module>markupbase</module>
+		<module>md5</module>
+		<module>mhlib</module>
+		<module>mimetools</module>
+		<module>mimify</module>
+		<module>multifile</module>
+		<module>multiprocessing.forking</module>
+		<module>mutex</module>
+		<module>new</module>
+		<module>nis_failed</module>
+		<module>os2emxpath</module>
+		<module>popen2</module>
+		<module>posixfile</module>
+		<module>pydoc_topics</module>
+		<module>repr</module>
+		<module>rexec</module>
+		<module>rfc822</module>
+		<module>robotparser</module>
+		<module>sets</module>
+		<module>sgmllib</module>
+		<module>sha</module>
+		<module>sqlite3.test.py25tests</module>
+		<module>sre</module>
+		<module>statvfs</module>
+		<module>stringold</module>
+		<module>strop</module>
+		<module>sunaudio</module>
+		<module>thread</module>
+		<module>tkColorChooser</module>
+		<module>tkCommonDialog</module>
+		<module>tkFileDialog</module>
+		<module>tkFont</module>
+		<module>tkMessageBox</module>
+		<module>tkSimpleDialog</module>
+		<module>tkinter._fix</module>
+		<module>toaiff</module>
+		<module>ttk</module>
+		<module>unittest.test.testmock.testsealable</module>
+		<module>urllib2</module>
+		<module>urlparse</module>
+		<module>user</module>
+		<module>versions_updater</module>
+		<module>whichdb</module>
+		<module>xmllib</module>
+		<module>xmlrpclib</module>
+		<func>ModuleNotFoundError</func>
+		<func>StandardError</func>
+		<func>apply</func>
+		<func>basestring</func>
+		<func>breakpoint</func>
+		<func>buffer</func>
+		<func>cmp</func>
+		<func>coerce</func>
+		<func>execfile</func>
+		<func>file</func>
+		<func>intern</func>
+		<func>long</func>
+		<func>raw_input</func>
+		<func>reduce</func>
+		<func>reload</func>
+		<func>unichr</func>
+		<func>unicode</func>
+		<func>xrange</func>
+	</python>
+	<python version="3.7">
+		<module>BaseHTTPServer</module>
+		<module>Bastion</module>
+		<module>CDROM</module>
+		<module>CGIHTTPServer</module>
+		<module>Canvas</module>
+		<module>ConfigParser</module>
+		<module>Cookie</module>
+		<module>DLFCN</module>
+		<module>Dialog</module>
+		<module>DocXMLRPCServer</module>
+		<module>FileDialog</module>
+		<module>FixTk</module>
+		<module>HTMLParser</module>
+		<module>IN</module>
+		<module>MimeWriter</module>
+		<module>Queue</module>
+		<module>ScrolledText</module>
+		<module>SimpleDialog</module>
+		<module>SimpleHTTPServer</module>
+		<module>SimpleXMLRPCServer</module>
+		<module>SocketServer</module>
+		<module>StringIO</module>
+		<module>TYPES</module>
+		<module>Tix</module>
+		<module>Tkconstants</module>
+		<module>Tkdnd</module>
+		<module>Tkinter</module>
+		<module>UserDict</module>
+		<module>UserList</module>
+		<module>UserString</module>
+		<module>_LWPCookieJar</module>
+		<module>_MozillaCookieJar</module>
+		<module>__builtin__</module>
+		<module>__main__</module>
+		<module>_abcoll</module>
+		<module>_bytesio</module>
+		<module>_dbm</module>
+		<module>_fileio</module>
+		<module>_gdbm</module>
+		<module>_hotshot</module>
+		<module>_sha</module>
+		<module>_sqlite3</module>
+		<module>_stringio</module>
+		<module>_sysconfigdata</module>
+		<module>_sysconfigdata_m</module>
+		<module>anydbm</module>
+		<module>asyncio.compat</module>
+		<module>audiodev</module>
+		<module>bsddb</module>
+		<module>bsddb.db</module>
+		<module>bsddb.dbobj</module>
+		<module>bsddb.dbrecio</module>
+		<module>bsddb.dbshelve</module>
+		<module>bsddb.dbtables</module>
+		<module>bsddb.dbutils</module>
+		<module>bsddb.test</module>
+		<module>bsddb.test.test_all</module>
+		<module>bsddb.test.test_associate</module>
+		<module>bsddb.test.test_basics</module>
+		<module>bsddb.test.test_compare</module>
+		<module>bsddb.test.test_compat</module>
+		<module>bsddb.test.test_cursor_pget_bug</module>
+		<module>bsddb.test.test_db</module>
+		<module>bsddb.test.test_dbenv</module>
+		<module>bsddb.test.test_dbobj</module>
+		<module>bsddb.test.test_dbshelve</module>
+		<module>bsddb.test.test_dbtables</module>
+		<module>bsddb.test.test_distributed_transactions</module>
+		<module>bsddb.test.test_early_close</module>
+		<module>bsddb.test.test_fileid</module>
+		<module>bsddb.test.test_get_none</module>
+		<module>bsddb.test.test_join</module>
+		<module>bsddb.test.test_lock</module>
+		<module>bsddb.test.test_misc</module>
+		<module>bsddb.test.test_pickle</module>
+		<module>bsddb.test.test_queue</module>
+		<module>bsddb.test.test_recno</module>
+		<module>bsddb.test.test_replication</module>
+		<module>bsddb.test.test_sequence</module>
+		<module>bsddb.test.test_thread</module>
+		<module>build_class</module>
+		<module>cPickle</module>
+		<module>cStringIO</module>
+		<module>collections.__main__</module>
+		<module>commands</module>
+		<module>compiler</module>
+		<module>compiler.ast</module>
+		<module>compiler.consts</module>
+		<module>compiler.future</module>
+		<module>compiler.misc</module>
+		<module>compiler.pyassem</module>
+		<module>compiler.pycodegen</module>
+		<module>compiler.symbols</module>
+		<module>compiler.syntax</module>
+		<module>compiler.transformer</module>
+		<module>compiler.visitor</module>
+		<module>cookielib</module>
+		<module>copy_reg</module>
+		<module>crypt_failed</module>
+		<module>ctypes.test.runtests</module>
+		<module>ctypes.test.test_errcheck</module>
+		<module>ctypes.test.test_integers</module>
+		<module>curses.wrapper</module>
+		<module>dbhash</module>
+		<module>dircache</module>
+		<module>distutils.emxccompiler</module>
+		<module>distutils.mwerkscompiler</module>
+		<module>distutils.tests.setuptools_build_ext</module>
+		<module>distutils.tests.setuptools_extension</module>
+		<module>distutils.tests.test_ccompiler</module>
+		<module>dumbdbm</module>
+		<module>dummy_thread</module>
+		<module>email.test</module>
+		<module>email.test.test_email</module>
+		<module>email.test.test_email_codecs</module>
+		<module>email.test.test_email_codecs_renamed</module>
+		<module>email.test.test_email_renamed</module>
+		<module>email.test.test_email_torture</module>
+		<module>encodings.string_escape</module>
+		<module>exceptions</module>
+		<module>fpformat</module>
+		<module>future_builtins</module>
+		<module>hotshot</module>
+		<module>hotshot.log</module>
+		<module>hotshot.stats</module>
+		<module>hotshot.stones</module>
+		<module>htmlentitydefs</module>
+		<module>htmllib</module>
+		<module>httplib</module>
+		<module>idlelib.AutoComplete</module>
+		<module>idlelib.AutoCompleteWindow</module>
+		<module>idlelib.AutoExpand</module>
+		<module>idlelib.Bindings</module>
+		<module>idlelib.CallTipWindow</module>
+		<module>idlelib.CallTips</module>
+		<module>idlelib.ClassBrowser</module>
+		<module>idlelib.CodeContext</module>
+		<module>idlelib.ColorDelegator</module>
+		<module>idlelib.Debugger</module>
+		<module>idlelib.Delegator</module>
+		<module>idlelib.EditorWindow</module>
+		<module>idlelib.FileList</module>
+		<module>idlelib.FormatParagraph</module>
+		<module>idlelib.GrepDialog</module>
+		<module>idlelib.HyperParser</module>
+		<module>idlelib.IOBinding</module>
+		<module>idlelib.IdleHistory</module>
+		<module>idlelib.MultiCall</module>
+		<module>idlelib.MultiStatusBar</module>
+		<module>idlelib.ObjectBrowser</module>
+		<module>idlelib.OutputWindow</module>
+		<module>idlelib.ParenMatch</module>
+		<module>idlelib.PathBrowser</module>
+		<module>idlelib.Percolator</module>
+		<module>idlelib.PyParse</module>
+		<module>idlelib.PyShell</module>
+		<module>idlelib.RemoteDebugger</module>
+		<module>idlelib.RemoteObjectBrowser</module>
+		<module>idlelib.ReplaceDialog</module>
+		<module>idlelib.RstripExtension</module>
+		<module>idlelib.ScriptBinding</module>
+		<module>idlelib.ScrolledList</module>
+		<module>idlelib.SearchDialog</module>
+		<module>idlelib.SearchDialogBase</module>
+		<module>idlelib.SearchEngine</module>
+		<module>idlelib.StackViewer</module>
+		<module>idlelib.ToolTip</module>
+		<module>idlelib.TreeWidget</module>
+		<module>idlelib.UndoDelegator</module>
+		<module>idlelib.WidgetRedirector</module>
+		<module>idlelib.WindowList</module>
+		<module>idlelib.ZoomHeight</module>
+		<module>idlelib.aboutDialog</module>
 		<module>idlelib.configDialog</module>
 		<module>idlelib.configHandler</module>
 		<module>idlelib.configHelpSourceEdit</module>
@@ -6215,7 +4034,7 @@
 		<module>idlelib.idlever</module>
 		<module>idlelib.keybindingDialog</module>
 		<module>idlelib.macosxSupport</module>
-		<module>idlelib.tabpage</module>
+		<module>idlelib.tabbedpages</module>
 		<module>idlelib.testcode</module>
 		<module>idlelib.textView</module>
 		<module>ihooks</module>
@@ -6278,7 +4097,9 @@
 		<module>json.tests.test_speedups</module>
 		<module>json.tests.test_tool</module>
 		<module>json.tests.test_unicode</module>
+		<module>lib2to3.fixes.fix_callable</module>
 		<module>linuxaudiodev</module>
+		<module>macurl2path</module>
 		<module>markupbase</module>
 		<module>md5</module>
 		<module>mhlib</module>
@@ -6290,32 +4111,23 @@
 		<module>new</module>
 		<module>nis_failed</module>
 		<module>os2emxpath</module>
-		<module>pcre</module>
 		<module>popen2</module>
 		<module>posixfile</module>
-		<module>pre</module>
 		<module>pydoc_topics</module>
-		<module>reconvert</module>
-		<module>regex</module>
-		<module>regex_syntax</module>
-		<module>regsub</module>
 		<module>repr</module>
 		<module>rexec</module>
 		<module>rfc822</module>
 		<module>robotparser</module>
-		<module>rotor</module>
 		<module>sets</module>
 		<module>sgmllib</module>
 		<module>sha</module>
 		<module>sqlite3.test.py25tests</module>
 		<module>sre</module>
-		<module>statcache</module>
 		<module>statvfs</module>
 		<module>stringold</module>
 		<module>strop</module>
 		<module>sunaudio</module>
 		<module>thread</module>
-		<module>timing</module>
 		<module>tkColorChooser</module>
 		<module>tkCommonDialog</module>
 		<module>tkFileDialog</module>
@@ -6325,17 +4137,13 @@
 		<module>tkinter._fix</module>
 		<module>toaiff</module>
 		<module>ttk</module>
-		<module>tzparse</module>
 		<module>urllib2</module>
 		<module>urlparse</module>
 		<module>user</module>
 		<module>versions_updater</module>
 		<module>whichdb</module>
-		<module>whrandom</module>
 		<module>xmllib</module>
 		<module>xmlrpclib</module>
-		<module>xreadlines</module>
-		<func>OverflowWarning</func>
 		<func>StandardError</func>
 		<func>apply</func>
 		<func>basestring</func>

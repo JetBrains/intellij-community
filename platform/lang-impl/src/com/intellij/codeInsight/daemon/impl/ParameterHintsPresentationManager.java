@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -97,6 +98,22 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer.highlighted;
   }
 
+  public void setCurrent(@NotNull Inlay hint, boolean current) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.current;
+    if (current != oldValue) {
+      renderer.current = current;
+      hint.repaint();
+    }
+  }
+
+  public boolean isCurrent(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.current;
+  }
+
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
     renderer.update(editor, newText, true);
@@ -137,17 +154,11 @@ public class ParameterHintsPresentationManager implements Disposable {
     String familyName = UIManager.getFont("Label.font").getFamily();
     int size = Math.max(1, editor.getColorsScheme().getEditorFontSize() - 1);
     MyFontMetrics metrics = editor.getUserData(HINT_FONT_METRICS);
-    if (metrics != null) {
-      Font font = metrics.getFont();
-      if (!familyName.equals(font.getFamily()) || size != font.getSize()) metrics = null;
-      else {
-        FontRenderContext currentContext = FontInfo.getFontRenderContext(editor.getContentComponent());
-        if (!currentContext.equals(metrics.metrics.getFontRenderContext())) metrics = null;
-      }
+    if (metrics != null && !metrics.isActual(editor, familyName, size)) {
+      metrics = null;
     }
     if (metrics == null) {
-      Font font = new Font(familyName, Font.PLAIN, size);
-      metrics = new MyFontMetrics(editor, font);
+      metrics = new MyFontMetrics(editor, familyName, size);
       editor.putUserData(HINT_FONT_METRICS, metrics);
     }
     return metrics;
@@ -157,10 +168,27 @@ public class ParameterHintsPresentationManager implements Disposable {
     private final FontMetrics metrics;
     private final int lineHeight;
 
-    private MyFontMetrics(Editor editor, Font font) {
-      metrics = editor.getContentComponent().getFontMetrics(font);
+    private MyFontMetrics(Editor editor, String familyName, int size) {
+      Font font = new Font(familyName, Font.PLAIN, size);
+      FontRenderContext context = getCurrentContext(editor);
+      metrics = FontInfo.getFontMetrics(font, context);
       // We assume this will be a better approximation to a real line height for a given font
-      lineHeight = (int)Math.ceil(font.createGlyphVector(metrics.getFontRenderContext(), "Ap").getVisualBounds().getHeight());
+      lineHeight = (int)Math.ceil(font.createGlyphVector(context, "Ap").getVisualBounds().getHeight());
+    }
+
+    private boolean isActual(Editor editor, String familyName, int size) {
+      Font font = metrics.getFont();
+      if (!familyName.equals(font.getFamily()) || size != font.getSize()) return false;
+      FontRenderContext currentContext = getCurrentContext(editor);
+      return currentContext.equals(metrics.getFontRenderContext());
+    }
+
+    private static FontRenderContext getCurrentContext(@NotNull Editor editor) {
+      FontRenderContext editorContext = FontInfo.getFontRenderContext(editor.getContentComponent());
+      return new FontRenderContext(editorContext.getTransform(), 
+                                   AntialiasingType.getKeyForCurrentScope(false), 
+                                   editor instanceof EditorImpl ? ((EditorImpl)editor).myFractionalMetricsHintValue 
+                                                                : RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
     }
 
     private Font getFont() {
@@ -174,6 +202,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int steps;
     private int step;
     private boolean highlighted;
+    private boolean current;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
       updateState(editor, text, animated);
@@ -222,30 +251,43 @@ public class ParameterHintsPresentationManager implements Disposable {
       if (!(editor instanceof EditorImpl)) return;
       int ascent = ((EditorImpl)editor).getAscent();
       int descent = ((EditorImpl)editor).getDescent();
+      Graphics2D g2d = (Graphics2D)g;
       if (myText != null && (step > steps || startWidth != 0)) {
         TextAttributes attributes = 
           editor.getColorsScheme().getAttributes(highlighted ? DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED 
                                                              : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
+          int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
           Color backgroundColor = attributes.getBackgroundColor();
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
             GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
             g.setColor(backgroundColor);
-            int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
             g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
             config.restore();
           }
           Color foregroundColor = attributes.getForegroundColor();
           if (foregroundColor != null) {
+            Object savedHint = g2d.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+            Shape savedClip = g.getClip();
+
             g.setColor(foregroundColor);
             g.setFont(getFont(editor));
-            Shape savedClip = g.getClip();
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false));
             g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4);
             FontMetrics metrics = fontMetrics.metrics;
             g.drawString(myText, r.x + 7, r.y + Math.max(ascent, (r.height + metrics.getAscent() - metrics.getDescent()) / 2) - 1);
+            
             g.setClip(savedClip);
+            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, savedHint);
+
+            if (current) {
+              savedHint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+              g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+              g.drawRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
+              g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+            }
           }
         }
       }
@@ -257,7 +299,6 @@ public class ParameterHintsPresentationManager implements Disposable {
         int xEnd = r.x + r.width;
         int y = r.y + ascent;
         Font font = editor.getColorsScheme().getFont(EditorFontType.PLAIN);
-        Graphics2D g2d = (Graphics2D)g;
         if (effectType == EffectType.LINE_UNDERSCORE) {
           EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font);
         }

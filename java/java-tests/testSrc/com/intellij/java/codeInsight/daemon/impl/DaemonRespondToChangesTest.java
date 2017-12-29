@@ -492,7 +492,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEquals("Field can be converted to a local variable", infos.get(0).getDescription());
   }
 
-  private static class MyWholeInspection extends LocalInspectionTool {
+  private static class MyTrackingInspection extends LocalInspectionTool {
     private final List<PsiElement> visited = Collections.synchronizedList(new ArrayList<>());
 
     @Nls
@@ -533,6 +533,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       };
     }
 
+  }
+  private static class MyWholeInspection extends MyTrackingInspection {
     @Override
     public boolean runForWholeFile() {
       return true;
@@ -540,9 +542,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testWholeFileInspectionRestartedOnAllElements() {
-    MyWholeInspection tool = new MyWholeInspection();
-    enableInspectionTool(tool);
-    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+    MyTrackingInspection tool = registerInspection(new MyWholeInspection());
 
     configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     List<HighlightInfo> infos = doHighlighting(HighlightSeverity.WARNING);
@@ -559,11 +559,15 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue("visitedCount = "+visitedCount+"; countAfter="+countAfter, countAfter >= visitedCount);
   }
 
-  public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
-    MyWholeInspection tool = new MyWholeInspection();
-
+  @NotNull
+  private <T extends LocalInspectionTool> T registerInspection(T tool) {
     enableInspectionTool(tool);
     disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+    return tool;
+  }
+
+  public void testWholeFileInspectionRestartedEvenIfThereWasAModificationInsideCodeBlockInOtherFile() throws Exception {
+    MyTrackingInspection tool = registerInspection(new MyWholeInspection());
 
     PsiFile file = configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
     PsiFile otherFile = createFile(myModule, file.getContainingDirectory().getVirtualFile(), "otherFile.txt", "xxx");
@@ -590,6 +594,19 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     int countAfter2 = tool.visited.size();
     assertTrue(tool.visited.toString(), countAfter2 > 0);
+  }
+
+  public void testDaemonIsRestartedOnPsiCacheDrop() {
+    MyTrackingInspection tool = registerInspection(new MyTrackingInspection());
+
+    configureByText(JavaFileType.INSTANCE, "class X { void f() { <caret> } }");
+    waitForDaemon();
+    tool.visited.clear();
+
+    getPsiManager().dropPsiCaches();
+
+    waitForDaemon();
+    assertNotEmpty(tool.visited);
   }
 
   public void testOverriddenMethodMarkers() throws Exception {
@@ -1308,7 +1325,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       StoreUtil.saveDocumentsAndProjectsAndApp();
 
-      checkDaemonReaction(false, () -> StoreUtil.saveDocumentsAndProjectsAndApp());
+      checkDaemonReaction(false, StoreUtil::saveDocumentsAndProjectsAndApp);
     }
     finally {
       application.doNotSave(appSave);
@@ -2469,9 +2486,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testDumbQuickFixIsNoLongerVisibleAfterApplied() {
-    MyInspection tool = new MyInspection();
-    enableInspectionTool(tool);
-    disposeOnTearDown(() -> disableInspectionTool(tool.getShortName()));
+    registerInspection(new MyInspection());
 
     @Language("JAVA")
     String text = "class X { void f() { if (this == null) {} else return; } }";

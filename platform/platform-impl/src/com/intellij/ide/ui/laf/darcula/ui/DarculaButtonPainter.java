@@ -17,15 +17,16 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.geom.Path2D;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,38 +36,66 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    final Graphics2D g2d = (Graphics2D)g;
-    final Insets ins = getBorderInsets(c);
-    final int yOff = (ins.top + ins.bottom) / 4;
-    final boolean square = DarculaButtonUI.isSquare(c);
-    int offset = JBUI.scale(square ? 1 : getOffset());
-    int w = c.getWidth();
-    int h = c.getHeight();
-    int diam = JBUI.scale(22);
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    if (c.hasFocus()) {
-      if (DarculaButtonUI.isHelpButton((JComponent)c)) {
-          DarculaUIUtil.paintFocusOval(g2d, (w - diam) / 2, (h - diam) / 2, diam, diam);
-      } else {
-        DarculaUIUtil.paintFocusRing(g2d, new Rectangle(offset, yOff, width - 2 * offset, height - 2 * yOff));
-      }
-    } else {
-      final GraphicsConfig config = new GraphicsConfig(g);
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
-      g2d.setPaint(UIUtil.getGradientPaint(width / 2, y + yOff + JBUI.scale(1), Gray._80.withAlpha(90), width / 2, height - 2 * yOff, Gray._90.withAlpha(90)));
-      //g.drawRoundRect(x + offset + 1, y + yOff + 1, width - 2 * offset, height - 2*yOff, 5, 5);
-      ((Graphics2D)g).setPaint(getBorderColor());
-      if (DarculaButtonUI.isHelpButton((JComponent)c)) {
-        g.drawOval((w - diam) / 2, (h - diam) / 2, diam, diam);
-      } else {
-        g.translate(x,y);
-        int r = JBUI.scale(square ? 3 : 5);
-        g.drawRoundRect(offset, yOff, width - 2 * offset, height - 2 * yOff, r, r);
-        g.translate(-x,-y);
-      }
+      if (DarculaButtonUI.isSquare(c)) {
 
-      config.restore();
+        Rectangle r = new Rectangle(width, height);
+        //JBInsets.removeFrom(r, JBUI.insets(1));
+        g2.translate(r.x, r.y);
+
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        float lw = DarculaUIUtil.lw(g2);
+        float bw = DarculaUIUtil.bw();
+        float arc = JBUI.scale(2.0f);
+        border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc - lw, arc - lw),
+                      false);
+
+        g2.setColor(DarculaUIUtil.getOutlineColor(c.isEnabled()));
+        g2.fill(border);
+
+        if (c.hasFocus()) {
+          DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
+        }
+      } else {
+        int diam = JBUI.scale(22);
+        if (c.hasFocus()) {
+          int off = JBUI.scale(2);
+          if (DarculaButtonUI.isHelpButton((JComponent)c)) {
+            g2.translate(off, (height - diam) / 2.0 - off);
+            DarculaUIUtil.paintFocusBorder(g2, width - off * 2, diam + off * 2, diam / 2.0f + 2.0f * off , true);
+          }
+          else {
+            g2.translate(off, off);
+            DarculaUIUtil.paintFocusBorder(g2, width - off * 2, height - off * 2, DarculaUIUtil.arc(), true);
+          }
+        }
+        else {
+          Insets ins = getBorderInsets(c);
+          int yOff = (ins.top + ins.bottom) / 4;
+          int offset = JBUI.scale(getOffset());
+          int w = c.getWidth();
+          int h = c.getHeight();
+
+          g2.setPaint(getBorderColor());
+          if (DarculaButtonUI.isHelpButton((JComponent)c)) {
+            g2.drawOval((w - diam) / 2, (h - diam) / 2, diam, diam);
+          }
+          else {
+            g2.translate(x, y);
+            int r = JBUI.scale(5);
+            g2.drawRoundRect(offset, yOff, width - 2 * offset, height - 2 * yOff, r, r);
+            g2.translate(-x, -y);
+          }
+        }
+      }
+    } finally {
+      g2.dispose();
     }
   }
 
@@ -80,7 +109,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       return JBUI.insets(4, 16, 4, 16);
     }
     if (DarculaButtonUI.isSquare(c)) {
-      return JBUI.insets(2, 0, 2, 0).asUIResource();
+      return JBUI.insets(3).asUIResource();
     }
     return JBUI.insets(8, 16, 8, 14).asUIResource();
   }

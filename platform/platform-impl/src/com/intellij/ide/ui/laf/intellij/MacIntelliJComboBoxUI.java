@@ -17,8 +17,10 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,6 +90,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
         if (component instanceof JComponent) {
           JComponent comboBoxEditor = (JComponent)component;
           comboBoxEditor.setBorder(ourDefaultEditorBorder);
+          comboBoxEditor.setOpaque(false);
           comboBoxEditor.addPropertyChangeListener("border", myEditorBorderChangeListener);
         }
       }
@@ -125,7 +128,12 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
       @Override
       public void paint(Graphics g) {
         Icon icon = MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, comboBox.isEnabled());
-        icon.paintIcon(this, g, 0, 0);
+        if (getWidth() > icon.getIconWidth() || getHeight() > icon.getIconHeight()) {
+          Image image = IconUtil.toImage(icon);
+          UIUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null, null);
+        } else {
+          icon.paintIcon(this, g, 0, 0);
+        }
       }
 
       @Override
@@ -147,7 +155,8 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Insets i = comboBox.getInsets();
     int iconWidth = DEFAULT_ICON.getIconWidth() + i.right;
     int iconHeight = DEFAULT_ICON.getIconHeight() + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth), iconHeight);
+    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
+    return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth), Math.max(iconHeight, editorHeight));
   }
 
   @Override
@@ -183,12 +192,13 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
             }
 
             @Override
-            public void setBorder(Border border) {
+            public Border getBorder() {
+              return ourDefaultEditorBorder;
             }
 
             @Override
-            public Border getBorder() {
-              return ourDefaultEditorBorder;
+            public Insets getInsets() {
+              return ourDefaultEditorBorder.getBorderInsets(this);
             }
 
             @Override
@@ -286,19 +296,18 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
         Insets cbInsets = cb.getInsets();
         if (arrowButton != null) {
-          Insets arrowInsets = arrowButton.getInsets();
           Dimension prefSize = arrowButton.getPreferredSize();
-          int buttonWidth = prefSize.width + arrowInsets.left + arrowInsets.right;
-          int buttonHeight = prefSize.height + arrowInsets.top + arrowInsets.bottom;
 
-          arrowButton.setBounds(bounds.width - buttonWidth - cbInsets.right, cbInsets.top, buttonWidth, buttonHeight);
+          int buttonHeight = bounds.height - (cbInsets.top + cbInsets.bottom);
+          double ar = (double)buttonHeight / prefSize.height;
+          int buttonWidth = (int)Math.floor(prefSize.width * ar);
+          int offset = (int)Math.round(ar - 1.0);
+
+          arrowButton.setBounds(bounds.width - buttonWidth - cbInsets.right + offset, cbInsets.top, buttonWidth, buttonHeight);
         }
 
         if (editor != null ) {
           bounds = rectangleForCurrentValue();
-          Insets editorInsets = ourDefaultEditorBorder.getBorderInsets(editor);
-          bounds.y += editorInsets.top;
-          bounds.height -= editorInsets.top + editorInsets.bottom;
           editor.setBounds(bounds);
         }
       }

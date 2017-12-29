@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * Date: 17-Jan-2008
  */
 public class ProjectRootsUtil {
   private ProjectRootsUtil() { }

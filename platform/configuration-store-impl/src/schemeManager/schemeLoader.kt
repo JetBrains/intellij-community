@@ -66,7 +66,7 @@ private fun preload(isOldSchemeNaming: Boolean, parser: MXParser): String? {
 
 internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtension: String?) {
   // we keep it to detect rename
-  var schemeName: String? = null
+  var schemeKey: String? = null
 
   var digest: ByteArray? = null
 

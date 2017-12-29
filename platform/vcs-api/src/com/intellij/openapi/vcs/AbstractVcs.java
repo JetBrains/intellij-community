@@ -575,6 +575,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return true;
   }
 
+  public boolean arePartialChangelistsSupported() {
+    return false;
+  }
+
   public CheckoutProvider getCheckoutProvider() {
     return null;
   }

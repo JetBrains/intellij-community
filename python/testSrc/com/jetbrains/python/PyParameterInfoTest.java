@@ -44,7 +44,6 @@ import java.util.List;
 /**
  * Tests parameter info available via ^P at call sites.
  * <br/>User: dcheryasov
- * Date: Jul 14, 2009 3:42:44 AM
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
 
@@ -440,8 +439,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22005
   public void testWithSpecifiedType() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -463,8 +460,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22004
   public void testMultiResolved() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -480,8 +475,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsInImportedClass() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -497,8 +490,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsInImportedModule() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -513,8 +504,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedClass() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -530,8 +519,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -704,6 +691,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         for (int offset : StreamEx.of(loadTest(2).values()).map(PsiElement::getTextOffset)) {
           feignCtrlP(offset).check("self: Foo, arg: int", new String[]{"arg: int"}, new String[]{"self: Foo, "});
         }
+      }
+    );
+  }
+
+  // PY-26582
+  public void testStructuralType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(1);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("p1, p2: int", new String[]{"p1, "});
       }
     );
   }

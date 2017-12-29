@@ -61,8 +61,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
                              @NotNull PsiElement endElement) {
     final PsiParameter myParameter = (PsiParameter)startElement;
     return
-      myParameter.isValid()
-      && myParameter.getDeclarationScope() instanceof PsiMethod
+      myParameter.getDeclarationScope() instanceof PsiMethod
       && myParameter.getManager().isInProject(myParameter);
   }
 

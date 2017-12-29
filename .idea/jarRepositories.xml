@@ -16,5 +16,15 @@
       <option name="name" value="IntelliJ Dependencies on Bintray" />
       <option name="url" value="https://jetbrains.bintray.com/intellij-third-party-dependencies" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="jcenter"/>
+      <option name="name" value="JCenter on Bintray"/>
+      <option name="url" value="https://jcenter.bintray.com"/>
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
+      <option name="name" value="18c13506-e994-44b4-9eef-4e6ec3262e15" />
+      <option name="url" value="https://dl.google.com/dl/android/maven2" />
+    </remote-repository>
   </component>
 </project>

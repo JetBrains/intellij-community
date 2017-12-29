@@ -176,9 +176,11 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
       }
     });
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      removeDuplicatedUrlsFromRepositoryLibraries(project);
-      syncTask.run();
-    });
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        removeDuplicatedUrlsFromRepositoryLibraries(project);
+        syncTask.run();
+      });
+    }
   }
 }

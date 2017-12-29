@@ -1,37 +1,29 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.history.LocalHistory;
+import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
-import com.intellij.openapi.module.ModifiableModuleModel;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -39,25 +31,38 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.CheckBoxList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.JBUI;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.MatteBorder;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -68,7 +73,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   public static final Key<ModuleData> MODULE_DATA_KEY = Key.create("MODULE_DATA_KEY");
   public static final Key<Module> MODULE_KEY = Key.create("LINKED_MODULE");
   public static final Key<Map<OrderEntry, OrderAware>> ORDERED_DATA_MAP_KEY = Key.create("ORDER_ENTRY_DATA_MAP");
-  public static final Key<Set<String>> ORPHAN_MODULE_FILES = Key.create("ORPHAN_FILES");
+  private static final Key<Set<Path>> ORPHAN_MODULE_FILES = Key.create("ORPHAN_FILES");
+  private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
+
+  private static final NotificationGroup ORPHAN_MODULE_NOTIFICATION_GROUP =
+    NotificationGroup.toolWindowGroup("Build sync orphan modules", ToolWindowId.BUILD);
 
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
 
@@ -83,14 +92,14 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
     final Collection<DataNode<E>> toCreate = filterExistingModules(toImport, modelsProvider);
     if (!toCreate.isEmpty()) {
-      createModules(toCreate, modelsProvider, project);
+      createModules(toCreate, modelsProvider);
     }
 
     for (DataNode<E> node : toImport) {
       Module module = node.getUserData(MODULE_KEY);
       if (module != null) {
         ProjectCoordinate publication = node.getData().getPublication();
-        if (publication != null){
+        if (publication != null) {
           modelsProvider.registerModulePublication(module, publication);
         }
         String productionModuleId = node.getData().getProductionModuleId();
@@ -114,17 +123,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
-  private void createModules(@NotNull Collection<DataNode<E>> toCreate,
-                             @NotNull IdeModifiableModelsProvider modelsProvider,
-                             @NotNull Project project) {
+  private void createModules(@NotNull Collection<DataNode<E>> toCreate, @NotNull IdeModifiableModelsProvider modelsProvider) {
     for (final DataNode<E> module : toCreate) {
       ModuleData data = module.getData();
       final Module created = modelsProvider.newModule(data);
       module.putUserData(MODULE_KEY, created);
-      Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
-      if (orphanFiles != null) {
-        orphanFiles.remove(created.getModuleFilePath());
-      }
 
       // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via external system)
       final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(created);
@@ -210,84 +213,179 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       unlinkModuleFromExternalSystem(module);
     }
 
-    ruleOrphanModules(modules, project, projectData.getOwner(), modules1 -> {
-      for (Module module : modules1) {
-        if (module.isDisposed()) continue;
-        String path = module.getModuleFilePath();
-        final ModifiableModuleModel moduleModel = modelsProvider.getModifiableModuleModel();
-        moduleModel.disposeModule(module);
-        ModuleBuilder.deleteModuleFile(path);
+    ExternalSystemApiUtil.executeOnEdt(true, () -> {
+      AtomicInteger counter = project.getUserData(ORPHAN_MODULE_HANDLERS_COUNTER);
+      if (counter == null) {
+        counter = new AtomicInteger();
+        project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, counter);
+      }
+      counter.incrementAndGet();
+
+      Set<Path> orphanModules = project.getUserData(ORPHAN_MODULE_FILES);
+      if (orphanModules == null) {
+        orphanModules = ContainerUtil.newLinkedHashSet();
+        project.putUserData(ORPHAN_MODULE_FILES, orphanModules);
+      }
+
+      LocalHistoryAction historyAction =
+        LocalHistory.getInstance().startAction(ExternalSystemBundle.message("local.history.remove.orphan.modules"));
+      try {
+        String rootProjectPathKey = String.valueOf(projectData.getLinkedExternalProjectPath().hashCode());
+        Path unlinkedModulesDir =
+          ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve("orphanModules").resolve(rootProjectPathKey);
+        if (!FileUtil.createDirectory(unlinkedModulesDir.toFile())) {
+          LOG.warn("Unable to create " + unlinkedModulesDir);
+          return;
+        }
+
+        AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectData.getOwner());
+        SyncType syncType = localSettings.getProjectSyncType().get(projectData.getLinkedExternalProjectPath());
+        for (Module module : modules) {
+          if (module.isDisposed()) continue;
+          String path = module.getModuleFilePath();
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
+            try {
+              // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
+              ServiceKt.getStateStore(module).save(new ArrayList<>());
+              VirtualFile moduleFile = module.getModuleFile();
+              if (moduleFile != null) {
+                Path orphanModulePath = unlinkedModulesDir.resolve(String.valueOf(path.hashCode()));
+                FileUtil.writeToFile(orphanModulePath.toFile(), moduleFile.contentsToByteArray());
+                Path orphanModuleOriginPath = unlinkedModulesDir.resolve(path.hashCode() + ".path");
+                FileUtil.writeToFile(orphanModuleOriginPath.toFile(), path);
+                orphanModules.add(orphanModulePath);
+              }
+            }
+            catch (Exception e) {
+              LOG.warn(e);
+            }
+          }
+          modelsProvider.getModifiableModuleModel().disposeModule(module);
+          ModuleBuilder.deleteModuleFile(path);
+        }
+      }
+      finally {
+        historyAction.finish();
       }
     });
   }
 
-  /**
-   * There is a possible case that an external module has been un-linked from ide project. There are two ways to process
-   * ide modules which correspond to that external project:
-   * <pre>
-   * <ol>
-   *   <li>Remove them from ide project as well;</li>
-   *   <li>Keep them at ide project as well;</li>
-   * </ol>
-   * </pre>
-   * This method handles that situation, i.e. it asks a user what should be done and acts accordingly.
-   *
-   * @param orphanModules    modules which correspond to the un-linked external project
-   * @param project          current ide project
-   * @param externalSystemId id of the external system which project has been un-linked from ide project
-   */
-  private static void ruleOrphanModules(@NotNull final List<Module> orphanModules,
-                                        @NotNull final Project project,
-                                        @NotNull final ProjectSystemId externalSystemId,
-                                        @NotNull final Consumer<List<Module>> result) {
-    ExternalSystemApiUtil.executeOnEdt(true, () -> {
-      List<Module> toRemove = ContainerUtil.newSmartList();
-      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        toRemove.addAll(orphanModules);
-      }
-      else {
-        final JPanel content = new JPanel(new GridBagLayout());
-        content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
-                    ExternalSystemUiUtil.getFillLineConstraints(0));
+  @Override
+  public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project,
+                              @NotNull IdeModelsProvider modelsProvider) {
+    Set<Path> orphanModules = project.getUserData(ORPHAN_MODULE_FILES);
+    if (orphanModules == null || orphanModules.isEmpty()) {
+      return;
+    }
 
-        final CheckBoxList<Module> orphanModulesList = new CheckBoxList<>();
+    AtomicInteger counter = project.getUserData(ORPHAN_MODULE_HANDLERS_COUNTER);
+    if (counter == null) {
+      return;
+    }
+    if (counter.decrementAndGet() == 0) {
+      project.putUserData(ORPHAN_MODULE_FILES, null);
+      project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);
+      StringBuilder modulesToRestoreText = new StringBuilder();
+      List<Pair<String, Path>> modulesToRestore = ContainerUtil.newArrayList();
+      for (Path modulePath : orphanModules) {
+        try {
+          String path = FileUtil.loadFile(modulePath.resolveSibling(modulePath.getFileName() + ".path").toFile());
+          modulesToRestoreText.append(FileUtil.getNameWithoutExtension(new File(path))).append("\n");
+          modulesToRestore.add(Pair.create(path, modulePath));
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      }
+
+      String buildSystem = projectData != null ? projectData.getOwner().getReadableName() : "build system";
+      String content = ExternalSystemBundle.message("orphan.modules.text", buildSystem,
+                                                    StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 100, 0));
+      Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
+        .setListener((notification, event) -> {
+          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
+          if (showRemovedOrphanModules(modulesToRestore, project, buildSystem)) {
+            notification.expire();
+          }
+        })
+        .whenExpired(() -> {
+          List<File> filesToRemove = orphanModules.stream().map(Path::toFile).collect(Collectors.toList());
+          filesToRemove.addAll(orphanModules.stream()
+                                 .map(path -> path.resolveSibling(path.getFileName() + ".path").toFile())
+                                 .collect(Collectors.toList()));
+          FileUtil.asyncDelete(filesToRemove);
+        });
+
+      Disposer.register(project, cleanUpNotification::expire);
+      cleanUpNotification.notify(project);
+    }
+  }
+
+  public void onFailureImport(Project project) {
+    project.putUserData(ORPHAN_MODULE_FILES, null);
+    project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);
+  }
+
+  private static boolean showRemovedOrphanModules(@NotNull final List<Pair<String, Path>> orphanModules,
+                                                  @NotNull final Project project,
+                                                  @NotNull final String buildSystem) {
+    final CheckBoxList<Pair<String, Path>> orphanModulesList = new CheckBoxList<>();
+    DialogWrapper dialog = new DialogWrapper(project) {
+      {
+        setTitle(ExternalSystemBundle.message("orphan.modules.dialog.title"));
+        init();
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
         orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        orphanModulesList.setItems(orphanModules, module -> module.getName());
-        for (Module module : orphanModules) {
-          orphanModulesList.setItemSelected(module, true);
-        }
-        orphanModulesList.setBorder(JBUI.Borders.empty(8));
-        content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
-        content.setBorder(JBUI.Borders.empty(0, 0, 8, 0));
+        orphanModulesList.setItems(orphanModules, module -> FileUtil.getNameWithoutExtension(new File(module.getFirst())));
+        orphanModulesList.setBorder(JBUI.Borders.empty(5));
 
-        DialogWrapper dialog = new DialogWrapper(project) {
-          {
-            setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
-            init();
-          }
+        JScrollPane myModulesScrollPane =
+          ScrollPaneFactory.createScrollPane(orphanModulesList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        myModulesScrollPane.setBorder(new MatteBorder(0, 0, 1, 0, JBColor.border()));
+        myModulesScrollPane.setMaximumSize(new Dimension(-1, 300));
 
-          @Override
-          protected JComponent createCenterPanel() {
-            return new JBScrollPane(content);
-          }
-
-          @NotNull
-          protected Action[] createActions() {
-            return new Action[]{getOKAction()};
-          }
-        };
-
-        dialog.showAndGet();
-
-        for (int i = 0; i < orphanModules.size(); i++) {
-          Module module = orphanModules.get(i);
-          if (orphanModulesList.isItemSelected(i)) {
-            toRemove.add(module);
-          }
-        }
+        JPanel content = new JPanel(new BorderLayout());
+        content.add(myModulesScrollPane, BorderLayout.CENTER);
+        return content;
       }
-      result.consume(toRemove);
-    });
+
+      @NotNull
+      @Override
+      protected JComponent createNorthPanel() {
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+        JPanel panel = new JPanel(new GridBagLayout());
+        gbConstraints.insets = JBUI.insets(4, 0, 10, 8);
+        panel.add(new JLabel(ExternalSystemBundle.message("orphan.modules.dialog.text", buildSystem)), gbConstraints);
+        return panel;
+      }
+    };
+
+    if (dialog.showAndGet()) {
+      ExternalSystemApiUtil.doWriteAction(() -> {
+        for (int i = 0; i < orphanModules.size(); i++) {
+          Pair<String, Path> pair = orphanModules.get(i);
+          String originalPath = pair.first;
+          Path savedPath = pair.second;
+          if (orphanModulesList.isItemSelected(i) && savedPath.toFile().isFile()) {
+            try {
+              FileUtil.copy(savedPath.toFile(), new File(originalPath));
+              ModuleManager.getInstance(project).loadModule(originalPath);
+            }
+            catch (IOException | JDOMException | ModuleWithNameAlreadyExists e) {
+              LOG.warn(e);
+            }
+          }
+        }
+      });
+      return true;
+    }
+    return false;
   }
 
   public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
@@ -297,7 +395,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
-    ExternalSystemModulePropertyManager.getInstance(module).setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
+    ExternalSystemModulePropertyManager.getInstance(module)
+      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
   }
 
   @Override
@@ -313,26 +412,12 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
       setBytecodeTargetLevel(project, module, moduleDataNode.getData());
+      moduleDataNode.putUserData(MODULE_KEY, null);
+      moduleDataNode.putUserData(ORDERED_DATA_MAP_KEY, null);
     }
 
     for (Module module : modelsProvider.getModules()) {
       module.putUserData(MODULE_DATA_KEY, null);
-    }
-  }
-
-  @Override
-  public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
-                              @Nullable ProjectData projectData,
-                              @NotNull Project project,
-                              @NotNull IdeModelsProvider modelsProvider) {
-    final Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
-    if (orphanFiles != null && !orphanFiles.isEmpty()) {
-      ExternalSystemApiUtil.executeOnEdt(false, () -> {
-        for (String orphanFile : orphanFiles) {
-          ModuleBuilder.deleteModuleFile(orphanFile);
-        }
-      });
-      project.putUserData(ORPHAN_MODULE_FILES, null);
     }
   }
 
@@ -411,7 +496,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       Sdk sdk = projectJdkTable.findJdk(skdName);
       if (sdk != null) {
         modifiableRootModel.setSdk(sdk);
-      } else {
+      }
+      else {
         modifiableRootModel.setInvalidSdk(skdName, JavaSdk.getInstance().getName());
       }
     }

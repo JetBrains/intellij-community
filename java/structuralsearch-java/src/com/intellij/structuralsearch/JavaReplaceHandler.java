@@ -64,10 +64,12 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   }
 
   private static boolean isListContext(PsiElement el) {
+    if (el instanceof PsiParameter) {
+      return true;
+    }
     final PsiElement parent = el.getParent();
 
-    return parent instanceof PsiParameterList ||
-           (parent instanceof PsiExpressionList && !parent.getClass().getSimpleName().startsWith("Jsp")) ||
+    return (parent instanceof PsiExpressionList && !parent.getClass().getSimpleName().startsWith("Jsp")) ||
            parent instanceof PsiCodeBlock ||
            parent instanceof PsiClass ||
            parent instanceof PsiIfStatement && (((PsiIfStatement)parent).getThenBranch() == el ||

@@ -40,7 +40,6 @@ import java.util.List;
 
 /**
  * @author lene
- *         Date: 06.08.12
  */
 public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
   public static final Object NONE_TOOL = new Object();

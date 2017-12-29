@@ -39,7 +39,7 @@ import java.util.*;
  */
 public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
 
-  private final Set<Class> myExtraProjectModelClasses = new HashSet<Class>();
+  private final Set<Class> myExtraProjectModelClasses = new LinkedHashSet<Class>();
   private final boolean myIsPreviewMode;
   private final boolean myIsGradleProjectDirSupported;
   private final boolean myIsCompositeBuildsSupported;
@@ -94,7 +94,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private static void configureAdditionalTypes(BuildController controller) {
     try {
-      Field adapterField = controller.getClass().getDeclaredField("adapter");
+      Field adapterField;
+      try {
+        adapterField = controller.getClass().getDeclaredField("adapter");
+      }
+      catch (NoSuchFieldException e) {
+        // since v.4.4 there is a BuildControllerWithoutParameterSupport can be used
+        Field delegate = controller.getClass().getDeclaredField("delegate");
+        delegate.setAccessible(true);
+        Object wrappedController = delegate.get(controller);
+        adapterField = wrappedController.getClass().getDeclaredField("adapter");
+        controller = (BuildController)wrappedController;
+      }
       adapterField.setAccessible(true);
       ProtocolToModelAdapter adapter = (ProtocolToModelAdapter)adapterField.get(controller);
 

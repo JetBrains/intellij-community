@@ -57,7 +57,6 @@ public class GuavaInspectionTest extends JavaCodeInsightFixtureTestCase {
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
     moduleBuilder.addLibraryJars("guava", getTestDataPath() + "/", "guava-stubs.jar");
-    moduleBuilder.addLibraryJars("jsr305", PathManager.getHomePathFor(Assert.class) + "/lib/", "jsr305.jar");
     moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 

@@ -93,12 +93,6 @@ public class MethodEvaluator implements Evaluator {
       else if (isInvokableType(object)) {
         referenceType = (ReferenceType)object;
       }
-      else {
-        final String className = myClassName != null ? myClassName.getName(debugProcess) : null;
-        if (className != null) {
-          referenceType = debugProcess.findClass(context, className, context.getClassLoader());
-        }
-      }
 
       if (referenceType == null) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
@@ -126,6 +120,10 @@ public class MethodEvaluator implements Evaluator {
       ReferenceType _refType = referenceType;
       if (requiresSuperObject && (referenceType instanceof ClassType)) {
         _refType = ((ClassType)referenceType).superclass();
+        String className = myClassName != null ? myClassName.getName(debugProcess) : null;
+        if (_refType == null || (className != null && !className.equals(_refType.name()))) {
+          _refType = debugProcess.findClass(context, className, context.getClassLoader());
+        }
       }
       Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
       if (signature == null) {

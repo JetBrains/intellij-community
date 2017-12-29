@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 7, 2005
  */
 public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
   private static final class SingletonHolder {

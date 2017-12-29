@@ -119,8 +119,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @NotNull PsiElement endElement) {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     PsiVariable variable = myVariable == null ? null : myVariable.getElement();
-    return myModifierList.isValid() &&
-           myModifierList.getManager().isInProject(myModifierList) &&
+    return myModifierList.getManager().isInProject(myModifierList) &&
            myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
            (variable == null || variable.isValid());
   }

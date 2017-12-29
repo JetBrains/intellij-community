@@ -38,7 +38,6 @@ abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
 
     testMatcher = new Matcher(getProject());
     options = new MatchOptions();
-    options.setLooseMatching(true);
     options.setRecursiveSearch(true);
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_5);
   }

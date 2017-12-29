@@ -15,9 +15,13 @@
  */
 package com.siyeh.ipp.conditional;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiConditionalExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiType;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -52,21 +56,22 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends Intention 
   protected void processIntention(@NotNull PsiElement element) {
     final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element;
     final PsiExpression condition = conditionalExpression.getCondition();
-    final String replacementText = condition.getText() + "&&" + getText(conditionalExpression.getThenExpression()) + "||" +
-                                   BoolUtils.getNegatedExpressionText(condition, AND_PRECEDENCE) + "&&" +
-                                   getText(conditionalExpression.getElseExpression());
-    PsiReplacementUtil.replaceExpression((PsiExpression)element, replacementText);
+    CommentTracker tracker = new CommentTracker();
+    final String replacementText = condition.getText() + "&&" + getText(conditionalExpression.getThenExpression(), tracker) + "||" +
+                                   BoolUtils.getNegatedExpressionText(condition, AND_PRECEDENCE, tracker) + "&&" +
+                                   getText(conditionalExpression.getElseExpression(), tracker);
+    PsiReplacementUtil.replaceExpression((PsiExpression)element, replacementText, tracker);
   }
 
-  private static String getText(@Nullable PsiExpression expression) {
+  private static String getText(@Nullable PsiExpression expression, CommentTracker tracker) {
     if (expression == null) {
       return "";
     }
     if (ParenthesesUtils.getPrecedence(expression) > AND_PRECEDENCE) {
-      return '(' + expression.getText() + ')';
+      return '(' + tracker.markUnchanged(expression).getText() + ')';
     }
     else {
-      return expression.getText();
+      return tracker.markUnchanged(expression).getText();
     }
   }
 }

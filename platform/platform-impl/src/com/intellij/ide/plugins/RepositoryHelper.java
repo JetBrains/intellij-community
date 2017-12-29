@@ -18,6 +18,7 @@ package com.intellij.ide.plugins;
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PermanentInstallationID;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -118,6 +119,7 @@ public class RepositoryHelper {
 
       if (repositoryUrl == null) {
         uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
+        uriBuilder.addParameter("uuid", PermanentInstallationID.get());
         pluginListFile = new File(PathManager.getPluginsPath(), PLUGIN_LIST_FILE);
         eTag = loadPluginListETag(pluginListFile);
       }

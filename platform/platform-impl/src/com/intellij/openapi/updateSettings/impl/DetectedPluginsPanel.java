@@ -38,7 +38,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 04-Dec-2007
  */
 public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();

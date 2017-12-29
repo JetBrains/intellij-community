@@ -138,8 +138,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
     if (namespacePrefix.isEmpty()) {
       final XmlTag tag = (XmlTag)element;
-      if (!XmlUtil.JSP_URI.equals(tag.getNamespace())) {
-        LocalQuickFix fix = isOnTheFly ? XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(context, namespacePrefix, token) : null;
+      if (!XmlUtil.JSP_URI.equals(tag.getNamespace()) && isOnTheFly) {
+        LocalQuickFix fix = XmlQuickFixFactory.getInstance().createNSDeclarationIntentionFix(context, namespacePrefix, token);
         reportTagProblem(tag, localizedMessage, null, ProblemHighlightType.INFORMATION, fix, holder);
       }
       return;

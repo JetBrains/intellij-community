@@ -146,9 +146,7 @@ public class PyOverrideImplementUtil {
     }.execute();
   }
 
-  private static void write(@NotNull final PyClass pyClass,
-                            @NotNull final List<PyMethodMember> newMembers,
-                            @NotNull final Editor editor, boolean implement) {
+  private static void write(@NotNull PyClass pyClass, @NotNull List<PyMethodMember> newMembers, @NotNull Editor editor, boolean implement) {
     final PyStatementList statementList = pyClass.getStatementList();
     final int offset = editor.getCaretModel().getOffset();
     PsiElement anchor = null;
@@ -161,10 +159,11 @@ public class PyOverrideImplementUtil {
     }
 
     PyFunction element = null;
-    for (PyMethodMember newMember : newMembers) {
-      PyFunction baseFunction = (PyFunction)newMember.getPsiElement();
+    final LanguageLevel languageLevel = LanguageLevel.forElement(statementList);
+    for (PyMethodMember newMember : Lists.reverse(newMembers)) {
+      final PyFunction baseFunction = (PyFunction)newMember.getPsiElement();
       final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction, implement);
-      PyFunction function = builder.addFunctionAfter(statementList, anchor, LanguageLevel.forElement(statementList));
+      final PyFunction function = builder.addFunctionAfter(statementList, anchor, languageLevel);
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
     }
 
@@ -203,6 +202,9 @@ public class PyOverrideImplementUtil {
     PyAnnotation anno = baseFunction.getAnnotation();
     if (anno != null && level.isAtLeast(LanguageLevel.PYTHON30)) {
       pyFunctionBuilder.annotation(anno.getText());
+    }
+    if (baseFunction.isAsync()) {
+      pyFunctionBuilder.makeAsync();
     }
     final TypeEvalContext context = TypeEvalContext.userInitiated(baseFunction.getProject(), baseFunction.getContainingFile());
     final List<PyCallableParameter> baseParams = baseFunction.getParameters(context);
@@ -335,7 +337,7 @@ public class PyOverrideImplementUtil {
         if (ancestor.findClassAttribute(methodName, false, context) != null) return false;
       }
     }
-    return method.onlyRaisesNotImplementedError() || PyUtil.isDecoratedAsAbstract(method);
+    return method.onlyRaisesNotImplementedError() || PyKnownDecoratorUtil.hasAbstractDecorator(method, context);
   }
 
   /**

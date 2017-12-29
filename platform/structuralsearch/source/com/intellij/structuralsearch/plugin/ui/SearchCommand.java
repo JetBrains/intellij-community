@@ -96,6 +96,7 @@ public class SearchCommand {
 
   public void findUsages(final Processor<Usage> processor) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    progress.setIndeterminate(false);
 
     final MatchResultSink sink = new MatchResultSink() {
       int count;
@@ -148,7 +149,12 @@ public class SearchCommand {
           info = new UsageInfo(parent, startOffset, end - parentStart);
         }
         else {
-          info = new UsageInfo(StructuralSearchUtil.getPresentableElement(result.getMatch()));
+          final PsiElement match = StructuralSearchUtil.getPresentableElement(result.getMatch());
+          if (!match.isPhysical()) {
+            // e.g. lambda parameter anonymous type element
+            return;
+          }
+          info = new UsageInfo(match);
         }
 
         Usage usage = new UsageInfo2UsageAdapter(info);

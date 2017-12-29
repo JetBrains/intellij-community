@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger;
 
@@ -22,8 +10,10 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -153,7 +143,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEmpty(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
   }
 
-  public void testConditionConvert() {
+  public void testConditionConvert() throws IOException, JDOMException {
     String condition = "old-style condition";
     String logExpression = "old-style expression";
     String oldStyle =
@@ -167,13 +157,7 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     "</breakpoints>" +
     "<option name=\"time\" value=\"1\" />" +
     "</breakpoint-manager>";
-    try {
-      load(JdomKt.loadElement(oldStyle));
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-      fail();
-    }
+    load(JdomKt.loadElement(oldStyle));
     XLineBreakpoint<MyBreakpointProperties> breakpoint = assertOneElement(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE));
     assertEquals(condition, breakpoint.getCondition());
     assertEquals(logExpression, breakpoint.getLogExpression());

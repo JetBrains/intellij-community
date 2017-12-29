@@ -55,6 +55,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testClassScope4() { doTest(10, CLASS_SCOPE_KEYWORDS_2); }
   public void testInterfaceScope() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(8, INTERFACE_SCOPE_KEYWORDS); }
   public void testAfterAnnotations() { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
+  public void testAfterAnnotationsWithParams() { doTest(6, "public", "final", "class", "interface", "abstract", "enum", null); }
+  public void testAfterAnnotationsWithParamsInClass() { doTest(7, "public", "private", "final", "class", "interface", "abstract", "enum"); }
   public void testExtends1() { doTest(2, "extends", "implements", null); }
   public void testExtends2() { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
   public void testExtends3() { doTest(2, "extends", "implements", "AAA", "BBB", "CCC", "instanceof"); }
@@ -163,6 +165,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     selectItem(myItems[0], Lookup.REPLACE_SELECT_CHAR);
     checkResultByTestName();
   }
+
+  public void testFinalAfterAnnotationAttributes() { doTest(); }
 
   public void testTryInExpression() {
     configureByTestName();

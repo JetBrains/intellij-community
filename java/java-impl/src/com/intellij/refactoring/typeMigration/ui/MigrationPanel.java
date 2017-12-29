@@ -74,7 +74,6 @@ import java.util.Set;
 
 /**
  * @author anna
- * Date: 24-Mar-2008
  */
 public class MigrationPanel extends JPanel implements Disposable {
   @NonNls private static final String MIGRATION_USAGES = "migration.usages";

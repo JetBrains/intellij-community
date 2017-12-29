@@ -15,6 +15,7 @@
  */
 package com.intellij.spellchecker.dictionary;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,11 +78,9 @@ public class AggregatedDictionary implements EditableDictionary {
     Set<String> oldWords = getProjectDictionary().getWords();
     getProjectDictionary().replaceAll(words);
     getCachedDictionary().addToDictionary(words);
-    if (oldWords != null) {
-      for (String word : oldWords) {
-        if (words == null || !words.contains(word)) {
-          getCachedDictionary().removeFromDictionary(word);
-        }
+    for (String word : oldWords) {
+      if (words == null || !words.contains(word)) {
+        getCachedDictionary().removeFromDictionary(word);
       }
     }
   }
@@ -97,6 +96,16 @@ public class AggregatedDictionary implements EditableDictionary {
   }
 
   @Override
+  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+    traverse(s -> {
+      if (!StringUtil.isEmpty(s) && s.charAt(0) == word.charAt(0) && s.length() >= 0 && s.length() <= Integer.MAX_VALUE) {
+        consumer.consume(s);
+      }
+    });
+  }
+
+  @Override
+  @NotNull
   public Set<String> getWords() {
     return cachedDictionary.getWords();
   }
@@ -107,7 +116,7 @@ public class AggregatedDictionary implements EditableDictionary {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Set<String> getEditableWords() {
     return getProjectDictionary().getEditableWords();
   }

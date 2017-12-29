@@ -15,16 +15,13 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
@@ -36,9 +33,10 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
   @Override
   public TextRange process(@NotNull final ASTNode element, @NotNull final TextRange range) {
     PsiElement e = SourceTreeToPsiMap.treeElementToPsi(element);
-    assert e != null;
+    assert e != null && e.isValid();
+    final PsiFile file = e.getContainingFile();
     final Project project = e.getProject();
-    if (!CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING ||
+    if (!CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING ||
         element.getPsi().getContainingFile().getLanguage() != JavaLanguage.INSTANCE
         || InjectedLanguageManager.getInstance(project).isInjectedFragment(element.getPsi().getContainingFile()))
     {
@@ -54,9 +52,12 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
   private static TextRange formatCommentsInner(@NotNull Project project, @NotNull ASTNode element, @NotNull final TextRange markedRange) {
     TextRange resultTextRange = markedRange;
     final PsiElement elementPsi = element.getPsi();
+    assert elementPsi.isValid();
+    final PsiFile file = elementPsi.getContainingFile();
     boolean shouldFormat = markedRange.contains(element.getTextRange());
 
     if (shouldFormat) {
+
       final ASTNode rangeAnchor;
       // There are two possible cases:
       //   1. Given element correspond to comment's owner (e.g. field or method);
@@ -71,7 +72,7 @@ public class FormatCommentsProcessor implements PreFormatProcessor {
         rangeAnchor = element;
       }
       TextRange before = rangeAnchor.getTextRange();
-      new CommentFormatter(project).processComment(element);
+      new CommentFormatter(file).processComment(element);
       int deltaRange = rangeAnchor.getTextRange().getLength() - before.getLength();
       resultTextRange = new TextRange(markedRange.getStartOffset(), markedRange.getEndOffset() + deltaRange);
     }

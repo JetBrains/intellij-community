@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 16, 2010
  */
 public class AntDomTargetDependsListConverter extends Converter<TargetResolver.Result> implements CustomReferenceConverter<TargetResolver.Result>{
   

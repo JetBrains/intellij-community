@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 22-Oct-14
  */
 public class PreloadedData {
   @Nullable 

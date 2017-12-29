@@ -36,6 +36,6 @@ def deserialize(base,
 
 
 if IS_PY3K:
-    pass
+    import pkgutil
 else:
-    pass
+    from _imps import _pydev_pkgutil_old as pkgutil

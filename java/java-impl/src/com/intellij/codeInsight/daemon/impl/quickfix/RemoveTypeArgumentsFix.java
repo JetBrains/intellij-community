@@ -48,7 +48,7 @@ public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsi
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement instanceof PsiVariable && startElement.isValid() && ((PsiVariable)startElement).getTypeElement() != null;
+    return startElement instanceof PsiVariable && ((PsiVariable)startElement).getTypeElement() != null;
   }
 
   @Override

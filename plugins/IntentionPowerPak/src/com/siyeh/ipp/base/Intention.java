@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +56,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();
 
-  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression) {
+  protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull PsiExpression expression, CommentTracker tracker) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -75,7 +76,7 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     }
     final PsiExpression newCall = factory.createExpressionFromText(expString, expression);
     assert expressionToReplace != null;
-    final PsiElement insertedElement = expressionToReplace.replace(newCall);
+    final PsiElement insertedElement = tracker.replaceAndRestoreComments(expressionToReplace, newCall);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(insertedElement);
   }

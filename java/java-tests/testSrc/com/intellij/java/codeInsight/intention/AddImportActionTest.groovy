@@ -349,7 +349,16 @@ class Test {
     }
 }
 '''
-    assert !myFixture.filterAvailableIntentions("Import class")
+    importClass()
+    myFixture.checkResult '''\
+import a.MMM;
+
+class Test {
+    {
+      MMM m;
+    }
+}
+'''
   }
 
   void "test don't import class in assignment"() {

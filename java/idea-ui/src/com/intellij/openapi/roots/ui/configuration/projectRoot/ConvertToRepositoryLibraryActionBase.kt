@@ -36,8 +36,10 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
@@ -73,7 +75,12 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
     val library = getSelectedLibrary() ?: return
     val mavenCoordinates = detectOrSpecifyMavenCoordinates(library) ?: return
 
-    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version)
+    downloadLibraryAndReplace(library, mavenCoordinates)
+  }
+
+  private fun downloadLibraryAndReplace(library: LibraryEx,
+                                        mavenCoordinates: JpsMavenRepositoryLibraryDescriptor) {
+    val libraryProperties = RepositoryLibraryProperties(mavenCoordinates.groupId, mavenCoordinates.artifactId, mavenCoordinates.version, mavenCoordinates.isIncludeTransitiveDependencies)
     val hasSources = RepositoryUtils.libraryHasSources(library)
     val hasJavadoc = RepositoryUtils.libraryHasJavaDocs(library)
     LOG.debug("Resolving $mavenCoordinates")
@@ -81,24 +88,47 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
       JarRepositoryManager.loadDependenciesModal(project, libraryProperties, hasSources, hasJavadoc, null, null)
 
     val downloadedFiles = roots.filter { it.type == OrderRootType.CLASSES }.map { VfsUtilCore.virtualToIoFile(it.file) }
+    if (downloadedFiles.isEmpty()) {
+      if (Messages.showYesNoDialog("No files were downloaded. Do you want to try different coordinates?", "Failed to Download Library",
+                                   null) != Messages.YES) {
+        return
+      }
+      changeCoordinatesAndRetry(mavenCoordinates, library)
+      return
+    }
+
     val libraryFiles = library.getFiles(OrderRootType.CLASSES).map { VfsUtilCore.virtualToIoFile(it) }
     val task = ComparingJarFilesTask(project, downloadedFiles, libraryFiles)
     task.queue()
     if (task.cancelled) return
 
     if (!task.filesAreTheSame) {
-      val ok = LibraryJarsDiffDialog(task.libraryFileToCompare!!, task.downloadedFileToCompare!!, mavenCoordinates, LibraryUtil.getPresentableName(library), project).showAndGet()
+      val dialog = LibraryJarsDiffDialog(task.libraryFileToCompare, task.downloadedFileToCompare, mavenCoordinates,
+                                         LibraryUtil.getPresentableName(library), project)
+      dialog.show()
       task.deleteTemporaryFiles()
-      if (!ok) {
-        return
+      when (dialog.exitCode) {
+        DialogWrapper.CANCEL_EXIT_CODE -> return
+        LibraryJarsDiffDialog.CHANGE_COORDINATES_CODE -> {
+          changeCoordinatesAndRetry(mavenCoordinates, library)
+          return
+        }
       }
     }
     ApplicationManager.getApplication().invokeLater {
-      replaceByLibrary(library, object : NewLibraryConfiguration(library.name ?: "", RepositoryLibraryType.getInstance(), libraryProperties) {
-        override fun addRoots(editor: LibraryEditor) {
-          editor.addRoots(roots)
-        }
-      })
+      replaceByLibrary(library,
+                       object : NewLibraryConfiguration(library.name ?: "", RepositoryLibraryType.getInstance(), libraryProperties) {
+                         override fun addRoots(editor: LibraryEditor) {
+                           editor.addRoots(roots)
+                         }
+                       })
+    }
+  }
+
+  private fun changeCoordinatesAndRetry(mavenCoordinates: JpsMavenRepositoryLibraryDescriptor, library: LibraryEx) {
+    val coordinates = specifyMavenCoordinates(listOf(mavenCoordinates)) ?: return
+    ApplicationManager.getApplication().invokeLater {
+      downloadLibraryAndReplace(library, coordinates)
     }
   }
 
@@ -112,16 +142,22 @@ abstract class ConvertToRepositoryLibraryActionBase(protected val context: Struc
     if (Messages.showYesNoDialog(project, "$message. Do you want to search Maven repositories manually?", "Cannot Detect Maven Coordinates", null) != Messages.YES) {
       return null
     }
+    return specifyMavenCoordinates(detectedCoordinates)
+  }
+
+  private fun specifyMavenCoordinates(detectedCoordinates: List<JpsMavenRepositoryLibraryDescriptor>): JpsMavenRepositoryLibraryDescriptor? {
     val dialog = RepositoryAttachDialog(project, detectedCoordinates.firstOrNull()?.mavenId, RepositoryAttachDialog.Mode.SEARCH)
     if (!dialog.showAndGet()) {
       return null
     }
 
-    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText)
+    return JpsMavenRepositoryLibraryDescriptor(dialog.coordinateText, dialog.includeTransitiveDependencies)
   }
 
   private fun replaceByLibrary(library: Library, configuration: NewLibraryConfiguration) {
     val annotationUrls = library.getUrls(AnnotationOrderRootType.getInstance())
+    ProjectStructureConfigurable.getInstance(project).registerObsoleteLibraryRoots((library.getFiles(OrderRootType.CLASSES) +
+                                                                                    library.getFiles(OrderRootType.SOURCES)).asList())
     replaceLibrary(library) { editor ->
       editor.properties = configuration.properties
       editor.removeAllRoots()
@@ -163,8 +199,8 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
                                     private val libraryFiles: List<File>) : Task.Modal(project, "Comparing JAR Files...", true) {
   var cancelled = false
   var filesAreTheSame = false
-  var downloadedFileToCompare: VirtualFile? = null
-  var libraryFileToCompare: VirtualFile? = null
+  lateinit var downloadedFileToCompare: VirtualFile
+  lateinit var libraryFileToCompare: VirtualFile
   val filesToDelete = ArrayList<File>()
 
   override fun run(indicator: ProgressIndicator) {
@@ -203,13 +239,13 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
           downloadedFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(downloadedIoFileToCompare)!!
         }
       }.execute()
-      RefreshQueue.getInstance().refresh(false, true, null, libraryFileToCompare, downloadedFileToCompare)
+      RefreshQueue.getInstance().refresh(false, false, null, libraryFileToCompare, downloadedFileToCompare)
 
       val jarFilesToRefresh = ArrayList<VirtualFile>()
       object : WriteAction<Unit>() {
         override fun run(result: Result<Unit>) {
-          collectNestedJars(libraryFileToCompare!!, jarFilesToRefresh)
-          collectNestedJars(downloadedFileToCompare!!, jarFilesToRefresh)
+          collectNestedJars(libraryFileToCompare, jarFilesToRefresh)
+          collectNestedJars(downloadedFileToCompare, jarFilesToRefresh)
         }
       }.execute()
       RefreshQueue.getInstance().refresh(false, true, null, jarFilesToRefresh)
@@ -222,7 +258,7 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
     }
     else if (file.fileType == StdFileTypes.ARCHIVE) {
       val jarRootUrl = VfsUtil.getUrlForLibraryRoot(VfsUtil.virtualToIoFile(file))
-      result.add(VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)!!)
+      VirtualFileManager.getInstance().refreshAndFindFileByUrl(jarRootUrl)?.let { result.add(it) }
     }
   }
 

@@ -22,7 +22,6 @@ import java.util.UUID;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 1/22/12
 */
 public interface UUIDGetter {
   @NotNull UUID getSessionUUID(@NotNull JavacRemoteProto.Message message);

@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author max
- * Date: Oct 21, 2001
  */
 public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_READING_MASK = 0x10000;

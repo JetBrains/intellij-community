@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -26,6 +25,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
@@ -57,7 +57,9 @@ public class ParametrizedDuplicates {
   private PsiMethodCallExpression myParametrizedCall;
   private VariableData[] myVariableDatum;
 
-  private ParametrizedDuplicates(@NotNull PsiElement[] pattern) {
+  private ParametrizedDuplicates(@NotNull PsiElement[] pattern,
+                                 @NotNull ExtractMethodProcessor originalProcessor) {
+    pattern = getFilteredElements(pattern);
     LOG.assertTrue(pattern.length != 0, "pattern length");
     if (pattern[0] instanceof PsiStatement) {
       PsiElement[] copy = copyElements(pattern);
@@ -65,7 +67,7 @@ public class ParametrizedDuplicates {
     }
     else if (pattern[0] instanceof PsiExpression) {
       PsiElement[] copy = copyElements(pattern);
-      PsiExpression wrapped = wrapExpressionWithCodeBlock(copy);
+      PsiExpression wrapped = wrapExpressionWithCodeBlock(copy, originalProcessor);
       myElements = wrapped != null ? new PsiElement[]{wrapped} : PsiElement.EMPTY_ARRAY;
     }
     else {
@@ -89,7 +91,7 @@ public class ParametrizedDuplicates {
       return null;
     }
 
-    ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern);
+    ParametrizedDuplicates duplicates = new ParametrizedDuplicates(pattern, originalProcessor);
     if (!duplicates.initMatches(matches)) {
       return null;
     }
@@ -103,13 +105,14 @@ public class ParametrizedDuplicates {
   @NotNull
   private static List<Match> findOriginalDuplicates(@NotNull ExtractMethodProcessor processor) {
     PsiElement[] elements = getFilteredElements(processor.myElements);
+    Set<PsiVariable> effectivelyLocal = processor.getEffectivelyLocalVariables();
 
     List<PsiVariable> variables = ContainerUtil.map(processor.myInputVariables.getInputVariables(), iv -> iv.variable);
     InputVariables inputVariables = new InputVariables(variables, processor.myProject, new LocalSearchScope(processor.myElements), false);
     DuplicatesFinder finder = new DuplicatesFinder(elements, inputVariables,
                                                    processor.myOutputVariable != null
                                                    ? new VariableReturnValue(processor.myOutputVariable) : null,
-                                                   Collections.emptyList(), true) {
+                                                   Collections.emptyList(), true, effectivelyLocal) {
       @Override
       protected boolean isSelf(@NotNull PsiElement candidate) {
         for (PsiElement element : elements) {
@@ -143,6 +146,8 @@ public class ParametrizedDuplicates {
     if (myElements.length == 0) {
       return false;
     }
+    matches = filterNestedSubexpressions(matches);
+
     myUsagesList = new ArrayList<>();
     Map<PsiExpression, ClusterOfUsages> usagesMap = new THashMap<>();
     Set<Match> badMatches = new THashSet<>();
@@ -165,7 +170,7 @@ public class ParametrizedDuplicates {
       matches.removeAll(badMatches);
     }
     myMatches = matches;
-    if (myMatches.isEmpty() || myUsagesList.isEmpty()) {
+    if (myMatches.isEmpty()) {
       return false;
     }
 
@@ -181,6 +186,38 @@ public class ParametrizedDuplicates {
 
     myUsagesList.sort(Comparator.comparing(usages -> usages.myFirstOffset));
     return true;
+  }
+
+  private static List<Match> filterNestedSubexpressions(List<Match> matches) {
+    Map<PsiExpression, Set<Match>> patternUsages = new THashMap<>();
+    for (Match match : matches) {
+      for (ExtractedParameter parameter : match.getExtractedParameters()) {
+        for (PsiExpression patternUsage : parameter.myPatternUsages) {
+          patternUsages.computeIfAbsent(patternUsage, k -> new THashSet<>()).add(match);
+        }
+      }
+    }
+
+    Set<Match> badMatches = new THashSet<>();
+    for (Map.Entry<PsiExpression, Set<Match>> entry : patternUsages.entrySet()) {
+      PsiExpression patternUsage = entry.getKey();
+      Set<Match> patternMatches = entry.getValue();
+      for (PsiExpression maybeNestedUsage : patternUsages.keySet()) {
+        if (patternUsage == maybeNestedUsage) {
+          continue;
+        }
+        if (PsiTreeUtil.isAncestor(patternUsage, maybeNestedUsage, true)) {
+          badMatches.addAll(patternMatches);
+          break;
+        }
+      }
+    }
+
+    if (!badMatches.isEmpty()) {
+      matches = new ArrayList<>(matches);
+      matches.removeAll(badMatches);
+    }
+    return matches;
   }
 
   @Nullable
@@ -209,18 +246,12 @@ public class ParametrizedDuplicates {
     Map<PsiLocalVariable, ClusterOfUsages> parameterDeclarations = createParameterDeclarations(originalProcessor, expressionsMapping);
     putMatchParameters(parameterDeclarations);
 
-    JavaDuplicatesExtractMethodProcessor parametrizedProcessor = new JavaDuplicatesExtractMethodProcessor(myElements, REFACTORING_NAME) {
-      @Override
-      protected boolean isFoldingApplicable() {
-        return false;
-      }
-    };
+    JavaDuplicatesExtractMethodProcessor parametrizedProcessor = new JavaDuplicatesExtractMethodProcessor(myElements, REFACTORING_NAME);
     if (!parametrizedProcessor.prepare(false)) {
       return false;
     }
     parametrizedProcessor.applyFrom(originalProcessor, variablesMapping);
     parametrizedProcessor.doExtract();
-    parametrizedProcessor.setDataFromInputVariables();
     myParametrizedMethod = parametrizedProcessor.getExtractedMethod();
     myParametrizedCall = parametrizedProcessor.getMethodCall();
     myVariableDatum = unmapVariableData(parametrizedProcessor.myVariableDatum, variablesMapping);
@@ -308,7 +339,8 @@ public class ParametrizedDuplicates {
   }
 
   @Nullable
-  private static PsiExpression wrapExpressionWithCodeBlock(@NotNull PsiElement[] copy) {
+  private static PsiExpression wrapExpressionWithCodeBlock(@NotNull PsiElement[] copy,
+                                                           @NotNull ExtractMethodProcessor originalProcessor) {
     if (copy.length != 1 || !(copy[0] instanceof PsiExpression)) return null;
 
     PsiExpression expression = (PsiExpression)copy[0];
@@ -340,6 +372,14 @@ public class ParametrizedDuplicates {
     LOG.assertTrue(statements.length == 1, "wrapper class method's body statement count");
     PsiStatement bodyStatement = statements[0];
 
+    Set<PsiVariable> effectivelyLocal = originalProcessor.getEffectivelyLocalVariables();
+    for (PsiVariable variable : effectivelyLocal) {
+      String name = variable.getName();
+      LOG.assertTrue(name != null, "effectively local variable's name is null");
+      PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement(name, variable.getType(), null);
+      body.addBefore(declaration, bodyStatement);
+    }
+
     PsiExpression wrapped = null;
     if (PsiType.VOID.equals(type) && bodyStatement instanceof PsiExpressionStatement) {
       wrapped = ((PsiExpressionStatement)bodyStatement).getExpression();
@@ -350,8 +390,9 @@ public class ParametrizedDuplicates {
     else {
       LOG.error("Unexpected statement in expression code block " + bodyStatement);
     }
-    if (expression instanceof UserDataHolderBase && wrapped instanceof UserDataHolderBase) {
-      ((UserDataHolderBase)expression).copyUserDataTo((UserDataHolderBase)wrapped);
+    if (wrapped != null) {
+      // this key is not copyable so replace() doesn't preserve it - have to do it here
+      wrapped.putUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL, expression.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL));
     }
     return wrapped;
   }

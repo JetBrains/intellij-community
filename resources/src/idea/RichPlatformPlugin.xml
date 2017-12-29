@@ -85,6 +85,8 @@
 
     <extensionPoint name="projectStructureValidator"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
+
+    <extensionPoint name="compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -106,8 +108,6 @@
     <packaging.artifactType implementation="com.intellij.packaging.impl.artifacts.PlainArtifactType" order="last"/>
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
-
-    <compiler.task execute="BEFORE" implementation="com.intellij.compiler.impl.JavaModuleIndexBuildTask"/>
 
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
@@ -151,9 +151,6 @@
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
-                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
 
@@ -165,12 +162,6 @@
 
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
                     serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
@@ -203,8 +194,6 @@
                     serviceImplementation="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
                     serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
 
@@ -342,11 +331,10 @@
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
-    <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
-    <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
+
+    <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
 
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
@@ -386,15 +374,11 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestResourceRootEditHandler"/>
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
-    <experimentalFeature id="project.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="true">
-      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
-    </experimentalFeature>
-    <experimentalFeature id="structure.view.async.tree.model" internalFeature="true" percentOfUsers="10" requireRestart="false">
-      <description>New implementation based on AsyncTreeModel + StructureTreeModel</description>
-    </experimentalFeature>
 
-    <editorActionHandler action="EditorChooseLookupItemReplace" 
+    <editorActionHandler action="EditorChooseLookupItemReplace"
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
+
+    <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>

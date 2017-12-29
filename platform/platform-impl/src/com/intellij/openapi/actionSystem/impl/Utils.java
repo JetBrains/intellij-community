@@ -224,7 +224,9 @@ public class Utils{
           list.add(child);
         }
         else {
-          expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false, hideDisabled);
+          boolean hideDisabledChildren = hideDisabled || actionGroup instanceof CompactActionGroup;
+          expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false,
+                            hideDisabledChildren);
         }
       }
       else if (child instanceof Separator) {

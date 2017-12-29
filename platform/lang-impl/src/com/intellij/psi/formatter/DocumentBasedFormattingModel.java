@@ -51,7 +51,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myRootBlock = rootBlock;
     myDocument = document;
     myProject = project;
@@ -66,7 +66,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myRootBlock = rootBlock;
     myProject = project;
     mySettings = settings;
@@ -82,7 +82,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myOriginalFormattingModel = originalModel;
     myRootBlock = originalModel.getRootBlock();
     myDocument = document;

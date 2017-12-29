@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/12
  */
 public class ModuleImportProvider extends ProjectImportProvider {
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:JvmName("UastLiteralUtils")
+
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiLanguageInjectionHost
@@ -60,7 +61,7 @@ fun UElement.isStringLiteral(): Boolean = this is ULiteralExpression && this.isS
  * @return literal text if the receiver is a valid [String] literal, null otherwise.
  */
 fun UElement.getValueIfStringLiteral(): String? =
-        if (isStringLiteral()) (this as ULiteralExpression).value as String else null
+  if (isStringLiteral()) (this as ULiteralExpression).value as String else null
 
 /**
  * Checks if the [UElement] is a [Number] literal (Integer, Long, Float, Double, etc.).
@@ -75,12 +76,12 @@ fun UElement.isNumberLiteral(): Boolean = this is ULiteralExpression && this.val
  * @return true if the receiver is an integral literal, false otherwise.
  */
 fun UElement.isIntegralLiteral(): Boolean = this is ULiteralExpression && when (value) {
-    is Int -> true
-    is Long -> true
-    is Short -> true
-    is Char -> true
-    is Byte -> true
-    else -> false
+  is Int -> true
+  is Long -> true
+  is Short -> true
+  is Char -> true
+  is Byte -> true
+  else -> false
 }
 
 /**
@@ -90,18 +91,18 @@ fun UElement.isIntegralLiteral(): Boolean = this is ULiteralExpression && when (
  *         0 if the receiver literal expression is not a integral one.
  */
 fun ULiteralExpression.getLongValue(): Long = value.let {
-    when (it) {
-        is Long -> it
-        is Int -> it.toLong()
-        is Short -> it.toLong()
-        is Char -> it.toLong()
-        is Byte -> it.toLong()
-        else -> 0
-    }
+  when (it) {
+    is Long -> it
+    is Int -> it.toLong()
+    is Short -> it.toLong()
+    is Char -> it.toLong()
+    is Byte -> it.toLong()
+    else -> 0
+  }
 }
 
 /**
  * @return corresponding [PsiLanguageInjectionHost] for this literal expression if it exists.
  */
 val ULiteralExpression.psiLanguageInjectionHost
-    get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }
+  get() = this.psi?.let { PsiTreeUtil.getParentOfType(it, PsiLanguageInjectionHost::class.java, false) }

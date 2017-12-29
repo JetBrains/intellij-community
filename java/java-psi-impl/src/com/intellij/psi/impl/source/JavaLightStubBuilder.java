@@ -120,6 +120,7 @@ public class JavaLightStubBuilder extends LightStubBuilder {
     private IElementType preLast;
     private IElementType last;
     private boolean seenNew;
+    private boolean seenLParen;
 
     @Override
     @SuppressWarnings("IfStatementWithIdenticalBranches")
@@ -135,12 +136,16 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       // anonymous classes
       else if (type == JavaTokenType.NEW_KEYWORD) {
         seenNew = true;
+        seenLParen = false;
       }
       else if (seenNew && type == JavaTokenType.SEMICOLON) {
         seenNew = false;
       }
-      else if (seenNew && type == JavaTokenType.LBRACE && last != JavaTokenType.RBRACKET) {
+      else if (seenNew && type == JavaTokenType.LBRACE && seenLParen) {
         return (result = false);
+      }
+      else if (seenNew && type == JavaTokenType.LPARENTH) {
+        seenLParen = true;
       }
       // local classes
       else if (type == JavaTokenType.CLASS_KEYWORD && (last != JavaTokenType.DOT || preLast != JavaTokenType.IDENTIFIER)  

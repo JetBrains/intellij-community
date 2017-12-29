@@ -225,10 +225,8 @@ public class GoToHashOrRefPopup {
     public LookupElementBuilder createLookupBuilder(@NotNull VcsRef item) {
       LookupElementBuilder lookupBuilder = super.createLookupBuilder(item);
       if (myColorManager.isMultipleRoots()) {
-        lookupBuilder = lookupBuilder
-          .withTypeText(getTypeText(item),
-                        JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager))),
-                        true);
+        ColorIcon icon = JBUI.scale(new ColorIcon(15, VcsLogGraphTable.getRootBackgroundColor(item.getRoot(), myColorManager)));
+        lookupBuilder = lookupBuilder.withTypeText(getTypeText(item), icon, true).withTypeIconRightAligned(true);
       }
       return lookupBuilder;
     }

@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.coverage;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -16,7 +19,7 @@ public abstract class CoverageRunner {
 
   public abstract String getPresentableName();
 
-  @NonNls
+  @NotNull
   public abstract String getId();
 
   @NonNls

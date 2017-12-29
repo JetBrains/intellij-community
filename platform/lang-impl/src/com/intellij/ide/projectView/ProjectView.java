@@ -18,7 +18,9 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.SelectInTarget;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,8 +29,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class ProjectView {
+  /**
+   * Use this key to get unloaded modules which content roots are selected in Project View
+   */
+  public static final DataKey<List<UnloadedModuleDescription>> UNLOADED_MODULES_CONTEXT_KEY = DataKey.create("context.unloaded.modules.list");
+
   public static ProjectView getInstance(Project project) {
     return ServiceManager.getService(project, ProjectView.class);
   }
@@ -88,6 +96,12 @@ public abstract class ProjectView {
 
   public abstract void setShowModules(boolean showModules, @NotNull String paneId);
 
+  public abstract boolean isFlattenModules(String paneId);
+
+  public abstract void setFlattenModules(boolean flattenModules, @NotNull String paneId);
+
+  public abstract boolean isShowURL(String paneId);
+
   public abstract void addProjectPane(@NotNull AbstractProjectViewPane pane);
 
   public abstract void removeProjectPane(@NotNull AbstractProjectViewPane pane);
@@ -110,7 +124,7 @@ public abstract class ProjectView {
 
   public abstract boolean isManualOrder(String paneId);
   public abstract void setManualOrder(@NotNull String paneId, final boolean enabled);
-  
+
   public abstract boolean isSortByType(String paneId);
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
 

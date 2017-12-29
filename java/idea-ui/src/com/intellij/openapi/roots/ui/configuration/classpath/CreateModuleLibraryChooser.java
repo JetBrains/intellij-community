@@ -112,7 +112,7 @@ public class CreateModuleLibraryChooser implements ClasspathElementChooser<Libra
     final List<OrderRoot> result = new ArrayList<>();
     final Library[] libraries = moduleLibrariesModel.getLibraries();
     for (OrderRoot root : roots) {
-      if (!Arrays.stream(libraries).anyMatch(library -> contains(root.getFile(), library.getFiles(root.getType())))) {
+      if (Arrays.stream(libraries).noneMatch(library -> contains(root.getFile(), library.getFiles(root.getType())))) {
         result.add(root);
       }
     }

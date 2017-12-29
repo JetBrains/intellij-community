@@ -1,28 +1,28 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.JavaProjectModelModificationService;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.modules.CircularModuleDependenciesDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,18 +51,13 @@ class AddModuleDependencyFix extends OrderEntryFix {
     myClasses = ContainerUtil.map(classes, PointersKt::createSmartPointer);
 
     PsiElement psiElement = reference.getElement();
-    Project project = psiElement.getProject();
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     ModuleRootManager rootManager = ModuleRootManager.getInstance(currentModule);
     for (PsiClass aClass : classes) {
-      if (!isAccessible(aClass, psiElement)) continue;
-      PsiFile psiFile = aClass.getContainingFile();
-      if (psiFile == null) continue;
-      VirtualFile virtualFile = psiFile.getVirtualFile();
-      if (virtualFile == null) continue;
-      Module classModule = fileIndex.getModuleForFile(virtualFile);
-      if (classModule != null && classModule != currentModule && !rootManager.isDependsOn(classModule)) {
-        myModules.add(classModule);
+      if (isAccessible(aClass, psiElement)) {
+        Module classModule = ModuleUtilCore.findModuleForFile(aClass.getContainingFile());
+        if (classModule != null && classModule != currentModule && !rootManager.isDependsOn(classModule)) {
+          myModules.add(classModule);
+        }
       }
     }
   }
@@ -134,7 +129,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
   private void addDependencyOnModule(Project project, Editor editor, @Nullable Module module) {
     if (module == null) return;
-    Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
+    Couple<Module> circularModules = CircularModuleDependenciesDetector.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
       JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
 
@@ -146,6 +141,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
         if (targetClasses.length > 0) {
           PsiReference ref = restoreReference();
           if (ref != null) {
+            DumbService.getInstance(project).completeJustSubmittedTasks();
             new AddImportAction(project, ref, editor, targetClasses).execute();
           }
         }
@@ -160,8 +156,4 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 }

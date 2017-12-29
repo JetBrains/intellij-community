@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
 public final class IdIndexEntry {
   private final int myWordHashCode;

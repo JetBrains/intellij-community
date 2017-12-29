@@ -66,10 +66,12 @@ public class OpenTaskDialog extends DialogWrapper {
 
   public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
-    setTitle("Open Task");
-
     myProject = project;
     myTask = new LocalTaskImpl(task);
+    myTaskStateCombo.setProject(myProject);
+    myTaskStateCombo.setTask(myTask);
+
+    setTitle("Open Task");
     myNameField.setText(TaskUtil.getTrimmedSummary(task));
     myNameField.setEnabled(!task.isIssue());
 
@@ -103,7 +105,7 @@ public class OpenTaskDialog extends DialogWrapper {
     if (myUpdateState.isSelected()) {
       myTaskStateCombo.scheduleUpdateOnce();
     }
-    
+
     myAdditionalPanel.setLayout(new BoxLayout(myAdditionalPanel, BoxLayout.Y_AXIS));
     myPanels = TaskDialogPanelProvider.getOpenTaskPanels(project, myTask);
     for (TaskDialogPanel panel : myPanels) {
@@ -197,7 +199,7 @@ public class OpenTaskDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTaskStateCombo = new TaskStateCombo(myProject, myTask) {
+    myTaskStateCombo = new TaskStateCombo() {
       @Nullable
       @Override
       protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {

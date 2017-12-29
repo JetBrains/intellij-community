@@ -39,13 +39,9 @@ class LibraryLicensesListGenerator {
     this.licensesList = licensesList
   }
 
-  private String getLibraryName(JpsLibrary lib) {
+  static String getLibraryName(JpsLibrary lib) {
     def name = lib.name
     if (name.startsWith("#")) {
-      if (lib.getRoots(JpsOrderRootType.COMPILED).size() != 1) {
-        def urls = lib.getRoots(JpsOrderRootType.COMPILED).collect { it.url }
-        messages.warning("Non-single entry module library $name: $urls");
-      }
       File file = lib.getFiles(JpsOrderRootType.COMPILED)[0]
       return file.name
     }
@@ -105,39 +101,6 @@ class LibraryLicensesListGenerator {
     }
     finally {
       out.close()
-    }
-  }
-
-  void checkLibLicenses() {
-    def libraries = new HashSet<JpsLibrary>()
-    def lib2Module = new HashMap<JpsLibrary, JpsModule>();
-    Set<String> nonPublicModules = ["buildScripts", "build", "buildSrc"] as Set
-    project.modules.findAll { !nonPublicModules.contains(it.name) }.each { JpsModule module ->
-      JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {
-        lib2Module[it] = module
-        libraries << it
-      }
-    }
-
-    def libWithLicenses = licensesList.collectMany { it.libraryNames } as Set<String>
-
-    List<String> withoutLicenses = []
-    libraries.each { JpsLibrary lib ->
-      def name = getLibraryName(lib)
-      if (!libWithLicenses.contains(name)) {
-        withoutLicenses << "$name (used in module ${lib2Module[lib].name})".toString()
-      }
-    }
-
-    if (!withoutLicenses.isEmpty()) {
-      def errorMessage = []
-      errorMessage << "Licenses aren't specified for ${withoutLicenses.size()} libraries:"
-      withoutLicenses.sort(true, String.CASE_INSENSITIVE_ORDER)
-      withoutLicenses.each { errorMessage << it }
-      errorMessage << "If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files"
-      errorMessage << "If a library is used in tests only change its scope to 'Test'"
-      errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
-      messages.error(errorMessage.join("\n"))
     }
   }
 }

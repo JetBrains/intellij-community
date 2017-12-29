@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="vcs-api-core" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="lang-api" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

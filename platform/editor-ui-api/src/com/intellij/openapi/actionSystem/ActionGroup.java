@@ -48,7 +48,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * The actual value is a Boolean.
    */
-  @NonNls public static final String PROP_POPUP = "popup";
+  @NonNls private static final String PROP_POPUP = "popup";
 
   private Boolean myDumbAware;
 
@@ -57,7 +57,7 @@ public abstract class ActionGroup extends AnAction {
    * popup set to false.
    */
   public ActionGroup(){
-    this(null, false);
+    // avoid eagerly creating template presentation
   }
 
   /**
@@ -109,7 +109,7 @@ public abstract class ActionGroup extends AnAction {
   public final void setPopup(boolean popup){
     boolean oldPopup = myPopup;
     myPopup = popup;
-    firePropertyChange(PROP_POPUP, oldPopup?Boolean.TRUE:Boolean.FALSE, myPopup?Boolean.TRUE:Boolean.FALSE);
+    firePropertyChange(PROP_POPUP, oldPopup, myPopup);
   }
 
   public final void addPropertyChangeListener(PropertyChangeListener l){

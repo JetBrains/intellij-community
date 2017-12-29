@@ -73,7 +73,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     if (renderer.isShowFlatten()) {
       FilePath parentPath = filePath.getParentPath();
       if (parentPath != null) {
-        appendParentPath(renderer, parentPath.getPath());
+        appendParentPath(renderer, parentPath);
       }
     }
 
@@ -123,10 +123,7 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     return CHANGE_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof Change) {
-      return ChangesUtil.getFilePath(getUserObject()).getName().compareToIgnoreCase(ChangesUtil.getFilePath((Change)o2).getName());
-    }
-    return 0;
+  public int compareUserObjects(final Change o2) {
+    return ChangesComparator.getInstance(true).compare(getUserObject(), o2);
   }
 }

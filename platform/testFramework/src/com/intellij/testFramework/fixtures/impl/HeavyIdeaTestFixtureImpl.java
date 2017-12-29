@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.testFramework.fixtures.impl;
@@ -77,10 +65,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String myName;
+  private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker myOldSdks;
 
-  HeavyIdeaTestFixtureImpl(@NotNull String name) {
+  HeavyIdeaTestFixtureImpl(@NotNull String name, boolean isDirectoryBasedProject) {
     myName = name;
+    myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
 
   void addModuleFixtureBuilder(ModuleFixtureBuilder builder) {
@@ -152,7 +142,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       .synchronizeTempDirVfs(ObjectUtils.assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory)));
     myFilesToDelete.add(tempDirectory);
 
-    String projectPath = FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + ProjectFileType.DOT_DEFAULT_EXTENSION;
+    String projectPath = generateProjectPath(tempDirectory);
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     new Throwable(projectPath).printStackTrace(new PrintStream(buffer));
     myProject = PlatformTestCase.createProject(projectPath, buffer.toString());
@@ -167,6 +157,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       LightPlatformTestCase.clearUncommittedDocuments(myProject);
       ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     });
+  }
+
+  @NotNull
+  protected String generateProjectPath(@NotNull File tempDirectory) {
+    String suffix = myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION;
+    return FileUtil.toSystemIndependentName(tempDirectory.getPath()) + "/" + myName + suffix;
   }
 
   private void initApplication() {
@@ -205,8 +201,8 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
         }
         if (LangDataKeys.IDE_VIEW.is(dataId)) {
           VirtualFile[] contentRoots = ProjectRootManager.getInstance(myProject).getContentRoots();
-          final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
           if (contentRoots.length > 0) {
+            final PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(contentRoots[0]);
             return new IdeView() {
               @Override
               public void selectElement(PsiElement element) {

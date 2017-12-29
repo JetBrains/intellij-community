@@ -32,11 +32,24 @@ class GradleIdeaSettingsContributor: GradleMethodContextContributor {
     val MODULE_SETTINGS_FQN = "org.jetbrains.gradle.ext.ModuleSettings"
 
     val compilerSettingsClosure = groovyClosure().inMethod(psiMethod(PROJECT_SETTINGS_FQN, "compiler"))
+    val runConfigurationsClosure = groovyClosure().inMethod(psiMethod(MODULE_SETTINGS_FQN, "runConfigurations"))
+    val facetsClosure = groovyClosure().inMethod(psiMethod(MODULE_SETTINGS_FQN, "facets"))
+
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = when {
-      compilerSettingsClosure.accepts(closure) -> DelegatesToInfo(TypesUtil.createType("org.jetbrains.gradle.ext.IdeaCompilerConfiguration", closure), Closure.DELEGATE_FIRST)
-      else -> null
+    compilerSettingsClosure.accepts(closure) -> DelegatesToInfo(
+      TypesUtil.createType("org.jetbrains.gradle.ext.IdeaCompilerConfiguration", closure), Closure.DELEGATE_FIRST)
+    runConfigurationsClosure.accepts(closure) ->
+      DelegatesToInfo(TypesUtil.createGenericType("org.gradle.api.PolymorphicDomainObjectContainer", closure,
+                                                  TypesUtil.createType("org.jetbrains.gradle.ext.runConfigurations.RunConfiguration",
+                                                                       closure)), Closure.DELEGATE_FIRST)
+    facetsClosure.accepts(closure) ->
+      DelegatesToInfo(TypesUtil.createGenericType("org.gradle.api.PolymorphicDomainObjectContainer", closure,
+                                                  TypesUtil.createType("org.jetbrains.gradle.ext.facets.Facet", closure)),
+                      Closure.DELEGATE_FIRST)
+
+    else -> null
   }
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {

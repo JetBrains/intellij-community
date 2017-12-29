@@ -25,8 +25,11 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 
 public class BaseLabel extends JLabel {
   protected ToolWindowContentUi myUi;
@@ -39,6 +42,16 @@ public class BaseLabel extends JLabel {
     myUi = ui;
     setOpaque(false);
     myBold = bold;
+    addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        repaint();
+      }
+      @Override
+      public void focusLost(FocusEvent e) {
+        repaint();
+      }
+    });
   }
 
   @Override
@@ -77,6 +90,10 @@ public class BaseLabel extends JLabel {
     setForeground(fore);
     GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent());
     super.paintComponent(_getGraphics((Graphics2D)g));
+
+    if (isFocusOwner()) {
+      UIUtil.drawLabelDottedRectangle(this, g);
+    }
   }
 
   protected Graphics _getGraphics(Graphics2D g) {
@@ -132,5 +149,16 @@ public class BaseLabel extends JLabel {
 
   public Content getContent() {
     return null;
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleBaseLabel();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleBaseLabel extends AccessibleJLabel {
   }
 }

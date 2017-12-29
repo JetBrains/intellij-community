@@ -53,8 +53,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.*;
@@ -451,7 +451,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     assert !myApplication.isDispatchThread();
     final int resolvedInPreviousBatch = this.resolvedInPreviousBatch;
     final int totalSize = files.size() + resolvedInPreviousBatch;
-    final ConcurrentIntObjectMap<int[]> fileToForwardIds = ContainerUtil.createConcurrentIntObjectMap();
+    final IntObjectMap<int[]> fileToForwardIds = ContainerUtil.createConcurrentIntObjectMap();
     final Set<VirtualFile> toProcess = Collections.synchronizedSet(files);
     indicator.setIndeterminate(false);
     ProgressIndicatorUtils.forceWriteActionPriority(indicator, (Disposable)indicator);
@@ -652,11 +652,11 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
     return forwardIds;
   }
 
-  private void storeIds(@NotNull ConcurrentIntObjectMap<int[]> fileToForwardIds) {
+  private void storeIds(@NotNull IntObjectMap<int[]> fileToForwardIds) {
     int forwardSize = 0;
     int backwardSize = 0;
     final TIntObjectHashMap<TIntArrayList> fileToBackwardIds = new TIntObjectHashMap<>(fileToForwardIds.size());
-    for (ConcurrentIntObjectMap.IntEntry<int[]> entry : fileToForwardIds.entries()) {
+    for (IntObjectMap.Entry<int[]> entry : fileToForwardIds.entries()) {
       int fileId = entry.getKey();
       int[] forwardIds = entry.getValue();
       forwardSize += forwardIds.length;

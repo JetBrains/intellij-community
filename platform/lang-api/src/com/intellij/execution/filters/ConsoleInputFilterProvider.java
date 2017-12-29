@@ -20,9 +20,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
+@FunctionalInterface
 public interface ConsoleInputFilterProvider {
-  ExtensionPointName<ConsoleInputFilterProvider> INPUT_FILTER_PROVIDERS =
-    ExtensionPointName.create("com.intellij.consoleInputFilterProvider");
+  ExtensionPointName<ConsoleInputFilterProvider> INPUT_FILTER_PROVIDERS = ExtensionPointName.create("com.intellij.consoleInputFilterProvider");
 
   @NotNull
   InputFilter[] getDefaultFilters(@NotNull Project project);

@@ -362,7 +362,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     i = myIndices.getIndices().get(0);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
@@ -370,12 +370,12 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
 
     MavenServerManager.getInstance().shutdown(true);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
@@ -452,7 +452,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     MavenIndex i = myIndices.add("id", myRepositoryHelper.getTestDataPath("local1"), MavenIndex.Kind.LOCAL);
     myIndices.updateOrRepair(i, true, getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*junit*")),
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*junit*")),
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
@@ -462,7 +462,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
 
     i.addArtifact(new File(myRepositoryHelper.getTestDataPath("local2/jmock/jmock/1.0.0/jmock-1.0.0.jar")));
 
-    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
+    assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_CLASS_NAMES, "*mock*")), "jmock:jmock:1.0.0");
   }
 
   public void testSearchingForClasses() throws Exception {

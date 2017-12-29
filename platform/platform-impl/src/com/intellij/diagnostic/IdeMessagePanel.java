@@ -57,14 +57,14 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   private final MessagePool myMessagePool;
   private boolean myNotificationPopupAlreadyShown = false;
 
-  public IdeMessagePanel(@NotNull IdeFrame frame, @NotNull MessagePool messagePool) {
+  public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
     myIdeFatal = new IdeFatalErrorsIcon(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         openFatals(null);
       }
-    });
+    }, frame != null);
 
     myIdeFatal.setVerticalAlignment(SwingConstants.CENTER);
 
@@ -236,7 +236,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       myNotificationPopupAlreadyShown = false;
     }
     else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      Project project = myFrame.getProject();
+      Project project = myFrame == null ? null : myFrame.getProject();
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(() -> {
           String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));

@@ -34,12 +34,13 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
 public class StaticGenericInfoBuilder {
-  private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
+  private static final Set<Class<?>> ADDER_PARAMETER_TYPES = new THashSet<>(Arrays.asList(Class.class, int.class));
   private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<>();
@@ -125,16 +126,11 @@ public class StaticGenericInfoBuilder {
       }
     }
 
-    //noinspection ConstantIfStatement
+    //noinspection ConstantIfStatement,ConstantConditions
     if (false) {
       if (!methods.isEmpty()) {
-        StringBuilder sb = new StringBuilder(myClass + " should provide the following implementations:");
-        for (JavaMethod method : methods) {
-          sb.append("\n  ");
-          sb.append(method);
-        }
-        assert false : sb.toString();
-        //System.out.println(sb.toString());
+        assert false : methods.stream().map(method -> "\n  " + method)
+          .collect(Collectors.joining("", myClass + " should provide the following implementations:", ""));
       }
     }
   }

@@ -127,7 +127,9 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         if (overrideDefault) {
           return;
         }
-        accept |= methodsHaveSameReturnTypes(method, superMethod) && haveSameExceptionSignatures(method, superMethod);
+        accept |= methodsHaveSameReturnTypes(method, superMethod) &&
+                  haveSameExceptionSignatures(method, superMethod) &&
+                  method.isVarArgs() == superMethod.isVarArgs();;
 
         if (ignoreJavaDoc && !haveSameJavaDoc(method, superMethod)) {
           return;

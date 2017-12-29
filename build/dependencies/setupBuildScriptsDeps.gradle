@@ -15,6 +15,10 @@
  */
 repositories {
   mavenCentral()
+  if (project.ext.inJetBrainsNetwork) {
+    maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
+  }
+  maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
 }
 
 configurations {
@@ -23,6 +27,15 @@ configurations {
 
 dependencies {
   buildScriptsDeps loadLibraryMavenId("Groovy")
+  buildScriptsDeps loadLibraryMavenId("cli-parser")
+  buildScriptsDeps loadLibraryMavenId("protobuf")
+  buildScriptsDeps loadLibraryMavenId("OroMatcher")
+  buildScriptsDeps loadLibraryMavenId("commons-codec")
+  buildScriptsDeps loadLibraryMavenId("commons-logging")
+  buildScriptsDeps loadLibraryMavenId("Trove4j")
+  buildScriptsDeps loadLibraryMavenId("NanoXML")
+  buildScriptsDeps loadLibraryMavenId("Guava")
+  buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
 }
 
 /**
@@ -34,7 +47,7 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
 }
 
 private String loadLibraryMavenId(String libraryName) {
-  File file = new File(project.rootDir, "../../.idea/libraries/${libraryName}.xml")
+  File file = new File(project.rootDir, "../../.idea/libraries/${libraryName.replace('-', '_')}.xml")
   if (!file.exists()) {
     throw new GradleException("Cannot find $libraryName project library: $file doesn't exist")
   }

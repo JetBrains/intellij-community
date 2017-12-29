@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -23,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored"})
+@SuppressWarnings({"EqualsBetweenInconvertibleTypes", "ResultOfMethodCallIgnored", "StringEqualsCharSequence"})
 public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
@@ -88,6 +74,86 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightInspecti
            "  BiPredicate<Long, Double> bp2 = Object::/*'equals()' between objects of inconvertible types 'Long' and 'Double'*/equals/**/;\n" +
            "  BiPredicate<Long, Long> bpOk = Object::equals;\n" +
            "}\n");
+  }
+
+  public void testNoCommonSubclass() {
+    doTest("import java.util.Date;\n" +
+           "import java.util.Map;\n" +
+           "import java.util.Objects;\n" +
+           "\n" +
+           "class X {\n" +
+           "  public static void foo(Date date, Map<String, String> map) {\n" +
+           "    boolean res = Objects./*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/equals/**/(map, date);\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testNoCommonSubclassEqualityComparison() {
+    doTest("import java.util.Date;\n" +
+           "import java.util.Map;\n" +
+           "import java.util.Objects;\n" +
+           "\n" +
+           "class X {\n" +
+           "  public static boolean foo(Date date, Map<String, String> map) {\n" +
+           "    return map /*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/==/**/ date;\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testCommonSubclass() {
+    doTest("import java.util.Date;\n" +
+           "import java.util.Map;\n" +
+           "import java.util.Objects;\n" +
+           "\n" +
+           "class X {\n" +
+           "  static abstract class Y extends Date implements Map<String, String> {}\n" +
+           "  \n" +
+           "  public static void foo(Date date, Map<String, String> map) {\n" +
+           "    boolean res = Objects.equals(map, date);\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testDifferentSets() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class X {\n" +
+           "  boolean test(HashSet<String> set1, TreeSet<String> set2) {\n" +
+           "    return set1.equals(set2); // can be equal by content\n" +
+           "  }\n" +
+           "\n" +
+           "  boolean test2(HashSet<String> set1, TreeSet<Integer> set2) {\n" +
+           "    return set1./*'equals()' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(set2);\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testGeneratedEquals() {
+    doTest("class A {\n" +
+           "    int i;\n" +
+           "\n" +
+           "    @Override\n" +
+           "    public boolean equals(Object o) {\n" +
+           "      if (this == o) return true;\n" +
+           "      if (o == null || getClass() != o.getClass()) return false; // <-- a warning here is unexpected\n" +
+           "      A a = (A)o;\n" +
+           "      if (i != a.i) return false;\n" +
+           "      return true;\n" +
+           "    }\n" +
+           "    @Override\n" +
+           "    public int hashCode() {\n" +
+           "      return i;\n" +
+           "    }\n" +
+           "  }");
+  }
+
+  public void testWilcards() {
+    doTest("import java.util.*;" +
+           "class X {" +
+           "  boolean x(Class<? extends Date> a, Class<? extends Map<String, String>> b) {" +
+           "    return b./*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/equals/**/(a);" +
+           "  }" +
+           "}");
   }
 
   @Override

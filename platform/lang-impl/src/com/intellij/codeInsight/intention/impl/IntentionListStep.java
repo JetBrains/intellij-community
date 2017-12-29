@@ -277,7 +277,7 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private void applyAction(@NotNull IntentionActionWithTextCaching cachedAction) {
     myFinalRunnable = () -> {
       HintManager.getInstance().hideAllHints();
-      if (myProject.isDisposed() || myEditor != null && myEditor.isDisposed()) return;
+      if (myProject.isDisposed() || myEditor != null && (myEditor.isDisposed() || !myEditor.getComponent().isShowing())) return;
       if (DumbService.isDumb(myProject) && !DumbService.isDumbAware(cachedAction)) {
         DumbService.getInstance(myProject).showDumbModeNotification(cachedAction.getText() + " is not available during indexing");
         return;

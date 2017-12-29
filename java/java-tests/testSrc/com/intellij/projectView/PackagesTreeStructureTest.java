@@ -16,8 +16,8 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -213,12 +213,17 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
     projectView.setAbbreviatePackageNames(abbreviatePackageNames, PackageViewPane.ID);
     projectView.setHideEmptyPackages(true, PackageViewPane.ID);
 
-    PackageViewPane packageViewPane = new PackageViewPane(myProject);
+    PackageViewPane packageViewPane = new PackageViewPane(myProject) {
+      @Override
+      protected ProjectAbstractTreeStructureBase createStructure() {
+        ProjectAbstractTreeStructureBase structure = super.createStructure();
+        structure.setProviders(new ResourceBundleGrouper(myProject));
+        return structure;
+      }
+    };
     packageViewPane.createComponent();
-    ((AbstractProjectTreeStructure) packageViewPane.getTreeStructure()).setProviders(new ResourceBundleGrouper(myProject));
-    packageViewPane.updateFromRoot(true);
     JTree tree = packageViewPane.getTree();
-    TreeUtil.expand(tree, levels);
+    PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, levels));
     PlatformTestUtil.assertTreeEqual(tree, expected);
     BaseProjectViewTestCase.checkContainsMethod(packageViewPane.getTreeStructure().getRootElement(), packageViewPane.getTreeStructure());
     Disposer.dispose(packageViewPane);

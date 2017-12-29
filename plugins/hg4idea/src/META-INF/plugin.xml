@@ -32,11 +32,14 @@
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
     <vcs.taskHandler implementation="org.zmlx.hg4idea.HgTaskHandler"/>
     <vcs.ignoredFilesHolder implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
+    <vcsRepositoryInitializer implementation="org.zmlx.hg4idea.repo.HgRepositoryInitializer"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
     <applicationService serviceInterface="org.zmlx.hg4idea.HgRememberedInputs"
                         serviceImplementation="org.zmlx.hg4idea.HgRememberedInputs"/>
+    <applicationService serviceInterface="org.zmlx.hg4idea.HgExecutableManager"
+                        serviceImplementation="org.zmlx.hg4idea.HgExecutableManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.branch.HgBranchManager"/>
     <projectService serviceImplementation="org.zmlx.hg4idea.repo.HgRepositoryManager"/>
     <projectService serviceInterface="org.zmlx.hg4idea.HgProjectSettings"

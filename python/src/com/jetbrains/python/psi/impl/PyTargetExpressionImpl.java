@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -197,8 +183,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
           final PyTupleExpression targetTuple = PsiTreeUtil.findChildOfType(lhs, PyTupleExpression.class, false);
           if (value != null && targetTuple != null) {
             final PyType assignedType = PyTypeChecker.toNonWeakType(context.getType(value), context);
-            if (assignedType instanceof PyTupleType) {
-              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, (PyTupleType)assignedType);
+            if (assignedType != null) {
+              final PyType t = PyTypeChecker.getTargetTypeFromTupleAssignment(this, targetTuple, assignedType, context);
               if (t != null) {
                 return t;
               }
@@ -285,7 +271,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (enter != null) {
       final PyType enterType = enter.getCallType(withExpression, Collections.emptyMap(), context);
       if (enterType != null) {
-        return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType, context)) : enterType;
+        return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
       for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
         final PyType typeFromProvider = provider.getContextManagerVariableType(cls, withExpression, context);

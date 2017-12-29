@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -65,10 +66,11 @@ public class DoubleNegationInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement expression = descriptor.getPsiElement();
+      CommentTracker tracker = new CommentTracker();
       if (expression instanceof PsiPrefixExpression) {
         final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
         final PsiExpression operand = ParenthesesUtils.stripParentheses(prefixExpression.getOperand());
-        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand));
+        PsiReplacementUtil.replaceExpression(prefixExpression, BoolUtils.getNegatedExpressionText(operand, tracker), tracker);
       } else if (expression instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
         final PsiExpression[] operands = polyadicExpression.getOperands();
@@ -78,11 +80,11 @@ public class DoubleNegationInspection extends BaseInspection {
           final PsiExpression secondOperand = operands[1];
           if (isNegation(firstOperand)) {
             PsiReplacementUtil
-              .replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand) + "==" + secondOperand.getText());
+              .replaceExpression(polyadicExpression, BoolUtils.getNegatedExpressionText(firstOperand, tracker) + "==" + tracker.markUnchanged(secondOperand).getText(), tracker);
           }
           else {
             PsiReplacementUtil
-              .replaceExpression(polyadicExpression, firstOperand.getText() + "==" + BoolUtils.getNegatedExpressionText(secondOperand));
+              .replaceExpression(polyadicExpression, tracker.markUnchanged(firstOperand).getText() + "==" + BoolUtils.getNegatedExpressionText(secondOperand, tracker), tracker);
           }
         }
         else {
@@ -96,9 +98,9 @@ public class DoubleNegationInspection extends BaseInspection {
                 newExpressionText.append("==");
               }
             }
-            newExpressionText.append(operands[i].getText());
+            newExpressionText.append(tracker.markUnchanged(operands[i]).getText());
           }
-          PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString());
+          PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString(), tracker);
         }
       }
     }
@@ -120,6 +122,13 @@ public class DoubleNegationInspection extends BaseInspection {
       final PsiExpression operand = expression.getOperand();
       if (!isNegation(operand)) {
         return;
+      }
+      PsiExpression nestedOperand = ParenthesesUtils.stripParentheses(operand);
+      if (nestedOperand instanceof PsiPrefixExpression) {
+        PsiExpression nestedPrefixOperand = ((PsiPrefixExpression)nestedOperand).getOperand();
+        if (nestedPrefixOperand == null || !LambdaUtil.isSafeLambdaReturnValueReplacement(expression, nestedPrefixOperand)) {
+          return;
+        }
       }
       registerError(expression);
     }

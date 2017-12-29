@@ -23,10 +23,10 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
-public class NonExceptionNameEndsWithExceptionInspection
-  extends NonExceptionNameEndsWithExceptionInspectionBase {
+public class NonExceptionNameEndsWithExceptionInspection extends NonExceptionNameEndsWithExceptionInspectionBase {
 
   @Override
   @NotNull
@@ -65,8 +65,7 @@ public class NonExceptionNameEndsWithExceptionInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass)) {
@@ -80,16 +79,13 @@ public class NonExceptionNameEndsWithExceptionInspection
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = facade.getElementFactory();
       final GlobalSearchScope scope = aClass.getResolveScope();
-      final PsiJavaCodeReferenceElement reference =
-        factory.createReferenceElementByFQClassName(
-          CommonClassNames.JAVA_LANG_EXCEPTION, scope);
-      final PsiJavaCodeReferenceElement[] referenceElements =
-        extendsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement :
-        referenceElements) {
-        referenceElement.delete();
+      final PsiJavaCodeReferenceElement reference = factory.createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_EXCEPTION, scope);
+      CommentTracker tracker = new CommentTracker();
+      final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
+        tracker.delete(referenceElement);
       }
-      extendsList.add(reference);
+      tracker.insertCommentsBefore(extendsList.add(reference));
     }
   }
 }

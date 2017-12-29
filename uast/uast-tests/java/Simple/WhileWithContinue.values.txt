@@ -24,7 +24,7 @@ UFile (package = ) [public class WhileWithContinue {...]
                                 USimpleNameReferenceExpression (identifier = first) [first] = (var first = 1)
                                 ULiteralExpression (value = 0) [0] = 0
                             UContinueExpression (label = null) [continue] = Nothing(continue)
-                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                            UastEmptyExpression [UastEmptyExpression] = Undetermined
                         UBinaryExpression (operator = =) [second = 4] = 4
                             USimpleNameReferenceExpression (identifier = second) [second] = Undetermined
                             ULiteralExpression (value = 4) [4] = 4
@@ -52,7 +52,7 @@ UFile (package = ) [public class WhileWithContinue {...]
                                 USimpleNameReferenceExpression (identifier = first) [first] = (var first = Undetermined)
                                 ULiteralExpression (value = 0) [0] = 0
                             UContinueExpression (label = null) [continue] = Nothing(continue)
-                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                            UastEmptyExpression [UastEmptyExpression] = Undetermined
                         UBinaryExpression (operator = =) [second = 4] = 4
                             USimpleNameReferenceExpression (identifier = second) [second] = (var second = 3)
                             ULiteralExpression (value = 4) [4] = 4

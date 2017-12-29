@@ -16,6 +16,7 @@
 package com.intellij.lang.html;
 
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.intellij.psi.tree.IElementType;
@@ -43,10 +45,12 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     if (psiElement != null &&
         psiElement.isValid() &&
         psiElement.getLanguage().is(HTMLLanguage.INSTANCE)) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(psiElement.getProject());
-      CodeStyleSettings.QuoteStyle quoteStyle = settings.HTML_QUOTE_STYLE;
-      if (quoteStyle != CodeStyleSettings.QuoteStyle.None && settings.HTML_ENFORCE_QUOTES) {
-        PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(settings);
+      CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(psiElement.getProject());
+      HtmlCodeStyleSettings htmlSettings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
+      CodeStyleSettings.QuoteStyle quoteStyle = htmlSettings.HTML_QUOTE_STYLE;
+      if (quoteStyle != CodeStyleSettings.QuoteStyle.None && htmlSettings.HTML_ENFORCE_QUOTES) {
+        PostFormatProcessorHelper postFormatProcessorHelper =
+          new PostFormatProcessorHelper(rootSettings.getCommonSettings(HTMLLanguage.INSTANCE));
         postFormatProcessorHelper.setResultTextRange(range);
         HtmlQuotesConverter converter = new HtmlQuotesConverter(quoteStyle, psiElement, postFormatProcessorHelper);
         Document document = converter.getDocument();
@@ -161,7 +165,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
-      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(null);
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(CodeStyle.getDefaultSettings());
       postFormatProcessorHelper.setResultTextRange(element.getTextRange());
       new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }

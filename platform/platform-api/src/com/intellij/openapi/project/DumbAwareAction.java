@@ -39,6 +39,15 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     };
   }
 
+  @NotNull
+  public static DumbAwareAction create(@Nullable String text, @NotNull Consumer<AnActionEvent> actionPerformed) {
+    return new DumbAwareAction(text) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        actionPerformed.consume(e);
+      }
+    };
+  }
 
   protected DumbAwareAction() {
   }

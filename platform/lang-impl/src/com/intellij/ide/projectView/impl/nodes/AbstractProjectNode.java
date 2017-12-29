@@ -19,7 +19,8 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +44,18 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   }
 
   protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
+    if (getSettings().isFlattenModules()) {
+      return ContainerUtil.mapNotNull(modules, moduleDescription -> {
+        try {
+          return createModuleNode(moduleDescription);
+        }
+        catch (InvocationTargetException | NoSuchMethodException | InstantiationException | IllegalAccessException e) {
+          LOG.error(e);
+          return null;
+        }
+      });
+    }
+
     Set<String> topLevelGroups = new LinkedHashSet<>();
     Set<ModuleDescription> nonGroupedModules = new LinkedHashSet<>(modules);
     List<String> commonGroupsPath = null;
@@ -135,6 +147,6 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
            index.isInLibraryClasses(vFile) ||
            index.isInLibrarySource(vFile) ||
            Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           Registry.is("ide.scratch.in.project.view") && vFile.getFileType() == ScratchFileType.INSTANCE;
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && RootType.forFile(vFile) != null;
   }
 }

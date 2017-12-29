@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public interface JvmElement extends PomTarget {
 
   /**
-   * @return corresponsing source element or {@code null} if no source element is available
+   * @return corresponding source element or {@code null} if no source element is available
    */
   @Nullable
   PsiElement getSourceElement();

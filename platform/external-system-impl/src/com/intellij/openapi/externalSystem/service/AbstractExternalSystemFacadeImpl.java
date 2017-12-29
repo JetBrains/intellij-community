@@ -59,7 +59,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public RemoteExternalSystemProjectResolver<S> getResolver() throws RemoteException, IllegalStateException {
+  public RemoteExternalSystemProjectResolver<S> getResolver() throws IllegalStateException {
     try {
       return getService(RemoteExternalSystemProjectResolver.class, myProjectResolver);
     }
@@ -72,7 +72,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
   @SuppressWarnings("unchecked")
   @NotNull
   @Override
-  public RemoteExternalSystemTaskManager<S> getTaskManager() throws RemoteException {
+  public RemoteExternalSystemTaskManager<S> getTaskManager() {
     try {
       return getService(RemoteExternalSystemTaskManager.class, myTaskManager);
     }

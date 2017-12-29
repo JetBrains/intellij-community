@@ -15,9 +15,12 @@
  */
 package com.intellij.usages;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.regex.Pattern;
 
 /**
  * @author max
@@ -45,6 +48,8 @@ public class UsageViewPresentation {
   private String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
+  private Pattern mySearchPattern;
+  private Pattern myReplacePattern;
 
   public String getTabText() {
     return myTabText;
@@ -213,6 +218,22 @@ public class UsageViewPresentation {
     myExcludeAvailable = excludeAvailable;
   }
 
+  public void setSearchPattern(Pattern searchPattern) {
+    mySearchPattern = searchPattern;
+  }
+
+  public Pattern getSearchPattern() {
+    return mySearchPattern;
+  }
+
+  public void setReplacePattern(Pattern replacePattern) {
+    myReplacePattern = replacePattern;
+  }
+
+  public Pattern getReplacePattern() {
+    return myReplacePattern;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -249,9 +270,24 @@ public class UsageViewPresentation {
     }
     if (myUsagesString != null ? !myUsagesString.equals(that.myUsagesString) : that.myUsagesString != null) return false;
     if (myUsagesWord != null ? !myUsagesWord.equals(that.myUsagesWord) : that.myUsagesWord != null) return false;
+    if (!arePatternsEqual(mySearchPattern, that.mySearchPattern)) return false;
+    if (!arePatternsEqual(myReplacePattern, that.myReplacePattern)) return false;
 
     return true;
   }
+
+  public static boolean arePatternsEqual(Pattern p1, Pattern p2) {
+    if (p1 == null) return p2 == null;
+    if (p2 == null) return false;
+    return Comparing.equal(p1.pattern(), p2.pattern()) && p1.flags() == p2.flags();
+  }
+
+  public static int getHashCode(Pattern pattern) {
+    if (pattern == null) return 0;
+    String s = pattern.pattern();
+    return (s != null ? s.hashCode() : 0) * 31 + pattern.flags();
+  }
+
 
   @Override
   public int hashCode() {
@@ -269,6 +305,8 @@ public class UsageViewPresentation {
     result = 31 * result + (myUsageTypeFilteringAvailable ? 1 : 0);
     result = 31 * result + (myExcludeAvailable ? 1 : 0);
     result = 31 * result + (myUsagesWord != null ? myUsagesWord.hashCode() : 0);
+    result = 31 * result + getHashCode(mySearchPattern);
+    result = 31 * result + getHashCode(myReplacePattern);
     result = 31 * result + (myTabName != null ? myTabName.hashCode() : 0);
     result = 31 * result + (myToolwindowTitle != null ? myToolwindowTitle.hashCode() : 0);
     result = 31 * result + (myDetachedMode ? 1 : 0);

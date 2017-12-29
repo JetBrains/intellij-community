@@ -16,7 +16,6 @@ class ArgumentFileFilter() : Filter {
     this.fileText = fileText
   }
 
-
   fun setPath(path: String) {
     filePath = path
     fileText = File(path).readText()

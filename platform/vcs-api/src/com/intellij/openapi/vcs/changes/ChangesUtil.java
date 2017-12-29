@@ -154,6 +154,15 @@ public class ChangesUtil {
       .filter(Objects::nonNull);
   }
 
+  @NotNull
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
+    return changes
+      .map(ChangesUtil::getAfterPath)
+      .filter(Objects::nonNull)
+      .map(FilePath::getVirtualFile)
+      .filter(Objects::nonNull);
+  }
+
   /**
    * @deprecated Use {@link ChangesUtil#getFiles(Stream)}.
    */

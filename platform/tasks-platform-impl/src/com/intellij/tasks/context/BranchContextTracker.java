@@ -3,6 +3,7 @@ package com.intellij.tasks.context;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vcs.BranchChangeListener;
@@ -38,11 +39,15 @@ public class BranchContextTracker implements BranchChangeListener {
     String contextName = getContextName(branchName);
     if (!myContextManager.hasContext(contextName)) return;
 
+    TransactionGuard.submitTransaction(myProject, () -> switchContext(branchName, contextName));
+  }
+
+  private void switchContext(@NotNull String branchName, String contextName) {
     myContextManager.clearContext();
     myContextManager.loadContext(contextName);
 
     Notification notification =
-      NOTIFICATION.createNotification("Workspace is restored as it was in branch ‘" + branchName + "'", NotificationType.INFORMATION);
+      NOTIFICATION.createNotification("Workspace is restored to how it was in the ‘" + branchName + "' branch", NotificationType.INFORMATION);
     if (myLastBranch != null && myContextManager.hasContext(getContextName(myLastBranch))) {
       notification.addAction(new NotificationAction("Rollback") {
         @Override
@@ -57,7 +62,7 @@ public class BranchContextTracker implements BranchChangeListener {
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         new ConfigureBranchContextDialog(myProject).show();
       }
-    }).setContextHelpAction(new AnAction("What is workspace?", "Workspace includes open editors, current run configuration, and breakpoints.", null) {
+    }).setContextHelpAction(new AnAction("What is a workspace?", "Workspace includes open editors, current run configuration, and breakpoints.", null) {
       @Override
       public void actionPerformed(AnActionEvent e) {
 

@@ -22,24 +22,24 @@ import com.intellij.psi.PsiType
 internal val LINE_SEPARATOR = System.getProperty("line.separator") ?: "\n"
 
 val String.withMargin: String
-    get() = lines().joinToString(LINE_SEPARATOR) { "    " + it }
+  get() = lines().joinToString(LINE_SEPARATOR) { "    " + it }
 
 internal operator fun String.times(n: Int) = this.repeat(n)
 
 internal fun List<UElement>.asLogString() = joinToString(LINE_SEPARATOR) { it.asLogString().withMargin }
 
 internal tailrec fun UExpression.unwrapParenthesis(): UExpression = when (this) {
-    is UParenthesizedExpression -> expression.unwrapParenthesis()
-    else -> this
+  is UParenthesizedExpression -> expression.unwrapParenthesis()
+  else -> this
 }
 
 internal fun <T> lz(f: () -> T) = lazy(LazyThreadSafetyMode.NONE, f)
 
 internal val PsiType.name: String
-    get() = getCanonicalText(false)
+  get() = getCanonicalText(false)
 
 
 internal fun PsiModifierListOwner.renderModifiers(): String {
-    val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
-    return if (modifiers.isEmpty()) "" else modifiers + " "
+  val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
+  return if (modifiers.isEmpty()) "" else modifiers + " "
 }

@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,12 +20,12 @@ public class SidePanelSeparator extends SeparatorWithText {
     if ("--".equals(getCaption())) {
       final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       final int h = getHeight() / 2;
-      g.drawLine(30, h, getWidth() - 30, h);
+      UIUtil.drawLine(g, 30, h, getWidth() - 30, h);
       ((Graphics2D)g).setPaint(new GradientPaint(5, h, ColorUtil.toAlpha(separatorColor, 0), 30, h, separatorColor));
-      g.drawLine(5, h, 30, h);
+      UIUtil.drawLine(g, 5, h, 30, h);
       ((Graphics2D)g).setPaint(
         new GradientPaint(getWidth() - 5, h, ColorUtil.toAlpha(separatorColor, 0), getWidth() - 30, h, separatorColor));
-      g.drawLine(getWidth() - 5, h, getWidth() - 30, h);
+      UIUtil.drawLine(g, getWidth() - 5, h, getWidth() - 30, h);
       config.restore();
       return;
     }

@@ -16,9 +16,9 @@
 
 package org.jetbrains.idea.svn.branchConfig;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -71,7 +71,7 @@ public class SvnBranchConfigurationManager implements PersistentStateComponent<S
   }
 
   public static SvnBranchConfigurationManager getInstance(@NotNull Project project) {
-    SvnBranchConfigurationManager result = PeriodicalTasksCloser.getInstance().safeGetService(project, SvnBranchConfigurationManager.class);
+    SvnBranchConfigurationManager result = ServiceManager.getService(project, SvnBranchConfigurationManager.class);
 
     if (result != null) {
       result.initialize();

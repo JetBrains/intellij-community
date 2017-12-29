@@ -1,4 +1,4 @@
-<scheme name="WarmNeon" version="142" parent_scheme="Default">
+<scheme name="WarmNeon" version="142" parent_scheme="Darcula">
   <colors>
     <option name="ADDED_LINES_COLOR" value="395439" />
     <option name="ANNOTATIONS_COLOR" value="8178af" />
@@ -1327,6 +1327,30 @@
       <value>
         <option name="FOREGROUND" value="ffffff" />
         <option name="BACKGROUND" value="404040" />
+      </value>
+    </option>
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
+      <value>
+        <option name="FOREGROUND" value="686a4e" />
+      </value>
+    </option>
+    <option name="OC.MACRONAME">
+      <value>
+        <option name="FOREGROUND" value="908b25" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="OC.MESSAGE_ARGUMENT" baseAttributes="DEFAULT_FUNCTION_CALL" />
+    <option name="OC.METHOD_DECLARATION" baseAttributes="DEFAULT_FUNCTION_DECLARATION" />
+    <option name="OC.STRUCT_FIELD">
+      <value>
+        <option name="FOREGROUND" value="b9b9b9" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="OC.TYPEDEF">
+      <value>
+        <option name="FOREGROUND" value="50861a" />
       </value>
     </option>
   </attributes>

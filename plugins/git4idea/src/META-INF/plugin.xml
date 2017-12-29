@@ -161,6 +161,7 @@
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
+    <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>
     <projectService serviceImplementation="git4idea.ui.branch.GitBranchManager"/>
@@ -190,6 +191,7 @@
     <projectService
         serviceInterface="git4idea.config.GitExecutableValidator"
         serviceImplementation="git4idea.config.GitExecutableValidator"/>
+    <projectService serviceImplementation="git4idea.util.GitVcsConsoleWriter"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceImplementation="git4idea.GitUserRegistry" />
@@ -210,6 +212,7 @@
                         serviceImplementation="git4idea.remote.GitRememberedInputs"/>
     <applicationService serviceInterface="git4idea.commands.Git"
                         serviceImplementation="git4idea.commands.GitImpl"/>
+    <applicationService serviceImplementation="git4idea.config.GitExecutableManager"/>
     <applicationService serviceInterface="git4idea.GitPlatformFacade"
                         serviceImplementation="git4idea.GitPlatformFacadeImpl" />
     <applicationService serviceInterface="git4idea.DialogManager"

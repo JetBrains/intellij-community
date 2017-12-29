@@ -18,19 +18,18 @@ package org.jetbrains.plugins.gradle.compiler;
 import com.google.gson.Gson;
 import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import groovy.lang.GroovyObject;
 import org.apache.tools.ant.taskdefs.Ant;
+import org.gradle.internal.impldep.com.google.common.base.Optional;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
-import java.io.File;
 import java.util.List;
 
 /**
@@ -62,22 +61,13 @@ public class GradleBuildProcessParametersProvider extends BuildProcessParameters
   private void addGradleClassPath(@NotNull final List<String> classpath) {
     if (myGradleClasspath == null) {
       myGradleClasspath = ContainerUtil.newArrayList();
-      String gradleLibDirPath = null;
       String gradleToolingApiJarPath = PathUtil.getJarPathForClass(ProjectConnection.class);
       if (!StringUtil.isEmpty(gradleToolingApiJarPath)) {
-        gradleLibDirPath = PathUtil.getParentPath(gradleToolingApiJarPath);
+        myGradleClasspath.add(gradleToolingApiJarPath);
       }
-      if (gradleLibDirPath == null || gradleLibDirPath.isEmpty()) return;
-
-      File gradleLibDir = new File(gradleLibDirPath);
-      if (!gradleLibDir.isDirectory()) return;
-
-      File[] children = FileUtil.notNullize(gradleLibDir.listFiles());
-      for (File child : children) {
-        final String fileName = child.getName();
-        if (fileName.endsWith(".jar") && child.isFile()) {
-          myGradleClasspath.add(child.getAbsolutePath());
-        }
+      String gradleToolingApiImplDepJarPath = PathUtil.getJarPathForClass(Optional.class);
+      if (!StringUtil.isEmpty(gradleToolingApiImplDepJarPath)) {
+        myGradleClasspath.add(gradleToolingApiImplDepJarPath);
       }
     }
     ContainerUtil.addAll(classpath, myGradleClasspath);

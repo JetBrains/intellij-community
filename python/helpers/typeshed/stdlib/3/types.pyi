@@ -29,6 +29,7 @@ class FunctionType:
     __dict__ = ...  # type: Dict[str, Any]
     __globals__ = ...  # type: Dict[str, Any]
     __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     __annotations__ = ...  # type: Dict[str, Any]
     __kwdefaults__ = ...  # type: Dict[str, Any]
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
@@ -140,10 +141,13 @@ class MethodType:
     __func__ = ...  # type: _StaticFunctionType
     __self__ = ...  # type: object
     __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     def __init__(self, func: Callable, obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 class BuiltinFunctionType:
     __self__ = ...  # type: Union[object, ModuleType]
+    __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 BuiltinMethodType = BuiltinFunctionType
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Pair;
@@ -328,6 +314,34 @@ public class ContainerUtilRt {
     public Iterator<T> iterator() {
       return EmptyIterator.getInstance();
     }
+
+    @NotNull
+    @Override
+    public ListIterator<T> listIterator() {
+      return EmptyListIterator.getInstance();
+    }
+
+    @Override
+    public boolean containsAll(@NotNull Collection<?> c) {
+      return c.isEmpty();
+    }
+
+    @Override
+    @Contract(pure = true)
+    public boolean isEmpty() {
+      return true;
+    }
+
+    @Override
+    @Contract(pure = true)
+    public boolean equals(Object o) {
+      return o instanceof List && ((List)o).isEmpty();
+    }
+
+    @Override
+    public int hashCode() {
+      return 1;
+    }
   }
 
   @NotNull
@@ -381,6 +395,20 @@ public class ContainerUtilRt {
       list.add(mapper.fun(t));
     }
     return list;
+  }
+  
+  /**
+   * @return read-only list consisting key-value pairs of a map
+   */
+  @NotNull
+  @Contract(pure=true)
+  public static <K, V> List<Pair<K, V>> map2List(@NotNull Map<K, V> map) {
+    if (map.isEmpty()) return emptyList();
+    final List<Pair<K, V>> result = new ArrayList<Pair<K, V>>(map.size());
+    for (Map.Entry<K, V> entry : map.entrySet()) {
+      result.add(Pair.create(entry.getKey(), entry.getValue()));
+    }
+    return result;
   }
 
   /**

@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 /**
  * @author konstantin.aleev
  */
@@ -65,11 +67,15 @@ public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
   public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
     if (node instanceof RunDashboardRunConfigurationNode) {
       RunDashboardRunConfigurationNode runConfigurationNode = (RunDashboardRunConfigurationNode)node;
-      RunDashboardContributor contributor = runConfigurationNode.getContributor();
-      RunDashboardRunConfigurationStatus status = contributor != null ? contributor.getStatus(runConfigurationNode) :
-                                                  RunDashboardRunConfigurationStatus.getStatus(runConfigurationNode);
+      RunDashboardRunConfigurationStatus status = runConfigurationNode.getStatus();
       return new RunDashboardGroupImpl<>(status, status.getName(), status.getIcon());
     }
     return null;
+  }
+
+  @Override
+  public Comparator<RunDashboardGroup> getGroupComparator() {
+    //noinspection unchecked
+    return Comparator.comparing(group -> ((RunDashboardGroupImpl<RunDashboardRunConfigurationStatus>)group).getValue().getPriority());
   }
 }

@@ -17,16 +17,20 @@ package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
@@ -36,6 +40,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsCommitStyleFactory;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -55,10 +60,12 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,8 +102,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public static final String LOADING_COMMITS_TEXT = "Loading commits...";
   public static final String CHANGES_LOG_TEXT = "Changes log";
-  public static final String NO_CHANGES_COMMITTED_TEXT = "No changes committed";
-  public static final String NO_COMMITS_MATCHING_TEXT = "No commits matching filters";
 
   @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
@@ -171,20 +176,28 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return Registry.is("vcs.log.speedsearch");
   }
 
-  @NotNull
-  private String getEmptyTextString() {
+  protected void updateEmptyText() {
+    StatusText statusText = getEmptyText();
     VisiblePack visiblePack = getModel().getVisiblePack();
 
     if (visiblePack.getVisibleGraph().getVisibleCommitCount() == 0) {
       if (visiblePack.getFilters().isEmpty()) {
-        return NO_CHANGES_COMMITTED_TEXT;
+        statusText.setText("No changes committed.").
+          appendSecondaryText("Commit local changes", VcsLogUiUtil.getLinkAttributes(),
+                              ActionUtil.createActionListener(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION, this, ActionPlaces.UNKNOWN));
+        String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(VcsLogActionPlaces.CHECKIN_PROJECT_ACTION);
+        if (!shortcutText.isEmpty()) {
+          statusText.appendSecondaryText(" (" + shortcutText + ")", StatusText.DEFAULT_ATTRIBUTES, null);
+        }
       }
       else {
-        return NO_COMMITS_MATCHING_TEXT;
+        statusText.setText("No commits matching filters.").appendSecondaryText("Reset filters", VcsLogUiUtil.getLinkAttributes(),
+                                                                               e -> myUi.getFilterUi().setFilter(null));
       }
     }
-
-    return CHANGES_LOG_TEXT;
+    else {
+      statusText.setText(CHANGES_LOG_TEXT);
+    }
   }
 
   public void updateDataPack(@NotNull VisiblePack visiblePack, boolean permGraphChanged) {
@@ -198,7 +211,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     if (!getEmptyText().getText().equals(LOADING_COMMITS_TEXT)) {
-      getEmptyText().setText(getEmptyTextString());
+      updateEmptyText();
     }
 
     setPaintBusy(false);
@@ -431,7 +444,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (rowIndex >= 0 && rowIndex <= getRowCount() - 1) {
       scrollRectToVisible(getCellRect(rowIndex, 0, false));
       setRowSelectionInterval(rowIndex, rowIndex);
-      scrollRectToVisible(getCellRect(rowIndex, 0, false));
+      if (!hasFocus()) {
+        IdeFocusManager.getInstance(myLogData.getProject()).requestFocus(this, true);
+      }
     }
   }
 
@@ -912,7 +927,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     public void progressStopped() {
-      getEmptyText().setText(getEmptyTextString());
+      updateEmptyText();
     }
   }
 

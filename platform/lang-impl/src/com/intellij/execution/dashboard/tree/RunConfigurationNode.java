@@ -80,11 +80,16 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
     //noinspection ConstantConditions
     boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
-    presentation.addText(configurationSettings.getName(),
-                         isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+    SimpleTextAttributes nameAttributes;
+    if (isStored) {
+      nameAttributes = getContent() != null ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+    else {
+      nameAttributes = SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES;
+    }
+    presentation.addText(configurationSettings.getName(), nameAttributes);
     Icon icon = null;
-    RunDashboardRunConfigurationStatus status = myContributor != null ? myContributor.getStatus(this) :
-                                                RunDashboardRunConfigurationStatus.getStatus(this);
+    RunDashboardRunConfigurationStatus status = getStatus();
     if (RunDashboardRunConfigurationStatus.STARTED.equals(status)) {
       icon = getExecutorIcon();
     }
@@ -122,6 +127,12 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   @Override
   public RunDashboardContributor getContributor() {
     return myContributor;
+  }
+
+  @NotNull
+  @Override
+  public RunDashboardRunConfigurationStatus getStatus() {
+    return myContributor != null ? myContributor.getStatus(this) : RunDashboardRunConfigurationStatus.getStatus(this);
   }
 
   @Nullable

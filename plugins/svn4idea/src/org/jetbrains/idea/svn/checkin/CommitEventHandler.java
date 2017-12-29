@@ -23,8 +23,6 @@ import java.io.File;
  * Used to listen to commit events to display progress to user
  *
  * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 10:12 AM
  */
 public interface CommitEventHandler extends ProgressTracker {
   void commitEvent(final CommitEventType type, final File target);

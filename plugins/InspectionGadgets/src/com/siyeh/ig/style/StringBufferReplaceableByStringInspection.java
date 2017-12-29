@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -24,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -99,7 +86,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       if (originalTypeElement == null) {
         return;
       }
-      final PsiExpression initializer = variable.getInitializer();
+      final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
       if (initializer == null) {
         return;
       }
@@ -147,12 +134,12 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       final List<PsiMethodCallExpression> expressions = visitor.getExpressions();
       final String expressionText = builder.toString().trim();
       final PsiMethodCallExpression lastExpression = expressions.get(expressions.size() - 1);
+      final PsiStatement statement = PsiTreeUtil.getParentOfType(lastExpression, PsiStatement.class);
+      if (statement == null) {
+        return;
+      }
       final boolean useVariable = expressionText.contains("\n") && !isVariableInitializer(lastExpression);
       if (useVariable) {
-        final PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
-        if (statement == null) {
-          return;
-        }
         final String modifier =
           CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS ? "final " : "";
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -172,10 +159,6 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         PsiReplacementUtil.replaceExpression(lastExpression, variableName);
       }
       else {
-        final PsiStatement statement = PsiTreeUtil.getParentOfType(lastExpression, PsiStatement.class);
-        if (statement == null) {
-          return;
-        }
         addLeadingCommentsBefore(statement);
         addTrailingCommentsAfter(statement);
         PsiReplacementUtil.replaceExpression(lastExpression, expressionText);

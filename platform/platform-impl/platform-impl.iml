@@ -44,11 +44,13 @@
     <orderEntry type="library" exported="" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="configuration-store-impl" scope="RUNTIME" />
-    <orderEntry type="library" name="com.twelvemonkeys.imageio:imageio-tiff:3.2.1" level="project" />
+    <orderEntry type="library" name="imageio-tiff" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="module" module-name="credential-store" scope="RUNTIME" />
     <orderEntry type="library" exported="" name="StreamEx" level="project" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
     <orderEntry type="module" module-name="tasks-platform-impl" scope="RUNTIME" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

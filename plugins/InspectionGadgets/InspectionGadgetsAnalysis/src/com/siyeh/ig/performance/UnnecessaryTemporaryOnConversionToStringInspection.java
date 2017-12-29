@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,14 +123,14 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiMethodCallExpression expression =
-        (PsiMethodCallExpression)descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final String newExpression = calculateReplacementExpression(expression);
       if (newExpression == null) {
         return;
       }
-      PsiReplacementUtil.replaceExpression(expression, newExpression);
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(expression.getArgumentList().getExpressions()[0]);
+      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }
 

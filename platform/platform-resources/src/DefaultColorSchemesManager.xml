@@ -1747,11 +1747,6 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
-      <option name="JSP_SCRIPTING_BACKGROUND">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
       <option name="LESS_VARIABLE">
         <value>
           <option name="FOREGROUND" value="d0d0ff" />
@@ -1924,7 +1919,7 @@
       <option name="SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="155221" deuteranopia="404861" protanopia="404861"/>
-          <option name="ERROR_STRIPE_COLOR" deuteranopia="4b6f99" protanopia="4b6f99"/>
+          <option name="ERROR_STRIPE_COLOR" value="00530d" deuteranopia="4b6f99" protanopia="4b6f99"/>
         </value>
       </option>
       <option name="SPY-JS.FUNCTION_SCOPE">
@@ -2092,7 +2087,7 @@
       <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="532b2e" deuteranopia="2f4794" protanopia="2f4794"/>
-          <option name="ERROR_STRIPE_COLOR" deuteranopia="5fcc" protanopia="5fcc"/>
+          <option name="ERROR_STRIPE_COLOR" value="8d4457" deuteranopia="5fcc" protanopia="5fcc"/>
         </value>
       </option>
       <option name="WRONG_REFERENCES_ATTRIBUTES">

@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -509,22 +494,31 @@ public class GradleExecutionHelper {
       }
       buf.append(']');
 
-      InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
-      try {
-        if (stream == null) {
-          LOG.warn("Can't get test filter init script template");
-          return;
-        }
-        String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(buf.toString()));
-        final File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
-        ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
+      String path = renderInitScript(buf.toString());
+      if (path != null) {
+        ContainerUtil.addAll(args, GradleConstants.INIT_SCRIPT_CMD_OPTION, path);
       }
-      catch (Exception e) {
-        LOG.warn("Can't generate IJ gradle test filter init script", e);
+    }
+  }
+
+  @Nullable
+  public static String renderInitScript(@NotNull String testArgs) {
+    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
+    try {
+      if (stream == null) {
+        LOG.error("Can't get test filter init script template");
+        return null;
       }
-      finally {
-        StreamUtil.closeStream(stream);
-      }
+      String script = FileUtil.loadTextAndClose(stream).replaceFirst(Pattern.quote("${TEST_NAME_INCLUDES}"), Matcher.quoteReplacement(testArgs));
+      final File tempFile = writeToFileGradleInitScript(script, "ijtestinit");
+      return tempFile.getAbsolutePath();
+    }
+    catch (Exception e) {
+      LOG.warn("Can't generate IJ gradle test filter init script", e);
+      return null;
+    }
+    finally {
+      StreamUtil.closeStream(stream);
     }
   }
 
@@ -582,7 +576,6 @@ public class GradleExecutionHelper {
     return result;
   }
 
-  @VisibleForTesting
   @NotNull
   static List<String> obfuscatePasswordParameters(@NotNull List<String> commandLineArguments) {
     List<String> replaced = new ArrayList<>(commandLineArguments.size());

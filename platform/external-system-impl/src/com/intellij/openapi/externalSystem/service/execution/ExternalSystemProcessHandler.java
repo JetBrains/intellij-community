@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.process.AnsiEscapeDecoder;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
@@ -34,16 +34,18 @@ import java.io.PipedOutputStream;
 /**
  * @author Vladislav.Soroka
  */
-public class ExternalSystemProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor, Disposable {
+public class ExternalSystemProcessHandler extends BuildProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalSystemProcessHandler.class);
+  private final String myExecutionName;
   @Nullable
   private ExternalSystemTask myTask;
   private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
   @Nullable
   private OutputStream myProcessInput;
 
-  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task) {
+  public ExternalSystemProcessHandler(@NotNull ExternalSystemTask task, String executionName) {
     myTask = task;
+    myExecutionName = executionName;
     if (task instanceof UserDataHolder) {
       try {
         PipedInputStream inputStream = new PipedInputStream();
@@ -54,6 +56,11 @@ public class ExternalSystemProcessHandler extends ProcessHandler implements Ansi
         LOG.warn("Unable to setup process input", e);
       }
     }
+  }
+
+  @Override
+  public String getExecutionName() {
+    return myExecutionName;
   }
 
   @Override
@@ -98,6 +105,9 @@ public class ExternalSystemProcessHandler extends ProcessHandler implements Ansi
   }
 
   protected void closeInput() {
+    if (myTask instanceof UserDataHolder) {
+      ((UserDataHolder)myTask).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
+    }
     StreamUtil.closeStream(myProcessInput);
     myProcessInput = null;
   }

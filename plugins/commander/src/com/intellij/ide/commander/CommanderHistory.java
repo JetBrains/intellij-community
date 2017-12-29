@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 14, 2004
  */
 public class CommanderHistory {
   public static final int HISTORY_LIMIT = 2*30; // elements are saved in pairs

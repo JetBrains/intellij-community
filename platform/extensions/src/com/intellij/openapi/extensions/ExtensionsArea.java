@@ -18,9 +18,11 @@ package com.intellij.openapi.extensions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author AKireyev
+ * @see Extensions#getArea(AreaInstance)
+ * @see Extensions#getRootArea()
  */
 public interface ExtensionsArea  {
   void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass);
@@ -43,7 +45,15 @@ public interface ExtensionsArea  {
   AreaPicoContainer getPicoContainer();
   void registerExtensionPoint(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionPointElement);
 
-  void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, String ns);
+  /**
+   * Registers a new extension.
+   * @param pluginDescriptor plugin to which extension belongs
+   * @param extensionElement element from plugin.xml file where extension settings are specified
+   * @param extensionNs extension namespace which is prepended to the tag name from {@code extensionElement} to form the qualified extension name.
+   */
+  void registerExtension(@NotNull PluginDescriptor pluginDescriptor, @NotNull Element extensionElement, @Nullable String extensionNs);
+
+  void registerExtension(@NotNull final ExtensionPoint extensionPoint, @NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement);
 
   String getAreaClass();
 }

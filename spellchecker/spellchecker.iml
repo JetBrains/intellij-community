@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="dom-openapi" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

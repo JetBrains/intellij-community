@@ -366,7 +366,7 @@ if sys.version_info >= (3,):
 
 
 class StreamHandler(Handler):
-    stream = ...  # type IO[str]
+    stream = ...  # type: IO[str]
     if sys.version_info >= (3,):
         terminator = ...  # type: str
     def __init__(self, stream: Optional[IO[str]] = ...) -> None: ...

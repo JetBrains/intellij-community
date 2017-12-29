@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -75,7 +76,8 @@ public class NegatedEqualityExpressionInspection extends BaseInspection {
       }
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)operand;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
-      StringBuilder text = new StringBuilder(binaryExpression.getLOperand().getText());
+      CommentTracker commentTracker = new CommentTracker();
+      StringBuilder text = new StringBuilder(commentTracker.markUnchanged(binaryExpression.getLOperand()).getText());
       if (JavaTokenType.EQEQ.equals(tokenType)) {
         text.append("!=");
       }
@@ -87,9 +89,10 @@ public class NegatedEqualityExpressionInspection extends BaseInspection {
       }
       final PsiExpression rhs = binaryExpression.getROperand();
       if (rhs != null) {
-        text.append(rhs.getText());
+        text.append(commentTracker.markUnchanged(rhs).getText());
       }
-      PsiReplacementUtil.replaceExpression(prefixExpression, text.toString());
+
+      PsiReplacementUtil.replaceExpression(prefixExpression, text.toString(), commentTracker);
     }
   }
 

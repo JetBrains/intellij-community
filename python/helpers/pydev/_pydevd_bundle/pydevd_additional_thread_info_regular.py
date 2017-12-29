@@ -1,11 +1,13 @@
 import sys
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON, IS_IRONPYTHON
+from _pydev_bundle import pydev_log
 # IFDEF CYTHON
+# pydev_log.debug("Using Cython speedups")
 # ELSE
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 8
+version = 10
 
 if not hasattr(sys, '_current_frames'):
 
@@ -37,6 +39,14 @@ if not hasattr(sys, '_current_frames'):
 
                 ret[thread.getId()] = frame
             return ret
+        
+    elif IS_IRONPYTHON: 
+        _tid_to_last_frame = {}
+        
+        # IronPython doesn't have it. Let's use our workaround...
+        def _current_frames():
+            return _tid_to_last_frame
+
     else:
         raise RuntimeError('Unable to proceed (sys._current_frames not available in this Python implementation).')
 else:
@@ -109,14 +119,6 @@ class PyDBAdditionalThreadInfo(object):
         if v is not None:
             return [v]
         return []
-
-    # IFDEF CYTHON
-    # def create_db_frame(self, *args, **kwargs):
-    #     raise AssertionError('This method should not be called on cython (PyDbFrame should be used directly).')
-    # ELSE
-    # just create the db frame directly
-    create_db_frame = PyDBFrame
-    # ENDIF
 
     def __str__(self):
         return 'State:%s Stop:%s Cmd: %s Kill:%s' % (

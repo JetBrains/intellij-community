@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="JSch">
+  <library name="JSch" type="repository">
+    <properties maven-id="com.jcraft:jsch:0.1.54" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jsch-0.1.54.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.54/jsch-0.1.54.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jsch-0.1.54.zip!/jsch-0.1.54/src/main/java" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jcraft/jsch/0.1.54/jsch-0.1.54-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

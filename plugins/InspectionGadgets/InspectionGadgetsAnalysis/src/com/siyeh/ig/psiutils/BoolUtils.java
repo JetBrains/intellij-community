@@ -63,24 +63,31 @@ public class BoolUtils {
 
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
-    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES);
+    return getNegatedExpressionText(condition, new CommentTracker());
   }
 
   @NotNull
-  public static String getNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
+  public static String getNegatedExpressionText(@Nullable PsiExpression condition, CommentTracker tracker) {
+    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES, tracker);
+  }
+
+  @NotNull
+  public static String getNegatedExpressionText(@Nullable PsiExpression expression,
+                                                int precedence,
+                                                CommentTracker tracker) {
     if (expression == null) {
       return "";
     }
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      return '(' + getNegatedExpressionText(parenthesizedExpression.getExpression()) + ')';
+      return '(' + getNegatedExpressionText(parenthesizedExpression.getExpression(), tracker) + ')';
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
-      final String text = conditionalExpression.getCondition().getText() +
-                          '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
-                          ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      final String text = tracker.markUnchanged(conditionalExpression.getCondition()).getText() +
+                          '?' + getNegatedExpressionText(conditionalExpression.getThenExpression(), tracker) +
+                          ':' + getNegatedExpressionText(conditionalExpression.getElseExpression(), tracker);
       return needParenthesis ? "(" + text + ")" : text;
     }
     if (isNegation(expression)) {
@@ -88,7 +95,7 @@ public class BoolUtils {
       if (negated == null) {
         return "";
       }
-      return ParenthesesUtils.getText(negated, precedence);
+      return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
@@ -115,7 +122,7 @@ public class BoolUtils {
               result.append(negatedComparison);
             }
           }
-          result.append(operand.getText());
+          result.append(tracker.markUnchanged(operand).getText());
         }
         return result.toString();
       }
@@ -132,15 +139,15 @@ public class BoolUtils {
         }
         final Function<PsiElement, String> replacer = child -> {
           if (child instanceof PsiExpression) {
-            return getNegatedExpressionText((PsiExpression)child, newPrecedence);
+            return getNegatedExpressionText((PsiExpression)child, newPrecedence, tracker);
           }
-          return child instanceof PsiJavaToken ? targetToken : child.getText();
+          return child instanceof PsiJavaToken ? targetToken : tracker.markUnchanged(child).getText();
         };
         final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
         return (newPrecedence > precedence) ? '(' + join + ')' : join;
       }
     }
-    return '!' + ParenthesesUtils.getText(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
+    return '!' + ParenthesesUtils.getText(tracker.markUnchanged(expression), ParenthesesUtils.PREFIX_PRECEDENCE);
   }
 
   @Nullable

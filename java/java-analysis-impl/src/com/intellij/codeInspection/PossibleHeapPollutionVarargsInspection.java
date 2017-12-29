@@ -92,7 +92,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         if (psiMethod != null) {
-          new AddAnnotationPsiFix("java.lang.SafeVarargs", psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
+          new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
         }
       }
     }
@@ -122,7 +122,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
       if (psiElement instanceof PsiIdentifier) {
         final PsiMethod psiMethod = (PsiMethod)psiElement.getParent();
         WriteAction.run(() -> psiMethod.getModifierList().setModifierProperty(PsiModifier.FINAL, true));
-        new AddAnnotationPsiFix("java.lang.SafeVarargs", psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
+        new AddAnnotationPsiFix(CommonClassNames.JAVA_LANG_SAFE_VARARGS, psiMethod, PsiNameValuePair.EMPTY_ARRAY).applyFix(project, descriptor);
       }
     }
   }
@@ -132,7 +132,7 @@ public class PossibleHeapPollutionVarargsInspection extends AbstractBaseJavaLoca
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       if (!PsiUtil.getLanguageLevel(method).isAtLeast(LanguageLevel.JDK_1_7)) return;
-      if (AnnotationUtil.isAnnotated(method, "java.lang.SafeVarargs", false)) return;
+      if (AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS, 0)) return;
       if (!method.isVarArgs()) return;
 
       final PsiParameter[] parameters = method.getParameterList().getParameters();

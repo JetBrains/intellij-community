@@ -57,7 +57,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
 
     if (renderer.isShowFlatten()) {
       if (file.isValid()) {
-        appendParentPath(renderer, file.getParent().getPresentableUrl());
+        appendParentPath(renderer, file.getParent());
       }
     }
 
@@ -87,10 +87,7 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
     return myName.compareTo(o.myName);
   }
 
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof VirtualFile) {
-      return getUserObject().getName().compareToIgnoreCase(((VirtualFile)o2).getName());
-    }
-    return 0;
+  public int compareUserObjects(final VirtualFile o2) {
+    return getUserObject().getName().compareToIgnoreCase(o2.getName());
   }
 }

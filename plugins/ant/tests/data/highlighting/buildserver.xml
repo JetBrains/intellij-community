@@ -143,7 +143,6 @@
   </path>
 
   <path id="library.idea-classpath.classpath">
-    <pathelement location="${basedir}/tools/idea/lib/alloy.jar"/>
     <pathelement location="${basedir}/tools/idea/lib/cglib-nodep-2.1_3.jar"/>
     <pathelement location="${basedir}/tools/idea/lib/commons-collections.jar"/>
     <pathelement location="${basedir}/tools/idea/lib/jh.jar"/>

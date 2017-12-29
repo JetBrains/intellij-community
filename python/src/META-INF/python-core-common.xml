@@ -107,6 +107,8 @@
     <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                     serviceImplementation="com.jetbrains.python.PyDocumentationManager" overrides="true"/>
 
+    <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkSettings"
+                        serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
@@ -151,6 +153,7 @@
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"
                         serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
+    <projectService serviceImplementation="com.jetbrains.python.debugger.PyDebugValueExecutionService"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
     <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
@@ -362,7 +365,6 @@
     <localInspection language="Python" shortName="PyClassicStyleClassInspection" suppressId="PyClassicStyleClass" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.classic.class.usage" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyClassicStyleClassInspection"/>
     <localInspection language="Python" shortName="PyExceptionInheritInspection" suppressId="PyExceptionInherit" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.exception.not.inherit" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptionInheritInspection"/>
     <localInspection language="Python" shortName="PyDefaultArgumentInspection" suppressId="PyDefaultArgument" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.default.argument" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDefaultArgumentInspection"/>
-    <localInspection language="Python" shortName="PyRaisingNewStyleClassInspection" suppressId="PyRaisingNewStyleClass" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.raising.new.style.class" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRaisingNewStyleClassInspection"/>
     <localInspection language="Python" shortName="PyIncorrectDocstringInspection" suppressId="PyIncorrectDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.docstring" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyIncorrectDocstringInspection"/>
     <localInspection language="Python" shortName="PyMissingOrEmptyDocstringInspection" suppressId="PyMissingOrEmptyDocstring" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.missing.or.empty.docstring" groupKey="INSP.GROUP.python" enabledByDefault="false" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingOrEmptyDocstringInspection"/>
     <localInspection language="Python" shortName="PyUnboundLocalVariableInspection" suppressId="PyUnboundLocalVariable" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unbound" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnboundLocalVariableInspection"/>
@@ -471,6 +473,7 @@
                   order="first, before completionAutoPopup"/>
 
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyInitReferenceSearchExecutor"/>
+    <referencesSearch implementation="com.jetbrains.python.psi.search.PyClassReferenceSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralReferenceSearcher"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyKeywordArgumentSearchExecutor"/>
     <referencesSearch implementation="com.jetbrains.python.psi.search.PyStringReferenceSearch"/>
@@ -675,6 +678,9 @@
     <extensionPoint qualifiedName="Pythonid.debugSessionFactory" interface="com.jetbrains.python.debugger.PyDebugSessionFactory"/>
     <extensionPoint qualifiedName="Pythonid.customPackageIdentifier" interface="com.jetbrains.python.psi.PyCustomPackageIdentifier"/>
     <extensionPoint qualifiedName="Pythonid.pythonSdkComparator" interface="com.jetbrains.python.sdk.PySdkComparator" />
+    <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
+                    interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -707,6 +713,7 @@
     <typeProvider implementation="com.jetbrains.python.pyi.PyiTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.pyi.PyiModuleMembersProvider"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.pyi.PyiClassMembersProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.python.pyi.PyiReferenceResolveProvider"/>
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
@@ -746,6 +753,7 @@
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
+    <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
 
   <actions>

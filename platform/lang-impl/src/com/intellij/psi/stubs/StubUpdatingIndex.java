@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.index.PrebuiltIndexProviderBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
@@ -71,7 +72,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
   };
 
-  private static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
+  protected static final FileBasedIndex.InputFilter INPUT_FILTER = file -> canHaveStub(file);
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     final FileType fileType = file.getFileType();
@@ -145,6 +146,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       public Collection<Integer> read(@NotNull DataInput in) throws IOException {
         if (!myEnsuredStubElementTypesLoaded) {
           SerializationManager.getInstance().initSerializers();
+          StubIndexImpl.initExtensions();
           myEnsuredStubElementTypesLoaded = true;
         }
         int fileId = DataInputOutputUtil.readINT(in);
@@ -217,7 +219,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
               PrebuiltStubsProviders.INSTANCE.forFileType(inputData.getFileType());
             if (prebuiltStubsProvider != null) {
               rootStub = prebuiltStubsProvider.findStub(inputData);
-              if (DebugAssertions.DEBUG) {
+              if (PrebuiltIndexProviderBase.DEBUG_PREBUILT_INDICES) {
                 Stub stub = StubTreeBuilder.buildStubTree(inputData);
                 if (rootStub != null && stub != null) {
                   check(rootStub, stub);

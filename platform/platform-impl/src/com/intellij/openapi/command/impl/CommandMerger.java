@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.command.impl;
 
@@ -67,22 +55,27 @@ public class CommandMerger {
   }
 
   public void commandFinished(String commandName, Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+    // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
+    if (!nextCommandToMerge.isTransparent() && nextCommandToMerge.hasActions()) {
+      clearRedoStacks(nextCommandToMerge);
+      convertTemporaryActionsToNormal(nextCommandToMerge);
+    }
+
     if (!shouldMerge(groupId, nextCommandToMerge)) {
       flushCurrentCommand();
       myManager.compact();
     }
     merge(nextCommandToMerge);
 
-    // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (nextCommandToMerge.isTransparent() || !hasActions()) return;
-
-    clearRedoStacks(nextCommandToMerge);
 
     myLastGroupId = groupId;
     if (myCommandName == null) myCommandName = commandName;
   }
 
   private boolean shouldMerge(Object groupId, @NotNull CommandMerger nextCommandToMerge) {
+    if (nextCommandToMerge.isTransparent() && nextCommandToMerge.myStateAfter == null && myStateAfter != null) return false;
+    if (isTransparent() && myStateBefore == null && nextCommandToMerge.myStateBefore != null) return false;
     if (isTransparent() || nextCommandToMerge.isTransparent()) {
       return !hasActions() || !nextCommandToMerge.hasActions() || myAllAffectedDocuments.equals(nextCommandToMerge.myAllAffectedDocuments);
     }
@@ -169,7 +162,11 @@ public class CommandMerger {
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
-    myManager.getRedoStacksHolder().clearStacks(isGlobal(), nextMerger.myAllAffectedDocuments);
+    myManager.getRedoStacksHolder().clearStacks(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
+  }
+
+  private void convertTemporaryActionsToNormal(@NotNull CommandMerger nextMerger) {
+    myManager.getUndoStacksHolder().convertTemporaryActionsToPermanent(nextMerger.isGlobal(), nextMerger.myAllAffectedDocuments);
   }
 
   boolean isGlobal() {
@@ -207,8 +204,14 @@ public class CommandMerger {
     // are not dropped, since this means they did not occur after undo/redo
     UndoRedo undoRedo;
     while ((undoRedo = createUndoOrRedo(editor, true)) != null) {
-      if (!undoRedo.isTransparent()) break;
+      if (!undoRedo.isTemporary()) break;
       if (!undoRedo.execute(true, false)) return;
+      if (!undoRedo.hasMoreActions()) break;
+    }
+
+    while ((undoRedo = createUndoOrRedo(editor, isUndo)) != null) {
+      if (!undoRedo.isTransparent()) break;
+      if (!undoRedo.execute(false, false)) return;
       if (!undoRedo.hasMoreActions()) break;
     }
 

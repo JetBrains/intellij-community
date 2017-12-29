@@ -1,0 +1,13 @@
+<idea-plugin>
+  <id>com.intellij</id>
+
+  <extensionPoints>
+    <!--suppress PluginXmlValidity -->
+    <extensionPoint name="myEp3"
+                    beanClass="java.lang.String"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <myEp3 id="id1" order="first, <caret>"/>
+  </extensions>
+</idea-plugin>

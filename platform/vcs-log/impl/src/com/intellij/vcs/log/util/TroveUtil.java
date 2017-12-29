@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
@@ -81,23 +82,22 @@ public class TroveUtil {
     TIntHashSet result = new TIntHashSet();
 
     if (set1.size() < set2.size()) {
-      set1.forEach(value -> {
-        if (set2.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set1, set2, result);
     }
     else {
-      set2.forEach(value -> {
-        if (set1.contains(value)) {
-          result.add(value);
-        }
-        return true;
-      });
+      intersectTo(set2, set1, result);
     }
 
     return result;
+  }
+
+  private static void intersectTo(@NotNull TIntHashSet small, @NotNull TIntHashSet big, @NotNull TIntHashSet result) {
+    small.forEach(value -> {
+      if (big.contains(value)) {
+        result.add(value);
+      }
+      return true;
+    });
   }
 
   @NotNull
@@ -161,5 +161,21 @@ public class TroveUtil {
     TIntHashSet result = new TIntHashSet();
     stream.forEach(result::add);
     return result;
+  }
+
+  @NotNull
+  public static TIntHashSet singleton(@NotNull Integer elements) {
+    TIntHashSet commits = new TIntHashSet();
+    commits.add(elements);
+    return commits;
+  }
+
+  public static <T> void add(@NotNull Map<T, TIntHashSet> targetMap, @NotNull T key, int value) {
+    TIntHashSet set = targetMap.get(key);
+    if (set == null) {
+      set = new TIntHashSet();
+      targetMap.put(key, set);
+    }
+    set.add(value);
   }
 }

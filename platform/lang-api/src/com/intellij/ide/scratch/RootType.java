@@ -59,6 +59,11 @@ public abstract class RootType {
     return Extensions.findExtension(ROOT_EP, aClass);
   }
 
+  @Nullable
+  public static RootType forFile(@Nullable VirtualFile file) {
+    return ScratchFileService.getInstance().getRootType(file);
+  }
+
   private final String myId;
   private final String myDisplayName;
 

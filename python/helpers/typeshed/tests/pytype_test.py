@@ -4,7 +4,15 @@
 Depends on mypy and pytype being installed.
 
 If pytype is installed:
-    1. For every pyi, run "pytd <foo.pyi>" in a separate process
+    1. For every pyi, do nothing if it is in pytype_blacklist.txt.
+    2. If the blacklist line has a "# parse only" comment run
+      "pytd <foo.pyi>" in a separate process.
+    3. If the file is not in the blacklist run
+      "pytype --typeshed-location=typeshed_location --module-name=foo \
+      --convert-to-pickle=tmp_file <foo.pyi>.
+Option two will parse the file, mostly syntactical correctness. Option three
+will load the file and all the builtins, typeshed dependencies. This will
+also discover incorrect usage of imported modules.
 """
 
 import os
@@ -25,32 +33,44 @@ def main():
     code, runs = pytype_test(args)
 
     if code:
-        print("--- exit status %d ---" % code)
+        print('--- exit status %d ---' % code)
         sys.exit(code)
     if not runs:
-        print("--- nothing to do; exit 1 ---")
+        print('--- nothing to do; exit 1 ---')
         sys.exit(1)
 
 
 def load_blacklist():
     filename = os.path.join(os.path.dirname(__file__), "pytype_blacklist.txt")
-    regex = r"^\s*([^\s#]+)\s*(?:#.*)?$"
+    skip_re = re.compile(r'^\s*([^\s#]+)\s*(?:#.*)?$')
+    parse_only_re = re.compile(r'^\s*([^\s#]+)\s*#\s*parse only\s*')
+    skip = []
+    parse_only = []
 
     with open(filename) as f:
-        return re.findall(regex, f.read(), flags=re.M)
+        for line in f:
+            parse_only_match = parse_only_re.match(line)
+            skip_match = skip_re.match(line)
+            if parse_only_match:
+                parse_only.append(parse_only_match.group(1))
+            elif skip_match:
+                skip.append(skip_match.group(1))
+
+    return skip, parse_only
 
 
-class PytdRun(object):
+class BinaryRun(object):
     def __init__(self, args, dry_run=False):
         self.args = args
+
         self.dry_run = dry_run
         self.results = None
 
         if dry_run:
-            self.results = (0, "", "")
+            self.results = (0, '', '')
         else:
             self.proc = subprocess.Popen(
-                ["pytd"] + args,
+                self.args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
 
@@ -63,29 +83,54 @@ class PytdRun(object):
         return self.results
 
 
+def _get_module_name(filename):
+    """Converts a filename stdblib/m.n/module/foo to module.foo."""
+    return '.'.join(filename.split(os.path.sep)[2:]).replace(
+        '.pyi', '').replace('.__init__', '')
+
+
 def pytype_test(args):
     try:
-        PytdRun(["-h"]).communicate()
+        BinaryRun(['pytd', '-h']).communicate()
     except OSError:
-        print("Cannot run pytd. Did you install pytype?")
+        print('Cannot run pytd. Did you install pytype?')
         return 0, 0
 
-    wanted = re.compile(r"stdlib/.*\.pyi$")
-    skipped = re.compile("(%s)$" % "|".join(load_blacklist()))
-    files = []
+    skip, parse_only = load_blacklist()
+    wanted = re.compile(r'stdlib/.*\.pyi$')
+    skipped = re.compile('(%s)$' % '|'.join(skip))
+    parse_only = re.compile('(%s)$' % '|'.join(parse_only))
 
-    for root, _, filenames in os.walk("stdlib"):
+    pytype_run = []
+    pytd_run = []
+
+    for root, _, filenames in os.walk('stdlib'):
         for f in sorted(filenames):
             f = os.path.join(root, f)
-            if wanted.search(f) and not skipped.search(f):
-                files.append(f)
+            if wanted.search(f):
+                if parse_only.search(f):
+                    pytd_run.append(f)
+                elif not skipped.search(f):
+                    pytype_run.append(f)
 
     running_tests = collections.deque()
     max_code, runs, errors = 0, 0, 0
-    print("Running pytype tests...")
+    files = pytype_run + pytd_run
     while 1:
         while files and len(running_tests) < args.num_parallel:
-            test_run = PytdRun([files.pop()], dry_run=args.dry_run)
+            f = files.pop()
+            if f in pytype_run:
+                test_run = BinaryRun(
+                    ['pytype',
+                     '--typeshed-location=%s' % os.getcwd(),
+                     '--module-name=%s' % _get_module_name(f),
+                     '--convert-to-pickle=%s' % os.devnull,
+                     f],
+                    dry_run=args.dry_run)
+            elif f in pytd_run:
+                test_run = BinaryRun(['pytd', f], dry_run=args.dry_run)
+            else:
+                raise ValueError('Unknown action for file: %s' % f)
             running_tests.append(test_run)
 
         if not running_tests:
@@ -97,13 +142,11 @@ def pytype_test(args):
         runs += 1
 
         if code:
-            print("pytd error processing \"%s\":" % test_run.args[0])
             print(stderr)
             errors += 1
 
-    print("Ran pytype with %d pyis, got %d errors." % (runs, errors))
+    print('Ran pytype with %d pyis, got %d errors.' % (runs, errors))
     return max_code, runs
-
 
 if __name__ == '__main__':
     main()

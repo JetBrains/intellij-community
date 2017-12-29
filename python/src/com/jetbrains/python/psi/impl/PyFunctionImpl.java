@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -230,10 +216,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
-    if (isAsync() && isAsyncAllowed()) {
-      return createAsyncType(inferredType);
-    }
-    return inferredType;
+    return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 
   @Nullable
@@ -247,10 +230,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
 
     final PyExpression receiver = callSite.getReceiver(this);
-    final Map<PyExpression, PyCallableParameter> mapping =
-      PyCallExpressionHelper.mapArguments(callSite, this, context).getMappedParameters();
+    final PyCallExpression.PyArgumentsMapping fullMapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
+    final Map<PyExpression, PyCallableParameter> mappedExplicitParameters = fullMapping.getMappedParameters();
 
-    return getCallType(receiver, mapping, context);
+    final Map<PyExpression, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
+    final PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
+    if (receiver != null && firstImplicit != null) {
+      allMappedParameters.put(receiver, firstImplicit);
+    }
+    allMappedParameters.putAll(mappedExplicitParameters);
+
+    return getCallType(receiver, allMappedParameters, context);
   }
 
   @Nullable
@@ -316,16 +306,47 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    return replaceSelf(returnType, receiver, context, true);
+  }
+
+  @Nullable
+  private PyType replaceSelf(@Nullable PyType returnType,
+                             @Nullable PyExpression receiver,
+                             @NotNull TypeEvalContext context,
+                             boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
-      // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
+      // TODO: Currently we substitute only simple subclass types and unions, but we could handle collection types as well
       if (returnType instanceof PyClassType) {
         final PyClassType returnClassType = (PyClassType)returnType;
+
         if (returnClassType.getPyClass() == getContainingClass()) {
           final PyType receiverType = context.getType(receiver);
-          if (receiverType instanceof PyClassType && PyTypeChecker.match(returnType, receiverType, context)) {
-            return returnClassType.isDefinition() ? receiverType : ((PyClassType)receiverType).toInstance();
+
+          if (receiverType instanceof PyClassType) {
+            final PyClassType receiverClassType = (PyClassType)receiverType;
+
+            if (receiverClassType.getPyClass() != returnClassType.getPyClass() &&
+                PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
+              return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
+            }
           }
         }
+        else if (allowCoroutineOrGenerator &&
+                 returnType instanceof PyCollectionType &&
+                 PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType) != null) {
+          final List<PyType> replacedElementTypes = ContainerUtil.map(
+            ((PyCollectionType)returnType).getElementTypes(),
+            type -> replaceSelf(type, receiver, context, false)
+          );
+
+          return new PyCollectionTypeImpl(returnClassType.getPyClass(),
+                                          returnClassType.isDefinition(),
+                                          replacedElementTypes);
+        }
+      }
+      else if (returnType instanceof PyUnionType) {
+        final Collection<PyType> members = ((PyUnionType)returnType).getMembers();
+        return PyUnionType.union(ContainerUtil.map(members, type -> replaceSelf(type, receiver, context, true)));
       }
     }
     return returnType;
@@ -403,20 +424,6 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       return null;
     }
     return visitor.result();
-  }
-
-  @Nullable
-  private PyType createAsyncType(@Nullable PyType returnType) {
-    if (returnType instanceof PyCollectionType) {
-      final PyClassLikeType classType = as(returnType, PyClassLikeType.class);
-      if (classType != null) {
-        if (PyTypingTypeProvider.GENERATOR.equals(classType.getClassQName())) {
-          return PyTypingTypeProvider.wrapInAsyncGeneratorType(((PyCollectionType)returnType).getIteratedItemType(), this);
-        }
-      }
-    }
-
-    return PyTypingTypeProvider.wrapInCoroutineType(returnType, this);
   }
 
   @Override
@@ -694,6 +701,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isGenerator();
+    }
+
     Boolean result = myIsGenerator;
     if (result == null) {
       Ref<Boolean> containsYield = Ref.create(false);

@@ -1,3 +1,5 @@
 class Foo {
-  private final synchronized strictfp void F<caret>oo() {}
+  Foo(long l) {}
+
+  private final synchronized strictfp void F<caret>oo(int i) {}
 }

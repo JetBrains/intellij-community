@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
@@ -39,9 +40,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
-
+  
   private JTextField myKeepBlankLines;
   private JComboBox myWrapAttributes;
   private JCheckBox myAlignAttributes;
@@ -70,7 +72,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JBCheckBox myEnforceQuotesBox;
   private ComboBox myBeforeFirstAttributeCombo;
   private ComboBox myAfterLastAttributeCombo;
+  private JPanel mySettingsPanel;
   private RightMarginForm myRightMarginForm;
+  private final List<HtmlCodeStylePanelExtension.HtmlPanelCustomizer> myPanelCustomizers;
 
   public CodeStyleHtmlPanel(CodeStyleSettings settings) {
     super(settings);
@@ -104,6 +108,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       }
     });
     addPanelToWatch(myPanel);
+
+    myPanelCustomizers = HtmlCodeStylePanelExtension.getCustomizers();
+    myPanelCustomizers.forEach(customizer -> customizer.customizeSettingsPanel(mySettingsPanel));
   }
 
   @Override
@@ -133,7 +140,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(CodeStyleSettings rootSettings) throws ConfigurationException {
+    HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
     settings.HTML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
     settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -141,7 +149,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
     settings.HTML_ALIGN_TEXT = myAlignText.isSelected();
     settings.HTML_KEEP_WHITESPACES = myKeepWhiteSpaces.isSelected();
-    settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE = mySpacesAroundEquality.isSelected();
+    settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE = mySpacesAroundEquality.isSelected();
     settings.HTML_SPACE_AFTER_TAG_NAME = mySpacesAroundTagName.isSelected();
 
     settings.HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = myInsertNewLineTagNames.getText();
@@ -157,7 +165,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myBeforeFirstAttributeCombo.getSelectedItem();
     settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myAfterLastAttributeCombo.getSelectedItem();
-    myRightMarginForm.apply(settings);
+    myRightMarginForm.apply(rootSettings);
+
+    myPanelCustomizers.forEach(el -> el.apply(rootSettings));
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -170,7 +180,8 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final CodeStyleSettings rootSettings) {
+    HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
     myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
     myWrapText.setSelected(settings.HTML_TEXT_WRAP != CommonCodeStyleSettings.DO_NOT_WRAP);
@@ -179,7 +190,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myAlignText.setSelected(settings.HTML_ALIGN_TEXT);
     myKeepWhiteSpaces.setSelected(settings.HTML_KEEP_WHITESPACES);
     mySpacesAroundTagName.setSelected(settings.HTML_SPACE_AFTER_TAG_NAME);
-    mySpacesAroundEquality.setSelected(settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE);
+    mySpacesAroundEquality.setSelected(settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE);
     myShouldKeepBlankLines.setSelected(settings.HTML_KEEP_LINE_BREAKS);
     myShouldKeepLineBreaksInText.setSelected(settings.HTML_KEEP_LINE_BREAKS_IN_TEXT);
 
@@ -190,15 +201,18 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInlineElementsTagNames.setText(settings.HTML_INLINE_ELEMENTS);
     myDontBreakIfInlineContent.setText(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT);
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
-    myRightMarginForm.reset(settings);
+    myRightMarginForm.reset(rootSettings);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
     myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
     myBeforeFirstAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
     myAfterLastAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
+
+    myPanelCustomizers.forEach(el -> el.reset(rootSettings));
   }
 
   @Override
-  public boolean isModified(CodeStyleSettings settings) {
+  public boolean isModified(CodeStyleSettings rootSettings) {
+    HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
     if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
@@ -226,7 +240,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    if (settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE != mySpacesAroundEquality.isSelected()) {
+    if (settings.HTML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE != mySpacesAroundEquality.isSelected()) {
       return true;
     }
 
@@ -275,8 +289,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return myRightMarginForm.isModified(settings) ||
-           myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
+    if (myRightMarginForm.isModified(rootSettings) || myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES) return true;
+    
+    return myPanelCustomizers.stream().anyMatch(el -> el.isModified(rootSettings));
   }
 
   @Override

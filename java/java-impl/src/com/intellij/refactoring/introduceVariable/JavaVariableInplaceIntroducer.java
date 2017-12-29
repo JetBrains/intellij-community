@@ -109,13 +109,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         myEditor.getCaretModel().moveToOffset(typeElement.getTextOffset());
       }
     }
-    super.beforeTemplateStart();
-  }
-
-  @Override
-  protected void onRenameTemplateStarted() {
     final ResolveSnapshotProvider resolveSnapshotProvider = VariableInplaceRenamer.INSTANCE.forLanguage(myScope.getLanguage());
     myConflictResolver = resolveSnapshotProvider != null ? resolveSnapshotProvider.createSnapshot(myScope) : null;
+    super.beforeTemplateStart();
   }
 
   @Nullable
@@ -245,7 +241,7 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
         public void actionPerformed(ActionEvent e) {
           new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
             @Override
-            protected void run(@NotNull Result result) throws Throwable {
+            protected void run(@NotNull Result result) {
               PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
               final PsiVariable variable = getVariable();
               if (variable != null) {

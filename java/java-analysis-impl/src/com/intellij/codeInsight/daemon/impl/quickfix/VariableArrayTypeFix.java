@@ -158,8 +158,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
     return myVariable != null
            && myVariable.isValid()
            && myVariable.getManager().isInProject(myVariable)
-           && myTargetType.isValid()
-           && myInitializer.isValid();
+           && myTargetType.isValid();
   }
 
   @Override

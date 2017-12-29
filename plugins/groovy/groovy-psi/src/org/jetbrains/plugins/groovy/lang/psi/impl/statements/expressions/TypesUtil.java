@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
@@ -52,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.Appli
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -762,6 +749,7 @@ public class TypesUtil implements TypeConstants {
     final PsiType[] parameters = ((PsiClassType)type).getParameters();
 
     boolean changed = false;
+    final PsiType[] newParameters = new PsiType[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       PsiType parameter = parameters[i];
       if (parameter == null) continue;
@@ -771,9 +759,7 @@ public class TypesUtil implements TypeConstants {
         @Nullable
         @Override
         public Object visitClassType(PsiClassType classType) {
-         // if (classType.getParameterCount() > 0) {
             newParam.set(classType.rawType());
-         // }
           return null;
         }
 
@@ -794,11 +780,43 @@ public class TypesUtil implements TypeConstants {
 
       if (!newParam.isNull()) {
         changed = true;
-        parameters[i] = newParam.get();
+        newParameters[i] = newParam.get();
       }
     }
     if (!changed) return null;
-    return JavaPsiFacade.getElementFactory(project).createType(element, parameters);
+    return JavaPsiFacade.getElementFactory(project).createType(element, newParameters);
+  }
+
+
+  @Nullable
+  public static PsiType rawWildcard(PsiType type, PsiElement context) {
+    final PsiTypeMapper visitor = new PsiTypeMapper() {
+
+      @Override
+      public PsiType visitClassType(PsiClassType classType) {
+        final PsiClassType.ClassResolveResult result = classType.resolveGenerics();
+        final PsiClass element = result.getElement();
+        if (element == null) return null;
+
+        final PsiType[] parameters = classType.getParameters();
+        PsiType[] replacedParams = Arrays.stream(parameters).map((arg) -> arg == null ? null : arg.accept(this)).toArray(PsiType[]::new);
+        return JavaPsiFacade.getElementFactory(context.getProject()).createType(element, replacedParams);
+      }
+
+      @Override
+      public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
+        return getJavaLangObject(context);
+      }
+
+      @Override
+      public PsiType visitWildcardType(PsiWildcardType capturedWildcardType) {
+        return getJavaLangObject(context);
+      }
+
+    };
+
+    return type.accept(visitor);
+
   }
 
   public static boolean isPsiClassTypeToClosure(PsiType type) {

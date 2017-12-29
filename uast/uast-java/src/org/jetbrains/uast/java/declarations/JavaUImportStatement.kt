@@ -21,11 +21,11 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UImportStatement
 
 class JavaUImportStatement(
-        override val psi: PsiImportStatementBase, 
-        uastParent: UElement?
+  override val psi: PsiImportStatementBase,
+  uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UImportStatement, JvmDeclarationUElement {
-    override val isOnDemand: Boolean
-        get() = psi.isOnDemand
-    override val importReference by lz { psi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
-    override fun resolve() = psi.resolve()
+  override val isOnDemand: Boolean
+    get() = psi.isOnDemand
+  override val importReference by lz { psi.importReference?.let { JavaDumbUElement(it, this, it.qualifiedName) } }
+  override fun resolve() = psi.resolve()
 }

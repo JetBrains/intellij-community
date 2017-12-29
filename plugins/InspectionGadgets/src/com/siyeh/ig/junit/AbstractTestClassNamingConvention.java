@@ -20,6 +20,7 @@ import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 
 public class AbstractTestClassNamingConvention extends NamingConvention<PsiClass> {
@@ -39,8 +40,12 @@ public class AbstractTestClassNamingConvention extends NamingConvention<PsiClass
   }
 
   @Override
-  public boolean isApplicable(PsiClass member) {
-    return member.hasModifierProperty(PsiModifier.ABSTRACT) && TestFrameworks.detectFramework(member) != null;
+  public boolean isApplicable(PsiClass aClass) {
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      TestFramework framework = TestFrameworks.detectFramework(aClass);
+      return framework != null && framework.isTestClass(aClass);
+    }
+    return false;
   }
 
   @Override

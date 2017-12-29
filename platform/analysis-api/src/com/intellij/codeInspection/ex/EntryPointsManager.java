@@ -16,7 +16,6 @@
 
 /*
  * User: anna
-  * Date: 28-Feb-2007
   */
 package com.intellij.codeInspection.ex;
 

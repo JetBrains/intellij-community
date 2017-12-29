@@ -25,7 +25,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/6/11
  */
 public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescriptor, MavenResourcesTarget> {
   private static final Logger LOG = Logger.getInstance(MavenResourcesBuilder.class);

@@ -76,7 +76,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author traff, Leonid Shalupov
@@ -90,6 +89,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_DEBUGGER = "Debugger";
   public static final String GROUP_PROFILER = "Profiler";
   public static final String GROUP_COVERAGE = "Coverage";
+  /**
+   * This group is applied for Python module execution. In this case it
+   * contains two parameters: {@code -m} and the module name.
+   * <p>
+   * For Python script execution this group must be empty.
+   * <p>
+   * Note that this option <cite>terminates option list</cite> so this group
+   * must go <b>after</b> other Python interpreter options. At the same time it
+   * must go <b>before</b> <cite>arguments passed to program in
+   * sys.argv[1:]</cite>, which are stored in {@link #GROUP_SCRIPT}.
+   */
+  public static final String GROUP_MODULE = "Module";
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
 
@@ -315,6 +326,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_DEBUGGER);
     params.addParamsGroup(GROUP_PROFILER);
     params.addParamsGroup(GROUP_COVERAGE);
+    params.addParamsGroup(GROUP_MODULE);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
@@ -343,26 +355,27 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   private static void setupVirtualEnvVariables(PythonRunParams myConfig, Map<String, String> env, String sdkHome) {
     Sdk sdk = PythonSdkType.findSdkByPath(sdkHome);
-    if (Registry.is("python.activate.virtualenv.on.run") &&
-        (PythonSdkType.isVirtualEnv(sdkHome) || (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk)))) {
-      PyVirtualEnvReader reader = new PyVirtualEnvReader(sdkHome);
-      if (reader.getActivate() != null) {
-        try {
-          env.putAll(reader.readShellEnv().entrySet().stream()
-                       .filter((entry) -> PyVirtualEnvReader.Companion.getVirtualEnvVars().contains(entry.getKey())
-                       ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    if (Registry.is("python.activate.virtualenv.on.run") && sdk != null &&
+        (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
 
-          for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
-            if ("PATH".equals(e.getKey())) {
-              env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
-            }
-            else {
-              env.put(e.getKey(), e.getValue());
-            }
+      Map<String, String> environment = sdk.getUserData(PythonSdkType.ENVIRONMENT_KEY);
+
+      if (environment == null) {
+        environment = PythonSdkType.activateVirtualEnv(sdkHome);
+
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY, environment);
+      }
+
+      env.putAll(environment);
+
+      for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
+        if (environment.containsKey(e.getKey())) {
+          if ("PATH".equals(e.getKey())) {
+            env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
           }
-        }
-        catch (Exception e) {
-          LOG.error("Couldn't read virtualenv variables", e);
+          else {
+            env.put(e.getKey(), e.getValue());
+          }
         }
       }
     }

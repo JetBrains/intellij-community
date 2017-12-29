@@ -18,7 +18,7 @@ try:
 
 <error descr="Python version 3.0 does not have module __builtin__">import __builtin__</error>
 
-<warning descr="Python version 3.0 does not support this syntax. Raise with no arguments can only be used in an except block">raise</warning>
+<error descr="No exception to reraise">raise</error>
 
 try:
     pass

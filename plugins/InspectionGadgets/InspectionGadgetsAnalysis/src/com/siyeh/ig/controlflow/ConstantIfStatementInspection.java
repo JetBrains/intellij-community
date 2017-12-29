@@ -27,6 +27,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,16 +97,14 @@ public class ConstantIfStatementInspection extends BaseInspection {
       }
     }
 
-    private static void replaceStatementWithUnwrapping(
-      PsiStatement branch, PsiIfStatement statement)
+    private static void replaceStatementWithUnwrapping(PsiStatement branch, PsiIfStatement statement)
       throws IncorrectOperationException {
       if (branch instanceof PsiBlockStatement &&
           !(statement.getParent() instanceof PsiIfStatement)) {
         final PsiCodeBlock parentBlock =
           PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
         if (parentBlock == null) {
-          final String elseText = branch.getText();
-          PsiReplacementUtil.replaceStatement(statement, elseText);
+          replaceWithBranch(branch, statement);
           return;
         }
         final PsiCodeBlock block =
@@ -114,8 +113,7 @@ public class ConstantIfStatementInspection extends BaseInspection {
           DeclarationSearchUtils.containsConflictingDeclarations(
             block, parentBlock);
         if (hasConflicts) {
-          final String elseText = branch.getText();
-          PsiReplacementUtil.replaceStatement(statement, elseText);
+          replaceWithBranch(branch, statement);
         }
         else {
           final PsiElement containingElement = statement.getParent();
@@ -145,9 +143,14 @@ public class ConstantIfStatementInspection extends BaseInspection {
         }
       }
       else {
-        final String elseText = branch.getText();
-        PsiReplacementUtil.replaceStatement(statement, elseText);
+        replaceWithBranch(branch, statement);
       }
+    }
+
+    private static void replaceWithBranch(PsiStatement branch, PsiIfStatement statement) {
+      CommentTracker commentTracker = new CommentTracker();
+      final String elseText = commentTracker.markUnchanged(branch).getText();
+      PsiReplacementUtil.replaceStatement(statement, elseText, commentTracker);
     }
   }
 

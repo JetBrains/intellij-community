@@ -46,6 +46,7 @@ public class PatchFileType implements FileType {
     return VcsBundle.message("patch.file.type.description");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getDefaultExtension() {
@@ -57,14 +58,17 @@ public class PatchFileType implements FileType {
     return AllIcons.Vcs.Patch;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getCharset(@NotNull VirtualFile file, @NotNull final byte[] content) {

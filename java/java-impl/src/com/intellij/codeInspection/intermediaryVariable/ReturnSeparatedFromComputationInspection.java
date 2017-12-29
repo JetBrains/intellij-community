@@ -1,18 +1,28 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.intermediaryVariable;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +44,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         super.visitReturnStatement(returnStatement);
         final ReturnContext context = createReturnContext(returnStatement);
         if (context != null && isApplicable(context)) {
-          registerProblem(holder, returnStatement, context.returnedVariable);
+          registerProblem(holder, returnStatement, context.returnedVariable, isOnTheFly);
         }
       }
     };
@@ -168,7 +178,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     return !mover.isEmpty();
   }
 
-  private static void doApply(PsiReturnStatement returnStatement) {
+  private static void doApply(PsiReturnStatement returnStatement, boolean isOnTheFly) {
     ReturnContext context = createReturnContext(returnStatement);
     if (context != null) {
       ControlFlow flow = createControlFlow(context);
@@ -176,20 +186,84 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         Mover mover = new Mover(flow, context.refactoredStatement, context.returnedVariable, context.returnType, false);
         boolean removeReturn = mover.moveTo(context.refactoredStatement, true);
         if (!mover.isEmpty()) {
-          applyChanges(mover, context, removeReturn);
+          Highlighter highlighter = new Highlighter();
+
+          applyChanges(mover, context, removeReturn, highlighter);
+          deleteRedundantVariable(context, highlighter);
+
+          if (isOnTheFly) {
+            highlighter.highlight();
+          }
         }
       }
     }
   }
 
-  private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn) {
-    mover.insertBefore.forEach(e -> e.getParent().addBefore(context.returnStatement, e));
+  private static void deleteRedundantVariable(@NotNull ReturnContext context, Highlighter highlighter) {
+    PsiExpression value = PsiUtil.skipParenthesizedExprDown(context.returnedVariable.getInitializer());
+
+    boolean isConstant = value instanceof PsiLiteralExpression || value instanceof PsiThisExpression || PsiUtil.isConstantExpression(value);
+    boolean isSimple = isSimpleExpression(value, context.returnScope);
+    if (value != null && !isConstant && !isSimple) {
+      return;
+    }
+
+    Query<PsiReference> query = ReferencesSearch.search(context.returnedVariable, new LocalSearchScope(context.variableScope));
+    Collection<PsiReference> usages = query.findAll();
+    for (PsiReference usage : usages) {
+      PsiElement parent = PsiTreeUtil.skipParentsOfType(usage.getElement(),
+                                                        PsiParenthesizedExpression.class, PsiTypeCastExpression.class);
+      if (!(parent instanceof PsiReturnStatement)) {
+        return;
+      }
+    }
+    PsiExpression firstInlined = null;
+    boolean isSingleUsage = value != null && usages.size() == 1;
+    if (isSimple || isSingleUsage) {
+      for (PsiReference usage : usages) {
+        PsiExpression inlined = InlineUtil.inlineVariable(context.returnedVariable, value, (PsiJavaCodeReferenceElement)usage);
+        if (firstInlined == null) firstInlined = inlined;
+        highlighter.add(inlined);
+      }
+    }
+    if (isSimple || isSingleUsage || usages.isEmpty()) {
+      CommentTracker tracker = new CommentTracker();
+      if (firstInlined != null) {
+        tracker.delete(context.returnedVariable);
+        tracker.insertCommentsBefore(firstInlined);
+      }
+      else {
+        tracker.deleteAndRestoreComments(context.returnedVariable);
+      }
+    }
+  }
+
+  @Contract("null,_ -> false")
+  private static boolean isSimpleExpression(@Nullable PsiExpression expression, @NotNull PsiElement scope) {
+    if (expression instanceof PsiReferenceExpression) {
+      PsiVariable variable = ObjectUtils.tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
+      return variable != null && (variable.hasModifierProperty(PsiModifier.FINAL) ||
+                                  HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null));
+    }
+    if (expression instanceof PsiUnaryExpression) {
+      return ((PsiUnaryExpression)expression).getOperand() instanceof PsiLiteralExpression; // "-1" and "!true"
+    }
+    return expression instanceof PsiLiteralExpression ||
+           expression instanceof PsiThisExpression ||
+           expression instanceof PsiClassObjectAccessExpression;
+  }
+
+  private static void applyChanges(@NotNull Mover mover, @NotNull ReturnContext context, boolean removeReturn, Highlighter highlighter) {
+    for (PsiElement anchor : mover.insertBefore) {
+      PsiElement added = anchor.getParent().addBefore(context.returnStatement, anchor);
+      highlighter.add(added);
+    }
     mover.replaceInline.forEach(e -> {
       if (e instanceof PsiBreakStatement) {
-        replaceStatementKeepComments((PsiBreakStatement)e, context.returnStatement);
+        replaceStatementKeepComments((PsiBreakStatement)e, context.returnStatement, highlighter);
       }
       else if (e instanceof PsiAssignmentExpression) {
-        inlineAssignment((PsiAssignmentExpression)e, context.returnStatement);
+        inlineAssignment((PsiAssignmentExpression)e, context.returnStatement, highlighter);
       }
     });
     mover.removeCompletely.forEach(e -> removeElementKeepComments(e));
@@ -205,7 +279,9 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     removeElementKeepComments(context.returnStatement);
   }
 
-  private static void inlineAssignment(PsiAssignmentExpression assignmentExpression, PsiReturnStatement returnStatement) {
+  private static void inlineAssignment(PsiAssignmentExpression assignmentExpression,
+                                       PsiReturnStatement returnStatement,
+                                       Highlighter highlighter) {
     PsiElement assignmentParent = assignmentExpression.getParent();
     LOG.assertTrue(assignmentParent instanceof PsiExpressionStatement, "PsiExpressionStatement");
     PsiReturnStatement returnStatementCopy = (PsiReturnStatement)returnStatement.copy();
@@ -213,54 +289,18 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     PsiExpression returnValue = returnStatementCopy.getReturnValue();
     if (rExpression != null && returnValue != null) {
       returnValue.replace(rExpression);
-      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy);
+      replaceStatementKeepComments((PsiExpressionStatement)assignmentParent, returnStatementCopy, highlighter);
     }
   }
 
-  private static void replaceStatementKeepComments(PsiStatement replacedStatement, PsiReturnStatement returnStatement) {
-    List<PsiComment> keptComments = getComments(replacedStatement);
-    if (!keptComments.isEmpty()) {
-      returnStatement = (PsiReturnStatement)returnStatement.copy();
-      PsiElement lastReturnChild = returnStatement.getLastChild();
-      Project project = returnStatement.getProject();
-      for (PsiComment comment : keptComments) {
-        lastReturnChild = returnStatement.addAfter(comment, lastReturnChild);
-      }
-      CodeStyleManager.getInstance(project).reformat(returnStatement, true);
-    }
-    replacedStatement.replace(returnStatement);
+  private static void replaceStatementKeepComments(PsiStatement replacedStatement,
+                                                   PsiReturnStatement returnStatement,
+                                                   Highlighter highlighter) {
+    highlighter.add(new CommentTracker().replaceAndRestoreComments(replacedStatement, returnStatement));
   }
 
   private static void removeElementKeepComments(PsiElement removedElement) {
-    List<PsiComment> keptComments = getComments(removedElement);
-    if (!keptComments.isEmpty()) {
-      PsiComment firstComment = keptComments.get(0);
-      PsiElement lastComment = removedElement.replace(firstComment);
-      PsiElement parent = lastComment.getParent();
-      Project project = parent.getProject();
-      CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-      styleManager.reformat(lastComment, true);
-      if (keptComments.size() > 1) {
-        for (PsiComment comment : keptComments.subList(1, keptComments.size())) {
-          lastComment = parent.addAfter(comment, lastComment);
-          styleManager.reformat(lastComment, true);
-        }
-      }
-    }
-    else {
-      removedElement.delete();
-    }
-  }
-
-  private static List<PsiComment> getComments(PsiElement commentedElement) {
-    final List<PsiComment> comments = new ArrayList<>();
-    commentedElement.accept(new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitComment(PsiComment comment) {
-        comments.add(comment);
-      }
-    });
-    return comments;
+    new CommentTracker().deleteAndRestoreComments(removedElement);
   }
 
   private static class Mover {
@@ -523,18 +563,20 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
 
   private static void registerProblem(@NotNull ProblemsHolder holder,
                                       @NotNull PsiReturnStatement returnStatement,
-                                      @NotNull PsiVariable variable) {
+                                      @NotNull PsiVariable variable, boolean isOnTheFly) {
     String name = variable.getName();
     holder.registerProblem(returnStatement,
                            InspectionsBundle.message("inspection.return.separated.from.computation.descriptor", name),
-                           new VariableFix(name));
+                           new VariableFix(name, isOnTheFly));
   }
 
   private static class VariableFix implements LocalQuickFix {
     private String myName;
+    private boolean myIsOnTheFly;
 
-    public VariableFix(String name) {
+    public VariableFix(String name, boolean isOnTheFly) {
       myName = name;
+      myIsOnTheFly = isOnTheFly;
     }
 
     @Nls
@@ -555,7 +597,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiReturnStatement) {
-        doApply(((PsiReturnStatement)element));
+        doApply((PsiReturnStatement)element, myIsOnTheFly);
       }
     }
   }
@@ -581,6 +623,26 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
       this.refactoredStatement = refactoredStatement;
       this.returnedVariable = returnedVariable;
       this.variableScope = variableScope;
+    }
+  }
+
+  private static class Highlighter {
+    private final List<PsiElement> myElements = new ArrayList<>();
+
+    public void add(@NotNull PsiElement element) {
+      if (element instanceof PsiReturnStatement) {
+        PsiExpression value = ((PsiReturnStatement)element).getReturnValue();
+        if (value != null) {
+          myElements.add(value);
+          return;
+        }
+      }
+      myElements.add(element);
+    }
+
+    public void highlight() {
+      List<PsiElement> validElements = ContainerUtil.filter(myElements, PsiElement::isValid);
+      HighlightUtils.highlightElements(validElements);
     }
   }
 }

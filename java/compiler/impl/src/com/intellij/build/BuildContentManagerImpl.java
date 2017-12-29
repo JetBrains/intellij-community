@@ -15,13 +15,28 @@
  */
 package com.intellij.build;
 
+import com.intellij.build.process.BuildProcessHandler;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.TerminateRemoteProcessDialog;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.GeneralSettings;
+import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.VetoableProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
@@ -32,6 +47,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -53,13 +69,15 @@ import static com.intellij.util.ContentUtilEx.getFullName;
 /**
  * @author Vladislav.Soroka
  */
-public class BuildContentManagerImpl implements BuildContentManager, ContentManagerListener {
+public class BuildContentManagerImpl implements BuildContentManager {
 
   public static final String Build = "Build";
   public static final String Sync = "Sync";
   public static final String Run = "Run";
   public static final String Debug = "Debug";
   private static final String[] ourPresetOrder = {Build, Sync, Run, Debug};
+  private static final Key<Map<Object, CloseListener>> CONTENT_CLOSE_LISTENERS = Key.create("CONTENT_CLOSE_LISTENERS");
+
   private Project myProject;
   private ToolWindow myToolWindow;
   private final List<Runnable> myPostponedRunnables = new ArrayList<>();
@@ -76,12 +94,31 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
         .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
-      toolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
-      toolWindow.setIcon(AllIcons.Actions.Compile);
+      JComponent component = toolWindow.getComponent();
+      if (component != null) {
+        component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+      }
+      toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
       toolWindow.setAvailable(true, null);
       toolWindow.hide(null);
       myToolWindow = toolWindow;
-      myToolWindow.getContentManager().addContentManagerListener(this);
+      ContentManager contentManager = myToolWindow.getContentManager();
+      contentManager.addDataProvider(new DataProvider() {
+        private int myInsideGetData = 0;
+
+        @Override
+        public Object getData(String dataId) {
+          myInsideGetData++;
+          try {
+            return myInsideGetData == 1 ? DataManager.getInstance().getDataContext(contentManager.getComponent()).getData(dataId) : null;
+          }
+          finally {
+            myInsideGetData--;
+          }
+        }
+      });
+      new ContentManagerWatcher(toolWindow, contentManager);
+
       for (Runnable postponedRunnable : myPostponedRunnables) {
         postponedRunnable.run();
       }
@@ -232,7 +269,17 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
     return content;
   }
 
-  public void startBuildNotified(@NotNull Content content) {
+  public void startBuildNotified(@NotNull BuildDescriptor buildDescriptor,
+                                 @NotNull Content content,
+                                 @Nullable BuildProcessHandler processHandler) {
+    if (processHandler != null) {
+      Map<Object, CloseListener> closeListenerMap = content.getUserData(CONTENT_CLOSE_LISTENERS);
+      if (closeListenerMap == null) {
+        closeListenerMap = ContainerUtil.newHashMap();
+        content.putUserData(CONTENT_CLOSE_LISTENERS, closeListenerMap);
+      }
+      closeListenerMap.put(buildDescriptor.getId(), new CloseListener(content, processHandler));
+    }
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
       pair.second.incrementAndGet();
@@ -242,11 +289,21 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
       if (component != null) {
         component.invalidate();
       }
-      myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Actions.Compile));
+      myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
     });
   }
 
-  public void finishBuildNotified(@NotNull Content content) {
+  public void finishBuildNotified(@NotNull BuildDescriptor buildDescriptor, @NotNull Content content) {
+    Map<Object, CloseListener> closeListenerMap = content.getUserData(CONTENT_CLOSE_LISTENERS);
+    if (closeListenerMap != null) {
+      CloseListener closeListener = closeListenerMap.remove(buildDescriptor.getId());
+      if (closeListener != null) {
+        Disposer.dispose(closeListener);
+        if (closeListenerMap.isEmpty()) {
+          content.putUserData(CONTENT_CLOSE_LISTENERS, null);
+        }
+      }
+    }
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.get(content);
       if (pair != null && pair.second.decrementAndGet() == 0) {
@@ -256,7 +313,7 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
         }
         liveContentsMap.remove(content);
         if (liveContentsMap.isEmpty()) {
-          myToolWindow.setIcon(AllIcons.Actions.Compile);
+          myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
         }
       }
     });
@@ -273,26 +330,163 @@ public class BuildContentManagerImpl implements BuildContentManager, ContentMana
     }
   }
 
-  @Override
-  public void contentAdded(ContentManagerEvent event) {
+  private class CloseListener extends ContentManagerAdapter implements VetoableProjectManagerListener, Disposable {
+    @Nullable
+    private Content myContent;
+    @Nullable
+    private BuildProcessHandler myProcessHandler;
 
-  }
+    private CloseListener(@NotNull final Content content, @NotNull BuildProcessHandler processHandler) {
+      myContent = content;
+      ContentManager contentManager = content.getManager();
+      if (contentManager != null) {
+        contentManager.addContentManagerListener(this);
+      }
+      ProjectManager.getInstance().addProjectManagerListener(myProject, this);
+      myProcessHandler = processHandler;
+    }
 
-  @Override
-  public void contentRemoved(ContentManagerEvent event) {
-    ContentManager contentManager = myToolWindow.getContentManager();
-    if (contentManager.getContentCount() == 0) {
-      myToolWindow.setAvailable(false, null);
+    @Override
+    public void contentRemoved(final ContentManagerEvent event) {
+      final Content content = event.getContent();
+      if (content == myContent) {
+        Disposer.dispose(this);
+      }
+    }
+
+    @Override
+    public void dispose() {
+      if (myContent == null) return;
+
+      final Content content = myContent;
+      ContentManager contentManager = content.getManager();
+      if(contentManager != null) {
+        contentManager.removeContentManagerListener(this);
+      }
+      ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
+      myContent = null;
+      if (myProcessHandler instanceof Disposable) {
+        Disposer.dispose((Disposable)myProcessHandler);
+      }
+      myProcessHandler = null;
+    }
+
+    @Override
+    public void contentRemoveQuery(final ContentManagerEvent event) {
+      if (event.getContent() == myContent) {
+        final boolean canClose = closeQuery(false);
+        if (!canClose) {
+          event.consume();
+        }
+      }
+    }
+
+    @Override
+    public void projectClosed(final Project project) {
+      if (myContent != null && project == myProject) {
+        ContentManager contentManager = myContent.getManager();
+        if (contentManager != null) {
+          contentManager.removeContent(myContent, true);
+        }
+        Disposer.dispose(this); // Dispose content even if content manager refused to.
+      }
+    }
+
+    @Override
+    public boolean canClose(@NotNull Project project) {
+      if (project != myProject) return true;
+
+      if (myContent == null) return true;
+
+      final boolean canClose = closeQuery(true);
+      // Content could be removed during close query
+      if (canClose && myContent != null) {
+        ContentManager contentManager = myContent.getManager();
+        if (contentManager != null) contentManager.removeContent(myContent, true);
+        myContent = null;
+      }
+      return canClose;
+    }
+
+    private boolean closeQuery(boolean modal) {
+      if (myProcessHandler == null || myProcessHandler.isProcessTerminated() || myProcessHandler.isProcessTerminating()) {
+        return true;
+      }
+      myProcessHandler.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, Boolean.TRUE);
+      GeneralSettings.ProcessCloseConfirmation rc =
+        TerminateRemoteProcessDialog.show(myProject, myProcessHandler.getExecutionName(), myProcessHandler);
+      if (rc == null) { // cancel
+        return false;
+      }
+      boolean destroyProcess = rc == GeneralSettings.ProcessCloseConfirmation.TERMINATE;
+      if (destroyProcess) {
+        myProcessHandler.destroyProcess();
+      }
+      else {
+        myProcessHandler.detachProcess();
+      }
+      waitForProcess(modal, myProcessHandler);
+      return true;
     }
   }
 
-  @Override
-  public void contentRemoveQuery(ContentManagerEvent event) {
+  private void waitForProcess(final boolean modal, BuildProcessHandler processHandler) {
+    String title = ExecutionBundle.message("terminating.process.progress.title", processHandler.getExecutionName());
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, title, true) {
 
-  }
+      @Override
+      public boolean isConditionalModal() {
+        return modal;
+      }
 
-  @Override
-  public void selectionChanged(ContentManagerEvent event) {
+      @Override
+      public boolean shouldStartInBackground() {
+        return !modal;
+      }
 
+      @Override
+      public void run(@NotNull final ProgressIndicator progressIndicator) {
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            processHandler.waitFor();
+          }
+          finally {
+            semaphore.up();
+          }
+        });
+
+        progressIndicator.setText(ExecutionBundle.message("waiting.for.vm.detach.progress.text"));
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            while (true) {
+              if (progressIndicator.isCanceled() || !progressIndicator.isRunning()) {
+                semaphore.up();
+                break;
+              }
+              try {
+                //noinspection SynchronizeOnThis
+                synchronized (this) {
+                  //noinspection SynchronizeOnThis
+                  wait(2000L);
+                }
+              }
+              catch (InterruptedException ignore) {
+              }
+            }
+          }
+        });
+        semaphore.waitFor();
+      }
+
+      @Override
+      public void onCancel() {
+        // stop waiting for the process
+        processHandler.forceProcessDetach();
+      }
+    });
   }
 }

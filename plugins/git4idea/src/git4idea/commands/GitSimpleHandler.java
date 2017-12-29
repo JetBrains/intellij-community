@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,10 @@ import java.io.File;
  * <p/>
  * The class also includes a number of static utility methods that represent some
  * simple commands.
+ *
+ * @deprecated use {@link Git} and {@link GitLineHandler}
  */
+@Deprecated
 public class GitSimpleHandler extends GitTextHandler {
 
   public static final String DURING_EXECUTING_ERROR_MESSAGE = "during executing";
@@ -82,16 +86,13 @@ public class GitSimpleHandler extends GitTextHandler {
    * {@inheritDoc}
    */
   protected void processTerminated(final int exitCode) {
-    if (myVcs == null) { return; }
     String stdout = myStdoutLine.toString();
     String stderr = myStderrLine.toString();
     if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
-      myVcs.showMessages(stdout);
       LOG.info(stdout.trim());
       myStdoutLine.setLength(0);
     }
     else if (!isStderrSuppressed() && !StringUtil.isEmptyOrSpaces(stderr)) {
-      myVcs.showErrorMessages(stderr);
       LOG.info(stderr.trim());
       myStderrLine.setLength(0);
     }
@@ -104,15 +105,8 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * For silent handlers, print out everything
    */
+  @Deprecated
   public void unsilence() {
-    if (myVcs == null) { return; }
-    myVcs.showCommandLine(printableCommandLine());
-    if (myStderr.length() != 0) {
-      myVcs.showErrorMessages(myStderr.toString());
-    }
-    if (myStdout.length() != 0) {
-      myVcs.showMessages(myStdout.toString());
-    }
   }
 
   /**
@@ -136,7 +130,7 @@ public class GitSimpleHandler extends GitTextHandler {
       return;
     }
     entire.append(text);
-    if (myVcs == null || (suppressed && !LOG.isDebugEnabled())) {
+    if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
     int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
@@ -163,12 +157,6 @@ public class GitSimpleHandler extends GitTextHandler {
           if (!StringUtil.isEmptyOrSpaces(line)) {
             if (!suppressed) {
               LOG.info(line.trim());
-              if (ProcessOutputTypes.STDOUT == outputType) {
-                myVcs.showMessages(line);
-              }
-              else if (ProcessOutputTypes.STDERR == outputType) {
-                myVcs.showErrorMessages(line);
-              }
             }
             else {
               LOG.debug(line.trim());
@@ -199,22 +187,19 @@ public class GitSimpleHandler extends GitTextHandler {
   }
 
   /**
-   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link GitHandlerUtil} methods.
+   * Execute without UI. If UI interactions are required (for example SSH popups or progress dialog), use {@link Git} methods.
    *
    * @return a value if process was successful
    * @throws VcsException exception if process failed to start.
    */
   public String run() throws VcsException {
-    if (isRemote()) {
-      throw new IllegalStateException("Commands that require remote access could not be run using this method");
-    }
-    final VcsException[] ex = new VcsException[1];
-    final String[] result = new String[1];
+    Ref<VcsException> exRef = Ref.create();
+    Ref<String> resultRef = Ref.create();
     addListener(new GitHandlerListener() {
       public void processTerminated(final int exitCode) {
         try {
           if (exitCode == 0 || isIgnoredErrorCode(exitCode)) {
-            result[0] = getStdout();
+            resultRef.set(getStdout());
           }
           else {
             String msg = getStderr();
@@ -224,25 +209,26 @@ public class GitSimpleHandler extends GitTextHandler {
             if (msg.length() == 0) {
               msg = GitBundle.message("git.error.exit", exitCode);
             }
-            ex[0] = new VcsException(msg);
+            exRef.set(new VcsException(msg));
           }
         }
         catch (Throwable t) {
-          ex[0] = new VcsException(t.toString(), t);
+          exRef.set(new VcsException(t.toString(), t));
         }
       }
 
       public void startFailed(final Throwable exception) {
-        ex[0] = new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception);
+        exRef.set(
+          new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }
     });
-    runInCurrentThread(null);
-    if (ex[0] != null) {
-      throw new VcsException(ex[0].getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), ex[0]);
+    runInCurrentThread();
+    if (!exRef.isNull()) {
+      throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
     }
-    if (result[0] == null) {
+    if (resultRef.isNull()) {
       throw new VcsException("The git command returned null: " + printableCommandLine());
     }
-    return result[0];
+    return resultRef.get();
   }
 }

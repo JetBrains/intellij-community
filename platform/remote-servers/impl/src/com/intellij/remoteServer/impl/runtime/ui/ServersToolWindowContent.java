@@ -1,8 +1,10 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.dashboard.TreeContent;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -337,8 +339,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private JComponent createMainToolbar(@NotNull String actionGroupID) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(actionGroupID));
-    group.add(new Separator());
-    group.add(new ContextHelpAction(myContribution.getContextHelpId()));
 
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 

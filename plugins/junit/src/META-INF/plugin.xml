@@ -88,6 +88,8 @@
                      key="junit5.malformed.repeated.test.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
+
+    <runDashboardContributor implementation="com.intellij.execution.junit.JUnitRunDashboardContributor"/>
   </extensions>
 
   <extensionPoints>

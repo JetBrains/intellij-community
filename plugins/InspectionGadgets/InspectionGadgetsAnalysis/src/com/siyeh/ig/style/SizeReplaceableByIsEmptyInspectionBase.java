@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -84,13 +85,15 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
       if (qualifierExpression == null) {
         return;
       }
-      @NonNls String newExpression = qualifierExpression.getText();
+      CommentTracker commentTracker = new CommentTracker();
+      @NonNls String newExpression = commentTracker.markUnchanged(qualifierExpression).getText();
       final IElementType tokenType = binaryExpression.getOperationTokenType();
       if (!JavaTokenType.EQEQ.equals(tokenType)) {
         newExpression = '!' + newExpression;
       }
       newExpression += ".isEmpty()";
-      PsiReplacementUtil.replaceExpression(binaryExpression, newExpression);
+
+      PsiReplacementUtil.replaceExpression(binaryExpression, newExpression, commentTracker);
     }
   }
 

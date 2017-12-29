@@ -63,8 +63,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");

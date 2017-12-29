@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.google.common.collect.ImmutableSet;
@@ -22,8 +8,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -31,7 +18,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
@@ -53,12 +39,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyStdlibTypeProvider extends PyTypeProviderBase {
-  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("open", "io.open", "os.fdopen",
-                                                                    "pathlib.Path.open", "_io.open", "_io.fdopen");
 
-  private static final String PY2K_FILE_TYPE = "file";
-  private static final String PY3K_BINARY_FILE_TYPE = "io.FileIO[bytes]";
-  private static final String PY3K_TEXT_FILE_TYPE = "io.TextIOWrapper[unicode]";
+  @NotNull
+  private static final Set<String> OPEN_FUNCTIONS = ImmutableSet.of("io.open", "pathlib.Path.open", "_io.open",
+                                                                    "os.fdopen", "posix.fdopen", "nt.fdopen");
 
   @Nullable
   public static PyStdlibTypeProvider getInstance() {
@@ -100,9 +84,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    final PyType fieldTypeForTypingNTTarget = getFieldTypeForTypingNTTarget(referenceExpression, context);
-    if (fieldTypeForTypingNTTarget != null) {
-      return fieldTypeForTypingNTTarget;
+    final PyType fieldTypeForNamedTuple = getFieldTypeForNamedTupleAsTarget(referenceExpression, context);
+    if (fieldTypeForNamedTuple != null) {
+      return fieldTypeForNamedTuple;
     }
 
     final PyCallableType namedTupleTypeForCallee = getNamedTupleTypeForCallee(referenceExpression, context);
@@ -189,8 +173,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getFieldTypeForTypingNTTarget(@NotNull PyReferenceExpression referenceExpression,
-                                                      @NotNull TypeEvalContext context) {
+  private static PyType getFieldTypeForNamedTupleAsTarget(@NotNull PyReferenceExpression referenceExpression,
+                                                          @NotNull TypeEvalContext context) {
     final PyExpression qualifier = referenceExpression.getQualifier();
     if (qualifier != null) {
       final PyType qualifierType = context.getType(qualifier);
@@ -252,8 +236,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final String qname = function.getQualifiedName();
     if (qname != null) {
       if (OPEN_FUNCTIONS.contains(qname) && callSite instanceof PyCallExpression) {
-        final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callSite, function, context);
-        return getOpenFunctionType(qname, mapping.getMappedParameters(), callSite, context);
+        return getOpenFunctionCallType(function, qname, (PyCallExpression)callSite, context);
       }
       else if ("tuple.__init__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
@@ -324,8 +307,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           return null;
         }
 
-        final List<PyType> newElementTypes = ContainerUtil.concat(leftTupleType.getElementTypes(context),
-                                                                  rightTupleType.getElementTypes(context));
+        final List<PyType> newElementTypes = ContainerUtil.concat(leftTupleType.getElementTypes(),
+                                                                  rightTupleType.getElementTypes());
         return Ref.create(PyTupleType.create(addition, newElementTypes));
       }
     }
@@ -424,7 +407,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           final Set<PyTargetExpression> fields = new TreeSet<>(Comparator.comparingInt(PyTargetExpression::getTextOffset));
 
           cls.processClassLevelDeclarations(
-            new BaseScopeProcessor() {
+            new PsiScopeProcessor() {
               @Override
               public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
                 if (element instanceof PyTargetExpression) {
@@ -458,34 +441,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static Ref<PyType> getOpenFunctionType(@NotNull String callQName,
-                                                 @NotNull Map<PyExpression, PyCallableParameter> arguments,
-                                                 @NotNull PsiElement anchor,
-                                                 @NotNull TypeEvalContext context) {
-    String mode = "r";
-    for (Map.Entry<PyExpression, PyCallableParameter> entry : arguments.entrySet()) {
-      if ("mode".equals(entry.getValue().getName())) {
-        PyExpression argument = entry.getKey();
-        if (argument instanceof PyKeywordArgument) {
-          argument = ((PyKeywordArgument)argument).getValueExpression();
-        }
-        if (argument instanceof PyStringLiteralExpression) {
-          mode = ((PyStringLiteralExpression)argument).getStringValue();
-          break;
-        }
-      }
-    }
+  private static Ref<PyType> getOpenFunctionCallType(@NotNull PyFunction function,
+                                                     @NotNull String functionQName,
+                                                     @NotNull PyCallExpression call,
+                                                     @NotNull TypeEvalContext context) {
+    final LanguageLevel typeLevel =
+      ArrayUtil.contains(functionQName, "io.open", "pathlib.Path.open", "_io.open")
+      ? LanguageLevel.PYTHON30
+      : LanguageLevel.forElement(call);
 
-    if (LanguageLevel.forElement(anchor).isAtLeast(LanguageLevel.PYTHON30) || "io.open".equals(callQName) || "_io.open".equals(callQName)) {
-      if (mode.contains("b")) {
-        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_BINARY_FILE_TYPE, context));
-      }
-      else {
-        return Ref.create(PyTypeParser.getTypeByName(anchor, PY3K_TEXT_FILE_TYPE, context));
-      }
-    }
-
-    return Ref.create(PyTypeParser.getTypeByName(anchor, PY2K_FILE_TYPE, context));
+    return PyTypingTypeProvider.getOpenFunctionCallType(function, call, typeLevel, context);
   }
 
   @Nullable

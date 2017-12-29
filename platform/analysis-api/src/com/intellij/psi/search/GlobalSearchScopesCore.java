@@ -248,7 +248,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean isSearchInLibraries() {
-      return false;
+      return true;
     }
 
     @Override
@@ -346,7 +346,7 @@ public class GlobalSearchScopesCore {
 
     @Override
     public boolean isSearchInLibraries() {
-      return false;
+      return true;
     }
 
     @Override

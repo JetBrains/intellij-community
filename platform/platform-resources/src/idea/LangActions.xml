@@ -56,7 +56,9 @@
       <action id="EditorMatchBrace" class="com.intellij.codeInsight.editorActions.MatchBraceAction"/>
       <action id="EditorCodeBlockStartWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockStartWithSelectionAction"/>
       <action id="EditorCodeBlockEndWithSelection" class="com.intellij.codeInsight.editorActions.CodeBlockEndWithSelectionAction"/>
-      <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction"/>
+      <action id="EditorCompleteStatement" class="com.intellij.codeInsight.editorActions.smartEnter.SmartEnterAction">
+        <add-to-group group-id="EditSmartGroup" anchor="first"/>
+      </action>
 
       <add-to-group group-id="EditorActions" anchor="last"/>
     </group>
@@ -401,6 +403,9 @@
       <add-to-group group-id="MainToolBar" anchor="first"/>
     </group>
     -->
+    <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction">
+      <add-to-group group-id="RunContextPopupGroup" anchor="last"/>
+    </action>
 
     <group id="ToolbarFindGroup">
       <separator/>
@@ -507,7 +512,6 @@
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
       <separator/>
-      <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
       <separator/>
@@ -572,7 +576,6 @@
       <reference ref="VersionControlsGroup"/>
       <reference ref="SynchronizeCurrentFile"/>
       <separator/>
-      <reference ref="RevealIn"/>
       <reference ref="ShowFilePath"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
@@ -1063,9 +1066,6 @@
     </action>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
-      <action id="RunDashboard.NextConfiguration" class="com.intellij.execution.dashboard.actions.NextConfigurationAction"/>
-      <action id="RunDashboard.PreviousConfiguration" class="com.intellij.execution.dashboard.actions.PreviousConfigurationAction"/>
-      <separator/>
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
               use-shortcut-of="EditSource"/>
       <action id="RunDashboard.CopyConfiguration" class="com.intellij.execution.dashboard.actions.CopyConfigurationAction"

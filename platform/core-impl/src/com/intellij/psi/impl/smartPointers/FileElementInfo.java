@@ -37,7 +37,7 @@ class FileElementInfo extends SmartPointerElementInfo {
   private final Language myLanguage;
   private final Class<? extends PsiFile> myFileClass;
 
-  public FileElementInfo(@NotNull final PsiFile file) {
+  FileElementInfo(@NotNull final PsiFile file) {
     myVirtualFile = file.getVirtualFile();
     myProject = file.getProject();
     myLanguage = LanguageUtil.getRootLanguage(file);
@@ -45,34 +45,34 @@ class FileElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement() {
     PsiFile file = SelfElementInfo.restoreFileFromVirtual(myVirtualFile, myProject, myLanguage);
     return myFileClass.isInstance(file) ? file : null;
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile() {
     PsiElement element = restoreElement();
     return element == null ? null : element.getContainingFile(); // can be directory
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return myVirtualFile.hashCode();
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
     return other instanceof FileElementInfo && Comparing.equal(myVirtualFile, ((FileElementInfo)other).myVirtualFile);
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
+  VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
   @Override
-  public Segment getRange() {
+  Segment getRange() {
     if (!myVirtualFile.isValid()) return null;
 
     Document document = FileDocumentManager.getInstance().getDocument(myVirtualFile);
@@ -81,13 +81,13 @@ class FileElementInfo extends SmartPointerElementInfo {
 
   @NotNull
   @Override
-  public Project getProject() {
+  Project getProject() {
     return myProject;
   }
 
   @Nullable
   @Override
-  public Segment getPsiRange() {
+  Segment getPsiRange() {
     Document currentDoc = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
     Document committedDoc = currentDoc == null ? null :
                                   ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getLastCommittedDocument(currentDoc);

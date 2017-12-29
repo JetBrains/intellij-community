@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="commons-net">
+  <library name="commons-net" type="repository">
+    <properties maven-id="commons-net:commons-net:3.3" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/commons-net-3.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-net/commons-net/3.3/commons-net-3.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/commons-net-3.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/commons-net/commons-net/3.3/commons-net-3.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

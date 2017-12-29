@@ -41,6 +41,10 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   private void handleInputFocusMovement(LogicalPosition position) {
+    final Configuration configuration = editor.getUserData(CURRENT_CONFIGURATION_KEY);
+    if (configuration == null) {
+      return;
+    }
     checkModelValidity();
     final int offset = editor.logicalPositionToOffset(position);
     final int length = editor.getDocument().getTextLength();
@@ -55,7 +59,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       end = offset;
 
       while(end < length && Character.isJavaIdentifierPart(elements.charAt(end)) && elements.charAt(end)!='$') end++;
-      if (end < length && elements.charAt(end)=='$') {
+      if (end < length && elements.charAt(end) == '$') {
         String varname = elements.subSequence(start + 1, end).toString();
         Variable foundVar = null;
 
@@ -66,13 +70,13 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
           }
         }
 
-        if (foundVar!=null) {
-          text = getShortParamString(editor.getUserData(CURRENT_CONFIGURATION_KEY),varname);
+        if (foundVar != null) {
+          text = getShortParamString(configuration, varname);
         }
       }
     }
 
-    if (text.length() > 0) {
+    if (!text.isEmpty()) {
       showTooltip(editor, start, end + 1, text);
     }
     else {
@@ -131,7 +135,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
         final String text = StringUtil.unquoteString(constraint.getReferenceConstraint());
-        append(buf, "reference target matches: " + text);
+        append(buf, SSRBundle.message("reference.target.tooltip.message",
+                                      constraint.isInvertReference() ? SSRBundle.message("not.tooltip.message") : "", text));
       }
 
       if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {

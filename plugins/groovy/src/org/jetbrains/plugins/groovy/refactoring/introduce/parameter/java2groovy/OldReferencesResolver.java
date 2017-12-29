@@ -53,7 +53,6 @@ import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 18, 2009 3:21:45 PM
  */
 
 public class OldReferencesResolver {

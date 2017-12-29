@@ -35,8 +35,6 @@ import java.util.Map;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   26.03.2010
- * Time:   22:01:27
  */
 public class PyFlipComparisonIntention extends PyBaseIntentionAction {
   private static final Map<PyElementType, String> FLIPPED_OPERATORS = new HashMap<>(7);

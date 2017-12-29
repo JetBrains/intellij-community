@@ -115,7 +115,17 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
 
   protected void setData(final MavenRunnerParameters data) {
     data.setWorkingDirPath(workingDirComponent.getComponent().getText());
-    data.setGoals(ParametersListUtil.parse(goalsComponent.getComponent().getText()));
+
+    List<String> commandLine = ParametersListUtil.parse(goalsComponent.getComponent().getText());
+    int pomFileNameIndex = commandLine.indexOf("-f");
+    if (pomFileNameIndex != -1) {
+      if (pomFileNameIndex + 1 < commandLine.size()) {
+        data.setPomFileName(commandLine.remove(pomFileNameIndex + 1));
+      }
+      commandLine.remove(pomFileNameIndex);
+    }
+
+    data.setGoals(commandLine);
     data.setResolveToWorkspace(myResolveToWorkspaceCheckBox.isSelected());
 
     Map<String, Boolean> profilesMap = new LinkedHashMap<>();
@@ -138,7 +148,11 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
 
   protected void getData(final MavenRunnerParameters data) {
     workingDirComponent.getComponent().setText(data.getWorkingDirPath());
-    goalsComponent.getComponent().setText(ParametersList.join(data.getGoals()));
+    String commandLine = ParametersList.join(data.getGoals());
+    if (data.getPomFileName() != null) {
+      commandLine += " -f " + data.getPomFileName();
+    }
+    goalsComponent.getComponent().setText(commandLine);
     myResolveToWorkspaceCheckBox.setSelected(data.isResolveToWorkspace());
 
     ParametersList parametersList = new ParametersList();

@@ -22,11 +22,11 @@ import org.junit.runner.notification.RunNotifier
 import org.junit.runners.Suite
 import org.junit.runners.model.RunnerBuilder
 
-class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(suiteClass, builder) {
+class GuiTestSuite(private val suiteClass: Class<*>, builder: RunnerBuilder) : Suite(suiteClass, builder) {
 
   //IDE type to run suite tests with
-  val myIde = GuiTestLocalRunner.getIdeFromAnnotation(suiteClass)
-  var myFirstStart = true
+  val myIde = getIdeFromAnnotation(suiteClass)
+  var isFirstStart = true
   val UNDEFINED_FIRST_CLASS = "undefined"
   val myFirstStartClassName: String by lazy {
     val annotation = suiteClass.getAnnotation(FirstStartWith::class.java)
@@ -38,9 +38,9 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(sui
   override fun runChild(runner: Runner, notifier: RunNotifier?) {
     try {
       //let's start IDE to complete installation, import configs and etc before running tests
-      if (myFirstStart) firstStart()
+      if (isFirstStart) firstStart()
       val testClass = runner.description.testClass
-      val guiTestLocalRunner = GuiTestLocalRunner(testClass, myIde)
+      val guiTestLocalRunner = GuiTestLocalRunner(testClass, suiteClass, myIde)
       super.runChild(guiTestLocalRunner, notifier)
     }
     catch (e: Exception) {
@@ -53,8 +53,7 @@ class GuiTestSuite(suiteClass: Class<*>, val builder: RunnerBuilder) : Suite(sui
     if (myFirstStartClassName == UNDEFINED_FIRST_CLASS) return
     LOG.info("IDE is configuring for the first time...")
     GuiTestLocalLauncher.firstStartIdeLocally(myIde, myFirstStartClassName)
-    myFirstStart = false
+    isFirstStart = false
   }
-
 
 }

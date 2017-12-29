@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.Maps;
@@ -62,8 +48,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   protected List<LanguageLevel> myVersionsToProcess;
 
   static {
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON24, Sets.newHashSet("R", "U", "UR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON25, Sets.newHashSet("R", "U", "UR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
@@ -129,12 +113,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       PsiElement element = exceptClass.getNextSibling();
       while (element instanceof PsiWhiteSpace) {
         element = element.getNextSibling();
-      }
-
-      if (element != null && "as".equals(element.getText())) {
-        registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON26),
-                                       "Python versions < 2.6 do not support this syntax.",
-                                       node);
       }
 
       if (element != null && ",".equals(element.getText())) {
@@ -276,8 +254,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyRaiseStatement(PyRaiseStatement node) {
     super.visitPyRaiseStatement(node);
 
-    // empty raise
-    registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasNoArgs(node, level),
+    // empty raise under finally
+    registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasNoArgsUnderFinally(node, level),
                                    " not support this syntax. Raise with no arguments can only be used in an except block",
                                    node,
                                    null,
@@ -311,11 +289,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyWithStatement(PyWithStatement node) {
     super.visitPyWithStatement(node);
 
-    registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-
     final PyWithItem[] items = node.getWithItems();
     if (items.length > 1) {
-      registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && !level.equals(LanguageLevel.PYTHON24),
+      registerForAllMatchingVersions(level -> !level.supportsSetLiterals(),
                                      " not support multiple context managers",
                                      Arrays.asList(items).subList(1, items.length),
                                      null);
@@ -328,16 +304,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   public void visitPyForStatement(PyForStatement node) {
     super.visitPyForStatement(node);
     checkAsyncKeyword(node);
-  }
-
-  @Override
-  public void visitPyClass(PyClass node) {    // PY-2719
-    super.visitPyClass(node);
-
-    final PyArgumentList list = node.getSuperClassExpressionList();
-    if (list != null && list.getArguments().length == 0) {
-      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 does not support this syntax.", list);
-    }
   }
 
   @Override
@@ -354,65 +320,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                      "The print statement has been replaced with a print() function",
                                      node,
                                      new CompatibilityPrintCallQuickFix());
-    }
-  }
-
-  @Override
-  public void visitPyFromImportStatement(PyFromImportStatement node) {
-    super.visitPyFromImportStatement(node);
-
-    final PyReferenceExpression importSource  = node.getImportSource();
-    if (importSource != null) {
-      final PsiElement prev = importSource.getPrevSibling();
-      if (prev != null && prev.getNode().getElementType() == PyTokenTypes.DOT) { // PY-2793
-        registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-      }
-    }
-    else {
-      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-    }
-  }
-
-  @Override
-  public void visitPyAssignmentStatement(PyAssignmentStatement node) {
-    super.visitPyAssignmentStatement(node);
-    if (myVersionsToProcess.contains(LanguageLevel.PYTHON24)) {
-      PyExpression assignedValue = node.getAssignedValue();
-
-      Stack<PsiElement> st = new Stack<>();           // PY-2796
-      if (assignedValue != null)
-        st.push(assignedValue);
-      while (!st.isEmpty()) {
-        PsiElement el = st.pop();
-        if (el instanceof PyYieldExpression)
-          registerProblem(node, "Python version 2.4 doesn't support this syntax. " +
-                                                    "In Python <= 2.4, yield was a statement; it didn't return any value.");
-        else {
-          for (PsiElement e : el.getChildren())
-            st.push(e);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void visitPyConditionalExpression(PyConditionalExpression node) {   //PY-4293
-    super.visitPyConditionalExpression(node);
-
-    registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals, "Python version 2.4 doesn't support this syntax.", node);
-  }
-
-  @Override
-  public void visitPyTryExceptStatement(PyTryExceptStatement node) { // PY-2795
-    super.visitPyTryExceptStatement(node);
-
-    final PyExceptPart[] excepts = node.getExceptParts();
-    final PyFinallyPart finallyPart = node.getFinallyPart();
-    if (excepts.length != 0 && finallyPart != null) {
-      registerOnFirstMatchingVersion(LanguageLevel.PYTHON24::equals,
-                                     "Python version 2.4 doesn't support this syntax. You could use a finally block to ensure " +
-                                     "that code is always executed, or one or more except blocks to catch specific exceptions.",
-                                     node);
     }
   }
 
@@ -665,12 +572,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
         if (keywordArgumentNames.contains(keyword)) {
           registerProblem(argument, "Keyword argument repeated", new PyRemoveArgumentQuickFix());
-        }
-        else if (seenPositionalContainer) {
-          registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON26),
-                                         "Python versions < 2.6 do not allow keyword arguments after *expression",
-                                         argument,
-                                         new PyRemoveArgumentQuickFix());
         }
         else if (seenKeywordContainer) {
           registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON35),

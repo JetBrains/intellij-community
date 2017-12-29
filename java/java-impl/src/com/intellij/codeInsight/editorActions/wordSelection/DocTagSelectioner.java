@@ -24,17 +24,18 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class DocTagSelectioner extends WordSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiDocTag;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(e, editorText, cursorOffset, editor);
     result.add(getDocTagRange((PsiDocTag)e, editorText, cursorOffset));
     return result;

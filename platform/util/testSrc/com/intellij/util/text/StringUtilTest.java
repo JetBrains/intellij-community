@@ -2,6 +2,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
@@ -615,5 +616,39 @@ public class StringUtilTest {
     assertEquals("", StringUtil.substringAfterLast("abc", ""));
     assertNull(StringUtil.substringAfterLast("abc", "1"));
     assertNull(StringUtil.substringAfterLast("", "1"));
+  }
+
+  @Test
+  public void testGetWordIndicesIn() {
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first second"));
+    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second"));
+    assertEquals(ContainerUtil.list(new TextRange(1, 6), new TextRange(7, 13)), StringUtil.getWordIndicesIn(" first second    "));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first:second"));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)), StringUtil.getWordIndicesIn("first-second"));
+    assertEquals(ContainerUtil.list(new TextRange(0, 12)), StringUtil.getWordIndicesIn("first-second", ContainerUtil.set(' ', '_', '.')));
+    assertEquals(ContainerUtil.list(new TextRange(0, 5), new TextRange(6, 12)),
+                 StringUtil.getWordIndicesIn("first-second", ContainerUtil.set('-')));
+  }
+
+  @Test
+  public void testIsLatinAlphanumeric() {
+    assertTrue(StringUtil.isLatinAlphanumeric("1234567890"));
+    assertTrue(StringUtil.isLatinAlphanumeric("123abc593"));
+    assertTrue(StringUtil.isLatinAlphanumeric("gwengioewn"));
+    assertTrue(StringUtil.isLatinAlphanumeric("FiwnFWinfs"));
+    assertTrue(StringUtil.isLatinAlphanumeric("b"));
+    assertTrue(StringUtil.isLatinAlphanumeric("1"));
+
+    assertFalse(StringUtil.isLatinAlphanumeric("йцукен"));
+    assertFalse(StringUtil.isLatinAlphanumeric("ЙцуTYuio"));
+    assertFalse(StringUtil.isLatinAlphanumeric("йцу626кен"));
+    assertFalse(StringUtil.isLatinAlphanumeric("12 12"));
+    assertFalse(StringUtil.isLatinAlphanumeric("."));
+    assertFalse(StringUtil.isLatinAlphanumeric("_"));
+    assertFalse(StringUtil.isLatinAlphanumeric("-"));
+    assertFalse(StringUtil.isLatinAlphanumeric("fhu384 "));
+    assertFalse(StringUtil.isLatinAlphanumeric(""));
+    assertFalse(StringUtil.isLatinAlphanumeric(null));
+    assertFalse(StringUtil.isLatinAlphanumeric("'"));
   }
 }

@@ -16,7 +16,8 @@
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -42,13 +43,12 @@ import git4idea.util.StringScanner;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.findVirtualFilesWithRefresh;
 import static com.intellij.dvcs.DvcsUtil.sortVirtualFilesByPresentation;
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 /**
  * The class is highly customizable, since the procedure of resolving conflicts is very common in Git operations.
@@ -127,7 +127,7 @@ public class GitConflictResolver {
     myParams = params;
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
     myVcsHelper = AbstractVcsHelper.getInstance(project);
-    myVcs = assertNotNull(GitVcs.getInstance(myProject));
+    myVcs = GitVcs.getInstance(myProject);
   }
 
   /**
@@ -183,7 +183,7 @@ public class GitConflictResolver {
    */
   protected void notifyUnresolvedRemain() {
     notifyWarning(myParams.myErrorNotificationTitle,
-                  "You have to <a href='resolve'>resolve</a> all conflicts first." + myParams.myErrorNotificationAdditionalDescription);
+                  "Unresolved conflicts remaining in the project." + myParams.myErrorNotificationAdditionalDescription);
   }
 
   /**
@@ -191,13 +191,16 @@ public class GitConflictResolver {
    * notification.
    */
   private void notifyUnresolvedRemainAfterNotification() {
-    notifyWarning("Not all conflicts resolved",
-                  "You should <a href='resolve'>resolve</a> all conflicts before update. <br>" +
-                  myParams.myErrorNotificationAdditionalDescription);
+    notifyWarning("Unresolved Conflicts Remaining", myParams.myErrorNotificationAdditionalDescription);
   }
 
-  private void notifyWarning(String title, String content) {
-    VcsNotifier.getInstance(myProject).notifyImportantWarning(title, content, new ResolveNotificationListener());
+  protected void notifyWarning(String title, String content) {
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
+    notification.addAction(NotificationAction.createSimple("Resolve...", () -> {
+      notification.expire();
+      BackgroundTaskUtil.executeOnPooledThread(myProject, () -> mergeNoProceed());
+    }));
+    VcsNotifier.getInstance(myProject).notify(notification);
   }
 
   private boolean merge(boolean mergeDialogInvokedFromNotification) {
@@ -246,24 +249,8 @@ public class GitConflictResolver {
     VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
                                                    description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
                                                    e.getLocalizedMessage(),
-                                                   new ResolveNotificationListener()
+                                                   null
     );
-  }
-
-
-  @NotNull
-  protected NotificationListener getResolveLinkListener() {
-    return new ResolveNotificationListener();
-  }
-
-  private class ResolveNotificationListener implements NotificationListener {
-    @Override public void hyperlinkUpdate(@NotNull final Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
-        notification.expire();
-        Runnable task = () -> mergeNoProceed();
-        BackgroundTaskUtil.executeOnPooledThread(myProject, task);
-      }
-    }
   }
 
   /**

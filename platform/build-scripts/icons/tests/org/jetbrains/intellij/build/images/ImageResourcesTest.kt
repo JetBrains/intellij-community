@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.model.JpsElementFactory
+import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
@@ -29,8 +30,6 @@ import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
 import java.io.File
 import java.util.*
-import kotlin.comparisons.compareBy
-import kotlin.comparisons.thenBy
 
 class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
   companion object {
@@ -48,6 +47,16 @@ class CommunityImageResourcesOptimumSizeTest : ImageResourcesTestBase() {
     @Parameters(name = "{0}")
     fun data(): Collection<Array<Any?>> {
       return ImageResourcesTestBase.collectIconsWithNonOptimumSize(TestRoot.COMMUNITY)
+    }
+  }
+}
+
+class CommunityIconClassesTest : ImageResourcesTestBase() {
+  companion object {
+    @JvmStatic
+    @Parameters(name = "{0}")
+    fun data(): Collection<Array<Any?>> {
+      return ImageResourcesTestBase.collectNonRegeneratedIconClasses(TestRoot.COMMUNITY)
     }
   }
 }
@@ -92,7 +101,8 @@ abstract class ImageResourcesTestBase {
     @JvmOverloads
     fun collectBadIcons(root: TestRoot,
                         ignoreSkipTag: Boolean = false): List<Array<Any?>> {
-      val modules = collectModules(root)
+      val model = loadProjectModel(root)
+      val modules = collectModules(root, model)
       val checker = MySanityChecker(File(PathManager.getHomePath()), ignoreSkipTag)
       modules.forEach {
         checker.check(it)
@@ -105,10 +115,24 @@ abstract class ImageResourcesTestBase {
     fun collectIconsWithNonOptimumSize(root: TestRoot,
                                        iconsOnly: Boolean = true,
                                        ignoreSkipTag: Boolean = false): List<Array<Any?>> {
-      val modules = collectModules(root)
+      val model = loadProjectModel(root)
+      val modules = collectModules(root, model)
       val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
       modules.forEach {
         checker.checkOptimumSizes(it)
+      }
+      return createTestData(modules, checker.failures)
+    }
+
+    @JvmStatic
+    fun collectNonRegeneratedIconClasses(root: TestRoot): List<Array<Any?>> {
+      val model = loadProjectModel(root)
+      val util = model.project.modules.find { it.name == "util" } ?: throw IllegalStateException("Can't load module 'util'")
+      val modules = collectModules(root, model)
+
+      val checker = MyIconClassFileChecker(File(PathManager.getHomePath()), util)
+      modules.forEach {
+        checker.checkIconClasses(it)
       }
       return createTestData(modules, checker.failures)
     }
@@ -121,13 +145,19 @@ abstract class ImageResourcesTestBase {
       return success + failedTests
     }
 
-    private fun collectModules(root: TestRoot): List<JpsModule> {
+    private fun loadProjectModel(root: TestRoot): JpsModel {
       val home = getHomePath(root)
       val model = JpsElementFactory.getInstance().createModel()
 
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
       JpsProjectLoader.loadProject(model.project, pathVariables, home.path)
 
+      return model
+    }
+
+    private fun collectModules(root: TestRoot,
+                               model: JpsModel): List<JpsModule> {
+      val home = getHomePath(root)
       return model.project.modules
         .filterNot { root == TestRoot.ULTIMATE && isCommunityModule(home, it) }
     }
@@ -181,12 +211,28 @@ private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean
   }
 }
 
-class FailedTest(val module: String, val message: String, val id: String, val paths: List<String>) {
+private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule) {
+  val failures = ArrayList<FailedTest>()
+
+  fun checkIconClasses(module: JpsModule) {
+    val generator = IconsClassGenerator(projectHome, util, false)
+    generator.processModule(module)
+
+    generator.getModifiedClasses().forEach { (module, file) ->
+      failures.add(FailedTest(module, "image class file should be regenerated", file))
+    }
+  }
+}
+
+class FailedTest internal constructor(val module: String, val message: String, val id: String, val paths: List<String>) {
   internal constructor(module: JpsModule, message: String, image: ImagePaths, file: File) :
     this(module.name, message, image.id, listOf(file.absolutePath))
 
   internal constructor(module: JpsModule, message: String, image: ImagePaths) :
     this(module.name, message, image.id, image.files.values.map { it.absolutePath }.toList())
+
+  internal constructor(module: JpsModule, message: String, file: File) :
+    this(module.name, message, file.name, listOf(file.path))
 
   fun getTestName(): String = "'${module}' - $id - $message"
   fun getException(): Throwable = Exception("${message}\n\n${paths.joinToString("\n")}")

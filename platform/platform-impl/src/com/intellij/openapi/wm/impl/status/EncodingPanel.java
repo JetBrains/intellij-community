@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -49,6 +50,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +69,8 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   private final TextPanel myComponent;
   private boolean actionEnabled;
   private final Alarm update;
-  private volatile Reference<Editor> myEditor = new WeakReference<>(null); // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
+  // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
+  private volatile Reference<Editor> myEditor = new WeakReference<>(null);
 
   public EncodingPanel(@NotNull final Project project) {
     super(project);
@@ -142,14 +145,15 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         updateForDocument(document);
       }
     }, this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
-      @Override
-      public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
-        if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
-          updateForFile(event.getFile());
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
+        @Override
+        public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+          if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {
+            updateForFile(event.getFile());
+          }
         }
-      }
-    }));
+      }));
 
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
@@ -194,10 +198,13 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   private DataContext getContext() {
     Editor editor = getEditor();
     DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
-    return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), getSelectedFile(),
-           SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), getProject(),
-           SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent)
-           ));
+    return SimpleDataContext.getSimpleContext(
+      ContainerUtil.<String, Object>immutableMapBuilder()
+        .put(CommonDataKeys.VIRTUAL_FILE.getName(), getSelectedFile())
+        .put(CommonDataKeys.PROJECT.getName(), getProject())
+        .put(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent())
+        .build(),
+      parent);
   }
 
   private void update() {
@@ -217,7 +224,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         charsetName = "";
       }
       else {
-        Pair<Charset, String> check = EncodingUtil.checkSomeActionEnabled(file);
+        Pair<Charset, String> check = EncodingUtil.getCharsetAndTheReasonTooltip(file);
         String failReason = check == null ? null : check.second;
         actionEnabled = failReason == null;
 
@@ -225,13 +232,13 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         charsetName = ObjectUtils.notNull(charset.displayName(), "n/a");
 
         if (failReason == null) {
-          toolTipText = "File Encoding: "+charsetName;
+          toolTipText = "File Encoding: " + charsetName;
 
           myComponent.setForeground(UIUtil.getActiveTextColor());
           myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
         }
         else {
-          toolTipText = "File encoding is disabled because\n"+failReason;
+          toolTipText = StringUtil.capitalize(failReason) + ".";
 
           myComponent.setForeground(UIUtil.getInactiveTextColor());
           myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);

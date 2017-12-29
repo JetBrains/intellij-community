@@ -20,6 +20,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +38,7 @@ public abstract class ConvertNumberIntentionBase extends Intention {
     final String resultString = convertValue(value, type, negated);
     if (resultString == null) return;
 
-    if (negated) {
-      PsiReplacementUtil.replaceExpression((PsiExpression)expression.getParent(), resultString);
-    }
-    else {
-      PsiReplacementUtil.replaceExpression(expression, resultString);
-    }
+    PsiReplacementUtil.replaceExpression(negated ? (PsiExpression)expression.getParent() : expression, resultString, new CommentTracker());
   }
 
   @Nullable

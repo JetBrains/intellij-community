@@ -258,6 +258,7 @@
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>
 
+    <extensionPoint name="searchScopesProvider" interface="com.intellij.psi.search.SearchScopeProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="searchScopeEnlarger" interface="com.intellij.psi.search.SearchScopeEnlarger"/>
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
@@ -607,6 +608,8 @@
     <extensionPoint name="referenceImporter" interface="com.intellij.codeInsight.daemon.ReferenceImporter"/>
     <extensionPoint name="elementLookupRenderer" interface="com.intellij.codeInsight.lookup.impl.ElementLookupRenderer"/>
 
+    <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
+
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
@@ -826,8 +829,10 @@
     </extensionPoint>
 
     <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP"/>
-
     <extensionPoint name="typeIcon" beanClass="com.intellij.ide.TypeIconEP"/>
+    <extensionPoint name="presentationProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.ide.presentation.PresentationProvider"/>
+    </extensionPoint>
 
     <extensionPoint name="analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT"/>
 
@@ -908,8 +913,6 @@
     <extensionPoint name="metaLanguage" interface="com.intellij.lang.MetaLanguage"/>
 
     <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
-    <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin"
-                    interface="org.jetbrains.uast.UastLanguagePlugin"/>
 
     <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
     <extensionPoint name="consoleHistoryModelProvider" interface="com.intellij.execution.console.ConsoleHistoryModelProvider"/>

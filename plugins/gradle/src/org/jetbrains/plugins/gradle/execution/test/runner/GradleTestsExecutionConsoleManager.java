@@ -18,13 +18,16 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
@@ -76,13 +79,27 @@ public class GradleTestsExecutionConsoleManager
                                                             @Nullable ExecutionEnvironment env,
                                                             @Nullable ProcessHandler processHandler) {
     if (env == null) return null;
+    RunConfiguration configuration;
+    SMTRunnerConsoleProperties consoleProperties = null;
     RunnerAndConfigurationSettings settings = env.getRunnerAndConfigurationSettings();
-    if (settings == null) return null;
-    RunConfiguration configuration = settings.getConfiguration();
+    if (settings == null) {
+      RunProfile runProfile = env.getRunProfile();
+      if (runProfile instanceof AbstractImportTestsAction.ImportRunProfile) {
+        consoleProperties = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getProperties();
+        configuration = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getInitialConfiguration();
+      }
+      else {
+        return null;
+      }
+    } else {
+      configuration = settings.getConfiguration();
+    }
     if (!(configuration instanceof ExternalSystemRunConfiguration)) return null;
     ExternalSystemRunConfiguration externalSystemRunConfiguration = (ExternalSystemRunConfiguration)configuration;
 
-    final GradleConsoleProperties consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
+    if(consoleProperties == null) {
+      consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
+    }
     String testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
     String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
     final GradleTestsExecutionConsole consoleView = new GradleTestsExecutionConsole(consoleProperties, splitterPropertyName);
@@ -109,14 +126,18 @@ public class GradleTestsExecutionConsoleManager
     }
     SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
     testsRootNode.setSuiteStarted();
-    resultsViewer.onTestingStarted(testsRootNode);
     if (processHandler != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (testsRootNode.isInProgress()) {
             ApplicationManager.getApplication().invokeLater(() -> {
-              testsRootNode.setFinished();
+              if (event.getExitCode() == 1) {
+                testsRootNode.setTestFailed("", null, false);
+              }
+              else {
+                testsRootNode.setFinished();
+              }
               resultsViewer.onTestingFinished(testsRootNode);
             });
           }

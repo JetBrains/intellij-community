@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.ProjectTopics
@@ -65,7 +63,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     })
   }
 
-  override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
+  override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
     val project = componentManager as? Project ?: (componentManager as Module).project
     // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
     if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {
@@ -76,7 +74,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
       val fileSpec = storages.firstOrNull()?.value
       if (fileSpec == "libraries") {
         val result = ArrayList<Storage>(storages.size + 1)
-        result.add(FileStorageAnnotation("$fileSpec.xml", false, ExternalProjectStorage::class.java))
+        result.add(FileStorageAnnotation("$fileSpec.xml", false, ExternalProjectFilteringStorage::class.java))
         result.addAll(storages)
         return result
       }
@@ -96,14 +94,21 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     // so, we just add our storage as first and default storages in the end as fallback
 
     // on write default storages also returned, because default FileBasedStorage will remove data if component has external source
-
-    val result = ArrayList<Storage>(storages.size + 1)
+    val annotation: FileStorageAnnotation
     if (componentManager is Project) {
-      result.add(FileStorageAnnotation(storages.get(0).value, false, ExternalProjectStorage::class.java))
+      val fileSpec = storages.get(0).value
+      annotation = FileStorageAnnotation(fileSpec, false, ExternalProjectStorage::class.java)
     }
     else {
-      result.add(EXTERNAL_MODULE_STORAGE_ANNOTATION)
+      annotation = EXTERNAL_MODULE_STORAGE_ANNOTATION
     }
+
+    if (stateSpec.externalStorageOnly) {
+      return listOf(annotation)
+    }
+
+    val result = ArrayList<Storage>(storages.size + 1)
+    result.add(annotation)
     result.addAll(storages)
     return result
   }

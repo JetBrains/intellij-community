@@ -14,8 +14,6 @@ import java.util.List;
 
 /**
  * @author maxim
- * Date: 31.12.2004
- * Time: 12:01:29
  */
 public class DeclarationStatementHandler extends MatchingHandler {
   private MatchingHandler myCommentHandler;

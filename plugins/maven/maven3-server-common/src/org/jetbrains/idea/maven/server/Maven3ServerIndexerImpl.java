@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
@@ -37,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.sonatype.nexus.index.*;
 import org.sonatype.nexus.index.context.IndexUtils;
 import org.sonatype.nexus.index.context.IndexingContext;
@@ -91,7 +91,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
                                                                    indexDir,
                                                                    url,
                                                                    null, // repo update url
-                                                                   Arrays.asList(new MinimalArtifactInfoIndexCreator(),
+                                                                   Arrays.asList(new TinyArtifactInfoIndexCreator(),
                                                                                  new JarFileContentsIndexCreator()));
       int id = System.identityHashCode(context);
       myIndices.put(id, context);
@@ -233,20 +233,23 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       IndexReader r = getIndex(indexId).getIndexReader();
       int total = r.numDocs();
 
-      List<MavenId> result = new ArrayList<MavenId>(Math.min(CHUNK_SIZE, total));
+      List<IndexedMavenId> result = new ArrayList<IndexedMavenId>(Math.min(CHUNK_SIZE, total));
       for (int i = 0; i < total; i++) {
         if (r.isDeleted(i)) continue;
 
         Document doc = r.document(i);
-        String uinfo = doc.get(SEARCH_TERM_COORDINATES);
+        String uinfo = doc.get(ArtifactInfo.UINFO);
         if (uinfo == null) continue;
-        List<String> parts = StringUtil.split(uinfo, "|");
-        String groupId = parts.get(0);
-        String artifactId = parts.get(1);
-        String version = parts.get(2);
+        List<String> uInfoParts = StringUtil.split(uinfo, ArtifactInfoRecord.FS);
+        String groupId = uInfoParts.get(0);
+        String artifactId = uInfoParts.get(1);
+        String version = uInfoParts.get(2);
         if (groupId == null || artifactId == null || version == null) continue;
 
-        result.add(new MavenId(groupId, artifactId, version));
+        String packaging = doc.get(ArtifactInfo.PACKAGING);
+        String description = doc.get(ArtifactInfo.DESCRIPTION);
+
+        result.add(new IndexedMavenId(groupId, artifactId, version, packaging, description));
 
         if (result.size() == CHUNK_SIZE) {
           processor.processArtifacts(result);
@@ -264,7 +267,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   }
 
   @Override
-  public MavenId addArtifact(int indexId, File artifactFile) throws RemoteException, MavenServerIndexerException {
+  public IndexedMavenId addArtifact(int indexId, File artifactFile) throws RemoteException, MavenServerIndexerException {
     try {
       IndexingContext index = getIndex(indexId);
       ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(index, artifactFile);
@@ -273,7 +276,7 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       addArtifact(myIndexer, index, artifactContext);
 
       ArtifactInfo a = artifactContext.getArtifactInfo();
-      return new MavenId(a.groupId, a.artifactId, a.version);
+      return new IndexedMavenId(a.groupId, a.artifactId, a.version, a.packaging, a.description);
     }
     catch (Exception e) {
       throw new MavenServerIndexerException(wrapException(e));
@@ -328,7 +331,6 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
   public Collection<MavenArchetype> getArchetypes() throws RemoteException {
     Set<MavenArchetype> result = new THashSet<MavenArchetype>();
     doCollectArchetypes("internal-catalog", result);
-    doCollectArchetypes("nexus", result);
     return result;
   }
 
@@ -393,6 +395,33 @@ public abstract class Maven3ServerIndexerImpl extends MavenRemoteObject implemen
       catch (RemoteException e) {
         throw new RuntimeRemoteException(e);
       }
+    }
+  }
+
+  private static class TinyArtifactInfoIndexCreator extends MinimalArtifactInfoIndexCreator {
+
+    private static final IndexerField FLD_PACKAGING_NOT_INDEXED =
+      new IndexerField(MAVEN.PACKAGING, IndexerFieldVersion.V1, ArtifactInfo.PACKAGING,"Artifact Packaging (not indexed, stored)",
+                       Field.Store.YES, Field.Index.NO);
+
+    private static final IndexerField FLD_DESCRIPTION_NOT_INDEXED =
+      new IndexerField(MAVEN.DESCRIPTION, IndexerFieldVersion.V1, ArtifactInfo.DESCRIPTION, "Artifact description (not indexed, stored)",
+                       Field.Store.YES, Field.Index.NO);
+
+    @Override
+    public void updateDocument(ArtifactInfo ai, Document doc) {
+      if (ai.packaging != null) {
+        doc.add(FLD_PACKAGING_NOT_INDEXED.toField(ai.packaging));
+      }
+
+      if ("maven-archetype".equals(ai.packaging) && ai.description != null) {
+        doc.add(FLD_DESCRIPTION_NOT_INDEXED.toField(ai.description));
+      }
+    }
+
+    @Override
+    public Collection<IndexerField> getIndexerFields() {
+      return Arrays.asList(FLD_PACKAGING_NOT_INDEXED, FLD_DESCRIPTION_NOT_INDEXED);
     }
   }
 }

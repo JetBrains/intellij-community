@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -23,22 +9,44 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";
   @NonNls private static final String CREATED_ATTRIBUTE_NAME = "created";
 
-  private String name = "";
-  private String category = null;
+  private String name;
+  private String category;
   private boolean predefined;
-  private long created = -1L;
+  private long created;
+
+  public Configuration() {
+    name = "";
+    category = "";
+    created = -1L;
+  }
+
+  public Configuration(String name, String category) {
+    this.name = name;
+    this.category = category;
+    created = -1L;
+  }
+
+  protected Configuration(Configuration configuration) {
+    name = configuration.name;
+    category = configuration.category;
+    created = configuration.created;
+    predefined = false; // copy is never predefined
+  }
+
+  public abstract Configuration copy();
 
   public String getName() {
     return name;
   }
 
-  public void setName(String value) {
+  public void setName(@NotNull String value) {
     name = value;
   }
 
@@ -46,7 +54,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     return category;
   }
 
-  public void setCategory(String category) {
+  public void setCategory(@NotNull String category) {
     this.category = category;
   }
 

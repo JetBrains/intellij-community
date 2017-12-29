@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +17,38 @@ public interface PyClassMembersProvider {
   ExtensionPointName<PyClassMembersProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyClassMembersProvider");
 
   @NotNull
-  Collection<PyCustomMember> getMembers(final PyClassType clazz, PsiElement location, @Nullable  TypeEvalContext typeEvalContext);
+  Collection<PyCustomMember> getMembers(final PyClassType clazz, PsiElement location, @NotNull TypeEvalContext context);
 
+  /**
+   * Provides member with specified name for specified class type.
+   *
+   * @param clazz    member owner
+   * @param name     member name
+   * @param location psi element to be used as psi context
+   * @param context  type evaluation context
+   * @return provided member
+   * @deprecated Use {@link PyClassMembersProvider#resolveMember(PyClassType, String, PsiElement, PyResolveContext)} instead.
+   * This method will be removed in 2018.2.
+   */
   @Nullable
-  PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, @Nullable TypeEvalContext context);
+  @Deprecated
+  PsiElement resolveMember(PyClassType clazz, String name, @Nullable PsiElement location, @NotNull TypeEvalContext context);
+
+  /**
+   * Provides member with specified name for specified class type.
+   *
+   * @param type           member owner
+   * @param name           member name
+   * @param location       psi element to be used as psi context
+   * @param resolveContext context to be used in resolve
+   * @return provided member
+   * @apiNote This method will be marked as abstract in 2018.2.
+   */
+  @Nullable
+  default PsiElement resolveMember(@NotNull PyClassType type,
+                                   @NotNull String name,
+                                   @Nullable PsiElement location,
+                                   @NotNull PyResolveContext resolveContext) {
+    return resolveMember(type, name, location, resolveContext.getTypeEvalContext());
+  }
 }

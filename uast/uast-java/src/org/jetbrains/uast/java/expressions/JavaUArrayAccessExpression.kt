@@ -20,9 +20,9 @@ import org.jetbrains.uast.UArrayAccessExpression
 import org.jetbrains.uast.UElement
 
 class JavaUArrayAccessExpression(
-        override val psi: PsiArrayAccessExpression,
-        givenParent: UElement?
+  override val psi: PsiArrayAccessExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UArrayAccessExpression {
-    override val receiver by lz { JavaConverter.convertOrEmpty(psi.arrayExpression, this) }
-    override val indices by lz { singletonListOrEmpty(JavaConverter.convertOrNull(psi.indexExpression, this)) }
+  override val receiver by lz { JavaConverter.convertOrEmpty(psi.arrayExpression, this) }
+  override val indices by lz { singletonListOrEmpty(JavaConverter.convertOrNull(psi.indexExpression, this)) }
 }

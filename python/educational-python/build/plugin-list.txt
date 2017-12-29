@@ -2,7 +2,5 @@ svn4idea
 git4idea
 remote-servers-git
 github
-educational-core
-Edu-Python
 hg4idea
 ipnb

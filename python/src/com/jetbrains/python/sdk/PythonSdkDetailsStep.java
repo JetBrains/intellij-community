@@ -50,7 +50,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private static final String LOCAL = PyBundle.message("sdk.details.step.add.local");
   private static final String REMOTE = PyBundle.message("sdk.details.step.add.remote");
   private static final String ALL = PyBundle.message("sdk.details.step.show.all");
-  @Nullable private final String myNewProjectPath;
+  @Nullable private String myNewProjectPath;
 
   public static void show(@Nullable final Project project,
                           @NotNull final Sdk[] existingSdks,
@@ -60,24 +60,23 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
                           @Nullable String newProjectPath,
                           @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
     final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, showAllDialog, ownerComponent, existingSdks,
-                                                                       sdkAddedCallback, newProjectPath);
+                                                                       sdkAddedCallback);
+    sdkHomesStep.myNewProjectPath = newProjectPath;
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
     popup.showInScreenCoordinates(ownerComponent, popupPoint);
   }
 
-  private PythonSdkDetailsStep(@Nullable final Project project,
-                               @Nullable final DialogWrapper showAllDialog,
-                               @NotNull final Component ownerComponent,
-                               @NotNull final Sdk[] existingSdks,
-                               @NotNull final NullableConsumer<Sdk> sdkAddedCallback,
-                               @Nullable String newProjectPath) {
+  public PythonSdkDetailsStep(@Nullable final Project project,
+                              @Nullable final DialogWrapper showAllDialog,
+                              @NotNull final Component ownerComponent,
+                              @NotNull final Sdk[] existingSdks,
+                              @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;
     myShowAll = showAllDialog;
     myOwnerComponent = ownerComponent;
     myExistingSdks = existingSdks;
     mySdkAddedCallback = sdkAddedCallback;
-    myNewProjectPath = newProjectPath;
   }
 
   private static List<String> getAvailableOptions(boolean showAll) {
@@ -115,13 +114,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   private void createLocalSdk() {
     final Project project = myNewProjectPath != null ? null : myProject;
     final PyAddSdkDialog dialog = new PyAddSdkDialog(project, Arrays.asList(myExistingSdks), myNewProjectPath);
-    final Sdk sdk;
-    if (dialog.showAndGet()) {
-      sdk = dialog.getOrCreateSdk();
-    }
-    else {
-      sdk = null;
-    }
+    final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
     mySdkAddedCallback.consume(sdk);
   }
 

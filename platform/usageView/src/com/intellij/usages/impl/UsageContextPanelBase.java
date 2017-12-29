@@ -18,6 +18,7 @@ package com.intellij.usages.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageContextPanel;
 import com.intellij.usages.UsageViewPresentation;
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-public abstract class UsageContextPanelBase extends JPanel implements UsageContextPanel {
+public abstract class UsageContextPanelBase extends JBPanelWithEmptyText implements UsageContextPanel {
   protected final Project myProject;
   @NotNull protected final UsageViewPresentation myPresentation;
   protected volatile boolean isDisposed;

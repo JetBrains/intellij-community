@@ -42,7 +42,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 21, 2010
  */
 public abstract class AntDomProperty extends AntDomClasspathComponent implements PropertiesProvider{
   private volatile Map<String, String> myCachedProperties;

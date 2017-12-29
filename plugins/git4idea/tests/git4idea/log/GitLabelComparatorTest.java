@@ -91,6 +91,6 @@ public class GitLabelComparatorTest extends GitRefManagerTest {
 
   @NotNull
   private List<VcsRef> sort(@NotNull final Collection<VcsRef> refs) {
-    return ContainerUtil.sorted(refs, new GitRefManager(myGitRepositoryManager).getLabelsOrderComparator());
+    return ContainerUtil.sorted(refs, new GitRefManager(repositoryManager).getLabelsOrderComparator());
   }
 }

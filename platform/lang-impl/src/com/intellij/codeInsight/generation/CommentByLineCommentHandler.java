@@ -21,7 +21,7 @@ import com.intellij.codeInsight.actions.MultiCaretCodeInsightActionHandler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.InjectedCaret;
+import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;

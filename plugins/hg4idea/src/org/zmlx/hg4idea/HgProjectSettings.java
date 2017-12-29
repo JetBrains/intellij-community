@@ -14,11 +14,7 @@ package org.zmlx.hg4idea;
 
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
@@ -32,18 +28,18 @@ import org.jetbrains.annotations.Nullable;
 )
 public class HgProjectSettings implements PersistentStateComponent<HgProjectSettings.State>, DvcsSyncSettings {
 
-  @NotNull private final HgGlobalSettings myAppSettings;
   @NotNull private final Project myProject;
 
   private State myState = new State();
 
-  public HgProjectSettings(@NotNull Project project, @NotNull HgGlobalSettings appSettings) {
+  public HgProjectSettings(@NotNull Project project) {
     myProject = project;
-    myAppSettings = appSettings;
   }
 
   public static class State {
 
+    public String PATH_TO_EXECUTABLE = null;
+    public boolean OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = false;
     public boolean myCheckIncoming = true;
     public boolean myCheckOutgoing = true;
     public Boolean CHECK_INCOMING_OUTGOING = null;
@@ -67,7 +63,24 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public static HgProjectSettings getInstance(@NotNull Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, HgProjectSettings.class);
+    return ServiceManager.getService(project, HgProjectSettings.class);
+  }
+
+  @Nullable
+  public String getHgExecutable() {
+    return myState.PATH_TO_EXECUTABLE;
+  }
+
+  public void setHgExecutable(@Nullable String path) {
+    myState.PATH_TO_EXECUTABLE = path;
+  }
+
+  public boolean isHgExecutableOverridden() {
+    return myState.OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE;
+  }
+
+  public void setHgExecutableOverridden(boolean overridden) {
+    myState.OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = overridden;
   }
 
   @Nullable
@@ -86,8 +99,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     return myState.CHECK_INCOMING_OUTGOING.booleanValue();
   }
 
-  public boolean isWhitespacesIgnoredInAnnotations() {
-    return myState.myIgnoreWhitespacesInAnnotations;
+  public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
+    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
   }
 
   @NotNull
@@ -99,8 +112,8 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
     myState.ROOT_SYNC = syncSetting;
   }
 
-  public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
-    myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
+  public boolean isWhitespacesIgnoredInAnnotations() {
+    return myState.myIgnoreWhitespacesInAnnotations;
   }
 
   public void setIgnoreWhitespacesInAnnotations(boolean ignoreWhitespacesInAnnotations) {
@@ -113,18 +126,5 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   @NotNull
   public DvcsBranchSettings getFavoriteBranchSettings() {
     return myState.FAVORITE_BRANCH_SETTINGS;
-  }
-
-  public String getHgExecutable() {
-    return myAppSettings.getHgExecutable();
-  }
-
-  public void setHgExecutable(String text) {
-    myAppSettings.setHgExecutable(text);
-  }
-
-  @NotNull
-  public HgGlobalSettings getGlobalSettings() {
-    return myAppSettings;
   }
 }

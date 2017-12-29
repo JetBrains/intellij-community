@@ -309,7 +309,9 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
 
     PsiElement identifier = IdentifierUtil.getNameIdentifier(element);
     if (identifier != null && PsiUtilBase.isUnderPsiRoot(file, identifier)) {
-      TextRange range = identifier.getTextRange();
+      TextRange range = identifier instanceof ExternallyAnnotated
+                        ? ((ExternallyAnnotated)identifier).getAnnotationRegion() // the way to skip the id highlighting
+                        : identifier.getTextRange();
       return range == null ? null : injectedManager.injectedToHost(identifier, range);
     }
     return null;

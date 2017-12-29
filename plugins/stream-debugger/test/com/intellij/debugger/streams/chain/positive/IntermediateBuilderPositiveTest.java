@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.chain.positive;
 
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -26,63 +12,63 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class IntermediateBuilderPositiveTest extends StreamChainBuilderPositiveTestBase {
-  public void testFilter() throws Exception {
+  public void testFilter() {
     doTest();
   }
 
-  public void testMap() throws Exception {
+  public void testMap() {
     doTest();
   }
 
-  public void testMapToInt() throws Exception {
+  public void testMapToInt() {
     doTest();
   }
 
-  public void testMapToDouble() throws Exception {
+  public void testMapToDouble() {
     doTest();
   }
 
-  public void testMapToLong() throws Exception {
+  public void testMapToLong() {
     doTest();
   }
 
-  public void testFlatMap() throws Exception {
+  public void testFlatMap() {
     doTest();
   }
 
-  public void testFlatMapToInt() throws Exception {
+  public void testFlatMapToInt() {
     doTest();
   }
 
-  public void testFlatMapToLong() throws Exception {
+  public void testFlatMapToLong() {
     doTest();
   }
 
-  public void testFlatMapToDouble() throws Exception {
+  public void testFlatMapToDouble() {
     doTest();
   }
 
-  public void testDistinct() throws Exception {
+  public void testDistinct() {
     doTest();
   }
 
-  public void testSorted() throws Exception {
+  public void testSorted() {
     doTest();
   }
 
-  public void testLimit() throws Exception {
+  public void testLimit() {
     doTest();
   }
 
-  public void testBoxed() throws Exception {
+  public void testBoxed() {
     doTest();
   }
 
-  public void testPeek() throws Exception {
+  public void testPeek() {
     doTest();
   }
 
-  public void testOnClose() throws Exception {
+  public void testOnClose() {
     doTest();
   }
 

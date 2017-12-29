@@ -200,6 +200,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
 
   final void addRootToUpdate() {
     final AbstractTreeStructure structure = getTreeStructure();
+    if (structure == null) return; // disposed
     structure.asyncCommit().doWhenDone(() -> {
       ((SmartTreeStructure)structure).rebuildTree();
       if (!isDisposed()) {

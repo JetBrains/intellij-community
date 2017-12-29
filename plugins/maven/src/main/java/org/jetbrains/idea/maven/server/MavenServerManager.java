@@ -44,6 +44,7 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.Converter;
@@ -58,7 +59,6 @@ import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -218,7 +218,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   @NotNull
   private Sdk getJdk() {
     if (myState.embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = System.getenv("JAVA_HOME");
+      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (!StringUtil.isEmptyOrSpaces(javaHome)) {
         return JavaSdk.getInstance().createJdk("", javaHome);
       }
@@ -526,33 +526,18 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   @NotNull
   public MavenModel interpolateAndAlignModel(final MavenModel model, final File basedir) {
-    return perform(new Retriable<MavenModel>() {
-      @Override
-      public MavenModel execute() throws RemoteException {
-        return getOrCreateWrappee().interpolateAndAlignModel(model, basedir);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().interpolateAndAlignModel(model, basedir));
   }
 
   public MavenModel assembleInheritance(final MavenModel model, final MavenModel parentModel) {
-    return perform(new Retriable<MavenModel>() {
-      @Override
-      public MavenModel execute() throws RemoteException {
-        return getOrCreateWrappee().assembleInheritance(model, parentModel);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().assembleInheritance(model, parentModel));
   }
 
   public ProfileApplicationResult applyProfiles(final MavenModel model,
                                                 final File basedir,
                                                 final MavenExplicitProfiles explicitProfiles,
                                                 final Collection<String> alwaysOnProfiles) {
-    return perform(new Retriable<ProfileApplicationResult>() {
-      @Override
-      public ProfileApplicationResult execute() throws RemoteException {
-        return getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
-      }
-    });
+    return perform(() -> getOrCreateWrappee().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles));
   }
 
   public void addDownloadListener(MavenServerDownloadListener listener) {
@@ -809,7 +794,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     }
 
     @Override
-    public void processArtifacts(Collection<MavenId> artifacts) {
+    public void processArtifacts(Collection<IndexedMavenId> artifacts) {
       myProcessor.processArtifacts(artifacts);
     }
   }

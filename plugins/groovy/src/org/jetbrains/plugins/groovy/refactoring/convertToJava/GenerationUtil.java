@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -520,15 +519,6 @@ public class GenerationUtil {
         return false;
       }
       return true;
-    }
-
-    @Override
-    public <T> T getHint(@NotNull Key<T> hintKey) {
-      return null;
-    }
-
-    @Override
-    public void handleEvent(@NotNull Event event, Object associated) {
     }
 
     public boolean isFound() {

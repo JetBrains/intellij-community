@@ -1,59 +1,137 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
+import java.nio.file.Files
+import java.nio.file.Paths
+
 plugins {
-  id "com.jetbrains.python.envs" version "0.0.10"
+  id "com.jetbrains.python.envs" version "0.0.21"
 }
 
+/**
+ * Installs python interpreters for env. tests using conda or CPython.
+ * Utilizes following env variables:
+ *
+ * PYCHARM_PYTHONS -- path to install cPythons
+ * PYCHARM_PYTHON_VIRTUAL_ENVS -- path to install condas
+ *
+ * PYCHARM_USE_CONDA -- use conda (cPython will be used if not set)
+ *
+ * PYCHARM_ZIP_REPOSITORY -- to download unpacked pythons for Windows (default cpython does not support unattended installation)
+ * Recommended value: http://repo.labs.intellij.net/pycharm/python-archives-windows/
+ *
+ * Pitfall: TMP var on windows points to very long path inside of user local dir and may lead to errors.
+ * It is recommended to create "c:\temp\" with full write access and set TMP="c:\temp\" on Windows.
+ *
+ */
 
 envs {
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
-  minicondaVersion = 'latest'
-  packages = ["pip", "setuptools"]
-  _64Bits = true
 
-  conda "django19", "2.7", ["django==1.9", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages"], true
-  textfile "django19/tags.txt", "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted"
+  if (System.getenv().containsKey("PYCHARM_ZIP_REPOSITORY")) {
+    zipRepository = new URL(System.getenv().get("PYCHARM_ZIP_REPOSITORY"))
+    shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
+  }
+  Boolean shouldUseCondaInterpreters = System.getenv().getOrDefault("PYCHARM_USE_CONDA", false)
 
-  conda "django110", "3.4", ["django==1.10", "django-nose"], false
-  textfile "django110/tags.txt", "python3.4\ndjango\nskeletons\ndjango-nose"
+  Closure createPython = { String pythonName,
+                           String version,
+                           List<String> packages = null,
+                           String tags = null,
+                           Boolean createLink = false,
+                           Boolean forceConda = false ->
+    File pythonDirectory
+    if (shouldUseCondaInterpreters || forceConda) {
+      condaenv pythonName, version, packages
+      pythonDirectory = new File(envsDirectory, pythonName)
+    } else {
+      python pythonName, version, packages
+      pythonDirectory = new File(bootstrapDirectory, pythonName)
+    }
 
-  conda "django111", "3.4", ["django==1.11"], true
-  textfile "django111/tags.txt", "python3.4\ndjango"
+    project.tasks.create("Misc for $pythonName") {
+      shouldRunAfter 'build_envs'
 
-  conda "python34", "3.4", ["ipython==2.1", "django==1.8", "behave", "jinja2", "tox>=2.0", "pandas"], true
-  textfile "python34/tags.txt", "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npandas"
+      doLast {
+        if (tags) new File(pythonDirectory, "tags.txt").write(tags)
 
-  conda "python36", "3.6", ["django==1.9", "jinja2"], true
-  textfile "python36/tags.txt", "python3.6\npython3\ndjango\njinja2\npython34\npython36"
+        if (createLink) {
+          String linkName = "python${version.split(/\./)[0..1].join(".")}"
 
-  if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-    conda "pyqt_env", "2.7", [install("pyqt=5.6.0")], true
-    textfile "pyqt_env/tags.txt", "pyqt5"
-//    jython "jython25", []
-//    textfile "jython25/tags.txt", "jython"
+          Closure createLinkClosure = { java.nio.file.Path link, java.nio.file.Path existing ->
+            if (!link.toFile().exists()) Files.createLink(link, existing)
+          }
+
+          if (Os.isFamily(Os.FAMILY_UNIX) && !shouldUseCondaInterpreters) {
+            createLinkClosure(Paths.get(pythonDirectory.toString(), linkName),
+                              Paths.get(pythonDirectory.toString(), "bin/$linkName"))
+          } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            createLinkClosure(Paths.get(pythonDirectory.toString(), "${linkName}.exe"),
+                              Paths.get(pythonDirectory.toString(), "python.exe"))
+          }
+        }
+      }
+    }
   }
 
-  conda "django_latest", "3.5", ["django"], true
-  textfile "django_latest/tags.txt", "python3.5\ndjango"
+  createPython("py2_django18_full",
+               "2.7.13",
+               ["django==1.8", "tox", "nose", "pytest", "Twisted", "behave", "lettuce>=0.2.22", "unittest2", "teamcity-messages", "django-nose"]
+                + ( Os.isFamily(Os.FAMILY_WINDOWS) ? ['pypiwin32'] : []  ) //win32api is required for pypiwin32
+               ,
+               "python2.7\ndjango\nnose\npytest\nbehave\nlettuce\npackaging\ntox\nunittest2\ntwisted\ndjango-nose",
+               true)
+
+  createPython("py35_django20_full",
+               "3.5.3",
+               ["ipython==2.1", "django==2.0", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose"],
+               "python3.4\npython3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npytest\nnose\ndjango-nose",
+               true)
+
+  // Mostly for tox
+  createPython("py34",
+               "3.4.4",
+                [],
+               "python3.4",
+               true)
+
+  createPython("py36_django1_11",
+               "3.6.3",
+               ["django==1.11", "jinja2", "pandas"],
+               "python3.6\npython3\ndjango\njinja2\npython34\npython36\npandas",
+               true)
+
+  if (Os.isFamily(Os.FAMILY_UNIX)) {
+    createPython("pyqt_env", "2.7.13", [condaPackage("pyqt=5.6.0")], "pyqt5", false, true)
+  }
+
+  createPython("django_latest", "3.5.3", ["django"], "python3.5\ndjango", true)
 }
 
-if (new File(envs.envsDirectory, "django_latest").exists() && 
-    new File(envs.envsDirectory, "django_latest").lastModified()<System.currentTimeMillis() - 24*60*60*1000) {
-  // older then a day
-  println "Cleaning django_latest at" + new File(envs.envsDirectory, "django_latest")
-  delete new File(envs.envsDirectory, "django_latest")
+task prepare (type: Delete) {
+  doFirst {
+    new File(envs.bootstrapDirectory, "django_latest").with { djangoLatestFolder ->
+      if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
+        // older then a day
+        println "Cleaning django_latest at" + djangoLatestFolder
+        delete djangoLatestFolder
+      }
+    }
+
+    if (!envs.bootstrapDirectory.exists() || (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
+                                              envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
+      // clean the cache if the build script was modified later
+      println "Cleaning cached environments at " + envs.envsDirectory
+      delete envs.envsDirectory
+      println "Cleaning cached pythons at " + envs.bootstrapDirectory
+      delete envs.bootstrapDirectory
+    }
+  }
 }
 
-def bootstrapDirNotEmpty = envs.bootstrapDirectory.exists() &&
-                        (new File(envs.bootstrapDirectory, "latest_64/bin/conda").exists() ||
-                         new File(envs.bootstrapDirectory, "latest_64/Scripts/conda.exe").exists())
 
-if (!bootstrapDirNotEmpty || (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
-    envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
-  // clean the cache if the build script if modified later
-  println "Cleaning cached environments at " + envs.envsDirectory
-  delete envs.envsDirectory
-  println "Cleaning cached pythons at " + envs.bootstrapDirectory
-  delete envs.bootstrapDirectory
+task build {
+  mustRunAfter prepare
+
+  dependsOn prepare, 'build_envs', tasks.findAll { it.name.startsWith("Misc") }
 }

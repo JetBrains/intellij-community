@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -12,6 +10,7 @@ import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
@@ -392,18 +391,18 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Nullable
   @Override
   public Pair<PsiElement, PsiComment> parseContext(@NotNull PsiElement startPoint) {
-    PsiElement docCommentOwner = PsiTreeUtil.findFirstParent(startPoint, e -> {
-      if (e instanceof PsiDocCommentOwner && !(e instanceof PsiTypeParameter) && !(e instanceof PsiAnonymousClass)) {
-        return true;
+    PsiElement current = startPoint;
+    while (current != null) {
+      if (current instanceof PsiJavaDocumentedElement && !(current instanceof PsiTypeParameter) && !(current instanceof PsiAnonymousClass)) {
+        PsiDocComment comment = ((PsiJavaDocumentedElement)current).getDocComment();
+        return Pair.create(current instanceof PsiField ? ((PsiField)current).getModifierList() : current, comment);
       }
-      return false;
-    });
-    if (docCommentOwner == null) return null;
-    PsiDocComment comment = ((PsiDocCommentOwner)docCommentOwner).getDocComment();
-    if (docCommentOwner instanceof PsiField) {
-      docCommentOwner = ((PsiField)docCommentOwner).getModifierList();
+      else if (PackageUtil.isPackageInfoFile(current)) {
+        return Pair.create(current, getPackageInfoComment(current));
+      }
+      current = current.getParent();
     }
-    return Pair.create(docCommentOwner, comment);
+    return null;
   }
 
   @Override
@@ -728,6 +727,11 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
 
     return signature;
+  }
+
+  @Nullable
+  public static PsiDocComment getPackageInfoComment(@NotNull PsiElement packageInfoFile) {
+    return PsiTreeUtil.getChildOfType(packageInfoFile, PsiDocComment.class);
   }
 
   @Nullable

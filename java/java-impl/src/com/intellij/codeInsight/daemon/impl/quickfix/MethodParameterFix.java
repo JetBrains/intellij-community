@@ -74,8 +74,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    return myMethod.isValid()
-        && myMethod.getManager().isInProject(myMethod)
+    return myMethod.getManager().isInProject(myMethod)
         && myParameterType != null
         && !TypeConversionUtil.isNullType(myParameterType)
         && myMethod.getReturnType() != null

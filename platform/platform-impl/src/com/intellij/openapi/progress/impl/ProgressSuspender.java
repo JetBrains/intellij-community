@@ -36,10 +36,12 @@ public class ProgressSuspender {
   private final Object myLock = new Object();
   private final Thread myThread;
   private static final Application ourApp = ApplicationManager.getApplication();
+  @NotNull private final String mySuspendedText;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
 
-  private ProgressSuspender(@NotNull ProgressIndicatorEx progress) {
+  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
+    mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
     myThread = Thread.currentThread();
@@ -54,13 +56,18 @@ public class ProgressSuspender {
     }.installToProgress(progress);
   }
 
-  public static void markSuspendable(@NotNull ProgressIndicator indicator) {
-    new ProgressSuspender((ProgressIndicatorEx)indicator);
+  public static void markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
+    new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
   }
 
   @Nullable
   public static ProgressSuspender getSuspender(@NotNull ProgressIndicator indicator) {
     return indicator instanceof UserDataHolder ? ((UserDataHolder)indicator).getUserData(PROGRESS_SUSPENDER) : null;
+  }
+
+  @NotNull
+  public String getSuspendedText() {
+    return mySuspendedText;
   }
 
   public boolean isSuspended() {

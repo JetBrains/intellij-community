@@ -280,7 +280,7 @@ public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroduce
   private static TextAttributes getTestAttributesForRemoval() {
     final TextAttributes textAttributes = new TextAttributes();
     textAttributes.setEffectType(EffectType.STRIKEOUT);
-    textAttributes.setEffectColor(Color.BLACK);
+    textAttributes.setEffectColor(JBColor.BLACK);
     return textAttributes;
   }
 

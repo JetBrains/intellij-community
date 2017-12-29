@@ -83,14 +83,15 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
   }
 
   public void printOwnPrintablesOn(final Printer printer) {
-    final ArrayList<Printable> printables = new ArrayList<>();
+    printOwnPrintablesOn(printer, true);
+  }
+
+  public void printOwnPrintablesOn(@NotNull Printer printer, boolean skipFileContent) {
+    List<Printable> printables;
     synchronized (myNestedPrintables) {
-      for (Printable printable : myNestedPrintables) {
-        if (printable instanceof AbstractTestProxy) continue;
-        printables.add(printable);
-      }
+      printables = ContainerUtil.filter(myNestedPrintables, printable -> !(printable instanceof AbstractTestProxy));
     }
-    myWrapper.printOn(printer, printables, true);
+    myWrapper.printOn(printer, printables, skipFileContent);
   }
 
   public void addLast(@NotNull final Printable printable) {

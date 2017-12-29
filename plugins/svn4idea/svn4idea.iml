@@ -16,75 +16,26 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="vcs-impl" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/svnkit.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/svnkitsrc.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="library" name="trilead-ssh2" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/sequence-library.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/sqljet.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/sqljetsrc.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="RUNTIME">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/antlr.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/svnkit-javahl.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/svnkit-javahl16.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="purejavacomm" level="project" />
-    <orderEntry type="library" name="jsch-agent-proxy" level="project" />
-    <orderEntry type="module-library">
-      <library>
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="sqlite" type="repository">
+        <properties maven-id="org.xerial:sqlite-jdbc:3.20.1" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jsch.agentproxy.svnkit-trilead-ssh2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.20.1/sqlite-jdbc-3.20.1-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="diff-impl" />
-    <orderEntry type="library" name="sqlite" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="ini4j" level="project" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
   </component>
 </module>

@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ContainerProvider;
@@ -23,7 +21,6 @@ import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.util.*;
@@ -415,6 +412,16 @@ public class HighlightUtil extends HighlightUtilBase {
       HighlightFixUtil.registerChangeVariableTypeFixes(initializer, lType, null, highlightInfo);
     }
     return highlightInfo;
+  }
+
+  static HighlightInfo checkLegalVarReference(PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
+    if (PsiKeyword.VAR.equals(resolved.getName()) && PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_X)) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip("Illegal reference to restricted type 'var'")
+        .range(ObjectUtils.notNull(ref.getReferenceNameElement(), ref))
+        .create();
+    }
+    return null;
   }
 
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
@@ -934,13 +941,13 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (level != null && file != null) {
       if (isFP) {
-        if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (text.startsWith(PsiLiteralUtil.HEX_PREFIX)) {
           final HighlightInfo info = checkFeature(expression, Feature.HEX_FP_LITERALS, level, file);
           if (info != null) return info;
         }
       }
       if (isInt) {
-        if (text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (text.startsWith(PsiLiteralUtil.BIN_PREFIX)) {
           final HighlightInfo info = checkFeature(expression, Feature.BIN_LITERALS, level, file);
           if (info != null) return info;
         }
@@ -959,18 +966,18 @@ public class HighlightUtil extends HighlightUtilBase {
     if (type == JavaTokenType.INTEGER_LITERAL) {
       String cleanText = StringUtil.replace(text, "_", "");
       //literal 2147483648 may appear only as the operand of the unary negation operator -.
-      if (!(cleanText.equals(PsiLiteralExpressionImpl._2_IN_31) &&
+      if (!(cleanText.equals(PsiLiteralUtil._2_IN_31) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (cleanText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.HEX_PREFIX)) {
           String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (cleanText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.BIN_PREFIX)) {
           String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (value == null || cleanText.equals(PsiLiteralExpressionImpl._2_IN_31)) {
+        if (value == null || cleanText.equals(PsiLiteralUtil._2_IN_31)) {
           String message = JavaErrorMessages.message("integer.number.too.large");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
@@ -979,18 +986,18 @@ public class HighlightUtil extends HighlightUtilBase {
     else if (type == JavaTokenType.LONG_LITERAL) {
       String cleanText = StringUtil.replace(StringUtil.trimEnd(text, 'l'), "_", "");
       //literal 9223372036854775808L may appear only as the operand of the unary negation operator -.
-      if (!(cleanText.equals(PsiLiteralExpressionImpl._2_IN_63) &&
+      if (!(cleanText.equals(PsiLiteralUtil._2_IN_63) &&
             parent instanceof PsiPrefixExpression &&
             ((PsiPrefixExpression)parent).getOperationTokenType() == JavaTokenType.MINUS)) {
-        if (cleanText.equals(PsiLiteralExpressionImpl.HEX_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.HEX_PREFIX)) {
           String message = JavaErrorMessages.message("hexadecimal.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (cleanText.equals(PsiLiteralExpressionImpl.BIN_PREFIX)) {
+        if (cleanText.equals(PsiLiteralUtil.BIN_PREFIX)) {
           String message = JavaErrorMessages.message("binary.numbers.must.contain.at.least.one.hexadecimal.digit");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        if (value == null || cleanText.equals(PsiLiteralExpressionImpl._2_IN_63)) {
+        if (value == null || cleanText.equals(PsiLiteralUtil._2_IN_63)) {
           String message = JavaErrorMessages.message("long.number.too.large");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
@@ -1113,7 +1120,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (isInt) {
       int start = 0;
-      if (text.startsWith(PsiLiteralExpressionImpl.HEX_PREFIX) || text.startsWith(PsiLiteralExpressionImpl.BIN_PREFIX)) start += 2;
+      if (text.startsWith(PsiLiteralUtil.HEX_PREFIX) || text.startsWith(PsiLiteralUtil.BIN_PREFIX)) start += 2;
       int end = text.length();
       if (StringUtil.endsWithChar(text, 'l')) --end;
       parts = new String[]{text.substring(start, end)};
@@ -2692,11 +2699,14 @@ public class HighlightUtil extends HighlightUtilBase {
     if ((resolved instanceof PsiLocalVariable || resolved instanceof PsiParameter) && !(resolved instanceof ImplicitVariable)) {
       return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
+
     if (resolved instanceof PsiClass &&
         ((PsiClass)resolved).getContainingClass() == null &&
-        PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null &&
-        PsiUtil.isFromDefaultPackage((PsiClass)resolved)) {
-      String description = JavaErrorMessages.message("cannot.resolve.symbol", refName.getText());
+        PsiUtil.isFromDefaultPackage(resolved) &&
+        (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
+         PsiUtil.isModuleFile(containingFile) ||
+         !PsiUtil.isFromDefaultPackage(containingFile))) {
+      String description = JavaErrorMessages.message("class.in.default.package", ((PsiClass)resolved).getName());
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
     }
 
@@ -2738,16 +2748,13 @@ public class HighlightUtil extends HighlightUtilBase {
   @Nullable
   static HighlightInfo checkPackageAndClassConflict(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiFile containingFile) {
     if (ref.isQualified() && getOuterReferenceParent(ref).getParent() instanceof PsiPackageStatement) {
-      VirtualFile file = containingFile.getVirtualFile();
-      if (file != null) {
-        Module module = ProjectFileIndex.SERVICE.getInstance(ref.getProject()).getModuleForFile(file);
-        if (module != null) {
-          GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
-          PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(ref.getCanonicalText(), scope);
-          if (aClass != null) {
-            String message = JavaErrorMessages.message("package.clashes.with.class", ref.getText());
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message).create();
-          }
+      Module module = ModuleUtilCore.findModuleForFile(containingFile);
+      if (module != null) {
+        GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
+        PsiClass aClass = JavaPsiFacade.getInstance(ref.getProject()).findClass(ref.getCanonicalText(), scope);
+        if (aClass != null) {
+          String message = JavaErrorMessages.message("package.clashes.with.class", ref.getText());
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref).descriptionAndTooltip(message).create();
         }
       }
     }

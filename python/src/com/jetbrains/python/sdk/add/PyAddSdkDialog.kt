@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.sdk.PreferredSdkComparator
 import com.jetbrains.python.sdk.PythonSdkType
@@ -54,8 +55,8 @@ class PyAddSdkDialog(private val project: Project?,
       .filter { it.sdkType is PythonSdkType && !PythonSdkType.isInvalid(it) }
       .sortedWith(PreferredSdkComparator())
     return createCardSplitter(listOf(createVirtualEnvPanel(project, sdks, newProjectPath),
-                                     PyAddSystemWideInterpreterPanel(existingSdks),
-                                     createAnacondaPanel()))
+                                     createAnacondaPanel(project),
+                                     PyAddSystemWideInterpreterPanel(existingSdks)))
   }
 
   override fun postponeValidation() = false
@@ -100,20 +101,35 @@ class PyAddSdkDialog(private val project: Project?,
   private fun createVirtualEnvPanel(project: Project?,
                                     existingSdks: List<Sdk>,
                                     newProjectPath: String?): PyAddSdkPanel {
-    val newVirtualEnvPanel = PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
+    val newVirtualEnvPanel = when {
+      allowCreatingNewEnvironments(project) -> PyAddNewVirtualEnvPanel(project, existingSdks, newProjectPath)
+      else -> null
+    }
     val existingVirtualEnvPanel = PyAddExistingVirtualEnvPanel(project, existingSdks, newProjectPath)
     val panels = listOf(newVirtualEnvPanel,
                         existingVirtualEnvPanel)
+      .filterNotNull()
     val defaultPanel = when {
       detectVirtualEnvs(project, existingSdks).any { it.isAssociatedWithProject(project) } -> existingVirtualEnvPanel
-      else -> newVirtualEnvPanel
+      newVirtualEnvPanel != null -> newVirtualEnvPanel
+      else -> existingVirtualEnvPanel
     }
-    return PyAddSdkGroupPanel("Virtual environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
+    return PyAddSdkGroupPanel("Virtualenv environment", PythonIcons.Python.Virtualenv, panels, defaultPanel)
   }
 
-  private fun createAnacondaPanel(): PyAddSdkPanel {
-    val panels = listOf(PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath),
+  private fun createAnacondaPanel(project: Project?): PyAddSdkPanel {
+    val newCondaEnvPanel = when {
+      allowCreatingNewEnvironments(project) -> PyAddNewCondaEnvPanel(project, existingSdks, newProjectPath)
+      else -> null
+    }
+    val panels = listOf(newCondaEnvPanel,
                         PyAddExistingCondaEnvPanel(project, existingSdks, newProjectPath))
-    return PyAddSdkGroupPanel("Anaconda", PythonIcons.Python.Anaconda, panels, panels[0])
+      .filterNotNull()
+    return PyAddSdkGroupPanel("Conda environment", PythonIcons.Python.Anaconda, panels, panels[0])
+  }
+
+  companion object {
+    private fun allowCreatingNewEnvironments(project: Project?) =
+      project != null || !PlatformUtils.isPyCharm() || PlatformUtils.isPyCharmEducational()
   }
 }

@@ -1,4 +1,4 @@
-// "Replace condition with Objects.requireNonNullElse" "true"
+// "Replace condition with Objects.requireNonNullElse" "GENERIC_ERROR_OR_WARNING"
 
 import java.util.*;
 

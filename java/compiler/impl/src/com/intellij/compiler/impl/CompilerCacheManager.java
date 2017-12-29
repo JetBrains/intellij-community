@@ -35,7 +35,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 4, 2008
  */
 public class CompilerCacheManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.CompilerCacheManager");

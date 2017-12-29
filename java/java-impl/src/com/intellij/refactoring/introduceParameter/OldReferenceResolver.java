@@ -36,7 +36,6 @@ import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 29, 2009 2:03:38 PM
  */
 public class OldReferenceResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldReferenceResolver");

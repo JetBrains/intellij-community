@@ -53,11 +53,17 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)component;
       Object object = node.getUserObject();
       if (object instanceof AbstractTreeNode) {
-        return accept(path, (AbstractTreeNode)object, element);
+        return visit(path, (AbstractTreeNode)object, element);
+      }
+      else if (object instanceof String) {
+        LOG.debug("ignore children: ", object);
       }
       else {
         LOG.warn(object == null ? "no object" : "unexpected object " + object.getClass());
       }
+    }
+    else if (component instanceof String) {
+      LOG.debug("ignore children: ", component);
     }
     else {
       LOG.warn(component == null ? "no component" : "unexpected component " + component.getClass());
@@ -72,8 +78,8 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @return an action that controls visiting a tree
    */
   @NotNull
-  protected Action accept(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
-    if (found(node, element)) {
+  protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull T element) {
+    if (matches(node, element)) {
       LOG.debug("found ", path);
       if (predicate == null) return Action.INTERRUPT;
       if (predicate.test(path)) return Action.CONTINUE;
@@ -90,7 +96,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @param element an element to find
    * @return {@code true} if the specified node represents the given element
    */
-  protected boolean found(@NotNull AbstractTreeNode node, @NotNull T element) {
+  protected boolean matches(@NotNull AbstractTreeNode node, @NotNull T element) {
     return node.canRepresent(element);
   }
 

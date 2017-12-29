@@ -97,9 +97,12 @@ public abstract class RunDashboardTreeAction<T, C extends TreeContent> extends A
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    C content = getTreeContent(e);
+    if (content == null) return;
+
     List<T> verifiedTargetNodes = getTargetNodes(e).stream().filter(node -> isVisible4(node) && isEnabled4(node))
       .collect(Collectors.toList());
-    doActionPerformed(getTreeContent(e), e, verifiedTargetNodes);
+    doActionPerformed(content, e, verifiedTargetNodes);
   }
 
   protected boolean isVisibleForAnySelection(@NotNull AnActionEvent e) {

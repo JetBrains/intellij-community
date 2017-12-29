@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -189,35 +190,34 @@ public class BlockSupportImpl extends BlockSupport {
 
       return diffLog;
     }
-    else {
-      FileViewProvider viewProvider = fileImpl.getViewProvider();
-      viewProvider.getLanguages();
-      FileType fileType = viewProvider.getVirtualFile().getFileType();
-      String fileName = fileImpl.getName();
-      final LightVirtualFile lightFile = new LightVirtualFile(fileName, fileType, newFileText, viewProvider.getVirtualFile().getCharset(),
-                                                              fileImpl.getViewProvider().getModificationStamp());
-      lightFile.setOriginalFile(viewProvider.getVirtualFile());
+    FileViewProvider viewProvider = fileImpl.getViewProvider();
+    viewProvider.getLanguages();
+    VirtualFile virtualFile = viewProvider.getVirtualFile();
+    FileType fileType = virtualFile.getFileType();
+    String fileName = fileImpl.getName();
+    LightVirtualFile lightFile = new LightVirtualFile(fileName, fileType, newFileText, virtualFile.getCharset(),
+                                                      viewProvider.getModificationStamp());
+    lightFile.setOriginalFile(virtualFile);
 
-      FileViewProvider copy = viewProvider.createCopy(lightFile);
-      if (copy.isEventSystemEnabled()) {
-        throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
-      }
-      copy.getLanguages();
-      SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
-      PsiFileImpl newFile = getFileCopy(fileImpl, copy);
-
-      newFile.setOriginalFile(fileImpl);
-
-      final FileElement newFileElement = (FileElement)newFile.getNode();
-      final FileElement oldFileElement = (FileElement)oldFileNode;
-      if (lastCommittedText.length() != oldFileElement.getTextLength()) {
-        throw new IncorrectOperationException(viewProvider.toString());
-      }
-      DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
-
-      ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
-      return diffLog;
+    FileViewProvider providerCopy = viewProvider.createCopy(lightFile);
+    if (providerCopy.isEventSystemEnabled()) {
+      throw new AssertionError("Copied view provider must be non-physical for reparse to deliver correct events: " + viewProvider);
     }
+    providerCopy.getLanguages();
+    SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
+    PsiFileImpl newFile = getFileCopy(fileImpl, providerCopy);
+
+    newFile.setOriginalFile(fileImpl);
+
+    final FileElement newFileElement = (FileElement)newFile.getNode();
+    final FileElement oldFileElement = (FileElement)oldFileNode;
+    if (lastCommittedText.length() != oldFileElement.getTextLength()) {
+      throw new IncorrectOperationException(viewProvider.toString());
+    }
+    DiffLog diffLog = mergeTrees(fileImpl, oldFileElement, newFileElement, indicator, lastCommittedText);
+
+    ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
+    return diffLog;
   }
 
   @NotNull

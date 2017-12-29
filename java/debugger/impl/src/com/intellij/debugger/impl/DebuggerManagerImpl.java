@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
-import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -20,6 +21,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -58,6 +60,10 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
@@ -417,11 +423,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return DebuggerSettings.getInstance().FORCE_CLASSIC_VM;
   }
 
+  public static RemoteConnection createDebugParameters(final JavaParameters parameters,
+                                                       final boolean debuggerInServerMode,
+                                                       int transport, final String debugPort,
+                                                       boolean checkValidity) throws ExecutionException {
+    return createDebugParameters(parameters, debuggerInServerMode, transport, debugPort, checkValidity, true);
+  }
+
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static RemoteConnection createDebugParameters(final JavaParameters parameters,
                                                        final boolean debuggerInServerMode,
                                                        int transport, final String debugPort,
-                                                       boolean checkValidity)
+                                                       boolean checkValidity,
+                                                       boolean addAsyncDebuggerAgent)
     throws ExecutionException {
     if (checkValidity) {
       checkTargetJPDAInstalled(parameters);
@@ -444,9 +458,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       address = debugPort;
     }
 
-    final TransportServiceWrapper transportService = TransportServiceWrapper.getTransportService(useSockets);
     final String debugAddress = debuggerInServerMode && useSockets ? LOCALHOST_ADDRESS_FALLBACK + ":" + address : address;
-    String debuggeeRunProperties = "transport=" + transportService.transportId() + ",address=" + debugAddress;
+    String debuggeeRunProperties =
+      "transport=" + DebugProcessImpl.findConnector(useSockets, debuggerInServerMode).transport().name() + ",address=" + debugAddress;
     if (debuggerInServerMode) {
       debuggeeRunProperties += ",suspend=y,server=n";
     }
@@ -462,7 +476,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     ApplicationManager.getApplication().runReadAction(() -> {
       JavaSdkUtil.addRtJar(parameters.getClassPath());
 
-      addDebuggerAgent(parameters);
+      if (addAsyncDebuggerAgent) {
+        addDebuggerAgent(parameters);
+      }
 
       final Sdk jdk = parameters.getJdk();
       final boolean forceClassicVM = shouldForceClassicVM(jdk);
@@ -499,12 +515,14 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     return new RemoteConnection(useSockets, LOCALHOST_ADDRESS_FALLBACK, address, debuggerInServerMode);
   }
 
+  private static final String AGENT_FILE_NAME = "debugger-agent.jar";
+  private static final String STORAGE_FILE_NAME = "debugger-agent-storage.jar";
+
   private static void addDebuggerAgent(JavaParameters parameters) {
     if (StackCapturingLineBreakpoint.isAgentEnabled()) {
       String prefix = "-javaagent:";
-      String agentName = "debugger-agent.jar";
       ParametersList parametersList = parameters.getVMParametersList();
-      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(agentName))) {
+      if (parametersList.getParameters().stream().noneMatch(p -> p.startsWith(prefix) && p.contains(AGENT_FILE_NAME))) {
         Sdk jdk = parameters.getJdk();
         String version = jdk != null ? JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION) : null;
         if (version != null) {
@@ -513,13 +531,16 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
             File classesRoot = new File(PathUtil.getJarPathForClass(DebuggerManagerImpl.class));
             File agentFile;
             if (classesRoot.isFile()) {
-              agentFile = new File(classesRoot.getParentFile(), "rt/" + agentName);
+              agentFile = new File(classesRoot.getParentFile(), "rt/" + AGENT_FILE_NAME);
             }
             else {
-              agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + agentName);
+              agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + AGENT_FILE_NAME);
             }
             if (agentFile.exists()) {
-              parametersList.add(prefix + agentFile + "=" + generateAgentSettings());
+              String agentPath = handleSpacesInPath(agentFile.getAbsolutePath());
+              if (agentPath != null) {
+                parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
+              }
             }
             else {
               LOG.warn("Capture agent not found: " + agentFile);
@@ -531,6 +552,41 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         }
       }
     }
+  }
+
+  @Nullable
+  private static String handleSpacesInPath(String agentPath) {
+    if (agentPath.contains(" ")) {
+      File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
+      if (targetDir.getAbsolutePath().contains(" ")) {
+        try {
+          targetDir = FileUtil.createTempDirectory("capture", "jars");
+          if (targetDir.getAbsolutePath().contains(" ")) {
+            LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
+            return null;
+          }
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          return null;
+        }
+      }
+
+      try {
+        targetDir.mkdirs();
+        Path source = Paths.get(agentPath);
+        Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
+        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(source.getParent().resolve(STORAGE_FILE_NAME), targetDir.toPath().resolve(STORAGE_FILE_NAME),
+                   StandardCopyOption.REPLACE_EXISTING);
+        return target.toString();
+      }
+      catch (IOException e) {
+        LOG.info(e);
+        return null;
+      }
+    }
+    return agentPath;
   }
 
   private static String generateAgentSettings() {

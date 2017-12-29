@@ -47,7 +47,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/21/12
  */
 public class ProjectTypesList implements Disposable {
 

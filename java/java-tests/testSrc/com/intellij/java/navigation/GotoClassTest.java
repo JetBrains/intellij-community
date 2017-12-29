@@ -26,7 +26,6 @@ import com.intellij.psi.PsiJavaFile;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 4/25/13
  */
 public class GotoClassTest extends HeavyFileEditorManagerTestCase {
 

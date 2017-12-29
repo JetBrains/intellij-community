@@ -73,12 +73,16 @@ public class AbstractTreeUi {
   private final Comparator<TreeNode> myNodeComparator = new Comparator<TreeNode>() {
     @Override
     public int compare(TreeNode n1, TreeNode n2) {
-      if (isLoadingNode(n1) || isLoadingNode(n2)) return 0;
+      if (isLoadingNode(n1) && isLoadingNode(n2)) return 0;
+      if (isLoadingNode(n1)) return -1;
+      if (isLoadingNode(n2)) return 1;
 
       NodeDescriptor nodeDescriptor1 = getDescriptorFrom(n1);
       NodeDescriptor nodeDescriptor2 = getDescriptorFrom(n2);
 
-      if (nodeDescriptor1 == null || nodeDescriptor2 == null) return 0;
+      if (nodeDescriptor1 == null && nodeDescriptor2 == null) return 0;
+      if (nodeDescriptor1 == null) return -1;
+      if (nodeDescriptor2 == null) return 1;
 
       return myNodeDescriptorComparator != null
              ? myNodeDescriptorComparator.compare(nodeDescriptor1, nodeDescriptor2)
@@ -1004,7 +1008,7 @@ public class AbstractTreeUi {
       DefaultMutableTreeNode nodeToUpdate = null;
       boolean updateElementStructure = updateStructure;
       for (Object element = fromElement; element != null; element = getTreeStructure().getParentElement(element)) {
-        final DefaultMutableTreeNode node = getNodeForElement(element, false);
+        final DefaultMutableTreeNode node = getFirstNode(element);
         if (node != null) {
           nodeToUpdate = node;
           break;
@@ -1075,6 +1079,7 @@ public class AbstractTreeUi {
   }
 
   private void updateRow(final int row, @NotNull final TreeUpdatePass pass) {
+    LOG.debug("updateRow: ", row, " - ", pass);
     invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.updateRow") {
       @Override
       public void perform() {
@@ -1789,7 +1794,7 @@ public class AbstractTreeUi {
               @Override
               public void perform() {
                 if (!pass.isExpired()) {
-                  queueUpdate(node);
+                  queueUpdate(getElementFor(node));
                 }
               }
             });
@@ -2804,11 +2809,6 @@ public class AbstractTreeUi {
       }
     }
 
-    if (parent == getRootNode() && !myTree.isRootVisible() && parent.getChildCount() == 0) {
-      insertLoadingNode(parent, false);
-      reallyRemoved = false;
-    }
-
     maybeReady();
     if (reallyRemoved) {
       nodeStructureChanged(parent);
@@ -3640,7 +3640,14 @@ public class AbstractTreeUi {
 
     if (descriptor.getChildrenSortingStamp() >= getComparatorStamp() && !forceSort) return;
     if (!children.isEmpty()) {
-      getBuilder().sortChildren(myNodeComparator, node, (ArrayList<TreeNode>)children);
+      try {
+        getBuilder().sortChildren(myNodeComparator, node, (ArrayList<TreeNode>)children);
+      }
+      catch (IllegalArgumentException exception) {
+        StringBuilder sb = new StringBuilder("cannot sort children");
+        children.forEach(child -> sb.append('\n').append(child));
+        throw new IllegalArgumentException(sb.toString(), exception);
+      }
     }
 
     if (updateStamp) {

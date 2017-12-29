@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -29,10 +15,14 @@ import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
  * @author cdr
@@ -45,7 +35,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   public AnnotateMethodFix(@NotNull String fqn, @NotNull String... annotationsToRemove) {
     myAnnotation = fqn;
-    myAnnotationsToRemove = annotationsToRemove;
+    myAnnotationsToRemove = annotationsToRemove.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : annotationsToRemove;
     LOG.assertTrue(annotateSelf() || annotateOverriddenMethods(), "annotate method quick fix should not do nothing");
   }
 
@@ -66,12 +56,10 @@ public class AnnotateMethodFix implements LocalQuickFix {
     if (annotateSelf()) {
       if (annotateOverriddenMethods()) {
         return InspectionsBundle.message("inspection.annotate.overridden.method.and.self.quickfix.family.name");
-      } else {
-        return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
       }
-    } else {
-      return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+      return InspectionsBundle.message("inspection.annotate.method.quickfix.family.name");
     }
+    return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
   }
 
   @Override
@@ -97,7 +85,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
           if (psiMethod.isPhysical() &&
               psiMethod.getManager().isInProject(psiMethod) &&
               AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
-              !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, false, false, true)) {
+              !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE)) {
             toAnnotate.add(psiMethod);
           }
         });

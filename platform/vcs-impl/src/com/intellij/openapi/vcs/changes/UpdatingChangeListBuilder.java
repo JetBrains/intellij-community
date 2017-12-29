@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.changes.ChangeListWorker.ChangeListUpdater;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nullable;
@@ -32,29 +33,26 @@ import javax.swing.*;
 
 class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
-  private final ChangeListWorker myChangeListWorker;
+  private final ChangeListUpdater myChangeListUpdater;
   private final FileHolderComposite myComposite;
   private final Getter<Boolean> myDisposedGetter;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
-  private final ChangeListManagerGate myGate;
 
   private VcsDirtyScope myScope;
   private FoldersCutDownWorker myFoldersCutDownWorker;
 
   private Factory<JComponent> myAdditionalInfo;
 
-  UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
+  UpdatingChangeListBuilder(final ChangeListUpdater changeListUpdater,
                             final FileHolderComposite composite,
                             final Getter<Boolean> disposedGetter,
-                            final ChangeListManager changeListManager,
-                            final ChangeListManagerGate gate) {
-    myChangeListWorker = changeListWorker;
+                            final ChangeListManager changeListManager) {
+    myChangeListUpdater = changeListUpdater;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
     myChangeListManager = changeListManager;
-    myVcsManager = ProjectLevelVcsManager.getInstance(changeListWorker.getProject());
-    myGate = gate;
+    myVcsManager = ProjectLevelVcsManager.getInstance(changeListUpdater.getProject());
   }
 
   private void checkIfDisposed() {
@@ -86,11 +84,11 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (ChangeListManagerImpl.isUnder(change, myScope)) {
       if (changeList != null) {
         LOG.debug("[processChangeInList-1] to add change to cl");
-        myChangeListWorker.addChangeToList(changeList.getName(), change, vcsKey);
+        myChangeListUpdater.addChangeToList(changeList.getName(), change, vcsKey);
       }
       else {
         LOG.debug("[processChangeInList-1] to add to corresponding list");
-        myChangeListWorker.addChangeToCorrespondingList(change, vcsKey);
+        myChangeListUpdater.addChangeToCorrespondingList(change, vcsKey);
       }
     }
     else {
@@ -104,14 +102,14 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
     LocalChangeList list = null;
     if (changeListName != null) {
-      list = myGate.findOrCreateList(changeListName, null);
+      list = myChangeListUpdater.findOrCreateList(changeListName, null);
     }
     processChangeInList(change, list, vcsKey);
   }
 
   @Override
   public void removeRegisteredChangeFor(FilePath path) {
-    myChangeListWorker.removeRegisteredChangeFor(path);
+    myChangeListUpdater.removeRegisteredChangeFor(path);
   }
 
   @Override

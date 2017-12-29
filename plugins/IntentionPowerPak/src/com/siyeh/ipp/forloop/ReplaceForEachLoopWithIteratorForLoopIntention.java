@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -51,12 +52,13 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     if (!(iteratedValueType instanceof PsiClassType)) {
       return;
     }
+    CommentTracker tracker = new CommentTracker();
     @NonNls final StringBuilder methodCall = new StringBuilder();
     if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      methodCall.append('(').append(iteratedValue.getText()).append(')');
+      methodCall.append('(').append(tracker.markUnchanged(iteratedValue).getText()).append(')');
     }
     else {
-      methodCall.append(iteratedValue.getText());
+      methodCall.append(tracker.markUnchanged(iteratedValue).getText());
     }
     methodCall.append(".iterator()");
     final Project project = statement.getProject();
@@ -89,13 +91,14 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
         //skip the braces
-        newStatement.append(children[i].getText());
+        newStatement.append(tracker.markUnchanged(children[i]).getText());
       }
     }
     else {
-      newStatement.append(body.getText());
+      newStatement.append(tracker.markUnchanged(body).getText());
     }
     newStatement.append('}');
-    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString());
+
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString(), tracker);
   }
 }

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -25,72 +26,102 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class SemanticEditorPosition {
+public class SemanticEditorPosition {
   public interface SyntaxElement {}
   
   private final EditorEx myEditor;
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
+  private final Function<IElementType, SyntaxElement> myTypeMapper;
 
-  public SemanticEditorPosition(@NotNull EditorEx editor, int offset) {
+  public SemanticEditorPosition(@NotNull EditorEx editor, int offset, @NotNull Function<IElementType,SyntaxElement> typeMapper) {
+    this(editor, editor.getHighlighter().createIterator(offset), typeMapper);
+  }
+
+  private SemanticEditorPosition(@NotNull EditorEx editor,
+                                 @NotNull HighlighterIterator iterator,
+                                 @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     myEditor = editor;
     myChars = editor.getDocument().getCharsSequence();
-    myIterator = editor.getHighlighter().createIterator(offset);
+    myIterator = iterator;
+    myTypeMapper = typeMapper;
   }
-  
-  public SemanticEditorPosition beforeOptional(@NotNull SyntaxElement syntaxElement) {
+
+  public void moveBeforeOptional(@NotNull SyntaxElement syntaxElement) {
     if (!myIterator.atEnd()) {
       if (syntaxElement.equals(map(myIterator.getTokenType()))) myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition beforeOptional(@NotNull SyntaxElement syntaxElement) {
+    return copyAnd(position -> position.moveBeforeOptional(syntaxElement));
   }
   
-  public SemanticEditorPosition beforeOptionalMix(@NotNull SyntaxElement... elements) {
+  public void moveBeforeOptionalMix(@NotNull SyntaxElement... elements) {
     while (isAtAnyOf(elements)) {
       myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition beforeOptionalMix(@NotNull SyntaxElement... elements) {
+    return copyAnd(position -> position.moveBeforeOptionalMix(elements));
   }
   
-  public SemanticEditorPosition afterOptionalMix(@NotNull SyntaxElement... elements)  {
+  public void moveAfterOptionalMix(@NotNull SyntaxElement... elements)  {
     while (isAtAnyOf(elements)) {
       myIterator.advance();
     }
-    return this;
   }
-  
-  public boolean isAtMultiline() {
+
+
+  public SemanticEditorPosition afterOptionalMix(@NotNull SyntaxElement... elements) {
+    return copyAnd(position -> position.moveAfterOptionalMix(elements));
+  }
+
+    public boolean isAtMultiline() {
     if (!myIterator.atEnd()) {
       return CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
     }
     return false;
   }
   
-  public SemanticEditorPosition before() {
+  public void moveBefore() {
     if (!myIterator.atEnd()) {
       myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition before() {
+    return copyAnd(position -> position.moveBefore());
   }
   
-  public SemanticEditorPosition afterOptional(@NotNull SyntaxElement syntaxElement) {
+  public void moveAfterOptional(@NotNull SyntaxElement syntaxElement) {
     if (!myIterator.atEnd()) {
       if (syntaxElement.equals(map(myIterator.getTokenType()))) myIterator.advance();
     }
-    return this;
   }
-  
-  public SemanticEditorPosition after() {
+
+  public SemanticEditorPosition afterOptional(@NotNull SyntaxElement syntaxElement) {
+    return copyAnd(position -> position.moveAfterOptional(syntaxElement));
+  }
+
+  public void moveAfter() {
     if (!myIterator.atEnd()) {
       myIterator.advance();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition after() {
+    return copyAnd(position -> position.moveAfter());
   }
   
-  public SemanticEditorPosition beforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+  public void moveBeforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
     int parenLevel = 0;
     while (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -105,30 +136,44 @@ public abstract class SemanticEditorPosition {
         }
       }
     }
-    return this;
+  }
+
+  public SemanticEditorPosition beforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+    return copyAnd(position -> position.moveBeforeParentheses(leftParenthesis, rightParenthesis));
+  }
+
+  public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                           @NotNull SyntaxElement rightParenthesis) {
+    moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, Conditions.alwaysFalse());
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                                            @NotNull SyntaxElement rightParenthesis) {
-    return findLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, Conditions.alwaysFalse());
+    return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis));
   }
   
-  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                                           @NotNull SyntaxElement rightParenthesis,
-                                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
+  public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                           @NotNull SyntaxElement rightParenthesis,
+                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
     while (!myIterator.atEnd()) {
       if (terminationCondition.value(map(myIterator.getTokenType()))) {
         break;
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
-        beforeParentheses(leftParenthesis, rightParenthesis);
+        moveBeforeParentheses(leftParenthesis, rightParenthesis);
       }
       else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
         break; 
       }
       myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                                           @NotNull SyntaxElement rightParenthesis,
+                                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
+    return copyAnd(
+      position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, terminationCondition));
   }
   
   public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
@@ -219,10 +264,36 @@ public abstract class SemanticEditorPosition {
     boolean check(SemanticEditorPosition position);
   }
   
-  public abstract SyntaxElement map(@NotNull IElementType elementType);
+  public SyntaxElement map(@NotNull IElementType elementType) {
+    return myTypeMapper.apply(elementType);
+  }
 
   @Override
   public String toString() {
     return myIterator.getTokenType().toString();
+  }
+
+  public SemanticEditorPosition copy() {
+    if (!myIterator.atEnd()) {
+      return new SemanticEditorPosition(myEditor, myIterator.getStart(), myTypeMapper);
+    }
+    // A wrapper around current iterator to make it immutable.
+    HighlighterIteratorWrapper wrapper = new HighlighterIteratorWrapper(myIterator) {
+      @Override
+      public void advance() {
+        // do nothing
+      }
+      @Override
+      public void retreat() {
+        // do nothing
+      }
+    };
+    return new SemanticEditorPosition(myEditor, wrapper, myTypeMapper);
+  }
+
+  public SemanticEditorPosition copyAnd(@NotNull Consumer<SemanticEditorPosition> modifier) {
+    SemanticEditorPosition position = copy();
+    modifier.accept(position);
+    return position;
   }
 }

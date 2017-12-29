@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -36,18 +35,20 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import java.awt.GridLayout;
-import java.util.TreeMap;
+import java.util.HashMap;
 import java.util.Map.Entry;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.openapi.application.ApplicationBundle.message;
+import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.SwingConstants.LEFT;
 
 /**
  * @author Sergey.Malenkov
  */
 final class BreadcrumbsConfigurable implements Configurable {
-  private final TreeMap<String, JCheckBox> map = new TreeMap<>();
+  private final HashMap<String, JCheckBox> map = new HashMap<>();
   private JComponent component;
   private JCheckBox show;
   private JRadioButton above;
@@ -76,8 +77,8 @@ final class BreadcrumbsConfigurable implements Configurable {
           }
         }
       }
-      JPanel boxes = new JPanel(new GridLayout(0, 3));
-      for (JCheckBox box : map.values()) boxes.add(box);
+      JPanel boxes = new JPanel(new GridLayout(0, 3, isUnderDarcula() ? JBUI.scale(10) : 0, 0));
+      map.values().stream().sorted((box1, box2) -> naturalCompare(box1.getText(), box2.getText())).forEach(box -> boxes.add(box));
 
       show = new JCheckBox(message("checkbox.show.breadcrumbs"));
       show.addItemListener(event -> updateEnabled());
@@ -140,7 +141,7 @@ final class BreadcrumbsConfigurable implements Configurable {
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     boolean modified = false;
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     if (settings.setBreadcrumbsAbove(isBreadcrumbsAbove())) modified = true;

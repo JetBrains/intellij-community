@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -29,6 +15,7 @@ import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -37,11 +24,17 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,6 +80,14 @@ public class TraceStreamAction extends AnAction {
     final XDebugSession session = getCurrentSession(e);
     Extensions.getExtensions(LibrarySupportProvider.EP_NAME);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
+
+    if (element != null && isJdkAtLeast9(session.getProject(), element)) {
+      XDebuggerManagerImpl.NOTIFICATION_GROUP
+        .createNotification("This action does not work with JDK 9 yet", MessageType.WARNING)
+        .notify(session.getProject());
+      return;
+    }
+
     if (element != null) {
       final List<StreamChainWithLibrary> chains = mySupportedLibraries.stream()
         .filter(library -> library.languageId.equals(element.getLanguage().getID()))
@@ -163,6 +164,18 @@ public class TraceStreamAction extends AnAction {
   private static XDebugSession getCurrentSession(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     return project == null ? null : XDebuggerManager.getInstance(project).getCurrentSession();
+  }
+
+  private static boolean isJdkAtLeast9(@NotNull Project project, @NotNull PsiElement element) {
+    if (element.getLanguage().is(JavaLanguage.INSTANCE)) {
+      final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null) {
+        final JavaSdkVersion javaVersion = JavaSdk.getInstance().getVersion(sdk);
+        if (javaVersion != null) return javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
+      }
+    }
+
+    return false;
   }
 
   private static class MyStreamChainChooser extends ElementChooserImpl<StreamChainOption> {

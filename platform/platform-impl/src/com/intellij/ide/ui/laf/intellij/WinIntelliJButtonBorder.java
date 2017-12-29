@@ -66,7 +66,7 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
         }
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(outerRect, false);
 
       Rectangle innerRect = new Rectangle(outerRect);
@@ -82,14 +82,12 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    if (DarculaButtonUI.isComboButton((JComponent)c)) {
-      return JBUI.insets(2).asUIResource();
-    } else if (UIUtil.getParentOfType(ActionToolbar.class, c) != null) {
-      return JBUI.insets(4, 16, 4, 19).asUIResource();
-    } else if (isSquare(c)) {
+    if (isSquare(c)) {
       return JBUI.insets(2).asUIResource();
     } else if (DarculaButtonUI.isHelpButton((JComponent)c)) {
       return JBUI.insets(0, 0, 0, 10).asUIResource();
+    } else if (DarculaButtonUI.isComboButton((JComponent)c)) {
+      return JBUI.insets(4, 10).asUIResource();
     } else {
       return JBUI.insets(4, 18).asUIResource();
     }

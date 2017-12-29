@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.ui;
 
@@ -37,10 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.VetoableProjectManagerListener;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -92,6 +77,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     RunDashboardManager dashboardManager = RunDashboardManager.getInstance(myProject);
+    dashboardManager.updateDashboard(true);
     initToolWindow(null, dashboardManager.getToolWindowId(), dashboardManager.getToolWindowIcon(),
                    dashboardManager.getDashboardContentManager());
 
@@ -170,6 +156,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
             LOG.assertTrue(contentExecutor != null);
           }
           getSyncPublisher().contentSelected(getRunContentDescriptorByContent(content), contentExecutor);
+          content.setHelpId(contentExecutor.getHelpId());
         }
       }
     });
@@ -273,9 +260,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     final ContentManager contentManager = getContentManagerForRunner(executor, descriptor);
     String toolWindowId = getToolWindowIdForRunner(executor, descriptor);
-    boolean chooseByPreferredName = RunDashboardManager.getInstance(myProject).getToolWindowId().equals(toolWindowId);
+    final RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
+    Condition<Content> reuseCondition = runDashboardManager.getToolWindowId().equals(toolWindowId) ?
+                                        runDashboardManager.getReuseCondition() : null;
     RunContentDescriptor oldDescriptor =
-      chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName(), chooseByPreferredName);
+      chooseReuseContentForDescriptor(contentManager, descriptor, executionId, descriptor.getDisplayName(), reuseCondition);
     final Content content;
     if (oldDescriptor == null) {
       content = createNewContent(descriptor, executor);
@@ -378,9 +367,11 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     final ContentManager contentManager = toolWindowId == null ?
                                           getContentManagerForRunner(executionEnvironment.getExecutor(), null) :
                                           myToolwindowIdToContentManagerMap.get(toolWindowId);
-    boolean chooseByPreferredName = RunDashboardManager.getInstance(myProject).getToolWindowId().equals(toolWindowId);
+    final RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
+    Condition<Content> reuseCondition = runDashboardManager.getToolWindowId().equals(toolWindowId) ?
+                                        runDashboardManager.getReuseCondition() : null;
     return chooseReuseContentForDescriptor(contentManager, null, executionEnvironment.getExecutionId(),
-                                           executionEnvironment.toString(), chooseByPreferredName);
+                                           executionEnvironment.toString(), reuseCondition);
   }
 
   @Override
@@ -412,7 +403,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                                                                       @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName,
-                                                                      boolean chooseByPreferredName) {
+                                                                      @Nullable Condition<Content> reuseCondition) {
     Content content = null;
     if (descriptor != null) {
       //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -427,19 +418,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
           && contentManager.getIndexOfContent(attachedContent) != -1
           && (Comparing.equal(descriptor.getDisplayName(), attachedContent.getDisplayName()) || !attachedContent.isPinned())) {
         content = attachedContent;
-        // Content from descriptor itself should be applicable for reuse even if display names are different.
-        chooseByPreferredName = false;
       }
     }
     //Stage three: choose the content with name we prefer
     if (content == null) {
-      content = getContentFromManager(contentManager, preferredName, executionId);
+      content = getContentFromManager(contentManager, preferredName, executionId, reuseCondition);
     }
     if (content == null || !isTerminated(content) || (content.getExecutionId() == executionId && executionId != 0)) {
       return null;
-    }
-    if (chooseByPreferredName && (preferredName == null || !preferredName.equals(content.getDisplayName()))) {
-        return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
     if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited() ) {
@@ -451,7 +437,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   }
 
   @Nullable
-  private static Content getContentFromManager(ContentManager contentManager, @Nullable String preferredName, long executionId) {
+  private static Content getContentFromManager(ContentManager contentManager,
+                                               @Nullable String preferredName,
+                                               long executionId,
+                                               @Nullable Condition<Content> reuseCondition) {
     ArrayList<Content> contents = new ArrayList<>(Arrays.asList(contentManager.getContents()));
     Content first = contentManager.getSelectedContent();
     if (first != null && contents.remove(first)) {//selected content should be checked first
@@ -465,7 +454,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
     }
     for (Content c : contents) {//return first "good" content
-      if (canReuseContent(c, executionId)) {
+      if (canReuseContent(c, executionId) && (reuseCondition == null || reuseCondition.value(c))) {
         return c;
       }
     }

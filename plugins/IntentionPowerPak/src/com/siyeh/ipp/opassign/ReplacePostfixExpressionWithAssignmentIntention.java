@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -48,17 +49,17 @@ public class ReplacePostfixExpressionWithAssignmentIntention
   @Override
   protected void processIntention(@NotNull PsiElement element)
     throws IncorrectOperationException {
-    final PsiPostfixExpression postfixExpression =
-      (PsiPostfixExpression)element;
+    final PsiPostfixExpression postfixExpression = (PsiPostfixExpression)element;
     final PsiExpression operand = postfixExpression.getOperand();
-    final String operandText = operand.getText();
+    CommentTracker commentTracker = new CommentTracker();
+    final String operandText = commentTracker.markUnchanged(operand).getText();
     final IElementType tokenType =
       postfixExpression.getOperationTokenType();
     if (JavaTokenType.PLUSPLUS.equals(tokenType)) {
-      PsiReplacementUtil.replaceExpression(postfixExpression, operandText + '=' + operandText + "+1");
+      PsiReplacementUtil.replaceExpression(postfixExpression, operandText + '=' + operandText + "+1", commentTracker);
     }
     else if (JavaTokenType.MINUSMINUS.equals(tokenType)) {
-      PsiReplacementUtil.replaceExpression(postfixExpression, operandText + '=' + operandText + "-1");
+      PsiReplacementUtil.replaceExpression(postfixExpression, operandText + '=' + operandText + "-1", commentTracker);
     }
   }
 }

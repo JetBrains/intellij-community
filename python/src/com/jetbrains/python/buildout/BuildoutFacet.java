@@ -60,7 +60,6 @@ import java.util.regex.Pattern;
  * Facet for buildout support.
  * Knows which script in bin/ contains paths we want to add.
  * User: dcheryasov
- * Date: Jul 25, 2010 3:23:50 PM
  */
 public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfiguration> implements PythonPathContributingFacet {
 

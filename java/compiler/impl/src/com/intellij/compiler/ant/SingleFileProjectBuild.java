@@ -21,7 +21,6 @@ import com.intellij.openapi.compiler.CompilerBundle;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 public class SingleFileProjectBuild extends ProjectBuild {
   public SingleFileProjectBuild(Project project, GenerationOptions genOptions) {

@@ -21,7 +21,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +51,7 @@ class GitInteractiveRebaseFile {
     final StringScanner s = new StringScanner(FileUtil.loadFile(new File(myFile), encoding));
     boolean noop = false;
     while (s.hasMoreData()) {
-      if (s.isEol() || s.startsWith(GitUtil.COMMENT_CHAR)) {
+      if (s.isEol() || isComment(s)) {
         s.nextLine();
         continue;
       }
@@ -68,6 +70,12 @@ class GitInteractiveRebaseFile {
       throw new NoopException();
     }
     return entries;
+  }
+
+  private boolean isComment(@NotNull StringScanner s) {
+    String commentChar = GitVersionSpecialty.KNOWS_CORE_COMMENT_CHAR.existsIn(GitVcs.getInstance(myProject).getVersion()) ?
+                         GitUtil.COMMENT_CHAR : "#";
+    return s.startsWith(commentChar);
   }
 
   public void cancel() throws IOException {

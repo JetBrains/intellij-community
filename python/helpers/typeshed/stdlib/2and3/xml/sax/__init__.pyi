@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Text, Union
+from typing import Any, List, Optional, Text, Union, IO
 from mypy_extensions import NoReturn
 
 import xml.sax
@@ -26,7 +26,7 @@ default_parser_list = ...  # type: List[str]
 
 def make_parser(parser_list: List[str] = ...) -> xml.sax.xmlreader.XMLReader: ...
 
-def parse(source: str, handler: xml.sax.handler.ContentHandler,
+def parse(source: Union[str, IO[str]], handler: xml.sax.handler.ContentHandler,
           errorHandler: xml.sax.handler.ErrorHandler = ...) -> None: ...
 
 def parseString(string: Union[bytes, Text], handler: xml.sax.handler.ContentHandler,

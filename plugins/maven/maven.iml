@@ -31,12 +31,10 @@
     <orderEntry type="library" exported="" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework-java" exported="" scope="TEST" />
     <orderEntry type="module" module-name="jetgroovy" />
-    <orderEntry type="module" module-name="maven2-server-impl" scope="RUNTIME" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="jps-model-impl" />
     <orderEntry type="module" module-name="maven-jps-plugin" />
-    <orderEntry type="module" module-name="maven-artifact-resolver-m2" scope="PROVIDED" />
     <orderEntry type="module" module-name="maven-artifact-resolver-m3" scope="PROVIDED" />
     <orderEntry type="module" module-name="maven-artifact-resolver-m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="spellchecker" />
@@ -58,6 +56,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="util-tests" scope="TEST" />
     <orderEntry type="module" module-name="compiler-tests" scope="TEST" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
   <component name="copyright">
     <Base>

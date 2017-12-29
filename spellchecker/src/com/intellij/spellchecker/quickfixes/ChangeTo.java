@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.spellchecker.quickfixes;
 
@@ -20,14 +8,23 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
+import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.Anchor;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.getInjectedEditorForInjectedFile;
 
 
 public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
@@ -52,23 +49,34 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
-    final Editor editor = getEditor(element, project);
-    if (editor == null) return;
+    final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
+    asyncResult.doWhenDone((Consumer<DataContext>)context -> {
+      Editor editor = CommonDataKeys.EDITOR.getData(context);
+      if (editor == null) return;
+      
+      if (InjectedLanguageManager.getInstance(project).getInjectionHost(element) != null && !(editor instanceof EditorWindow)) {
+        editor = getInjectedEditorForInjectedFile(editor, element.getContainingFile());
+      }
+      
+      final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
+      final int documentLength = editor.getDocument().getTextLength();
+      final int endOffset = getDocumentOffset(textRange.getEndOffset(), documentLength);
+      final int startOffset = getDocumentOffset(textRange.getStartOffset(), documentLength);
+      editor.getSelectionModel().setSelection(startOffset, endOffset);
+      final String word = editor.getSelectionModel().getSelectedText();
 
-    final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-    final int documentLength = editor.getDocument().getTextLength();
-    final int textEndOffset = textRange.getEndOffset();
-    final int endOffset = textEndOffset <= documentLength ? textEndOffset : documentLength;
-    editor.getSelectionModel().setSelection(textRange.getStartOffset(), endOffset);
-    final String word = editor.getSelectionModel().getSelectedText();
+      if (word == null || StringUtil.isEmpty(word)) {
+        return;
+      }
+      final LookupElement[] items = getSuggestions(project)
+        .stream()
+        .map(LookupElementBuilder::create)
+        .toArray(LookupElement[]::new);
+      LookupManager.getInstance(project).showLookup(editor, items);
+    });
+  }
 
-    if (word == null || StringUtil.isEmpty(word)) {
-      return;
-    }
-    final LookupElement[] items = getSuggestions(project)
-      .stream()
-      .map(LookupElementBuilder::create)
-      .toArray(LookupElement[]::new);
-    LookupManager.getInstance(project).showLookup(editor, items);
+  private static int getDocumentOffset(int offset, int documentLength) {
+    return offset >=0 && offset <= documentLength ? offset : documentLength;
   }
 }

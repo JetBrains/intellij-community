@@ -32,7 +32,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public void createListeners(ArrayList listeners) {
+  public void createListeners(ArrayList listeners, int count) {
     myTestsListener = new SMTestListener();
     myListeners = listeners;
   }

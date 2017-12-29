@@ -11,7 +11,7 @@
     <myLanguageEP language="MyAnonymousLanguageID"/>
 
     <myLanguageEP language="<error descr="Cannot resolve language with id ''INVALID_VALUE''">INVALID_VALUE</error>"/>
-
+    <myLanguageEP language="<error descr="Cannot resolve language with id ''AbstractLanguageIDMustNotBeVisible''">AbstractLanguageIDMustNotBeVisible</error>"/>
   </extensions>
 
 </idea-plugin>

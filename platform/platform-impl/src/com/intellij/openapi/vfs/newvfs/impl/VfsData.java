@@ -20,11 +20,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.text.CharSequenceHashingStrategy;
 import gnu.trove.THashSet;
@@ -62,12 +65,12 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * and creates the file instance. See {@link #initFile}
  *
  * 3. After that the file is live, an object representing it can be retrieved any time from its parent. File system roots are
- * kept on hard references in {@link com.intellij.openapi.vfs.newvfs.persistent.PersistentFS}
+ * kept on hard references in {@link PersistentFS}
  *
  * 4. If a file is deleted (invalidated), then its data is not needed anymore, and should be removed. But this can only happen after
  * all the listener have been notified about the file deletion and have had their chance to look at the data the last time. See {@link #killInvalidatedFiles()}
  *
- * 5. The file with removed data is marked as "dead" (see {@link #ourDeadMarker}, any access to it will throw {@link com.intellij.openapi.vfs.InvalidVirtualFileAccessException}
+ * 5. The file with removed data is marked as "dead" (see {@link #ourDeadMarker}, any access to it will throw {@link InvalidVirtualFileAccessException}
  * Dead ids won't be reused in the same session of the IDE.
  *
  * @author peter
@@ -82,7 +85,7 @@ public class VfsData {
   private static final ConcurrentIntObjectMap<Segment> ourSegments = ContainerUtil.createConcurrentIntObjectMap();
   private static final ConcurrentBitSet ourInvalidatedIds = new ConcurrentBitSet();
   private static TIntHashSet ourDyingIds = new TIntHashSet();
-  private static final ConcurrentIntObjectMap<VirtualDirectoryImpl> ourChangedParents = ContainerUtil.createConcurrentIntObjectMap();
+  private static final IntObjectMap<VirtualDirectoryImpl> ourChangedParents = ContainerUtil.createConcurrentIntObjectMap();
 
   static {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
@@ -110,7 +113,11 @@ public class VfsData {
   }
 
   @Nullable
-  static VirtualFileSystemEntry getFileById(int id, VirtualDirectoryImpl parent) {
+  static VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent) {
+    PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
+    VirtualFileSystemEntry dir = persistentFS.getCachedDir(id);
+    if (dir != null) return dir;
+
     Segment segment = getSegment(id, false);
     if (segment == null) return null;
 
@@ -127,7 +134,7 @@ public class VfsData {
       throw new AssertionError("nameId=" + nameId + "; data=" + o + "; parent=" + parent + "; parent.id=" + parent.getId() + "; db.parent=" + FSRecords.getParent(id));
     }
 
-    return o instanceof DirectoryData ? new VirtualDirectoryImpl(id, segment, (DirectoryData)o, parent, parent.getFileSystem())
+    return o instanceof DirectoryData ? persistentFS.getOrCacheDir(id, segment, (DirectoryData)o, parent)
                                       : new VirtualFileImpl(id, segment, parent);
   }
 
@@ -273,7 +280,7 @@ public class VfsData {
     private Set<CharSequence> myAdoptedNames; // guarded by this
 
     @NotNull
-    VirtualFileSystemEntry[] getFileChildren(int fileId, VirtualDirectoryImpl parent) {
+    VirtualFileSystemEntry[] getFileChildren(int fileId, @NotNull VirtualDirectoryImpl parent) {
       assert fileId > 0;
       VirtualFileSystemEntry[] children = new VirtualFileSystemEntry[myChildrenIds.length];
       for (int i = 0; i < myChildrenIds.length; i++) {

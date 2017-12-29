@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.rt.debugger.agent;
 
 import sun.misc.JavaLangAccess;
@@ -28,28 +30,36 @@ public class CaptureStorage {
   private static boolean DEBUG = false;
   private static boolean ENABLED = true;
 
+  //// METHODS CALLED FROM THE USER PROCESS
+
   @SuppressWarnings("unused")
   public static void capture(Object key) {
     if (!ENABLED) {
       return;
     }
-    if (DEBUG) {
-      System.out.println("capture - " + key);
-    }
-    Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-    CapturedStack stack = createCapturedStack(new Throwable(), currentStacks.isEmpty() ? null : currentStacks.getLast());
-    WeakKey keyRef = new WeakKey(key);
-    synchronized (HISTORY) {
-      CapturedStack old = STORAGE.put(keyRef, stack);
-      if (old == null) {
-        if (HISTORY.size() >= MAX_STORED_STACKS) {
-          STORAGE.remove(HISTORY.removeFirst());
+    try {
+      Throwable exception = new Throwable();
+      if (DEBUG) {
+        System.out.println("capture " + getCallerDescriptor(exception) + " - " + key);
+      }
+      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
+      CapturedStack stack = createCapturedStack(exception, currentStacks.isEmpty() ? null : currentStacks.getLast());
+      WeakKey keyRef = new WeakKey(key);
+      synchronized (HISTORY) {
+        CapturedStack old = STORAGE.put(keyRef, stack);
+        if (old == null) {
+          if (HISTORY.size() >= MAX_STORED_STACKS) {
+            STORAGE.remove(HISTORY.removeFirst());
+          }
         }
+        else {
+          HISTORY.removeFirstOccurrence(keyRef); // must not happen often
+        }
+        HISTORY.addLast(keyRef);
       }
-      else {
-        HISTORY.removeFirstOccurrence(keyRef); // must not happen often
-      }
-      HISTORY.addLast(keyRef);
+    }
+    catch (Exception e) {
+      handleException(e);
     }
   }
 
@@ -58,21 +68,48 @@ public class CaptureStorage {
     if (!ENABLED) {
       return;
     }
-    CapturedStack stack = STORAGE.get(new WeakKey(key));
-    Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-    if (stack != null) {
-      currentStacks.add(new InsertMatch(stack, getStackTraceDepth(new Throwable())));
-      if (DEBUG) {
-        System.out.println("insert -> " + key + ", stack saved (" + currentStacks.size() + ")");
+    try {
+      CapturedStack stack = STORAGE.get(new WeakKey(key));
+      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
+      if (stack != null) {
+        Throwable exception = new Throwable();
+        currentStacks.add(new InsertMatch(stack, getStackTraceDepth(exception)));
+        if (DEBUG) {
+          System.out.println("insert " + getCallerDescriptor(exception) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
+        }
+      }
+      else {
+        currentStacks.add(InsertMatch.EMPTY);
+        if (DEBUG) {
+          System.out.println(
+            "insert " + getCallerDescriptor(new Throwable()) + " -> " + key + ", no stack found (" + currentStacks.size() + ")");
+        }
       }
     }
-    else {
-      currentStacks.add(InsertMatch.EMPTY);
-      if (DEBUG) {
-        System.out.println("insert -> " + key + ", no stack found (" + currentStacks.size() + ")");
-      }
+    catch (Exception e) {
+      handleException(e);
     }
   }
+
+  @SuppressWarnings("unused")
+  public static void insertExit(Object key) {
+    if (!ENABLED) {
+      return;
+    }
+    try {
+      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
+      currentStacks.removeLast();
+      if (DEBUG) {
+        System.out.println(
+          "insert " + getCallerDescriptor(new Throwable()) + " <- " + key + ", stack removed (" + currentStacks.size() + ")");
+      }
+    }
+    catch (Exception e) {
+      handleException(e);
+    }
+  }
+
+  //// END - METHODS CALLED FROM THE USER PROCESS
 
   private static class WeakKey extends WeakReference {
     private final int myHashCode;
@@ -90,18 +127,6 @@ public class CaptureStorage {
     @Override
     public int hashCode() {
       return myHashCode;
-    }
-  }
-
-  @SuppressWarnings("unused")
-  public static void insertExit(Object key) {
-    if (!ENABLED) {
-      return;
-    }
-    Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-    currentStacks.removeLast();
-    if (DEBUG) {
-      System.out.println("insert <- " + key + ", stack removed (" + currentStacks.size() + ")");
     }
   }
 
@@ -193,17 +218,33 @@ public class CaptureStorage {
 
   private static final JavaLangAccess ourJavaLangAccess;
   static {
-    JavaLangAccess access = null;
+    JavaLangAccess access;
     try {
       access = SharedSecrets.getJavaLangAccess();
+      if (access != null) {
+        access.getStackTraceDepth(new Throwable()); // may throw UnsupportedOperationException in some implementations
+      }
     }
     catch (Throwable e) {
-      // java 9
+      access = null;
     }
     ourJavaLangAccess = access;
   }
   // TODO: this is a workaround for java 9 where SharedSecrets are not available
   private static int getStackTraceDepth(Throwable exception) {
     return ourJavaLangAccess != null ? ourJavaLangAccess.getStackTraceDepth(exception) : exception.getStackTrace().length;
+  }
+
+  private static void handleException(Throwable e) {
+    ENABLED = false;
+    System.err.println("Critical error in IDEA Async Stacktraces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
+    //noinspection CallToPrintStackTrace
+    e.printStackTrace();
+  }
+
+  private static String getCallerDescriptor(Throwable e) {
+    StackTraceElement[] stackTrace = e.getStackTrace();
+    StackTraceElement caller = stackTrace[stackTrace.length - 2];
+    return caller.getClassName() + "." + caller.getMethodName();
   }
 }

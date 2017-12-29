@@ -21,8 +21,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -55,6 +57,8 @@ public interface RunDashboardManager {
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow);
 
+  void updateDashboard(boolean withSStructure);
+
   List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 
   boolean isShowConfigurations();
@@ -75,4 +79,7 @@ public interface RunDashboardManager {
 
   @Nullable
   RunDashboardContributor getContributor(@NotNull ConfigurationType type);
+
+  @NotNull
+  Condition<Content> getReuseCondition();
 }

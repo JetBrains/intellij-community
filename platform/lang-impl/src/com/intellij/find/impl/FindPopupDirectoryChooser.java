@@ -34,11 +34,13 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -62,6 +64,12 @@ class FindPopupDirectoryChooser extends JPanel {
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
       JTextField field = (JTextField)editorComponent;
+      field.getDocument().addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          myFindPopupPanel.scheduleResultsUpdate();
+        }
+      });
       field.setColumns(40);
     }
     myDirectoryComboBox.setEditable(true);
@@ -139,7 +147,7 @@ class FindPopupDirectoryChooser extends JPanel {
 
   @NotNull
   public String getDirectory() {
-    return (String)myDirectoryComboBox.getSelectedItem();
+    return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
   @Nullable

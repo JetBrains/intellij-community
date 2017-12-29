@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,15 +99,16 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
-      final String parameterText = parameterList != null ? parameterList.getText() : "";
+      CommentTracker commentTracker = new CommentTracker();
+      final String parameterText = parameterList != null ? commentTracker.markUnchanged(parameterList).getText() : "";
       if (myEmpty) {
         PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText +
-                                                                             "emptyList()");
+                                                                             "emptyList()", commentTracker);
       }
       else {
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
         PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Collections." + parameterText +
-                                                                             "singletonList" + argumentList.getText());
+                                                                             "singletonList" + commentTracker.markUnchanged(argumentList).getText(), commentTracker);
       }
     }
   }

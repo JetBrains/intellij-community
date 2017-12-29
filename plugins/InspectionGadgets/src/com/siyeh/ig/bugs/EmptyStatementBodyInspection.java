@@ -22,7 +22,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -30,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +81,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("statement.with.empty.body.include.option"), "m_reportEmptyBlocks");
-    panel.addCheckbox(InspectionGadgetsBundle.message("empty.catch.block.comments.option"), "commentsAreContent");
+    panel.addCheckbox(InspectionGadgetsBundle.message("comments.as.content.option"), "commentsAreContent");
     return panel;
   }
 
@@ -174,36 +174,7 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     }
 
     private boolean isEmpty(PsiElement element) {
-      if (!commentsAreContent && element instanceof PsiComment) {
-        return true;
-      }
-      else if (element instanceof PsiEmptyStatement) {
-        return !commentsAreContent ||
-               PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
-               !(PsiTreeUtil.skipWhitespacesBackward(element) instanceof PsiComment);
-      }
-      else if (element instanceof PsiWhiteSpace) {
-        return true;
-      }
-      else if (element instanceof PsiBlockStatement) {
-        final PsiBlockStatement block = (PsiBlockStatement)element;
-        return isEmpty(block.getCodeBlock());
-      }
-      else if (m_reportEmptyBlocks && element instanceof PsiCodeBlock) {
-        final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
-        final PsiElement[] children = codeBlock.getChildren();
-        if (children.length == 2) {
-          return true;
-        }
-        for (int i = 1; i < children.length - 1; i++) {
-          final PsiElement child = children[i];
-          if (!isEmpty(child)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      return false;
+      return ControlFlowUtils.isEmpty(element, commentsAreContent, m_reportEmptyBlocks);
     }
   }
 }

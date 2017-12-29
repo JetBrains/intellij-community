@@ -27,7 +27,6 @@ import java.util.Iterator;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 11, 2010
  */
 public abstract class AntDomBuildnumberTask extends AntDomElement implements PropertiesProvider{
   public static final String PROPERTY_NAME = "build.number";

@@ -24,7 +24,7 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   public void testSimple() {
     registerDefaultCreatePullRequestDialogHandler("master", myLogin1);
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
+    GithubCreatePullRequestAction.createPullRequest(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();
@@ -35,7 +35,7 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
     registerDefaultCreatePullRequestDialogHandler("file2", myLogin2);
     addRemote(myLogin2);
 
-    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
+    GithubCreatePullRequestAction.createPullRequest(myProject, projectRoot);
 
     checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
     checkRemoteConfigured();

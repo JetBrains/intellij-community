@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.projectView.impl.nodes;
@@ -40,9 +28,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,6 +140,47 @@ public class ProjectViewDirectoryHelper {
     return false;
   }
 
+  public boolean canRepresent(Object element, PsiDirectory directory, Object owner, ViewSettings settings) {
+    if (directory != null) {
+      if (canRepresent(element, directory)) return true;
+      if (settings == null) return false; // unexpected
+      if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
+        if (element instanceof PsiDirectory) {
+          if (getParents(directory, owner).find(dir -> Comparing.equal(element, dir)) != null) return true;
+        }
+        else if (element instanceof VirtualFile) {
+          if (getParents(directory, owner).find(dir -> Comparing.equal(element, dir.getVirtualFile())) != null) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean isValidDirectory(PsiDirectory directory, Object owner, ViewSettings settings, PsiFileSystemItemFilter filter) {
+    if (directory == null || !directory.isValid()) return false;
+    if (settings == null) return true; // unexpected
+    if (!settings.isFlattenPackages() && settings.isHideEmptyMiddlePackages()) {
+      PsiDirectory parent = directory.getParent();
+      if (parent == null || skipDirectory(parent)) return true;
+      if (isEmptyMiddleDirectory(directory, true, filter)) return false;
+      for (PsiDirectory dir : getParents(directory, owner)) {
+        if (!dir.isValid()) return false;
+        parent = dir.getParent();
+        if (parent == null || skipDirectory(parent)) return false;
+        if (!isEmptyMiddleDirectory(dir, true, filter)) return false;
+      }
+    }
+    return true;
+  }
+
+  @NotNull
+  private static JBIterable<PsiDirectory> getParents(PsiDirectory directory, Object owner) {
+    if (directory != null) directory = directory.getParent(); // because JBIterable adds first parent without comparing with owner
+    return directory != null && owner instanceof PsiDirectory && PsiTreeUtil.isAncestor((PsiDirectory)owner, directory, true)
+           ? JBIterable.generate(directory, PsiDirectory::getParent).takeWhile(dir -> dir != null && !dir.equals(owner))
+           : JBIterable.empty();
+  }
+
   @NotNull
   public Collection<AbstractTreeNode> getDirectoryChildren(final PsiDirectory psiDirectory,
                                                            final ViewSettings settings,
@@ -254,8 +285,8 @@ public class ProjectViewDirectoryHelper {
   }
 
 
-  private static boolean isFileUnderContentRoot(DirectoryIndex index, VirtualFile file) {
-    return index.getInfoForFile(file).getContentRoot() != null;
+  private static boolean isFileUnderContentRoot(DirectoryIndex index, @Nullable VirtualFile file) {
+    return file != null && index.getInfoForFile(file).getContentRoot() != null;
   }
 
   private PsiElement[] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {

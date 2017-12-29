@@ -191,6 +191,12 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-14840
+  // PY-22003
+  public void testPositiveIteration() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -45,7 +46,8 @@ class ArrayMemberAccess {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ARRAY_MEMBER);
 
           final int tailOffset = context.getTailOffset();
-          final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
+          final String callSpace = getSpace(
+            CodeStyleSettingsManager.getSettings(element.getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_BRACKETS);
           context.getDocument().insertString(tailOffset, "[" + callSpace + callSpace + "]");
           context.getEditor().getCaretModel().moveToOffset(tailOffset + 1 + callSpace.length());
         }

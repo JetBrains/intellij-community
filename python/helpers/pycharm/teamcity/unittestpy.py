@@ -196,7 +196,7 @@ class TeamcityTestResult(TestResult):
             error = err[1]
             if isinstance(error, EqualsAssertionError):
                 diff_failed = error
-        except:
+        except Exception:
             pass
 
         if is_string(err):
@@ -289,12 +289,16 @@ class TeamcityTestRunner(TextTestRunner):
             return TeamcityTestResult(self.stream, self.descriptions, self.verbosity)
 
     def run(self, test):
+        subtest_filter = None
+        if sys.version_info > (3, 3):  # No subtests in < 2.4
+            def subtest_filter(current_test):
+                return not getattr(current_test, "_subtest", None)
         # noinspection PyBroadException
-        patch_unittest_diff()
+        patch_unittest_diff(subtest_filter)
         try:
             total_tests = test.countTestCases()
             TeamcityServiceMessages(_real_stdout).testCount(total_tests)
-        except:
+        except Exception:
             pass
 
         return super(TeamcityTestRunner, self).run(test)

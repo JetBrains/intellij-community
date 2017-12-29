@@ -88,7 +88,7 @@ public final class DescriptorUtil {
     return ideaPlugin.getRootElement().getPluginId();
   }
 
-  public static boolean isPluginXml(PsiFile file) {
+  public static boolean isPluginXml(@Nullable PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
     return getIdeaPlugin((XmlFile)file) != null;
   }

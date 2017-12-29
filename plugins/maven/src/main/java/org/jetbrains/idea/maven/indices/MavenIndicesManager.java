@@ -240,6 +240,7 @@ public class MavenIndicesManager implements Disposable {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
+          indicator.setIndeterminate(false);
           doUpdateIndices(projectOrNull, toSchedule, fullUpdate, new MavenProgressIndicator(indicator));
         }
         catch (MavenProcessCanceledException ignore) {
@@ -325,6 +326,9 @@ public class MavenIndicesManager implements Disposable {
     ensureInitialized();
     Set<MavenArchetype> result = new THashSet<>(myIndexer.getArchetypes());
     result.addAll(myUserArchetypes);
+    for (MavenIndex index : myIndices.getIndices()) {
+      result.addAll(index.getArchetypes());
+    }
 
     for (MavenArchetypesProvider each : Extensions.getExtensions(MavenArchetypesProvider.EP_NAME)) {
       result.addAll(each.getArchetypes());

@@ -38,6 +38,8 @@ import java.util.List;
  * The handler for git commands with text outputs
  */
 public abstract class GitTextHandler extends GitHandler {
+  private static final int WAIT_TIMEOUT_MS = 50;
+  private static final int TERMINATION_TIMEOUT_MS = 1000 * 60 * 10;
   // note that access is safe because it accessed in unsynchronized block only after process is started, and it does not change after that
   @SuppressWarnings({"FieldAccessedSynchronizedAndUnsynchronized"}) private OSProcessHandler myHandler;
   private volatile boolean myIsDestroyed;
@@ -47,12 +49,23 @@ public abstract class GitTextHandler extends GitHandler {
     super(project, directory, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command) {
+  protected GitTextHandler(@NotNull Project project, @NotNull VirtualFile vcsRoot, @NotNull GitCommand command) {
     super(project, vcsRoot, command, Collections.emptyList());
   }
 
-  protected GitTextHandler(final Project project, final VirtualFile vcsRoot, final GitCommand command, List<String> configParameters) {
+  protected GitTextHandler(@NotNull Project project,
+                           @NotNull VirtualFile vcsRoot,
+                           @NotNull GitCommand command,
+                           List<String> configParameters) {
     super(project, vcsRoot, command, configParameters);
+  }
+
+  public GitTextHandler(@Nullable Project project,
+                        @NotNull File directory,
+                        @NotNull String pathToExecutable,
+                        @NotNull GitCommand command,
+                        @NotNull List<String> configParameters) {
+    super(project, directory, pathToExecutable, command, configParameters);
   }
 
   @Nullable
@@ -82,7 +95,6 @@ public abstract class GitTextHandler extends GitHandler {
         final int exitCode = event.getExitCode();
         try {
           setExitCode(exitCode);
-          cleanupEnv();
           GitTextHandler.this.processTerminated(exitCode);
         }
         finally {
@@ -129,7 +141,7 @@ public abstract class GitTextHandler extends GitHandler {
   protected void waitForProcess() {
     if (myHandler != null) {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      while (!myHandler.waitFor(50)) {
+      while (!myHandler.waitFor(WAIT_TIMEOUT_MS)) {
         try {
           if (indicator != null) {
             indicator.checkCanceled();
@@ -137,26 +149,24 @@ public abstract class GitTextHandler extends GitHandler {
         }
         catch (ProcessCanceledException pce) {
           myHandler.destroyProcess();
+          // signal was sent, but we still need to wait for process to finish its dark deeds
+          if (!myHandler.waitFor(TERMINATION_TIMEOUT_MS)) {
+            LOG.error("Time out while waiting for cancellation of [" + printableCommandLine() + "].\nDestroying process manually");
+            myHandler.getProcess().destroy();
+          }
           throw pce;
         }
       }
     }
   }
 
-  public ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-    commandLine.setCharset(getCharset());
+  protected ProcessHandler createProcess(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new MyOSProcessHandler(commandLine);
   }
 
-  private static class MyOSProcessHandler extends KillableProcessHandler {
-    private MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+  protected static class MyOSProcessHandler extends KillableProcessHandler {
+    MyOSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
       super(commandLine, true);
-    }
-
-    @NotNull
-    @Override
-    public Charset getCharset() {
-      return myCharset;
     }
 
     @NotNull

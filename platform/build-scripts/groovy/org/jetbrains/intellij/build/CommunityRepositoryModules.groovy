@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
 import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
 
@@ -52,7 +39,6 @@ class CommunityRepositoryModules {
     "xml-openapi",
     "xml-psi-api",
     "xml-structure-view-api",
-    "uast-common",
   ]
 
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
@@ -65,8 +51,6 @@ class CommunityRepositoryModules {
     "editor-ui-ex",
     "images",
     "indexing-impl",
-    "jps-model-impl",
-    "jps-model-serialization",
     "json",
     "lang-impl",
     "lvcs-impl",
@@ -112,12 +96,9 @@ class CommunityRepositoryModules {
       withModule("properties-psi-impl", "properties.jar")
     },
     plugin("git4idea") {
-      withModule("git4idea-rt", "git4idea-rt.jar", false)
+      withModule("git4idea-rt", "git4idea-rt.jar", null)
       withOptionalModule("remote-servers-git")
       withOptionalModule("remote-servers-git-java", "remote-servers-git.jar")
-    },
-    plugin("svn4idea") {
-      withResource("lib/licenses", "lib/licenses")
     },
     plugin("cvs-plugin") {
       directoryName = "cvsIntegration"
@@ -154,10 +135,6 @@ class CommunityRepositoryModules {
       excludeFromModule("xslt-debugger-engine-impl", "saxon9he.jar")
       excludeFromModule("xslt-debugger-engine-impl", "serializer.jar")
       excludeFromModule("xslt-debugger-engine-impl", "xalan.jar")
-    },
-    plugin("Edu-Python") {
-      withResource("resources/courses", "lib/courses")
-      excludeFromModule("Edu-Python", "courses/**")
     },
     plugin("maven") {
       withModule("maven-jps-plugin")
@@ -214,13 +191,16 @@ class CommunityRepositoryModules {
       withModule("devkit-jps-plugin")
     },
     plugin("eclipse") {
-      withModule("eclipse-jps-plugin", "eclipse-jps-plugin.jar", false)
+      withModule("eclipse-jps-plugin", "eclipse-jps-plugin.jar", null)
       withModule("common-eclipse-util")
     },
     plugin("coverage") {
       withModule("coverage-common", mainJarName)
       withModule("coverage_rt")
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
+    },
+    plugin("error-prone") {
+      withModule("error-prone-jps-plugin", "jps/error-prone-jps-plugin.jar")
     },
     plugin("java-decompiler-plugin") {
       directoryName = "java-decompiler"
@@ -233,79 +213,100 @@ class CommunityRepositoryModules {
       withResource("resources/.zshrc", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
+    },
+    PythonCommunityPluginModules.pythonCommunityPluginLayout(),
+    // required for android plugin
+    plugin("smali") {
+      withModule("smali")
     }
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
+    // the following is copied from https://android.googlesource.com/platform/tools/idea/+/studio-master-dev/build/groovy/org/jetbrains/intellij/build/AndroidStudioProperties.groovy
     plugin("android-plugin") {
-      mainJarName = "android.jar"
       directoryName = "android"
-      withModule("android", "android.jar")
-      withModule("observable", "android.jar")
-      withModule("wizard", "android.jar")
-      withModule("sdk-updates", "android.jar")
-      withModule("designer", "android.jar")
-      withModule("manifest-merger")
-      withModule("repository")
-      withModule("common", "android-common.jar")
+      mainJarName = "android.jar"
       withModule("android-common", "android-common.jar", false)
+      withModule("build-common", "build-common.jar", false)
       withModule("android-rt", "android-rt.jar", false)
-      withModule("android-annotations", "androidAnnotations.jar")
+
+      withModule("android", "android.jar", false)
+      withModule("artwork")
+      withModule("observable", "android.jar")
+      withModule("observable-ui", "android.jar")
+      withModule("flags", "android.jar")
+      withModule("designer", "android.jar")
+      withModule("sdk-updates", "android.jar")
+      withModule("wizard", "android.jar")
+      withModule("wizard-model", "android.jar")
+      withModule("profilers-android", "android.jar")
+      withModule("perfd-host", "android-profilers.jar")
+      withModule("profilers", "android-profilers.jar")
+      withModule("profilers-ui", "android-profilers.jar")
+      withModule("adt-ui", "adt-ui.jar")
+      withModule("adt-ui-model", "adt-ui.jar")
+      withModule("repository")
+      withModule("sherpa-ui", "constraint-layout.jar")
       withModule("sdklib", "sdklib.jar")
       withModule("sdk-common", "sdk-common.jar")
       withModule("layoutlib-api", "layoutlib-api.jar")
       withModule("layoutlib", "layoutlib-loader.jar")
-      withModule("adt-ui", "adt-ui.jar")
-      withModule("adt-ui-model", "adt-ui.jar")
-      withModule("sherpa-ui", "constraint-layout.jar")
-      withModule("pixelprobe", "pixalprobe.jar")
       withModule("manifest-merger", "manifest-merger.jar")
-      withModule("assetstudio", "sdk-tools.jar")
+      withModule("chunkio", "pixelprobe.jar")
+      withModule("pixelprobe", "pixelprobe.jar")
+
+      withModule("binary-resources", "sdk-tools.jar")
+      withModule("analyzer", "sdk-tools.jar")
       withModule("ddmlib", "sdk-tools.jar")
       withModule("dvlib", "sdk-tools.jar")
       withModule("draw9patch", "sdk-tools.jar")
+      withModule("instant-run-client", "sdk-tools.jar")
+      withModule("instant-run-common", "sdk-tools.jar")
       withModule("lint-api", "sdk-tools.jar")
       withModule("lint-checks", "sdk-tools.jar")
       withModule("ninepatch", "sdk-tools.jar")
       withModule("perflib", "sdk-tools.jar")
       withModule("builder-model", "sdk-tools.jar")
       withModule("builder-test-api", "sdk-tools.jar")
-      withModule("instant-run-common", "sdk-tools.jar")
-      withModule("instant-run-client", "sdk-tools.jar")
-      withModule("instant-run-runtime", "sdk-tools.jar")
-      withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
+      withModule("android-annotations", "sdk-tools.jar")
+      withModule("layoutinspector", "sdk-tools.jar")
+
+      withJpsModule("android-gradle-jps")
+      withJpsModule("android-jps-plugin")
+
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
-      withResource("../android/device-art-resources", "lib/device-art-resources")
-      withResourceFromModule("layoutlib-resources", ".", "lib/layoutlib")
-      withResourceFromModule("sdklib", "../templates", "lib/templates")
+
+      withResourceFromModule("android","lib/antlr4-runtime-4.5.3.jar", "lib")
+      withResourceFromModule("android","lib/asm-5.0.3.jar", "lib")
+      withResourceFromModule("android","lib/asm-analysis-5.0.3.jar", "lib")
+      withResourceFromModule("android","lib/asm-tree-5.0.3.jar", "lib")
+      withResourceFromModule("android","lib/commons-io-2.4.jar", "lib")
+      withResourceFromModule("android","lib/commons-compress-1.8.1.jar", "lib")
+      withResourceFromModule("android","lib/javawriter-2.2.1.jar", "lib")
+      withResourceFromModule("android","lib/juniversalchardet-1.0.3.jar", "lib")
+
+      withResourceFromModule("android","lib/androidWidgets", "lib/androidWidgets")
+      withResourceFromModule("artwork","resources/device-art-resources", "lib/device-art-resources")
+      withResourceFromModule("android","lib/sampleData", "lib/sampleData")
       withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
-      withResource("../android/lib/antlr4-runtime-4.5.3.jar", "lib")
-      withResource("../android/lib/asm-5.0.3.jar", "lib")
-      withResource("../android/lib/asm-analysis-5.0.3.jar", "lib")
-      withResource("../android/lib/asm-tree-5.0.3.jar", "lib")
-      withResource("../android/lib/commons-io-2.4.jar", "lib")
-      withResource("../android/lib/commons-compress-1.8.1.jar", "lib")
-      withResource("../android/lib/javawriter-2.2.1.jar", "lib")
-      withResource("../android/lib/juniversalchardet-1.0.3.jar", "lib")
-      withResource("../android/lib/layoutlib.jar", "lib")
-      withResource("../android/lib/google-analytics-library.jar", "lib")
-      withResource("../android/lib/gluegen-rt.jar", "lib")
-      withResource("../android/lib/gluegen-rt-natives-linux-amd64.jar", "lib")
-      withResource("../android/lib/gluegen-rt-natives-linux-i586.jar", "lib")
-      withResource("../android/lib/gluegen-rt-natives-macosx-universal.jar", "lib")
-      withResource("../android/lib/gluegen-rt-natives-windows-amd64.jar", "lib")
-      withResource("../android/lib/gluegen-rt-natives-windows-i586.jar", "lib")
-      withProjectLibrary("jogl-all") //todo[nik] move to module libraries
-      withResource("../android/lib/jogl-all-natives-linux-amd64.jar", "lib")
-      withResource("../android/lib/jogl-all-natives-linux-i586.jar", "lib")
-      withResource("../android/lib/jogl-all-natives-macosx-universal.jar", "lib")
-      withResource("../android/lib/jogl-all-natives-windows-amd64.jar", "lib")
-      withResource("../android/lib/jogl-all-natives-windows-i586.jar", "lib")
-      withResource("../android/lib/androidWidgets", "lib/androidWidgets")
+
+      // here go some differences from original Android Studio layout
+      withResourceFromModule("layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
+      withResourceFromModule("sdklib", "../templates", "lib/templates")
+
+      // we put it to plugin instead of ide in original Android Studio layout
+      withModule("common", "android-base-common.jar")
+
+      withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
+      withProjectLibrary("archive-patcher")
+      withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
+      withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
+      withProjectLibrary("analytics-protos")
+
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }

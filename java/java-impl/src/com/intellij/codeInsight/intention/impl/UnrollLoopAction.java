@@ -165,7 +165,10 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     CommentTracker ct = new CommentTracker();
     PsiElement anchor = loop;
     for (PsiExpression expression : expressions) {
-      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(ct.text(loop), element);
+      if (loop.getBody() != null) {
+        ct.markUnchanged(loop.getBody());
+      }
+      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(loop.getText(), element);
       PsiVariable variable = Objects.requireNonNull(getVariable(copy));
       for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(copy))) {
         final PsiElement referenceElement = reference.getElement();
@@ -190,7 +193,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
           PsiIfStatement ifStatement = (PsiIfStatement)added;
           PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
           PsiStatement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch());
-          String negated = BoolUtils.getNegatedExpressionText(condition);
+          String negated = BoolUtils.getNegatedExpressionText(condition, ct);
           condition.replace(factory.createExpressionFromText(negated, condition));
           PsiBlockStatement block = (PsiBlockStatement)thenBranch.replace(factory.createStatementFromText("{}", added));
           anchor = block.getCodeBlock().getLastChild();

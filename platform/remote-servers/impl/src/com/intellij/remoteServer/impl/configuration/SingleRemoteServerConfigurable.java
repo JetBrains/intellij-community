@@ -36,7 +36,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
 
   private final RemoteServer<?> myInnerServer;
   private boolean myInnerApplied;
-  private boolean myUncheckedApply;
+  private boolean myAppliedButNeedsCheck;
 
   private boolean myConnected;
 
@@ -51,7 +51,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     C innerConfiguration = XmlSerializerUtil.createCopy(configuration);
     myInnerServer = new RemoteServerImpl<>("<temp inner server>", server.getType(), innerConfiguration);
     myInnerApplied = false;
-    myUncheckedApply = false;
+    myAppliedButNeedsCheck = isNew || server.getType().canAutoDetectConfiguration();
 
     myConfigurable = createConfigurable(server, innerConfiguration);
 
@@ -63,9 +63,9 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
         if (!myConfigurable.canCheckConnection()) return false;
 
         boolean modified = myConfigurable.isModified();
-        boolean result = modified || myUncheckedApply;
+        boolean result = modified || myAppliedButNeedsCheck;
         if (result) {
-          myUncheckedApply = false;
+          myAppliedButNeedsCheck = false;
 
           setConnectionStatus(false, false, "");
           myConnectionTester = null;
@@ -175,7 +175,7 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     XmlSerializerUtil.copyBean(myInnerServer.getConfiguration(), myServer.getConfiguration());
     myServer.setName(myServerName);
     myNew = false;
-    myUncheckedApply = uncheckedApply;
+    myAppliedButNeedsCheck = uncheckedApply;
     myInnerApplied = false;
   }
 

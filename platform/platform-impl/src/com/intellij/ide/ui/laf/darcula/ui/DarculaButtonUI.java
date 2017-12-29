@@ -18,18 +18,17 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
-import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
@@ -38,6 +37,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Konstantin Bulenkov
@@ -87,24 +87,38 @@ public class DarculaButtonUI extends BasicButtonUI {
       AllIcons.Actions.Help.paintIcon(c, g, x + JBUI.scale(3), y + JBUI.scale(3));
       return false;
     } else {
-      final Border border = c.getBorder();
-      final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      final boolean square = isSquare(c);
-      if (c.isEnabled() && border != null) {
-        final Insets ins = border.getBorderInsets(c);
-        final int yOff = (ins.top + ins.bottom) / 4;
-        if (!square) {
-          if (isDefaultButton(c)) {
-            g.setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()));
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                            MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        if (c.isEnabled()) {
+          if (isSquare(c)) {
+
+            Rectangle r = new Rectangle(w, h);
+            //JBInsets.removeFrom(r, JBUI.insets(1));
+            g2.translate(r.x, r.y);
+            g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColor1(), r.x + r.width,
+                                                r.y + r.height, getButtonColor2()));
+            float arc = JBUI.scale(2.0f);
+            float bw = DarculaUIUtil.bw();
+            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
           else {
-            g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+            g2.setPaint(isDefaultButton(c) ?
+                        UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, h, getSelectedButtonColor2()) :
+                        UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
+
+            Insets ins = c.getInsets();
+            int yOff = (ins.top + ins.bottom) / 4;
+            int rad = JBUI.scale(5);
+            g2.fillRoundRect(JBUI.scale(4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
           }
         }
-        int rad = JBUI.scale(square ? 3 : 5);
-        g.fillRoundRect(JBUI.scale(square ? 2 : 4), yOff, w - 2 * JBUI.scale(4), h - 2 * yOff, rad, rad);
+      } finally {
+        g2.dispose();
       }
-      config.restore();
       return true;
     }
   }
@@ -187,23 +201,6 @@ public class DarculaButtonUI extends BasicButtonUI {
           paintText(g, b, textRect, text);
         }
       }
-    }
-  }
-
-  @Override
-  protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
-    Border border = c.getBorder();
-    if (border != null && isSquare(c)) {
-      int xOff = 1;
-      Insets ins = border.getBorderInsets(c);
-      int yOff = (ins.top + ins.bottom) / 4;
-      Rectangle iconRect2 = new Rectangle(iconRect);
-      iconRect2.x += xOff;
-      iconRect2.y += yOff;
-      super.paintIcon(g, c, iconRect2);
-    }
-    else {
-      super.paintIcon(g, c, iconRect);
     }
   }
 

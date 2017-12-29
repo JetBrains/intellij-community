@@ -317,6 +317,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   // public for Upsource
   public boolean finishCommit(@NotNull final Document document,
                               @NotNull final List<Processor<Document>> finishProcessors,
+                              @NotNull ProperTextRange changedRange,
                               final boolean synchronously,
                               @NotNull final Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
@@ -338,7 +339,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (ok[0]) {
       // otherwise changes maybe not synced to the document yet, and injectors will crash
       if (!mySynchronizer.isDocumentAffectedByTransactions(document)) {
-        InjectedLanguageManager.getInstance(myProject).startRunInjectors(document, synchronously);
+        InjectedLanguageManager.getInstance(myProject).startRunInjectorsInRange(document, changedRange, synchronously);
       }
       // run after commit actions outside write action
       runAfterCommitActions(document);

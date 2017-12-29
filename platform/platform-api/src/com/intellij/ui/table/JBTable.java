@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +21,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +79,19 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   public JBTable(final TableModel model, final TableColumnModel columnModel) {
     super(model, columnModel);
+    // By default, tables only allow Ctrl-TAB/Ctrl-Shift-TAB to navigate to the
+    // next/previous component, while TAB/Shift-TAB is used to navigate through
+    // cells. This behavior is somewhat counter-intuitive, as visually impaired
+    // users are used to use TAB to navigate between components. By resetting
+    // the default traversal keys, we add TAB/Shift-TAB as focus navigation keys.
+    // Notes:
+    // * Navigating through cells can still be done using the cursor keys
+    // * One could argue that resetting to the default behavior should be
+    //   done in all case, i.e. not only when a screen reader is active,
+    //   but we leave it as is to favor backward compatibility.
+    if (ScreenReader.isActive()) {
+      resetDefaultFocusTraversalKeys();
+    }
 
     setSurrendersFocusOnKeystroke(true);
 
@@ -516,11 +528,9 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private static boolean isTableDecorationSupported() {
-    return UIUtil.isUnderAlloyLookAndFeel()
-           || UIUtil.isUnderNativeMacLookAndFeel()
+    return UIUtil.isUnderNativeMacLookAndFeel()
            || UIUtil.isUnderDarcula()
            || UIUtil.isUnderIntelliJLaF()
-           || UIUtil.isUnderNimbusLookAndFeel()
            || UIUtil.isUnderWindowsLookAndFeel();
   }
 

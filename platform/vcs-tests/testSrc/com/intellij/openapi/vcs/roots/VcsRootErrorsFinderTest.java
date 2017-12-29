@@ -177,7 +177,7 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
     Collection<VcsRootError> expected = new ArrayList<>();
     expected.addAll(unregAll(vcsRootConfiguration.getUnregErrors()));
     expected.addAll(extraAll(vcsRootConfiguration.getExtraErrors()));
-    myProjectRoot.refresh(false, true);
+    projectRoot.refresh(false, true);
     Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(),
                                                            error -> error.getVcsKey().equals(myVcs.getKeyInstanceMethod()));
     VcsTestUtil.assertEqualCollections(actual, expected);

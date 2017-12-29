@@ -37,25 +37,25 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
   override fun setUp() {
     super.setUp()
 
-    val mainRepo = setupRepositories(myProjectPath, "parent", "bro")
+    val mainRepo = setupRepositories(projectPath, "parent", "bro")
     ultimate = mainRepo.projectRepo
     brultimate = mainRepo.bro
 
-    val communityDir = File(myProjectPath, "community")
+    val communityDir = File(projectPath, "community")
     assertTrue(communityDir.mkdir())
     val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
     community = enclosingRepo.projectRepo
     brommunity = enclosingRepo.bro
 
-    cd(myProjectPath)
+    cd(projectPath)
     refresh()
     updateRepositories()
   }
 
-  fun test_try_push_from_all_roots_even_if_one_fails() {
+  fun `test try push from all roots even if one fails`() {
     // fail in the first repo
-    myGit.onPush {
-      if (it == ultimate) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>(), null)
+    git.onPush {
+      if (it == ultimate) GitCommandResult(false, 128, false, listOf("Failed to push to origin"), listOf<String>())
       else null
     }
 
@@ -69,7 +69,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     val map = ContainerUtil.newHashMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>()
     map.put(ultimate, spec1)
     map.put(community, spec2)
-    val result = GitPushOperation(myProject, pushSupport, map, null, false, false).execute()
+    val result = GitPushOperation(project, pushSupport, map, null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
     val result2 = result.results[community]!!
@@ -79,7 +79,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
     assertResult(GitPushRepoResult.Type.SUCCESS, 1, "master", "origin/master", null, result2)
   }
 
-  fun test_update_all_roots_on_reject_when_needed_even_if_only_one_in_push_spec() {
+  fun `test update all roots on reject when needed even if only one in push spec`() {
     cd(brultimate)
     val broHash = makeCommit("bro.txt")
     git("push")
@@ -92,7 +92,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     val mainSpec = makePushSpec(ultimate, "master", "origin/master")
     agreeToUpdate(GitRejectedPushUpdateDialog.MERGE_EXIT_CODE) // auto-update-all-roots is selected by default
-    val result = GitPushOperation(myProject, pushSupport,
+    val result = GitPushOperation(project, pushSupport,
                                   Collections.singletonMap<GitRepository, PushSpec<GitPushSource, GitPushTarget>>(ultimate, mainSpec), null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
@@ -141,7 +141,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
 
     // push only to 1 repo, otherwise the push would recreate the deleted branch, and the error won't reproduce
     val pushSpecs = mapOf(ultimate to makePushSpec(ultimate, "feature", "origin/feature"))
-    val result = GitPushOperation(myProject, pushSupport, pushSpecs, null, false, false).execute()
+    val result = GitPushOperation(project, pushSupport, pushSpecs, null, false, false).execute()
 
     val result1 = result.results[ultimate]!!
     assertResult(GitPushRepoResult.Type.SUCCESS, 2, "feature", "origin/feature", GitUpdateResult.SUCCESS, result1)

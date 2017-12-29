@@ -26,6 +26,17 @@ class BaseLayoutSpec {
   }
 
   /**
+   * @deprecated use explicit resource name instead of boolean or null. To be removed in IDEA 2018.3.
+   */
+  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", boolean localizableResourcesInCommonJar) {
+    if (localizableResourcesInCommonJar) {
+      withModule(moduleName, relativeJarPath)
+    } else {
+      withModule(moduleName, relativeJarPath, null)
+    }
+  }
+
+  /**
    * Register an additional module to be included into the plugin distribution. If {@code relativeJarPath} doesn't contain '/' (i.e. the
    * JAR will be added to the plugin's classpath) this will also cause modules library from {@code moduleName} with scopes 'Compile' and
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
@@ -35,9 +46,9 @@ class BaseLayoutSpec {
    * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
    * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", boolean localizableResourcesInCommonJar = true) {
-    if (localizableResourcesInCommonJar) {
-      layout.modulesWithLocalizableResourcesInCommonJar << moduleName
+  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", String localizableResourcesInJar = "resources_en.jar") {
+    if (localizableResourcesInJar != null) {
+      layout.modulesWithLocalizableResourcesInCommonJar.put(moduleName, localizableResourcesInJar)
     }
     layout.moduleJars.put(relativeJarPath, moduleName)
   }

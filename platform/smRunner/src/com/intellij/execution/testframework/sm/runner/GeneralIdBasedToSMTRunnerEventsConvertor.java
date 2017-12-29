@@ -236,13 +236,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     addToInvokeLater(() -> {
       Node activeNode = findActiveNode();
       SMTestProxy activeProxy = activeNode.getProxy();
-      if (ProcessOutputTypes.STDERR.equals(outputType)) {
-        activeProxy.addStdErr(text);
-      } else if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
-        activeProxy.addSystemOutput(text);
-      } else {
-        activeProxy.addStdOutput(text, outputType);
-      }
+      activeProxy.addOutput(text, outputType);
     });
   }
 

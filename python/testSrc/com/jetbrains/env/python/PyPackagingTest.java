@@ -100,6 +100,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
+  @Staging
   @Test
   public void testInstallPackage() {
     runPythonTest(new PyPackagingTestTask() {

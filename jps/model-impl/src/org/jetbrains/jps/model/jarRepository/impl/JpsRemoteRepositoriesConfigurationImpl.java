@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 25-Apr-17
  */
 public class JpsRemoteRepositoriesConfigurationImpl extends JpsElementBase<JpsRemoteRepositoriesConfigurationImpl> implements JpsRemoteRepositoriesConfiguration{
   public static final JpsElementChildRole<JpsRemoteRepositoriesConfiguration> ROLE = JpsElementChildRoleBase.create("remote repositories configuration");

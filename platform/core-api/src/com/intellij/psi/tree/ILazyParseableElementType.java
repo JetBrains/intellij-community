@@ -74,7 +74,7 @@ public class ILazyParseableElementType extends IElementType implements ILazyPars
    * @param chameleon the node to parse.
    * @return the parsed contents of the node.
    */
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull ASTNode chameleon) {
     PsiElement parentElement = chameleon.getTreeParent().getPsi();
     assert parentElement != null : "parent psi is null: " + chameleon;
     return doParseContents(chameleon, parentElement);

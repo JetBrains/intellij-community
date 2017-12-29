@@ -1074,4 +1074,8 @@
   <action id="DirDiffMenu.SynchronizeDiff.All">
     <keyboard-shortcut first-keystroke="control ENTER"/>
   </action>
+
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="control shift T"/>
+  </action>
 </keymap>

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -461,7 +447,7 @@ public class GenericsHighlightUtil {
           if (abstracts == null) abstracts = new ArrayList<>(2);
           abstracts.add(method);
         }
-        hasConcrete |= !isDefault && !isAbstract;
+        hasConcrete |= !isDefault && !isAbstract && !method.hasModifierProperty(PsiModifier.STATIC);
       }
 
       if (!hasConcrete && defaults != null) {
@@ -469,7 +455,16 @@ public class GenericsHighlightUtil {
         if (MethodSignatureUtil.findMethodBySuperMethod(aClass, defaultMethod, false) != null) continue;
         final PsiClass defaultMethodContainingClass = defaultMethod.getContainingClass();
         if (defaultMethodContainingClass == null) continue;
-        final PsiMethod unrelatedMethod = abstracts != null ? abstracts.get(0) : defaults.get(1);
+        final PsiMethod unrelatedMethod;
+        if (abstracts != null) {
+          unrelatedMethod = abstracts.get(0);
+        }
+        else if (defaults.size() > 1) {
+          unrelatedMethod = defaults.get(1);
+        }
+        else {
+          continue;
+        }
         final PsiClass unrelatedMethodContainingClass = unrelatedMethod.getContainingClass();
         if (unrelatedMethodContainingClass == null) continue;
         if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !(aClass instanceof PsiTypeParameter)
@@ -1034,7 +1029,7 @@ public class GenericsHighlightUtil {
   @Nullable
   static HighlightInfo checkSafeVarargsAnnotation(PsiMethod method, LanguageLevel languageLevel) {
     PsiModifierList list = method.getModifierList();
-    final PsiAnnotation safeVarargsAnnotation = list.findAnnotation("java.lang.SafeVarargs");
+    final PsiAnnotation safeVarargsAnnotation = list.findAnnotation(CommonClassNames.JAVA_LANG_SAFE_VARARGS);
     if (safeVarargsAnnotation == null) {
       return null;
     }
@@ -1241,7 +1236,7 @@ public class GenericsHighlightUtil {
     PsiElement parent = list.getParent();
     if (parent instanceof PsiClass) {
       PsiClass klass = (PsiClass)parent;
-      if (PsiUtil.typeParametersIterator(klass).hasNext() && klass.getExtendsList() == list) {
+      if (hasGenericSignature(klass) && klass.getExtendsList() == list) {
         PsiClass throwableClass = null;
         for (PsiJavaCodeReferenceElement refElement : list.getReferenceElements()) {
           PsiElement resolved = refElement.resolve();
@@ -1277,12 +1272,21 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkGenericCannotExtendException(PsiAnonymousClass anonymousClass) {
-    if (PsiUtil.typeParametersIterator(anonymousClass).hasNext() &&
+    if (hasGenericSignature(anonymousClass) &&
         InheritanceUtil.isInheritor(anonymousClass, true, CommonClassNames.JAVA_LANG_THROWABLE)) {
       String message = JavaErrorMessages.message("generic.extend.exception");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(anonymousClass.getBaseClassReference()).descriptionAndTooltip(message).create();
     }
     return null;
+  }
+
+  private static boolean hasGenericSignature(PsiClass klass) {
+    PsiClass containingClass = klass;
+    while (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) {
+      if (containingClass.hasTypeParameters()) return true;
+      containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
+    }
+    return containingClass != null && PsiUtil.typeParametersIterator(containingClass).hasNext();
   }
 
   static HighlightInfo checkEnumMustNotBeLocal(final PsiClass aClass) {

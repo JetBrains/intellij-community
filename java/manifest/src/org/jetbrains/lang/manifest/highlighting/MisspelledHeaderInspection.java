@@ -39,7 +39,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.intellij.util.text.EditDistance;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.lang.manifest.ManifestBundle;
@@ -60,7 +60,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
   private static final int MAX_DISTANCE = 4;
   private static final int TYPO_DISTANCE = 2;
 
-  @AbstractCollection(surroundWithTag = false, elementTag = "header")
+  @XCollection(elementName = "header")
   public final Set<String> CUSTOM_HEADERS = new THashSet<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
 
   private final HeaderParserRepository myRepository;

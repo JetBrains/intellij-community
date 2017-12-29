@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * @author vlan
@@ -139,6 +140,12 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @NotNull
   @Override
   public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+    return getPresentableText(includeDefaultValue, context, Objects::isNull);
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 
@@ -148,10 +155,12 @@ public class PyCallableParameterImpl implements PyCallableParameter {
       final String name = getName();
       sb.append(name != null ? name : "...");
 
-      final PyType argumentType = context == null ? null : getArgumentType(context);
-      if (argumentType != null) {
-        sb.append(": ");
-        sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+      if (context != null) {
+        final PyType argumentType = getArgumentType(context);
+        if (!typeFilter.test(argumentType)) {
+          sb.append(": ");
+          sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+        }
       }
 
       final String defaultValue = getDefaultValueText();
@@ -188,7 +197,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
         return collectionType.getIteratedItemType();
       }
       else if (isKeywordContainer()) {
-        return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 1, null);
+        return ContainerUtil.getOrElse(collectionType.getElementTypes(), 1, null);
       }
     }
 

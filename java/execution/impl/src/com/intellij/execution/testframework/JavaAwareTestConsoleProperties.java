@@ -70,7 +70,11 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Override
   public Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     //navigate to the first stack trace
-    final String[] stackTrace = new LineTokenizer(stacktrace).execute();
+    return getStackTraceErrorNavigatable(location, stacktrace);
+  }
+
+  @Nullable
+  public static Navigatable getStackTraceErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace) {
     final PsiLocation<?> psiLocation = location.toPsiLocation();
     final PsiClass containingClass = psiLocation.getParentElement(PsiClass.class);
     if (containingClass == null) return null;
@@ -83,6 +87,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     }
     if (containingMethod == null) return null;
     StackTraceLine lastLine = null;
+    final String[] stackTrace = new LineTokenizer(stacktrace).execute();
     for (String aStackTrace : stackTrace) {
       final StackTraceLine line = new StackTraceLine(containingClass.getProject(), aStackTrace);
       if (containingMethod.equals(line.getMethodName()) && qualifiedName.equals(line.getClassName())) {

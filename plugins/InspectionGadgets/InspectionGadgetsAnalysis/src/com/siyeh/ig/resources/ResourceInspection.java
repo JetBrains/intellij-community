@@ -126,12 +126,13 @@ public abstract class ResourceInspection extends BaseInspection {
       }
       return (PsiVariable)referent;
     }
-    else if (parent instanceof PsiVariable) {
+    if (parent instanceof PsiVariable) {
       return (PsiVariable)parent;
     }
-    else {
-      return null;
+    if (parent instanceof PsiConditionalExpression) {
+      return getVariable((PsiExpression)parent);
     }
+    return null;
   }
 
   private static PsiElement getParent(PsiExpression expression) {
@@ -447,7 +448,10 @@ public abstract class ResourceInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAnonymousClass(PsiAnonymousClass aClass) {}
+    public void visitLambdaExpression(PsiLambdaExpression expression) {}
+
+    @Override
+    public void visitClass(PsiClass aClass) {}
 
     @Override
     public void visitElement(PsiElement element) {

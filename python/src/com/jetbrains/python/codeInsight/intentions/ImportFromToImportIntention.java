@@ -48,7 +48,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Qualifies any names imported from that module by module name.
  * <br><small>
  * User: dcheryasov
- * Date: Sep 26, 2009 9:12:28 AM
  * </small>
  */
 public class ImportFromToImportIntention extends PyBaseIntentionAction {

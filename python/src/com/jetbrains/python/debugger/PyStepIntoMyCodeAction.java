@@ -45,7 +45,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
 
       @Override
       public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
-        return super.isEnabled(project, event) && PyDebugSupportUtils.isPythonConfigurationSelected(project);
+        return super.isEnabled(project, event) && PyDebugSupportUtils.isCurrentPythonDebugProcess(project);
       }
     };
   }
@@ -58,6 +58,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
 
   @Override
   protected boolean isHidden(AnActionEvent event) {
-    return !PyDebugSupportUtils.isPythonConfigurationSelected(event.getData(CommonDataKeys.PROJECT));
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(project);
   }
 }

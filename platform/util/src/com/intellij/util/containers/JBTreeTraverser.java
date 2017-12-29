@@ -42,6 +42,6 @@ public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser
   @NotNull
   @Override
   protected JBTreeTraverser<T> newInstance(Meta<T> meta) {
-    return new JBTreeTraverser<T>(meta, tree);
+    return new JBTreeTraverser<T>(meta, getTree());
   }
 }

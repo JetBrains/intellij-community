@@ -359,7 +359,6 @@ public class Py3ResolveTest extends PyResolveTestCase {
   
   // PY-20864
   public void testTopLevelVariableAnnotationFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> assertResolvesTo(PyElement.class, "List"));
   }
 

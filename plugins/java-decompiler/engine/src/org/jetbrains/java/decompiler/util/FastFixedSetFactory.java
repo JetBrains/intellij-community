@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.*;
@@ -111,12 +97,6 @@ public class FastFixedSetFactory<E> {
       data[index[0]] &= ~index[1];
     }
 
-    public void removeAll(Collection<E> set) {
-      for (E element : set) {
-        remove(element);
-      }
-    }
-
     public boolean contains(E element) {
       int[] index = colValuesInternal.getWithKey(element);
       return (data[index[0]] & index[1]) != 0;
@@ -150,15 +130,6 @@ public class FastFixedSetFactory<E> {
 
       for (int i = intdata.length - 1; i >= 0; i--) {
         intdata[i] &= extdata[i];
-      }
-    }
-
-    public void symdiff(FastFixedSet<E> set) {
-      int[] extdata = set.getData();
-      int[] intdata = data;
-
-      for (int i = intdata.length - 1; i >= 0; i--) {
-        intdata[i] ^= extdata[i];
       }
     }
 
@@ -208,11 +179,6 @@ public class FastFixedSetFactory<E> {
       return toPlainCollection(new HashSet<>());
     }
 
-    public List<E> toPlainList() {
-      return toPlainCollection(new ArrayList<>());
-    }
-
-
     private <T extends Collection<E>> T toPlainCollection(T cl) {
 
       int[] intdata = data;
@@ -231,18 +197,6 @@ public class FastFixedSetFactory<E> {
       }
 
       return cl;
-    }
-
-    public String toBinary() {
-
-      StringBuilder buffer = new StringBuilder();
-      int[] intdata = data;
-
-      for (int i = 0; i < intdata.length; i++) {
-        buffer.append(" ").append(Integer.toBinaryString(intdata[i]));
-      }
-
-      return buffer.toString();
     }
 
     public String toString() {
@@ -357,4 +311,3 @@ public class FastFixedSetFactory<E> {
     }
   }
 }
-

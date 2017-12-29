@@ -75,7 +75,7 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
     List<String> goals = ((MavenGoalLocation)l).getGoals();
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(l.getProject()).getExplicitProfiles();
 
-    return new MavenRunnerParameters(true, f.getParent().getPath(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
+    return new MavenRunnerParameters(true, f.getParent().getPath(), f.getName(), goals, profiles.getEnabledProfiles(), profiles.getDisabledProfiles());
   }
 
   public int compareTo(Object o) {

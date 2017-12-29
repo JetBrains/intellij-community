@@ -16,14 +16,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.Map;
 
 @State(
@@ -34,22 +31,9 @@ import java.util.Map;
   }
 )
 public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettings.State> {
-  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\Program Files\\Mercurial",
-    "C:\\Program Files (x86)\\Mercurial",
-    "C:\\cygwin\\bin"};
-  @NonNls private static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin",
-    "/usr/bin",
-    "/opt/local/bin",
-    "/opt/bin",
-    "/usr/local/mercurial"};
-  @NonNls private static final String DEFAULT_WINDOWS_HG = "hg.exe";
-  @NonNls private static final String DEFAULT_UNIX_HG = "hg";
-
   private static final int FIVE_MINUTES = 300;
 
   private State myState = new State();
-
-  private String myDetectedHgExecutable;
 
   public static class State {
     public String myHgExecutable = null;
@@ -65,43 +49,6 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
   @Override
   public void loadState(State state) {
     myState = state;
-  }
-
-  /**
-   * @return the default executable name depending on the platform
-   */
-  @NotNull
-  public String defaultHgExecutable() {
-    String hgExecutable = myState.myHgExecutable;
-    if (hgExecutable != null) {
-      return hgExecutable;
-    }
-
-    if (myDetectedHgExecutable == null) {
-      String[] paths;
-      String programName;
-      if (SystemInfo.isWindows) {
-        programName = DEFAULT_WINDOWS_HG;
-        paths = DEFAULT_WINDOWS_PATHS;
-      }
-      else {
-        programName = DEFAULT_UNIX_HG;
-        paths = DEFAULT_UNIX_PATHS;
-      }
-
-      for (String p : paths) {
-        File f = new File(p, programName);
-        if (f.exists()) {
-          myDetectedHgExecutable = f.getAbsolutePath();
-          break;
-        }
-      }
-      if (myDetectedHgExecutable == null) {
-        // otherwise, take the first variant and hope it's in $PATH
-        myDetectedHgExecutable = programName;
-      }
-    }
-    return myDetectedHgExecutable;
   }
 
   /**
@@ -131,12 +78,12 @@ public class HgGlobalSettings implements PersistentStateComponent<HgGlobalSettin
     myState.myRememberedUserNames.put(stringUrl, username);
   }
 
-  @NotNull
+  @Nullable
   public String getHgExecutable() {
-    return myState.myHgExecutable == null ? defaultHgExecutable() : myState.myHgExecutable;
+    return myState.myHgExecutable;
   }
 
-  public void setHgExecutable(String hgExecutable) {
+  public void setHgExecutable(@Nullable String hgExecutable) {
     myState.myHgExecutable = hgExecutable;
   }
 

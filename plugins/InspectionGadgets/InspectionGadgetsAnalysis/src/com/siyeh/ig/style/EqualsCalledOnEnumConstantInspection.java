@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
@@ -98,7 +99,8 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
         prefixExpression = null;
         not = false;
       }
-      newExpression.append(qualifier.getText());
+      CommentTracker commentTracker = new CommentTracker();
+      newExpression.append(commentTracker.markUnchanged(qualifier).getText());
       if (not) {
         newExpression.append("!=");
       }
@@ -106,13 +108,13 @@ public class EqualsCalledOnEnumConstantInspection extends BaseInspection {
         newExpression.append("==");
       }
       if (arguments.length == 1) {
-        newExpression.append(arguments[0].getText());
+        newExpression.append(commentTracker.markUnchanged(arguments[0]).getText());
       }
       if (not) {
-        PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString());
+        PsiReplacementUtil.replaceExpression(prefixExpression, newExpression.toString(), commentTracker);
       }
       else {
-        PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+        PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
       }
     }
   }

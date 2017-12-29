@@ -33,6 +33,13 @@ public abstract class ContractValue {
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
 
+  /**
+   * @return true if this contract value represents a bounds-checking condition
+   */
+  public boolean isBoundCheckingCondition() {
+    return false;
+  }
+
   public static ContractValue qualifier() {
     return Qualifier.INSTANCE;
   }
@@ -106,9 +113,9 @@ public abstract class ContractValue {
     static final IndependentValue TRUE = new IndependentValue(factory -> factory.getConstFactory().getTrue(), "true");
     static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false");
     static final IndependentValue OPTIONAL_PRESENT =
-      new IndependentValue(factory -> factory.getOptionalFactory().getOptional(true), "present");
+      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), "present");
     static final IndependentValue OPTIONAL_ABSENT =
-      new IndependentValue(factory -> factory.getOptionalFactory().getOptional(false), "empty");
+      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
     private final Function<DfaValueFactory, DfaValue> mySupplier;
@@ -158,6 +165,19 @@ public abstract class ContractValue {
       myLeft = left;
       myRight = right;
       myRelationType = type;
+    }
+
+    @Override
+    public boolean isBoundCheckingCondition() {
+      switch (myRelationType) {
+        case LE:
+        case LT:
+        case GE:
+        case GT:
+          return true;
+        default:
+          return false;
+      }
     }
 
     @Override

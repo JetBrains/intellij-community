@@ -23,7 +23,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 10, 2006
  */
 public class AddWildcardBreakpointDialog extends DialogWrapper {
   private JPanel myPanel;

@@ -1,20 +1,9 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.spellchecker.engine;
 
+import com.google.common.collect.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,14 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.spellchecker.compress.CompressedDictionary;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.EditDistance;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +26,9 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.util.containers.ContainerUtil.concat;
+import static com.intellij.util.text.EditDistance.optimalAlignment;
+import static java.util.stream.Collectors.toList;
 
 public class BaseSpellChecker implements SpellCheckerEngine {
   static final Logger LOG = Logger.getInstance("#com.intellij.spellchecker.engine.BaseSpellChecker");
@@ -58,10 +48,10 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   @Override
   public void loadDictionary(@NotNull Loader loader) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      addCompressedFixedDictionary(CompressedDictionary.create(loader, transform));
+      addDictionary(CompressedDictionary.create(loader, transform));
     }
     else {
-      loadDictionaryAsync(loader, this::addCompressedFixedDictionary);
+      loadDictionaryAsync(loader, this::addDictionary);
     }
   }
 
@@ -122,32 +112,14 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     dictionaries.add(dictionary);
   }
 
-  private void addCompressedFixedDictionary(@NotNull Dictionary dictionary) {
+  @Override
+  public void addDictionary(@NotNull Dictionary dictionary) {
     bundledDictionaries.add(dictionary);
   }
 
   @Override
   public Transformation getTransformation() {
     return transform;
-  }
-
-  private static void restore(char startFrom, int j, Collection<? extends Dictionary> dictionaries, Collection<String> result) {
-    for (Dictionary o : dictionaries) {
-      restore(startFrom, j, o, result);
-    }
-  }
-
-  private static void restore(final char first, final int j, Dictionary dictionary, final Collection<String> result) {
-    if (dictionary instanceof CompressedDictionary) {
-      ((CompressedDictionary)dictionary).getWords(first, 0, j, result);
-    }
-    else {
-      dictionary.traverse(s -> {
-        if (!StringUtil.isEmpty(s) && s.charAt(0) == first && s.length() >= 0 && s.length() <= j) {
-          result.add(s);
-        }
-      });
-    }
   }
 
   /**
@@ -187,30 +159,19 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public List<String> getSuggestions(@NotNull String word, int maxSuggestions, int quality) {
     String transformed = transform.transform(word);
     if (transformed == null) return Collections.emptyList();
-
-    List<String> rawSuggestions = new ArrayList<>();
-    restore(transformed.charAt(0), Integer.MAX_VALUE, bundledDictionaries, rawSuggestions);
-    restore(word.charAt(0), Integer.MAX_VALUE, dictionaries, rawSuggestions);
-    if (rawSuggestions.isEmpty()) return Collections.emptyList();
-
-    List<Suggestion> suggestions = new ArrayList<>(rawSuggestions.size());
-    for (String rawSuggestion : rawSuggestions) {
-      int distance = EditDistance.optimalAlignment(transformed, rawSuggestion, true);
-      suggestions.add(new Suggestion(rawSuggestion, distance));
+    final MinMaxPriorityQueue<Suggestion> suggestions = MinMaxPriorityQueue.orderedBy(Suggestion::compareTo).maximumSize(maxSuggestions).create();
+    for (Dictionary dict : concat(bundledDictionaries, dictionaries)) {
+      dict.getSuggestions(transformed, s -> suggestions.add(new Suggestion(s, optimalAlignment(transformed, s, true))));
     }
-
-    Collections.sort(suggestions);
-    int limit = Math.min(maxSuggestions, suggestions.size());
-    List<String> result = new ArrayList<>(limit);
-    int bestMetrics = suggestions.get(0).getMetrics();
-    for (int i = 0; i < limit; i++) {
-      Suggestion suggestion = suggestions.get(i);
-      if (bestMetrics - suggestion.getMetrics() > quality) {
-        break;
-      }
-      result.add(i, suggestion.getWord());
+    if (suggestions.isEmpty()) {
+      return Collections.emptyList();
     }
-    return result;
+    int bestMetrics = suggestions.peek().getMetrics();
+    return suggestions.stream()
+      .filter(i -> bestMetrics - i.getMetrics() < quality)
+      .sorted()
+      .map(Suggestion::getWord)
+      .collect(toList());
   }
 
   @Override
@@ -242,7 +203,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   public void removeDictionariesRecursively(@NotNull String directory) {
     bundledDictionaries.stream()
       .map(Dictionary::getName)
-      .filter(dict -> isAncestor(directory, dict, true) && isDictionaryLoad(dict))
+      .filter(dict -> isAncestor(directory, dict, false) && isDictionaryLoad(dict))
       .forEach(this::removeDictionary);
   }
 

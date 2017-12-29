@@ -111,7 +111,7 @@ public class ReadThread implements Runnable {
     return internalRead();
   }
 
-  public synchronized int read(byte b[], int off, int len) throws IOException {
+  public synchronized int read(byte[] b, int off, int len) throws IOException {
     int result = waitForAvailableBytes();
     if (result == END_OF_STREAM) return END_OF_STREAM;
     return internalRead(b, off, len);
@@ -213,7 +213,7 @@ public class ReadThread implements Runnable {
     }
   }
 
-  private synchronized int internalRead(byte b[], int off, int len) {
+  private synchronized int internalRead(byte[] b, int off, int len) {
     int result = Math.min(len, size());
     System.arraycopy(myBuffer, myFirstIndex, b, off, result);
     myFirstIndex += result;

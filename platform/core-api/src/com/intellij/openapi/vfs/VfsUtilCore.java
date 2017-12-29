@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -178,6 +164,48 @@ public class VfsUtilCore {
       parent = parent.getParent();
     }
     return StringFactory.createShared(chars);
+  }
+
+  /**
+   * Returns the relative path from one virtual file to another.
+   * If {@code src} is a file, the path is calculated from its parent directory.
+   *
+   * @param src           the file or directory, from which the path is built
+   * @param dst           the file or directory, to which the path is built
+   * @param separatorChar the separator for the path components
+   * @return the relative path, or {@code null} if the files have no common ancestor
+   * @since 2018.1
+   */
+  @Nullable
+  public static String findRelativePath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
+    if (!src.getFileSystem().equals(dst.getFileSystem())) {
+      return null;
+    }
+
+    if (!src.isDirectory()) {
+      src = src.getParent();
+      if (src == null) return null;
+    }
+
+    VirtualFile commonAncestor = getCommonAncestor(src, dst);
+    if (commonAncestor == null) return null;
+
+    StringBuilder buffer = new StringBuilder();
+
+    if (!Comparing.equal(src, commonAncestor)) {
+      while (!Comparing.equal(src, commonAncestor)) {
+        buffer.append("..").append(separatorChar);
+        src = src.getParent();
+      }
+    }
+
+    buffer.append(getRelativePath(dst, commonAncestor, separatorChar));
+
+    if (StringUtil.endsWithChar(buffer, separatorChar)) {
+      buffer.setLength(buffer.length() - 1);
+    }
+
+    return buffer.toString();
   }
 
   @Nullable
@@ -611,12 +639,7 @@ public class VfsUtilCore {
   }
 
   /**
-   * Gets the common ancestor for passed files, or null if the files do not have common ancestors.
-   *
-   * @param file1 fist file
-   * @param file2 second file
-   * @return common ancestor for the passed files. Returns {@code null} if
-   *         the files do not have common ancestor
+   * Returns a common ancestor for the given files, or {@code null} if the files do not have one.
    */
   @Nullable
   public static VirtualFile getCommonAncestor(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -624,19 +647,37 @@ public class VfsUtilCore {
       return null;
     }
 
-    VirtualFile[] path1 = getPathComponents(file1);
-    VirtualFile[] path2 = getPathComponents(file2);
-
-    int lastEqualIdx = -1;
-    for (int i = 0; i < path1.length && i < path2.length; i++) {
-      if (path1[i].equals(path2[i])) {
-        lastEqualIdx = i;
-      }
-      else {
-        break;
-      }
+    if (file1.equals(file2)) {
+      return file1;
     }
-    return lastEqualIdx == -1 ? null : path1[lastEqualIdx];
+
+    int depth1 = depth(file1);
+    int depth2 = depth(file2);
+
+    VirtualFile parent1 = file1;
+    VirtualFile parent2 = file2;
+    while (depth1 > depth2 && parent1 != null) {
+      parent1 = parent1.getParent();
+      depth1--;
+    }
+    while (depth2 > depth1 && parent2 != null) {
+      parent2 = parent2.getParent();
+      depth2--;
+    }
+    while (parent1 != null && parent2 != null && !parent1.equals(parent2)) {
+      parent1 = parent1.getParent();
+      parent2 = parent2.getParent();
+    }
+    return parent1;
+  }
+
+  private static int depth(VirtualFile file) {
+    int depth = 0;
+    while (file != null) {
+      depth++;
+      file = file.getParent();
+    }
+    return depth;
   }
 
   /**

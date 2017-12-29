@@ -428,7 +428,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public VirtualFileSystemEntry findChildById(int id, boolean cachedOnly) {
-    if (ArrayUtil.indexOf(myData.myChildrenIds, id) >= 0) {
+    int i;
+    synchronized (myData) {
+      i = ArrayUtil.indexOf(myData.myChildrenIds, id);
+    }
+    if (i >= 0) {
       return VfsData.getFileById(id, this);
     }
     if (cachedOnly) return null;
@@ -569,9 +573,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (int id : myData.myChildrenIds) {
         existingNames.add(VfsData.getNameByFileId(id));
       }
-      FSRecords.NameId[] persistentIds = FSRecords.listAll(getId());
-      for (FSRecords.NameId nameId : persistentIds) {
-        existingNames.add(nameId.name);
+      int id = getId();
+      if (id >= 0) {
+        FSRecords.NameId[] persistentIds = FSRecords.listAll(id);
+        for (FSRecords.NameId nameId : persistentIds) {
+          existingNames.add(nameId.name);
+        }
       }
 
       validateAgainst(childrenToCreate, existingNames);

@@ -75,7 +75,7 @@ public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAct
 
   protected boolean isVisible(@NotNull Project project, @NotNull MultiMap<Repo, Hash> grouped) {
     RepositoryManager<Repo> manager = getRepositoryManager(project);
-    return grouped.keySet().stream().allMatch(repo -> !manager.isExternal(repo));
+    return grouped.keySet().stream().noneMatch(manager::isExternal);
   }
 
   @NotNull

@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -115,14 +116,15 @@ public class UsePrimitiveTypesInspection extends DevKitInspectionBase {
           if (rOperand != null) {
             final boolean flip = isPrimitiveTypeRef(rOperand);
             if (flip || isPrimitiveTypeRef(lOperand)) {
-              final String rText = PsiUtil.skipParenthesizedExprUp(rOperand).getText();
-              final String lText = PsiUtil.skipParenthesizedExprUp(lOperand).getText();
+              CommentTracker commentTracker = new CommentTracker();
+              final String rText = commentTracker.markUnchanged(PsiUtil.skipParenthesizedExprUp(rOperand)).getText();
+              final String lText = commentTracker.markUnchanged(PsiUtil.skipParenthesizedExprUp(lOperand)).getText();
 
               final String lhText = flip ? rText : lText;
               final String rhText = flip ? lText : rText;
 
               @NonNls final String expString = prefix + lhText + ".equals(" + rhText + ')';
-              PsiReplacementUtil.replaceExpression((PsiBinaryExpression)parent, expString);
+              PsiReplacementUtil.replaceExpression((PsiBinaryExpression)parent, expString, commentTracker);
             }
           }
         }

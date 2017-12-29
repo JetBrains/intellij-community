@@ -35,6 +35,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.function.Function;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
@@ -69,8 +71,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
       @Override
-      public void onFinished() {
-        super.onFinished();
+      public void onSuccess() {
+        super.onSuccess();
         PsiElement oneElement = getTheOnlyOneElement();
         if (oneElement != null && navigateToElement(oneElement)) {
           myPopup.cancel();
@@ -138,7 +140,13 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final PsiReference myReference;
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
-      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS, createComparator(gotoData));
+      super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS,
+            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
+                @Override
+                public Comparable apply(PsiElement e1) {
+                  return getRenderer(e1, gotoData).getComparingObject(e1);
+                }
+              })));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;

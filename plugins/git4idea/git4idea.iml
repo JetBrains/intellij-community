@@ -41,9 +41,9 @@
     <orderEntry type="module" module-name="vcs-tests" scope="TEST" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
-    <orderEntry type="module" module-name="testGuiFramework" scope="TEST" />
     <orderEntry type="library" name="ini4j" level="project" />
     <orderEntry type="module" module-name="tasks-platform-impl" />
     <orderEntry type="module" module-name="tasks-platform-api" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

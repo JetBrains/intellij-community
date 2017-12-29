@@ -85,6 +85,7 @@ class TestDirectory extends TestPackage {
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(getConfiguration().getPersistentData().getDirName()));
     if (file == null) return null;
     Module dirModule = ModuleUtilCore.findModuleForFile(file, getConfiguration().getProject());
+    if (dirModule == null) return null;
     return TestClassCollector.getRootPath(dirModule, true);
   }
 

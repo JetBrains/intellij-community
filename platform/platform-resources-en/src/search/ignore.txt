@@ -98,7 +98,6 @@ every
 everyone
 everything
 everywhere
-except
 f
 far
 few

@@ -17,7 +17,9 @@ package com.intellij.ide;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.ide.presentation.PresentationProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.ClassExtension;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +37,9 @@ import java.util.Set;
  * @author peter
  */
 public class TypePresentationServiceImpl extends TypePresentationService {
+
+  private static final ExtensionPointName<PresentationProvider> PROVIDER_EP = ExtensionPointName.create("com.intellij.presentationProvider");
+  private static final ClassExtension<PresentationProvider> PROVIDERS = new ClassExtension<>(PROVIDER_EP.getName());
 
   @Override
   public Icon getIcon(Object o) {
@@ -88,7 +93,11 @@ public class TypePresentationServiceImpl extends TypePresentationService {
   private PresentationTemplate createPresentationTemplate(Class<?> type) {
     Presentation presentation = type.getAnnotation(Presentation.class);
     if (presentation != null) {
-      return new PresentationTemplateImpl(presentation, type);
+      return new AnnotationBasedTemplate(presentation, type);
+    }
+    PresentationProvider provider = PROVIDERS.forClass(type);
+    if (provider != null) {
+      return new ProviderBasedTemplate(provider);
     }
     final NullableLazyValue<Icon> icon = myIcons.get(type.getName());
     final NullableLazyValue<String> typeName = myNames.get(type.getName());
@@ -120,13 +129,13 @@ public class TypePresentationServiceImpl extends TypePresentationService {
 
   private final Map<String, NullableLazyValue<Icon>> myIcons = new HashMap<>();
   private final Map<String, NullableLazyValue<String>> myNames = new HashMap<>();
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<Class, Set<PresentationTemplate>> mySuperClasses = ConcurrentFactoryMap.createMap(key-> {
       LinkedHashSet<PresentationTemplate> templates = new LinkedHashSet<>();
       walkSupers(key, new LinkedHashSet<>(), templates);
       return templates;
     }
   );
+
   private void walkSupers(Class aClass, Set<Class> classes, Set<PresentationTemplate> templates) {
     if (!classes.add(aClass)) {
       return;
@@ -142,10 +151,65 @@ public class TypePresentationServiceImpl extends TypePresentationService {
     }
   }
 
-  /**
-   * @author Dmitry Avdeev
-   */
-  public static class PresentationTemplateImpl implements PresentationTemplate {
+  /** @noinspection unchecked*/
+  public static class ProviderBasedTemplate implements PresentationTemplate {
+
+    private final PresentationProvider myProvider;
+
+    public ProviderBasedTemplate(PresentationProvider provider) {
+      myProvider = provider;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon(Object o, int flags) {
+      return myProvider instanceof PresentationTemplate ?
+             ((PresentationTemplate)myProvider).getIcon(o, flags) :
+             myProvider.getIcon(o);
+    }
+
+    @Nullable
+    @Override
+    public String getName(Object o) {
+      return myProvider.getName(o);
+    }
+
+    @Nullable
+    @Override
+    public String getTypeName() {
+      return myProvider instanceof PresentationTemplate ?
+             ((PresentationTemplate)myProvider).getTypeName() : null;
+    }
+
+    @Override
+    public String getTypeName(Object o) {
+      return myProvider.getTypeName(o);
+    }
+  }
+
+  public static class PresentationTemplateImpl extends ProviderBasedTemplate {
+
+    public PresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
+      super(new AnnotationBasedTemplate(presentation, aClass));
+    }
+  }
+
+  /** @noinspection unchecked*/
+  private static class AnnotationBasedTemplate extends PresentationProvider<Object> implements PresentationTemplate {
+
+    private final Presentation myPresentation;
+    private final Class<?> myClass;
+
+    AnnotationBasedTemplate(Presentation presentation, Class<?> aClass) {
+      myPresentation = presentation;
+      myClass = aClass;
+    }
+
+    @Override
+    @Nullable
+    public Icon getIcon(Object o) {
+      return getIcon(o, 0);
+    }
 
     @Override
     @Nullable
@@ -183,14 +247,6 @@ public class TypePresentationServiceImpl extends TypePresentationService {
       PresentationProvider namer = myPresentationProvider.getValue();
       return namer == null ? null : namer.getName(o);
     }
-
-    public PresentationTemplateImpl(Presentation presentation, Class<?> aClass) {
-      this.myPresentation = presentation;
-      myClass = aClass;
-    }
-
-    private final Presentation myPresentation;
-    private final Class<?> myClass;
 
     private final NullableLazyValue<Icon> myIcon = new NullableLazyValue<Icon>() {
       @Override

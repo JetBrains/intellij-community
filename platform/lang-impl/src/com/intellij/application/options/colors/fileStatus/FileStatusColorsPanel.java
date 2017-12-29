@@ -84,14 +84,18 @@ public class FileStatusColorsPanel {
     });
     adjustTableSize();
     myColorSettingsPanel.setVisible(false);
-    myCustomizedLabel.setForeground(JBColor.GRAY);
-    myCustomizedLabel.setVisible(myModel.containsCustomSettings());
+    updateCustomizedLabel();
     myModel.addTableModelListener(new TableModelListener() {
       @Override
       public void tableChanged(TableModelEvent e) {
-        myCustomizedLabel.setVisible(myModel.containsCustomSettings());
+        updateCustomizedLabel();
       }
     });
+  }
+
+  private void updateCustomizedLabel() {
+    boolean isVisible = myModel.containsCustomSettings();
+    myCustomizedLabel.setForeground(isVisible ? JBColor.GRAY : UIUtil.getLabelBackground());
   }
 
   private void adjustTableSize() {

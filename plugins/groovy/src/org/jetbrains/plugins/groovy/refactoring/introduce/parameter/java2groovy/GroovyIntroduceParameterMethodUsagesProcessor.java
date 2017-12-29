@@ -61,7 +61,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GroovyIntrod
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 18, 2009 3:16:24 PM
  */
 public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceParameterMethodUsagesProcessor {
   private static final Logger LOG = Logger.getInstance(GroovyIntroduceParameterMethodUsagesProcessor.class);

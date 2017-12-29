@@ -271,7 +271,7 @@ public class GitRebaseUtils {
   @NotNull
   static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     return saver != null && saver.wereChangesSaved() ?
-           "<br/>Note that some local changes were <a href='stash'>" + toPast(saver.getOperationName()) + "</a> before rebase." :
+           "<br/>Local changes were " + toPast(saver.getOperationName()) + " before rebase." :
            "";
   }
 

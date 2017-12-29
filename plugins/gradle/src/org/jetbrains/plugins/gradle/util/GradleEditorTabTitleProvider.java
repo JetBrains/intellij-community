@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
@@ -29,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class GradleEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
   @Override
-  public String getEditorTabTitle(Project project, VirtualFile file) {
+  public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     if (GradleConstants.EXTENSION.equals(file.getExtension()) && GradleConstants.DEFAULT_SCRIPT_NAME.equals(file.getName())) {
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         if (!module.isDisposed()) {

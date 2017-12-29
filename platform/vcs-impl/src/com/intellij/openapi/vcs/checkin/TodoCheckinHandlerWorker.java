@@ -61,8 +61,6 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author irengrig
- *         Date: 2/18/11
- *         Time: 5:16 PM
  */
 public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.checkin.TodoCheckinHandler");

@@ -2,6 +2,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 public class StreamInlining {
@@ -46,8 +47,49 @@ public class StreamInlining {
 
   void test2(int[] array) {
     IntStream.of(array).filter(x -> x < 5)
-      .filter(x -> x > 7) // TODO: find variable state for non-qualified value
+      .filter(x -> <warning descr="Condition 'x > 7' is always 'false'">x > 7</warning>)
       .forEach(value -> System.out.println(value));
+  }
+
+  void testInstanceof(List<?> objects) {
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(x -> <warning descr="Condition 'x instanceof Number' is always 'false'">x instanceof Number</warning>)
+      .forEach(System.out::println);
+  }
+
+  void testIsInstanceIncomplete(List<?> objects) {
+    IntStream is = objects.stream()
+      .filter(String.class::isInstance)
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)x);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>);
+  }
+
+  Stream<String> testInstanceOfMap(List<?> objects) {
+    return objects.stream().filter(it -> it instanceof String)
+      .map(entry -> {
+        if (<warning descr="Condition 'entry instanceof String' is always 'true'">entry instanceof String</warning>) {
+          return (String)entry;
+        }
+        return null;
+      })
+      .filter(<warning descr="Method reference result is always 'true'">Objects::nonNull</warning>);
+  }
+
+  void test(Stream<String> stream, Optional<String> opt) {
+    stream.filter(<warning descr="Condition 'String.class::isInstance' is redundant and can be replaced with a null check">String.class::isInstance</warning>).forEach(System.out::println);
+    opt.filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>).ifPresent(System.out::println);
   }
 
   // IDEA-152871
@@ -130,5 +172,16 @@ public class StreamInlining {
     List<String> list2 = Stream.generate(() -> "xyz").limit(20).filter(<warning descr="Method reference result is always 'false'">"bar"::equals</warning>).collect(Collectors.toList());
     Stream.generate(() -> Optional.of("xyz")).filter(<warning descr="Method reference result is always 'true'">Optional::isPresent</warning>).forEach(System.out::println);
     LongStream.generate(() -> 5).limit(10).filter(x -> <warning descr="Condition 'x > 6' is always 'false'">x > 6</warning>).forEach(s -> System.out.println(s));
+  }
+
+  // IDEA-183501
+  void testFlatMapIdentity(Stream<Integer> stream) {
+    Integer res = Stream.of(stream)
+      .flatMap(Function.identity())
+      .min(Comparator.naturalOrder())
+      .orElse(null);
+    if(res == null) { // not always null
+      System.out.println("possible");
+    }
   }
 }

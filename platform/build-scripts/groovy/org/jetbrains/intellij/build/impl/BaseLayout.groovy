@@ -36,11 +36,11 @@ abstract class BaseLayout {
   final List<ModuleLibraryData> includedModuleLibraries = []
   /** JAR name -> name of project library which content should be unpacked */
   final MultiValuesMap<String, String> projectLibrariesToUnpack = new MultiValuesMap<>()
-  protected final Set<String> modulesWithLocalizableResourcesInCommonJar = new LinkedHashSet<>()
+  protected final Map<String, String>  modulesWithLocalizableResourcesInCommonJar = new LinkedHashMap<>()
   final List<String> modulesWithExcludedModuleLibraries = []
   final List<Pair<ResourcesGenerator, String>> resourceGenerators = []
 
-  boolean packLocalizableResourcesInCommonJar(String moduleName) {
-    return modulesWithLocalizableResourcesInCommonJar.contains(moduleName)
+  String localizableResourcesJarName(String moduleName) {
+    return modulesWithLocalizableResourcesInCommonJar.get(moduleName)
   }
 }

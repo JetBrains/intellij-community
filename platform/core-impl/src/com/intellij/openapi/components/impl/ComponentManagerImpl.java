@@ -19,6 +19,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -160,8 +161,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @Override
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
     if (myDisposeCompleted) {
-      ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: " + this);
+      ReadAction.run(() -> {
+        ProgressManager.checkCanceled();
+        throw new AssertionError("Already disposed: " + this);
+      });
     }
 
     ComponentAdapter adapter = getPicoContainer().getComponentAdapter(interfaceClass);
@@ -253,8 +256,10 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public MutablePicoContainer getPicoContainer() {
     MutablePicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
-      ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: "+toString());
+      ReadAction.run(() -> {
+        ProgressManager.checkCanceled();
+        throw new AssertionError("Already disposed: "+toString());
+      });
     }
     return container;
   }
@@ -484,6 +489,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
             ProgressIndicator indicator = getProgressIndicator();
             if (indicator != null) {
+              indicator.setIndeterminate(false);
               indicator.checkCanceled();
               setProgressDuringInit(indicator);
             }

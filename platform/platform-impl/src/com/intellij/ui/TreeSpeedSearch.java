@@ -26,12 +26,11 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.ArrayList;
@@ -95,28 +94,21 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   @Override
   protected Object[] getAllElements() {
+    JBIterable<TreePath> paths;
     if (myCanExpand) {
-      final Object root = myComponent.getModel().getRoot();
-      if (root instanceof DefaultMutableTreeNode || root instanceof PathAwareTreeNode) {
-        final List<TreePath> paths = new ArrayList<>();
-        TreeUtil.traverseDepth((TreeNode)root, node -> {
-          if (node instanceof DefaultMutableTreeNode) {
-            paths.add(new TreePath(((DefaultMutableTreeNode)node).getPath()));
-          }
-          else if (node instanceof PathAwareTreeNode) {
-            paths.add(((PathAwareTreeNode)node).getPath());
-          }
-          return true;
-        });
-        return paths.toArray(new TreePath[paths.size()]);
+      paths = TreeUtil.treePathTraverser(myComponent).traverse();
+    }
+    else {
+      TreePath[] arr = new TreePath[myComponent.getRowCount()];
+      for (int i = 0; i < arr.length; i++) {
+        arr[i] = myComponent.getPathForRow(i);
       }
+      paths = JBIterable.of(arr);
     }
-    TreePath[] paths = new TreePath[myComponent.getRowCount()];
-    for (int i = 0; i < paths.length; i++) {
-      paths[i] = myComponent.getPathForRow(i);
-    }
-    return paths;
-
+    List<TreePath> result = paths
+      .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode))
+      .toList();
+    return result.toArray(new TreePath[result.size()]);
   }
 
   @Override
@@ -125,10 +117,6 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     String string = myToStringConvertor.convert(path);
     if (string == null) return TO_STRING.convert(path);
     return string;
-  }
-
-  public interface PathAwareTreeNode extends TreeNode {
-    TreePath getPath();
   }
 
   @NotNull

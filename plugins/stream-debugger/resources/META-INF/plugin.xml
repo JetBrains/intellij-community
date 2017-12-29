@@ -3,6 +3,8 @@
   <name>Java Stream Debugger</name>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
+  <depends>com.intellij.modules.java</depends>
+
   <description><![CDATA[
       <p>In some ways, Stream API is better than traditional loop approach: it takes full advantage of modern multi-core architectures,
       and lets you process data in a declarative way. What's also good is that this approach helps to avoid the state issues, and the
@@ -12,17 +14,17 @@
       tool window by adding the <em>Trace Current Stream Chain</em> button, which becomes active when debugger stops inside of a
       chain of Stream API calls.</p>
 
-      <img src="https://blog.jetbrains.com/idea/files/2017/05/Screen-Shot-2017-05-11-at-15.06.58.png" height="300" width="750">
+      <img src="https://raw.githubusercontent.com/bibaev/static/master/debugger-stop.png" height="300" width="750">
 
       <p>After you click it, the current data stream is evaluated and you get a visualization of what exactly happens to each element
       from the first call to last, with changes occurring gradually as it's passing thru all the steps:</p>
 
-      <img src="https://blog.jetbrains.com/idea/files/2017/05/Screen-Shot-2017-05-11-at-15.06.18.png" height="300" width="750">
+      <img src="https://raw.githubusercontent.com/bibaev/static/master/flat_mode.png" height="300" width="750">
 
       <p>The <em>Split Mode button</em> in the left bottom corner lets you choose whether you want to see all operations at once or
       separately:</p>
 
-      <img src="https://blog.jetbrains.com/idea/files/2017/05/Screen-Shot-2017-05-11-at-15.04.39.png" height="300" width="750">
+      <img src="https://raw.githubusercontent.com/bibaev/static/master/split_mode.png" height="300" width="750">
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
     ]]></description>
@@ -31,7 +33,7 @@
       2017.3 <br>
         <ul>
             <li> Add as a bundled plugin to the IDEA Community </li>
-            <li> Change UI </li>
+            <li> Update UI </li>
             <li> Bug-fixes and improvements </li>
         </ul>
       0.1.4 <br>
@@ -68,7 +70,7 @@
   <actions>
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.action.TraceStreamAction"
-            icon="StreamDebuggerIcons.RUN_STREAM_DEBUG_ACTION"
+            icon="AllIcons.Debugger.StreamDebugger.Stream_debugger"
             text="Trace Current Stream Chain">
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
     </action>

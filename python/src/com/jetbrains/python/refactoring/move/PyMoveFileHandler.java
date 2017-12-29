@@ -281,7 +281,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
       }
     }
     if (!updatedFiles.isEmpty()) {
-      final PyImportOptimizer optimizer = new PyImportOptimizer();
+      final PyImportOptimizer optimizer = PyImportOptimizer.onlyRemoveUnused();
       for (PsiFile file : updatedFiles) {
         final boolean injectedFragment = InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file);
         if (!injectedFragment) {

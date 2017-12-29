@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tabs.JBTabsPresentation;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
 
     setContent(mySplitter);
     setOpaque(false);
-    setFocusCycleRoot(true);
+    setFocusCycleRoot(!ScreenReader.isActive());
 
 
     myTopSplit.setFirstComponent(left);

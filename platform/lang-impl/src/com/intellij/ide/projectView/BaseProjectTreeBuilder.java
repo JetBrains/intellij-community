@@ -86,12 +86,13 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
+    return nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
   @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
-    return nodeDescriptor.getParentDescriptor() == null || ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
+    return nodeDescriptor.getParentDescriptor() == null ||
+           nodeDescriptor instanceof AbstractTreeNode && ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
   }
 
   @Override
@@ -224,8 +225,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
     for (TreePath selectionPath : selectionPaths) {
       Object selected = selectionPath.getLastPathComponent();
-      if (elementIsEqualTo(selected, element)) {
-        return ((AbstractTreeNode)((DefaultMutableTreeNode)selected).getUserObject());
+      if (selected instanceof DefaultMutableTreeNode && elementIsEqualTo(selected, element)) {
+        Object userObject = ((DefaultMutableTreeNode)selected).getUserObject();
+        if (userObject instanceof AbstractTreeNode) return (AbstractTreeNode)userObject;
       }
     }
     return null;

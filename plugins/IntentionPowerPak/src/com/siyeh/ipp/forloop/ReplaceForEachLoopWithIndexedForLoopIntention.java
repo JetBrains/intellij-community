@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
@@ -51,6 +52,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     if (iteratedValueType == null) {
       return;
     }
+    CommentTracker tracker = new CommentTracker();
     final boolean isArray = iteratedValueType instanceof PsiArrayType;
     final PsiElement grandParent = statement.getParent();
     final PsiStatement context;
@@ -59,7 +61,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     } else {
       context = statement;
     }
-    final String iteratedValueText = getReferenceToIterate(iteratedValue, context);
+    final String iteratedValueText = getReferenceToIterate(iteratedValue, context, tracker);
     @NonNls final StringBuilder newStatement = new StringBuilder();
     final String indexText = createVariableName("i", PsiType.INT, statement);
     createForLoopDeclaration(statement, iteratedValue, isArray, iteratedValueText, newStatement, indexText);
@@ -93,14 +95,14 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
         //skip the braces
-        newStatement.append(children[i].getText());
+        newStatement.append(tracker.markUnchanged(children[i]).getText());
       }
     }
     else {
-      newStatement.append(body.getText());
+      newStatement.append(tracker.markUnchanged(body).getText());
     }
     newStatement.append('}');
-    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString());
+    PsiReplacementUtil.replaceStatementAndShortenClassNames(statement, newStatement.toString(), tracker);
   }
 
   protected void createForLoopDeclaration(PsiForeachStatement statement,
@@ -187,8 +189,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     return null;
   }
 
-  private static String getReferenceToIterate(
-    PsiExpression expression, PsiElement context) {
+  private static String getReferenceToIterate(PsiExpression expression, PsiElement context, CommentTracker tracker) {
     if (expression instanceof PsiMethodCallExpression ||
         expression instanceof PsiTypeCastExpression ||
         expression instanceof PsiArrayAccessExpression ||
@@ -201,7 +202,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
         (PsiParenthesizedExpression)expression;
       final PsiExpression innerExpression =
         parenthesizedExpression.getExpression();
-      return getReferenceToIterate(innerExpression, context);
+      return getReferenceToIterate(innerExpression, context, tracker);
     }
     else if (expression instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement =
@@ -218,7 +219,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       }
       return createVariable(variableName, expression, context);
     }
-    return expression.getText();
+    return tracker.markUnchanged(expression).getText();
   }
 
   private static String createVariable(String variableNameRoot,

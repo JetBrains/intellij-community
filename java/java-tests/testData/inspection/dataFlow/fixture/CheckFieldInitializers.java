@@ -8,6 +8,9 @@ class Foo {
 }
 class Bar {
   public static final String s = Foo.bar(<warning descr="Argument 'Foo.foo()' might be null">Foo.foo()</warning>);
-  @NotNull public static Object o = <warning descr="Expression 'Foo.foo()' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Foo.foo()</warning>;
+  @NotNull public static Object o = Foo.foo();
 
+}
+class Baz {
+  @NotNull public static Object o = <warning descr="Expression 'Foo.foo()' might evaluate to null but is assigned to a variable that is annotated with @NotNull">Foo.foo()</warning>;
 }

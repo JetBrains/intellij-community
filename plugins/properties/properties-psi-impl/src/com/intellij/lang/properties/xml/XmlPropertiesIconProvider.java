@@ -27,7 +27,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/29/11
  */
 public class XmlPropertiesIconProvider extends IconProvider {
 

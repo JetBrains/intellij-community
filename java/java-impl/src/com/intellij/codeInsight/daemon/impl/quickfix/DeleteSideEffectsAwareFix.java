@@ -37,6 +37,7 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
   private final SmartPsiElementPointer<PsiStatement> myStatementPtr;
   private final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
   private final String myMessage;
+  private final boolean myIsAvailable;
 
   public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression) {
     super(statement);
@@ -47,11 +48,6 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     if (sideEffects.isEmpty()) {
       myMessage = QuickFixBundle.message("delete.element.fix.text");
     }
-    else if (sideEffects.size() == 1 && statement instanceof PsiExpressionStatement &&
-             sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression)) {
-      // "Remove unnecessary parentheses" action is already present which will do the same
-      myMessage = "";
-    }
     else {
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
       if (statements.length == 1 && statements[0] instanceof PsiIfStatement) {
@@ -61,6 +57,9 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
         myMessage = QuickFixBundle.message("extract.side.effects", statements.length);
       }
     }
+    // "Remove unnecessary parentheses" action is already present which will do the same
+    myIsAvailable = sideEffects.size() != 1 || !(statement instanceof PsiExpressionStatement) ||
+                    sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression);
   }
 
   @Nls
@@ -82,7 +81,7 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return !myMessage.isEmpty();
+    return myIsAvailable;
   }
 
   @Override
@@ -101,11 +100,11 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
       PsiStatement lastAdded = BlockUtils.addBefore(statement, statements);
       statement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiStatement.class));
     }
-    statement.delete();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiStatement && !(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == statement)) {
+      statement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", statement));
+    } else {
+      statement.delete();
+    }
   }
 }

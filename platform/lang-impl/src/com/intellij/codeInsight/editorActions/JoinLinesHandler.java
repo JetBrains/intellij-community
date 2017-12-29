@@ -100,6 +100,7 @@ public class JoinLinesHandler extends EditorActionHandler {
 
     ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
       "Join Lines", project, null, IdeBundle.message("action.stop"), indicator -> {
+        indicator.setIndeterminate(false);
         Ref<Integer> caretRestoreOffset = new Ref<>(-1);
         CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
         try {
@@ -149,12 +150,11 @@ public class JoinLinesHandler extends EditorActionHandler {
       offsets = calcJoinLinesOffsets(psiFile, doc, startLine);
     }
 
-    int rc = -1;
-    int start;
-    int end;
     TextRange limits = findStartAndEnd(text, offsets.lastNonSpaceOffsetInStartLine, offsets.firstNonSpaceOffsetInNextLine, doc.getTextLength());
-    start = limits.getStartOffset(); end = limits.getEndOffset();
+    int start = limits.getStartOffset();
+    int end = limits.getEndOffset();
     // run raw joiners
+    int rc = -1;
     for (JoinLinesHandlerDelegate delegate: Extensions.getExtensions(JoinLinesHandlerDelegate.EP_NAME)) {
       if (delegate instanceof JoinRawLinesHandlerDelegate) {
         rc = ((JoinRawLinesHandlerDelegate)delegate).tryJoinRawLines(doc, psiFile, start, end);
@@ -215,9 +215,9 @@ public class JoinLinesHandler extends EditorActionHandler {
         end++;
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;
       }
-      else if (!offsets.isJoiningSameComment() && 
+      else if (!offsets.isJoiningSameComment() &&
                !(replaceStart >= 2 && text.charAt(replaceStart - 2) == '*' && text.charAt(replaceStart - 1) == '/') &&
-               text.charAt(end) == '/' && (end + 1) < text.length() && text.charAt(end + 1) == '/') {
+               text.charAt(end) == '/' && end + 1 < text.length() && text.charAt(end + 1) == '/') {
         adjacentLineComments = true;
         end += 2;
         while (end < doc.getTextLength() && (text.charAt(end) == ' ' || text.charAt(end) == '\t')) end++;

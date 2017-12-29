@@ -23,12 +23,12 @@ import org.jetbrains.uast.UastBinaryOperator
 
 
 class JavaUPolyadicExpression(
-        override val psi: PsiPolyadicExpression,
-        givenParent: UElement?
+  override val psi: PsiPolyadicExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
-    override val operands: List<UExpression> by lz {
-        psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
-    }
+  override val operands: List<UExpression> by lz {
+    psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
+  }
 
-    override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
+  override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
 }

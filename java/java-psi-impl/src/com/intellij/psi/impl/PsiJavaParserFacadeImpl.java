@@ -1,23 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.java.parser.*;
+import com.intellij.lang.java.parser.DeclarationParser;
+import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.lang.java.parser.ReferenceParser;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +20,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -402,6 +392,16 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaModule)) throw new IncorrectOperationException("Incorrect module declaration '" + text + "'");
     return (PsiJavaModule)element;
+  }
+
+  @NotNull
+  @Override
+  public PsiStatement createModuleStatementFromText(@NotNull String text) throws IncorrectOperationException {
+    String template = "module M { " + text + "; }";
+    PsiJavaModule module = createModuleFromText(template);
+    PsiStatement statement = PsiTreeUtil.getChildOfType(module, PsiStatement.class);
+    if (statement == null) throw new IncorrectOperationException("Incorrect module statement '" + text + "'");
+    return statement;
   }
 
   @NotNull

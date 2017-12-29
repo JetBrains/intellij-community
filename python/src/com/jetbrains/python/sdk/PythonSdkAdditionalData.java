@@ -154,7 +154,9 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private static void collectPaths(@NotNull List<String> paths, VirtualFilePointerContainer container) {
     for (String path : paths) {
       if (StringUtil.isEmpty(path)) continue;
-      container.add(VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path));
+      final String protocol = VirtualFileManager.extractProtocol(path);
+      final String url = protocol != null ? path : VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
+      container.add(url);
     }
   }
 

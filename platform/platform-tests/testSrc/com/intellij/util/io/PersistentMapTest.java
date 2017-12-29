@@ -16,10 +16,13 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.IntObjectCache;
 import com.intellij.util.io.storage.AbstractStorage;
+import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -30,7 +33,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 19, 2007
  */
 public class PersistentMapTest extends PersistentMapTestBase {
   public void testMap() throws IOException {
@@ -133,6 +135,116 @@ public class PersistentMapTest extends PersistentMapTestBase {
     }
   }
 
+  public void testPersistentMapWithoutChunks() throws IOException {
+    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+    try {
+      myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+    } finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+    }
+
+    String writeKey = "key";
+    String writeKey2 = "key2";
+
+    failIfSucceededWithoutAssertion(
+      () -> {
+        myMap.appendData(writeKey, out -> out.writeUTF("BAR"));
+        myMap.appendData(writeKey, out -> out.writeUTF("BAR"));
+      }, 
+      "Assertion on writing chunks"
+    );
+
+    failIfSucceededWithoutAssertion(
+      () -> {
+        myMap.appendData(writeKey2, out -> out.writeUTF("BAR"));
+        myMap.force();
+        myMap.appendData(writeKey2, out -> out.writeUTF("BAR"));
+        myMap.force();
+      },
+      "Assertion on writing chunks 2"
+    );
+    
+    try {
+      myMap.close();
+    } catch (Throwable ignore) {}
+  }
+
+  protected void failIfSucceededWithoutAssertion(ThrowableRunnable<IOException> runnable, String message) throws IOException {
+    try {
+      runnable.run();
+      fail(message);
+    }
+    catch (AssertionFailedError assertionFailedError) { throw assertionFailedError; }
+    catch (AssertionError ignored) {}
+  }
+
+  public void testCreationTimeOptionsAffectPersistentMapVersion() throws IOException {
+    String keyWithChunks = "keyWithChunks";
+    myMap.appendData(keyWithChunks, out -> out.writeUTF("BAR"));
+    myMap.force();
+    myMap.appendData(keyWithChunks, out -> out.writeUTF("BAR2"));
+
+    myMap.close();
+
+    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+    try {
+      myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+      fail();
+    } catch (PersistentEnumeratorBase.VersionUpdatedException ignore) {}
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+    }
+  }
+
+  public void testForwardCompact() throws IOException {
+    clearMap(myFile, myMap);
+
+    Random random = new Random(1);
+    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+    //PersistentHashMapValueStorage.CreationTimeOptions.DO_COMPRESSION.set(Boolean.FALSE);
+    
+    PersistentHashMap<Integer, String> map = null;
+    try {
+      map = new PersistentHashMap<>(myFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+      
+      //final int stringsCount = 100;
+      final int stringsCount = 2000000;
+      int repetition = 100;
+      
+      List<String> strings = new ArrayList<>(stringsCount);
+      for (int i = 0; i < stringsCount; ++i) {
+        final String value = StringEnumeratorTest.createRandomString(random);
+        
+        map.put(i, StringUtil.repeat(value, repetition));
+        if (i % 2 == 0) strings.add(value);
+        else map.remove(i); // create some garbage
+      }
+
+      map.close();
+
+      map = new PersistentHashMap<>(myFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+
+      map.close();
+      map = new PersistentHashMap<>(myFile, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+
+      { // after compact
+        final Collection<Integer> allKeys = new HashSet<>(map.getAllKeysWithExistingMapping());
+        assertEquals(allKeys.size(), strings.size());
+        for (int i = 0; i < stringsCount; ++i) if (i % 2 == 0) assertTrue(allKeys.contains(i));
+        allKeys.clear();
+                                                              
+        for (int i = 0; i < stringsCount / 2; ++i) {
+          assertEquals(StringUtil.repeat(strings.get(i), repetition), map.get(i * 2));
+        }
+      }
+    }
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+      
+      clearMap(myFile, map);
+    }
+  }
+  
   public void testGarbageSizeUpdatedAfterCompact() throws IOException {
     final int stringsCount = 5/*1000000*/;
     Set<String> strings = new HashSet<>(stringsCount);

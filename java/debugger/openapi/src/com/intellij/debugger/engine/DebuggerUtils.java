@@ -26,19 +26,18 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -350,13 +349,31 @@ public abstract class DebuggerUtils {
     return null;
   }
 
+  // compilable version of array class for compiling evaluator
+  private static final String ARRAY_CLASS_NAME = "__Dummy_Array__";
+  private static final String ARRAY_CLASS_TEXT =
+    "public class " + ARRAY_CLASS_NAME + "<T> {" +
+    "  public final int length;" +
+    "  private " + ARRAY_CLASS_NAME + "(int l) {length = l;}" +
+    "  public T[] clone() {return null;}" +
+    "}";
+
+  // workaround to get an array class of needed language version for correct HL in array renderers expression
+  private static PsiClass createArrayClass(Project project, LanguageLevel level) {
+    PsiFile psiFile =
+      PsiFileFactory.getInstance(project).createFileFromText(ARRAY_CLASS_NAME + "." + StdFileTypes.JAVA.getDefaultExtension(),
+                                                             StdFileTypes.JAVA.getLanguage(),
+                                                             ARRAY_CLASS_TEXT);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, level);
+    return ((PsiJavaFile)psiFile).getClasses()[0];
+  }
+
   @Nullable
   public static PsiClass findClass(@NotNull final String className, @NotNull Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(project).getElementFactory()
-          .getArrayClass(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+        return createArrayClass(project, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       }
       if (project.isDefault()) {
         return null;

@@ -28,6 +28,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final List<InspectionGadgetsFix> fixes = new ArrayList<>(3);
     final PsiMethod method = (PsiMethod)infos[1];
-    if (AnnotationUtil.isAnnotated(method, IGNORE, false)) {
+    if (AnnotationUtil.isAnnotated(method, IGNORE, 0)) {
       fixes.add(new RemoveIgnoreAndRename(method));
     }
     if (TestUtils.isJUnit4TestMethod(method)) {
@@ -88,6 +89,12 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
     @Override
     public String getName() {
       return InspectionGadgetsBundle.message("ignore.test.method.in.class.extending.junit3.testcase.quickfix", getTargetName());
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
     }
 
     @Override
@@ -265,9 +272,15 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4Annot
                                : InspectionGadgetsBundle.message("remove.junit4.test.annotation.and.rename.quickfix", myNewName);
     }
 
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
+    }
+
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      deleteAnnotation(descriptor, "org.junit.Test");
+      WriteAction.run(() -> deleteAnnotation(descriptor, "org.junit.Test"));
       if (myNewName != null) {
         super.doFix(project, descriptor);
       }

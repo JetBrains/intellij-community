@@ -19,6 +19,7 @@ import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 import java.util.Collections;
@@ -29,12 +30,12 @@ import java.util.List;
  */
 public class GroovyParameterListSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof GrParameterList || e.getParent() instanceof GrParameterList;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     if (e.getParent() instanceof GrParameterList) e = e.getParent();
     if (!(e instanceof GrParameterList)) return Collections.emptyList();
     return Collections.singletonList(e.getTextRange());

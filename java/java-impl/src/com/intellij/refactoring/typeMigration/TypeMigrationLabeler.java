@@ -45,7 +45,6 @@ import java.util.*;
 
 /**
  * @author db
- * Date: Sep 19, 2004
  */
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeMigrationLabeler");
@@ -139,6 +138,7 @@ public class TypeMigrationLabeler {
         final PsiExpression expr = pair.getFirst().getElement();
         LOG.assertTrue(expr != null);
         return new UsageInfo(expr) {
+          @Override
           @Nullable
           public String getTooltipText() {
             final PsiType type = expr.isValid() ? expr.getType() : null;
@@ -159,6 +159,7 @@ public class TypeMigrationLabeler {
     for (final PsiElement element : myConversions.keySet()) {
       final Object conv = myConversions.get(element);
       usages[j++] = new TypeMigrationUsageInfo(element) {
+        @Override
         public String getTooltipText() {
           if (conv instanceof String) {   //todo
             final String conversion = (String)conv;

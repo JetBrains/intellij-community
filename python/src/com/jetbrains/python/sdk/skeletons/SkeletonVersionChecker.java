@@ -16,12 +16,11 @@
 package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -34,16 +33,18 @@ import java.util.regex.Pattern;
  * Is immutable.
  * <br/>
  * User: dcheryasov
- * Date: 2/23/11 5:32 PM
  */
 public class SkeletonVersionChecker {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkType.SkeletonVersionChecker");
 
   final static Pattern ONE_LINE = Pattern.compile("^(?:(\\w+(?:\\.\\w+)*|\\(built-in\\)|\\(default\\))\\s+(\\d+\\.\\d+))?\\s*(?:#.*)?$");
 
+  public static final int PREGENERATED_VERSION = -1;
+
   @NonNls static final String REQUIRED_VERSION_FNAME = "required_gen_version";
   @NonNls static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
   @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
+  @NonNls public static final String PREGENERATED = "(pre-generated)"; // pre-generated skeleton
   private TreeMap<QualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
   private Integer myDefaultVersion; // version of (default)
   private Integer myBuiltinsVersion; // version of (built-it)
@@ -55,6 +56,10 @@ public class SkeletonVersionChecker {
     myExplicitVersion = createTreeMap();
     myDefaultVersion = defaultVersion;
     load();
+  }
+
+  public boolean isPregenerated() {
+    return myDefaultVersion == PREGENERATED_VERSION;
   }
 
   private static TreeMap<QualifiedName, Integer> createTreeMap() {
@@ -105,7 +110,9 @@ public class SkeletonVersionChecker {
                 if (package_name != null) {
                   final int version = fromVersionString(ver);
                   if (DEFAULT_NAME.equals(package_name)) {
-                    myDefaultVersion = version;
+                    if (myDefaultVersion != PREGENERATED_VERSION) {
+                      myDefaultVersion = version;
+                    }
                   }
                   else if (BUILTIN_NAME.equals(package_name)) {
                     myBuiltinsVersion = version;

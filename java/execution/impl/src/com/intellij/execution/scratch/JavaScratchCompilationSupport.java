@@ -43,7 +43,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 08-Sep-15
  */
 public class JavaScratchCompilationSupport implements CompileTask {
   public JavaScratchCompilationSupport(CompilerManager compileManager) {

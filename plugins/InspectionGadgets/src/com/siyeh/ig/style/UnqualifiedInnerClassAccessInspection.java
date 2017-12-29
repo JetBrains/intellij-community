@@ -108,17 +108,9 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
           }
         }
       }
-      final ReferenceCollector referenceCollector;
-      if (onDemand) {
-        referenceCollector = new ReferenceCollector(qualifiedName, true);
-      }
-      else {
-        referenceCollector = new ReferenceCollector(innerClassName, false);
-      }
-      final PsiClass[] classes = javaFile.getClasses();
-      for (PsiClass psiClass : classes) {
-        psiClass.accept(referenceCollector);
-      }
+      final ReferenceCollector referenceCollector = new ReferenceCollector(onDemand ? qualifiedName : innerClassName, onDemand);
+      javaFile.accept(referenceCollector);
+
       final Collection<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       final List<SmartPsiElementPointer> pointers = new ArrayList<>();
@@ -148,7 +140,9 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
             elements.add(psiElement);
           }
         }
-        HighlightUtils.highlightElements(elements);
+        if (isOnTheFly()) {
+          HighlightUtils.highlightElements(elements);
+        }
       }
     }
 
@@ -211,6 +205,9 @@ public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClass
       this.name = name;
       this.onDemand = onDemand;
     }
+
+    @Override
+    public void visitImportList(PsiImportList list) { }
 
     @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {

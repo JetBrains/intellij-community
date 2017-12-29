@@ -262,12 +262,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void rebuildListContent() {
     ArrayList<Item> items = new ArrayList<>();
-    int i = 0;
+    int index = 0;
     List<Data> contents = new ArrayList<>(getContents());
     for (Data content : contents) {
       String longText = getStringRepresentationFor(content);
-      if (StringUtil.isEmpty(longText)) continue;
-      items.add(new Item(i++, longText));
+      if (!StringUtil.isEmpty(longText)) {
+        items.add(new Item(index, longText));
+      }
+      index++;
     }
     myAllContents = contents;
     FilteringListModel listModel = (FilteringListModel)myList.getModel();

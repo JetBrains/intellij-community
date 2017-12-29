@@ -1,8 +1,10 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -77,8 +79,8 @@ public class PyEnvTaskRunner {
         }
         final Sdk sdk = createSdkByExecutable(executable);
 
-        /**
-         * Skipping test if {@link PyTestTask} reports it does not support this language level
+        /*
+          Skipping test if {@link PyTestTask} reports it does not support this language level
          */
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
@@ -104,14 +106,14 @@ public class PyEnvTaskRunner {
           e);
       }
       finally {
-        TransactionGuard.getInstance().submitTransactionAndWait(() -> {
-          try {
-            testTask.tearDown();
-          }
-          catch (Exception e) {
-            throw new RuntimeException("Couldn't tear down task", e);
-          }
-        });
+        try {
+          // Teardown should be called on main thread because fixture teardown checks for
+          // thread leaks, and blocked main thread is considered as leaked
+          testTask.tearDown();
+        }
+        catch (Exception e) {
+          throw new RuntimeException("Couldn't tear down task", e);
+        }
       }
     }
 

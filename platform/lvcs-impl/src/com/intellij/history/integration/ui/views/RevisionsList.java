@@ -33,9 +33,12 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -185,7 +188,7 @@ public class RevisionsList {
 
     private final DefaultTableCellRenderer myTemplate = new DefaultTableCellRenderer();
 
-    private final JPanel myWrapperPanel = new JPanel();
+    private final MyWrapperPanel myWrapperPanel = new MyWrapperPanel();
     private final JPanel myItemPanel = new JPanel();
 
     private final MyBorder myBorder = new MyBorder(BORDER_INSETS);
@@ -366,6 +369,38 @@ public class RevisionsList {
       }
 
       return new LabelsAndColor(named, title, filesCount, label);
+    }
+
+    /**
+     * Given each item in the list of revisions contains multiple strings,
+     * we customize the containing panel to expose an accessible name
+     * combining all these strings so that screen readers announce these
+     * strings as the active list item changes.
+     */
+    private class MyWrapperPanel extends JPanel {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleMyWrapperPanel();
+        }
+        return accessibleContext;
+      }
+
+      protected class AccessibleMyWrapperPanel extends AccessibleJPanel {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.LABEL;
+        }
+
+        @Override
+        public String getAccessibleName() {
+          if (myPeriodLabel.isVisible()) {
+            return AccessibleContextUtil.getCombinedName(", ", myPeriodLabel, myTitleLabel, myFilesCountLabel, myDateLabel);
+          } else {
+            return AccessibleContextUtil.getCombinedName(", ", myTitleLabel, myFilesCountLabel, myDateLabel);
+          }
+        }
+      }
     }
 
     private static class LabelsAndColor {

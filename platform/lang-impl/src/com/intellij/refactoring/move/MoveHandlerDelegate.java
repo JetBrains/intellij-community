@@ -16,10 +16,10 @@
 
 package com.intellij.refactoring.move;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +33,14 @@ public abstract class MoveHandlerDelegate {
   public static final ExtensionPointName<MoveHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.moveHandler");
 
   public boolean canMove(PsiElement[] elements, @Nullable final PsiElement targetContainer) {
-    return targetContainer == null || isValidTarget(targetContainer, elements);
+    return isValidTarget(targetContainer, elements);
   }
 
   public boolean canMove(DataContext dataContext){
     return false;
   }
 
-  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
+  public boolean isValidTarget(@Nullable final PsiElement targetElement, PsiElement[] sources) {
     return false;
   }
 

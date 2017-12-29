@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 20, 2007
  */
 class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.ValueContainerImpl");
@@ -58,10 +57,13 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       attachFileSetForNewValue(value, inputId);
     }
     else if (fileSetObject instanceof Integer) {
-      ChangeBufferingList list = new ChangeBufferingList();
-      list.add(((Integer)fileSetObject).intValue());
-      list.add(inputId);
-      resetFileSetForValue(value, list);
+      int existingValue = ((Integer)fileSetObject).intValue();
+      if (existingValue != inputId) {
+        ChangeBufferingList list = new ChangeBufferingList();
+        list.add(existingValue);
+        list.add(inputId);
+        resetFileSetForValue(value, list);
+      }
     }
     else {
       ((ChangeBufferingList)fileSetObject).add(inputId);

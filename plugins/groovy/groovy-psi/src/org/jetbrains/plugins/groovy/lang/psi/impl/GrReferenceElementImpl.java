@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -32,6 +20,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
  * @author ven
  */
 public abstract class GrReferenceElementImpl<Q extends PsiElement> extends GroovyPsiElementImpl implements GrReferenceElement<Q> {
+
+  private static final String DUMMY_FQN = "05ab655a-0e15-4f35-909d-9dff5e757f63";
+
+  private volatile String myQualifiedReferenceName = DUMMY_FQN;
   private volatile String myCachedQName;
   private volatile String myCachedTextSkipWhiteSpaceAndComments;
 
@@ -40,12 +32,8 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
   }
 
   @Override
-  public PsiReference getReference() {
-    return this;
-  }
-
-  @Override
   public void subtreeChanged() {
+    myQualifiedReferenceName = DUMMY_FQN;
     myCachedQName = null;
     myCachedTextSkipWhiteSpaceAndComments = null;
     super.subtreeChanged();
@@ -58,6 +46,17 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
       return nameElement.getText();
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedReferenceName() {
+    String qualifiedReferenceName = myQualifiedReferenceName;
+    if (qualifiedReferenceName == DUMMY_FQN) {
+      qualifiedReferenceName = PsiImplUtilKt.getQualifiedReferenceName(this);
+      myQualifiedReferenceName = qualifiedReferenceName;
+    }
+    return qualifiedReferenceName;
   }
 
   @Override

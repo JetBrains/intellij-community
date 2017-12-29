@@ -1,21 +1,8 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.QuickFixAction;
 import com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper;
@@ -64,9 +51,13 @@ public class QuickFixPreviewPanelFactory {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
-      CommonProblemDescriptor[] descriptors = myView.getTree().getSelectedDescriptors(false, null, false, true);
-      QuickFixAction[] fixes = view.getProvider().getQuickFixes(myWrapper, view.getTree());
-      myEmpty = fillPanel(fixes, descriptors, view);
+      QuickFixAction[] commonFixes = view.getProvider().getCommonQuickFixes(myWrapper, view.getTree());
+      boolean multipleDescriptors = myView.getTree().getSelectedDescriptors(false, null, false, true).length > 1;
+      QuickFixAction[] partialFixes = QuickFixAction.EMPTY;
+      if (multipleDescriptors && commonFixes.length == 0) {
+        partialFixes = view.getProvider().getPartialQuickFixes(myWrapper, view.getTree());
+      }
+      myEmpty = fillPanel(commonFixes, partialFixes, multipleDescriptors, view);
     }
 
     public boolean isEmpty() {
@@ -74,16 +65,15 @@ public class QuickFixPreviewPanelFactory {
     }
 
     private boolean fillPanel(@NotNull QuickFixAction[] fixes,
-                              CommonProblemDescriptor[] descriptors,
+                              @NotNull QuickFixAction[] partialFixes,
+                              boolean multipleDescriptors,
                               @NotNull InspectionResultsView view) {
       boolean hasFixes = fixes.length != 0;
-      int problemCount = descriptors.length;
-      boolean multipleDescriptors = problemCount > 1;
       setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
       boolean hasComponents = false;
 
       final int actualProblemCount = myView.getTree().getContext().getPresentation(myWrapper).getProblemsCount(myView.getTree());
-      if (actualProblemCount > 1 || (actualProblemCount == 1 && problemCount > 1)) {
+      if (actualProblemCount > 1 || (actualProblemCount == 1 && multipleDescriptors)) {
         add(getLabel(actualProblemCount));
         hasComponents = true;
       }
@@ -96,6 +86,11 @@ public class QuickFixPreviewPanelFactory {
       if (suppressionCombo != null) {
         actions.add(suppressionCombo);
       }
+
+      if (partialFixes.length != 0) {
+        actions.add(createPartialFixCombo(partialFixes));
+      }
+
       if (actions.getChildrenCount() != 0) {
         final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
@@ -106,11 +101,34 @@ public class QuickFixPreviewPanelFactory {
 
       if (hasComponents) {
         int top = hasFixes ? 2 : 9;
-        int left = (hasFixes || problemCount > 1) ? 8 : 5;
+        int left = (hasFixes || multipleDescriptors) ? 8 : 5;
         int bottom = hasFixes ? 0 : 8;
         setBorder(JBUI.Borders.empty(top, left, bottom, 0));
       }
+
+
       return !hasComponents;
+    }
+
+    @NotNull
+    private static AnAction createPartialFixCombo(QuickFixAction[] fixes) {
+      DefaultActionGroup group = new DefaultActionGroup();
+      for (QuickFixAction fix : fixes) {
+        group.add(fix);
+      }
+
+      return new ComboBoxAction() {
+        {
+          getTemplatePresentation().setText("Fix partially");
+          setSmallVariant(false);
+        }
+
+        @NotNull
+        @Override
+        protected DefaultActionGroup createPopupActionGroup(JComponent button) {
+          return group;
+        }
+      };
     }
 
     @Nullable

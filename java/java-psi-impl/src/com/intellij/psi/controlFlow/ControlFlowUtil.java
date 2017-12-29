@@ -1238,9 +1238,9 @@ public class ControlFlowUtil {
     return null;
   }
 
-  private static boolean isUnqualified(PsiReferenceExpression element) {
+  public static boolean isUnqualified(PsiReferenceExpression element) {
     if (element.isQualified()) {
-      final PsiExpression qualifierExpression = element.getQualifierExpression();
+      final PsiExpression qualifierExpression = PsiUtil.deparenthesizeExpression(element.getQualifierExpression());
       return qualifierExpression instanceof PsiThisExpression && ((PsiThisExpression)qualifierExpression).getQualifier() == null;
     }
     return true;

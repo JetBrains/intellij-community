@@ -85,6 +85,18 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     }
   };
 
+  public static final LightProjectDescriptor JAVA_X = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return IdeaTestUtil.getMockJdk9();
+    }
+
+    @Override
+    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_X);
+    }
+  };
+
   public static final LightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor();
 
   protected JavaCodeInsightTestFixture myFixture;

@@ -16,10 +16,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.DfaUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.SpecialField;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
@@ -32,6 +29,7 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +135,8 @@ public class DfaExpressionFactory {
         if (constValue != null && !maybeUninitializedConstant(constValue, refExpr, var)) return constValue;
       }
 
-      if (DfaValueFactory.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var)) {
+      if (ExpressionUtils.isEffectivelyUnqualified(refExpr) || isStaticFinalConstantWithoutInitializationHacks(var) ||
+          (var instanceof PsiMethod && var.hasModifierProperty(PsiModifier.STATIC))) {
         return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null);
       }
 
@@ -190,7 +189,7 @@ public class DfaExpressionFactory {
     }
     if (target instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)target;
-      if (PropertyUtilBase.isSimplePropertyGetter(method) && !(method.getReturnType() instanceof PsiPrimitiveType)) {
+      if (PropertyUtilBase.isSimplePropertyGetter(method) && ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
         String qName = PsiUtil.getMemberQualifiedName(method);
         if (qName == null || !FALSE_GETTERS.value(qName)) {
           return method;
@@ -201,8 +200,12 @@ public class DfaExpressionFactory {
           return sf.getCanonicalOwner(null, ((PsiMethod)target).getContainingClass());
         }
       }
-      if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {
-        return method;
+      if (method.getParameterList().getParametersCount() == 0) {
+        if ((ControlFlowAnalyzer.isPure(method) ||
+            AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) &&
+            ControlFlowAnalyzer.getMethodCallContracts(method, null).isEmpty()) {
+          return method;
+        }
       }
     }
     return null;

@@ -20,46 +20,47 @@ import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.*
 
 class JavaUTryExpression(
-        override val psi: PsiTryStatement,
-        givenParent: UElement?
+  override val psi: PsiTryStatement,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UTryExpression {
-    override val tryClause by lz { JavaConverter.convertOrEmpty(psi.tryBlock, this) }
-    override val catchClauses by lz { psi.catchSections.map { JavaUCatchClause(it, this) } }
-    override val finallyClause by lz { psi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
+  override val tryClause by lz { JavaConverter.convertOrEmpty(psi.tryBlock, this) }
+  override val catchClauses by lz { psi.catchSections.map { JavaUCatchClause(it, this) } }
+  override val finallyClause by lz { psi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
 
-    override val resourceVariables by lz {
-        psi.resourceList
-                ?.filterIsInstance<PsiResourceVariable>()
-                ?.map { JavaUVariable.create(it, this) }
-                ?: emptyList()
-    }
+  override val resourceVariables by lz {
+    psi.resourceList
+      ?.filterIsInstance<PsiResourceVariable>()
+      ?.map { JavaUVariable.create(it, this) }
+    ?: emptyList()
+  }
 
-    override val hasResources: Boolean
-        get() = psi.resourceList != null
+  override val hasResources: Boolean
+    get() = psi.resourceList != null
 
-    override val tryIdentifier: UIdentifier
-        get() = UIdentifier(psi.getChildByRole(ChildRole.TRY_KEYWORD), this)
+  override val tryIdentifier: UIdentifier
+    get() = UIdentifier(psi.getChildByRole(ChildRole.TRY_KEYWORD), this)
 
-    override val finallyIdentifier: UIdentifier?
-        get() = psi.getChildByRole(ChildRole.FINALLY_KEYWORD)?.let { UIdentifier(it, this) }
+  override val finallyIdentifier: UIdentifier?
+    get() = psi.getChildByRole(ChildRole.FINALLY_KEYWORD)?.let { UIdentifier(it, this) }
 }
 
 class JavaUCatchClause(
-        override val psi: PsiCatchSection,
-        givenParent: UElement?
+  override val psi: PsiCatchSection,
+  givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UCatchClause {
-    override val body by lz { JavaConverter.convertOrEmpty(psi.catchBlock, this) }
-    
-    override val parameters by lz {
-        (psi.parameter?.let { listOf(it) } ?: emptyList()).map { JavaUParameter(it, this) }
-    }
+  override val body by lz { JavaConverter.convertOrEmpty(psi.catchBlock, this) }
 
-    override val typeReferences by lz {
-        val typeElement = psi.parameter?.typeElement ?: return@lz emptyList<UTypeReferenceExpression>()
-        if (typeElement.type is PsiDisjunctionType) {
-            typeElement.children.filterIsInstance<PsiTypeElement>().map { JavaUTypeReferenceExpression(it, this) }
-        } else {
-            listOf(JavaUTypeReferenceExpression(typeElement, this))
-        }
+  override val parameters by lz {
+    (psi.parameter?.let { listOf(it) } ?: emptyList()).map { JavaUParameter(it, this) }
+  }
+
+  override val typeReferences by lz {
+    val typeElement = psi.parameter?.typeElement ?: return@lz emptyList<UTypeReferenceExpression>()
+    if (typeElement.type is PsiDisjunctionType) {
+      typeElement.children.filterIsInstance<PsiTypeElement>().map { JavaUTypeReferenceExpression(it, this) }
     }
+    else {
+      listOf(JavaUTypeReferenceExpression(typeElement, this))
+    }
+  }
 }

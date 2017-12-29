@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
@@ -29,71 +30,121 @@ public class AccessibleContextUtil {
   //@VisibleForTesting
   static final String PUNCTUATION_SEPARATOR = "  ";
 
-  public static void setName(@NotNull JComponent component, @NotNull String name) {
-    component.getAccessibleContext().setAccessibleName(name);
+  public static void setName(@NotNull Component component, String name) {
+    setAccessibleName(component, name);
   }
 
-  public static void setName(@NotNull JComponent component, @NotNull JComponent source) {
-    String name = source.getAccessibleContext().getAccessibleName();
-    if (name != null) {
-      component.getAccessibleContext().setAccessibleName(name);
-    }
+  public static void setName(@NotNull Component component, @NotNull Component source) {
+    setName(component, getAccessibleName(source));
   }
 
-  public static void setCombinedName(@NotNull JComponent component,
-                                     @NotNull JComponent j1, @NotNull String separator, @NotNull JComponent j2) {
-    component.getAccessibleContext().setAccessibleName(
+  public static void setCombinedName(@NotNull Component component,
+                                     @NotNull Component j1, @NotNull String separator, @NotNull Component j2) {
+    setAccessibleName(component,
       combineAccessibleStrings(
-        j1.getAccessibleContext().getAccessibleName(),
+        getAccessibleName(j1),
         separator,
-        j2.getAccessibleContext().getAccessibleName()));
+        getAccessibleName(j2)));
   }
 
-  public static void setCombinedName(@NotNull JComponent component,
-                                     @NotNull JComponent j1, @NotNull String separator1,
-                                     @NotNull JComponent j2, @NotNull String separator2, @NotNull JComponent j3) {
-    component.getAccessibleContext().setAccessibleName(
+  public static void setCombinedName(@NotNull Component component,
+                                     @NotNull Component j1, @NotNull String separator1,
+                                     @NotNull Component j2, @NotNull String separator2, @NotNull Component j3) {
+    setAccessibleName(component,
       combineAccessibleStrings(
-        j1.getAccessibleContext().getAccessibleName(),
+        getAccessibleName(j1),
         separator1,
-        j2.getAccessibleContext().getAccessibleName(),
+        getAccessibleName(j2),
         separator2,
-        j3.getAccessibleContext().getAccessibleName()));
+        getAccessibleName(j3)));
   }
 
-  public static void setDescription(@NotNull JComponent component, @NotNull JComponent source) {
-    String description = source.getAccessibleContext().getAccessibleDescription();
-    if (description != null) {
-      component.getAccessibleContext().setAccessibleDescription(description);
+  public static String getCombinedName(@NotNull Component j1, @NotNull String separator, @NotNull Component j2) {
+    return combineAccessibleStrings(getAccessibleName(j1), separator, getAccessibleName(j2));
+  }
+
+  public static String getCombinedName(@NotNull Component j1, @NotNull String separator1,
+                                       @NotNull Component j2, @NotNull String separator2, @NotNull Component j3) {
+    return combineAccessibleStrings(getAccessibleName(j1), separator1, getAccessibleName(j2), separator2, getAccessibleName(j3));
+  }
+
+  public static String getCombinedName(@NotNull String separator, Component... components) {
+    String result = "";
+    for (Component c : components) {
+      result = combineAccessibleStrings(result, separator, getAccessibleName(c));
     }
+    return result;
   }
 
-  public static void setCombinedDescription(@NotNull JComponent component, @NotNull JComponent j1,
-                                            @NotNull String separator, @NotNull JComponent j2) {
-    component.getAccessibleContext().setAccessibleDescription(
+  public static void setDescription(@NotNull Component component, @NotNull Component source) {
+    setAccessibleDescription(component, getAccessibleDescription(source));
+  }
+
+  public static void setDescription(@NotNull Component component, String description) {
+    setAccessibleDescription(component, description);
+  }
+
+  public static void setCombinedDescription(@NotNull Component component, @NotNull Component j1,
+                                            @NotNull String separator, @NotNull Component j2) {
+    setAccessibleDescription(component,
       combineAccessibleStrings(
-        j1.getAccessibleContext().getAccessibleDescription(),
+        getAccessibleDescription(j1),
         separator,
-        j2.getAccessibleContext().getAccessibleDescription()));
+        getAccessibleDescription(j2)));
   }
 
-  public static void setCombinedDescription(@NotNull JComponent component, @NotNull JComponent j1, @NotNull String separator1,
-                                            @NotNull JComponent j2, @NotNull String separator2, @NotNull JComponent j3) {
-    component.getAccessibleContext().setAccessibleDescription(
+  public static void setCombinedDescription(@NotNull Component component, @NotNull Component j1, @NotNull String separator1,
+                                            @NotNull Component j2, @NotNull String separator2, @NotNull Component j3) {
+    setAccessibleDescription(component,
       combineAccessibleStrings(
-        j1.getAccessibleContext().getAccessibleDescription(),
+        getAccessibleDescription(j1),
         separator1,
-        j2.getAccessibleContext().getAccessibleDescription(),
+        getAccessibleDescription(j2),
         separator2,
-        j3.getAccessibleContext().getAccessibleDescription()));
+        getAccessibleDescription(j3)));
   }
 
-  public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
+  public static String getCombinedDescription(@NotNull Component j1, @NotNull String separator, @NotNull Component j2) {
+    return combineAccessibleStrings(getAccessibleDescription(j1), separator, getAccessibleDescription(j2));
+  }
+
+  public static String getCombinedDescription(@NotNull Component j1, @NotNull String separator1,
+                                              @NotNull Component j2, @NotNull String separator2, @NotNull Component j3) {
+    return combineAccessibleStrings(getAccessibleDescription(j1), separator1,
+                                    getAccessibleDescription(j2), separator2, getAccessibleDescription(j3));
+  }
+
+  /**
+   * Returns {@code description} if it is different than the accessible
+   * name, {@code null} otherwise.
+   *
+   * Calling this method is useful from custom implementations of
+   * {@link AccessibleContext@getAccessibleDescription} to ensure screen
+   * readers don't announce the same text twice (name and description) when
+   * a component receives the focus.
+   */
+  @Nullable
+  public static String getUniqueDescription(@NotNull AccessibleContext context, @Nullable String description) {
+    String name = context.getAccessibleName();
+    if (StringUtil.equals(description, name)) {
+      return null;
+    }
+    return description;
+  }
+
+  public static void setParent(@NotNull Component component, @Nullable Component newParent) {
     if (newParent instanceof Accessible) {
       component.getAccessibleContext().setAccessibleParent((Accessible)newParent);
       return;
     }
     component.getAccessibleContext().setAccessibleParent(null);
+  }
+
+  /**
+   * @deprecated use {@link #setParent(Component, Component)} instead
+   */
+  public static void setParent(@NotNull JComponent component, @Nullable Component newParent) {
+    setParent((Component)component, newParent);
   }
 
   public static @Nullable String combineAccessibleStrings(@Nullable String s1, @NotNull String separator, @Nullable String s2) {
@@ -139,5 +190,31 @@ public class AccessibleContextUtil {
       }
     }
     return result.toString();
+  }
+
+  private static String getAccessibleName(@NotNull Component component) {
+    if (component instanceof Accessible) {
+      return component.getAccessibleContext().getAccessibleName();
+    }
+    return null;
+  }
+
+  private static void setAccessibleName(@NotNull Component component, String name) {
+    if (component instanceof Accessible) {
+      component.getAccessibleContext().setAccessibleName(name);
+    }
+  }
+
+  private static String getAccessibleDescription(@NotNull Component component) {
+    if (component instanceof Accessible) {
+      return component.getAccessibleContext().getAccessibleDescription();
+    }
+    return null;
+  }
+
+  private static void setAccessibleDescription(@NotNull Component component, String description) {
+    if (component instanceof Accessible) {
+      component.getAccessibleContext().setAccessibleDescription(description);
+    }
   }
 }

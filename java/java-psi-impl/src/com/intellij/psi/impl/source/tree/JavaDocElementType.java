@@ -81,7 +81,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser, false, LanguageLevel.JDK_1_3);
     }
   };
@@ -96,7 +96,7 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser, false, LanguageLevel.JDK_1_3);
     }
   };
@@ -116,12 +116,12 @@ public interface JavaDocElementType {
 
     @Nullable
     @Override
-    public ASTNode parseContents(final ASTNode chameleon) {
+    public ASTNode parseContents(@NotNull final ASTNode chameleon) {
       return JavaParserUtil.parseFragment(chameleon, myParser);
     }
 
     @Override
-    public boolean isParsable(final CharSequence buffer, Language fileLanguage, final Project project) {
+    public boolean isParsable(@NotNull final CharSequence buffer, @NotNull Language fileLanguage, @NotNull final Project project) {
       if (!StringUtil.startsWith(buffer, "/**") || !StringUtil.endsWith(buffer, "*/")) return false;
 
       Lexer lexer = JavaParserDefinition.createLexer(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());

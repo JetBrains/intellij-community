@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileRefe
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,12 +33,12 @@ import java.util.ListIterator;
 
 public class InjectedReferenceSelectioner extends AbstractWordSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return PsiTreeUtil.getParentOfType(e, PsiLanguageInjectionHost.class) != null;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, final int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, final int cursorOffset, @NotNull Editor editor) {
     PsiElement host = PsiTreeUtil.getParentOfType(e, PsiLanguageInjectionHost.class);
     if (host == null) return Collections.emptyList();
 

@@ -32,6 +32,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.function.UnaryOperator;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+
 public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousCanBeLambdaInspection.class);
 
@@ -87,15 +89,12 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
           if (isOnTheFly && !reportNotAnnotatedInterfaces) {
             final PsiClass baseClass = aClass.getBaseClassType().resolve();
             LOG.assertTrue(baseClass != null);
-            if (!AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) {
+            if (!AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, CHECK_EXTERNAL)) {
               type = ProblemHighlightType.INFORMATION;
             }
           }
-          ProblemDescriptorBase descriptor = new ProblemDescriptorBase(parent, parent, "Anonymous #ref #loc can be replaced with lambda",
-                                                                 new LocalQuickFix[]{new ReplaceWithLambdaFix()},
-                                                                 type, false, rangeInElement,
-                                                                 type != ProblemHighlightType.INFORMATION, true);
-          holder.registerProblem(descriptor);
+          holder.registerProblem(parent, "Anonymous #ref #loc can be replaced with lambda",
+                                 type, rangeInElement, new ReplaceWithLambdaFix());
         }
       }
     };
@@ -150,11 +149,12 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     final PsiCall call = LambdaUtil.treeWalkUp(topExpr);
     if (call != null && call.resolveMethod() != null) {
-      final int offsetInTopCall = aClass.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
+      Object marker = new Object();
+      PsiTreeUtil.mark(aClass, marker);
       PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
       if (copyCall == null) return null;
-      final PsiAnonymousClass classArg = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiAnonymousClass.class);
-      if (classArg != null) {
+      final PsiElement classArg = PsiTreeUtil.releaseMark(copyCall, marker);
+      if (classArg instanceof PsiAnonymousClass) {
         PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
           .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
         lambda = (PsiExpression)classArg.getParent().replace(lambda);
@@ -204,7 +204,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();
       final PsiClass baseClass = resolveResult.getElement();
       if (baseClass == null ||
-          !reportNotAnnotatedInterfaces && !AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) {
+          !reportNotAnnotatedInterfaces && !AnnotationUtil.isAnnotated(baseClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, CHECK_EXTERNAL)) {
         return false;
       }
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
@@ -272,7 +272,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
     final PsiCodeBlock body = method.getBody();
     LOG.assertTrue(body != null);
 
-    final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass, body);
+    final Collection<PsiComment> comments = collectCommentsOutsideMethodBody(anonymousClass.getParent(), body);
     final Project project = anonymousClass.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
@@ -327,7 +327,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
   }
 
   @NotNull
-  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiAnonymousClass anonymousClass, PsiCodeBlock body) {
+  static Collection<PsiComment> collectCommentsOutsideMethodBody(PsiElement anonymousClass, PsiCodeBlock body) {
     final Collection<PsiComment> psiComments = PsiTreeUtil.findChildrenOfType(anonymousClass, PsiComment.class);
     psiComments.removeIf(comment -> PsiTreeUtil.isAncestor(body, comment, false));
     return ContainerUtil.map(psiComments, (comment) -> (PsiComment)comment.copy());

@@ -7,7 +7,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import com.jetbrains.python.FunctionParameter;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -35,7 +37,21 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     final PyExpression callee = getCallee();
-    return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+    if (callee instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      final Predicate<String> isConstructorName = name -> PyNames.INIT.equals(name) || PyNames.NEW.equals(name);
+
+      if (resolvedCallee instanceof PyFunction &&
+          qualifiedCallee.isQualified() &&
+          isConstructorName.apply(resolvedCallee.getName()) &&
+          !isConstructorName.apply(qualifiedCallee.getName())) {
+        return qualifiedCallee;
+      }
+
+      return qualifiedCallee.getQualifier();
+    }
+
+    return null;
   }
 
   @NotNull
@@ -374,6 +390,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
   class PyArgumentsMapping {
     @NotNull private final PyCallSiteExpression myCallSiteExpression;
     @Nullable private final PyMarkedCallee myMarkedCallee;
+    @NotNull private final List<PyCallableParameter> myImplicitParameters;
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
@@ -383,6 +400,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
 
     public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
                               @Nullable PyMarkedCallee markedCallee,
+                              @NotNull List<PyCallableParameter> implicitParameters,
                               @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                               @NotNull List<PyCallableParameter> unmappedParameters,
                               @NotNull List<PyExpression> unmappedArguments,
@@ -391,6 +409,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
                               @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
       myCallSiteExpression = callSiteExpression;
       myMarkedCallee = markedCallee;
+      myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
       myUnmappedArguments = unmappedArguments;
@@ -399,10 +418,29 @@ public interface PyCallExpression extends PyCallSiteExpression {
       myMappedTupleParameters = tupleMappedParameters;
     }
 
+    /**
+     * @deprecated
+     * Use {@link #PyArgumentsMapping(PyCallSiteExpression, PyMarkedCallee, List, Map, List, List, List, List, Map)} that includes
+     * implicitly mapped parameters. This constructor will be removed in 2018.2.
+     */
+    @Deprecated
+    public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
+                              @Nullable PyMarkedCallee markedCallee,
+                              @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
+                              @NotNull List<PyCallableParameter> unmappedParameters,
+                              @NotNull List<PyExpression> unmappedArguments,
+                              @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
+                              @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
+                              @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
+      this(callSiteExpression, markedCallee, Collections.emptyList(), mappedParameters, unmappedParameters, unmappedArguments,
+           parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments, tupleMappedParameters);
+    }
+
     @NotNull
     public static PyArgumentsMapping empty(@NotNull PyCallSiteExpression callSiteExpression) {
       return new PyCallExpression.PyArgumentsMapping(callSiteExpression,
                                                      null,
+                                                     Collections.emptyList(),
                                                      Collections.emptyMap(),
                                                      Collections.emptyList(),
                                                      Collections.emptyList(),
@@ -419,6 +457,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @Nullable
     public PyMarkedCallee getMarkedCallee() {
       return myMarkedCallee;
+    }
+
+    @NotNull
+    public List<PyCallableParameter> getImplicitParameters() {
+      return myImplicitParameters;
     }
 
     @NotNull

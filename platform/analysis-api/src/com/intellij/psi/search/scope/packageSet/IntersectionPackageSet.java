@@ -20,6 +20,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 public class IntersectionPackageSet extends PackageSetBase {
   private final PackageSet myFirstSet;
   private final PackageSet mySecondSet;
@@ -55,6 +58,22 @@ public class IntersectionPackageSet extends PackageSetBase {
   @Override
   public int getNodePriority() {
     return 2;
+  }
+
+  @Override
+  public PackageSet map(Function<PackageSet, PackageSet> transformation) {
+    PackageSet firstUpdated = transformation.apply(myFirstSet);
+    PackageSet secondUpdated = transformation.apply(mySecondSet);
+    if (firstUpdated != myFirstSet || secondUpdated != mySecondSet) {
+      return new UnionPackageSet(firstUpdated != myFirstSet ? firstUpdated : myFirstSet.createCopy(),
+                                 secondUpdated != mySecondSet ? secondUpdated : mySecondSet.createCopy());
+    }
+    return this;
+  }
+
+  @Override
+  public boolean anyMatches(Predicate<PackageSet> predicate) {
+    return predicate.test(myFirstSet) || predicate.test(mySecondSet);
   }
 
   @Override

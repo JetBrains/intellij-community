@@ -1,40 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.ESCAPED_MODULE_DIR
-import com.intellij.configurationStore.createModule
 import com.intellij.configurationStore.useAndDispose
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
 import com.intellij.util.io.parentSystemIndependentPath
+import com.intellij.util.io.systemIndependentPath
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestRule
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
+import java.nio.file.Paths
 
 @RunsInEdt
 @RunsInActiveStoreMode
@@ -50,23 +37,28 @@ class ExternalSystemStorageTest {
   @Suppress("unused")
   @JvmField
   @Rule
-  val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule), ExternalStorageRule(projectRule.project))
+  val ruleChain = RuleChain(tempDirManager, EdtRule())
 
   @Test
   fun `must be empty if external system storage`() {
-    val cacheDir = ExternalProjectsDataStorage.getProjectConfigurationDir(projectRule.project).resolve("modules")
-    cacheDir.delete()
+    createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true) { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
 
-    // we must not use VFS here, file must not be created
-    val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
-    projectRule.createModule(moduleFile).useAndDispose {
-      assertThat(cacheDir).doesNotExist()
+      val dotIdeaDir = Paths.get(project.stateStore.directoryStorePath)
 
-      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+      val cacheDir = ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve("modules")
+      cacheDir.delete()
 
-      saveStore()
-      assertThat(cacheDir).doesNotExist()
-      assertThat(moduleFile).isEqualTo("""
+      // we must not use VFS here, file must not be created
+      val moduleFile = dotIdeaDir.parent.resolve("test.iml")
+      runWriteAction { ModuleManager.getInstance(project).newModule(moduleFile.systemIndependentPath, ModuleTypeId.JAVA_MODULE) }.useAndDispose {
+        assertThat(cacheDir).doesNotExist()
+
+        ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+
+        saveStore()
+        assertThat(cacheDir).doesNotExist()
+        assertThat(moduleFile).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
       <module type="JAVA_MODULE" version="4">
         <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -76,18 +68,18 @@ class ExternalSystemStorageTest {
         </component>
       </module>""")
 
-      ExternalSystemModulePropertyManager.getInstance(this).setMavenized(true)
-      // force re-save: this call not in the setMavenized because ExternalSystemModulePropertyManager in the API (since in production we have the only usage, it is ok for now)
-      (ModuleRootManager.getInstance(this) as ModuleRootManagerImpl).stateChanged()
+        ExternalSystemModulePropertyManager.getInstance(this).setMavenized(true)
+        // force re-save: this call not in the setMavenized because ExternalSystemModulePropertyManager in the API (since in production we have the only usage, it is ok for now)
+        (ModuleRootManager.getInstance(this) as ModuleRootManagerImpl).stateChanged()
 
-      assertThat(cacheDir).doesNotExist()
-      saveStore()
-      assertThat(cacheDir).isDirectory
-      assertThat(moduleFile).isEqualTo("""
+        assertThat(cacheDir).doesNotExist()
+        saveStore()
+        assertThat(cacheDir).isDirectory
+        assertThat(moduleFile).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
       <module type="JAVA_MODULE" version="4" />""")
 
-      assertThat(cacheDir.resolve("test.xml")).isEqualTo("""
+        assertThat(cacheDir.resolve("test.xml")).isEqualTo("""
       <module>
         <component name="ExternalSystem" externalSystem="Maven" />
         <component name="NewModuleRootManager" inherit-compiler-output="true">
@@ -96,20 +88,8 @@ class ExternalSystemStorageTest {
           <orderEntry type="sourceFolder" forTests="false" />
         </component>
       </module>""")
-    }
-  }
-}
 
-private class ExternalStorageRule(private val project: Project) : TestRule {
-  override fun apply(base: Statement, description: Description): Statement {
-    return statement {
-      val manager = ExternalProjectsManagerImpl.getInstance(project)
-      try {
-        manager.setStoreExternally(true)
-        base.evaluate()
-      }
-      finally {
-        manager.setStoreExternally(false)
+        assertThat(dotIdeaDir.resolve("modules.xml")).doesNotExist()
       }
     }
   }

@@ -26,62 +26,11 @@
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="library" exported="" name="Gradle" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="GradleGuava">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/guava-jdk5-17.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" exported="">
-      <library name="commons-io">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-io-2.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="commons-lang">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-lang-2.6.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="GradleNative">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/gradle-native-4.0.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libcpp-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-amd64-libstdcpp-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libcpp-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-freebsd-i386-libstdcpp-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses5-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-amd64-ncurses6-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses5-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-linux-i386-ncurses6-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-amd64-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-osx-i386-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-amd64-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/native-platform-windows-i386-0.14.jar!/" />
-          <root url="jar://$MODULE_DIR$/lib/jansi-1.14.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="library" name="Kryo" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="coverage" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
 </module>

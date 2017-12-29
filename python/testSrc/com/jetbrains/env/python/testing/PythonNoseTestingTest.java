@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
@@ -12,7 +15,6 @@ import com.jetbrains.python.testing.PyNoseTestFactory;
 import com.jetbrains.python.testing.PyTestFrameworkService;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -24,9 +26,7 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
-
-
-  private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST);;
+  private final String myFrameworkName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.NOSE_TEST);
 
   @Test
   public void testNoseGenerators() {
@@ -42,7 +42,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        Assert.assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
+        assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
                                 "[root]\n" +
                                 ".test_nose_generator\n" +
                                 "..test_evens\n" +
@@ -236,6 +236,28 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  @Test
+  public void testExceptionAndLog() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyNoseTestProcessRunner createProcessRunner() {
+        return new PyNoseTestProcessRunner("exception_and_log.py", 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyNoseTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals(1, runner.getAllTestsCount());
+        assertEquals(0, runner.getPassedTestsCount());
+        assertEquals(1, runner.getFailedTestsCount());
+      }
+    });
+  }
+
   private static class SlowRunnerTask extends PyProcessWithConsoleTestTask<PyNoseTestProcessRunner> {
     @NotNull
     private final String myArguments;
@@ -263,7 +285,7 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
                                     @NotNull String stdout,
                                     @NotNull String stderr,
                                     @NotNull String all) {
-      Assert.assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
+      assertEquals("--slow runner broken on arguments" + myArguments, "Test tree:\n" +
                                                   "[root]\n" +
                                                   ".test_with_slow\n" +
                                                   "..test_fast(+)\n",

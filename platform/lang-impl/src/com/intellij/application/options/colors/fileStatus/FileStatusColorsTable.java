@@ -31,6 +31,7 @@ public class FileStatusColorsTable extends JBTable {
 
   public FileStatusColorsTable() {
     setShowGrid(false);
+    setIntercellSpacing(new Dimension(0,0));
     getColumnModel().setColumnSelectionAllowed(false);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     setDefaultRenderer(String.class, new MyStatusCellRenderer());
@@ -47,7 +48,7 @@ public class FileStatusColorsTable extends JBTable {
       int width = 0;
       int rightGap = 0;
       if (getColumnClass(col).equals(Boolean.class)) {
-        width = JBUI.scale(10);
+        width = JBUI.scale(15);
       }
       else {
         rightGap = isColorColumn(col) ? JBUI.size(10, 1).width : 0;
@@ -110,8 +111,8 @@ public class FileStatusColorsTable extends JBTable {
       if (value instanceof Boolean) {
         myLabel.setForeground(isSelected ? UIUtil.getTableSelectionForeground() : myLabelColor);
         myLabel.setBackground(UIUtil.getTableBackground(isSelected));
-        myLabel.setText((Boolean)value ? "" : "*");
-        myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        myLabel.setText((Boolean)value ? "" : "* ");
+        myLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         return myLabel;
       }
       return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);

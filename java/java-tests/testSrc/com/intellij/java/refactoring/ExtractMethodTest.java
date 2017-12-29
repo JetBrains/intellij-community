@@ -36,6 +36,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -839,6 +840,39 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureTwoFieldInitializers() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testConditionalReturnInDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  // todo DuplicatesFinder.canBeEquivalent() should see the difference between 'return' and assignment
+  public void _testConditionalReturnVsAssignDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testConditionalWithTwoParameters() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testOverlappingDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testEffectivelyLocalVariables() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testEffectivelyLocalWithinExpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateNestedSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignatureWithChangedParameterName() throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     boolean success = performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, "p");
@@ -1056,7 +1090,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testQualifyWhenConflictingNamePresent() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1103,8 +1137,100 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testExtractBareThenBranch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBareElseBranch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBareForBody() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBareDoWhileBody() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBracedElseBranch() throws Exception {
+    doTest();
+  }
+
+  public void testExtractBracedDoWhileBody() throws Exception {
+    doTest();
+  }
+
+  public void testInferredNotNullInReturnStatementDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testNullableCheckBreakDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testOutputVariableDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testNullableCheckVoidDuplicate() throws Exception {
+    doTest();
+  }
+
+  public void testWriteDifferentFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentStaticFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentOuterFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentInnerFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDecrementDifferentChainedFieldsDuplicate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testArgumentFoldingWholeStatement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testArgumentFoldingWholeStatementForUpdate() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testArgumentFoldingWholeStatementForUpdateList() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testArgumentFoldingMethodCall() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testBeforeCommentAfterSelectedFragment() throws Exception {
+    doTest();
+  }
+
+  public void testInsideCommentAfterSelectedFragment() throws Exception {
+    doTest();
+  }
+
+  public void testEmptyBlockStatement() throws Exception {
+    doExitPointsTest(false);
+  }
+
   private void doTestDisabledParam() throws PrepareFailedException {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1114,7 +1240,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   private void doTestReturnTypeChanged(PsiType type) throws PrepareFailedException {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1124,7 +1250,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   private void doTestPassFieldsAsParams() throws PrepareFailedException {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     configureByFile(BASE_PATH + getTestName(false) + ".java");
@@ -1152,7 +1278,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   void doTest() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.ELSE_ON_NEW_LINE = true;
     settings.CATCH_ON_NEW_LINE = myCatchOnNewLine;
     doTest(true);
@@ -1177,7 +1303,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   public static boolean performExtractMethod(boolean doRefactor, boolean replaceAllDuplicates, Editor editor, PsiFile file, Project project,
                                              final boolean extractChainedConstructor)
     throws PrepareFailedException, IncorrectOperationException {
-    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, null);
+    return performExtractMethod(doRefactor, replaceAllDuplicates, editor, file, project, extractChainedConstructor, ArrayUtil.EMPTY_INT_ARRAY);
   }
 
   public static boolean performExtractMethod(boolean doRefactor,

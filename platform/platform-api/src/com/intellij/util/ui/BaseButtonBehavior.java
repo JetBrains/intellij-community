@@ -18,12 +18,12 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 
 public abstract class BaseButtonBehavior {
 
@@ -46,6 +46,31 @@ public abstract class BaseButtonBehavior {
     myComponent.addMouseListener(new MyMouseListener());
     myComponent.addMouseMotionListener(new MyMouseMotionListener());
     setActionTrigger(MouseEvent.MOUSE_RELEASED);
+    if (ScreenReader.isActive()) {
+      myComponent.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyReleased(KeyEvent e) {
+          if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            e.consume();
+            RelativePoint point = new RelativePoint(myComponent, new Point(myComponent.getWidth() / 2, myComponent.getHeight() / 2));
+            execute(point.toMouseEvent());
+            return;
+          }
+          super.keyReleased(e);
+        }
+      });
+      myComponent.addFocusListener(new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          repaintComponent();
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+          repaintComponent();
+        }
+      });
+    }
   }
 
   public void setActionTrigger(int trigger) {

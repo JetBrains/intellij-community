@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl;
 
@@ -39,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -133,7 +122,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
-      final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
+      List<Inlay> inlaysAtOffset = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
+      boolean leanForward = ContainerUtil.find(inlaysAtOffset, inlay -> !inlay.isRelatedToPrecedingText()) != null;
+      LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset).leanForward(leanForward);
       CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, false);
       final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(getOffset());
       if (!positionByOffsetAfterMove.equals(logicalPosition)) {
@@ -1562,7 +1553,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         setIntervalStart(newOffset);
         setIntervalEnd(newOffset);
       }
-      if (oldOffset >= e.getOffset() && oldOffset <= e.getOffset() + e.getOldLength() && e.getNewLength() == 0) {
+      myLogicalColumnAdjustment = 0;
+      myVisualColumnAdjustment = 0;
+      if (oldOffset >= e.getOffset() && oldOffset <= e.getOffset() + e.getOldLength() && e.getNewLength() == 0 && e.getOldLength() > 0) {
         int inlaysToTheLeft = myEditor.getInlayModel().getInlineElementsInRange(e.getOffset(), e.getOffset()).size();
         boolean hasInlaysToTheRight = myEditor.getInlayModel().hasInlineElementAt(e.getOffset() + e.getOldLength());
         if (inlaysToTheLeft > 0 || hasInlaysToTheRight) {

@@ -46,25 +46,27 @@ class GitLogRecord {
   private static final Logger LOG = Logger.getInstance(GitLogRecord.class);
 
   @NotNull private final Map<GitLogParser.GitLogOption, String> myOptions;
-  @NotNull private final List<String> myPaths;
   @NotNull private final List<GitLogStatusInfo> myStatusInfo;
   private final boolean mySupportsRawBody;
 
   private GitHandler myHandler;
 
   GitLogRecord(@NotNull Map<GitLogParser.GitLogOption, String> options,
-               @NotNull List<String> paths,
                @NotNull List<GitLogStatusInfo> statusInfo,
                boolean supportsRawBody) {
     myOptions = options;
-    myPaths = paths;
     myStatusInfo = statusInfo;
     mySupportsRawBody = supportsRawBody;
   }
 
   @NotNull
-  private List<String> getPaths() {
-    return myPaths;
+  private Collection<String> getPaths() {
+    LinkedHashSet<String> result = ContainerUtil.newLinkedHashSet();
+    for (GitLogStatusInfo info : myStatusInfo) {
+      result.add(info.getFirstPath());
+      if (info.getSecondPath() != null) result.add(info.getSecondPath());
+    }
+    return result;
   }
 
   @NotNull
@@ -198,32 +200,6 @@ class GitLogRecord {
     return mySupportsRawBody;
   }
 
-  /**
-   * Returns the list of tags and the list of branches.
-   * A single method is used to return both, because they are returned together by Git and we don't want to parse them twice.
-   *
-   * @param allBranchesSet
-   * @return
-   */
-  /*Pair<List<String>, List<String>> getTagsAndBranches(SymbolicRefs refs) {
-    final String decorate = myOptions.get(REF_NAMES);
-    final String[] refNames = parseRefNames(decorate);
-    final List<String> tags = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    final List<String> branches = refNames.length > 0 ? new ArrayList<String>() : Collections.<String>emptyList();
-    for (String refName : refNames) {
-      if (refs.contains(refName)) {
-        // also some gits can return ref name twice (like (HEAD, HEAD), so check we will show it only once)
-        if (!branches.contains(refName)) {
-          branches.add(shortBuffer(refName));
-        }
-      } else {
-        if (!tags.contains(refName)) {
-          tags.add(shortBuffer(refName));
-        }
-      }
-    }
-    return Pair.create(tags, branches);
-  }*/
   @NotNull
   private static List<String> parseRefNames(@Nullable final String decoration) {
     if (decoration == null) {
@@ -269,7 +245,7 @@ class GitLogRecord {
 
   @Override
   public String toString() {
-    return String.format("GitLogRecord{myOptions=%s, myPaths=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
-                         myOptions, myPaths, myStatusInfo, mySupportsRawBody, myHandler);
+    return String.format("GitLogRecord{myOptions=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
+                         myOptions, myStatusInfo, mySupportsRawBody, myHandler);
   }
 }

@@ -94,6 +94,9 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               }
               return methods.length != 0 ? methods[0] : null;
             }
+
+            case NEW_UPDATER:
+              return ownerClass.getPsiClass().findFieldByName(name, false);
           }
         }
       }
@@ -147,6 +150,14 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
               .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
               .filter(Objects::nonNull)
+              .toArray();
+          }
+
+          case NEW_UPDATER: {
+            return Arrays.stream(ownerClass.getPsiClass().getFields())
+              .filter(field -> field.getName() != null)
+              .sorted(Comparator.comparingInt((PsiField field) -> isAtomicallyUpdateable(field) ? 0 : 1).thenComparing(PsiField::getName))
+              .map(field -> withPriority(lookupField(field), isAtomicallyUpdateable(field)))
               .toArray();
           }
         }

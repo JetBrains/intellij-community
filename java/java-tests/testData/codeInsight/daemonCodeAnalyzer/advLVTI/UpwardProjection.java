@@ -34,13 +34,34 @@ class Main {
         e[0].add<error descr="'add(capture<? extends java.lang.String>)' in 'X' cannot be applied to '(java.lang.String)'">("")</error>;
     }
 
+    void fooHierarchy(X<? extends B, A> x) {
+        var y = x;
+        y = new X<B, A>();
+        y = new X<C, A>();
+
+        A a = y.get();
+        B b = y.get();
+        <error descr="Incompatible types. Found: 'capture<? extends B>', required: 'C'">C c = y.get();</error>
+    }
 
     <M> M[] m(M m) {
         return null;
     }
 }
 
-abstract class X<T extends S, S> {
-    abstract T get();
-    abstract void add(T t);
+class A {}
+class B extends A {}
+class C extends B {}
+
+class X<T extends S, S> {
+    T get() {return null;}
+    void add(T t) {}
+}
+
+class RecursiveBound {
+    class C<T extends Comparable<T>> { }
+
+    void test(C<? super Integer> c) {
+        var x = c;
+    }
 }

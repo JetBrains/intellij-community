@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
@@ -67,6 +67,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.count;
+import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
@@ -200,22 +202,6 @@ public class ResolveUtil {
   private static PsiClassType createPsiType(@NotNull PsiClass psiClass) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     return factory.createType(psiClass);
-  }
-
-  public static boolean processChildren(@NotNull PsiElement element,
-                                        @NotNull PsiScopeProcessor processor,
-                                        @NotNull ResolveState state,
-                                        @Nullable PsiElement lastParent,
-                                        @NotNull PsiElement place) {
-    if (!shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return true;
-
-    PsiElement run = lastParent == null ? element.getLastChild() : lastParent.getPrevSibling();
-    while (run != null) {
-      if (!run.processDeclarations(processor, state, null, place)) return false;
-      run = run.getPrevSibling();
-    }
-
-    return true;
   }
 
   @Nullable
@@ -999,10 +985,6 @@ public class ResolveUtil {
            || classHint.shouldProcess(DeclarationKind.FIELD) || classHint.shouldProcess(DeclarationKind.ENUM_CONST);
   }
 
-  public static boolean shouldProcessPackages(ElementClassHint classHint) {
-    return classHint == null || classHint.shouldProcess(DeclarationKind.PACKAGE);
-  }
-
   public static boolean processStaticImports(@NotNull PsiScopeProcessor resolver,
                                              @NotNull PsiFile file,
                                              @NotNull ResolveState state,
@@ -1169,22 +1151,22 @@ public class ResolveUtil {
   }
 
   @NotNull
-  public static List<GroovyResolveResult> collapseProperties(@NotNull Collection<GroovyResolveResult> candidates) {
-    Set<GrField> processed = ContainerUtil.newHashSet();
-    List<GroovyResolveResult> collapsed = ContainerUtil.newArrayList();
-    for (GroovyResolveResult propertyResult : candidates) {
-      PsiElement element = propertyResult.getElement();
-      if (element instanceof GrAccessorMethod) {
-        GrField property = ((GrAccessorMethod)element).getProperty();
-        if (processed.add(property)) {
-          collapsed.add(new GroovyResolveResultImpl(property, true));
-        }
-      }
-      else {
-        collapsed.add(propertyResult);
-      }
-    }
-    return collapsed;
+  public static List<GroovyResolveResult> filterAccessorMethods(@NotNull List<GroovyResolveResult> candidates) {
+    return filter(candidates, it -> !(it.getElement() instanceof GrAccessorMethod));
+  }
+
+  @NotNull
+  public static List<GroovyResolveResult> collapseReflectedMethodsSimple(@NotNull List<GroovyResolveResult> candidates) {
+    if (count(candidates, it -> it.getElement() instanceof GrReflectedMethod) < 2) return candidates;
+    final Set<GrMethod> visited = ContainerUtil.newHashSet();
+    return ContainerUtil.mapNotNull(candidates, result -> {
+      final PsiElement element = result.getElement();
+      if (!(element instanceof GrReflectedMethod)) return result;
+
+      final GrMethod baseMethod = ((GrReflectedMethod)element).getBaseMethod();
+      if (!visited.add(baseMethod)) return null;
+      return new ElementGroovyResult<>(baseMethod);
+    });
   }
 
   @NotNull

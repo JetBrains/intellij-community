@@ -80,7 +80,7 @@ public class ExternalSystemApiUtil {
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 
-  @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
+  @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^.]+?)?");
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
@@ -88,7 +88,7 @@ public class ExternalSystemApiUtil {
     public int compare(@NotNull Object o1, @NotNull Object o2) {
       int order1 = getOrder(o1);
       int order2 = getOrder(o2);
-      return (order1 < order2) ? -1 : ((order1 == order2) ? 0 : 1);
+      return Integer.compare(order1, order2);
     }
 
     private int getOrder(@NotNull Object o) {
@@ -171,9 +171,12 @@ public class ExternalSystemApiUtil {
   }
 
   public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {
-    return library.getName() != null && StringUtil.startsWith(library.getName(), externalSystemId.getReadableName() + ": ");
+    return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   @Nullable
   public static ArtifactInfo parseArtifactInfo(@NotNull String fileName) {
     Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
@@ -388,7 +391,7 @@ public class ExternalSystemApiUtil {
   private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
                                          @NotNull BooleanFunction<DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
-      DataNode node = (DataNode)queue.remove();
+      DataNode node = queue.remove();
       if (predicate.fun(node)) {
         return node;
       }
@@ -398,6 +401,9 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
     final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
     if (!changedModels.isEmpty()) {
@@ -412,6 +418,9 @@ public class ExternalSystemApiUtil {
     }
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
     for (ModifiableRootModel model : models) {
       if (!model.isDisposed()) {
@@ -420,6 +429,9 @@ public class ExternalSystemApiUtil {
     }
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
     final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
     for (ModifiableRootModel modifiableRootModel : models) {
@@ -581,6 +593,9 @@ public class ExternalSystemApiUtil {
     return true;
   }
 
+  /**
+   * @deprecated to be removed in 2018.2
+   */
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
       PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
@@ -748,6 +763,8 @@ public class ExternalSystemApiUtil {
    * <p/>
    * This method allows to do that.
    *
+   * @deprecated to be removed in 2018.2
+   *
    * @param clazz  custom classpath-aware class which instance should be created (is assumed to have a no-args constructor)
    * @param <T>    target type
    * @return       newly created instance of the given class loaded by custom classpath-aware loader
@@ -772,7 +789,7 @@ public class ExternalSystemApiUtil {
     Method method = baseLoader.getClass().getMethod("getUrls");
     if (method != null) {
       //noinspection unchecked
-      urls.addAll((Collection<? extends URL>)method.invoke(baseLoader));
+      urls.addAll((Collection<URL>)method.invoke(baseLoader));
     }
     UrlClassLoader loader = new UrlClassLoader(UrlClassLoader.build().urls(urls).parent(baseLoader.getParent())) {
       @Override

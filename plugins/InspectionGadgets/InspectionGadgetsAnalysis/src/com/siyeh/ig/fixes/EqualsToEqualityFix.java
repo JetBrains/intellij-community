@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,11 +67,14 @@ public class EqualsToEqualityFix extends InspectionGadgetsFix {
       return;
     }
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(call);
+    CommentTracker commentTracker = new CommentTracker();
+    commentTracker.markUnchanged(lhs);
+    commentTracker.markUnchanged(rhs);
     if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
-      PsiReplacementUtil.replaceExpression((PsiExpression)parent, getText(lhs) + "!=" + getText(rhs));
+      PsiReplacementUtil.replaceExpression((PsiExpression)parent, getText(lhs) + "!=" + getText(rhs), commentTracker);
     }
     else {
-      PsiReplacementUtil.replaceExpression(call, getText(lhs) + "==" + getText(rhs));
+      PsiReplacementUtil.replaceExpression(call, getText(lhs) + "==" + getText(rhs), commentTracker);
     }
   }
 

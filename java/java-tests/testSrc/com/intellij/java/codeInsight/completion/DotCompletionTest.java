@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ik
- * Date: 21.01.2003
  */
 public class DotCompletionTest extends LightCompletionTestCase {
   @NotNull

@@ -87,8 +87,8 @@ public class JsonSchemaResolver {
     }
     // actually we pass any schema here
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, firstSchema);
-    final JsonValueAdapter adapter = walker.createValueAdapter(element);
-    if (adapter == null) return null;
+    JsonValueAdapter adapter;
+    if (walker == null || (adapter = walker.createValueAdapter(element)) == null) return null;
 
     final JsonValueAdapter parentAdapter;
     if (topLevelSchema) {
@@ -100,10 +100,12 @@ public class JsonSchemaResolver {
     }
 
     final Ref<JsonSchemaObject> schemaRef = new Ref<>();
-    MatchResult.iterateTree(resolveRoot, (parent, node) -> {
-      if (node.getSchema() == null || parentAdapter != null && parent.isNothing()) return true;
+    MatchResult.iterateTree(resolveRoot, node -> {
+      final JsonSchemaTreeNode parent = node.getParent();
+      if (node.getSchema() == null || parentAdapter != null && parent != null && parent.isNothing()) return true;
       if (!isCorrect(adapter, node.getSchema())) return true;
       if (parentAdapter == null ||
+          parent == null ||
           parent.getSchema() == null ||
           parent.isAny() ||
           isCorrect(parentAdapter, parent.getSchema())) {

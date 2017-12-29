@@ -1,9 +1,9 @@
 UFile (package = ) [public final enum EnumChoice {...]
     UClass (name = EnumChoice) [public final enum EnumChoice {...}]
         UEnumConstant (name = FIRST) [FIRST] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumChoice) [EnumChoice] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumChoice) [EnumChoice] = external EnumChoice()
         UEnumConstant (name = SECOND) [SECOND] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumChoice) [EnumChoice] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumChoice) [EnumChoice] = external EnumChoice()
         UMethod (name = foo) [public fun foo(flag: boolean) : EnumChoice {...}]
             UParameter (name = flag) [var flag: boolean]
             UBlockExpression [{...}] = Nothing

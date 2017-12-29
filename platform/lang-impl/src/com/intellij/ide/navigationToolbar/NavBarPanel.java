@@ -62,6 +62,8 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +73,7 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.plaf.PanelUI;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -93,6 +94,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
   private final IdeView myIdeView;
   private final CopyPasteDelegator myCopyPasteDelegator;
+  private FocusListener myNavBarItemFocusListener;
+
   private LightweightHint myHint = null;
   private NavBarPopup myNodePopup = null;
   private JComponent myHintContainer;
@@ -135,6 +138,53 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
 
     Disposer.register(project, this);
+    AccessibleContextUtil.setName(this, "Navigation Bar");
+  }
+
+  /**
+   * Navigation bar entry point to determine if the keyboard/focus behavior should be
+   * compatible with screen readers. This additional level of indirection makes it
+   * easier to figure out the various locations in the various navigation bar components
+   * that enable screen reader friendly behavior.
+   */
+  protected boolean allowNavItemsFocus() {
+    return ScreenReader.isActive();
+  }
+
+  public boolean isFocused() {
+    if (allowNavItemsFocus()) {
+      return UIUtil.isFocusAncestor(this);
+    } else {
+      return hasFocus();
+    }
+  }
+
+  public void addNavBarItemFocusListener(@Nullable FocusListener l) {
+    if (l == null) {
+      return;
+    }
+    myNavBarItemFocusListener = AWTEventMulticaster.add(myNavBarItemFocusListener, l);
+  }
+
+  public void removeNavBarItemFocusListener(@Nullable FocusListener l) {
+    if (l == null) {
+      return;
+    }
+    myNavBarItemFocusListener = AWTEventMulticaster.remove(myNavBarItemFocusListener, l);
+  }
+
+  protected void fireNavBarItemFocusGained(final FocusEvent e) {
+    FocusListener listener = myNavBarItemFocusListener;
+    if (listener != null) {
+      listener.focusGained(e);
+    }
+  }
+
+  protected void fireNavBarItemFocusLost(final FocusEvent e) {
+    FocusListener listener = myNavBarItemFocusListener;
+    if (listener != null) {
+      listener.focusLost(e);
+    }
   }
 
   protected NavBarModel createModel() {
@@ -293,13 +343,20 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.queueSelect(() -> {
       if (!myList.isEmpty()) {
         myModel.setSelectedIndex(myList.size() - 1);
-        if (requestFocus) {
-          IdeFocusManager.getInstance(myProject).requestFocus(this, true);
-        }
+        requestSelectedItemFocus();
       }
     });
 
     myUpdateQueue.flush();
+  }
+
+  public void requestSelectedItemFocus() {
+    int index = myModel.getSelectedIndex();
+    if (index >= 0 && index < myModel.size() && allowNavItemsFocus()) {
+      IdeFocusManager.getInstance(myProject).requestFocus(getItem(index), true);
+    } else {
+      IdeFocusManager.getInstance(myProject).requestFocus(this, true);
+    }
   }
 
   public void moveLeft() {
@@ -314,6 +371,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     final int selectedIndex = myModel.getSelectedIndex();
     final int index = myModel.getIndexByModel(selectedIndex + direction);
     myModel.setSelectedIndex(index);
+    if (allowNavItemsFocus()) {
+      requestSelectedItemFocus();
+    }
   }
 
   void scrollSelectionToVisible() {
@@ -438,8 +498,19 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
           e.consume();
         }
         else if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
-          IdeFocusManager.getInstance(myProject).requestFocus(NavBarPanel.this, true);
+          requestSelectedItemFocus();
           doubleClick(index);
+          e.consume();
+        }
+      }
+    });
+
+    ListenerUtil.addKeyListener(component, new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getModifiers() == 0 && e.getKeyCode() == KeyEvent.VK_SPACE) {
+          ctrlClick(index);
+          myModel.setSelectedIndex(index);
           e.consume();
         }
       }
@@ -568,6 +639,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (myNodePopup != null) {
       myNodePopup.hide(ok);
       myNodePopup = null;
+      if (allowNavItemsFocus()) {
+        requestSelectedItemFocus();
+      }
     }
   }
 

@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ import java.util.List;
  * @author gregsh
  */
 public final class LightDirectoryIndex<T> {
-  private final ConcurrentIntObjectMap<T> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
+  private final IntObjectMap<T> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
   private final T myDefValue;
   private final Consumer<LightDirectoryIndex<T>> myInitializer;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
@@ -41,7 +27,8 @@ import java.util.Set;
  *   These roots won't be indexed and will be handled as {@link LibraryEx#getExcludedRoots()}</li>
  *   <br>
  *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
- *   <li>An item in "External Libraries" in Project view if library is instance of {@link ItemPresentation}</li>.
+ *   <li>An item in "External Libraries" in Project view if library returns true on {@link #isShowInExternalLibrariesNode()} and
+ *   is instance of {@link ItemPresentation}</li>.
  * </ul>
  * <p/>
  * To decorate a child node of "External Libraries" node in Project view consider implementing corresponding interfaces:
@@ -65,14 +52,6 @@ public abstract class SyntheticLibrary {
   }
 
   /**
-   * @deprecated use getExcludeFileCondition instead
-   */
-  @Nullable
-  public Condition<CharSequence> getExcludeCondition() {
-    return null;
-  }
-
-  /**
    * @return a condition for excluding file from a library or {@code null}
    * E.g. you can exclude all non-java file by returning {@code file -> !file.getName().endsWith(".java")}
    * <p>
@@ -86,10 +65,12 @@ public abstract class SyntheticLibrary {
    */
   @Nullable
   public Condition<VirtualFile> getExcludeFileCondition() {
-    Condition<CharSequence> condition = getExcludeCondition();
-    return condition != null ? (f) -> condition.value(f.getNameSequence()) : null;
+    return null;
   }
 
+  public boolean isShowInExternalLibrariesNode() {
+    return this instanceof ItemPresentation;
+  }
 
   /**
    * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).

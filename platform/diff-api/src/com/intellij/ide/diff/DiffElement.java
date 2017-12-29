@@ -81,7 +81,7 @@ public abstract class DiffElement<T> {
 
   public abstract T getValue();
 
-  public String getSeparator() {
+  public static String getSeparator() {
     return "/";
   }
 

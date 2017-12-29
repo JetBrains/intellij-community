@@ -137,7 +137,7 @@ internal class SchemeManagerTest {
   @Test fun testGenerateUniqueSchemeName() {
     val manager = createAndLoad("options1")
     val scheme = TestScheme("first")
-    manager.addNewScheme(scheme, false)
+    manager.addScheme(scheme, false)
 
     assertThat("first2").isEqualTo(scheme.name)
   }

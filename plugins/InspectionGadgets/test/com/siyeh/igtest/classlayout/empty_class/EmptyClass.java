@@ -20,3 +20,4 @@ interface Interface {
 }
 class EmptyClassTest implements Interface {
 }
+enum <warning descr="Enum 'EmptyEnum' is empty">EmptyEnum</warning> {}

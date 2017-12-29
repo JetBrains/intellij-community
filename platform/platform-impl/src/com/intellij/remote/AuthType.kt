@@ -22,5 +22,12 @@ enum class AuthType {
    * - read OpenSSH configuration files, get `IdentityFile` declared in it;
    * - use identity files provided by authentication agent (ssh-agent or PuTTY).
    */
-  OPEN_SSH
+  OPEN_SSH;
+
+  val displayName: String
+    get() = when (this) {
+      PASSWORD -> "Password"
+      KEY_PAIR -> "Key pair (OpenSSH or PuTTY)"
+      OPEN_SSH -> "OpenSSH config and authentication agent"
+    }
 }

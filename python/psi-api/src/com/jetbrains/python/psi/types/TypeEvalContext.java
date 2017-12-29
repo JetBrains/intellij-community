@@ -88,6 +88,7 @@ public class TypeEvalContext {
    * It is as detailed as {@link TypeEvalContext#userInitiated(Project, PsiFile)}, but allows inferring types based on the context in which
    * the analyzed code was called or may be called. Since this is basically guesswork, the results should be used only for code completion.
    */
+  @NotNull
   public static TypeEvalContext codeCompletion(@NotNull final Project project, @Nullable final PsiFile origin) {
     return getContextFromCache(project, new TypeEvalContext(true, true, true, origin));
   }

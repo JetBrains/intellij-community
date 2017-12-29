@@ -29,7 +29,6 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 4, 2007
  */
 public class ObjectMarkupPropertiesDialog extends ValueMarkerPresentationDialogBase {
   @NonNls private static final String MARK_ALL_REFERENCED_VALUES_KEY = "debugger.mark.all.referenced.values";

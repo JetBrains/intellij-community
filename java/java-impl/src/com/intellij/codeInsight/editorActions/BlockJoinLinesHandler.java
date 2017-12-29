@@ -23,12 +23,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.BlockJoinLinesHandler");
 
   @Override
-  public int tryJoinLines(final Document document, final PsiFile psiFile, final int start, final int end) {
+  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
     PsiElement elementAtStartLineEnd = psiFile.findElementAt(start);
     PsiElement elementAtNextLineStart = psiFile.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;

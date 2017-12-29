@@ -47,7 +47,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                                @Nullable ExternalSystemExecutionSettings settings,
                                @NotNull List<String> vmOptions,
                                @NotNull List<String> scriptParameters,
-                               @Nullable String jvmAgentSetup) throws RemoteException, ExternalSystemException
+                               @Nullable String jvmAgentSetup) throws ExternalSystemException
       {
       }
 
@@ -56,31 +56,31 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                                @NotNull List<String> taskNames,
                                @NotNull String projectPath,
                                @Nullable ExternalSystemExecutionSettings settings,
-                               @Nullable String jvmAgentSetup) throws RemoteException, ExternalSystemException {
+                               @Nullable String jvmAgentSetup) throws ExternalSystemException {
       }
 
       @Override
-      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
+      public boolean cancelTask(@NotNull ExternalSystemTaskId id) throws ExternalSystemException
       {
         return false;
       }
 
       @Override
-      public void setSettings(@NotNull ExternalSystemExecutionSettings settings) throws RemoteException {
+      public void setSettings(@NotNull ExternalSystemExecutionSettings settings) {
       }
 
       @Override
-      public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) throws RemoteException {
+      public void setNotificationListener(@NotNull ExternalSystemTaskNotificationListener notificationListener) {
       }
 
       @Override
-      public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
+      public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) {
         return false;
       }
 
       @NotNull
       @Override
-      public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+      public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() {
         return Collections.emptyMap();
       }
     };

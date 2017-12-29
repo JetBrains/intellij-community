@@ -284,7 +284,7 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
         }
         seenColon |= c == ':';
       }
-      if (end < 0 || start >= end) return null;
+      if (end < 0 || start > end) return null;
       return document.createRangeMarker(start, end, true);
     }
 
@@ -327,11 +327,34 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
         support = findSupportElement(element);
       }
 
-      if (support == null) return null;
+      if (support == null) return findSupportForTagList(leader, element, document);
 
       final TextRange range = support.getTextRange();
       TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), range);
       return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
+    }
+
+    private static RangeMarker findSupportForTagList(RangeMarker leader, PsiElement element, Document document) {
+      if (leader.getStartOffset() != leader.getEndOffset() || element == null) return null;
+
+      PsiElement support = null;
+      if ("<>".equals(element.getText())) {
+        PsiElement last = element.getParent().getLastChild();
+        if ("</>".equals(last.getText())) {
+          support = last;
+        }
+      }
+      if ("</>".equals(element.getText())) {
+        PsiElement first = element.getParent().getFirstChild();
+        if ("<>".equals(first.getText())) {
+          support = first;
+        }
+      }
+      if (support != null) {
+        TextRange range = support.getTextRange();
+        return document.createRangeMarker(range.getEndOffset() - 1, range.getEndOffset() - 1, true);
+      }
+      return null;
     }
 
     private static PsiElement findSupportElement(PsiElement element) {

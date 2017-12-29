@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewFactoryImpl;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -30,7 +31,6 @@ import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -90,8 +90,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
   private static AtomicInteger ourSettingsModificationCount = new AtomicInteger();
-  private final boolean myUseATM = ApplicationManager.getApplication().isUnitTestMode() ||
-    Experiments.isFeatureEnabled("structure.view.async.tree.model");
+  private final boolean myUseATM = true; //todo inline & remove
 
   private FileEditor myFileEditor;
   private final TreeModelWrapper myTreeModelWrapper;
@@ -120,7 +119,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   private final AutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
 
-  public StructureViewComponent(FileEditor editor,
+  public StructureViewComponent(@Nullable FileEditor editor,
                                 @NotNull StructureViewModel structureViewModel,
                                 @NotNull Project project,
                                 boolean showRootNode) {
@@ -136,9 +135,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       public void rebuildTree() {
         if (isDisposed()) return;
         super.rebuildTree();
-        if (myUseATM) {
-          myStructureTreeModel.invalidate();
-        }
       }
 
       @Override
@@ -164,13 +160,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
       myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
       myTree = new MyTree(myAsyncTreeModel);
-      UIUtil.putClientProperty(myTree, TreeState.VISIT, visitor -> myAsyncTreeModel.accept(visitor, true));
 
       Disposer.register(this, () -> myTreeModelWrapper.dispose());
       Disposer.register(this, myAsyncTreeModel);
 
-      myAsyncTreeModel.addTreeModelListener(new MyExpandListener(
-        myTree, ObjectUtils.tryCast(myTreeModel, StructureViewModel.ExpandInfoProvider.class)));
+      registerAutoExpandListener(myTree, myTreeModel);
 
       myUpdateAlarm = new SingleAlarm(this::rebuild, 200, this);
       myTreeBuilder = null;
@@ -204,16 +198,26 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
     myAutoScrollFromSourceHandler = new MyAutoScrollFromSourceHandler(myProject, this);
-    myCopyPasteDelegator = new CopyPasteDelegator(myProject, myTree) {
-      @Override
-      @NotNull
-      protected PsiElement[] getSelectedElements() {
-        return PsiUtilCore.toPsiElementArray(StructureViewComponent.this.getSelectedElements().filter(PsiElement.class).toList());
-      }
-    };
+    myCopyPasteDelegator = createCopyPasteDelegator(myProject, myTree);
 
     setToolbar(createToolbar());
     setupTree();
+  }
+
+  public static void registerAutoExpandListener(@NotNull JTree tree, @NotNull StructureViewModel structureViewModel) {
+    tree.getModel().addTreeModelListener(new MyExpandListener(
+      tree, ObjectUtils.tryCast(structureViewModel, StructureViewModel.ExpandInfoProvider.class)));
+  }
+
+  @NotNull
+  public static CopyPasteDelegator createCopyPasteDelegator(@NotNull Project project, @NotNull JTree tree) {
+    return new CopyPasteDelegator(project, tree) {
+      @Override
+      @NotNull
+      protected PsiElement[] getSelectedElements() {
+        return PsiUtilCore.toPsiElementArray(getSelectedValues(tree).filter(PsiElement.class).toList());
+      }
+    };
   }
 
   protected boolean showScrollToFromSourceActions() {
@@ -241,9 +245,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myTree.setCellRenderer(new NodeRenderer());
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.setShowsRootHandles(true);
-    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
-      PsiManager.getInstance(myProject).getModificationTracker(), this::queueUpdate);
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiListener, this);
+    registerPsiListener(myProject, this, this::queueUpdate);
 
     myAutoScrollToSourceHandler.install(myTree);
     myAutoScrollFromSourceHandler.install();
@@ -258,6 +260,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     addTreeKeyListener();
     addTreeMouseListeners();
     restoreState();
+  }
+
+  public static void registerPsiListener(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onChange) {
+    MyPsiTreeChangeListener psiListener = new MyPsiTreeChangeListener(
+      PsiManager.getInstance(project).getModificationTracker(), onChange);
+    PsiManager.getInstance(project).addPsiTreeChangeListener(psiListener, disposable);
   }
 
   @NotNull
@@ -281,7 +289,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public void rebuild() {
     if (myUseATM) {
-      myStructureTreeModel.getInvoker().invokeLaterIfNeeded(myTreeStructure::rebuildTree);
+      myStructureTreeModel.getInvoker().invokeLaterIfNeeded(() -> {
+        myTreeStructure.rebuildTree();
+        myStructureTreeModel.invalidate(null);
+      });
     }
     else {
       myTreeBuilder.queueUpdate();
@@ -293,30 +304,17 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return JBTreeTraverser.from(o -> o instanceof Group ? ((Group)o).getChildren() : null);
   }
 
-  private JBIterable<Object> getSelectedElements() {
+  private JBIterable<Object> getSelectedValues() {
+    return getSelectedValues(getTree());
+  }
+
+  @NotNull
+  public static JBIterable<Object> getSelectedValues(JTree tree) {
     return traverser()
-      .withRoots(JBIterable.of(getTree().getSelectionPaths()).map(TreePath::getLastPathComponent))
-      .traverse()
-      .filter(StructureViewTreeElement.class)
-      .filterMap(o -> o.getValue());
-  }
-
-  @Nullable
-  private Object[] getSelectedTreeElements() {
-    List<Object> list = JBIterable.of(getTree().getSelectionPaths())
-      .map(TreePath::getLastPathComponent)
-      .map(StructureViewComponent::getNodeValue)
-      .toList();
-    return list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
-  }
-
-  @Nullable
-  private static Object getNodeValue(Object node) {
-    Object userObject = TreeUtil.getUserObject(node);
-    if (userObject instanceof FilteringTreeStructure.FilteringNode) {
-      userObject = ((FilteringTreeStructure.FilteringNode)userObject).getDelegate();
-    }
-    return userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() : null;
+      .withRoots(JBIterable.of(tree.getSelectionPaths())
+                   .map(TreePath::getLastPathComponent)
+                   .filterMap(StructureViewComponent::unwrapValue))
+      .traverse();
   }
 
   private void addTreeMouseListeners() {
@@ -352,19 +350,23 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     Object root = myTree.getModel().getRoot();
     if (root == null) return;
     myStructureViewState = TreeState.createOn(myTree, new TreePath(root));
-    myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    if (myFileEditor != null) {
+      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, myStructureViewState);
+    }
   }
 
   @Override
   public void restoreState() {
-    myStructureViewState = myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
+    myStructureViewState = myFileEditor == null ? null : myFileEditor.getUserData(STRUCTURE_VIEW_STATE_KEY);
     if (myStructureViewState == null) {
       TreeUtil.expand(getTree(), 2);
     }
     else {
       myStructureViewState.applyTo(myTree);
-      myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
       myStructureViewState = null;
+      if (myFileEditor != null) {
+        myFileEditor.putUserData(STRUCTURE_VIEW_STATE_KEY, null);
+      }
     }
   }
 
@@ -454,14 +456,15 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         result.setError("rejected");
         return TreeVisitor.Action.INTERRUPT;
       }
-      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
-      Object unwrapped = unwrapValue(userObject);
-      if (Comparing.equal(unwrapped, element) ||
+      Object last = path.getLastPathComponent();
+      Object userObject = unwrapNavigatable(last);
+      Object value = unwrapValue(last);
+      if (Comparing.equal(value, element) ||
           userObject instanceof AbstractTreeNode && ((AbstractTreeNode)userObject).canRepresent(element)) {
         return TreeVisitor.Action.INTERRUPT;
       }
-      if (unwrapped instanceof PsiElement && element instanceof PsiElement) {
-        if (PsiTreeUtil.isAncestor((PsiElement)unwrapped, (PsiElement)element, true)) {
+      if (value instanceof PsiElement && element instanceof PsiElement) {
+        if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
           int count = path.getPathCount();
           if (stage[1] == 0 || stage[1] < count) {
             stage[1] = count;
@@ -616,9 +619,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (isDisposed()) return;
       myAutoscrollFeedback = true;
 
-      Navigatable editSourceDescriptor = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
-      if (myFileEditor != null && editSourceDescriptor != null && editSourceDescriptor.canNavigateToSource()) {
-        editSourceDescriptor.navigate(false);
+      Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
+      if (myFileEditor != null && navigatable != null && navigatable.canNavigateToSource()) {
+        navigatable.navigate(false);
       }
     }
   }
@@ -678,19 +681,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   @Override
   public Object getData(String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      TreePath path = getSelectedUniquePath();
-      if (path == null) return null;
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-      Object element = getNodeValue(node);
-      if (element instanceof StructureViewTreeElement) {
-        element = ((StructureViewTreeElement)element).getValue();
-      }
-      if (!(element instanceof PsiElement)) return null;
-      if (!((PsiElement)element).isValid()) return null;
-      return element;
+      PsiElement element = getSelectedValues().filter(PsiElement.class).single();
+      return element != null && element.isValid() ? element : null;
     }
     if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return PsiUtilCore.toPsiElementArray(getSelectedElements().filter(PsiElement.class).toList());
+      return PsiUtilCore.toPsiElementArray(getSelectedValues().filter(PsiElement.class).toList());
     }
     if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
@@ -705,7 +700,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return myCopyPasteDelegator.getPasteProvider();
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      Object[] selectedElements = getSelectedTreeElements();
+      List<Object> list = JBIterable.of(getTree().getSelectionPaths())
+        .map(TreePath::getLastPathComponent)
+        .map(StructureViewComponent::unwrapNavigatable)
+        .toList();
+      Object[] selectedElements = list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {
         return selectedElements[0];
@@ -718,12 +717,6 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return myProject;
     }
     return super.getData(dataId);
-  }
-
-  @Nullable
-  private TreePath getSelectedUniquePath() {
-    TreePath[] paths = getTree().getSelectionPaths();
-    return paths == null || paths.length != 1 ? null : paths[0];
   }
 
   @Override
@@ -751,8 +744,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
       return TreeVisitor.Action.CONTINUE;
     };
-    myStructureTreeModel.getInvoker().invokeLater(() ->
-      myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null)));
+    myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
     return result;
   }
 
@@ -993,8 +985,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return unwrapElement(unwrapWrapper(o));
   }
 
+  @Nullable
+  public static Object unwrapNavigatable(Object o) {
+    Object p = TreeUtil.getUserObject(o);
+    return p instanceof FilteringTreeStructure.FilteringNode ? ((FilteringTreeStructure.FilteringNode)p).getDelegate() : p;
+  }
+
   public static Object unwrapWrapper(Object o) {
-    return o instanceof MyNodeWrapper ? ((MyNodeWrapper)o).getValue() : o;
+    Object p = unwrapNavigatable(o);
+    return p instanceof MyNodeWrapper ? ((MyNodeWrapper)p).getValue() :
+           p instanceof MyGroupWrapper ? ((MyGroupWrapper)p).getValue() : p;
   }
 
   private static Object unwrapElement(Object o) {
@@ -1038,7 +1038,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
       if (provider != null) {
         Object value = unwrapWrapper(nodeDescriptor.getElement());
-        if (value instanceof StructureViewTreeElement) {
+        if (value instanceof CustomRegionTreeElement) {
+          return true;
+        }
+        else if (value instanceof StructureViewTreeElement) {
           return provider.isAutoExpand((StructureViewTreeElement)value);
         }
         else if (value instanceof GroupWrapper) {

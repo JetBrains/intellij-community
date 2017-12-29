@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ui;
 
@@ -20,14 +8,13 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
-import com.intellij.util.ui.JBEmptyBorder;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.*;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +30,7 @@ import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
+import java.awt.geom.RoundRectangle2D;
 import java.text.AttributedCharacterIterator;
 import java.text.AttributedString;
 import java.text.CharacterIterator;
@@ -722,7 +710,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
 
     doPaintTextBackground(g, offset);
-    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null);
+    offset = doPaintText(g, offset, myFocusBorderAroundIcon || icon == null) + myIconTextGap;
     if (icon != null && myIconOnTheRight) {
       doPaintIcon(g, icon, offset);
     }
@@ -769,8 +757,20 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     if (myBorder != null) {
       offset += myBorder.getBorderInsets(this).left;
     }
+    offset += getInsets().left;
 
-    final List<Object[]> searchMatches = new ArrayList<>();
+    class Frag { int index; float start; float end; float baseLine; Font font; Frag next;
+      public Frag(int index, float start, float end, float baseLine, Font font, Frag next) {
+        this.index = index;
+        this.start = start;
+        this.end = end;
+        this.baseLine = baseLine;
+        this.font = font;
+        this.next = next;
+      }
+    }
+    Frag secondPassFrag = null;
+    int height = getHeight();
 
     applyAdditionalHints(g);
     final Font baseFont = getBaseFont();
@@ -798,10 +798,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
       final int fragmentPadding = myFragmentPadding.get(i);
 
-      final Color bgColor = attributes.isSearchMatch() ? null : attributes.getBgColor();
+      boolean secondPass = attributes.isSearchMatch() || attributes.isClickable();
+      final Color bgColor = secondPass ? null : attributes.getBgColor();
       if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
         g.setColor(bgColor);
-        g.fillRect((int)offset, 0, (int)fragmentWidth, getHeight());
+        g.fillRect((int)offset, 0, (int)fragmentWidth, height);
       }
 
       Color color = attributes.getFgColor();
@@ -827,7 +828,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         endOffset = offset + fragmentWidth;
       }
 
-      if (!attributes.isSearchMatch()) {
+      if (!secondPass) {
         if (shouldDrawMacShadow()) {
           g.setColor(SHADOW_COLOR);
           doDrawString(g, i, offset, textBaseline + 1);
@@ -845,7 +846,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       g.setStroke(g.getStroke());
 
       // 1. Strikeout effect
-      if (attributes.isStrikeout() && !attributes.isSearchMatch()) {
+      if (attributes.isStrikeout() && !secondPass) {
         EffectPainter.STRIKE_THROUGH.paint(g, (int)offset, textBaseline, (int)fragmentWidth, getCharHeight(g), font);
       }
       // 2. Waved effect
@@ -866,8 +867,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         UIUtil.drawBoldDottedLine(g, (int)offset, (int)(offset + fragmentWidth), dottedAt, bgColor, lineColor, isOpaque());
       }
 
-      if (attributes.isSearchMatch()) {
-        searchMatches.add(new Object[]{offset, offset + fragmentWidth, (float)textBaseline, myFragments.get(i), g.getFont(), attributes});
+      if (secondPass) {
+        secondPassFrag = new Frag(i, offset, offset + fragmentWidth, textBaseline, font, secondPassFrag);
       }
 
       offset = endOffset;
@@ -875,36 +876,64 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     // Paint focus border around the text and icon (if necessary)
     if (myPaintFocusBorder && myBorder != null) {
+      int width = getWidth();
       if (focusAroundIcon) {
-        myBorder.paintBorder(this, g, 0, 0, getWidth(), getHeight());
+        myBorder.paintBorder(this, g, 0, 0, width, height);
       }
       else {
-        myBorder.paintBorder(this, g, textStart, 0, getWidth() - textStart, getHeight());
+        myBorder.paintBorder(this, g, textStart, 0, width - textStart, height);
       }
     }
 
     // draw search matches after all
-    for (final Object[] info : searchMatches) {
-      float x1 = (float)info[0];
-      float x2 = (float)info[1];
-      UIUtil.drawSearchMatch(g, x1, x2, getHeight());
-      g.setFont((Font)info[4]);
+    for (Frag frag = secondPassFrag; frag != null; frag = frag.next) {
+      float x1 = frag.start;
+      float x2 = frag.end;
+      float baseline = frag.baseLine;
+      String text = myFragments.get(frag.index);
+      SimpleTextAttributes attributes = myAttributes.get(frag.index);
+      Color fgColor;
+      if (attributes.isSearchMatch()) {
+        fgColor = new JBColor(Gray._50, Gray._0);
+        UIUtil.drawSearchMatch(g, x1, x2, height);
+      }
+      else if (attributes.isClickable()) {
+        fgColor = ObjectUtils.notNull(attributes.getFgColor(), UIUtil.getLabelForeground());
+        Color bg = ObjectUtils.notNull(attributes.getBgColor(), UIUtil.getLabelBackground());
+        drawClickableFrag(g, x1, x2, height, bg);
+      }
+      else {
+        continue;
+      }
+      g.setFont(frag.font);
 
-      float baseline = (float)info[2];
-      String text = (String)info[3];
       if (shouldDrawMacShadow()) {
         g.setColor(SHADOW_COLOR);
         g.drawString(text, x1, baseline + 1);
       }
 
-      g.setColor(new JBColor(Gray._50, Gray._0));
+      g.setColor(fgColor);
       g.drawString(text, x1, baseline);
 
-      if (((SimpleTextAttributes)info[5]).isStrikeout()) {
+      if (attributes.isStrikeout()) {
         EffectPainter.STRIKE_THROUGH.paint(g, (int)x1, (int)baseline, (int)(x2 - x1), getCharHeight(g), g.getFont());
       }
     }
     return (int)offset;
+  }
+
+  private static void drawClickableFrag(Graphics2D g, float x1, float x2, int height, Color bg) {
+    boolean darcula = UIUtil.isUnderDarcula();
+    Color c1 = darcula ? bg.brighter() : bg;
+    Color c2 = darcula ? bg : bg.darker();
+    GraphicsConfig c = GraphicsUtil.setupRoundedBorderAntialiasing(g);
+    g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.7f));
+    g.setPaint(UIUtil.getGradientPaint(x1 + 1, 2, c1, x1 + 1, height - 5, c2));
+    RoundRectangle2D.Float shape = new RoundRectangle2D.Float(x1 + 1, 2, x2 - x1 - 2, height - 4, 4, 4);
+    g.fill(shape);
+    g.setColor(new JBColor(Gray.xCC, new Color(0x757b80)));
+    g.draw(shape);
+    c.restore();
   }
 
   private static int getCharHeight(Graphics g) {

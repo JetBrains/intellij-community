@@ -85,3 +85,28 @@ class Presley {
     }
   }
 }
+
+class LambdaInOverloadMethod {
+  Boolean myField;
+  void m(I<Boolean> i) {}
+  void m(IVoid i) {}
+
+  Boolean get() {return myField;}
+
+  {
+    m(() -> get() <caret>== true);
+  }
+}
+
+interface I<T> {
+  T f();
+}
+
+interface IVoid extends I<Void>{
+  void foo();
+
+  @Override
+  default Void f() {
+    return null;
+  }
+}

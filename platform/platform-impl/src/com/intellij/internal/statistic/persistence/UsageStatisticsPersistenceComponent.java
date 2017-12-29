@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.internal.statistic.persistence;
 
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
@@ -39,9 +26,8 @@ import java.util.Set;
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements NamedComponent, PersistentStateComponent<Element> {
 
-  @NonNls private boolean isAllowed = false;
   @NonNls private boolean isShowNotification = true;
-  @NotNull private SendPeriod myPeriod = SendPeriod.WEEKLY;
+  @NotNull private SendPeriod myPeriod = SendPeriod.DAILY;
 
   @NonNls private static final String DATA_ATTR = "data";
   @NonNls private static final String GROUP_TAG = "group";
@@ -87,13 +73,16 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       setSentTime(0);
     }
 
+    // compatibility: if was previously allowed, transfer the setting to the new place
     final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
-    setAllowed(!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue));
+    if (!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue)) {
+      setAllowed(true);
+    }
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
     setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) || Boolean.parseBoolean(isShowNotificationValue));
 
-    setPeriod(parsePeriod(element.getAttributeValue(PERIOD_ATTR)));
+    //setPeriod(parsePeriod(element.getAttributeValue(PERIOD_ATTR)));
   }
 
   @Override
@@ -114,15 +103,15 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
       element.setAttribute(LAST_TIME_ATTR, String.valueOf(lastTimeSent));
     }
 
-    if (isAllowed()) {
-      element.setAttribute(IS_ALLOWED_ATTR, "true");
-    }
+    //if (isAllowed()) {
+    //  element.setAttribute(IS_ALLOWED_ATTR, "true");
+    //}
     if (!isShowNotification()) {
       element.setAttribute(SHOW_NOTIFICATION_ATTR, "false");
     }
-    if (myPeriod != SendPeriod.WEEKLY) {
-      element.setAttribute(PERIOD_ATTR, myPeriod.getName());
-    }
+    //if (myPeriod != SendPeriod.WEEKLY) {
+    //  element.setAttribute(PERIOD_ATTR, myPeriod.getName());
+    //}
 
     return element;
   }
@@ -145,12 +134,12 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   }
 
   public void setAllowed(boolean allowed) {
-    isAllowed = allowed;
+    ConsentOptions.getInstance().setSendingUsageStatsAllowed(allowed);
   }
 
   @Override
   public boolean isAllowed() {
-    return isAllowed;
+    return ConsentOptions.getInstance().isSendingUsageStatsAllowed() == ConsentOptions.Permission.YES;
   }
 
   public void setShowNotification(boolean showNotification) {

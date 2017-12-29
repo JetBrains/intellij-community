@@ -70,6 +70,7 @@ class CurrentRevisionAnnotationFieldGutter extends AspectAnnotationFieldGutter i
     return ((text == null) || (text.length() == 0)) ? "" : VcsBundle.message("annotation.original.revision.text", text);
   }
 
+  @Override
   public void consume(final AnnotationSource annotationSource) {
     myTurnedOn = annotationSource.showMerged();
   }

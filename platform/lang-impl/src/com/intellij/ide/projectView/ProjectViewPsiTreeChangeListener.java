@@ -16,6 +16,8 @@
 
 package com.intellij.ide.projectView;
 
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -25,6 +27,8 @@ import com.intellij.psi.util.PsiModificationTracker;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private final PsiModificationTracker myModificationTracker;
@@ -96,8 +100,14 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
           if (parent == null) break;
         }
       }
+      else if (parent instanceof PsiDirectory &&
+               ScratchProjectViewPane.isScratchesMergedIntoProjectTab() &&
+               RootType.forFile(((PsiDirectory)parent).getVirtualFile()) != null) {
+        addSubtreeToUpdateByRoot();
+        break;
+      }
 
-      if (addSubtreeToUpdateByElement(parent)) {
+      if (addSubtreeToUpdateByElementFile(parent)) {
         break;
       }
 
@@ -114,8 +124,8 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       addSubtreeToUpdateByRoot();
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)){
-      if (!addSubtreeToUpdateByElement(element) && element instanceof PsiFile) {
-        addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+      if (!addSubtreeToUpdateByElementFile(element) && element instanceof PsiFile) {
+        addSubtreeToUpdateByElementFile(((PsiFile)element).getContainingDirectory());
       }
     }
     else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_NAME) || propertyName.equals(PsiTreeChangeEvent.PROP_DIRECTORY_NAME)){
@@ -124,11 +134,11 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
         return;
       }
       final PsiElement parent = element.getParent();
-      if (parent == null || !addSubtreeToUpdateByElement(parent)) {
-        addSubtreeToUpdateByElement(element);
+      if (parent == null || !addSubtreeToUpdateByElementFile(parent)) {
+        addSubtreeToUpdateByElementFile(element);
       }
     }
-    else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES)){
+    else if (propertyName.equals(PsiTreeChangeEvent.PROP_FILE_TYPES) || propertyName.equals(PsiTreeChangeEvent.PROP_UNLOADED_PSI)) {
       addSubtreeToUpdateByRoot();
     }
   }
@@ -142,5 +152,9 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
   protected boolean addSubtreeToUpdateByElement(PsiElement element) {
     AbstractTreeUpdater updater = getUpdater();
     return updater != null && updater.addSubtreeToUpdateByElement(element);
+  }
+
+  private boolean addSubtreeToUpdateByElementFile(PsiElement element) {
+    return element != null && addSubtreeToUpdateByElement(notNull(element.getContainingFile(), element));
   }
 }

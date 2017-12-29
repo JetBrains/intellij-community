@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -286,6 +288,33 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  "\n" +
                  "</project>",
                  VfsUtil.loadText(myProjectRoot.findFileByRelativePath("subDir/module/pom.xml")));
+  }
+
+  public void testSameFolderAsParent() throws Exception {
+    VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
+                                                    "<groupId>test</groupId>" +
+                                                    "<artifactId>project</artifactId>" +
+                                                    "<version>1</version>"));
+    importProject(customPomXml);
+    assertModules("project");
+
+    setModuleNameAndRoot("module", getProjectPath());
+    setParentProject(customPomXml);
+
+    createNewModule(new MavenId("org.foo", "module", "1.0"));
+
+    assertContentRoots("project",
+                       getProjectPath() + "/src/main/java",
+                       getProjectPath() + "/src/main/resources",
+                       getProjectPath() + "/src/test/java"
+    );
+    assertContentRoots("module",
+                       getProjectPath());
+
+    MavenProject module = MavenProjectsManager.getInstance(myProject).findProject(getModule("module"));
+
+    MavenDomProjectModel domProjectModel = MavenDomUtil.getMavenDomProjectModel(myProject, module.getFile());
+    assertEquals("custompom.xml", domProjectModel.getMavenParent().getRelativePath().getRawText());
   }
 
   private void setModuleNameAndRoot(String name, String root) {

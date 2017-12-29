@@ -20,7 +20,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 
 import java.util.*;
@@ -34,6 +36,16 @@ public class CompileScopeUtil {
 
   public static void setBaseScopeForExternalBuild(@NotNull CompileScope scope, @NotNull List<TargetTypeBuildScope> scopes) {
     scope.putUserData(BASE_SCOPE_FOR_EXTERNAL_BUILD, scopes);
+  }
+
+  public static void setResourcesScopeForExternalBuild(@NotNull CompileScope scope, @NotNull List<String> moduleNames) {
+    List<TargetTypeBuildScope> resourceScopes = new ArrayList<>();
+    for (UpdateResourcesBuildContributor provider : UpdateResourcesBuildContributor.EP_NAME.getExtensions()) {
+      for (BuildTargetType<?> type : provider.getResourceTargetTypes()) {
+        resourceScopes.add(CmdlineProtoUtil.createTargetsScope(type.getTypeId(), moduleNames, false));
+      }
+    }
+    setBaseScopeForExternalBuild(scope, resourceScopes);
   }
 
   public static void addScopesForModules(Collection<Module> modules,

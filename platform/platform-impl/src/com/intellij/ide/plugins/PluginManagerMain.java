@@ -138,6 +138,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   protected void init() {
+    Color background = UIUtil.getTextFieldBackground();
     GuiUtils.replaceJSplitPaneWithIDEASplitter(main, true);
     HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
     StyleSheet sheet = kit.getStyleSheet();
@@ -149,8 +150,7 @@ public abstract class PluginManagerMain implements Disposable {
     JScrollPane installedScrollPane = createTable();
     installedScrollPane.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 1, 1, 0));
     myPluginHeaderPanel = new PluginHeaderPanel(this);
-    myHeader.setBackground(UIUtil.getTextFieldBackground());
-    myPluginHeaderPanel.getPanel().setBackground(UIUtil.getTextFieldBackground());
+    myPluginHeaderPanel.getPanel().setBackground(background);
     myPluginHeaderPanel.getPanel().setOpaque(true);
 
     myHeader.add(myPluginHeaderPanel.getPanel(), BorderLayout.CENTER);
@@ -213,9 +213,11 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.getModel().addTableModelListener(modelListener);
     modelListener.tableChanged(null);
 
-    myDescriptionScrollPane.setBackground(UIUtil.getTextFieldBackground());
+    myDescriptionScrollPane.setBackground(background);
     Border border = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 1, 1);
-    myInfoPanel.setBorder(border);
+    myInfoPanel.setBorder(BorderFactory.createCompoundBorder(border, JBUI.Borders.emptyLeft(5)));
+    myInfoPanel.setBackground(background);
+    myHeader.setBackground(background);
   }
 
   protected abstract JScrollPane createTable();
@@ -549,15 +551,6 @@ public abstract class PluginManagerMain implements Disposable {
   @Nullable
   protected String canApply() {
     return null;
-  }
-
-  private void createUIComponents() {
-    myHeader = new JPanel(new BorderLayout()) {
-      @Override
-      public Color getBackground() {
-        return UIUtil.getTextFieldBackground();
-      }
-    };
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {

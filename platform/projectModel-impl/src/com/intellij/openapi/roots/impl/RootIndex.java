@@ -75,7 +75,7 @@ public class RootIndex {
     myProject = project;
     myInfoCache = cache;
 
-    ApplicationManager.getApplication().isReadAccessAllowed();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final RootInfo info = buildRootInfo(project);
 
@@ -196,7 +196,7 @@ public class RootIndex {
       Collection<SyntheticLibrary> libraries = provider.getAdditionalProjectLibraries(project);
       for (SyntheticLibrary descriptor : libraries) {
         for (VirtualFile root : descriptor.getSourceRoots()) {
-          if (!ensureValid(root, project)) continue;
+          if (!ensureValid(root, descriptor)) continue;
 
           info.libraryOrSdkSources.add(root);
           info.classAndSourceRoots.add(root);

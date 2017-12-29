@@ -19,10 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -47,23 +44,24 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   @Override
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
-    JCheckBox b = (JCheckBox) c;
-    final Dimension size = c.getSize();
-    final Font font = c.getFont();
-
-    g.setFont(font);
-    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, font);
+    Dimension size = c.getSize();
 
     Rectangle viewRect = new Rectangle(size);
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
+    AbstractButton b = (AbstractButton) c;
+
+    Font f = c.getFont();
+    g.setFont(f);
+    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
 
     JBInsets.removeFrom(viewRect, c.getInsets());
 
-    String text = SwingUtilities.layoutCompoundLabel(c, fm, b.getText(), getDefaultIcon(),
-                                                     b.getVerticalAlignment(), b.getHorizontalAlignment(),
-                                                     b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-                                                     viewRect, iconRect, textRect, b.getIconTextGap());
+    String text = SwingUtilities.layoutCompoundLabel(
+      c, fm, b.getText(), getDefaultIcon(),
+      b.getVerticalAlignment(), b.getHorizontalAlignment(),
+      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
+      viewRect, iconRect, textRect, b.getIconTextGap());
 
     //background
     if (c.isOpaque()) {
@@ -75,7 +73,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     drawText(c, g, b, fm, textRect, text);
   }
 
-  protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
+  protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     if (selected && b.getSelectedIcon() != null) {
       b.getSelectedIcon().paintIcon(b, g, iconRect.x + JBUI.scale(4), iconRect.y + JBUI.scale(2));
     } else if (!selected && b.getIcon() != null) {
@@ -115,7 +113,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                              w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
           g.fillRoundRect(0, 0, w, h, R, R);
 
-          DarculaUIUtil.paintFocusRing(g, new Rectangle(offset, offset, w - offset * 2, h - offset * 2));
+          float bw = DarculaUIUtil.bw();
+          g.translate(-bw, -bw);
+          DarculaUIUtil.paintFocusBorder(g, (int)(iconRect.width - bw), (int)(iconRect.height - bw), DarculaUIUtil.arc(), true);
+          g.translate(bw, bw);
         } else {
           if (c.isEnabled() || !UIUtil.isUnderDarcula()) {
             g.setPaint(UIUtil.getGradientPaint(w / 2, offset, getBackgroundColor1(enabled, selected || overrideBg),
@@ -160,7 +161,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     g.drawLine(off, y1, w - off + JBUI.scale(1), y1);
   }
 
-  protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
+  protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
     //text
     if(text != null) {
       View view = (View) c.getClientProperty(BasicHTML.propertyKey);
@@ -266,7 +267,8 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     return EmptyIcon.create(JBUI.scale(20)).asUIResource();
   }
 
-  protected boolean isIndeterminate(JCheckBox checkBox) {
-    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState"));
+  protected boolean isIndeterminate(AbstractButton checkBox) {
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState")) ||
+      checkBox instanceof ThreeStateCheckBox && ((ThreeStateCheckBox)checkBox).getState() == ThreeStateCheckBox.State.DONT_CARE;
   }
 }

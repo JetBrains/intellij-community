@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
 import com.google.common.collect.Lists;
@@ -40,7 +26,6 @@ import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -139,7 +124,6 @@ public class ResolveImportUtil {
     String name = qName.getComponents().get(0);
 
     final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
-    List<PsiElement> resultList = new ArrayList<>();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
         throw new PsiInvalidElementAccessException(candidate, "Got an invalid candidate from resolveImportSourceCandidates(): " + candidate.getClass());
@@ -147,21 +131,7 @@ public class ResolveImportUtil {
       if (candidate instanceof PsiDirectory) {
         candidate = PyUtil.getPackageElement((PsiDirectory)candidate, importStatement);
       }
-      List<RatedResolveResult> results = resolveChildren(candidate, name, file, false, true, false, false);
-      if (!results.isEmpty()) {
-        for (RatedResolveResult result : results) {
-          final PsiElement element = result.getElement();
-          if (element != null) {
-            if (!element.isValid()) {
-              throw new PsiInvalidElementAccessException(element, "Got an invalid candidate from resolveChild(): " + element.getClass());
-            }
-            resultList.add(element);
-          }
-        }
-      }
-    }
-    if (!resultList.isEmpty()) {
-      return rateResults(resultList);
+      return updateRatedResults(resolveChildren(candidate, name, file, false, true, false, false));
     }
     return Collections.emptyList();
   }
@@ -303,7 +273,7 @@ public class ResolveImportUtil {
     final List<RatedResolveResult> results = Lists.newArrayList();
     for (RatedResolveResult member : moduleMembers) {
       final PsiElement moduleMember = member.getElement();
-      if (!fileOnly || PyUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
+      if (!fileOnly || PsiTreeUtil.instanceOf(moduleMember, PsiFile.class, PsiDirectory.class)) {
         results.add(member);
         if (moduleMember != null && !preferResolveInDirectoryOverModule(moduleMember)) {
           resolvedInModule.add(member);
@@ -325,7 +295,7 @@ public class ResolveImportUtil {
 
   private static boolean preferResolveInDirectoryOverModule(@NotNull PsiElement resolved) {
     return PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyExceptPart.class) != null ||
-           PyUtil.instanceOf(resolved, PsiFile.class, PsiDirectory.class) ||  // XXX: Workaround for PY-9439
+           PsiTreeUtil.instanceOf(resolved, PsiFile.class, PsiDirectory.class) ||  // XXX: Workaround for PY-9439
            isDunderAll(resolved);
   }
 
@@ -469,6 +439,30 @@ public class ResolveImportUtil {
       }
     }
     return ret;
+  }
+
+  @NotNull
+  private static List<RatedResolveResult> updateRatedResults(@NotNull List<? extends RatedResolveResult> results) {
+    if (results.isEmpty()) return Collections.emptyList();
+    final ResolveResultList result = new ResolveResultList();
+
+    for (RatedResolveResult resolveResult : results) {
+      PsiElement element = resolveResult.getElement();
+      if (element instanceof PsiDirectory) {
+        element = PyUtil.getPackageElement((PsiDirectory)element, element);
+      }
+
+      if (element != null) {
+        int delta = 0;
+        for (PyResolveResultRater rater : Extensions.getExtensions(PyResolveResultRater.EP_NAME)) {
+          delta += rater.getImportElementRate(element);
+        }
+
+        result.poke(element, resolveResult.getRate() + delta);
+      }
+    }
+
+    return result;
   }
 
   /**

@@ -19,7 +19,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.testGuiFramework.recorder.GlobalActionRecorder
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
+import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
 /**
@@ -41,7 +41,7 @@ class StartPauseRecAction : ToggleAction(null, "Start/Stop GUI Script Recording"
       presentation.description = "Start GUI Script Recording"
       Notifier.updateStatus("Recording paused")
       GlobalActionRecorder.deactivate()
-      GuiRecorderComponent.placeCaretToEnd()
+      GuiRecorderManager.placeCaretToEnd()
     }
   }
 

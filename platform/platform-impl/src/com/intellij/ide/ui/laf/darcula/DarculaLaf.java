@@ -19,6 +19,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.DarculaMetalTheme;
 import com.intellij.ide.ui.laf.IdeaLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
+import com.intellij.ide.ui.laf.intellij.MacIntelliJIconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -573,6 +574,21 @@ public class DarculaLaf extends BasicLookAndFeel {
   }
 
   public static Icon loadIcon(String iconName) {
-    return IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/" + iconName, DarculaLaf.class, true);
+    return IconLoader.findIcon("/com/intellij/ide/ui/laf/darcula/icons/" + iconName, DarculaLaf.class, true);
+  }
+
+  public static Icon getCheckmarkIcon(boolean darcula) {
+    if (darcula) return loadIcon("checkmark.png");
+    return MacIntelliJIconCache.getIcon("checkmark", false, false, true);
+  }
+
+  public static Icon getCheckmarkSelectedIcon(boolean darcula) {
+    if (darcula) return loadIcon("checkmarkSelected.png");
+    return MacIntelliJIconCache.getIcon("checkmark", true, false, true);
+  }
+
+  public static Icon getCheckmarkDisabledIcon(boolean darcula) {
+    if (darcula) return loadIcon("checkmarkDisabled.png");
+    return MacIntelliJIconCache.getIcon("checkmark", false, false, false);
   }
 }

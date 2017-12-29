@@ -40,7 +40,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
     nameToData.put(PathUtilRt.getFileName(fileSpec), ArrayUtil.realloc(content, size))
   }
 
-  fun load(state: Element?, nameGetter: ((Element) -> String)? = null) {
+  fun load(state: Element?, keyGetter: ((Element) -> String)? = null) {
     nameToData.clear()
 
     if (state == null) {
@@ -55,7 +55,7 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
         continue
       }
 
-      var name = nameGetter?.invoke(child) ?: child.getAttributeValue("name")
+      var name = keyGetter?.invoke(child) ?: child.getAttributeValue("name")
       if (name == null) {
         for (optionElement in child.getChildren("option")) {
           if (optionElement.getAttributeValue("name") == "myName") {

@@ -42,7 +42,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/25/11
  */
 public class XmlPropertiesIndex extends FileBasedIndexExtension<XmlPropertiesIndex.Key, String>
   implements FileBasedIndex.FileTypeSpecificInputFilter, DataIndexer<XmlPropertiesIndex.Key, String, FileContent>,

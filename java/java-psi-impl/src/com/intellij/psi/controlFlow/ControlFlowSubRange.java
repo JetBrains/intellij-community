@@ -24,12 +24,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ControlFlowSubRange implements ControlFlow {
-  private final ControlFlowImpl myControlFlow;
+  private final ControlFlow myControlFlow;
   private final int myStart;
   private final int myEnd;
   private List<Instruction> myInstructions;
 
-  public ControlFlowSubRange(ControlFlowImpl controlFlow, int start, int end) {
+  public ControlFlowSubRange(ControlFlow controlFlow, int start, int end) {
     myControlFlow = controlFlow;
     myStart = start;
     myEnd = end;

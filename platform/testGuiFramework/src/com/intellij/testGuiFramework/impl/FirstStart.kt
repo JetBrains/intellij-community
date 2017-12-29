@@ -15,7 +15,7 @@
  */
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.ide.PrivacyPolicy
+import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
@@ -148,10 +148,14 @@ abstract class FirstStart(val ideType: IdeType) {
   protected fun acceptAgreement() {
     if (!needToShowAgreement()) return
     with(myRobot) {
-      val policyAgreementTitle = "Privacy Policy Agreement"
+      val policyAgreementTitle = "License Agreement"
       try {
         LOG.info("Waiting for '$policyAgreementTitle' dialog")
         with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
+          click()
+          while(!button("Accept").isEnabled) {
+            scroll(10)
+          }
           LOG.info("Accept '$policyAgreementTitle' dialog")
           button("Accept").click()
         }
@@ -175,6 +179,21 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
+  protected fun acceptDataSharing() {
+    with(myRobot) {
+      LOG.info("Accepting Data Sharing")
+      val title = "Data Sharing Options"
+      try {
+        dialog(title, timeoutSeconds = 5)
+        button("OK").click()
+        LOG.info("Data sharing accepted")
+      } catch (e: WaitTimedOutError) {
+        LOG.info("Data sharing dialog hasn't been shown")
+        return
+      }
+    }
+  }
+
   protected fun customizeIde(ideName: String = ideType.name) {
     if (!needToShowCustomizeWizard()) return
     with(myRobot) {
@@ -188,8 +207,8 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   protected fun needToShowAgreement(): Boolean {
-    val policy = PrivacyPolicy.getContent()
-    return !PrivacyPolicy.isVersionAccepted(policy.getFirst())
+    val agreement = EndUserAgreement.getLatestDocument()
+    return !agreement.isAccepted()
   }
 
   protected fun needToShowCompleteInstallation(): Boolean {
@@ -207,6 +226,14 @@ abstract class FirstStart(val ideType: IdeType) {
       }
       return JDialogFixture(this, jDialog)
     }
+
+    fun Robot.dialog(timeoutSeconds: Long = DEFAULT_TIMEOUT, titleMatcher: (String) -> Boolean): JDialogFixture {
+      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
+        titleMatcher(dialog.title)
+      }
+      return JDialogFixture(this, jDialog)
+    }
+
 
     fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JRadioButtonFixture {
       val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->

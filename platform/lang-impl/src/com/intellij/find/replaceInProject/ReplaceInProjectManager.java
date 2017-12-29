@@ -36,6 +36,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
@@ -58,6 +59,7 @@ import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -116,26 +118,32 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public void replaceInProject(@NotNull DataContext dataContext) {
-    final boolean isOpenInNewTabEnabled;
-    final boolean toOpenInNewTab;
-    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
-    if (selectedContent != null && selectedContent.isPinned()) {
-      toOpenInNewTab = true;
-      isOpenInNewTabEnabled = false;
-    }
-    else {
-      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
-    }
+  public void replaceInProject(@NotNull DataContext dataContext, @Nullable FindModel predefinedModel) {
     final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = findManager.getFindInProjectModel().clone();
-    findModel.setReplaceState(true);
-    findModel.setOpenInNewTabVisible(true);
-    findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
-    findModel.setOpenInNewTab(toOpenInNewTab);
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
-    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+    final FindModel findModel;
+    if (predefinedModel == null) {
+      final boolean isOpenInNewTabEnabled;
+      final boolean toOpenInNewTab;
+      final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      if (selectedContent != null && selectedContent.isPinned()) {
+        toOpenInNewTab = true;
+        isOpenInNewTabEnabled = false;
+      }
+      else {
+        toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+        isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      }
+
+      findModel = findManager.getFindInProjectModel().clone();
+      findModel.setReplaceState(true);
+      findModel.setOpenInNewTabVisible(true);
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
+      findModel.setOpenInNewTab(toOpenInNewTab);
+      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+    } else {
+      findModel = predefinedModel;
+    }
 
     findManager.showFindDialog(findModel, () -> {
       if (!findModel.isProjectScope() &&
@@ -192,7 +200,7 @@ public class ReplaceInProjectManager {
       Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       ReplaceInProjectManager findInProjectManager = getInstance(myProject);
-      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
   }
 
@@ -212,6 +220,8 @@ public class ReplaceInProjectManager {
         public void usageViewCreated(@NotNull UsageView usageView) {
           context[0] = new ReplaceContext(usageView, findModelCopy);
           addReplaceActions(context[0]);
+          usageView.setReRunActivity(
+            () -> searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation, findManager));
         }
 
         @Override
@@ -355,6 +365,14 @@ public class ReplaceInProjectManager {
     return true;
   }
 
+  public boolean showReplaceAllConfirmDialog(String usagesCount, String stringToFind, String filesCount, String stringToReplace) {
+    return Messages.YES == MessageDialogBuilder.yesNo(
+      FindBundle.message("find.replace.all.confirmation.title"),
+      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount, StringUtil.escapeXml(stringToReplace)))
+             .yesText(Messages.OK_BUTTON)
+             .noText(Messages.CANCEL_BUTTON).show();
+  }
+
   private void addReplaceActions(final ReplaceContext replaceContext) {
     final AbstractAction replaceAction = new AbstractAction(FindBundle.message("find.replace.all.action")) {
       @Override
@@ -367,15 +385,11 @@ public class ReplaceInProjectManager {
             files.add(((UsageInfo2UsageAdapter)usage).getFile());
           }
         }
-        if (files.size() < 2 ||
-            JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(replaceContext.getUsageView().getComponent(),
-                                                                   FindBundle.message("find.replace.all.confirmation",
-                                                                                      usages.size(),
-                                                                                      replaceContext.getFindModel().getStringToFind(),
-                                                                                      files.size(),
-                                                                                      replaceContext.getFindModel().getStringToReplace()),
-                                                                   FindBundle.message("find.replace.all.confirmation.title"),
-                                                                   JOptionPane.OK_CANCEL_OPTION)) {
+        if (files.size() < 2 || showReplaceAllConfirmDialog(
+          "" + usages.size(),
+          replaceContext.getFindModel().getStringToFind(),
+          "" + files.size(),
+          replaceContext.getFindModel().getStringToReplace())) {
           replaceUsagesUnderCommand(replaceContext, usages);
         }
       }
@@ -396,7 +410,7 @@ public class ReplaceInProjectManager {
       @Override
       public Object getValue(String key) {
         return Action.NAME.equals(key)
-               ? FindBundle.message("find.popup.replace.selected.button", replaceContext.getUsageView().getSelectedUsages().size())
+               ? FindBundle.message("find.replace.selected.action", replaceContext.getUsageView().getSelectedUsages().size())
                : super.getValue(key);
       }
 

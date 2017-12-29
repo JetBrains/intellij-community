@@ -22,6 +22,7 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,11 +61,12 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList list = methodCallExpression.getArgumentList();
       final PsiExpression[] expressions = list.getExpressions();
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder fieldText =
         new StringBuilder("private static final java.util.regex.Pattern PATTERN = java.util.regex.Pattern.compile(");
       final int expressionsLength = expressions.length;
       if (expressionsLength > 0) {
-        fieldText.append(expressions[0].getText());
+        fieldText.append(commentTracker.markUnchanged(expressions[0]).getText());
       }
       @NonNls final String methodName = methodExpression.getReferenceName();
       final boolean literalReplacement = "replace".equals(methodName);
@@ -75,13 +77,13 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
 
       @NonNls final StringBuilder expressionText = new StringBuilder("PATTERN.");
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      @NonNls final String qualifierText = (qualifier == null) ? "this" : qualifier.getText();
+      @NonNls final String qualifierText = (qualifier == null) ? "this" : commentTracker.markUnchanged(qualifier).getText();
       if ("split".equals(methodName)) {
         expressionText.append(methodName);
         expressionText.append('(');
         expressionText.append(qualifierText);
         for (int i = 1; i < expressionsLength; i++) {
-          expressionText.append(',').append(expressions[i].getText());
+          expressionText.append(',').append(commentTracker.markUnchanged(expressions[i]).getText());
         }
         expressionText.append(')');
       }
@@ -98,9 +100,9 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
           expressionText.append("java.util.regex.Matcher.quoteReplacement(");
         }
         if (expressionsLength > 1) {
-          expressionText.append(expressions[1].getText());
+          expressionText.append(commentTracker.markUnchanged(expressions[1]).getText());
           for (int i = 2; i < expressionsLength; i++) {
-            expressionText.append(',').append(expressions[i].getText());
+            expressionText.append(',').append(commentTracker.markUnchanged(expressions[i]).getText());
           }
         }
         if (literalReplacement) {
@@ -110,10 +112,8 @@ public class DynamicRegexReplaceableByCompiledPatternInspection extends DynamicR
       }
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiField newField = factory.createFieldFromText(fieldText.toString(), element);
-      final PsiElement field = aClass.add(newField);
-      final PsiExpression newExpression = factory.createExpressionFromText(expressionText.toString(), element);
-      PsiMethodCallExpression newMethodCallExpression = (PsiMethodCallExpression)methodCallExpression.replace(newExpression);
+      final PsiElement field = aClass.add(factory.createFieldFromText(fieldText.toString(), element));
+      PsiMethodCallExpression newMethodCallExpression = (PsiMethodCallExpression)commentTracker.replaceAndRestoreComments(methodCallExpression, expressionText.toString());
       newMethodCallExpression = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newMethodCallExpression);
       final PsiReferenceExpression reference = getReference(newMethodCallExpression);
       HighlightUtils.showRenameTemplate(aClass, (PsiNameIdentifierOwner)field, reference);

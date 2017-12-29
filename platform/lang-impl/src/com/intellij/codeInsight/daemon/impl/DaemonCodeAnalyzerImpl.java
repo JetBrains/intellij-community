@@ -164,6 +164,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public synchronized void dispose() {
+    clearReferences();
+  }
+
+  private synchronized void clearReferences() {
     myUpdateProgress = new DaemonProgressIndicator(); // leak of highlight session via user data
     myUpdateRunnableFuture.cancel(true);
   }
@@ -364,7 +368,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     myPassExecutorService.submitPasses(map, progress);
     try {
       long start = System.currentTimeMillis();
-      while (progress.isRunning() && System.currentTimeMillis() < start + 5*60*1000) {
+      while (progress.isRunning() && System.currentTimeMillis() < start + 10*60*1000) {
         wrap(() -> {
           progress.checkCanceled();
           if (callbackWhileWaiting != null) {
@@ -377,7 +381,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         });
       }
       if (progress.isRunning() && !progress.isCanceled()) {
-        throw new RuntimeException("Highlighting still running after "+(System.currentTimeMillis()-start)/1000+" seconds.\n"+ ThreadDumper.dumpThreadsToString());
+        throw new RuntimeException("Highlighting still running after " +(System.currentTimeMillis()-start)/1000 + " seconds." +
+                                   " Still submitted passes: "+myPassExecutorService.getAllSubmittedPasses()+
+                                   " ForkJoinPool.commonPool(): "+ForkJoinPool.commonPool()+"\n"+
+                                   ", ForkJoinPool.commonPool() active thread count: "+ ForkJoinPool.commonPool().getActiveThreadCount()+
+                                   ", ForkJoinPool.commonPool() has queued submissions: "+ ForkJoinPool.commonPool().hasQueuedSubmissions()+
+                                   "\n"+ ThreadDumper.dumpThreadsToString());
       }
 
       HighlightingSessionImpl session = (HighlightingSessionImpl)HighlightingSessionImpl.getOrCreateHighlightingSession(file, progress, null);
@@ -437,6 +446,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public void prepareForTest() {
     setUpdateByTimerEnabled(false);
     waitForTermination();
+    clearReferences();
   }
 
   @TestOnly

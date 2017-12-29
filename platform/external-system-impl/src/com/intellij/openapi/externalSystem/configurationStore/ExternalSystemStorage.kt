@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
-import com.intellij.configurationStore.StateMap
-import com.intellij.configurationStore.StateStorageManager
-import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.configurationStore.XmlElementStorage
+import com.intellij.configurationStore.*
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StoragePathMacros
@@ -34,41 +17,35 @@ internal class ExternalModuleStorage(private val module: Module, storageManager:
 
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalModuleStorage>(states, this) {
     override fun saveLocally(element: Element?) {
-      // our customizeStorageSpecs on write will not return our storage for not applicable module, so, we don't need to check it here
-      if (element == null) {
-        manager.moduleStorage.remove(module.name)
-      }
-      else {
-        manager.moduleStorage.write(module.name, element)
-      }
+      manager.moduleStorage.write(module.name, element)
+    }
+  }
+}
+
+internal open class ExternalProjectStorage @JvmOverloads constructor(fileSpec: String, project: Project, storageManager: StateStorageManager, rootElementName: String? = ProjectStateStorageManager.ROOT_TAG_NAME /* several components per file */) : XmlElementStorage(fileSpec, rootElementName, storageManager.macroSubstitutor, RoamingType.DISABLED) {
+  protected val manager = StreamProviderFactory.EP_NAME.getExtensions(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
+
+  override final fun loadLocalData() = manager.fileStorage.read(fileSpec)
+
+  override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
+    override fun saveLocally(element: Element?) {
+      manager.fileStorage.write(fileSpec, element)
     }
   }
 }
 
 // for libraries only for now - we use null rootElementName because the only component is expected (libraryTable)
-internal class ExternalProjectStorage(fileSpec: String, project: Project, storageManager: StateStorageManager) : XmlElementStorage(fileSpec, null, storageManager.macroSubstitutor, RoamingType.DISABLED) {
-  private val manager = StreamProviderFactory.EP_NAME.getExtensions(project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
-
-  override fun loadLocalData() = manager.fileStorage.read(fileSpec)
-
+internal class ExternalProjectFilteringStorage(fileSpec: String, project: Project, storageManager: StateStorageManager) : ExternalProjectStorage(fileSpec, project, storageManager, null /* the only component per file */) {
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
     override fun saveLocally(element: Element?) {
-      var isEmpty = true
-      if (element != null) {
-        for (child in element.children) {
-          if (child.getAttribute(StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null) {
-            isEmpty = false
-            break
-          }
-        }
-      }
-
-      if (element == null || isEmpty) {
+      if (element == null || !element.children.any { it.isMarkedAsExternal() }) {
         manager.fileStorage.remove(fileSpec)
       }
       else {
-        manager.fileStorage.write(fileSpec, element, JDOMUtil.ElementOutputFilter { childElement, level -> level != 1 || childElement.getAttribute(StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null })
+        manager.fileStorage.write(fileSpec, element, JDOMUtil.ElementOutputFilter { childElement, level -> level != 1 || childElement.isMarkedAsExternal() })
       }
     }
   }
 }
+
+private fun Element.isMarkedAsExternal() = getAttribute(StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE) != null

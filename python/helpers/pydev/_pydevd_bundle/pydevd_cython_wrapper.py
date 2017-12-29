@@ -1,12 +1,15 @@
 try:
-    from _pydevd_bundle.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo, global_cache_skips, global_cache_frame_skips
-    import _pydevd_bundle.pydevd_cython
+    from _pydevd_bundle_ext.pydevd_cython import trace_dispatch, PyDBAdditionalThreadInfo, global_cache_skips, global_cache_frame_skips
+    import _pydevd_bundle_ext.pydevd_cython
+
     # this version number can be unavailable in old versions of compiled extensions
-    version = getattr(_pydevd_bundle.pydevd_cython, 'version', 0)
+    version = getattr(_pydevd_bundle_ext.pydevd_cython, 'version', 0)
+
 except ImportError:
     try:
-        import struct
         import sys
+        import struct
+
         try:
             is_python_64bit = (struct.calcsize('P') == 8)
         except:

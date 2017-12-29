@@ -349,11 +349,11 @@ public class RecentProjectPanel extends JPanel {
     return title;
   }
 
-  private class MyList extends JBList {
+  private class MyList extends JBList<AnAction> {
     private final Dimension mySize;
     private Point myMousePoint;
 
-    private MyList(Dimension size, @NotNull Object ... listData) {
+    private MyList(Dimension size, @NotNull AnAction[] listData) {
       super(listData);
       mySize = size;
       setEmptyText("  No Project Open Yet  ");

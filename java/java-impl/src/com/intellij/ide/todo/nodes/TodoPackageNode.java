@@ -257,7 +257,6 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
         TodoFileNode todoFileNode = new TodoFileNode(getProject(), psiFile, myBuilder, false);
         if (ArrayUtil.find(psiPackage.getDirectories(), _dir) > -1 && !children.contains(todoFileNode)) {
           children.add(todoFileNode);
-          continue;
         }
       }
     }
@@ -276,7 +275,7 @@ public final class TodoPackageNode extends PackageElementNode implements Highlig
     final PsiDirectory[] directories = packageElement.getPackage().getDirectories(scope);
     for (PsiDirectory directory : directories) {
       Iterator<PsiFile> files = myBuilder.getFiles(directory, false);
-      for (;files.hasNext();) {
+      while (files.hasNext()) {
         psiFileList.add(files.next());
       }
     }

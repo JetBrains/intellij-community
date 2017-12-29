@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar.ui;
 
 import com.intellij.ide.navigationToolbar.NavBarItem;
@@ -79,7 +65,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public short getSelectionAlpha() {
-    return (short)(UIUtil.isUnderAlloyLookAndFeel() && !UIUtil.isUnderAlloyIDEALookAndFeel() ? 255 : 150);
+    return 150;
   }
 
   @Override
@@ -92,7 +78,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
     final boolean floating = navbar.isInFloatingMode();
     boolean toolbarVisible = UISettings.getInstance().getShowMainToolbar();
     final boolean selected = item.isSelected() && item.isFocused();
-    boolean nextSelected = item.isNextSelected() && navbar.hasFocus();
+    boolean nextSelected = item.isNextSelected() && navbar.isFocused();
 
 
     ImageType type;
@@ -186,7 +172,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
       }
     }
 
-    if (item.isNextSelected() && navbar.hasFocus()) {
+    if (item.isNextSelected() && navbar.isFocused()) {
       g2.setColor(selection);
       g2.fill(endShape);
 
@@ -215,12 +201,12 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
     if (!floating || !item.isLastElement()) {
       if (toolbarVisible || floating) {
-        if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
-          Color hl = UIUtil.isUnderDarcula()? Gray._128.withAlpha(100) : UIUtil.isUnderAlloyLookAndFeel() ? Gray.xFF.withAlpha(200) : Gray._205;
+        if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
+          Color hl = UIUtil.isUnderDarcula()? Gray._128.withAlpha(100) : false ? Gray.xFF.withAlpha(200) : Gray._205;
           drawArrow(g2, Gray.x00.withAlpha(70), hl, off, h, !selected && !floating, false);
         }
       } else {
-        if (!selected && (!navbar.hasFocus() | !item.isNextSelected())) {
+        if (!selected && (!navbar.isFocused() | !item.isNextSelected())) {
           Color hl = UIUtil.isUnderDarcula() ? Gray._128.withAlpha(100) : Gray._255.withAlpha(200);
           drawArrow(g2, Gray.x00.withAlpha(150), hl, off, h, !selected && !floating, true);
         }

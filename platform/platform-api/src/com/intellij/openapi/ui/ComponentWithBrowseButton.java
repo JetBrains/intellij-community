@@ -1,25 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Nls;
@@ -56,18 +57,50 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac || UIUtil.isUnderDarcula() ? 0 : 2, 0));
 
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
+    boolean inlineBrowseButton = myComponent instanceof ExtendableTextField && Experiments.isFeatureEnabled("inline.browse.button");
+    if (inlineBrowseButton) {
+      ExtendableTextField.Extension action = new ExtendableTextField.Extension() {
+        @Override
+        public Icon getIcon(boolean hovered) {
+          return hovered ? AllIcons.General.OpenDiskHover : AllIcons.General.OpenDisk;
+        }
+
+        @Override
+        public String getTooltip() {
+          return UIBundle.message("component.with.browse.button.browse.button.tooltip.text");
+        }
+
+        @Override
+        public Runnable getActionOnClick() {
+          return () -> {
+            for (ActionListener listener : myBrowseButton.getActionListeners()) {
+              listener.actionPerformed(new ActionEvent(myComponent, ActionEvent.ACTION_PERFORMED, "action"));
+            }
+          };
+        }
+      };
+      ((ExtendableTextField)myComponent).addExtension(action);
+      new DumbAwareAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          action.getActionOnClick().run();
+        }
+      }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
+    }
     add(myComponent, BorderLayout.CENTER);
 
     myBrowseButton = new FixedSizeButton(myComponent);
     if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
     }
-    add(centerComponentVertically(myBrowseButton), BorderLayout.EAST);
+    if (!inlineBrowseButton) {
+      add(myBrowseButton, BorderLayout.EAST);
+    }
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
@@ -78,13 +111,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName("Browse");
     }
-  }
-
-  @NotNull
-  private static JPanel centerComponentVertically(@NotNull Component component) {
-    JPanel panel = new JPanel(new GridBagLayout());
-    panel.add(component, new GridBagConstraints());
-    return panel;
   }
 
   public final Comp getChildComponent() {

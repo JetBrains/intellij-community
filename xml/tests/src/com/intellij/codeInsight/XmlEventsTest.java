@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -30,6 +32,7 @@ import com.intellij.pom.event.PomModelListener;
 import com.intellij.pom.xml.XmlAspect;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.DocumentUtil;
@@ -255,6 +258,22 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
 
     PsiManager.getInstance(getProject()).removePsiTreeChangeListener(listener);
   }
+
+  public void testRangeMarkersShouldSurviveOnSmallTagValueModification() {
+    String text = "<tag>x y z a b c d</tag>";
+
+    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText("a.xml", XMLLanguage.INSTANCE, text);
+    Document document = file.getViewProvider().getDocument();
+    RangeMarker marker = document.createRangeMarker(TextRange.from(text.indexOf("a b"), 3));
+
+    XmlTag tag = PsiTreeUtil.findElementOfClassAtOffset(file, 0, XmlTag.class, false);
+    WriteCommandAction.runWriteCommandAction(null, () -> tag.getValue().setText("x a b c d"));
+
+    assertEquals("<tag>x a b c d</tag>", document.getText());
+    assertTrue(marker.isValid());
+    assertEquals("a b", document.getText(TextRange.create(marker)));
+  }
+
 
   private static class TestListener extends PsiTreeChangeAdapter {
     @Override

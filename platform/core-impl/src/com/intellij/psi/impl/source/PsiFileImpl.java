@@ -287,7 +287,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   void reportStubAstMismatch(String message, StubTree stubTree) {
     rebuildStub();
-    updateTrees(myTrees.clearStub(STUB_PSI_MISMATCH));
+    synchronized (myPsiLock) {
+      updateTrees(myTrees.clearStub(STUB_PSI_MISMATCH));
+    }
 
     throw StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(message, stubTree, this);
   }
@@ -1106,7 +1108,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (!useStrongRefs()) {
       synchronized (myPsiLock) {
         for (PsiFile root : myViewProvider.getAllFiles()) {
-          if ((root instanceof PsiFileImpl)) {
+          if (root instanceof PsiFileImpl) {
             ((PsiFileImpl)root).switchToStrongRefs();
           }
         }
@@ -1116,7 +1118,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   private void checkWritable() {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(getProject());
-    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress()) {
+    if (docManager instanceof PsiDocumentManagerBase && !((PsiDocumentManagerBase)docManager).isCommitInProgress() && !(myViewProvider instanceof FreeThreadedFileViewProvider)) {
       CheckUtil.checkWritable(this);
     }
   }

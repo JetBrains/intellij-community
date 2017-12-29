@@ -21,7 +21,6 @@ import java.io.Reader;
 
 /**
  * @author Eugene Zhuravlev
-*         Date: Apr 25, 2007
 */
 public class SegmentedInputStreamReader extends Reader {
   private final SegmentedInputStream myStream;

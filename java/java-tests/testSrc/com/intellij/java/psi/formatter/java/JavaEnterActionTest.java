@@ -234,4 +234,18 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "\t\t\t<caret>\n" +
                ") {}");
   }
+
+  public void testIdea179073() throws IOException {
+    doTextTest("java",
+               "ArrayList<String> strings = new ArrayList<>();\n" +
+               "    strings.stream()\n" +
+               "        .forEach((e) -> {<caret>\n" +
+               "        });",
+
+               "ArrayList<String> strings = new ArrayList<>();\n" +
+               "    strings.stream()\n" +
+               "        .forEach((e) -> {\n" +
+               "            <caret>\n" +
+               "        });");
+  }
 }

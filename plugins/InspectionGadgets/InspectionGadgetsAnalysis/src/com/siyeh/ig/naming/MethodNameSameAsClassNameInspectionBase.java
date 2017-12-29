@@ -17,10 +17,15 @@ package com.siyeh.ig.naming;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
   @Override
@@ -53,22 +58,19 @@ public class MethodNameSameAsClassNameInspectionBase extends BaseInspection {
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
       // no call to super, so it doesn't drill down into inner classes
-      if (method.isConstructor()) {
-        return;
-      }
+      if (method.isConstructor()) return;
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
+      if (containingClass == null) return;
       final String className = containingClass.getName();
-      if (className == null) {
-        return;
-      }
-      if (!methodName.equals(className)) {
-        return;
-      }
-      registerMethodError(method, isOnTheFly(), method.getBody() != null && !containingClass.isInterface());
+      if (!methodName.equals(className)) return;
+
+      MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+      boolean canReplaceWithConstructor =
+        method.getBody() != null && !containingClass.isInterface() &&
+        Arrays.stream(containingClass.getConstructors())
+          .noneMatch(ctor -> MethodSignatureUtil.areErasedParametersEqual(signature, ctor.getSignature(PsiSubstitutor.EMPTY)));
+      registerMethodError(method, isOnTheFly(), canReplaceWithConstructor);
     }
   }
 }

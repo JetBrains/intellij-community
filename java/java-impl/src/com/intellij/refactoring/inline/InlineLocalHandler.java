@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -246,6 +247,11 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("variable.is.accessed.for.writing", localName));
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       WindowManager.getInstance().getStatusBar(project).setInfo(RefactoringBundle.message("press.escape.to.remove.the.highlighting"));
+      return;
+    }
+
+    if (Arrays.stream(refsToInline).anyMatch(ref -> ref.getParent() instanceof PsiResourceExpression)) {
+      CommonRefactoringUtil.showErrorHint(project, editor,  RefactoringBundle.getCannotRefactorMessage("Variable is used as resource reference"), REFACTORING_NAME, HelpID.INLINE_VARIABLE);
       return;
     }
 

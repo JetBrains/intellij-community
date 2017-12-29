@@ -27,7 +27,6 @@ import java.util.Set;
 
 /**
  * Author: kirillk
- * Date: 8/3/11 4:08 PM
  */
 public class CallCommand extends AbstractCommand {
 
@@ -117,7 +116,6 @@ public class CallCommand extends AbstractCommand {
         return Pair.create(method, eachClass);
       }
       catch (NoSuchMethodException ignored) {
-        continue;
       }
     }
 

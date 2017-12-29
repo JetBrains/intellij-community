@@ -1,21 +1,11 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
+import com.intellij.execution.compound.CompoundRunConfiguration;
+import com.intellij.execution.compound.SettingsAndEffectiveTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ExecutionManagerImpl;
@@ -197,6 +187,27 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       myExecutor = executor;
     }
 
+    private boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs) {
+      if (pairs.isEmpty()) {
+        return false;
+      }
+      for (SettingsAndEffectiveTarget pair : pairs) {
+        RunnerAndConfigurationSettings runnerAndConfigurationSettings = pair.getSettings();
+        RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
+        if (configuration instanceof CompoundRunConfiguration) {
+          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets())) {
+            return false;
+          }
+        }
+        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), configuration);
+        if (!ExecutionTargetManager.canRun(runnerAndConfigurationSettings, pair.getTarget())
+            && runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId())) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     @Override
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
@@ -217,12 +228,13 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         }
 
         presentation.setIcon(getInformativeIcon(project, selectedConfiguration));
-        final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(myExecutor.getId(), selectedConfiguration.getConfiguration());
-
-        ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-        enabled = ExecutionTargetManager.canRun(selectedConfiguration, target)
-                  && runner != null && !isStarting(project, myExecutor.getId(), runner.getRunnerId());
-
+        RunConfiguration configuration = selectedConfiguration.getConfiguration();
+        if (configuration instanceof CompoundRunConfiguration) {
+          enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
+        }
+        else {
+          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(selectedConfiguration, ExecutionTargetManager.getActiveTarget(project))));
+        }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
         }
@@ -276,6 +288,22 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       return RunManager.getInstance(project).getSelectedConfiguration();
     }
 
+    private void run(@NotNull Project project, @Nullable RunnerAndConfigurationSettings configuration, @NotNull DataContext dataContext) {
+      if (configuration != null && configuration.getConfiguration() instanceof CompoundRunConfiguration) {
+        for (SettingsAndEffectiveTarget pair : ((CompoundRunConfiguration)configuration.getConfiguration()).getConfigurationsWithEffectiveRunTargets()) {
+          run(project, pair.getSettings(), dataContext);
+        }
+      }
+      else {
+        ExecutionEnvironmentBuilder builder =
+          configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
+        if (builder == null) {
+          return;
+        }
+        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
+      }
+    }
+
     @Override
     public void actionPerformed(final AnActionEvent e) {
       final Project project = e.getProject();
@@ -283,12 +311,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         return;
       }
 
-      RunnerAndConfigurationSettings configuration = getSelectedConfiguration(project);
-      ExecutionEnvironmentBuilder builder = configuration == null ? null : ExecutionEnvironmentBuilder.createOrNull(myExecutor, configuration);
-      if (builder == null) {
-        return;
-      }
-      ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(e.getDataContext()).build());
+      run(project, getSelectedConfiguration(project), e.getDataContext());
     }
   }
 }

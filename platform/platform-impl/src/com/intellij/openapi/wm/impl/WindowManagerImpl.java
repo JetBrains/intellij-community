@@ -516,9 +516,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       myDefaultFrameInfo.setBounds(FrameBoundsConverter.convertFromDeviceSpace(rawBounds));
     }
 
-    Rectangle bounds = myDefaultFrameInfo.getBounds();
-    if (bounds != null) {
-      frame.setBounds(bounds);
+    if (!(FrameState.isMaximized(frame.getExtendedState()) || FrameState.isFullScreen(frame)) ||
+        !FrameState.isMaximized(myDefaultFrameInfo.getExtendedState())) // going to quit maximized
+    {
+      Rectangle bounds = myDefaultFrameInfo.getBounds();
+      if (bounds != null) {
+        frame.setBounds(bounds);
+      }
     }
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 

@@ -51,7 +51,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
@@ -66,7 +65,6 @@ public class TreeState implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
-  public static final Key<Function<TreeVisitor, Promise<TreePath>>> VISIT = Key.create("TreeVisit");
   private static final Key<Promise<Void>> EXPANDING = Key.create("TreeExpanding");
 
   private static final String EXPAND_TAG = "expand";
@@ -247,7 +245,8 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
-    if (visit(tree)) return; // AsyncTreeModel#visit
+    LOG.debug(new IllegalStateException("restore paths"));
+    if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
@@ -472,21 +471,21 @@ public class TreeState implements JDOMExternalizable {
     return false;
   }
 
-  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> acceptor, @NotNull JTree tree) {
-    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(acceptor).collect(toList()));
+  private Promise<List<TreePath>> expand(@NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream().map(elements -> TreeUtil.promiseExpand(tree, new Visitor(elements))).collect(toList()));
   }
 
-  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> acceptor) {
-    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(acceptor).collect(toList()));
+  private Promise<List<TreePath>> select(@NotNull JTree tree) {
+    return collectResults(mySelectedPaths.stream().map(elements -> TreeUtil.promiseVisit(tree, new Visitor(elements))).collect(toList()));
   }
 
   private boolean visit(@NotNull JTree tree) {
-    Function<TreeVisitor, Promise<TreePath>> acceptor = UIUtil.getClientProperty(tree, VISIT);
-    if (acceptor == null) return false;
+    TreeModel model = tree.getModel();
+    if (!(model instanceof TreeVisitor.Acceptor)) return false;
 
-    expand(tree, promise -> expand(acceptor, tree).processed(expanded -> {
+    expand(tree, promise -> expand(tree).processed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {
-        select(acceptor).processed(selected -> {
+        select(tree).processed(selected -> {
           if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);
@@ -501,11 +500,9 @@ public class TreeState implements JDOMExternalizable {
 
   private static final class Visitor implements TreeVisitor {
     private final List<PathElement> elements;
-    private final Consumer<TreePath> consumer;
 
-    Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
+    Visitor(List<PathElement> elements) {
       this.elements = elements;
-      this.consumer = consumer;
     }
 
     @NotNull
@@ -514,9 +511,7 @@ public class TreeState implements JDOMExternalizable {
       int count = path.getPathCount();
       if (count > elements.size()) return Action.SKIP_CHILDREN;
       boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());
-      if (!matches) return Action.SKIP_CHILDREN;
-      if (consumer != null) consumer.accept(path);
-      return count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
+      return !matches ? Action.SKIP_CHILDREN : count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
     }
   }
 }

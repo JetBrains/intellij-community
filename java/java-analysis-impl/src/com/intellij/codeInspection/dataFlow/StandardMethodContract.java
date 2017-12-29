@@ -81,7 +81,7 @@ public final class StandardMethodContract extends MethodContract {
   }
 
   @Override
-  protected List<ContractValue> getConditions() {
+  public List<ContractValue> getConditions() {
     return IntStreamEx.ofIndices(arguments).mapToObj(idx -> arguments[idx].getCondition(idx)).without(ContractValue.booleanValue(true))
       .toList();
   }

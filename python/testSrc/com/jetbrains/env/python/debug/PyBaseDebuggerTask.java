@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -323,15 +323,19 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     return null;
   }
 
-  protected int getNumberOfReferringObjects(String name) throws PyDebuggerException {
+  protected List<String> getNumberOfReferringObjects(String name) throws PyDebuggerException {
     XValue var = XDebuggerTestUtil.evaluate(mySession, name).first;
     final PyReferringObjectsValue value = new PyReferringObjectsValue((PyDebugValue)var);
-    EvaluationCallback<Integer> callback = new EvaluationCallback<>();
+    EvaluationCallback<List<String>> callback = new EvaluationCallback<>();
 
     myDebugProcess.loadReferrers(value, new PyDebugCallback<XValueChildrenList>() {
       @Override
       public void ok(XValueChildrenList valueList) {
-        callback.evaluated(valueList.size());
+        ArrayList<String> values = new ArrayList<>();
+        for (int i = 0; i < valueList.size(); ++i) {
+          values.add(valueList.getName(i));
+        }
+        callback.evaluated(values);
       }
 
       @Override
@@ -340,12 +344,25 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       }
     });
 
-    final Pair<Integer, String> result = callback.waitFor(NORMAL_TIMEOUT);
+    final Pair<List<String>, String> result = callback.waitFor(NORMAL_TIMEOUT);
     if (result.second != null) {
       throw new PyDebuggerException(result.second);
     }
 
     return result.first;
+  }
+
+  protected void consoleExec(String command) throws PyDebuggerException {
+    // We can't wait for result with a callback, because console just prints it to output
+    myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
+      @Override
+      public void ok(String value) {
+      }
+
+      @Override
+      public void error(PyDebuggerException exception) {
+      }
+    });
   }
 
   protected Variable eval(String name) throws InterruptedException {
@@ -395,9 +412,8 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    assert SwingUtilities.isEventDispatchThread();
     try {
-      finishSession();
+      EdtTestUtil.runInEdtAndWait(() ->finishSession());
     }finally {
       PyBaseDebuggerTask.super.tearDown();
     }

@@ -19,7 +19,10 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusFactory;
+import com.intellij.openapi.vcs.FileStatusManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +65,9 @@ public class FileStatusColorsConfigurable implements SearchableConfigurable, Con
   @Override
   public void apply() throws ConfigurationException {
     myPanel.getModel().apply();
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      FileStatusManager.getInstance(project).fileStatusesChanged();
+    }
   }
 
   @Override

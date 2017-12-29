@@ -40,19 +40,22 @@ class Iteration<T> {
   @Nullable
   private CounterExampleImpl<T> findCounterExample(Random random) {
     for (int i = 0; i < 100; i++) {
-      StructureNode node = new StructureNode();
+      StructureNode node = new StructureNode(new NodeId(session.generator));
       T value;
       try {
         value = session.generator.getGeneratorFunction().apply(new GenerativeDataStructure(random, node, sizeHint));
+      }
+      catch (CannotSatisfyCondition e) {
+        continue;
       }
       catch (Throwable e) {
         throw new GeneratorException(this, e);
       }
       if (!session.generatedHashes.add(node.hashCode())) continue;
 
-      return CounterExampleImpl.checkProperty(session.property, value, node);
+      return CounterExampleImpl.checkProperty(this, value, node);
     }
-    throw new CannotSatisfyCondition(DATA_IS_DIFFERENT);
+    throw new GeneratorException(this, new CannotSatisfyCondition(DATA_IS_DIFFERENT));
   }
 
   String printToReproduce() {
@@ -74,8 +77,7 @@ class Iteration<T> {
     CounterExampleImpl<T> example = findCounterExample(random);
     if (example != null) {
       session.notifier.counterExampleFound(this);
-      PropertyFailureImpl<T> failure = new PropertyFailureImpl<>(example, this);
-      throw new PropertyFalsified(failure, () -> new ReplayDataStructure(failure.getMinimalCounterexample().data, sizeHint));
+      throw new PropertyFalsified(new PropertyFailureImpl<>(example, this));
     }
 
     if (iterationNumber >= session.iterationCount) {
@@ -83,6 +85,10 @@ class Iteration<T> {
     }
     
     return new Iteration<>(session, random.nextLong(), iterationNumber + 1);
+  }
+
+  T generateValue(ReplayDataStructure data) {
+    return session.generator.getGeneratorFunction().apply(data);
   }
 }
 

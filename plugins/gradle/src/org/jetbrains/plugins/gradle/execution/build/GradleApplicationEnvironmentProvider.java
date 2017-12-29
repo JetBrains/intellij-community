@@ -56,6 +56,7 @@ import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
@@ -104,18 +105,6 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       ExecutionErrorDialog.show(e, "Cannot use specified JRE", project);
     }
 
-    StringBuilder parametersString = new StringBuilder();
-    for (String parameter : params.getProgramParametersList().getParameters()) {
-      if (StringUtil.isEmpty(parameter)) continue;
-      String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
-      parametersString.append("args '").append(escaped).append("'\n");
-    }
-
-    StringBuilder vmParametersString = new StringBuilder();
-    for (String parameter : params.getVMParametersList().getParameters()) {
-      vmParametersString.append("jvmArgs '").append(parameter).append("'\n");
-    }
-
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
     taskSettings.setExternalProjectPath(ExternalSystemApiUtil.getExternalProjectPath(module));
@@ -143,6 +132,10 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
       String workingDir = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
       workingDir = workingDir == null ? null : FileUtil.toSystemIndependentName(workingDir);
+
+      String parametersString = createEscapedParameters(params.getProgramParametersList().getParameters(), "args");
+      String vmParametersString = createEscapedParameters(params.getVMParametersList().getParameters(), "jvmArgs");
+
       // @formatter:off
       @Language("Groovy")
       String initScript = "allprojects {\n" +
@@ -153,8 +146,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "           executable = '" + javaExePath + "'\n") +
                           "           classpath = project.sourceSets.'" + sourceSetName + "'.runtimeClasspath\n" +
                           "           main = '" + mainClass.getQualifiedName() + "'\n" +
-                                      parametersString.toString() +
-                                      vmParametersString.toString() +
+                                      parametersString +
+                                      vmParametersString +
                                       (StringUtil.isNotEmpty(workingDir) ?
                           "           workingDir = '" + workingDir + "'\n" : "") +
                           "           standardInput = System.in\n" +
@@ -179,6 +172,16 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     else {
       return null;
     }
+  }
+
+  private static String createEscapedParameters(List<String> parameters, String prefix) {
+    StringBuilder result = new StringBuilder();
+    for (String parameter : parameters) {
+      if (StringUtil.isEmpty(parameter)) continue;
+      String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
+      result.append(prefix).append(" '").append(escaped).append("'\n");
+    }
+    return result.toString();
   }
 
   @Nullable

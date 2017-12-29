@@ -206,7 +206,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     }
     if (child instanceof LeafElement || childPsi instanceof PsiJavaModuleReferenceElement) {
       if (child.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
-        return new CStyleCommentBlock(child, indent);
+        return new CStyleCommentBlock(child, actualIndent);
       }
       final LeafBlock block = new LeafBlock(child, wrap, alignment, actualIndent);
       block.setStartOffset(startOffset);
@@ -811,7 +811,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
    *
    * @param child   variable declaration child node which alignment is to be defined
    * @return        alignment to use for the given node
-   * @see CodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
+   * @see CommonCodeStyleSettings#ALIGN_GROUP_FIELD_DECLARATIONS
    */
   private boolean shouldAlignFieldInColumns(@NotNull ASTNode child) {
     // The whole idea of variable declarations alignment is that complete declaration blocks which children are to be aligned hold

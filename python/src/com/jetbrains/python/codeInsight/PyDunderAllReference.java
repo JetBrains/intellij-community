@@ -1,35 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.BaseScopeProcessor;
+import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.LightNamedElement;
-import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyModuleType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +24,7 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpression> {
+public class PyDunderAllReference extends PsiPolyVariantReferenceBase<PyStringLiteralExpression> {
   public PyDunderAllReference(@NotNull PyStringLiteralExpression element) {
     super(element);
     final List<TextRange> ranges = element.getStringValueTextRanges();
@@ -51,12 +34,13 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
   }
 
   @Override
-  public PsiElement resolve() {
+  @NotNull
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
     final PyStringLiteralExpression element = getElement();
     final String name = element.getStringValue();
     final PyFile file = (PyFile)element.getContainingFile();
 
-    final List<RatedResolveResult> resolveResults = PyUtil.filterTopPriorityResults(file.multiResolveName(name));
+    final List<RatedResolveResult> resolveResults = file.multiResolveName(name);
 
     final boolean onlyDunderAlls = StreamEx
       .of(resolveResults)
@@ -64,11 +48,9 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
       .allMatch(resolvedElement -> resolvedElement instanceof PyTargetExpression &&
                                    PyNames.ALL.equals(((PyTargetExpression)resolvedElement).getName()));
 
-    if (onlyDunderAlls) return null;
+    if (onlyDunderAlls) return ResolveResult.EMPTY_ARRAY;
 
-    final RatedResolveResult resolveResult = ContainerUtil.getFirstItem(resolveResults);
-    if (resolveResult == null) return null;
-    return resolveResult.getElement();
+    return ContainerUtil.toArray(resolveResults, RatedResolveResult.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -84,7 +66,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
       seenNames.addAll(dunderAll);
     }
 
-    containingFile.processDeclarations(new BaseScopeProcessor() {
+    containingFile.processDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {

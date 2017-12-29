@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -26,7 +27,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -63,33 +64,14 @@ public class SingleStatementInBlockInspection extends BaseInspection {
   private static void doFixImpl(@NotNull PsiBlockStatement blockStatement) {
     final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
     final PsiStatement[] statements = codeBlock.getStatements();
-    final PsiStatement statement = statements[0];
 
-    handleComments(blockStatement, codeBlock);
-
-    final String text = statement.getText();
-    PsiReplacementUtil.replaceStatement(blockStatement, text);
-  }
-
-  private static void handleComments(PsiBlockStatement blockStatement, PsiCodeBlock codeBlock) {
-    final PsiElement parent = blockStatement.getParent();
-    assert parent != null;
-    final PsiElement grandParent = parent.getParent();
-    assert grandParent != null;
-    PsiElement sibling = codeBlock.getFirstChild();
-    assert sibling != null;
-    sibling = sibling.getNextSibling();
-    while (sibling != null) {
-      if (sibling instanceof PsiComment) {
-        grandParent.addBefore(sibling, parent);
-      }
-      sibling = sibling.getNextSibling();
-    }
-    final PsiElement lastChild = blockStatement.getLastChild();
-    if (lastChild instanceof PsiComment) {
-      final PsiElement nextSibling = parent.getNextSibling();
-      grandParent.addAfter(lastChild, nextSibling);
-    }
+    CommentTracker commentTracker = new CommentTracker();
+    final String text = commentTracker.markUnchanged(statements[0]).getText();
+    PsiElement parent = blockStatement.getParent();
+    final Project project = blockStatement.getProject();
+    final PsiElement replacementExp = commentTracker.replace(blockStatement, text);
+    CodeStyleManager.getInstance(project).reformat(replacementExp);
+    commentTracker.insertCommentsBefore(parent);
   }
 
   private static class SingleStatementInBlockVisitor extends ControlFlowStatementVisitorBase {

@@ -85,6 +85,12 @@ public class JavaClassInheritorsSearcher extends QueryExecutorBase<PsiClass, Cla
       return;
     }
 
+    if (!parameters.isCheckDeep() && ApplicationManager.getApplication().isDispatchThread()) {
+      // optimisation: if under EDT we've been asked for one inheritor, to improve latency do not bother to compute and cache them all
+      DirectClassInheritorsSearch.search(baseClass, searchScope).forEach(consumer);
+      return;
+    }
+
     Iterable<PsiClass> cached = getOrComputeSubClasses(project, baseClass, searchScope);
 
     for (final PsiClass subClass : cached) {

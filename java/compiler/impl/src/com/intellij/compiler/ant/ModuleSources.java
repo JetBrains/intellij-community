@@ -23,7 +23,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class ModuleSources extends CompositeGenerator{
   private final VirtualFile[] mySourceRoots = VirtualFile.EMPTY_ARRAY;

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.uiDesigner.snapShooter;
@@ -23,7 +11,6 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.util.JreVersionDetector;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeView;
@@ -123,7 +110,7 @@ public class CreateSnapShotAction extends AnAction {
       if (config.getConfiguration() instanceof ApplicationConfiguration) {
         ApplicationConfiguration appConfig = (ApplicationConfiguration) config.getConfiguration();
         appConfigurations.add(config);
-        if (appConfig.ENABLE_SWING_INSPECTOR) {
+        if (appConfig.isSwingInspectorEnabled()) {
           SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
           snapshotConfiguration = config;
           if (settings.getLastPort() > 0) {
@@ -151,7 +138,7 @@ public class CreateSnapShotAction extends AnAction {
       if (rc == Messages.NO) return;
       final ApplicationConfiguration appConfig = (ApplicationConfiguration) snapshotConfiguration.getConfiguration();
       final SnapShooterConfigurationSettings settings = SnapShooterConfigurationSettings.get(appConfig);
-      settings.setNotifyRunnable(() -> SwingUtilities.invokeLater(() -> {
+      settings.setNotifyRunnable(() -> ApplicationManager.getApplication().invokeLater(() -> {
         Messages.showMessageDialog(project, UIDesignerBundle.message("snapshot.prepare.notice"),
                                    UIDesignerBundle.message("snapshot.title"), Messages.getInformationIcon());
         try {
@@ -293,7 +280,7 @@ public class CreateSnapShotAction extends AnAction {
       if (rc < 0) return null;
       snapshotConfiguration = configurations.get(rc);
     }
-    ((ApplicationConfiguration) snapshotConfiguration.getConfiguration()).ENABLE_SWING_INSPECTOR = true;
+    ((ApplicationConfiguration)snapshotConfiguration.getConfiguration()).setSwingInspectorEnabled(true);
     return snapshotConfiguration;
   }
 

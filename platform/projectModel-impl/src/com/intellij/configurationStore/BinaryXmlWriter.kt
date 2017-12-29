@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.util.containers.ObjectIntHashMap
@@ -62,19 +48,19 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
 
     val content = element.content
     for (item in content) {
-      if (item is Element) {
-        out.writeByte(TypeMarker.ELEMENT.ordinal)
-        writeElement(item)
-      }
-      else if (item is Text) {
-        if (!isAllWhitespace(item)) {
+      when (item) {
+        is Element -> {
+          out.writeByte(TypeMarker.ELEMENT.ordinal)
+          writeElement(item)
+        }
+        is CDATA -> {
+          out.writeByte(TypeMarker.CDATA.ordinal)
+          writeString(item.text)
+        }
+        is Text -> if (!isAllWhitespace(item)) {
           out.writeByte(TypeMarker.TEXT.ordinal)
           writeString(item.text)
         }
-      }
-      else if (item is CDATA) {
-        out.writeByte(TypeMarker.CDATA.ordinal)
-        writeString(item.text)
       }
     }
     out.writeByte(TypeMarker.ELEMENT_END.ordinal)
@@ -101,36 +87,29 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   // Represent smaller integers with fewer bytes using the most significant bit of each byte. The worst case uses 32-bits
   // to represent a 29-bit number, which is what we would have done with no compression.
   private fun writeUInt29(v: Int) {
-    if (v < 0x80) {
-      out.write(v)
-    }
-    else if (v < 0x4000) {
-      out.write((v shr 7 and 0x7F or 0x80))
-      out.write(v and 0x7F)
-    }
-    else if (v < 0x200000) {
-      out.write((v shr 14 and 0x7F or 0x80))
-      out.write(v shr 7 and 0x7F or 0x80)
-      out.write(v and 0x7F)
-    }
-    else if (v < 0x40000000) {
-      out.write(v shr 22 and 0x7F or 0x80)
-      out.write (v shr 15 and 0x7F or 0x80)
-      out.write(v shr 8 and 0x7F or 0x80)
-      out.write(v and 0xFF)
-    }
-    else {
-      throw IllegalArgumentException("Integer out of range: $v")
+    when {
+      v < 0x80 -> out.write(v)
+      v < 0x4000 -> {
+        out.write((v shr 7 and 0x7F or 0x80))
+        out.write(v and 0x7F)
+      }
+      v < 0x200000 -> {
+        out.write((v shr 14 and 0x7F or 0x80))
+        out.write(v shr 7 and 0x7F or 0x80)
+        out.write(v and 0x7F)
+      }
+      v < 0x40000000 -> {
+        out.write(v shr 22 and 0x7F or 0x80)
+        out.write (v shr 15 and 0x7F or 0x80)
+        out.write(v shr 8 and 0x7F or 0x80)
+        out.write(v and 0xFF)
+      }
+      else -> throw IllegalArgumentException("Integer out of range: $v")
     }
   }
 
-  private fun isAllWhitespace(obj: Content): Boolean {
-    val str = (obj as? Text)?.text ?: return false
-    for (i in 0..str.length - 1) {
-      if (!Verifier.isXMLWhitespace(str[i])) {
-        return false
-      }
-    }
-    return true
+  private fun isAllWhitespace(obj: Text): Boolean {
+    val str = obj.text ?: return false
+    return (0 until str.length).any { Verifier.isXMLWhitespace(str[it]) }
   }
 }

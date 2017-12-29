@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -383,6 +381,7 @@ public class HighlightMethodUtil {
             String message = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
             if (message != null) {
               highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(fixRange).create();
+              QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
             }
           }
         }
@@ -525,7 +524,7 @@ public class HighlightMethodUtil {
       PsiType rType = methodCall.getType();
       if (rType != null && !variable.getType().isAssignableFrom(rType)) {
         PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
-        if (expectedTypeByApplicabilityConstraints != null && !expectedTypeByApplicabilityConstraints.equals(rType)) {
+        if (expectedTypeByApplicabilityConstraints != null && !variable.getType().isAssignableFrom(expectedTypeByApplicabilityConstraints)) {
           HighlightFixUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
         }
       }
@@ -1647,7 +1646,9 @@ public class HighlightMethodUtil {
         String description = JavaErrorMessages.message("wrong.constructor.arguments", constructorName+"()", argTypes);
         String tooltip = createMismatchedArgumentsHtmlTooltip(list, null, PsiParameter.EMPTY_ARRAY, constructorName, PsiSubstitutor.EMPTY, aClass);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).description(description).escapedToolTip(tooltip).navigationShift(+1).create();
-        QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
+        QuickFixAction.registerQuickFixActions(
+          info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromUsageFixes(constructorCall)
+        );
         if (classReference != null) {
           ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info,getFixRange(list));
         }
@@ -1770,8 +1771,9 @@ public class HighlightMethodUtil {
                                                             PsiMethod[] constructors,
                                                             JavaResolveResult[] results, PsiElement infoElement,
                                                             @NotNull final HighlightInfo info) {
-    QuickFixAction
-      .registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
+    QuickFixAction.registerQuickFixActions(
+      info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromUsageFixes(constructorCall)
+    );
     if (classReference != null) {
       ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
       ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);

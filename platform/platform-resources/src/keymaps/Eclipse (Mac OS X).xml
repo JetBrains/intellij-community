@@ -333,4 +333,7 @@
   <action id="tasks.switch">
     <keyboard-shortcut first-keystroke="meta F9"/>
   </action>
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="alt meta H"/>
+  </action>
 </keymap>

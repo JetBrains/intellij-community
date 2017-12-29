@@ -70,9 +70,10 @@ public class JavaSourceRootDetectionUtil {
 
   @Nullable
   public static String getPackageName(CharSequence text) {
-    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.JDK_1_3);
+    Lexer lexer = JavaParserDefinition.createLexer(LanguageLevel.JDK_1_5);
     lexer.start(text);
     skipWhiteSpaceAndComments(lexer);
+    skipAnnotations(lexer);
     final IElementType firstToken = lexer.getTokenType();
     if (firstToken != JavaTokenType.PACKAGE_KEYWORD) {
       if (JAVA_FILE_FIRST_TOKEN_SET.contains(firstToken)) {
@@ -102,6 +103,56 @@ public class JavaSourceRootDetectionUtil {
   public static void skipWhiteSpaceAndComments(Lexer lexer){
     while(ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(lexer.getTokenType())) {
       lexer.advance();
+    }
+  }
+
+  private static void skipAnnotations(Lexer lexer){
+    while (lexer.getTokenType() == JavaTokenType.AT) {
+      lexer.advance();
+      skipQualifiedIdentifier(lexer);
+      skipArguments(lexer);
+      skipWhiteSpaceAndComments(lexer);
+    }
+  }
+
+  private static void skipQualifiedIdentifier(Lexer lexer) {
+    if (lexer.getTokenType() == JavaTokenType.IDENTIFIER) {
+      lexer.advance();
+      skipWhiteSpaceAndComments(lexer);
+      while (lexer.getTokenType() == JavaTokenType.DOT) {
+        lexer.advance();
+        skipWhiteSpaceAndComments(lexer);
+        if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) {
+          break;
+        }
+        lexer.advance();
+        skipWhiteSpaceAndComments(lexer);
+      }
+      skipWhiteSpaceAndComments(lexer);
+    }
+  }
+
+  private static void skipArguments(Lexer lexer) {
+    skipWhiteSpaceAndComments(lexer);
+    if (lexer.getTokenType() == JavaTokenType.LPARENTH) {
+      lexer.advance();
+      int depth = 1;
+      while (depth > 0) {
+        IElementType tokenType = lexer.getTokenType();
+        if (tokenType == JavaTokenType.LPARENTH) {
+          depth++;
+        }
+        else if (tokenType == JavaTokenType.RPARENTH) {
+          depth--;
+        }
+        else {
+          if (tokenType == null) {
+            break;
+          }
+        }
+        lexer.advance();
+      }
+      skipWhiteSpaceAndComments(lexer);
     }
   }
 }

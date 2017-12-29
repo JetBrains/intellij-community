@@ -15,15 +15,19 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 /**
@@ -99,6 +103,12 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
   @NotNull
   public List<RequiredModule> getRequiredModules() {
     return myRequiredModules != null ? myRequiredModules : Collections.emptyList();
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon(boolean expanded) {
+    return AllIcons.Nodes.JavaModule;
   }
 
   private void buildRequiresReferences(PsiJavaModule javaModule) {
@@ -240,6 +250,15 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
       }
     }
     return resolvedElements.size() == 1 ? resolvedElements.get(0) : null;
+  }
+
+  @Nullable
+  public static RefJavaModule moduleFromExternalName(@NotNull RefManagerImpl manager, @NotNull String fqName) {
+    PsiJavaModule javaModule = ContainerUtil.getFirstItem(JavaModuleNameIndex.getInstance().get(fqName,
+                                                                                                manager.getProject(),
+                                                                                                GlobalSearchScope.projectScope(manager.getProject())));
+
+    return javaModule == null ? null : new RefJavaModuleImpl(javaModule, manager);
   }
 
   @NotNull

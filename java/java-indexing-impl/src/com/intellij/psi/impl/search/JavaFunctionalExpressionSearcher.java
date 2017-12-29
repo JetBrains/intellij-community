@@ -349,6 +349,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                                            @NotNull Project project,
                                                            @NotNull Processor<PsiFunctionalExpression> consumer) {
     CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    if (compilerReferenceService == null) return true;
     for (SamDescriptor descriptor : descriptors) {
       if (!processFunctionalExpressions(performSearchUsingCompilerIndices(descriptor,
                                                                           searchScope,

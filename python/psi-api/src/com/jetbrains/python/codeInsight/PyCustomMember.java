@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.google.common.base.Preconditions;
@@ -28,6 +14,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -158,7 +145,7 @@ public class PyCustomMember extends UserDataHolderBase {
     myPsiPath = new PyPsiPath() {
 
       @Override
-      public PsiElement resolve(PsiElement module) {
+      public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
         return psiElement;
       }
     };
@@ -176,8 +163,29 @@ public class PyCustomMember extends UserDataHolderBase {
     return myIcon;
   }
 
+  /**
+   * Resolves custom member in specified context.
+   *
+   * @param context psi element to be used as psi context
+   * @return resolved element
+   * @deprecated Use {@link PyCustomMember#resolve(PsiElement, PyResolveContext)} instead.
+   * This method will be removed in 2018.2.
+   */
   @Nullable
-  public PsiElement resolve(@NotNull final PsiElement context) {
+  @Deprecated
+  public PsiElement resolve(@NotNull PsiElement context) {
+    return resolve(context, PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeInsightFallback(context.getProject())));
+  }
+
+  /**
+   * Resolves custom member in specified context.
+   *
+   * @param context        psi element to be used as psi context
+   * @param resolveContext context to be used in resolve
+   * @return resolved element
+   */
+  @Nullable
+  public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
 
     if (myTarget != null) {
       return myTarget;
@@ -198,7 +206,7 @@ public class PyCustomMember extends UserDataHolderBase {
       targetClass = CachedValuesManager.getManager(context.getProject()).getParameterizedCachedValue(this, RESOLVE,
                                                                                                      provider, false, context);
     }
-    final PsiElement resolveTarget = findResolveTarget(context);
+    final PsiElement resolveTarget = findResolveTarget(context, resolveContext);
     if (resolveTarget instanceof PyFunction && !myAlwaysResolveToCustomElement) {
       return resolveTarget;
     }
@@ -212,9 +220,9 @@ public class PyCustomMember extends UserDataHolderBase {
   }
 
   @Nullable
-  private PsiElement findResolveTarget(@NotNull PsiElement context) {
+  private PsiElement findResolveTarget(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
     if (myPsiPath != null) {
-      return myPsiPath.resolve(context);
+      return myPsiPath.resolve(context, resolveContext);
     }
     return null;
   }
@@ -224,7 +232,7 @@ public class PyCustomMember extends UserDataHolderBase {
     if (myTypeName == null) {
       return null;
     }
-    int pos = myTypeName.lastIndexOf('.');
+    final int pos = myTypeName.lastIndexOf('.');
     return myTypeName.substring(pos + 1);
   }
 
@@ -285,6 +293,8 @@ public class PyCustomMember extends UserDataHolderBase {
       return PyCustomMember.this;
     }
 
+    @Override
+    @Nullable
     public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
       if (myTypeCallback != null) {
         return myTypeCallback.fun(myContext);

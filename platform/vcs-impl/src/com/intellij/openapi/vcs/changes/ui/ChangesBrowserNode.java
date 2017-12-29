@@ -272,7 +272,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     return DEFAULT_SORT_WEIGHT;
   }
 
-  public int compareUserObjects(final Object o2) {
+  public int compareUserObjects(final T o2) {
     return 0;
   }
 
@@ -280,7 +280,15 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     myAttributes = attributes;
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull FilePath parentPath) {
+    appendParentPath(renderer, parentPath.getPresentableUrl());
+  }
+
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull VirtualFile parentPath) {
+    appendParentPath(renderer, parentPath.getPresentableUrl());
+  }
+
+  private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {
     renderer.append(spaceAndThinSpace() + FileUtil.getLocationRelativeToUserHome(parentPath),
                     SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }

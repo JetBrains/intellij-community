@@ -40,10 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
-import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.ExpectedHighlightingData;
-import com.intellij.testFramework.HighlightTestInfo;
-import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.*;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
@@ -603,6 +600,11 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void saveText(@NotNull VirtualFile file, @NotNull String text);
 
+  /**
+   * @return Disposable for the corresponding project fixture.
+   * It's disposed earlier than {@link UsefulTestCase#getTestRootDisposable()} and can be useful
+   * e.g. for avoiding library virtual pointers leaks: {@code PsiTestUtil.addLibrary(myFixture.getProjectDisposable(), ...)}
+   */
   @NotNull
   default Disposable getProjectDisposable() {
     return getProject();

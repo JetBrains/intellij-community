@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
@@ -50,6 +51,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilderHelper {
@@ -146,7 +148,7 @@ public class MavenModuleBuilderHelper {
     if (myParentProject == null) return;
 
     new WriteCommandAction.Simple(project, myCommandName) {
-      protected void run() throws Throwable {
+      protected void run() {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
 
         MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
@@ -165,16 +167,26 @@ public class MavenModuleBuilderHelper {
 
         CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
 
-        pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
-        try {
-          Document doc = FileDocumentManager.getInstance().getDocument(pom);
-          if (doc != null) {
-            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
-            FileDocumentManager.getInstance().saveDocument(doc);
-          }
+        List<VirtualFile> pomFiles = ContainerUtil.newArrayListWithCapacity(2);
+        pomFiles.add(pom);
+
+        if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
+          pomFiles.add(myParentProject.getFile());
+          MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
         }
-        finally {
-          pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
+
+        for (VirtualFile pom : pomFiles) {
+          pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
+          try {
+            Document doc = FileDocumentManager.getInstance().getDocument(pom);
+            if (doc != null) {
+              PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
+              FileDocumentManager.getInstance().saveDocument(doc);
+            }
+          }
+          finally {
+            pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
+          }
         }
       }
     }.execute();
@@ -196,7 +208,7 @@ public class MavenModuleBuilderHelper {
     }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-      false, workingDir.getPath(),
+      false, workingDir.getPath(), (String)null,
       Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
       Collections.emptyList());
 

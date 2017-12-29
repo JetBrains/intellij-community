@@ -30,8 +30,6 @@ import java.util.Map;
 
 /**
  * @author irengrig
- *         Date: 2/28/11
- *         Time: 6:55 PM
  */
 public class VcsHistoryCache {
   private final Object myLock;

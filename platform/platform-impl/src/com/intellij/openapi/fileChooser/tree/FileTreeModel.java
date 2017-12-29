@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.ui.tree.Identifiable;
 import com.intellij.ui.tree.MapBasedTree;
 import com.intellij.ui.tree.MapBasedTree.Entry;
@@ -41,6 +42,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.Icon;
 import javax.swing.tree.TreePath;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -52,6 +54,7 @@ import static com.intellij.openapi.util.Disposer.register;
 import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
+import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
@@ -487,7 +490,21 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
       super(state, file);
       if (state.refresher != null && state.refresher.isRecursive()) state.refresher.register(file);
       tree = new MapBasedTree<>(false, node -> node.getFile(), state.path);
+      tree.onInsert(node -> markDirtyInternal(node.getFile()));
       tree.updateRoot(Pair.create(this, state.isLeaf(file)));
+    }
+
+    private static void markDirtyInternal(VirtualFile file) {
+      if (file instanceof VirtualFileSystemEntry) {
+        Method method = getDeclaredMethod(VirtualFileSystemEntry.class, "markDirtyInternal");
+        if (method != null) {
+          try {
+            method.invoke(file);
+          }
+          catch (Exception ignore) {
+          }
+        }
+      }
     }
 
     private UpdateResult<Node> updateChildren(State state, Entry<Node> parent) {

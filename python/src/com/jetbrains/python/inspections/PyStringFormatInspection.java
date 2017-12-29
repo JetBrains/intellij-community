@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableMap;
@@ -32,6 +18,7 @@ import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +96,7 @@ public class PyStringFormatInspection extends PyInspection {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
 
         final String s = myFormatSpec.get("1");
-        if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
+        if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
             if (rightType instanceof PyTupleType) {
@@ -133,7 +120,13 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyReferenceExpression) {
           if (PyNames.DICT.equals(rightExpression.getName())) return -1;
 
-          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
+          final List<QualifiedRatedResolveResult> resolveResults =
+            ((PyReferenceExpression)rightExpression).multiFollowAssignmentsChain(resolveContext);
+          if (resolveResults.isEmpty()) {
+            return -1;
+          }
+
+          final PsiElement pyElement = PyUtil.filterTopPriorityResults(resolveResults).get(0).getElement();
           if (pyElement == rightExpression || !(pyElement instanceof PyExpression)) {
             return -1;
           }
@@ -168,7 +161,7 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyDictLiteralExpression) {
           return inspectDict(rightExpression, problemTarget, false);
         }
-        else if (PyUtil.instanceOf(rightExpression, PySequenceExpression.class, PyComprehensionElement.class)) {
+        else if (PsiTreeUtil.instanceOf(rightExpression, PySequenceExpression.class, PyComprehensionElement.class)) {
           if (s != null) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
                                 PyTypeParser.getTypeByName(problemTarget, s, myTypeEvalContext));
@@ -220,7 +213,7 @@ public class PyStringFormatInspection extends PyInspection {
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
         Map<PyExpression, PyExpression> additionalExpressions = new HashMap<>();
-        PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
+        Collection<PySubscriptionExpression> subscriptionExpressions = PsiTreeUtil.findChildrenOfType(file, PySubscriptionExpression.class);
         for (PySubscriptionExpression expr : subscriptionExpressions) {
           if (expr.getOperand().getText().equals(operand)) {
             PsiElement parent = expr.getParent();

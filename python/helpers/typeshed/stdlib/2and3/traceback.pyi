@@ -1,6 +1,6 @@
 # Stubs for traceback
 
-from typing import Any, Dict, Generator, IO, Iterator, List, Mapping, Optional, Tuple, Type
+from typing import Any, Dict, Generator, IO, Iterator, List, Mapping, Optional, Tuple, Type, Iterable
 from types import FrameType, TracebackType
 import sys
 
@@ -91,7 +91,7 @@ if sys.version_info >= (3, 5):
 
 
 if sys.version_info >= (3, 5):
-    class FrameSummary:
+    class FrameSummary(Iterable):
         filename: str
         lineno: int
         name: str

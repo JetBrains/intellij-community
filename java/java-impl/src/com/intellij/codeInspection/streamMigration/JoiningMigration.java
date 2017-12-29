@@ -61,13 +61,13 @@ public class JoiningMigration extends BaseStreamApiMigration {
 
     TerminalBlock block = terminal.getTerminalBlock();
     PsiStatement loopStatement = block.getStreamSourceStatement();
-    String stream = terminal.generateStreamCode();
-    restoreComments(loopStatement, body);
+    CommentTracker ct = new CommentTracker();
+    String stream = terminal.generateStreamCode(ct);
     PsiVariable builder = terminal.getBuilder();
-    terminal.preCleanUp();
+    terminal.preCleanUp(ct);
     ControlFlowUtils.InitializerUsageStatus status = getInitializerUsageStatus(builder, loopStatement);
     if(builder instanceof PsiLocalVariable) {
-      PsiElement result = replaceInitializer(loopStatement, builder, builder.getInitializer(), stream, status);
+      PsiElement result = replaceInitializer(loopStatement, builder, builder.getInitializer(), stream, status, ct);
       terminal.cleanUp((PsiLocalVariable)builder);
       JoiningTerminal.replaceUsages((PsiLocalVariable)terminal.getBuilder());
       return result;
@@ -157,14 +157,14 @@ public class JoiningMigration extends BaseStreamApiMigration {
       replaceUsages(target);
     }
 
-    void preCleanUp() {
-      cleanUpCall(myBeforeLoopAppend);
-      cleanUpCall(myAfterLoopAppend);
+    void preCleanUp(CommentTracker ct) {
+      cleanUpCall(ct, myBeforeLoopAppend);
+      cleanUpCall(ct, myAfterLoopAppend);
     }
 
     @NotNull
-    String generateStreamCode() {
-      return myTerminalBlock.generate() + generateIntermediate() + generateTerminal();
+    String generateStreamCode(CommentTracker ct) {
+      return myTerminalBlock.generate(ct) + generateIntermediate(ct) + generateTerminal(ct);
     }
 
     private static void replaceInitializer(@NotNull PsiLocalVariable target) {
@@ -195,33 +195,33 @@ public class JoiningMigration extends BaseStreamApiMigration {
              FinalUtils.canBeFinal(variable);
     }
 
-    String generateTerminal() {
+    String generateTerminal(CommentTracker ct) {
       final String collectArguments;
       if (myDelimiterJoinParts.isEmpty() && myPrefixJoinParts.isEmpty() && mySuffixJoinParts.isEmpty()) {
         collectArguments = "";
       }
       else {
-        String delimiter = myDelimiterJoinParts.isEmpty() ? "\"\"" : getExpressionText(myDelimiterJoinParts);
+        String delimiter = myDelimiterJoinParts.isEmpty() ? "\"\"" : getExpressionText(ct, myDelimiterJoinParts);
         if (mySuffixJoinParts.isEmpty() && myPrefixJoinParts.isEmpty()) {
           collectArguments = delimiter;
         }
         else {
-          String suffix = mySuffixJoinParts.isEmpty() ? "\"\"" : getExpressionText(mySuffixJoinParts);
-          String prefix = myPrefixJoinParts.isEmpty() ? "\"\"" : getExpressionText(myPrefixJoinParts);
+          String suffix = mySuffixJoinParts.isEmpty() ? "\"\"" : getExpressionText(ct, mySuffixJoinParts);
+          String prefix = myPrefixJoinParts.isEmpty() ? "\"\"" : getExpressionText(ct, myPrefixJoinParts);
           collectArguments = delimiter + "," + prefix + "," + suffix;
         }
       }
       return ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".joining(" + collectArguments + "))";
     }
 
-    String generateIntermediate() {
+    String generateIntermediate(CommentTracker ct) {
       if (TypeUtils.isJavaLangString(myLoopVariable.getType()) &&
           myMainJoinParts.size() == 1 &&
           myMainJoinParts.get(0) instanceof PsiReferenceExpression) {
         return "";
       }
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myLoopVariable.getProject());
-      String joinTransformation = getExpressionText(myMainJoinParts);
+      String joinTransformation = getExpressionText(ct, myMainJoinParts);
       PsiExpression mapping = elementFactory.createExpressionFromText(joinTransformation, myLoopVariable);
       return StreamRefactoringUtil.generateMapOperation(myLoopVariable, null, mapping);
     }
@@ -240,23 +240,23 @@ public class JoiningMigration extends BaseStreamApiMigration {
       }
     }
 
-    private static void cleanUpCall(PsiMethodCallExpression call) {
+    private static void cleanUpCall(CommentTracker ct, PsiMethodCallExpression call) {
       if (call != null) {
         if (call.getParent() instanceof PsiExpressionStatement) {
-          call.delete();
+          ct.delete(call);
         }
         else {
           PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
           PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if (nextCall != null && qualifier != null) {
-            nextCall.replace(qualifier);
+            ct.replace(nextCall, ct.markUnchanged(qualifier));
           }
         }
       }
     }
 
 
-    private static String getExpressionText(@NotNull List<PsiExpression> joinParts) {
+    private static String getExpressionText(CommentTracker ct, @NotNull List<PsiExpression> joinParts) {
       StringJoiner joiner = new StringJoiner("+");
       int size = joinParts.size();
       for (int i = 0; i < joinParts.size(); i++) {
@@ -270,10 +270,10 @@ public class JoiningMigration extends BaseStreamApiMigration {
               neighborIsString = true;
             }
           }
-          partText = expressionToCharSequence(joinPart, size, neighborIsString);
+          partText = expressionToCharSequence(ct, joinPart, size, neighborIsString);
         }
         else {
-          partText = expressionToCharSequence(joinPart, size, true);
+          partText = expressionToCharSequence(ct, joinPart, size, true);
         }
         joiner.add(partText);
       }
@@ -310,7 +310,10 @@ public class JoiningMigration extends BaseStreamApiMigration {
     }
 
     @NotNull
-    private static String expressionToCharSequence(@NotNull PsiExpression expression, int expressionCount, boolean neighborIsString) {
+    private static String expressionToCharSequence(CommentTracker ct,
+                                                   @NotNull PsiExpression expression,
+                                                   int expressionCount,
+                                                   boolean neighborIsString) {
       PsiType type = expression.getType();
       if(expression instanceof PsiMethodCallExpression) {
         PsiMethodCallExpression callExpression = (PsiMethodCallExpression)expression;
@@ -324,7 +327,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
               Object constantExpression = ExpressionUtils.computeConstantExpression(first);
               if(constantExpression instanceof Integer) {
                 String endIndex = String.valueOf((int)constantExpression + 1);
-                return qualifierExpression.getText() + ".substring(" + first.getText() + "," + endIndex + ")";
+                return ct.text(qualifierExpression) + ".substring(" + ct.text(first) + "," + endIndex + ")";
               }
             }
           }
@@ -336,22 +339,22 @@ public class JoiningMigration extends BaseStreamApiMigration {
           if (literalExpression != null) {
             Object value = literalExpression.getValue();
             if (value instanceof Character) {
-              String text = literalExpression.getText();
+              String text = ct.text(literalExpression);
               if ("'\"'".equals(text)) return "\"\\\"\"";
               return "\"" + text.substring(1, text.length() - 1) + "\"";
             }
           }
-          return CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + expression.getText() + ")";
+          return CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + ct.text(expression) + ")";
         }
         if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.ADDITIVE_PRECEDENCE ||
             (expression.getType() instanceof PsiPrimitiveType &&
              ParenthesesUtils.getPrecedence(expression) == ParenthesesUtils.ADDITIVE_PRECEDENCE) ||
             expressionCount == 1) {
-          return "(" + expression.getText() + ")";
+          return "(" + ct.text(expression) + ")";
         }
-        return expression.getText();
+        return ct.text(expression);
       }
-      String expressionText = expression.getText();
+      String expressionText = ct.text(expression);
       if(ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.ADDITIVE_PRECEDENCE && expressionCount > 1) {
         expressionText = "(" + expressionText + ")";
       }
@@ -860,9 +863,9 @@ List<PsiExpression> builderStrInitializers = null;
       }
 
       @Override
-      void preCleanUp() {
-        super.preCleanUp();
-        myBoolVariable.delete();
+      void preCleanUp(CommentTracker ct) {
+        super.preCleanUp(ct);
+        ct.delete(myBoolVariable);
       }
 
       @Nullable
@@ -919,9 +922,9 @@ List<PsiExpression> builderStrInitializers = null;
         myTruncateIfStatement = truncateIfStatement;
       }
 
-      void preCleanUp() {
-        super.preCleanUp();
-        myTruncateIfStatement.delete();
+      void preCleanUp(CommentTracker ct) {
+        super.preCleanUp(ct);
+        ct.delete(myTruncateIfStatement);
       }
 
       @Nullable
@@ -1032,9 +1035,9 @@ List<PsiExpression> builderStrInitializers = null;
         myDelimiterVariable = delimiterVariable;
       }
 
-      void preCleanUp() {
-        super.preCleanUp();
-        myDelimiterVariable.delete();
+      void preCleanUp(CommentTracker ct) {
+        super.preCleanUp(ct);
+        ct.delete(myDelimiterVariable);
       }
 
       @Nullable
@@ -1182,9 +1185,9 @@ List<PsiExpression> builderStrInitializers = null;
       }
 
       @Override
-      void preCleanUp() {
-        super.preCleanUp();
-        myBeforeLoopAppend.delete();
+      void preCleanUp(CommentTracker ct) {
+        super.preCleanUp(ct);
+        ct.delete(myBeforeLoopAppend);
       }
 
       private static List<PsiExpression> copyReplacingVar(@NotNull List<PsiExpression> joinParts,
@@ -1201,8 +1204,8 @@ List<PsiExpression> builderStrInitializers = null;
 
       @NotNull
       @Override
-      String generateStreamCode() {
-        return mySource.createReplacement() + generateIntermediate() + generateTerminal();
+      String generateStreamCode(CommentTracker ct) {
+        return mySource.createReplacement(ct) + generateIntermediate(ct) + generateTerminal(ct);
       }
 
       @Nullable

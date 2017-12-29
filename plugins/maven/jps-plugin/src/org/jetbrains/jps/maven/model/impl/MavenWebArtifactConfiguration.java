@@ -1,24 +1,12 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +23,7 @@ public class MavenWebArtifactConfiguration {
   @Tag("module-name")
   public String moduleName;
 
-  @Tag("web-resources")
-  @AbstractCollection(surroundWithTag = false, elementTag = "resource")
+  @XCollection(propertyElementName = "web-resources", elementName = "resource")
   public List<ResourceRootConfiguration> webResources = new ArrayList<>();
 
   @Tag("packaging-includes")
@@ -47,6 +34,12 @@ public class MavenWebArtifactConfiguration {
 
   @Tag("war-root")
   public String warSourceDirectory = "src/main/webapp";
+
+  @XCollection(propertyElementName = "war-source-includes", elementName = "include")
+  public List<String> warSourceIncludes = new ArrayList<>();
+
+  @XCollection(propertyElementName = "war-source-excludes", elementName = "exclude")
+  public List<String> warSourceExcludes = new ArrayList<>();
 
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;

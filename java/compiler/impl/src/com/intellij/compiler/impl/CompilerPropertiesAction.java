@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 9/12/12
 */
 class CompilerPropertiesAction extends AnAction {
   public CompilerPropertiesAction() {

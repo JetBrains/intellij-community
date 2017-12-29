@@ -125,6 +125,15 @@ public class PyiUtil {
            PyKnownDecoratorUtil.getKnownDecorators((PyFunction)element, context).contains(overload);
   }
 
+  @NotNull
+  public static <T extends PyElement> T stubToOriginal(@NotNull T element, @NotNull Class<T> cls) {
+    final PsiElement originalElement = getOriginalElement(element);
+    if (cls.isInstance(originalElement)) {
+      return cls.cast(originalElement);
+    }
+    return element;
+  }
+
   private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
     return file instanceof PyFile && !(file instanceof PyiFile);
   }

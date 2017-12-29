@@ -76,7 +76,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.09.13
  */
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {

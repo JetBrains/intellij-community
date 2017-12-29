@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.util.xmlb;
 
@@ -78,7 +66,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
   @Nullable
   @Override
   public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Element serialized = myMapAnnotation == null || myMapAnnotation.surroundWithTag() ? new Element(MAP) : (Element)context;
+    Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
     Map map = (Map)o;
@@ -98,6 +86,10 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return serialized == context ? null : serialized;
   }
 
+  protected boolean isSurroundWithTag() {
+    return myMapAnnotation == null || (myMapAnnotation.surroundWithTag() && myMapAnnotation.propertyElementName().isEmpty());
+  }
+
   private String getEntryAttributeName() {
     return myMapAnnotation == null ? ENTRY : myMapAnnotation.entryTagName();
   }
@@ -114,7 +106,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
   @Override
   public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     List<Element> childNodes;
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
+    if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
     }
@@ -131,7 +123,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   public Object deserialize(@Nullable Object context, @NotNull Element element) {
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
+    if (isSurroundWithTag()) {
       return deserialize(context, element.getChildren());
     }
     else {
@@ -169,7 +161,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
     }
 
     if (binding == null) {
-      entry.setAttribute(attributeName, XmlSerializerImpl.convertToString(value));
+      entry.setAttribute(attributeName, XmlSerializerImpl.removeControlChars(XmlSerializerImpl.convertToString(value)));
     }
     else {
       Object serialized = binding.serialize(value, entry, filter);

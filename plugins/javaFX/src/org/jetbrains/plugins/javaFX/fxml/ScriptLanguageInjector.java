@@ -21,6 +21,7 @@ public class ScriptLanguageInjector implements MultiHostInjector {
   private static final XmlElementPattern.XmlTextPattern SCRIPT_PATTERN = XmlPatterns.xmlText().withParent(
     XmlPatterns.xmlTag().withName(FxmlConstants.FX_SCRIPT));
 
+  @Override
   public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull final PsiElement host) {
     if (SCRIPT_PATTERN.accepts(host)) {
       final List<String> registeredLanguages = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)host.getContainingFile());
@@ -38,6 +39,7 @@ public class ScriptLanguageInjector implements MultiHostInjector {
     }
   }
 
+  @Override
   @NotNull
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return Collections.singletonList(XmlText.class);

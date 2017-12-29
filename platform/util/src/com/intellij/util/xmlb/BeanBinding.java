@@ -1,16 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
@@ -19,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.*;
@@ -61,10 +50,12 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert myBindings == null;
 
+    Property classAnnotation = myBeanClass.getAnnotation(Property.class);
+
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i), serializer);
+      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OLD : classAnnotation.style());
       binding.init(originalType, serializer);
       myBindings[i] = binding;
     }
@@ -262,6 +253,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
         return name;
       }
     }
+
     String name = aClass.getSimpleName();
     if (name.isEmpty()) {
       name = aClass.getSuperclass().getSimpleName();
@@ -274,7 +266,8 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return name;
   }
 
-  private static String getTagNameFromAnnotation(Class<?> aClass) {
+  @Nullable
+  private static String getTagNameFromAnnotation(@NotNull Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
     return tag != null && !tag.value().isEmpty() ? tag.value() : null;
   }
@@ -286,17 +279,18 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return accessors;
     }
 
-    accessors = ContainerUtil.newArrayList();
+    accessors = new ArrayList<MutableAccessor>();
 
     Map<String, Couple<Method>> nameToAccessors;
-    if (aClass != Rectangle.class) {   // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
-      nameToAccessors = collectPropertyAccessors(aClass, accessors);
-    }
-    else {
+    // special case for Rectangle.class to avoid infinite recursion during serialization due to bounds() method
+    if (aClass == Rectangle.class) {
       nameToAccessors = Collections.emptyMap();
     }
+    else {
+      nameToAccessors = collectPropertyAccessors(aClass, accessors);
+    }
 
-    int propertyAccessorCount  = accessors.size();
+    int propertyAccessorCount = accessors.size();
     collectFieldAccessors(aClass, accessors);
 
     // if there are field accessor and property accessor, prefer field - Kotlin generates private var and getter/setter, but annotation moved to var, not to getter/setter
@@ -323,7 +317,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
-    final Map<String, Couple<Method>> candidates = ContainerUtilRt.newTreeMap(); // (name,(getter,setter))
+    final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
         continue;
@@ -362,6 +356,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   private static boolean hasStoreAnnotations(@NotNull AccessibleObject object) {
+    //noinspection deprecation
     return object.getAnnotation(OptionTag.class) != null ||
            object.getAnnotation(Tag.class) != null ||
            object.getAnnotation(Attribute.class) != null ||
@@ -369,6 +364,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
            object.getAnnotation(Text.class) != null ||
            object.getAnnotation(CollectionBean.class) != null ||
            object.getAnnotation(MapAnnotation.class) != null ||
+           object.getAnnotation(XCollection.class) != null ||
            object.getAnnotation(AbstractCollection.class) != null;
   }
 
@@ -424,7 +420,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer) {
+  private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
     Binding binding = serializer.getBinding(accessor);
     if (binding instanceof JDOMElementBinding) {
       return binding;
@@ -446,7 +442,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding, false);
+      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OLD);
     }
 
     boolean surroundWithTag = true;
@@ -464,9 +460,22 @@ public class BeanBinding extends NotNullDeserializeBinding {
       if (binding == null || binding instanceof TextBinding) {
         throw new XmlSerializationException("Text-serializable properties can't be serialized without surrounding tags: " + accessor);
       }
-      return new AccessorBindingWrapper(accessor, binding, inline);
+      return new AccessorBindingWrapper(accessor, binding, inline, property.style());
     }
 
+    XCollection xCollection = accessor.getAnnotation(XCollection.class);
+    if (xCollection != null && (!xCollection.propertyElementName().isEmpty() || xCollection.style() == XCollection.Style.v2)) {
+      return new TagBinding(accessor, xCollection.propertyElementName());
+    }
+
+    MapAnnotation xMap = accessor.getAnnotation(MapAnnotation.class);
+    if (xMap != null && (!xMap.propertyElementName().isEmpty())) {
+      return new TagBinding(accessor, xMap.propertyElementName());
+    }
+
+    if (propertyStyle == Property.Style.ATTRIBUTE) {
+      return new AttributeBinding(accessor, null);
+    }
     return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
   }
 }

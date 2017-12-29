@@ -375,7 +375,7 @@ public class MarkerType {
     private final PsiClass myClass;
 
     private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, ((Comparator)renderer.getComparator()));
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper((Comparator)renderer.getComparator()));
       myClass = aClass;
     }
 
@@ -388,8 +388,8 @@ public class MarkerType {
     }
 
     @Override
-    public void onFinished() {
-      super.onFinished();
+    public void onSuccess() {
+      super.onSuccess();
       PsiElement oneElement = getTheOnlyOneElement();
       if (oneElement instanceof NavigatablePsiElement) {
         ((NavigatablePsiElement)oneElement).navigate(true);
@@ -433,7 +433,7 @@ public class MarkerType {
     private final PsiMethod myMethod;
 
     private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer renderer) {
-      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, renderer.getComparator());
+      super(method.getProject(), SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
       myMethod = method;
     }
 
@@ -445,8 +445,8 @@ public class MarkerType {
     }
 
     @Override
-    public void onFinished() {
-      super.onFinished();
+    public void onSuccess() {
+      super.onSuccess();
       PsiElement oneElement = getTheOnlyOneElement();
       if (oneElement instanceof NavigatablePsiElement) {
         ((NavigatablePsiElement)oneElement).navigate(true);

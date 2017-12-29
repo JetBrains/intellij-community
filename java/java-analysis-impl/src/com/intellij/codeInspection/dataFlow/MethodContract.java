@@ -52,8 +52,8 @@ public abstract class MethodContract {
     switch (getReturnValue()) {
       case NULL_VALUE: return factory.getConstFactory().getNull();
       case NOT_NULL_VALUE:
-        return defaultResult instanceof DfaTypeValue
-               ? ((DfaTypeValue)defaultResult).withNullness(Nullness.NOT_NULL)
+        return defaultResult instanceof DfaFactMapValue
+               ? ((DfaFactMapValue)defaultResult).withFact(DfaFactType.CAN_BE_NULL, false)
                : DfaUnknownValue.getInstance();
       case TRUE_VALUE: return factory.getConstFactory().getTrue();
       case FALSE_VALUE: return factory.getConstFactory().getFalse();
@@ -71,7 +71,7 @@ public abstract class MethodContract {
 
   abstract String getArgumentsPresentation();
 
-  abstract List<ContractValue> getConditions();
+  public abstract List<ContractValue> getConditions();
 
   @Override
   public String toString() {
@@ -91,7 +91,7 @@ public abstract class MethodContract {
       }
 
       @Override
-      List<ContractValue> getConditions() {
+      public List<ContractValue> getConditions() {
         return Collections.emptyList();
       }
     };
@@ -114,7 +114,7 @@ public abstract class MethodContract {
       }
 
       @Override
-      List<ContractValue> getConditions() {
+      public List<ContractValue> getConditions() {
         return Collections.singletonList(condition);
       }
     };

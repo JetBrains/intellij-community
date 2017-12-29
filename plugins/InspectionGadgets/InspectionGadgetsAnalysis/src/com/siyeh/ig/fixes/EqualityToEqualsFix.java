@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,13 @@ import java.util.List;
 public class EqualityToEqualsFix extends InspectionGadgetsFix {
 
   private final boolean myNegated;
+
+  /**
+   * @deprecated use {@link #buildFix(PsiBinaryExpression)} instead
+   */
+  public EqualityToEqualsFix() {
+    this(true);
+  }
 
   private EqualityToEqualsFix(boolean negated) {
     myNegated = negated;
@@ -91,17 +99,19 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     if (lhs == null || rhs == null) {
       return;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }
     if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      newExpression.append('(').append(lhs.getText()).append(')');
+      newExpression.append('(').append(commentTracker.markUnchanged(lhs).getText()).append(')');
     }
     else {
-      newExpression.append(lhs.getText());
+      newExpression.append(commentTracker.markUnchanged(lhs).getText());
     }
-    newExpression.append(".equals(").append(rhs.getText()).append(')');
-    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString());
+    newExpression.append(".equals(").append(commentTracker.markUnchanged(rhs).getText()).append(')');
+
+    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString(), commentTracker);
   }
 }

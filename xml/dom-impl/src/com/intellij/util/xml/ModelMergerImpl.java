@@ -232,7 +232,7 @@ public class ModelMergerImpl implements ModelMerger {
 
 
   private <T> T _mergeModels(final Class<? super T> aClass, final MergingInvocationHandler<T> handler, final T... implementations) {
-    final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), implementations);
+    final Set<Class> commonClasses = getCommonClasses(new THashSet<>(), (Object[])implementations);
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));

@@ -41,7 +41,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
     final PsiField[] fields = aClass.getFields();
     final Set<PsiField> candidates = new LinkedHashSet<>();
     for (PsiField field : fields) {
-      if (AnnotationUtil.isAnnotated(field, excludeAnnos)) {
+      if (AnnotationUtil.isAnnotated(field, excludeAnnos, 0)) {
         continue;
       }
       if (field.hasModifierProperty(PsiModifier.PRIVATE) && !(field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL))) {

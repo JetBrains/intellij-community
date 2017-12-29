@@ -116,6 +116,10 @@ public class MoveInstanceMethodTest extends LightRefactoringTestCase {
     doTest(false, 0);
   }
 
+  public void testMethodReferenceWithThisTarget() {
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 0));
+  }
+
   public void testMethodReferenceToExpandToLambda() {
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(true, 1));
   }

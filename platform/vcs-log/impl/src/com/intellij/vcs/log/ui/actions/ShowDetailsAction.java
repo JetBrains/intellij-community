@@ -19,15 +19,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   public ShowDetailsAction() {
-    super("Show Details", "Display details panel", getIcon());
+    super("Show Details", "Display details panel", AllIcons.Actions.Preview);
   }
 
   @Override
@@ -37,17 +34,10 @@ public class ShowDetailsAction extends BooleanPropertyToggleAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (e.getPlace().equals(VcsLogActionPlaces.VCS_LOG_GEAR_POPUP_PLACE)) {
-      e.getPresentation().setIcon(null);
-    } else {
-      e.getPresentation().setIcon(getIcon());
-    }
-
     super.update(e);
-  }
 
-  @NotNull
-  private static Icon getIcon() {
-    return AllIcons.Actions.Preview;
+    if (e.isFromContextMenu()) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

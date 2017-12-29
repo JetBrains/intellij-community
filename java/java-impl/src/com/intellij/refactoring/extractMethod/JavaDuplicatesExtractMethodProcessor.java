@@ -4,6 +4,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -17,6 +18,7 @@ import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +30,12 @@ import java.util.*;
 public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor {
   private static final Logger LOG = Logger.getInstance(JavaDuplicatesExtractMethodProcessor.class);
 
-  public JavaDuplicatesExtractMethodProcessor(PsiElement[] elements, String refactoringName) {
-    super(elements[0].getProject(), null, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
+  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @NotNull String refactoringName) {
+    this(elements, null, refactoringName);
+  }
+
+  public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @Nullable Editor editor, @Nullable String refactoringName) {
+    super(elements[0].getProject(), editor, elements, null, refactoringName, "", HelpID.EXTRACT_METHOD);
   }
 
   public void applyFrom(@NotNull ExtractMethodProcessor from, @NotNull Map<PsiVariable, PsiVariable> variablesMapping) {
@@ -54,9 +60,12 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
         variableDatum.add(newData);
       }
     }
+    Set<PsiVariable> parameterVariables = ContainerUtil.map2Set(variableDatum, data -> data.variable);
     List<VariableData> inputVariables = getInputVariables().getInputVariables();
-    for (int i = variableDatum.size(); i < inputVariables.size(); i++) {
-      variableDatum.add(inputVariables.get(i));
+    for (VariableData data : inputVariables) {
+      if (!parameterVariables.contains(data.variable)) {
+        variableDatum.add(data);
+      }
     }
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
   }
@@ -146,6 +155,11 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     return element;
   }
 
+  @Override
+  protected boolean isFoldingApplicable() {
+    return false;
+  }
+
   @NotNull
   private PsiElement updateCallQualifier(PsiMethodCallExpression callExpression) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
@@ -161,7 +175,8 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
   public DuplicatesFinder createDuplicatesFinder() {
     ReturnValue returnValue = myOutputVariables.length == 1 ? new VariableReturnValue(myOutputVariables[0]) : null;
 
-    return new DuplicatesFinder(myElements, myInputVariables, returnValue, Collections.emptyList(), true);
+    Set<PsiVariable> effectivelyLocal = getEffectivelyLocalVariables();
+    return new DuplicatesFinder(myElements, myInputVariables, returnValue, Collections.emptyList(), true, effectivelyLocal);
   }
 
   private void relaxMethodVisibility(Match match) {

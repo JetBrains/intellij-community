@@ -1,39 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import static com.intellij.codeInsight.AnnotationUtil.*;
 import static com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT;
 
 public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   private static final Set<String> INFERRED_ANNOTATIONS =
-    ContainerUtil.set(AnnotationUtil.NOT_NULL, AnnotationUtil.NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    ContainerUtil.set(NOT_NULL, NULLABLE, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
   private final Project myProject;
 
   public InferredAnnotationsManagerImpl(Project project) {
@@ -59,13 +47,13 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     if (ignoreInference(listOwner, annotationFQN)) {
       return null;
     }
-    
+
     PsiAnnotation fromBytecode = ProjectBytecodeAnalysis.getInstance(myProject).findInferredAnnotation(listOwner, annotationFQN);
     if (fromBytecode != null) {
       return fromBytecode;
     }
 
-    if ((AnnotationUtil.NOT_NULL.equals(annotationFQN) || AnnotationUtil.NULLABLE.equals(annotationFQN))) {
+    if ((NOT_NULL.equals(annotationFQN) || NULLABLE.equals(annotationFQN))) {
       PsiAnnotation anno = null;
       if (listOwner instanceof PsiMethodImpl) {
         anno = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
@@ -97,8 +85,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     if (ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotationFQN) && HardcodedContracts.hasHardcodedContracts(owner)) {
       return true;
     }
-    if (AnnotationUtil.NOT_NULL.equals(annotationFQN) && owner instanceof PsiParameter && owner.getParent() != null) {
-      if (AnnotationUtil.isAnnotated(owner, NullableNotNullManager.getInstance(owner.getProject()).getNullables(), false, false)) {
+    if (NOT_NULL.equals(annotationFQN) && owner instanceof PsiParameter && owner.getParent() != null) {
+      List<String> annotations = NullableNotNullManager.getInstance(owner.getProject()).getNullables();
+      if (isAnnotated(owner, annotations, CHECK_EXTERNAL | CHECK_INFERRED | CHECK_TYPE)) {
         return true;
       }
       if (HardcodedContracts.hasHardcodedContracts(owner)) {
@@ -120,7 +109,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
   @Nullable
   private PsiAnnotation getInferredNullityAnnotation(PsiMethodImpl method) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (AnnotationUtil.findAnnotation(method, manager.getNotNulls(), true) != null || AnnotationUtil.findAnnotation(method, manager.getNullables(), true) != null) {
+    if (findAnnotation(method, manager.getNotNulls(), true) != null || findAnnotation(method, manager.getNullables(), true) != null) {
       return null;
     }
 
@@ -165,21 +154,26 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation createContractAnnotation(List<? extends MethodContract> contracts, boolean pure) {
-    return createContractAnnotation(myProject, pure, StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "));
+    return createContractAnnotation(myProject, pure, StreamEx.of(contracts).select(StandardMethodContract.class).joining("; "), "");
   }
 
   @Nullable
-  public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts) {
-    final String attrs;
-    if (!contracts.isEmpty() && pure) {
-      attrs = "value = " + "\"" + contracts + "\", pure = true";
-    } else if (pure) {
-      attrs = "pure = true";
-    } else if (!contracts.isEmpty()) {
-      attrs = "\"" + contracts + "\"";
-    } else {
+  public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
+    Map<String, String> attrMap = new LinkedHashMap<>();
+    if (!contracts.isEmpty()) {
+      attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
+    }
+    if (pure) {
+      attrMap.put("pure", "true");
+    }
+    else if (!mutates.trim().isEmpty()) {
+      attrMap.put("mutates", StringUtil.wrapWithDoubleQuote(mutates));
+    }
+    if (attrMap.isEmpty()) {
       return null;
     }
+    String attrs = attrMap.keySet().equals(Collections.singleton("value")) ?
+                   attrMap.get("value") : EntryStream.of(attrMap).join(" = ").joining(", ");
     return ProjectBytecodeAnalysis.getInstance(project).createContractAnnotation(attrs);
   }
 
@@ -203,7 +197,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
           ContainerUtil.addIfNotNull(result, getInferredContractAnnotation((PsiMethodImpl)listOwner));
         }
 
-        if (!ignoreInference(listOwner, AnnotationUtil.NOT_NULL) || !ignoreInference(listOwner, AnnotationUtil.NULLABLE)) {
+        if (!ignoreInference(listOwner, NOT_NULL) || !ignoreInference(listOwner, NULLABLE)) {
           PsiAnnotation annotation = getInferredNullityAnnotation((PsiMethodImpl)listOwner);
           if (annotation != null && !ignoreInference(listOwner, annotation.getQualifiedName())) {
             result.add(annotation);
@@ -212,7 +206,7 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
       }
     }
 
-    if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, AnnotationUtil.NOT_NULL)) {
+    if (listOwner instanceof PsiParameter && !ignoreInference(listOwner, NOT_NULL)) {
       ContainerUtil.addIfNotNull(result, getInferredNullityAnnotation((PsiParameter)listOwner));
     }
 

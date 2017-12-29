@@ -16,19 +16,18 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.vcs.changes.local.*;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /** synchronization aspect is external for this class; only logic here
  * have internal command queue; applies commands to another copy of change lists (ChangeListWorker) and sends notifications
  * (after update is done)
  */
-public class Modifier implements ChangeListsWriteOperations {
-  private ChangeListWorker myWorker;
+public class Modifier {
+  private final ChangeListWorker myWorker;
   private boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
@@ -36,39 +35,50 @@ public class Modifier implements ChangeListsWriteOperations {
   public Modifier(ChangeListWorker worker, DelayedNotificator notificator) {
     myWorker = worker;
     myNotificator = notificator;
-    myCommandQueue = new LinkedList<>();
+    myCommandQueue = new ArrayList<>();
   }
 
   @NotNull
-  @Override
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
     return command.getNewListCopy();
   }
 
-  @Nullable
-  @Override
-  public String setDefault(String name) {
+  public void setDefault(String name) {
     SetDefault command = new SetDefault(name);
     impl(command);
-    return command.getPrevious();
   }
 
-  @Override
-  public boolean removeChangeList(@NotNull String name) {
+  public void removeChangeList(@NotNull String name) {
     RemoveList command = new RemoveList(name);
     impl(command);
-    return command.isRemoved();
+  }
+
+  public void moveChangesTo(String name, @NotNull Change[] changes) {
+    MoveChanges command = new MoveChanges(name, changes);
+    impl(command);
+  }
+
+  public boolean setReadOnly(String name, boolean value) {
+    SetReadOnly command = new SetReadOnly(name, value);
+    impl(command);
+    return command.isResult();
+  }
+
+  public boolean editName(@NotNull String fromName, @NotNull String toName) {
+    EditName command = new EditName(fromName, toName);
+    impl(command);
+    return command.isResult();
   }
 
   @Nullable
-  @Override
-  public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
-    MoveChanges command = new MoveChanges(name, changes);
+  public String editComment(@NotNull String fromName, @NotNull String newComment) {
+    EditComment command = new EditComment(fromName, newComment);
     impl(command);
-    return command.getMovedFrom();
+    return command.getOldComment();
   }
+
 
   private void impl(ChangeListCommand command) {
     if (myInsideUpdate) {
@@ -84,27 +94,6 @@ public class Modifier implements ChangeListsWriteOperations {
     }
   }
 
-  @Override
-  public boolean setReadOnly(String name, boolean value) {
-    SetReadOnly command = new SetReadOnly(name, value);
-    impl(command);
-    return command.isResult();
-  }
-
-  @Override
-  public boolean editName(@NotNull String fromName, @NotNull String toName) {
-    EditName command = new EditName(fromName, toName);
-    impl(command);
-    return command.isResult();
-  }
-
-  @Nullable
-  @Override
-  public String editComment(@NotNull String fromName, String newComment) {
-    EditComment command = new EditComment(fromName, newComment);
-    impl(command);
-    return command.getOldComment();
-  }
 
   public boolean isInsideUpdate() {
     return myInsideUpdate;
@@ -114,15 +103,13 @@ public class Modifier implements ChangeListsWriteOperations {
     myInsideUpdate = true;
   }
 
-  public void finishUpdate(@Nullable ChangeListWorker worker) {
+  public void finishUpdate(@Nullable ChangeListWorker updatedWorker) {
     myInsideUpdate = false;
 
-    if (worker != null) {
-      // re-apply commands to the new worker
+    if (updatedWorker != null) {
       for (ChangeListCommand command : myCommandQueue) {
-        command.apply(worker);
+        command.apply(updatedWorker);
       }
-      myWorker = worker;
     }
 
     for (ChangeListCommand command : myCommandQueue) {

@@ -1,19 +1,18 @@
 package com.intellij.internal.statistic.updater;
 
-import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
+import com.intellij.ide.gdpr.Consent;
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.ui.AppUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.util.Collection;
 
 public class StatisticsNotificationManager {
 
@@ -56,9 +55,10 @@ public class StatisticsNotificationManager {
           notification.expire();
         }
         else if ("settings".equals(description)) {
-          final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-          IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-          util.editConfigurable((JFrame)ideFrame, new StatisticsConfigurable(true));
+          final Collection<Consent> result = AppUIUtil.confirmConsentOptions(ConsentOptions.getInstance().getConsents().first);
+          if (result != null) {
+            ConsentOptions.getInstance().setConsents(result);
+          }
           notification.expire();
         }
       }

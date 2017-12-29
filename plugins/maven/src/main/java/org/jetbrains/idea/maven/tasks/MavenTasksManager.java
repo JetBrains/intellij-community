@@ -38,7 +38,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenSimpleProjectComponent;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -139,7 +139,8 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
         MavenExplicitProfiles explicitProfiles = myProjectsManager.getExplicitProfiles();
         parametersList.add(new MavenRunnerParameters(true,
                                                      file.getParent().getPath(),
-                                                     Arrays.asList(each.getGoal()),
+                                                     file.getName(),
+                                                     Collections.singletonList(each.getGoal()),
                                                      explicitProfiles.getEnabledProfiles(),
                                                      explicitProfiles.getDisabledProfiles()));
       }

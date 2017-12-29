@@ -38,7 +38,6 @@ import java.util.Arrays;
  * Module chunk consists of interdependent modules.
  *
  * @author Eugene Zhuravlev
- *         Date: Nov 19, 2004
  */
 public class ModuleChunk {
   /**

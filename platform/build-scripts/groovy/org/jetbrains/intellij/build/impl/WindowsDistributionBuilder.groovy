@@ -174,7 +174,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def launcherPropertiesPath = "${buildContext.paths.temp}/launcher${arch.fileSuffix}.properties"
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
       def lowerCaseProductName = buildContext.applicationInfo.shortProductName.toLowerCase()
-      String vmOptions = "$buildContext.additionalJvmArguments -Didea.paths.selector=${buildContext.systemSelector}".trim()
+      String vmOptions = "$buildContext.additionalJvmArguments -Dide.native.launcher=true -Didea.paths.selector=${buildContext.systemSelector}".trim()
       def productName = buildContext.applicationInfo.shortProductName
 
       String jdkEnvVarSuffix = arch == JvmArchitecture.x64 && customizer.include32BitLauncher ? "_64" : ""

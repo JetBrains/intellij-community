@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author ik
- * Date: 31.03.2003
  */
 public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo> implements NameHint {
   private final PsiConflictResolver[] myResolvers;

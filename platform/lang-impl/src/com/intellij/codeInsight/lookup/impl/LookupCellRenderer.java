@@ -436,6 +436,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     myTypeLabel.setBackground(sampleBackground);
     myTypeLabel.setForeground(getTypeTextColor(item, foreground, presentation, selected, nonFocusedSelection));
+    myTypeLabel.setIconOnTheRight(presentation.isTypeIconRightAligned());
     return used;
   }
 

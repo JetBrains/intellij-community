@@ -29,22 +29,27 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.URLUtil
 import java.io.File
 
-inline fun SourceResolver(rawSources: List<String>, sourceContents: List<String>?, urlCanonicalizer: (String) -> Url): SourceResolver {
+inline fun SourceResolver(rawSources: List<String>, sourceContents: List<String?>?, urlCanonicalizer: (String) -> Url): SourceResolver {
   return SourceResolver(rawSources, Array(rawSources.size) { urlCanonicalizer(rawSources[it]) }, sourceContents)
 }
 
 fun SourceResolver(rawSources: List<String>,
                    trimFileScheme: Boolean,
-                   baseUrl: Url?, sourceContents: List<String>?,
+                   baseUrl: Url?,
+                   sourceContents: List<String?>?,
                    baseUrlIsFile: Boolean = true): SourceResolver {
   return SourceResolver(rawSources, sourceContents) { canonicalizeUrl(it, baseUrl, trimFileScheme, baseUrlIsFile) }
 }
 
 interface SourceFileResolver {
-  fun resolve(sourceFile: VirtualFile?, map: ObjectIntHashMap<Url>): Int
+  /**
+   * Return -1 if no match
+   */
+  fun resolve(map: ObjectIntHashMap<Url>): Int = -1
+  fun resolve(rawSources: List<String>): Int = -1
 }
 
-class SourceResolver(private val rawSources: List<String>, internal val canonicalizedUrls: Array<Url>, private val sourceContents: List<String>?) {
+class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls: Array<Url>, private val sourceContents: List<String?>?) {
   companion object {
     fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
@@ -85,7 +90,10 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
     return if (index < 0) null else rawSources[index]
   }
 
-  internal fun findSourceIndex(sourceFile: VirtualFile?, resolver: SourceFileResolver) = resolver.resolve(sourceFile, canonicalizedUrlToSourceIndex)
+  internal fun findSourceIndex(resolver: SourceFileResolver): Int {
+    val resolveByCanonicalizedUrls = resolver.resolve(canonicalizedUrlToSourceIndex)
+    return if (resolveByCanonicalizedUrls != -1) resolveByCanonicalizedUrls else resolver.resolve(rawSources)
+  }
 
   fun findSourceIndex(sourceUrls: List<Url>, sourceFile: VirtualFile?, localFileUrlOnly: Boolean): Int {
     for (sourceUrl in sourceUrls) {
@@ -137,7 +145,7 @@ class SourceResolver(private val rawSources: List<String>, internal val canonica
 
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
   var path = url
-  if (!FileUtil.isAbsolute(url) && url[0] != '/') {
+  if (!FileUtil.isAbsolute(url) && !url.isEmpty() && url[0] != '/') {
     val basePath = baseUrl.path
     if (baseUrlIsFile) {
       val lastSlashIndex = basePath.lastIndexOf('/')

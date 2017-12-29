@@ -20,4 +20,4 @@ import java.io.Serializable
 /**
  * @author Sergey Karashevich
  */
-data class JUnitTestContainer(val testClass: Class<*>, val methodName: String, val additionalInfo: String = "") : Serializable
+data class JUnitTestContainer(val testClass: Class<*>, val testName: String, val additionalInfo: String = "") : Serializable

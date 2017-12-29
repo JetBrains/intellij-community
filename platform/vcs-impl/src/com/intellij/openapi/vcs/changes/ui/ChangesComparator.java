@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.HierarchicalFilePathComparator;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,22 +27,70 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 public class ChangesComparator {
+  private static final Comparator<VirtualFile> VIRTUAL_FILE_FLAT = new VirtualFileComparator(true);
+  private static final Comparator<VirtualFile> VIRTUAL_FILE_TREE = new VirtualFileComparator(false);
+  private static final Comparator<Change> CHANGE_FLAT = new ChangeComparator(true);
+  private static final Comparator<Change> CHANGE_TREE = new ChangeComparator(false);
+
   @NotNull
   public static Comparator<Change> getInstance(boolean flattened) {
-    return (o1, o2) -> comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), flattened);
+    return flattened ? CHANGE_FLAT : CHANGE_TREE;
   }
 
   @NotNull
   public static Comparator<VirtualFile> getVirtualFileComparator(boolean flattened) {
-    return (o1, o2) -> comparePaths(VcsUtil.getFilePath(o1), VcsUtil.getFilePath(o2), flattened);
+    return flattened ? VIRTUAL_FILE_FLAT : VIRTUAL_FILE_TREE;
   }
+
 
   private static int comparePaths(@NotNull FilePath filePath1, @NotNull FilePath filePath2, boolean flattened) {
     if (!flattened) {
       return HierarchicalFilePathComparator.IGNORE_CASE.compare(filePath1, filePath2);
     }
     else {
-      return filePath1.getName().compareToIgnoreCase(filePath2.getName());
+      int delta = filePath1.getName().compareToIgnoreCase(filePath2.getName());
+      if (delta != 0) return delta;
+      return filePath1.getPath().compareTo(filePath2.getPath());
+    }
+  }
+
+  private static class VirtualFileComparator implements Comparator<VirtualFile> {
+    private final boolean myFlattened;
+
+    public VirtualFileComparator(boolean flattened) {
+      myFlattened = flattened;
+    }
+
+    @Override
+    public int compare(VirtualFile o1, VirtualFile o2) {
+      return comparePaths(VcsUtil.getFilePath(o1), VcsUtil.getFilePath(o2), myFlattened);
+    }
+  }
+
+  private static class ChangeComparator implements Comparator<Change> {
+    private final boolean myFlattened;
+
+    public ChangeComparator(boolean flattened) {
+      myFlattened = flattened;
+    }
+
+    @Override
+    public int compare(Change o1, Change o2) {
+      int delta = comparePaths(ChangesUtil.getFilePath(o1), ChangesUtil.getFilePath(o2), myFlattened);
+      if (delta != 0) return delta;
+
+      if (o1 instanceof ChangeListChange || o2 instanceof ChangeListChange) {
+        if (o1 instanceof ChangeListChange && o2 instanceof ChangeListChange) {
+          String changeList1 = ((ChangeListChange)o1).getChangeListName();
+          String changeList2 = ((ChangeListChange)o2).getChangeListName();
+          return changeList1.compareToIgnoreCase(changeList2);
+        }
+        else {
+          return o1 instanceof ChangeListChange ? 1 : -1;
+        }
+      }
+
+      return 0;
     }
   }
 }

@@ -15,7 +15,6 @@
  */
 package git4idea.merge
 
-import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
@@ -43,9 +42,9 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
   public override fun setUp() {
     super.setUp()
 
-    repository = createRepository(myProjectPath)
+    repository = createRepository(projectPath)
 
-    cd(myProjectRoot)
+    cd(projectRoot)
     git("commit --allow-empty -m initial")
 
     touch(FILE, "original" + FILE_CONTENT)
@@ -93,14 +92,14 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
   //
 
   private fun doRebaseInteractive(onto: String) {
-    myGit.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
+    git.setInteractiveRebaseEditor (TestGitImpl.InteractiveRebaseEditor({
       it.lines().mapIndexed { i, s ->
         if (i != 0) s
         else s.replace("pick", "reword")
       }.joinToString(LineSeparator.getSystemLineSeparator().separatorString)
     }, null))
     val rebaseParams = GitRebaseParams(null, null, "branch-$onto", true, false)
-    myGit.rebase(repository, rebaseParams)
+    git.rebase(repository, rebaseParams)
   }
 
   protected fun `init branch - change`(branch: String) {
@@ -135,7 +134,7 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
     changesToCommit.forEachIndexed { index, changes ->
       changes()
-      git("add .")
+      git("add -A .")
       git("commit -m $branch-$index")
     }
 
@@ -160,10 +159,10 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
         val content = mergeData.content(it)
 
         if (revision != null && path != null) {
-          val relativePath = VcsFileUtil.relativePath(myProjectRoot, path)
+          val relativePath = VcsFileUtil.relativePath(projectRoot, path)
           val hash = revision.asString()
 
-          val actualContent = GitFileUtils.getFileContent(myProject, myProjectRoot, hash, relativePath)
+          val actualContent = GitFileUtils.getFileContent(project, projectRoot, hash, relativePath)
           assertOrderedEquals(content, actualContent)
         }
       }
@@ -189,9 +188,9 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
   }
 
   private fun getConflictedFiles(): List<File> {
-    val records = git("ls-files --unmerged -z").split('\u0000')
+    val records = git("ls-files --unmerged -z").split('\u0000').filter { !it.isBlank() }
     val files = records.map { it.split('\t').last() }.toSortedSet()
-    return files.map { File(myProjectPath, it) }.toList()
+    return files.map { File(projectPath, it) }.toList()
   }
 
   private fun getConflictFile(): File {

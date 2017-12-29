@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  * according to JShell spec, a snippet must correspond to one of the following JLS syntax productions:
       Expression
       Statement

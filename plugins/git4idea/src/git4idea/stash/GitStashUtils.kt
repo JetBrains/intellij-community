@@ -95,13 +95,13 @@ fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<Stash
 }
 
 private fun loadStashStack(project: Project, root: VirtualFile, charset: Charset, consumer: Consumer<StashInfo>) {
-  val h = GitSimpleHandler(project, root, GitCommand.STASH.readLockingCommand())
+  val h = GitLineHandler(project, root, GitCommand.STASH.readLockingCommand())
   h.setSilent(true)
   h.addParameters("list")
   val out: String
   try {
     h.charset = charset
-    out = h.run()
+    out = Git.getInstance().runCommand(h).getOutputOrThrow()
   }
   catch (e: VcsException) {
     GitUIUtil.showOperationError(project, e, h.printableCommandLine())

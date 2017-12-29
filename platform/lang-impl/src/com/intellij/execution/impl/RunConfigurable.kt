@@ -46,7 +46,6 @@ import java.awt.event.KeyEvent
 import java.util.*
 import java.util.function.ToIntFunction
 import javax.swing.*
-import javax.swing.border.EmptyBorder
 import javax.swing.event.DocumentEvent
 import javax.swing.tree.*
 
@@ -391,7 +390,7 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
       val userObject1 = o1.userObject
       val userObject2 = o2.userObject
       when {
-        userObject1 is ConfigurationType && userObject2 is ConfigurationType -> (userObject1).displayName.compareTo(userObject2.displayName)
+        userObject1 is ConfigurationType && userObject2 is ConfigurationType -> (userObject1).displayName.compareTo(userObject2.displayName, true)
         userObject1 === DEFAULTS && userObject2 is ConfigurationType -> 1
         userObject2 === DEFAULTS && userObject1 is ConfigurationType -> - 1
         else -> 0
@@ -446,11 +445,11 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
 
   private fun drawPressAddButtonMessage(configurationType: ConfigurationType?) {
     val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
-    messagePanel.border = EmptyBorder(30, 0, 0, 0)
-    messagePanel.add(JLabel("Press the"))
+    messagePanel.border = JBUI.Borders.empty(30, 0, 0, 0)
+    messagePanel.add(JLabel("Click the"))
 
     val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
-    addIcon.border = EmptyBorder(0, 0, 0, 5)
+    addIcon.border = JBUI.Borders.empty(0, 3, 0, 3)
     messagePanel.add(addIcon)
 
     val configurationTypeDescription = if (configurationType != null)
@@ -1199,7 +1198,8 @@ open class RunConfigurable @JvmOverloads constructor(private val myProject: Proj
     }
 
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = selectedConfiguration?.configuration !is UnknownRunConfiguration
+      val configuration = selectedConfiguration
+      e.presentation.isEnabled = configuration != null && configuration.configuration !is UnknownRunConfiguration
     }
   }
 

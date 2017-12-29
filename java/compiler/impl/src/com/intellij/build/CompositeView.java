@@ -15,106 +15,102 @@
  */
 package com.intellij.build;
 
-import com.intellij.execution.console.ConsoleHistoryController;
-import com.intellij.execution.console.LanguageConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Vladislav.Soroka
  */
-public class CompositeView<S extends ComponentContainer, T extends ComponentContainer> extends JPanel
-  implements ComponentContainer, DataProvider {
-  private final static String PRIMARY_PANEL = "PRIMARY_PANEL";
-  private final static String SECONDARY_PANEL = "SECONDARY_PANEL";
-
-  @NotNull
-  private final S myPrimaryView;
-  @NotNull
-  private final T mySecondaryView;
+@ApiStatus.Experimental
+public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, DataProvider {
+  private final Map<String, T> myViewMap = ContainerUtil.newConcurrentMap();
   private final String mySelectionStateKey;
-  private final boolean myPrimaryViewEnabledByDefault;
-  private boolean myPrimary;
+  private final AtomicReference<String> myEnabledViewRef = new AtomicReference<>();
   @NotNull
   private final SwitchViewAction mySwitchViewAction;
 
-  public CompositeView(@NotNull S primaryView, @NotNull T secondaryView, String selectionStateKey, boolean isPrimaryViewEnabledByDefault) {
+  public CompositeView(String selectionStateKey) {
     super(new CardLayout());
-    myPrimaryView = primaryView;
-    mySecondaryView = secondaryView;
     mySelectionStateKey = selectionStateKey;
-
-    add(myPrimaryView.getComponent(), PRIMARY_PANEL);
-    add(mySecondaryView.getComponent(), SECONDARY_PANEL);
-
     mySwitchViewAction = new SwitchViewAction();
-
-    myPrimary = true;
-    myPrimaryViewEnabledByDefault = isPrimaryViewEnabledByDefault;
-    enableView(getStoredState());
-
-    Disposer.register(this, myPrimaryView);
-    Disposer.register(this, mySecondaryView);
   }
 
-  public void enableView(boolean primary) {
-    if (primary != myPrimary) {
+  public void addView(T view, String viewName, boolean enable) {
+    T oldView = getView(viewName);
+    if (oldView != null) {
+      remove(oldView.getComponent());
+      Disposer.dispose(oldView);
+    }
+    myViewMap.put(viewName, view);
+    add(view.getComponent(), viewName);
+
+    String storedState = getStoredState();
+    if ((storedState != null && storedState.equals(viewName)) || storedState == null && enable) {
+      enableView(viewName);
+      setStoredState(viewName);
+    }
+    Disposer.register(this, view);
+  }
+
+  public void enableView(@NotNull String viewName) {
+    if (!StringUtil.equals(viewName, myEnabledViewRef.get())) {
+      myEnabledViewRef.set(viewName);
       CardLayout cl = (CardLayout)(getLayout());
-      cl.show(this, primary ? PRIMARY_PANEL : SECONDARY_PANEL);
+      cl.show(this, viewName);
     }
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(getView(primary).getPreferredFocusableComponent(), true);
+      ComponentContainer view = getView(viewName);
+      if (view != null) {
+        IdeFocusManager.getGlobalInstance().requestFocus(view.getPreferredFocusableComponent(), true);
+      }
     });
-    myPrimary = primary;
   }
 
-  public boolean isPrimaryViewEnabled() {
-    return myPrimary;
+  public boolean isViewEnabled(String viewName) {
+    return StringUtil.equals(myEnabledViewRef.get(), viewName);
   }
 
-  @NotNull
-  public S getPrimaryView() {
-    return myPrimaryView;
+  public T getView(@NotNull String viewName) {
+    return myViewMap.get(viewName);
   }
 
-  @NotNull
-  public T getSecondaryView() {
-    return mySecondaryView;
-  }
-
-  public ComponentContainer getView(boolean primary) {
-    return primary ? getPrimaryView() : getSecondaryView();
+  @Nullable
+  public <U> U getView(@NotNull String viewName, @NotNull Class<U> viewClass) {
+    T view = getView(viewName);
+    return viewClass.isInstance(view) ? viewClass.cast(view) : null;
   }
 
   @NotNull
   public AnAction[] createConsoleActions() {
-    List<AnAction> actions = ContainerUtil.newArrayList();
-    actions.add(mySwitchViewAction);
-    LanguageConsoleView langConsole =
-      ContainerUtil.findInstance(Arrays.asList(myPrimaryView, mySecondaryView), LanguageConsoleView.class);
-    ConsoleHistoryController controller = langConsole != null ? ConsoleHistoryController.getController(langConsole) : null;
-    if (controller != null) actions.add(controller.getBrowseHistory());
+    return AnAction.EMPTY_ARRAY;
+  }
 
-    return ArrayUtil.toObjectArray(actions, AnAction.class);
+  @NotNull
+  public AnAction[] getSwitchActions() {
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.addSeparator();
+    actionGroup.add(mySwitchViewAction);
+    return new AnAction[]{actionGroup};
   }
 
   @Override
@@ -134,21 +130,26 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    final ComponentContainer consoleView = getView(isPrimaryViewEnabled());
-    return consoleView instanceof DataProvider ? ((DataProvider)consoleView).getData(dataId) : null;
+    String enabledViewName = myEnabledViewRef.get();
+    if (enabledViewName != null) {
+      T enabledView = getView(enabledViewName);
+      if (enabledView instanceof DataProvider) {
+        Object data = ((DataProvider)enabledView).getData(dataId);
+        if (data != null) return data;
+      }
+    }
+    return null;
   }
 
-  private void setStoredState(boolean primary) {
+  private void setStoredState(String viewName) {
     if (mySelectionStateKey != null) {
-      PropertiesComponent.getInstance().setValue(mySelectionStateKey, primary, myPrimaryViewEnabledByDefault);
+      PropertiesComponent.getInstance().setValue(mySelectionStateKey, viewName);
     }
   }
 
-  private boolean getStoredState() {
-    if (mySelectionStateKey == null) {
-      return false;
-    }
-    return PropertiesComponent.getInstance().getBoolean(mySelectionStateKey, myPrimaryViewEnabledByDefault);
+  @Nullable
+  private String getStoredState() {
+    return mySelectionStateKey == null ? null : PropertiesComponent.getInstance().getValue(mySelectionStateKey);
   }
 
   private class SwitchViewAction extends ToggleAction implements DumbAware {
@@ -158,15 +159,34 @@ public class CompositeView<S extends ComponentContainer, T extends ComponentCont
     }
 
     @Override
+    public void update(@NotNull AnActionEvent e) {
+      final Presentation presentation = e.getPresentation();
+      if (myViewMap.size() <= 1) {
+        presentation.setEnabled(false);
+      }
+      else {
+        presentation.setEnabled(true);
+        presentation.putClientProperty(SELECTED_PROPERTY, isSelected(e));
+      }
+    }
+
+    @Override
     public boolean isSelected(final AnActionEvent event) {
-      return !isPrimaryViewEnabled();
+      String enabledViewName = myEnabledViewRef.get();
+      if (enabledViewName == null) return true;
+      Set<String> viewNames = myViewMap.keySet();
+      return viewNames.isEmpty() || enabledViewName.equals(viewNames.iterator().next());
     }
 
     @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
-      enableView(!flag);
-      setStoredState(!flag);
-      ApplicationManager.getApplication().invokeLater(() -> update(event));
+      if (myViewMap.size() > 1) {
+        List<String> names = new ArrayList<>(myViewMap.keySet());
+        String viewName = flag ? names.get(0) : names.get(1);
+        enableView(viewName);
+        setStoredState(viewName);
+        ApplicationManager.getApplication().invokeLater(() -> update(event));
+      }
     }
   }
 }

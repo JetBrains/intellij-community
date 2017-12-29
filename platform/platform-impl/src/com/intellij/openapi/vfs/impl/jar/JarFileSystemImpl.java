@@ -119,7 +119,7 @@ public class JarFileSystemImpl extends JarFileSystem {
   @NotNull
   @Override
   protected ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
-    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler");
+    boolean useNewJarHandler = Registry.is("vfs.use.new.jar.handler") && SystemInfo.isWindows;
     return VfsImplUtil.getHandler(this, entryFile, useNewJarHandler ? BasicJarHandler::new : JarHandler::new);
   }
 

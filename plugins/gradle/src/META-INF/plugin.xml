@@ -57,6 +57,7 @@
     <extensionPoint name="settingsControlProvider" interface="org.jetbrains.plugins.gradle.service.settings.GradleSettingsControlProvider"/>
     <extensionPoint name="importCustomizer" interface="org.jetbrains.plugins.gradle.service.project.GradleImportCustomizer"/>
     <extensionPoint name="frameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider"/>
+    <extensionPoint name="kotlinDslFrameworkSupport" interface="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleFrameworkSupportProvider"/>
     <extensionPoint name="pluginDescriptions" interface="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptionsExtension"/>
     <extensionPoint name="testTasksProvider" interface="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider"/>
     <extensionPoint name="artifactBuildTasksProvider" interface="org.jetbrains.plugins.gradle.execution.build.GradleArtifactBuildTasksProvider"/>
@@ -81,6 +82,8 @@
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleJavaFrameworkSupportProvider"/>
     <frameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.GradleGroovyFrameworkSupportProvider"/>
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleJavaFrameworkSupportProvider" />
+    <kotlinDslFrameworkSupport implementation="org.jetbrains.plugins.gradle.frameworkSupport.KotlinDslGradleGroovyFrameworkSupportProvider" />
     <pluginDescriptions implementation="org.jetbrains.plugins.gradle.codeInsight.GradlePluginDescriptions"/>
     <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
   </extensions>
@@ -108,12 +111,14 @@
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer"
                               order="last"/>
-    <runConfigurationExtension implementation="org.jetbrains.plugins.gradle.execution.ProgramRunConfigurationExtension"/>
 
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
     <externalSystemExecutionConsoleManager
         implementation="org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsoleManager" id="gradleTest" order="before gradle"/>
+
+    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
+                                        id="gradle"/>
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
@@ -183,6 +188,9 @@
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
     <attachSourcesProvider implementation="org.jetbrains.plugins.gradle.util.GradleAttachSourcesProvider"/>
+
+    <compiler.updateResourcesBuildContributor
+        implementation="org.jetbrains.plugins.gradle.execution.build.GradleUpdateResourcesBuildContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
@@ -237,6 +245,8 @@
       <reference id="Gradle.RefreshDependencies"/>
       <add-to-group group-id="ExternalSystemView.BaseProjectMenu" relative-to-action="ExternalSystem.RefreshProject" anchor="after"/>
     </group>
+
+    <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 
   </actions>
 </idea-plugin>

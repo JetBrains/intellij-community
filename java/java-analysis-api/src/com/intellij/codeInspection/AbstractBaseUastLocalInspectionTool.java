@@ -15,7 +15,10 @@ import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+    Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class),
+                   Conditions.notInstanceOf(PsiTypeParameter.class));
 
   /**
    * Override this to report problems at method level.
@@ -61,25 +64,25 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new UastVisitorAdapter(new AbstractUastVisitor() {
       @Override
-      public boolean visitClass(UClass node) {
+      public boolean visitClass(@NotNull UClass node) {
         addDescriptors(checkClass(node, holder.getManager(), isOnTheFly));
         return true;
       }
 
       @Override
-      public boolean visitMethod(UMethod node) {
+      public boolean visitMethod(@NotNull UMethod node) {
         addDescriptors(checkMethod(node, holder.getManager(), isOnTheFly));
         return true;
       }
 
       @Override
-      public boolean visitField(UField node) {
+      public boolean visitField(@NotNull UField node) {
         addDescriptors(checkField(node, holder.getManager(), isOnTheFly));
         return true;
       }
 
       @Override
-      public boolean visitFile(UFile node) {
+      public boolean visitFile(@NotNull UFile node) {
         addDescriptors(checkFile(node.getPsi(), holder.getManager(), isOnTheFly));
         return true;
       }

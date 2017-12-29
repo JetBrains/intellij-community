@@ -135,6 +135,9 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     Dimension size = new Dimension(height * 32, height * 16);
 
     JTextArea area = new JTextArea(parser.fun(getText()));
+    area.setEditable(isEditable());
+    area.setBackground(getBackground());
+    area.setForeground(getForeground());
     area.setFont(font);
     area.setWrapStyleWord(true);
     area.setLineWrap(true);
@@ -191,6 +194,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
 
     popup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(pane, area)
+      .setMayBeParent(true) // this creates a popup as a dialog with alwaysOnTop=false
       .setFocusable(true)
       .setRequestFocus(true)
       .setTitle(title)
@@ -205,8 +209,10 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
       }, getKeyStroke(KeyEvent.VK_ENTER, CTRL_MASK))))
       .setCancelCallback(() -> {
         try {
-          setText(joiner.fun(area.getText()));
-          copyCaretPosition(area, this);
+          if (isEditable()) {
+            setText(joiner.fun(area.getText()));
+            copyCaretPosition(area, this);
+          }
           popup = null;
           return true;
         }

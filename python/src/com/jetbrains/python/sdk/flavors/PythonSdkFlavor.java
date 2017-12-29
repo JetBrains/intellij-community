@@ -124,7 +124,7 @@ public abstract class PythonSdkFlavor {
   }
 
   @Nullable
-  public static PythonSdkFlavor getFlavor(@NotNull Sdk sdk) {
+  public static PythonSdkFlavor getFlavor(Sdk sdk) {
     final SdkAdditionalData data = sdk.getSdkAdditionalData();
     if (data instanceof PythonSdkAdditionalData) {
       PythonSdkFlavor flavor = ((PythonSdkAdditionalData)data).getFlavor();

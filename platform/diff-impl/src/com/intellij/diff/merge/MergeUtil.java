@@ -83,9 +83,9 @@ public class MergeUtil {
 
   @NotNull
   public static List<String> notNullizeContentTitles(@NotNull List<String> mergeContentTitles) {
-    String left = StringUtil.notNullize(ThreeSide.LEFT.select(mergeContentTitles), "Your Version");
-    String base = StringUtil.notNullize(ThreeSide.BASE.select(mergeContentTitles), "Base Version");
-    String right = StringUtil.notNullize(ThreeSide.RIGHT.select(mergeContentTitles), "Server Version");
+    String left = StringUtil.notNullize(ThreeSide.LEFT.select(mergeContentTitles), DiffBundle.message("merge.version.title.our"));
+    String base = StringUtil.notNullize(ThreeSide.BASE.select(mergeContentTitles), DiffBundle.message("merge.version.title.base"));
+    String right = StringUtil.notNullize(ThreeSide.RIGHT.select(mergeContentTitles), DiffBundle.message("merge.version.title.their"));
     return ContainerUtil.list(left, base, right);
   }
 

@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -33,11 +32,10 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableConsumer;
+import com.intellij.util.NotNullFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,14 +48,15 @@ import java.nio.charset.CharsetEncoder;
 
 public final class LoadTextUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.LoadTextUtil");
-  @Nls private static final String AUTO_DETECTED_FROM_BOM = "auto-detected from BOM";
+
+  public enum AutoDetectionReason { FROM_BOM, FROM_BYTES }
 
   private static final int UNLIMITED = -1;
 
   private LoadTextUtil() { }
 
   @NotNull
-  private static Pair<CharSequence, String> convertLineSeparatorsToSlashN(@NotNull CharBuffer buffer) {
+  private static ConvertResult convertLineSeparatorsToSlashN(@NotNull CharBuffer buffer) {
     int dst = 0;
     char prev = ' ';
     int crCount = 0;
@@ -97,17 +96,17 @@ public final class LoadTextUtil {
     String detectedLineSeparator = guessLineSeparator(crCount, lfCount, crlfCount);
 
     CharSequence result = buffer.length() == dst ? buffer : buffer.subSequence(0, dst);
-    return Pair.create(result, detectedLineSeparator);
+    return new ConvertResult(result, detectedLineSeparator);
   }
 
   @NotNull
-  private static Pair<CharSequence, String> convertLineSeparatorsToSlashN(@NotNull byte[] charsAsBytes, int startOffset, int endOffset) {
+  private static ConvertResult convertLineSeparatorsToSlashN(@NotNull byte[] charsAsBytes, int startOffset, int endOffset) {
     int index = ArrayUtil.indexOf(charsAsBytes, (byte)'\r', startOffset, endOffset);
     if (index == -1) {
       // optimisation: if there is no CR in the file, no line separator conversion is necessary. we can re-use the passed byte buffer in place
       ByteArrayCharSequence sequence = new ByteArrayCharSequence(charsAsBytes, startOffset, endOffset);
       String detectedLineSeparator = ArrayUtil.indexOf(charsAsBytes, (byte)'\n', startOffset, endOffset) == -1 ? null : "\n";
-      return Pair.create(sequence, detectedLineSeparator);
+      return new ConvertResult(sequence, detectedLineSeparator);
     }
     int dst = 0;
     char prev = ' ';
@@ -144,7 +143,7 @@ public final class LoadTextUtil {
     String detectedLineSeparator = guessLineSeparator(crCount, lfCount, crlfCount);
 
     ByteArrayCharSequence sequence = new ByteArrayCharSequence(result, 0, dst);
-    return Pair.create(sequence, detectedLineSeparator);
+    return new ConvertResult(sequence, detectedLineSeparator);
   }
 
   @Nullable
@@ -193,32 +192,37 @@ public final class LoadTextUtil {
     }
   }
 
+  public static class DetectResult {
+    public final Charset hardCodedCharset;
+    public final CharsetToolkit.GuessedEncoding guessed;
+    @Nullable public final byte[] BOM;
+
+    DetectResult(Charset hardCodedCharset, CharsetToolkit.GuessedEncoding guessed, @Nullable byte[] BOM) {
+      this.hardCodedCharset = hardCodedCharset;
+      this.guessed = guessed;
+      this.BOM = BOM;
+    }
+  }
+
   // guess from file type or content
   @NotNull
-  private static Trinity<Charset,CharsetToolkit.GuessedEncoding,byte[]> detectHardCharset(@NotNull VirtualFile virtualFile,
-                                                                                          @NotNull byte[] content,
-                                                                                          int startOffset, int endOffset,
-                                                                                          @NotNull FileType fileType) {
-    Charset hardCodedCharset;
-
+  private static DetectResult detectHardCharset(@NotNull VirtualFile virtualFile,
+                                                @NotNull byte[] content,
+                                                int length,
+                                                @NotNull FileType fileType) {
     String charsetName = fileType.getCharset(virtualFile, content);
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = guessFromContent(virtualFile, content, startOffset, endOffset);
-    if (charsetName == null) {
-      hardCodedCharset = guessed == null ? null : guessed.first;
-    }
-    else {
-      hardCodedCharset = CharsetToolkit.forName(charsetName);
-    }
+    DetectResult guessed = guessFromContent(virtualFile, content, length);
+    Charset hardCodedCharset = charsetName == null ? guessed.hardCodedCharset : CharsetToolkit.forName(charsetName);
 
-    if (hardCodedCharset == null && guessed != null && guessed.second != null && guessed.second == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-      return Trinity.create(CharsetToolkit.UTF8_CHARSET, guessed.getSecond(), guessed.getThird());
+    if (hardCodedCharset == null && guessed.guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
+      return new DetectResult(CharsetToolkit.UTF8_CHARSET, guessed.guessed, guessed.BOM);
     }
-    return Trinity.create(hardCodedCharset, guessed == null ? null : guessed.getSecond(), guessed == null ? null : guessed.getThird());
+    return new DetectResult(hardCodedCharset, guessed.guessed, guessed.BOM);
   }
 
   @NotNull
   public static Charset detectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, @NotNull byte[] content, @NotNull FileType fileType) {
-    Charset internalCharset = detectInternalCharsetAndSetBOM(virtualFile, content, 0, content.length, true, fileType).getFirst();
+    Charset internalCharset = detectInternalCharsetAndSetBOM(virtualFile, content, content.length, true, fileType).hardCodedCharset;
     return internalCharset instanceof SevenBitCharset ? ((SevenBitCharset)internalCharset).myBaseCharset : internalCharset;
   }
 
@@ -236,35 +240,32 @@ public final class LoadTextUtil {
   }
 
   @NotNull
-  private static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]>
-  detectInternalCharsetAndSetBOM(@NotNull VirtualFile file,
-                                 @NotNull byte[] content,
-                                 int startOffset, int endOffset,
-                                 boolean saveBOM,
-                                 @NotNull FileType fileType) {
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> info = detectHardCharset(file, content, startOffset, endOffset, fileType);
+  private static DetectResult detectInternalCharsetAndSetBOM(@NotNull VirtualFile file,
+                                                             @NotNull byte[] content,
+                                                             int length,
+                                                             boolean saveBOM,
+                                                             @NotNull FileType fileType) {
+    DetectResult info = detectHardCharset(file, content, length, fileType);
 
-    Charset detectedHardCharset = info.getFirst();
-    CharsetToolkit.GuessedEncoding guessed = info.getSecond();
-    byte[] bom = info.getThird();
     Charset charset;
-    if (detectedHardCharset == null) {
+    if (info.hardCodedCharset == null) {
       charset = file.isCharsetSet() ? file.getCharset() : getDefaultCharsetFromEncodingManager(file);
     }
     else {
-      charset = detectedHardCharset;
+      charset = info.hardCodedCharset;
     }
 
+    byte[] bom = info.BOM;
     if (saveBOM && bom != null && bom.length != 0) {
       file.setBOM(bom);
-      setCharsetWasDetectedFromBytes(file, AUTO_DETECTED_FROM_BOM);
+      setCharsetAutoDetectionReason(file, AutoDetectionReason.FROM_BOM);
     }
 
     file.setCharset(charset);
 
     Charset result = charset;
     // optimisation
-    if (guessed == CharsetToolkit.GuessedEncoding.SEVEN_BIT) {
+    if (info.guessed == CharsetToolkit.GuessedEncoding.SEVEN_BIT) {
       if (charset == CharsetToolkit.UTF8_CHARSET) {
         result = INTERNAL_SEVEN_BIT_UTF8;
       }
@@ -276,58 +277,56 @@ public final class LoadTextUtil {
       }
     }
 
-    return Trinity.create(result, guessed, bom);
+    return new DetectResult(result, info.guessed, bom);
+  }
+
+
+  @NotNull
+  public static DetectResult guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
+    return guessFromContent(virtualFile, content, content.length);
   }
 
   private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
-
-  @Nullable("null means no luck, otherwise it's tuple(guessed encoding, hint about content if was unable to guess, BOM)")
-  public static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content, int length) {
-    return guessFromContent(virtualFile, content, 0,length);
-  }
-
-  private static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content, int startOffset, int endOffset) {
-    String detectedFromBytes = null;
+  @NotNull
+  private static DetectResult guessFromContent(@NotNull VirtualFile virtualFile, @NotNull byte[] content, int length) {
+    AutoDetectionReason detectedFromBytes = null;
     try {
-      Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> info;
-      if (!GUESS_UTF) {
-        info = null;
+      DetectResult info;
+      if (GUESS_UTF) {
+        info = guessFromBytes(content, 0, length, getDefaultCharsetFromEncodingManager(virtualFile));
+        if (info.BOM != null) {
+          detectedFromBytes = AutoDetectionReason.FROM_BOM;
+        }
+        else if (info.guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
+          detectedFromBytes = AutoDetectionReason.FROM_BYTES;
+        }
       }
       else {
-        Charset defaultCharset = getDefaultCharsetFromEncodingManager(virtualFile);
-        info = guessFromBytes(content, startOffset, endOffset, defaultCharset);
-        byte[] bom = info.getThird();
-        CharsetToolkit.GuessedEncoding guessed = info.getSecond();
-        if (bom != null) {
-          detectedFromBytes = AUTO_DETECTED_FROM_BOM;
-        }
-        else if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-          detectedFromBytes = "auto-detected from bytes";
-        }
+        info = new DetectResult(null, null, null);
       }
       return info;
     }
     finally {
-      setCharsetWasDetectedFromBytes(virtualFile, detectedFromBytes);
+      setCharsetAutoDetectionReason(virtualFile, detectedFromBytes);
     }
   }
 
   @NotNull
-  private static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromBytes(@NotNull byte[] content,
-                                                                                         int startOffset, int endOffset,
-                                                                                         @NotNull Charset defaultCharset) {
+  private static DetectResult guessFromBytes(@NotNull byte[] content,
+                                             int startOffset, int endOffset,
+                                             @NotNull Charset defaultCharset) {
     CharsetToolkit toolkit = new CharsetToolkit(content, defaultCharset);
     toolkit.setEnforce8Bit(true);
     Charset charset = toolkit.guessFromBOM();
     if (charset != null) {
       byte[] bom = ObjectUtils.notNull(CharsetToolkit.getMandatoryBom(charset), CharsetToolkit.UTF8_BOM);
-      return Trinity.create(charset, null, bom);
+      return new DetectResult(charset, null, bom);
     }
     CharsetToolkit.GuessedEncoding guessed = toolkit.guessFromContent(startOffset, endOffset);
     if (guessed == CharsetToolkit.GuessedEncoding.VALID_UTF8) {
-      return Trinity.create(CharsetToolkit.UTF8_CHARSET, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
+      return new DetectResult(CharsetToolkit.UTF8_CHARSET, CharsetToolkit.GuessedEncoding.VALID_UTF8, null); //UTF detected, ignore all directives
     }
-    return Trinity.create(null, guessed, null);
+    return new DetectResult(null, guessed, null);
   }
 
   /**
@@ -335,14 +334,13 @@ public final class LoadTextUtil {
    */
   public static String getTextFromBytesOrNull(@NotNull byte[] bytes, int startOffset, int endOffset) {
     Charset defaultCharset = EncodingManager.getInstance().getDefaultCharset();
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> info = guessFromBytes(bytes, startOffset, endOffset, defaultCharset);
+    DetectResult info = guessFromBytes(bytes, startOffset, endOffset, defaultCharset);
     Charset charset;
-    if (info.getFirst() != null) {
-      charset = info.getFirst(); // hardcoded charset
+    if (info.hardCodedCharset != null) {
+      charset = info.hardCodedCharset;
     }
     else {
-      CharsetToolkit.GuessedEncoding guessed = info.getSecond();
-      switch (guessed) {
+      switch (info.guessed) {
         case SEVEN_BIT:
           charset = CharsetToolkit.US_ASCII_CHARSET;
           break;
@@ -354,12 +352,12 @@ public final class LoadTextUtil {
           // the charset was not detected so the file is likely binary
           return null;
         default:
-          throw new IllegalStateException(String.valueOf(guessed));
+          throw new IllegalStateException(String.valueOf(info.guessed));
       }
     }
-    byte[] bom = info.getThird();
-    Pair<CharSequence, String> result = convertBytes(bytes, Math.min(startOffset+(bom==null?0:bom.length), endOffset), endOffset, charset);
-    return result.getFirst().toString();
+    byte[] bom = info.BOM;
+    ConvertResult result = convertBytes(bytes, Math.min(startOffset + (bom == null ? 0 : bom.length), endOffset), endOffset, charset);
+    return result.text.toString();
   }
 
   @NotNull
@@ -421,10 +419,10 @@ public final class LoadTextUtil {
   }
 
   @NotNull
-  private static Pair.NonNull<Charset, byte[]> charsetForWriting(@Nullable Project project,
-                                                                 @NotNull VirtualFile virtualFile,
-                                                                 @NotNull String text,
-                                                                 @NotNull Charset existing) {
+  public static Pair.NonNull<Charset, byte[]> charsetForWriting(@Nullable Project project,
+                                                                @NotNull VirtualFile virtualFile,
+                                                                @NotNull String text,
+                                                                @NotNull Charset existing) {
     Charset specified = extractCharsetFromFileContent(project, virtualFile, text);
     Pair.NonNull<Charset, byte[]> chosen = chooseMostlyHarmlessCharset(existing, specified, text);
     Charset charset = chosen.first;
@@ -441,11 +439,11 @@ public final class LoadTextUtil {
 
   private static void setDetectedFromBytesFlagBack(@NotNull VirtualFile virtualFile, @NotNull byte[] content) {
     if (virtualFile.getBOM() == null) {
-      guessFromContent(virtualFile, content, content.length);
+      guessFromContent(virtualFile, content);
     }
     else {
       // prevent file to be reloaded in other encoding after save with BOM
-      setCharsetWasDetectedFromBytes(virtualFile, AUTO_DETECTED_FROM_BOM);
+      setCharsetAutoDetectionReason(virtualFile, AutoDetectionReason.FROM_BOM);
     }
   }
 
@@ -567,40 +565,42 @@ public final class LoadTextUtil {
                                                          @NotNull VirtualFile virtualFile,
                                                          boolean saveDetectedSeparators,
                                                          boolean saveBOM) {
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]>
-      info = detectInternalCharsetAndSetBOM(virtualFile, bytes, 0, bytes.length, saveBOM, virtualFile.getFileType());
-    Charset internalCharset = info.getFirst();
-    byte[] bom = info.getThird();
-    Pair<CharSequence, String> result = convertBytes(bytes, Math.min(bom == null ? 0 : bom.length, bytes.length), bytes.length, internalCharset);
+    DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, bytes.length, saveBOM, virtualFile.getFileType());
+    byte[] bom = info.BOM;
+    ConvertResult result = convertBytes(bytes, Math.min(bom == null ? 0 : bom.length, bytes.length), bytes.length,
+                                        info.hardCodedCharset);
     if (saveDetectedSeparators) {
-      virtualFile.setDetectedLineSeparator(result.getSecond());
+      virtualFile.setDetectedLineSeparator(result.lineSeparator);
     }
-    return result.getFirst();
+    return result.text;
   }
 
   // written in push way to make sure no-one stores the CharSequence because it came from thread-local byte buffers which will be overwritten soon
-  public static void processTextFromBinaryPresentationOrNull(@NotNull byte[] bytes,
-                                                             int startOffset, int endOffset,
-                                                             @NotNull VirtualFile virtualFile,
-                                                             boolean saveDetectedSeparators,
-                                                             boolean saveBOM,
-                                                             @NotNull FileType fileType,
-                                                             @NotNull NullableConsumer<CharSequence> fileTextProcessor) {
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> info = detectInternalCharsetAndSetBOM(virtualFile, bytes, startOffset, endOffset, saveBOM, fileType);
-    Charset internalCharset = info.getFirst();
-    CharsetToolkit.GuessedEncoding guessed = info.getSecond();
+  @NotNull
+  public static FileType processTextFromBinaryPresentationOrNull(@NotNull byte[] bytes, int length,
+                                                                 @NotNull VirtualFile virtualFile,
+                                                                 boolean saveDetectedSeparators,
+                                                                 boolean saveBOM,
+                                                                 @NotNull FileType fileType,
+                                                                 @NotNull NotNullFunction<CharSequence, FileType> fileTextProcessor) {
+    DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, length, saveBOM, fileType);
+    Charset internalCharset = info.hardCodedCharset;
+    CharsetToolkit.GuessedEncoding guessed = info.guessed;
+    CharSequence toProcess;
     if (internalCharset == null || guessed == CharsetToolkit.GuessedEncoding.BINARY || guessed == CharsetToolkit.GuessedEncoding.INVALID_UTF8) {
       // the charset was not detected so the file is likely binary
-      fileTextProcessor.consume(null);
+      toProcess = null;
     }
     else {
-      byte[] bom = info.getThird();
-      Pair<CharSequence, String> result = convertBytes(bytes, Math.min(startOffset+(bom==null?0:bom.length), endOffset), endOffset, internalCharset);
+      byte[] bom = info.BOM;
+      int BOMEndOffset = Math.min(length, bom == null ? 0 : bom.length);
+      ConvertResult result = convertBytes(bytes, BOMEndOffset, length, internalCharset);
       if (saveDetectedSeparators) {
-        virtualFile.setDetectedLineSeparator(result.getSecond());
+        virtualFile.setDetectedLineSeparator(result.lineSeparator);
       }
-      fileTextProcessor.consume(result.getFirst());
+      toProcess = result.text;
     }
+    return fileTextProcessor.fun(toProcess);
   }
 
   /**
@@ -634,14 +634,14 @@ public final class LoadTextUtil {
     Pair.NonNull<Charset, byte[]> pair = getOverriddenCharsetByBOM(bytes, charset);
     byte[] bom = pair.getSecond();
 
-    final Pair<CharSequence, String> result = convertBytes(bytes, Math.min(bom.length, bytes.length), bytes.length, pair.first);
-    return result.getFirst();
+    final ConvertResult result = convertBytes(bytes, Math.min(bom.length, bytes.length), bytes.length, pair.first);
+    return result.text;
   }
 
   @NotNull
-  private static Pair<CharSequence, String> convertBytes(@NotNull byte[] bytes,
-                                                         final int startOffset, int endOffset,
-                                                         @NotNull Charset internalCharset) {
+  private static ConvertResult convertBytes(@NotNull byte[] bytes,
+                                            final int startOffset, int endOffset,
+                                            @NotNull Charset internalCharset) {
     assert startOffset >= 0 && startOffset <= endOffset && endOffset <= bytes.length: startOffset + "," + endOffset+": "+bytes.length;
     if (internalCharset instanceof SevenBitCharset || internalCharset == CharsetToolkit.US_ASCII_CHARSET) {
       // optimisation: skip byte-to-char conversion for ascii chars
@@ -661,14 +661,29 @@ public final class LoadTextUtil {
     return convertLineSeparatorsToSlashN(charBuffer);
   }
 
-  private static final Key<String> CHARSET_WAS_DETECTED_FROM_BYTES = Key.create("CHARSET_WAS_DETECTED_FROM_BYTES");
+  private static class ConvertResult {
+    @NotNull private final CharSequence text;
+    @Nullable private final String lineSeparator;
+
+    ConvertResult(@NotNull CharSequence text, @Nullable String lineSeparator) {
+      this.text = text;
+      this.lineSeparator = lineSeparator;
+    }
+  }
+
+  private static final Key<AutoDetectionReason> CHARSET_WAS_DETECTED_FROM_BYTES = Key.create("CHARSET_WAS_DETECTED_FROM_BYTES");
   @Nullable("null if was not detected, otherwise the reason it was")
-  public static String wasCharsetDetectedFromBytes(@NotNull VirtualFile virtualFile) {
+  public static AutoDetectionReason getCharsetAutoDetectionReason(@NotNull VirtualFile virtualFile) {
     return virtualFile.getUserData(CHARSET_WAS_DETECTED_FROM_BYTES);
   }
 
-  public static void setCharsetWasDetectedFromBytes(@NotNull VirtualFile virtualFile,
-                                                    @Nullable("null if was not detected, otherwise the reason it was") String reason) {
+  private static void setCharsetAutoDetectionReason(
+    @NotNull VirtualFile virtualFile,
+    @Nullable("null if was not detected, otherwise the reason it was") AutoDetectionReason reason) {
     virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, reason);
+  }
+
+  public static void clearCharsetAutoDetectionReason(@NotNull VirtualFile virtualFile) {
+    virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, null);
   }
 }

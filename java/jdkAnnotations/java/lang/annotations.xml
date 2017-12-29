@@ -328,6 +328,9 @@
   </item>
   <item name="java.lang.String java.lang.String valueOf(char)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(char[])">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -343,15 +346,27 @@
   </item>
   <item name="java.lang.String java.lang.String valueOf(double)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(float)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+      <annotation name='org.jetbrains.annotations.Contract'>
+          <val name="pure" val="true"/>
+      </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(long)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String[] split(java.lang.String)">
     <annotation name="org.jetbrains.annotations.NotNull" />

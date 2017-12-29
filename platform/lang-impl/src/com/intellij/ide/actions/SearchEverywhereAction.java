@@ -31,6 +31,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
+import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -160,6 +161,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
   private static AtomicBoolean showAll = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
+  private int myCalcThreadRestartRequestId = 0;
+  private final Object myWorkerRestartRequestLock = new Object();
   private int myHistoryIndex = 0;
   boolean mySkipFocusGain = false;
 
@@ -190,7 +193,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Editor myEditor;
   private FileEditor myFileEditor;
-  private PsiFile myFile;
   private HistoryItem myHistoryItem;
 
   @Override
@@ -220,6 +222,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
         label.setToolTipText(null);
         IdeTooltipManager.getInstance().hideCurrentNow(false);
+        ActionToolbarImpl toolbar = UIUtil.getParentOfType(ActionToolbarImpl.class, panel);
+        if (toolbar != null) {
+          ToolbarClicksCollector.record(SearchEverywhereAction.this, toolbar.getPlace());
+        }
         actionPerformed(null, e);
       }
 
@@ -563,20 +569,29 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     assert project != null;
     myRenderer.myProject = project;
-    final Runnable run = () -> {
-      myCalcThread = new CalcThread(project, pattern, false);
-      myPopupActualWidth = 0;
-      myCurrentWorker = myCalcThread.start();
-    };
-    if (myCurrentWorker.isDone()) {
-      myCurrentWorker.doWhenDone(run);
-    } else {
-      myCurrentWorker.doWhenProcessed(run);
+    synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
+      final int currentRestartRequest = ++myCalcThreadRestartRequestId;
+      myCurrentWorker.doWhenProcessed(() -> {
+        synchronized (myWorkerRestartRequestLock) {
+          if (currentRestartRequest != myCalcThreadRestartRequestId) {
+            return;
+          }
+          myCalcThread = new CalcThread(project, pattern, false);
+          myPopupActualWidth = 0;
+          myCurrentWorker = myCalcThread.start();
+        }
+      });
     }
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    if (Registry.is("ide.suppress.double.click.handler") && e.getInputEvent() instanceof KeyEvent) {
+      if (((KeyEvent)e.getInputEvent()).getKeyCode() == KeyEvent.VK_SHIFT) {
+        return;
+      }
+    }
+
     actionPerformed(e, null);
   }
 
@@ -592,7 +607,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (e != null) {
       myEditor = e.getData(CommonDataKeys.EDITOR);
       myFileEditor = e.getData(PlatformDataKeys.FILE_EDITOR);
-      myFile = e.getData(CommonDataKeys.PSI_FILE);
     }
     if (e == null && myFocusOwner != null) {
       e = AnActionEvent.createFromAnAction(this, me, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext(myFocusOwner));
@@ -1410,6 +1424,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myProgressIndicator.checkCanceled();
       if (myDone.isRejected()) throw new ProcessCanceledException();
       if (myBalloon == null || myBalloon.isDisposed()) throw new ProcessCanceledException();
+      assert myCalcThread == this : "There are two CalcThreads running before one of them was cancelled";
     }
 
     private synchronized void buildToolWindows(String pattern) {
@@ -1946,7 +1961,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private synchronized void checkModelsUpToDate() {
       if (myClassModel == null) {
         myClassModel = new GotoClassModel2(project);
-        myFileModel = new GotoFileModel(project);
+        myFileModel = new GotoFileModel(project) {
+          @Override
+          public boolean isSlashlessMatchingEnabled() {
+            return false;
+          }
+        };
         mySymbolsModel = new GotoSymbolModel2(project);
         myFileChooseByName = ChooseByNamePopup.createPopup(project, myFileModel, (PsiElement)null);
         myClassChooseByName = ChooseByNamePopup.createPopup(project, myClassModel, (PsiElement)null);
@@ -1971,7 +1991,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private GotoActionItemProvider createActionProvider() {
-      GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor, myFile) {
+      GotoActionModel model = new GotoActionModel(project, myFocusComponent, myEditor) {
         @Override
         protected MatchMode actionMatches(@NotNull String pattern, MinusculeMatcher matcher, @NotNull AnAction anAction) {
           MatchMode mode = super.actionMatches(pattern, matcher, anAction);

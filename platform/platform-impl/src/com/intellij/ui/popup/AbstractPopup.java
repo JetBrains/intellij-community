@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -400,7 +386,7 @@ public class AbstractPopup implements JBPopup {
         @Override
         protected void paintComponent(Graphics g) {
           g.setColor(Gray._135);
-          g.drawLine(0, 0, getWidth(), 0);
+          UIUtil.drawLine(g, 0, 0, getWidth(), 0);
           super.paintComponent(g);
         }
       };
@@ -454,8 +440,9 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showInCenterOf(@NotNull Component aComponent) {
+    HelpTooltip.setMasterPopup(aComponent, this);
     Point popupPoint = getCenterOf(aComponent, getPreferredContentSize());
-    show(new RelativePoint(aComponent, popupPoint));
+    show(aComponent, popupPoint.x, popupPoint.y, false);
   }
 
 
@@ -469,7 +456,6 @@ public class AbstractPopup implements JBPopup {
   @Override
   public void show(@NotNull RelativePoint aPoint) {
     HelpTooltip.setMasterPopup(aPoint.getOriginalComponent(), this);
-
     Point screenPoint = aPoint.getScreenPoint();
     show(aPoint.getComponent(), screenPoint.x, screenPoint.y, false);
   }
@@ -538,7 +524,7 @@ public class AbstractPopup implements JBPopup {
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
     // inside the component (e.g. editor) it appears on top of.
-    AccessibleContextUtil.setParent(myComponent, editor.getContentComponent());
+    AccessibleContextUtil.setParent((Component)myComponent, editor.getContentComponent());
     DataContext context = ((EditorEx)editor).getDataContext();
     Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
     if (dominantArea != null && !myRequestFocus) {
@@ -1162,7 +1148,12 @@ public class AbstractPopup implements JBPopup {
     };
     Disposer.register(this, focusWatcher);
 
-    mySpeedSearchPatternField = new SearchTextField(false);
+    mySpeedSearchPatternField = new SearchTextField(false) {
+      @Override
+      protected void onFieldCleared() {
+        mySpeedSearch.reset();
+      }
+    };
     mySpeedSearchPatternField.getTextEditor().setFocusable(false);
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);

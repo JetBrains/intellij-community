@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -338,7 +339,7 @@ public class ImageLoader implements Serializable {
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, null);
+    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
   }
 
   @Nullable

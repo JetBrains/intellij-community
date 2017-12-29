@@ -38,13 +38,11 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -75,9 +73,12 @@ import java.util.stream.Collectors;
  * @author peter
  */
 class FindInProjectTask {
+  private static final Comparator<VirtualFile> SEARCH_RESULT_FILE_COMPARATOR =
+    Comparator.comparing((VirtualFile f) -> f instanceof VirtualFileWithId ? ((VirtualFileWithId)f).getId() : 0)
+      .thenComparing(VirtualFile::getName) // in case files without id are also searched
+      .thenComparing(VirtualFile::getPath);
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindInProjectTask");
   private static final int FILES_SIZE_LIMIT = 70 * 1024 * 1024; // megabytes.
-  private static final int SINGLE_FILE_SIZE_LIMIT = 5 * 1024 * 1024; // megabytes.
   private final FindModel myFindModel;
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -196,7 +197,7 @@ class FindInProjectTask {
       final boolean skipProjectFile = ProjectUtil.isProjectOrWorkspaceFile(virtualFile) && !myFindModel.isSearchInProjectFiles();
       if (skipProjectFile && !Registry.is("find.search.in.project.files")) return true;
 
-      if (fileLength > SINGLE_FILE_SIZE_LIMIT) {
+      if (fileLength > FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
         myLargeFiles.add(virtualFile);
         return true;
       }
@@ -254,7 +255,8 @@ class FindInProjectTask {
       }
       return true;
     };
-    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, new ArrayList<>(virtualFiles), myProgress, processor);
+    List<VirtualFile> sorted = ContainerUtil.sorted(virtualFiles, SEARCH_RESULT_FILE_COMPARATOR);
+    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, sorted, myProgress, processor);
   }
 
   // must return non-binary files

@@ -1,11 +1,11 @@
 UFile (package = ) [public final enum EnumSwitch {...]
     UClass (name = EnumSwitch) [public final enum EnumSwitch {...}]
         UEnumConstant (name = FIRST) [FIRST] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = external EnumSwitch()
         UEnumConstant (name = SECOND) [SECOND] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = external EnumSwitch()
         UEnumConstant (name = THIRD) [THIRD] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitch) [EnumSwitch] = external EnumSwitch()
         UMethod (name = foo) [public static fun foo(key: EnumSwitch) : int {...}]
             UParameter (name = key) [var key: EnumSwitch]
             UBlockExpression [{...}] = Nothing
@@ -36,7 +36,7 @@ UFile (package = ) [public final enum EnumSwitch {...]
                                     ULiteralExpression (value = 13) [13] = 13
                                 UBreakExpression (label = null) [break] = Nothing(break)
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
-                            UDefaultCaseExpression [else] = NON-EVALUATED
+                            UDefaultCaseExpression [else] = Undetermined
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [result = 66] = 66
                                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)

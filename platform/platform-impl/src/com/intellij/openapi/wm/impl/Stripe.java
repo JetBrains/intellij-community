@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -81,30 +67,30 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
 
     private static void drawBorder(Graphics g, int x, int y, int width, int height, Insets insets) {
-      if (insets.top == 1) g.drawLine(x, y, x + width, y);
-      if (insets.right == 1) g.drawLine(x + width - 1, y, x + width - 1, y + height);
-      if (insets.left == 1) g.drawLine(x, y, x, y + height);
-      if (insets.bottom == 1) g.drawLine(x, y + height - 1, x + width, y + height - 1);
+      if (insets.top == 1) UIUtil.drawLine(g, x, y, x + width, y);
+      if (insets.right == 1) UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height);
+      if (insets.left == 1) UIUtil.drawLine(g, x, y, x, y + height);
+      if (insets.bottom == 1) UIUtil.drawLine(g, x, y + height - 1, x + width, y + height - 1);
 
       if (UIUtil.isUnderDarcula()) {
         final Color c = g.getColor();
         if (insets.top == 2) {
           g.setColor(c);
-          g.drawLine(x, y, x + width, y);
+          UIUtil.drawLine(g, x, y, x + width, y);
           g.setColor(Gray._85);
-          g.drawLine(x, y + 1, x + width, y + 1);
+          UIUtil.drawLine(g, x, y + 1, x + width, y + 1);
         }
         if (insets.right == 2) {
           g.setColor(Gray._85);
-          g.drawLine(x + width - 1, y, x + width - 1, y + height);
+          UIUtil.drawLine(g, x + width - 1, y, x + width - 1, y + height);
           g.setColor(c);
-          g.drawLine(x + width - 2, y, x + width - 2, y + height);
+          UIUtil.drawLine(g, x + width - 2, y, x + width - 2, y + height);
         }
         if (insets.left == 2) {
           g.setColor(Gray._85);
-          g.drawLine(x + 1, y, x + 1, y + height);
+          UIUtil.drawLine(g, x + 1, y, x + 1, y + height);
           g.setColor(c);
-          g.drawLine(x, y, x, y + height);
+          UIUtil.drawLine(g, x, y, x, y + height);
         }
         if (insets.bottom == 2) {
           //do nothing
@@ -597,12 +583,12 @@ final class Stripe extends JPanel implements UISettingsListener {
     g.setColor(new Color(255, 255, 255, 40));
     Rectangle r = getBounds();
     if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
-      g.drawLine(0, 0, 0, r.height);
-      g.drawLine(r.width - 2, 0, r.width - 2, r.height);
+      UIUtil.drawLine(g, 0, 0, 0, r.height);
+      UIUtil.drawLine(g, r.width - 2, 0, r.width - 2, r.height);
     }
     else {
-      g.drawLine(0, 1, r.width, 1);
-      g.drawLine(0, r.height - 1, r.width, r.height - 1);
+      UIUtil.drawLine(g, 0, 1, r.width, 1);
+      UIUtil.drawLine(g, 0, r.height - 1, r.width, r.height - 1);
     }
   }
 }

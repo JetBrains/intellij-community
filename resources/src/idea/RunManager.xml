@@ -1,47 +1,18 @@
 <component>
   <option name="SHOW_SETTINGS_BEFORE_RUNNING" value="true" />
   <option name="COMPILE_BEFORE_RUNNING" value="true" />
-  <activeType name="Application" />
 
   <configuration name="&lt;template&gt;" type="Application" default="true" selected="false">
-    <option name="MAIN_CLASS_NAME" />
-    <option name="VM_PARAMETERS" />
-    <option name="PROGRAM_PARAMETERS" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
   </configuration>
 
-  <configuration name="&lt;template&gt;" type="Applet" default="true" selected="false">
-    <option name="MAIN_CLASS_NAME" />
-    <option name="HTML_FILE_NAME" />
-    <option name="HTML_USED" value="false" />
-    <option name="WIDTH" value="400" />
-    <option name="HEIGHT" value="300" />
-    <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-    <option name="VM_PARAMETERS" />
-  </configuration>
-
   <configuration name="&lt;template&gt;" type="JUnit" default="true" selected="false">
-    <option name="MAIN_CLASS_NAME" />
     <option name="VM_PARAMETERS" value="-ea"/>
-    <option name="PARAMETERS" />
     <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%" />
   </configuration>
 
   <configuration name="&lt;template&gt;" type="TestNG" default="true" selected="false">
-    <option name="MAIN_CLASS_NAME"/>
     <option name="VM_PARAMETERS" value="-ea"/>
-    <option name="PARAMETERS"/>
     <option name="WORKING_DIRECTORY" value="%MODULE_WORKING_DIR%"/>
-  </configuration>
-
-  <configuration name="&lt;template&gt;" type="Remote" default="true" selected="false">
-    <option name="USE_SOCKET_TRANSPORT" value="true" />
-    <option name="SHMEM_ADDRESS" value="javadebug" />
-    <option name="HOST" value="localhost" />
-    <option name="PORT" value="5005" />
-  </configuration>
-
-  <configuration name="&lt;template&gt;" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" default="true" selected="false">
-    <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
   </configuration>
 </component>

@@ -23,6 +23,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -31,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.TodoItemImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
@@ -107,7 +107,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageUtil.enumerate(element, (injectedPsi, places) -> {
+          InjectedLanguageManager.getInstance(psiFile.getProject()).enumerate(element, (injectedPsi, places) -> {
             if (places.size() == 1) {
               Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
               if (!(document instanceof DocumentWindow)) return;

@@ -1389,11 +1389,23 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static List<TextRange> getWordIndicesIn(@NotNull String text) {
+    return getWordIndicesIn(text, null);
+  }
+
+  /**
+   * @param text text to get word ranges in.
+   * @param separatorsSet if not null, only these characters will be considered as separators (i.e. not a part of word).
+   *                   Otherwise {@link Character#isJavaIdentifierPart(char)} will be used to determine whether a symbol is part of word.
+   * @return ranges ranges of words in passed text.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static List<TextRange> getWordIndicesIn(@NotNull String text, @Nullable Set<Character> separatorsSet) {
     List<TextRange> result = new SmartList<TextRange>();
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
-      boolean isIdentifierPart = Character.isJavaIdentifierPart(c);
+      boolean isIdentifierPart = separatorsSet == null ? Character.isJavaIdentifierPart(c) : !separatorsSet.contains(c);
       if (isIdentifierPart && start == -1) {
         start = i;
       }
@@ -1584,21 +1596,41 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
+    return formatFileSize(fileSize, null);
+  }
+
+  /**
+   * Formats the specified file size as a string.
+   *
+   * @param fileSize the size to format.
+   * @param spaceBeforeUnits space to be used between counts and measurement units
+   * @return the size formatted as a string.
+   * @since 5.0.1
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, final String spaceBeforeUnits) {
     return formatValue(fileSize, null,
                        new String[]{"B", "K", "M", "G", "T", "P", "E"},
-                       new long[]{1000, 1000, 1000, 1000, 1000, 1000});
+                       new long[]{1000, 1000, 1000, 1000, 1000, 1000}, spaceBeforeUnits);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatDuration(long duration) {
-    return formatValue(duration, " ",
-                       new String[]{"ms", "s", "m", "h", "d", "w", "mo", "yr", "c", "ml", "ep"},
-                       new long[]{1000, 60, 60, 24, 7, 4, 12, 100, 10, 10000});
+    return formatDuration(duration, null);
   }
 
   @NotNull
-  private static String formatValue(long value, String partSeparator, String[] units, long[] multipliers) {
+  @Contract(pure = true)
+  public static String formatDuration(long duration, final String spaceBeforeUnits) {
+    return formatValue(duration, " ",
+                       new String[]{"ms", "s", "m", "h", "d", "w", "mo", "yr", "c", "ml", "ep"},
+                       new long[]{1000, 60, 60, 24, 7, 4, 12, 100, 10, 10000}, spaceBeforeUnits);
+  }
+
+  @NotNull
+  private static String formatValue(long value, String partSeparator, String[] units, long[] multipliers, final String spaceBeforeUnits) {
     StringBuilder sb = new StringBuilder();
     long count = value;
     long remainder = 0;
@@ -1609,14 +1641,26 @@ public class StringUtil extends StringUtilRt {
       remainder = count % multiplier;
       count /= multiplier;
       if (partSeparator != null && (remainder != 0 || sb.length() > 0)) {
-        sb.insert(0, units[i]).insert(0, remainder).insert(0, partSeparator);
+        sb.insert(0, units[i]);
+        if (spaceBeforeUnits != null) {
+          sb.insert(0, spaceBeforeUnits);
+        }
+        sb.insert(0, remainder).insert(0, partSeparator);
       }
     }
     if (partSeparator != null || remainder == 0) {
-      sb.insert(0, units[i]).insert(0, count);
+      sb.insert(0, units[i]);
+      if (spaceBeforeUnits != null) {
+        sb.insert(0, spaceBeforeUnits);
+      }
+      sb.insert(0, count);
     }
     else if (remainder > 0) {
-      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1])).append(units[i]);
+      sb.append(String.format(Locale.US, "%.2f", count + (double)remainder / multipliers[i - 1]));
+      if (spaceBeforeUnits != null) {
+        sb.append(spaceBeforeUnits);
+      }
+      sb.append(units[i]);
     }
     return sb.toString();
   }
@@ -3248,5 +3292,24 @@ public class StringUtil extends StringUtilRt {
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
+  }
+
+  /**
+   * @return <code>true</code> if the passed string is not <code>null</code> and not empty
+   * and contains only latin upper- or lower-case characters and digits; <code>false</code> otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isLatinAlphanumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
+      return false;
+    }
+    for (int i = 0; i < str.length(); i++) {
+      char c = str.charAt(i);
+      if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || Character.isDigit(c)) {
+        continue;
+      }
+      return false;
+    }
+    return true;
   }
 }

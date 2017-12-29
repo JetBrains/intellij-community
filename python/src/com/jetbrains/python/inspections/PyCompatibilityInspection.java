@@ -238,21 +238,6 @@ public class PyCompatibilityInspection extends PyInspection {
         }
       }
 
-      final PyFromImportStatement fromImportStatement = PsiTreeUtil.getParentOfType(importElement, PyFromImportStatement.class);
-      if (fromImportStatement != null) {
-        final QualifiedName qName = importElement.getImportedQName();
-        final QualifiedName sourceQName = fromImportStatement.getImportSourceQName();
-
-        if (qName != null && sourceQName != null && qName.matches("unicode_literals") && sourceQName.matches("__future__")) {
-          registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON26),
-                                         " not have unicode_literals in __future__ module",
-                                         importElement,
-                                         null);
-        }
-
-        return;
-      }
-
       final QualifiedName qName = importElement.getImportedQName();
       if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
         final String moduleName = qName.toString();

@@ -15,9 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -37,7 +35,7 @@ public class MatchResult {
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
     List<JsonSchemaObject> schemas = new ArrayList<>();
     Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
-    iterateTree(root, (parent, node) -> {
+    iterateTree(root, node -> {
       if (node.isAny()) return true;
       int groupNumber = node.getExcludingGroupNumber();
       if (groupNumber < 0) {
@@ -54,21 +52,17 @@ public class MatchResult {
   }
 
   public static void iterateTree(@NotNull JsonSchemaTreeNode root,
-                                 @NotNull final PairProcessor<JsonSchemaTreeNode, JsonSchemaTreeNode> parentChildConsumer) {
-    final Ref<JsonSchemaTreeNode> parentRef = new Ref<>(root);
-    JBTreeTraverser.<JsonSchemaTreeNode>from(node -> node.getChildren())
-      .withRoot(root)
-      .preOrderDfsTraversal()
-      .processEach(node -> {
-        if (!node.getChildren().isEmpty()) {
-          parentRef.set(node);
-          return true;
+                                 @NotNull final Processor<JsonSchemaTreeNode> processor) {
+    final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>(root.getChildren());
+    while (!queue.isEmpty()) {
+      final JsonSchemaTreeNode node = queue.removeFirst();
+      if (node.getChildren().isEmpty()) {
+        if (!node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState()) && !processor.process(node)) {
+          break;
         }
-        if (node.getChildren().isEmpty() && !node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState())) {
-          assert !parentRef.isNull();
-          return parentChildConsumer.process(parentRef.get(), node);
-        }
-        return true;
-      });
+      } else {
+        queue.addAll(node.getChildren());
+      }
+    }
   }
 }

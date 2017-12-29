@@ -18,6 +18,7 @@ package com.siyeh.ig.j2me;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
@@ -47,7 +48,7 @@ public class RecordStoreResourceInspection extends ResourceInspection {
       return false;
     }
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-    return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.rms.RecordStore", null, "openRecordStore", null);
+    return MethodCallUtils.isCallToMethod(methodCallExpression, "javax.microedition.rms.RecordStore", null, "openRecordStore", (PsiType[])null);
   }
 
   @Override

@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
@@ -37,10 +35,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,10 +49,14 @@ import java.beans.PropertyChangeListener;
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
   private static Icon myIcon = null;
   private static Icon myDisabledIcon = null;
+  private static Icon myWin10ComboDropTriagleIcon = null;
 
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
-      return IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      if (myWin10ComboDropTriagleIcon == null) {
+        myWin10ComboDropTriagleIcon = IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+      }
+      return myWin10ComboDropTriagleIcon;
     }
     Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
     if (myIcon != icon) {
@@ -160,7 +160,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       getModel().setEnabled(myPresentation.isEnabled());
       setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
-      setFocusable(false);
+      setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
@@ -282,10 +282,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       return createActionPopup(getDataContext(), this, onDispose);
     }
 
-    private ComboBoxAction getMyAction() {
-      return ComboBoxAction.this;
-    }
-
     protected DataContext getDataContext() {
       return DataManager.getInstance().getDataContext(this);
     }
@@ -319,15 +315,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void updateTooltipText(String description) {
       String tooltip = KeymapUtil.createTooltipText(description, ComboBoxAction.this);
       setToolTipText(!tooltip.isEmpty() ? tooltip : null);
-    }
-
-    @Override
-    public void updateUI() {
-      super.updateUI();
-      //if (!UIUtil.isUnderGTKLookAndFeel()) {
-      //  setBorder(UIUtil.getButtonBorder());
-      //}
-      //((JComponent)getParent().getParent()).revalidate();
     }
 
     protected class MyButtonModel extends DefaultButtonModel {
@@ -364,33 +351,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
-    public Insets getInsets() {
-      final Insets insets = super.getInsets();
-      insets.right += getArrowIcon(isEnabled()).getIconWidth();
-      return insets;
-    }
-
-    @Override
-    public Insets getInsets(Insets insets) {
-      final Insets result = super.getInsets(insets);
-      result.right += getArrowIcon(isEnabled()).getIconWidth();
-      return result;
-    }
-
-    @Override
     public boolean isOpaque() {
       return !isSmallVariant();
     }
 
     @Override
     public Dimension getPreferredSize() {
-      final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? JBUI.scale(10) + getArrowIcon(isEnabled()).getIconWidth() : super.getPreferredSize().width;
-      if (isSmallVariant() && !UIUtil.isUnderDefaultMacTheme()) {
-        width += JBUI.scale(4);
-        if (UIUtil.isUnderWin10LookAndFeel()) {
-          width += JBUI.scale(8);
-        }
+      boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
+      int width = isEmpty ? JBUI.scale(10) : super.getPreferredSize().width;
+      width += getArrowIcon(isEnabled()).getIconWidth();
+      if (isSmallVariant()) {
+        int extraWidth = UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel() ? 0 : JBUI.scale(4);
+        width += extraWidth;
       }
 
       int height = UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(24) : JBUI.scale(19);
@@ -408,12 +380,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     }
 
     @Override
+    protected Graphics getComponentGraphics(Graphics graphics) {
+      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+    }
+
+    @Override
     public void paint(Graphics g) {
       Dimension size = getSize();
 
       if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) {
         super.paint(g);
-      } else {
+      }
+      else {
         UISettings.setupAntialiasing(g);
         GraphicsUtil.setupRoundedBorderAntialiasing(g);
 
@@ -479,7 +457,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         }
       }
 
-      Insets insets = super.getInsets();
+      Insets insets = getInsets();
       Icon icon = getArrowIcon(isEnabled());
 
       int x = size.width - icon.getIconWidth();
@@ -498,12 +476,17 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           }
         }
         else {
-          x += JBUI.scale(UIUtil.isUnderNimbusLookAndFeel() ? -3 : 2);
+          x += JBUI.scale(2);
         }
       }
 
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
       g.setPaintMode();
+    }
+
+    @Override public void updateUI() {
+      super.updateUI();
+      updateButtonSize();
     }
 
     protected void updateButtonSize() {

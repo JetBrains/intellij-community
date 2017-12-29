@@ -18,14 +18,13 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.vcs.Executor.cd;
-import static git4idea.test.GitExecutor.git;
 
 public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
   @NotNull
   protected Collection<VcsRef> given(@NotNull String... refs) {
     Collection<VcsRef> result = ContainerUtil.newArrayList();
-    cd(myProjectRoot);
+    cd(projectRoot);
     Hash hash = HashImpl.build(git("rev-parse HEAD"));
     for (String refName : refs) {
       if (isHead(refName)) {
@@ -45,13 +44,13 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
       }
     }
     setUpTracking(result);
-    myRepo.update();
+    repo.update();
     return result;
   }
 
   @NotNull
   protected List<VcsRef> expect(@NotNull String... refNames) {
-    final Set<VcsRef> refs = GitTestUtil.readAllRefs(myProjectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
+    final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, projectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
     return ContainerUtil.map2List(refNames, refName -> {
       VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));
       assertNotNull("Ref " + refName + " not found among " + refs, item);
@@ -72,11 +71,11 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
   }
 
   private VcsRef ref(Hash hash, String name, VcsRefType type) {
-    return new VcsRefImpl(hash, name, type, myProjectRoot);
+    return new VcsRefImpl(hash, name, type, projectRoot);
   }
 
   private void setUpTracking(@NotNull Collection<VcsRef> refs) {
-    cd(myProjectRoot);
+    cd(projectRoot);
     for (final VcsRef ref : refs) {
       if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
         final String localBranch = ref.getName();

@@ -42,6 +42,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -144,9 +145,9 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + initializer.getText() + ") {}";
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiTryStatement armStatement = (PsiTryStatement)declaration.replace(factory.createStatementFromText(text, codeBlock));
+    CommentTracker tracker = new CommentTracker();
+    String text = "try (" + variable.getTypeElement().getText() + " " + variable.getName() + " = " + tracker.markUnchanged(initializer).getText() + ") {}";
+    PsiTryStatement armStatement = (PsiTryStatement)tracker.replaceAndRestoreComments(declaration, text);
 
     List<PsiElement> toFormat = null;
     if (last != null) {
@@ -187,12 +188,16 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
       i = PsiTreeUtil.skipWhitespacesAndCommentsForward(i);
 
       if (!(child instanceof PsiDeclarationStatement)) continue;
+      int endOffset = last.getTextRange().getEndOffset();
+      //declared after last usage
+      if (child.getTextOffset() > endOffset) break;
 
       PsiElement anchor = child;
-      for (PsiElement declared : ((PsiDeclarationStatement)child).getDeclaredElements()) {
+      PsiElement[] declaredElements = ((PsiDeclarationStatement)child).getDeclaredElements();
+      for (PsiElement declared : declaredElements) {
         if (!(declared instanceof PsiLocalVariable)) continue;
 
-        int endOffset = last.getTextRange().getEndOffset();
+
         boolean contained = ReferencesSearch.search(declared, scope).forEach(ref -> ref.getElement().getTextOffset() <= endOffset);
 
         if (!contained) {
@@ -201,15 +206,18 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
 
           String name = var.getName();
           assert name != null : child.getText();
-          toFormat.add(parent.addBefore(factory.createVariableDeclarationStatement(name, var.getType(), null), statement));
+          PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement(name, var.getType(), null);
+          PsiUtil.setModifierProperty((PsiLocalVariable)declarationStatement.getDeclaredElements()[0], PsiModifier.FINAL, var.hasModifierProperty(PsiModifier.FINAL));
+          toFormat.add(parent.addBefore(declarationStatement, statement));
 
+          CommentTracker commentTracker = new CommentTracker();
           PsiExpression varInit = var.getInitializer();
           if (varInit != null) {
-            String varAssignText = name + " = " + varInit.getText() + ";";
+            String varAssignText = name + " = " + commentTracker.markUnchanged(varInit).getText() + ";";
             anchor = parent.addAfter(factory.createStatementFromText(varAssignText, parent), anchor);
           }
 
-          var.delete();
+          commentTracker.deleteAndRestoreComments(declaredElements.length == 1 ? child : var);
         }
       }
 
@@ -228,11 +236,10 @@ public class SurroundAutoCloseableAction extends PsiElementBaseIntentionAction {
   private static void processExpression(Project project, Editor editor, PsiExpression expression) {
     PsiType type = ObjectUtils.assertNotNull(expression.getType());
     PsiElement statement = expression.getParent();
-    PsiElement codeBlock = statement.getParent();
 
-    String text = "try (" + type.getCanonicalText(true) + " r = " + expression.getText() + ") {}";
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    PsiTryStatement tryStatement = (PsiTryStatement)statement.replace(factory.createStatementFromText(text, codeBlock));
+    CommentTracker commentTracker = new CommentTracker();
+    String text = "try (" + type.getCanonicalText(true) + " r = " + commentTracker.markUnchanged(expression).getText() + ") {}";
+    PsiTryStatement tryStatement = (PsiTryStatement)commentTracker.replaceAndRestoreComments(statement, text);
 
     tryStatement = (PsiTryStatement)CodeStyleManager.getInstance(project).reformat(tryStatement);
 

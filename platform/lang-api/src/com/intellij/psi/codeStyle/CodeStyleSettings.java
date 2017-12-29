@@ -35,7 +35,26 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class CodeStyleSettings extends CommonCodeStyleSettings
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+
+/**
+ * <p>
+ * A container for global, language and custom code style settings and indent options. Global options are default options for multiple
+ * languages and language-independent settings. Global (default) options which may be overwritten by a specific language can be retrieved
+ * using {@code getDefault...()} methods. Use {@link #getCommonSettings(Language)} to retrieve code style options for a language. Some
+ * languages may have specific options which are stored in a class derived from {@link CustomCodeStyleSettings}.
+ * Use {@link #getCustomSettings(Class)} to access them. For indent options use one of {@code getIndentOptions(...)} methods. In most cases
+ * you need {@link #getIndentOptionsByFile(PsiFile)}.
+ * </p>
+ * <p>
+ * Consider also using an utility {@link com.intellij.application.options.CodeStyle} class which encapsulates the above methods where possible.
+ * </p>
+ *
+ * <b>Note:</b> A direct use of any non-final public fields from {@code CodeStyleSettings} class is strongly discouraged. These fields,
+ * as well as the inheritance from {@code CommonCodeStyleSettings}, are left only for backwards compatibility and may be removed in the future.
+ */
+@SuppressWarnings("deprecation")
+public class CodeStyleSettings extends LegacyCodeStyleSettings
   implements Cloneable, JDOMExternalizable, ImportsLayoutSettings, CodeStyleConstraints {
   public static final int CURR_VERSION = 173;
 
@@ -54,6 +73,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
 
   private UnknownElementWriter myUnknownElementWriter = UnknownElementWriter.EMPTY;
 
+  private SoftMargins mySoftMargins = new SoftMargins();
+
   private int myVersion = CURR_VERSION;
 
   public CodeStyleSettings() {
@@ -61,7 +82,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   }
 
   public CodeStyleSettings(boolean loadExtensions) {
-    super(null);
     initTypeToName();
     initImportsByDefault();
 
@@ -165,9 +185,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   }
 
   public void copyFrom(CodeStyleSettings from) {
-    copyPublicFields(from, this);
-    copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
-    mySoftMargins.setValues(from.getSoftMargins());
+    CommonCodeStyleSettings.copyPublicFields(from, this);
+    CommonCodeStyleSettings.copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
+    mySoftMargins.setValues(from.getDefaultSoftMargins());
     copyCustomSettingsFrom(from);
   }
 
@@ -568,33 +588,116 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
 
 // region HTML formatting options (legacy)
 
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_KEEP_WHITESPACES;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_TEXT_WRAP = WRAP_AS_NEEDED;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_KEEP_LINE_BREAKS = true;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_KEEP_LINE_BREAKS_IN_TEXT = true;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_KEEP_BLANK_LINES = 2;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_ALIGN_ATTRIBUTES = true;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_ALIGN_TEXT;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_SPACE_AROUND_EQUALITY_IN_ATTRINUTE;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_SPACE_AFTER_TAG_NAME;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_SPACE_INSIDE_EMPTY_TAG;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_ELEMENTS_TO_INSERT_NEW_LINE_BEFORE = "body,div,p,form,h1,h2,h3";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_ELEMENTS_TO_REMOVE_NEW_LINE_BEFORE = "br";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_DO_NOT_INDENT_CHILDREN_OF = "html,body,thead,tbody,tfoot";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public int HTML_DO_NOT_ALIGN_CHILDREN_OF_MIN_LINES;
-
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_INLINE_ELEMENTS =
     "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,span,strike,strong,sub,sup,textarea,tt,u,var";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public boolean HTML_ENFORCE_QUOTES = false;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public HtmlTagNewLineStyle HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
+  /**
+   * @deprecated Use HtmlCodeStyleSettings
+   */
+  @Deprecated
   public HtmlTagNewLineStyle HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
 
 // endregion
@@ -798,7 +901,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
     return new IndentOptions();
   }
 
-  @Override
   @Nullable
   public IndentOptions getIndentOptions() {
     return OTHER_INDENT_OPTIONS;
@@ -941,8 +1043,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
 
   @Nullable
   private IndentOptions getIndentOptions(Language lang) {
-    CommonCodeStyleSettings langSettings = getCommonSettings(lang);
-    return langSettings == this ? null : langSettings.getIndentOptions();
+    CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
+    return settings != null ? settings.getIndentOptions() : null;
   }
 
   public boolean isSmartTabs(FileType fileType) {
@@ -1141,14 +1243,31 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
     }
   }
 
-  public CommonCodeStyleSettings getCommonSettings(Language lang) {
-    return myCommonSettingsManager.getCommonSettings(lang);
+  /**
+   * Attempts to get language-specific common settings from {@code LanguageCodeStyleSettingsProvider}.
+   *
+   * @param lang The language to get settings for.
+   * @return If the provider for the language exists and is able to create language-specific default settings
+   *         ({@code LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()} doesn't return null)
+   *         returns the instance of settings for this language. Otherwise returns new instance of common code style settings
+   *         with default values.
+   */
+  @NotNull
+  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
+    CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
+    if (settings == null) {
+      settings = myCommonSettingsManager.getDefaults();
+      if (lang != null) {
+        LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
+      }
+    }
+    return settings;
   }
 
   /**
-   * @param langName The language name. 
+   * @param langName The language name.
    * @return Language-specific code style settings or shared settings if not found.
-   * @see CommonCodeStyleSettingsManager#getCommonSettings 
+   * @see CommonCodeStyleSettingsManager#getCommonSettings
    */
   public CommonCodeStyleSettings getCommonSettings(String langName) {
     return myCommonSettingsManager.getCommonSettings(langName);
@@ -1164,7 +1283,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    */
   public int getRightMargin(@Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(language);
       if (langSettings != null) {
         if (langSettings.RIGHT_MARGIN >= 0) return langSettings.RIGHT_MARGIN;
       }
@@ -1180,7 +1299,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    */
   public void setRightMargin(@Nullable Language language, int rightMargin) {
     if (language != null) {
-      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(language);
       if (langSettings != null) {
         langSettings.RIGHT_MARGIN = rightMargin;
         return;
@@ -1206,10 +1325,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    */
   public boolean isWrapOnTyping(@Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings langSettings = getCommonSettings(language);
+      CommonCodeStyleSettings langSettings = myCommonSettingsManager.getCommonSettings(language);
       if (langSettings != null) {
-        if (langSettings.WRAP_ON_TYPING != WrapOnTyping.DEFAULT.intValue) {
-          return langSettings.WRAP_ON_TYPING == WrapOnTyping.WRAP.intValue;
+        if (langSettings.WRAP_ON_TYPING != CommonCodeStyleSettings.WrapOnTyping.DEFAULT.intValue) {
+          return langSettings.WRAP_ON_TYPING == CommonCodeStyleSettings.WrapOnTyping.WRAP.intValue;
         }
       }
     }
@@ -1249,6 +1368,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   public boolean equals(Object obj) {
     if (!(obj instanceof CodeStyleSettings)) return false;
     if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!mySoftMargins.equals(((CodeStyleSettings)obj).mySoftMargins)) return false;
     if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
     for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
@@ -1301,7 +1421,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
   @NotNull
   public List<Integer> getSoftMargins(@Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings languageSettings = getCommonSettings(language);
+      CommonCodeStyleSettings languageSettings = myCommonSettingsManager.getCommonSettings(language);
       if (languageSettings != null && !languageSettings.getSoftMargins().isEmpty()) {
         return languageSettings.getSoftMargins();
       }
@@ -1315,7 +1435,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    * @param softMargins The soft margins to set.
    */
   public void setSoftMargins(@NotNull Language language, List<Integer> softMargins) {
-    CommonCodeStyleSettings languageSettings = getCommonSettings(language);
+    CommonCodeStyleSettings languageSettings = myCommonSettingsManager.getCommonSettings(language);
     assert languageSettings != null : "Settings for language " + language.getDisplayName() + " do not exist";
     languageSettings.setSoftMargins(softMargins);
   }
@@ -1325,7 +1445,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    */
   @NotNull
   public List<Integer> getDefaultSoftMargins() {
-    return getSoftMargins();
+    return mySoftMargins.getValues();
   }
 
   /**
@@ -1333,6 +1453,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings
    * @param softMargins The default soft margins.
    */
   public void setDefaultSoftMargins(List<Integer> softMargins) {
-    setSoftMargins(softMargins);
+    mySoftMargins.setValues(softMargins);
   }
 }

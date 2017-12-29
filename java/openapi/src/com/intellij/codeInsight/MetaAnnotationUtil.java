@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.module.Module;
@@ -37,25 +35,27 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * @since 2016.3
  */
 public class MetaAnnotationUtil {
   private static final TObjectHashingStrategy<PsiClass> HASHING_STRATEGY = new TObjectHashingStrategy<PsiClass>() {
-    public int computeHashCode(final PsiClass object) {
-      final String qualifiedName = object.getQualifiedName();
+    @Override
+    public int computeHashCode(PsiClass object) {
+      String qualifiedName = object.getQualifiedName();
       return qualifiedName == null ? 0 : qualifiedName.hashCode();
     }
 
-    public boolean equals(final PsiClass o1, final PsiClass o2) {
+    @Override
+    public boolean equals(PsiClass o1, PsiClass o2) {
       return Comparing.equal(o1.getQualifiedName(), o2.getQualifiedName());
     }
   };
 
-  public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull final Module module,
-                                                                    final String annotationName,
-                                                                    final boolean includeTests) {
-    final Project project = module.getProject();
+  public static Collection<PsiClass> getAnnotationTypesWithChildren(@NotNull Module module, String annotationName, boolean includeTests) {
+    Project project = module.getProject();
 
     Map<Pair<String, Boolean>, Collection<PsiClass>> map = CachedValuesManager.getManager(project).getCachedValue(module, () -> {
       Map<Pair<String, Boolean>, Collection<PsiClass>> factoryMap = ConcurrentFactoryMap.createMap(key -> {
@@ -73,19 +73,18 @@ public class MetaAnnotationUtil {
       return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
 
-    return map.get(Pair.create(annotationName, includeTests));
+    return map.get(pair(annotationName, includeTests));
   }
 
-  public static Set<PsiClass> getChildren(final PsiClass psiClass, final GlobalSearchScope scope) {
-    if (AnnotationTargetUtil.findAnnotationTarget(psiClass,
-                                                  PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
+  public static Set<PsiClass> getChildren(@NotNull PsiClass psiClass, @NotNull GlobalSearchScope scope) {
+    if (AnnotationTargetUtil.findAnnotationTarget(psiClass, PsiAnnotation.TargetType.ANNOTATION_TYPE, PsiAnnotation.TargetType.TYPE) == null) {
       return Collections.emptySet();
     }
 
-    final String name = psiClass.getQualifiedName();
+    String name = psiClass.getQualifiedName();
     if (name == null) return Collections.emptySet();
 
-    final Set<PsiClass> result = new THashSet<>(HASHING_STRATEGY);
+    Set<PsiClass> result = new THashSet<>(HASHING_STRATEGY);
 
     AnnotatedElementsSearch.searchPsiClasses(psiClass, scope).forEach(processorResult -> {
       if (processorResult.isAnnotationType()) {
@@ -97,14 +96,14 @@ public class MetaAnnotationUtil {
     return result;
   }
 
-  public static Collection<PsiClass> getAnnotatedTypes(final Module module,
-                                                       final Key<CachedValue<Collection<PsiClass>>> key,
-                                                       final String annotationName) {
+  public static Collection<PsiClass> getAnnotatedTypes(@NotNull Module module,
+                                                       @NotNull Key<CachedValue<Collection<PsiClass>>> key,
+                                                       @NotNull String annotationName) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, key, () -> {
-      final GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
-      final PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject()).findClass(annotationName, scope);
+      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, false);
+      PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject()).findClass(annotationName, scope);
 
-      final Collection<PsiClass> classes;
+      Collection<PsiClass> classes;
       if (psiClass == null || !psiClass.isAnnotationType()) {
         classes = Collections.emptyList();
       }
@@ -117,10 +116,8 @@ public class MetaAnnotationUtil {
 
   @NotNull
   private static Collection<PsiClass> getAnnotationTypesWithChildren(PsiClass annotationClass, GlobalSearchScope scope) {
-    final Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
-
+    Set<PsiClass> classes = new THashSet<>(HASHING_STRATEGY);
     collectClassWithChildren(annotationClass, classes, scope);
-
     return classes;
   }
 
@@ -134,13 +131,13 @@ public class MetaAnnotationUtil {
           return true;
         });
       }
-      return CachedValueProvider.Result
-        .createSingleDependency(GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles),
-                                PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+
+      scope = GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles);
+      return CachedValueProvider.Result.createSingleDependency(scope, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
-  private static void collectClassWithChildren(final PsiClass psiClass, final Set<PsiClass> classes, final GlobalSearchScope scope) {
+  private static void collectClassWithChildren(PsiClass psiClass, Set<PsiClass> classes, GlobalSearchScope scope) {
     classes.add(psiClass);
 
     for (PsiClass aClass : getChildren(psiClass, scope)) {
@@ -151,14 +148,14 @@ public class MetaAnnotationUtil {
   }
 
   /**
-   * Check if listOwner is annotated with annotations or listOwner's annotations contain given annotations
+   * Checks if listOwner is annotated with annotations or listOwner's annotations contain given annotations.
    */
-  public static boolean isMetaAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull final Collection<String> annotations) {
-    if (AnnotationUtil.isAnnotated(listOwner, annotations, false)) {
+  public static boolean isMetaAnnotated(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
+    if (AnnotationUtil.isAnnotated(listOwner, annotations, 0)) {
       return true;
     }
 
-    final List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
+    List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(listOwner);
     for (String annotationFQN : annotations) {
       for (PsiClass resolvedAnnotation : resolvedAnnotations) {
         if (metaAnnotationCached(resolvedAnnotation, annotationFQN) != null) return true;
@@ -168,22 +165,44 @@ public class MetaAnnotationUtil {
     return false;
   }
 
-  @Nullable
-  private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
-    ConcurrentMap<String, PsiAnnotation> cachedValue = CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
-      ConcurrentMap<String, PsiAnnotation>
-        metaAnnotationsMap = ConcurrentFactoryMap.createMap(anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
-      return new CachedValueProvider.Result<>(metaAnnotationsMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
-    });
-    return cachedValue.get(annotationToFind);
+  public static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                   @NotNull Collection<String> annotations) {
+    return isMetaAnnotatedInHierarchy(listOwner, annotations, new HashSet<>());
+  }
+
+  private static boolean isMetaAnnotatedInHierarchy(@NotNull PsiModifierListOwner listOwner,
+                                                    @NotNull Collection<String> annotations,
+                                                    Set<PsiMember> visited) {
+    if (isMetaAnnotated(listOwner, annotations)) return true;
+    if (listOwner instanceof PsiClass) {
+      for (PsiClass superClass : ((PsiClass)listOwner).getSupers()) {
+        if (visited.add(superClass) && isMetaAnnotatedInHierarchy(superClass, annotations, visited)) return true;
+      }
+    }
+    else if (listOwner instanceof PsiMethod) {
+      for (PsiMethod method : ((PsiMethod)listOwner).findSuperMethods()) {
+        if (visited.add(method) && isMetaAnnotatedInHierarchy(method, annotations, visited)) return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
-  private static PsiAnnotation findMetaAnnotation(PsiClass aClass, final String annotation, final Set<PsiClass> visited) {
+  private static PsiAnnotation metaAnnotationCached(PsiClass subjectAnnotation, String annotationToFind) {
+    return CachedValuesManager.getCachedValue(subjectAnnotation, () -> {
+      ConcurrentMap<String, PsiAnnotation> metaAnnotationsMap = ConcurrentFactoryMap.createMap(
+        anno -> findMetaAnnotation(subjectAnnotation, anno, new HashSet<>()));
+      return new CachedValueProvider.Result<>(metaAnnotationsMap, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    }).get(annotationToFind);
+  }
+
+  @Nullable
+  private static PsiAnnotation findMetaAnnotation(PsiClass aClass, String annotation, Set<PsiClass> visited) {
     PsiAnnotation directAnnotation = AnnotationUtil.findAnnotation(aClass, annotation);
     if (directAnnotation != null) {
       return directAnnotation;
     }
+
     List<PsiClass> resolvedAnnotations = getResolvedClassesInAnnotationsList(aClass);
     for (PsiClass resolvedAnnotation : resolvedAnnotations) {
       if (visited.add(resolvedAnnotation)) {
@@ -197,10 +216,8 @@ public class MetaAnnotationUtil {
     return null;
   }
 
-
   @NotNull
-  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner,
-                                                          @NotNull final Collection<String> annotations) {
+  public static Stream<PsiAnnotation> findMetaAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotations) {
     Stream<PsiAnnotation> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, annotations));
 
     Stream<PsiClass> lazyResolvedAnnotations =
@@ -215,7 +232,6 @@ public class MetaAnnotationUtil {
 
     return Stream.concat(directAnnotations, metaAnnotations);
   }
-
 
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();

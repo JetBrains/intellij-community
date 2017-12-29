@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.find.impl;
 
@@ -23,10 +11,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,13 +71,11 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   }
 
   @SuppressWarnings("WeakerAccess") public boolean SEARCH_OVERLOADED_METHODS;
-  @SuppressWarnings("WeakerAccess") public boolean SEARCH_IN_LIBRARIES;
   @SuppressWarnings("WeakerAccess") public boolean SKIP_RESULTS_WHEN_ONE_USAGE;
 
   @SuppressWarnings("WeakerAccess") public String FIND_DIRECTION = FIND_DIRECTION_FORWARD;
   @SuppressWarnings("WeakerAccess") public String FIND_ORIGIN = FIND_ORIGIN_FROM_CURSOR;
   @SuppressWarnings("WeakerAccess") public String FIND_SCOPE = FIND_SCOPE_GLOBAL;
-  @SuppressWarnings("WeakerAccess") public String FIND_CUSTOM_SCOPE;
 
   @SuppressWarnings("WeakerAccess") public boolean CASE_SENSITIVE_SEARCH;
   @SuppressWarnings("WeakerAccess") public boolean LOCAL_CASE_SENSITIVE_SEARCH;
@@ -110,13 +95,12 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @SuppressWarnings("WeakerAccess") public String SEARCH_SCOPE = DEFAULT_SEARCH_SCOPE;
   @SuppressWarnings("WeakerAccess") public String FILE_MASK;
 
-  @Tag("recentFileMasks")
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "mask", elementValueAttribute = "")
+  @XCollection(propertyElementName = "recentFileMasks", elementName = "mask", valueAttributeName = "")
   public List<String> recentFileMasks = new ArrayList<>();
 
   @Override
-  public void loadState(FindSettingsImpl state) {
+  public void loadState(@NotNull FindSettingsImpl state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

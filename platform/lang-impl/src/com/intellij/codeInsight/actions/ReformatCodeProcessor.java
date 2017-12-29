@@ -106,6 +106,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
   protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly)
     throws IncorrectOperationException
   {
+    LOG.assertTrue(file.isValid(), "Invalid Psi file, name: " + file.getName() + " , class: " + file.getClass().getSimpleName());
     return new FutureTask<>(() -> {
       FormattingProgressTask.FORMATTING_CANCELLED_FLAG.set(false);
       try {

@@ -113,9 +113,6 @@ public class FindInProjectUtil {
     // apply explicit settings from context
     if (module != null) {
       model.setModuleName(module.getName());
-      directoryName = null;// Explicit 'module' scope is more specific than 'module directory' scope
-      model.setCustomScope(false);
-      model.setDirectoryName(null);
     }
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
@@ -127,7 +124,7 @@ public class FindInProjectUtil {
     }
 
     // set project scope if we have no other settings
-    model.setProjectScope(directoryName == null && module == null && !model.isCustomScope());
+    model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
   /** @deprecated to remove in IDEA 2018 */
@@ -345,7 +342,11 @@ public class FindInProjectUtil {
   @NotNull
   public static UsageViewPresentation setupViewPresentation(final boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final UsageViewPresentation presentation = new UsageViewPresentation();
+    setupViewPresentation(presentation, toOpenInNewTab, findModel);
+    return presentation;
+  }
 
+  public static void setupViewPresentation(UsageViewPresentation presentation, boolean toOpenInNewTab, @NotNull FindModel findModel) {
     final String scope = getTitleForScope(findModel);
     final String stringToFind = findModel.getStringToFind();
     presentation.setScopeText(scope);
@@ -370,8 +371,13 @@ public class FindInProjectUtil {
     presentation.setOpenInNewTab(toOpenInNewTab);
     presentation.setCodeUsages(false);
     presentation.setUsageTypeFilteringAvailable(true);
-
-    return presentation;
+    if (findModel.isReplaceState() && findModel.isRegularExpressions()) {
+      presentation.setSearchPattern(findModel.compileRegExp());
+      presentation.setReplacePattern(Pattern.compile(findModel.getStringToReplace()));
+    } else {
+      presentation.setSearchPattern(null);
+      presentation.setReplacePattern(null);
+    }
   }
 
   @NotNull
@@ -442,7 +448,7 @@ public class FindInProjectUtil {
 
     public StringUsageTarget(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;
-      myFindModel = findModel;
+      myFindModel = findModel.clone();
     }
 
     @Override
@@ -528,7 +534,7 @@ public class FindInProjectUtil {
       Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       FindInProjectManager findInProjectManager = FindInProjectManager.getInstance(myProject);
-      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.findInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
 
     @Override

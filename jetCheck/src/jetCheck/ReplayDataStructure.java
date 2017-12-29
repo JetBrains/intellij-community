@@ -7,17 +7,17 @@ import java.util.function.Predicate;
 
 class ReplayDataStructure extends AbstractDataStructure {
   private final Iterator<StructureElement> iterator;
+  private final IntCustomizer customizer;
 
-  public ReplayDataStructure(StructureNode node, int sizeHint) {
+  ReplayDataStructure(StructureNode node, int sizeHint, IntCustomizer customizer) {
     super(node, sizeHint);
     this.iterator = node.childrenIterator();
+    this.customizer = customizer;
   }
 
   @Override
   public int drawInt(@NotNull IntDistribution distribution) {
-    int value = nextChild(IntData.class).value;
-    if (!distribution.isValidValue(value)) throw new CannotRestoreValue();
-    return value;
+    return customizer.suggestInt(nextChild(IntData.class), distribution);
   }
 
   @NotNull
@@ -31,18 +31,18 @@ class ReplayDataStructure extends AbstractDataStructure {
 
   @NotNull
   @Override
-  public DataStructure subStructure() {
-    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint());
+  DataStructure subStructure(@NotNull Generator<?> generator) {
+    return new ReplayDataStructure(nextChild(StructureNode.class), childSizeHint(), customizer);
   }
 
   @Override
   public <T> T generateNonShrinkable(@NotNull Generator<T> generator) {
-    return generator.generateValue(this);
+    return generate(generator);
   }
 
   @Override
   public <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition) {
-    T value = generator.generateValue(this);
+    T value = generate(generator);
     if (!condition.test(value)) throw new CannotRestoreValue();
     return value;
   }

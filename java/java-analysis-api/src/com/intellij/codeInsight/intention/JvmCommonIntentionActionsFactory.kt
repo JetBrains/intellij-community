@@ -36,7 +36,7 @@ import org.jetbrains.uast.UParameter
  * @since 2017.2
  */
 @ApiStatus.Experimental
-@Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
+@Deprecated("to be removed in 2018.1", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
 abstract class JvmCommonIntentionActionsFactory {
 
   open fun createChangeModifierAction(declaration: UDeclaration,
@@ -61,7 +61,7 @@ abstract class JvmCommonIntentionActionsFactory {
 
 }
 
-@Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
+@Deprecated("to be removed in 2018.1", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
 sealed class MethodInsertionInfo(
   val containingClass: UClass,
   @PsiModifier.ModifierConstant
@@ -88,7 +88,7 @@ sealed class MethodInsertionInfo(
              parameters = parameters)
   }
 
-  @Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
+  @Deprecated("to be removed in 2018.1", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
   class Method(
     containingClass: UClass,
     val name: String,
@@ -99,7 +99,7 @@ sealed class MethodInsertionInfo(
     val isAbstract: Boolean = false
   ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
 
-  @Deprecated("to be removed in 2017.3", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
+  @Deprecated("to be removed in 2018.1", ReplaceWith("com.intellij.lang.jvm.actions.JvmCommonIntentionActionsFactory"))
   class Constructor(
     containingClass: UClass,
     modifiers: List<String> = emptyList(),

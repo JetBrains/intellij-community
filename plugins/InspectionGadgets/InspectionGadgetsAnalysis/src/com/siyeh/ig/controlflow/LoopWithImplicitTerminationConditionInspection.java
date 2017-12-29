@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -131,9 +132,10 @@ public class LoopWithImplicitTerminationConditionInspection
       final PsiStatement thenBranch = ifStatement.getThenBranch();
       final PsiStatement elseBranch = ifStatement.getElseBranch();
       if (containsUnlabeledBreakStatement(thenBranch)) {
+        CommentTracker commentTracker = new CommentTracker();
         final String negatedExpressionText =
-          BoolUtils.getNegatedExpressionText(ifCondition);
-        PsiReplacementUtil.replaceExpression(loopCondition, negatedExpressionText);
+          BoolUtils.getNegatedExpressionText(ifCondition, commentTracker);
+        PsiReplacementUtil.replaceExpression(loopCondition, negatedExpressionText, commentTracker);
         replaceStatement(ifStatement, elseBranch);
       }
       else if (containsUnlabeledBreakStatement(elseBranch)) {

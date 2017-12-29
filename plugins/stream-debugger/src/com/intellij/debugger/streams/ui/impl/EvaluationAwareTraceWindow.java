@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -26,6 +12,7 @@ import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -35,7 +22,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import icons.StreamDebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,17 +38,19 @@ import java.util.stream.Stream;
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
   private static final String DIALOG_TITLE = "Stream Trace";
+  private static final String IS_FLAT_MODE_PROPERTY = "org.jetbrains.debugger.streams:isTraceWindowInFlatMode";
+  private static final boolean IS_DEFAULT_MODE_FLAT = false;
 
   private static final int DEFAULT_WIDTH = 870;
   private static final int DEFAULT_HEIGHT = 400;
   private static final String FLAT_MODE_NAME = "Flat Mode";
   private static final String TABBED_MODE_NAME = "Split Mode";
-  private final JPanel myCenterPane;
+  private final MyCenterPane myCenterPane;
   private final List<MyPlaceholder> myTabContents;
   private final MyPlaceholder myFlatContent;
   private final JBTabsPaneImpl myTabsPane;
 
-  private MyMode myMode = MyMode.SPLIT;
+  private MyMode myMode;
 
   public EvaluationAwareTraceWindow(@NotNull XDebugSession session, @NotNull StreamChain chain) {
     super(session.getProject(), true);
@@ -75,27 +63,34 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }, myDisposable);
     setModal(false);
     setTitle(DIALOG_TITLE);
-    final JBCardLayout layout = new JBCardLayout();
-    myCenterPane = new JPanel(layout);
-    myCenterPane.add(myTabsPane.getComponent());
+    myCenterPane = new MyCenterPane();
+    myCenterPane.add(MyMode.SPLIT.name(), myTabsPane.getComponent());
+
     myTabContents = new ArrayList<>();
     final QualifierExpression qualifierExpression = chain.getQualifierExpression();
     final MyPlaceholder firstTab = new MyPlaceholder();
-    myTabsPane.insertTab("qualifier", StreamDebuggerIcons.STREAM_CALL_TAB_ICON, firstTab, qualifierExpression.getText(), 0);
+    myTabsPane.insertTab(TraceUtil.formatQualifierExpression(qualifierExpression.getText(), 30),
+                         AllIcons.Debugger.StreamDebugger.Tab, firstTab, qualifierExpression.getText(), 0);
     myTabContents.add(firstTab);
 
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
       final MyPlaceholder tab = new MyPlaceholder();
       final String callName = call.getName().replace(" ", "");
-      myTabsPane.insertTab(callName, StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab,
-                           TraceUtil.formatWithArguments(call), i + 1);
+      myTabsPane.insertTab(callName, AllIcons.Debugger.StreamDebugger.Tab, tab, TraceUtil.formatWithArguments(call), i + 1);
       myTabContents.add(tab);
     }
 
     myFlatContent = new MyPlaceholder();
-    myCenterPane.add(myFlatContent);
+    myCenterPane.add(MyMode.FLAT.name(), myFlatContent);
     myCenterPane.setPreferredSize(new JBDimension(DEFAULT_WIDTH, DEFAULT_HEIGHT));
+
+    if (!PropertiesComponent.getInstance().isValueSet(IS_FLAT_MODE_PROPERTY)) {
+      PropertiesComponent.getInstance().setValue(IS_FLAT_MODE_PROPERTY, IS_DEFAULT_MODE_FLAT);
+    }
+
+    myMode = PropertiesComponent.getInstance().getBoolean(IS_FLAT_MODE_PROPERTY) ? MyMode.FLAT : MyMode.SPLIT;
+    updateWindowMode(myCenterPane, myMode);
 
     init();
   }
@@ -119,7 +114,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     if (controllers.isEmpty()) return;
     final List<TraceElement> trace = controllers.get(0).getTrace();
     final CollectionTree tree = new CollectionTree(trace, context);
-    final CollectionView sourceView = new SourceView(tree);
+    final CollectionView sourceView = new CollectionView(tree);
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
 
@@ -144,7 +139,9 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     if (resolvedTrace.exceptionThrown()) {
       resultTab.setContent(new JBLabel("There is no result: exception was thrown", SwingConstants.CENTER), BorderLayout.CENTER);
       setTitle(DIALOG_TITLE + " - Exception was thrown. Trace can be incomplete");
-      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, result), "", 0);
+      final ExceptionView exceptionView = new ExceptionView(context, result);
+      Disposer.register(myDisposable, exceptionView);
+      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, exceptionView, "", 0);
       myTabsPane.setSelectedIndex(0);
     }
     else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
@@ -219,9 +216,19 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return controllers;
   }
 
+  private static void updateWindowMode(@NotNull MyCenterPane pane, @NotNull MyMode mode) {
+    pane.getLayout().show(pane, mode.name());
+    PropertiesComponent.getInstance().setValue(IS_FLAT_MODE_PROPERTY, MyMode.FLAT.equals(mode));
+  }
+
+  @NotNull
+  private static String getButtonText(@NotNull MyMode mode) {
+    return MyMode.SPLIT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+  }
+
   private class MyToggleViewAction extends DialogWrapperAction {
     MyToggleViewAction() {
-      super(FLAT_MODE_NAME);
+      super(getButtonText(myMode));
     }
 
     @Override
@@ -232,12 +239,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
         button.setText(getButtonText(myMode));
       }
 
-      ((JBCardLayout)myCenterPane.getLayout()).next(myCenterPane);
-    }
-
-    @NotNull
-    private String getButtonText(@NotNull MyMode mode) {
-      return MyMode.SPLIT.equals(mode) ? FLAT_MODE_NAME : TABBED_MODE_NAME;
+      updateWindowMode(myCenterPane, myMode);
     }
 
     @NotNull
@@ -262,5 +264,16 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   private enum MyMode {
     FLAT, SPLIT
+  }
+
+  private static class MyCenterPane extends JPanel {
+    MyCenterPane() {
+      super(new JBCardLayout());
+    }
+
+    @Override
+    public JBCardLayout getLayout() {
+      return (JBCardLayout)super.getLayout();
+    }
   }
 }

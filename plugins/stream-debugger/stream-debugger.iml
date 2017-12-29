@@ -3,7 +3,6 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/testData" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
@@ -19,7 +18,7 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="java-psi-api" />
     <orderEntry type="module" module-name="java-impl" />
-    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework-java" />
     <orderEntry type="module" module-name="openapi" />
   </component>
 </module>

@@ -17,11 +17,13 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
@@ -70,6 +72,17 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   public abstract String getCaption(int size);
   protected abstract void replaceModel(@NotNull List<PsiElement> data);
+
+  public static Comparator<PsiElement> createComparatorWrapper(@NotNull Comparator<PsiElement> comparator) {
+    return (o1, o2) -> {
+      int diff = comparator.compare(o1, o2);
+      if (diff == 0) {
+        return ReadAction.compute(() -> PsiUtilCore.compareElementsByPosition(o1, o2));
+      }
+      return diff;
+    };
+  }
+
   protected abstract void paintBusy(boolean paintBusy);
 
   public boolean setCanceled() {

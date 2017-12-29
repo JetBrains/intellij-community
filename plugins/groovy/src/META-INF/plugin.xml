@@ -33,7 +33,7 @@
   <extensionPoints>
     <extensionPoint name="methodComparator" interface="org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator"/>
     <extensionPoint name="membersContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor"/>
-    <extensionPoint name="importContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.GrImportContributor"/>
+    <extensionPoint name="importContributor" interface="org.jetbrains.plugins.groovy.lang.resolve.imports.GrImportContributor"/>
     <extensionPoint name="astTransformationSupport" interface="org.jetbrains.plugins.groovy.transformations.AstTransformationSupport"/>
     <extensionPoint name="renameHelper" interface="org.jetbrains.plugins.groovy.refactoring.rename.GrRenameHelper"/>
     <extensionPoint name="closureMissingMethodContributor"
@@ -171,7 +171,7 @@
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator"/>
 
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureDelegateTypeCalculator"/>
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureOwnerDelegateTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
                     implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
 
@@ -208,9 +208,9 @@
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiMethodCategory"/>
     <psiEnhancerCategory implementation="org.jetbrains.plugins.groovy.dsl.psi.PsiExpressionCategory"/>
 
+    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureAsAnonymousParameterEnhancer"/>
-    <variableEnhancer implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer"/>
 
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.FromStringHintProcessor"/>
     <signatureHintProcessor implementation="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.SimpleTypeHintProcessor"/>
@@ -284,7 +284,6 @@
     <methodComparator implementation="org.jetbrains.plugins.groovy.lang.resolve.GrDefaultMethodComparator" order="last"/>
     <expectedPackageNameProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.DefaultExpectedPackageNameProvider"
                                  order="last"/>
-    <importContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor"/>
     <delegatesToProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DefaultDelegatesToProvider" id="default"/>
   </extensions>
 
@@ -416,7 +415,8 @@
                         serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslErrorReporterImpl"/>
 
     <!-- Groovy language -->
-    <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
+    <lang.syntaxHighlighterFactory language="Groovy"
+                                   implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighterFactory"/>
 
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyKeywordAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
@@ -650,6 +650,7 @@
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.gant.GantClassFinder"/>
+    <java.elementFinder implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyClassFinder"/>
     <java.shortNamesCache implementation="org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache"/>
 
     <projectService
@@ -885,6 +886,9 @@
     <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
                      displayName="Unnecessary semicolon" cleanupTool="true" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessarySemicolonInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" groupKey="inspection.style"
+                     displayName="Unnecessary import alias" cleanupTool="true" enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.style.GrUnnecessaryAliasInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="ChangeToOperator"
                      displayName="Change to operator"
                      groupKey="inspection.style" enabledByDefault="true" level="WEAK WARNING"
@@ -1621,6 +1625,11 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.declaration.GrRemoveExplicitTypeDeclarationIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy.other</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.annotations.AddAnnotationValueIntention</className>
     </intentionAction>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"

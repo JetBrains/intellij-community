@@ -197,10 +197,27 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamInlining() { doTest(); }
   public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
+  
+  public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
+  public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
 
   public void testMethodVsExpressionTypeAnnotationConflict() {
     setupAmbiguousAnnotations("withTypeUse", myFixture);
     doTest();
   }
 
+  public void testCastInstanceOf() { doTest(); }
+
+  public void testMutabilityBasics() {
+    myFixture.addClass("package org.jetbrains.annotations;public @interface ReadOnly {}");
+    doTest();
+  }
+
+  public void testMutabilityJdk() {
+    doTest();
+  }
+
+  public void testPrimitiveGetters() { doTest(); }
+  public void testUnknownOnStack() { doTest(); }
+  public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
 }

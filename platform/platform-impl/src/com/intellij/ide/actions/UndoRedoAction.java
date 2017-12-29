@@ -26,7 +26,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,11 +63,13 @@ public abstract class UndoRedoAction extends DumbAwareAction {
   }
 
   private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
-    if (editor == null && Registry.is("undo.use.for.swing.in.modal.context")) {
+    if (editor == null) {
       Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       JRootPane rootPane = UIUtil.getRootPane(component);
       JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
-      if (popup != null && popup.isModalContext()) {
+      boolean modalPopup = popup != null && popup.isModalContext();
+      boolean modalContext = Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
+      if (modalPopup || modalContext) {
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
     }

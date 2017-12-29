@@ -21,6 +21,7 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -39,7 +40,7 @@ import java.util.List;
  * @author yole
  */
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
-  private Boolean myHidden = null;
+  private Boolean myHidden;
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
 
   public BasePlatformRefactoringAction() {
@@ -53,7 +54,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       public void extensionRemoved(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
         myHidden = null;
       }
-    });
+    }, ApplicationManager.getApplication());
   }
 
   @Override

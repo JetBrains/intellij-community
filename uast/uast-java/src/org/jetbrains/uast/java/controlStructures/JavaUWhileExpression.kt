@@ -22,12 +22,12 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UWhileExpression
 
 class JavaUWhileExpression(
-        override val psi: PsiWhileStatement,
-        givenParent: UElement?
+  override val psi: PsiWhileStatement,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UWhileExpression {
-    override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-    override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
+  override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
+  override val body by lz { JavaConverter.convertOrEmpty(psi.body, this) }
 
-    override val whileIdentifier: UIdentifier
-        get() = UIdentifier(psi.getChildByRole(ChildRole.WHILE_KEYWORD), this)
+  override val whileIdentifier: UIdentifier
+    get() = UIdentifier(psi.getChildByRole(ChildRole.WHILE_KEYWORD), this)
 }

@@ -5,9 +5,10 @@ from enum import IntEnum
 if sys.version_info >= (3, 5):
     class HTTPStatus(IntEnum):
 
-        def __init__(self, *a) -> None:
-            self.phrase = ...  # type: str
-            self.description = ...  # type: str
+        def __init__(self, *a) -> None: ...
+
+        phrase = ...  # type: str
+        description = ...  # type: str
 
         CONTINUE = ...  # type: HTTPStatus
         SWITCHING_PROTOCOLS = ...  # type: HTTPStatus

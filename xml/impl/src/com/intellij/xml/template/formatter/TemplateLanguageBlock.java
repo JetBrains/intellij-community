@@ -20,6 +20,7 @@ import com.intellij.formatting.templateLanguages.BlockWithParent;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -66,7 +67,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     boolean mergeFromMarkup = false;
     for (PsiElement markupElement : markupElements) {
       if (TemplateFormatUtil.isErrorElement(markupElement)) {
-        throw new FragmentedTemplateException();
+        throw new FragmentedTemplateException((PsiErrorElement)markupElement);
       }
       if (!(FormatterUtil.containsWhiteSpacesOnly(markupElement.getNode()))) {
         Block rootBlock = myBuilder
@@ -91,6 +92,9 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     List<Block> result = new ArrayList<>();
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
+      if (containsFatalError(child.getPsi()) && markupBlocks.size() > 0) {
+        throw new FragmentedTemplateException();
+      }
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (!myBuilder.isMarkupLanguageElement(child.getPsi())) {
           addBlocksForNonMarkupChild(result, child);
@@ -117,6 +121,17 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
       }
     }
     return result;
+  }
+
+  /**
+   * Checks that the given element contains fatal syntax errors which mean that the whole fragment is damaged and no reliable formatting
+   * is possible, {@code false} by default but can be overridden in subclasses for specific logic/heuristics.
+   *
+   * @param element The element to check.
+   * @return True if the fragment can't be reliably processed.
+   */
+  public boolean containsFatalError(@NotNull PsiElement element) {
+    return false;
   }
 
   @Override

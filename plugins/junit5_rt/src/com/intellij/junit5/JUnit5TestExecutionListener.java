@@ -45,10 +45,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
-  private int myFinishCount;
+  private int myFinishCount = 0;
   private String myRootName;
-  private boolean mySuccessful;
-  private String myForkModifier = "";
+  private boolean mySuccessful = true;
+  private String myIdSuffix = "";
   private final Set<TestIdentifier> myActiveRoots = new HashSet<>();
 
   public JUnit5TestExecutionListener() {
@@ -64,13 +64,16 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return mySuccessful;
   }
 
-  public void initialize(boolean forked) {
-    mySuccessful = true;
-    myFinishCount = 0;
-    if (forked) {
-      myForkModifier = String.valueOf(System.currentTimeMillis());
+  public void initializeIdSuffix(boolean forked) {
+    if (forked && myIdSuffix.length() == 0) {
+      myIdSuffix = String.valueOf(System.currentTimeMillis());
     }
   }
+  
+  public void initializeIdSuffix(int i) {
+    myIdSuffix = i + "th"; 
+  }
+
 
   @Override
   public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
@@ -122,7 +125,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void dynamicTestRegistered(TestIdentifier testIdentifier) {
-    int i = 0;
+    myTestPlan.add(testIdentifier);
   }
 
   @Override
@@ -293,7 +296,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private String getId(TestIdentifier identifier) {
-    return identifier.getUniqueId() + myForkModifier;
+    return identifier.getUniqueId() + myIdSuffix;
   }
 
   private void sendTreeUnderRoot(TestPlan testPlan,
@@ -335,7 +338,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
 
     return parent
-      .map(identifier -> identifier.getUniqueId() + myForkModifier)
+      .map(identifier -> identifier.getUniqueId() + myIdSuffix)
       .orElse("0");
   }
 

@@ -16,26 +16,33 @@
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.ObjectArrays;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
+import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
+import com.jetbrains.extenstions.ContextAnchor;
+import com.jetbrains.extenstions.ModuleBasedContextAnchor;
+import com.jetbrains.extenstions.ProjectSdkContextAnchor;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
+import com.jetbrains.python.run.PyBrowseActionListener;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
 import com.jetbrains.reflection.ReflectionUtilsKt;
 import com.jetbrains.reflection.SimplePropertiesProvider;
@@ -61,6 +68,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    * Regex to convert additionalArgumentNames to "Additional Argument Names"
    */
   private static final Pattern CAPITAL_LETTER = Pattern.compile("(?=\\p{Upper})");
+
   private JPanel myPanel;
   /**
    * Panel for test targets
@@ -70,10 +78,6 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
    * Panel for environment options
    */
   private JPanel myOptionsPanel;
-  /**
-   * Test label
-   */
-  private JBLabel myLabel;
   /**
    * Panel for custom options, specific for runner and for "Additional Arguments"al;sop
    */
@@ -112,12 +116,14 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
                            @NotNull final PyAbstractTestConfiguration configuration) {
     myPathTarget = new TextFieldWithBrowseButton();
     final Project project = configuration.getProject();
-    myPathTarget.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFolderDescriptor()));
+
+    myPathTarget.addBrowseFolderListener(new PyBrowseActionListener(configuration));
     final TypeEvalContext context = TypeEvalContext.userInitiated(project, null);
     final ThreeState testClassRequired = configuration.isTestClassRequired();
 
 
-    myPythonTarget = new PySymbolFieldWithBrowseButton(module != null ? module : ModuleManager.getInstance(project).getModules()[0],
+    ContextAnchor contentAnchor = (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(project, configuration.getSdk()));
+    myPythonTarget = new PySymbolFieldWithBrowseButton(contentAnchor,
                                                        element -> {
                                                          if (element instanceof PsiDirectory) {
                                                            // Folder is always accepted because we can't be sure
@@ -135,6 +141,13 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   }
 
   /**
+   * Titles border used among test run configurations
+   */
+  public static void setBorderToPanel(@NotNull final JPanel panel, @NotNull final String title) {
+    panel.setBorder(IdeBorderFactory.createTitledBorder(title, false));
+  }
+
+  /**
    * @param configuration configuration to configure form on creation
    * @param customOptions additional option names this form shall support. Make sure your configuration has appropriate properties.
    */
@@ -144,7 +157,8 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     final PyTestSharedForm form = new PyTestSharedForm(configuration.getModule(), configuration);
 
     for (final TestTargetType testTargetType : TestTargetType.values()) {
-      final JBRadioButton button = new JBRadioButton(StringUtil.capitalize(testTargetType.name().toLowerCase(Locale.getDefault())));
+      final JBRadioButton button =
+        new JBRadioButton(StringUtil.capitalize(testTargetType.getCustomName().toLowerCase(Locale.getDefault())));
       button.setActionCommand(testTargetType.name());
       button.addActionListener(o -> form.onTargetTypeChanged());
       form.myButtonGroup.add(button);
@@ -157,9 +171,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     constraints.setFill(GridConstraints.FILL_BOTH);
     form.myOptionsPanel.add(form.myOptionsForm.getMainPanel(), constraints);
 
-
-    form.myLabel.setText(configuration.getTestFrameworkName());
-
+    setBorderToPanel(form.myPanel, configuration.getTestFrameworkName());
 
     form.addCustomOptions(
       ObjectArrays.concat(customOptions, new CustomOption(PyTestsSharedKt.getAdditionalArgumentsPropertyName(), TestTargetType.values()))
@@ -177,29 +189,28 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
       final JBTextField textField = new JBTextField();
       optionValueFields.put(option.myName, textField);
     }
-    myCustomOptionsPanel.setLayout(new GridLayoutManager(customOptions.length, 2));
 
-    for (int i = 0; i < customOptions.length; i++) {
-      final CustomOption option = customOptions[i];
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.insets = JBUI.insets(3);
+    constraints.gridy = 0;
+    constraints.anchor = GridBagConstraints.LINE_START;
+
+    for (final CustomOption option : customOptions) {
       final JBTextField textField = optionValueFields.get(option.myName);
-
-      final GridConstraints labelConstraints = new GridConstraints();
-      labelConstraints.setFill(GridConstraints.FILL_VERTICAL);
-      labelConstraints.setRow(i);
-      labelConstraints.setColumn(0);
-      labelConstraints.setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_SHRINK);
-
-      final JLabel label = new JLabel(StringUtil.capitalize(CAPITAL_LETTER.matcher(option.myName).replaceAll(" ")));
+      final JLabel label = new JLabel(StringUtil.capitalize(CAPITAL_LETTER.matcher(option.myName).replaceAll(" ") + ':'));
       label.setHorizontalAlignment(SwingConstants.LEFT);
-      myCustomOptionsPanel.add(label, labelConstraints);
 
+      constraints.fill = GridBagConstraints.NONE;
+      constraints.gridx = 0;
+      constraints.weightx = 0;
+      myCustomOptionsPanel.add(label, constraints);
 
-      final GridConstraints textConstraints = new GridConstraints();
-      textConstraints.setFill(GridConstraints.FILL_BOTH);
-      textConstraints.setRow(i);
-      textConstraints.setColumn(1);
-      textConstraints.setHSizePolicy(GridConstraints.SIZEPOLICY_CAN_GROW);
-      myCustomOptionsPanel.add(textField, textConstraints);
+      constraints.gridx = 1;
+      constraints.weightx = 1.0;
+      constraints.fill = GridBagConstraints.HORIZONTAL;
+      myCustomOptionsPanel.add(textField, constraints);
+
+      constraints.gridy++;
 
       myCustomOptions.put(option.myName, new OptionHolder(option, label, textField));
     }

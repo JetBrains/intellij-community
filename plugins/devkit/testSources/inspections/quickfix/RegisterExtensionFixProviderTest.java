@@ -23,7 +23,6 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 1/20/12
  */
 @TestDataPath("$CONTENT_ROOT/testData/inspections/registerExtensionFix")
 public class RegisterExtensionFixProviderTest extends LightCodeInsightFixtureTestCase {

@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -121,7 +122,9 @@ class SlowerTypeConversions implements Runnable {
       if (PsiType.VOID.equals(type) || PsiType.NULL.equals(type)) return null;
       if (method.getParameterList().getParametersCount() > 0) return null;
       return method.getName() + "(" +
-             getSpace(CodeStyleSettingsManager.getSettings(method.getProject()).SPACE_WITHIN_METHOD_CALL_PARENTHESES) + ")"; }
+             getSpace(CodeStyleSettingsManager.getSettings(method.getProject())
+                        .getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_METHOD_CALL_PARENTHESES) + ")";
+    }
     else if (o instanceof PsiVariable) {
       return ((PsiVariable)o).getName();
     }

@@ -171,6 +171,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
               MavenRunnerParameters params = new MavenRunnerParameters(
                 true,
                 mavenProject.getDirectory(),
+                mavenProject.getFile().getName(),
                 ParametersListUtil.parse(task.getGoal()),
                 explicitProfiles.getEnabledProfiles(),
                 explicitProfiles.getDisabledProfiles());

@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/22/12
  */
 public class SimpleProtobufClient<T extends ProtobufResponseHandler> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.client.SimpleProtobufClient");

@@ -32,6 +32,8 @@ import java.io.File
 import java.io.IOException
 import java.net.URL
 import javax.swing.UIManager
+import java.nio.file.Files
+import java.nio.file.Paths
 
 object UpdateInstaller {
   private val patchesUrl: String
@@ -134,7 +136,7 @@ object UpdateInstaller {
 
     val args = arrayListOf<String>()
 
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
       val elevator = PathManager.findBinFile("elevator.exe")  // "launcher" depends on "elevator"
       if (launcher != null && elevator != null && launcher.canExecute() && elevator.canExecute()) {

@@ -32,7 +32,7 @@ public class DeleteAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorWriteActionHandler {
+  public static class Handler extends EditorWriteActionHandler {
     public Handler() {
       super(true);
     }

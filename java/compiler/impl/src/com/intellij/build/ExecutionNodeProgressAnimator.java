@@ -16,21 +16,22 @@
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  */
 public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   private static final int FRAMES_COUNT = 8;
-  private static final int MOVIE_TIME = 1600;
+  private static final int MOVIE_TIME = 1200;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
 
   public static final Icon[] FRAMES = new Icon[FRAMES_COUNT];
@@ -38,12 +39,13 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   private long myLastInvocationTime = -1;
 
   private Alarm myAlarm;
-  private ExecutionNode myCurrentNode;
-  private AbstractTreeBuilder myTreeBuilder;
+  private List<ExecutionNode> myNodes = new SmartList<>();
+  private BuildTreeConsoleView myTreeView;
 
-  public ExecutionNodeProgressAnimator(AbstractTreeBuilder builder) {
-    Disposer.register(builder, this);
-    init(builder);
+  public ExecutionNodeProgressAnimator(BuildTreeConsoleView treeConsoleView) {
+    Disposer.register(treeConsoleView, this);
+    myAlarm = new Alarm();
+    myTreeView = treeConsoleView;
   }
 
   static {
@@ -65,48 +67,42 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
     return FRAMES[getCurrentFrameIndex()];
   }
 
-  /**
-   * Initializes animator: creates alarm and sets tree builder
-   *
-   * @param treeBuilder tree builder
-   */
-  protected void init(final AbstractTreeBuilder treeBuilder) {
-    myAlarm = new Alarm();
-    myTreeBuilder = treeBuilder;
-  }
-
-  public SimpleNode getCurrentNode() {
-    return myCurrentNode;
-  }
-
   public void run() {
-    if (myCurrentNode != null) {
+    if (!myNodes.isEmpty()) {
       final long time = System.currentTimeMillis();
       // optimization:
       // we shouldn't repaint if this frame was painted in current interval
       if (time - myLastInvocationTime >= FRAME_TIME) {
-        repaintSubTree();
+        repaintTree();
         myLastInvocationTime = time;
       }
     }
     scheduleRepaint();
   }
 
-  public void setCurrentNode(@Nullable final ExecutionNode node) {
-    myCurrentNode = node;
+  public void addNode(@Nullable final ExecutionNode currentNode) {
+    myNodes.add(currentNode);
+  }
+
+  public void startMovie() {
     scheduleRepaint();
   }
 
   public void stopMovie() {
-    repaintSubTree();
-    setCurrentNode(null);
+    repaintTree();
+
+    // running nodes likely will not receive stop event yet after stop build event
+    for (ExecutionNode node : myNodes) {
+      node.setIconProvider(() -> AllIcons.Process.State.YellowStr);
+      node.setEndTime(System.currentTimeMillis());
+    }
+    myNodes.clear();
     cancelAlarm();
   }
 
-
   public void dispose() {
-    myTreeBuilder = null;
-    myCurrentNode = null;
+    myTreeView = null;
+    myNodes.clear();
     cancelAlarm();
   }
 
@@ -117,20 +113,23 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
     }
   }
 
-  private void repaintSubTree() {
-    if (myTreeBuilder != null && myCurrentNode != null && myCurrentNode.isRunning()) {
-      myTreeBuilder.queueUpdateFrom(myCurrentNode, false, false);
+  private void repaintTree() {
+    if (myTreeView == null || myTreeView.isDisposed()) return;
+
+    for (Iterator<ExecutionNode> iterator = myNodes.iterator(); iterator.hasNext(); ) {
+      ExecutionNode node = iterator.next();
+      myTreeView.scheduleUpdate(node);
+      if (!node.isRunning()) {
+        iterator.remove();
+      }
     }
   }
-
 
   private void scheduleRepaint() {
     if (myAlarm == null) {
       return;
     }
     myAlarm.cancelAllRequests();
-    if (myCurrentNode != null) {
-      myAlarm.addRequest(this, FRAME_TIME);
-    }
+    myAlarm.addRequest(this, FRAME_TIME);
   }
 }

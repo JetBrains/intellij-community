@@ -50,7 +50,7 @@ public class IdTableBuilding {
   private static final Map<FileType, IdIndexer> ourIdIndexers = new HashMap<>();
 
   @Deprecated
-  public static void registerIdIndexer(@NotNull FileType fileType, IdIndexer indexer) {
+  public static void registerIdIndexer(@NotNull FileType fileType, FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
   }
 

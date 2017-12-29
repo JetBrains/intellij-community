@@ -25,9 +25,13 @@ import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -40,7 +44,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +61,11 @@ import java.util.List;
 public class ScratchProjectViewPane extends ProjectViewPane {
 
   public static final String ID = "Scratches";
+
+  public static boolean isScratchesMergedIntoProjectTab() {
+    return (Registry.is("ide.scratch.in.project.view") || PlatformUtils.isDatabaseIDE()) &&
+           !ApplicationManager.getApplication().isUnitTestMode();
+  }
 
   public ScratchProjectViewPane(Project project) {
     super(project);
@@ -158,7 +167,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   @Override
   public boolean isInitiallyVisible() {
-    return !Registry.is("ide.scratch.in.project.view");
+    return !isScratchesMergedIntoProjectTab();
   }
 
   @NotNull
@@ -187,7 +196,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyProjectNode extends ProjectViewNode<String> {
     MyProjectNode(Project project, ViewSettings settings) {
-      super(project, "Scratches and Consoles", settings);
+      super(project, ScratchesNamedScope.NAME, settings);
     }
 
     @Override
@@ -202,7 +211,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       for (RootType rootId : RootType.getAllRootIds()) {
         if (rootId.isHidden()) continue;
         MyRootNode e = new MyRootNode(getProject(), rootId, getSettings());
-        if (e.getDirectory() == null) continue;
+        if (e.isEmpty()) continue;
         list.add(e);
       }
       return list;
@@ -211,7 +220,15 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     protected void update(PresentationData presentation) {
       presentation.setPresentableText(getValue());
-      presentation.setIcon(AllIcons.Nodes.Folder);
+      presentation.setIcon(AllIcons.General.ProjectTab);
+    }
+
+    @Override
+    public boolean canRepresent(Object element) {
+      PsiElement item = element instanceof PsiElement ? (PsiElement)element : null;
+      VirtualFile virtualFile = item == null ? null : PsiUtilCore.getVirtualFile(item);
+      if (virtualFile == null) return false;
+      return Comparing.equal(virtualFile.getPath(), FileUtil.toSystemIndependentName(PathManager.getScratchPath()));
     }
   }
 
@@ -241,8 +258,21 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected void update(PresentationData presentation) {
-      presentation.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
+      presentation.setIcon(AllIcons.Nodes.Folder);
       presentation.setPresentableText(getValue().getDisplayName());
+    }
+
+    @Override
+    public boolean canRepresent(Object element) {
+      return Comparing.equal(getDirectory(), element);
+    }
+
+    public boolean isEmpty() {
+      PsiDirectory directory = getDirectory();
+      if (directory == null) return true;
+      RootType rootType = ObjectUtils.notNull(getValue());
+      Project project = directory.getProject();
+      return directory.processChildren(element -> rootType.isIgnored(project, element.getVirtualFile()));
     }
   }
 

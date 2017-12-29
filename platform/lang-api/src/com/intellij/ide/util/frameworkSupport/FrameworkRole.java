@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.10.13
  */
 public class FrameworkRole {
 

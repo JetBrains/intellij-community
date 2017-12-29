@@ -21,7 +21,6 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
 
 public abstract class InstructionBaseImpl implements Instruction {
@@ -44,13 +43,13 @@ public abstract class InstructionBaseImpl implements Instruction {
 
   @NotNull
   @Override
-  public final Collection<Instruction> allSucc() {
+  public final List<Instruction> allSucc() {
     return mySucc;
   }
 
   @NotNull
   @Override
-  public final Collection<Instruction> allPred() {
+  public final List<Instruction> allPred() {
     return myPred;
   }
 

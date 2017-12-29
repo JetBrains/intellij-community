@@ -29,8 +29,6 @@ import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
- * Date: 11.06.2009
- * Time: 16:25:12
  */
 public class ScriptSupport {
   private final Script script;

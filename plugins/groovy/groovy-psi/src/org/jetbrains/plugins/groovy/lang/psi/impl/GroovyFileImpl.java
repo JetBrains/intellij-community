@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
@@ -19,20 +7,16 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiFileEx;
-import com.intellij.psi.impl.source.resolve.SymbolCollectingProcessor.ResultWithContext;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MostlySingularMultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -41,8 +25,6 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -50,20 +32,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyImportHelper.ImportKind;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrPackageDefinitionStub;
-import org.jetbrains.plugins.groovy.lang.resolve.ImplicitImportsKt;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
-import org.jetbrains.plugins.groovy.lang.resolve.PackageSkippingProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
+import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImports;
 
-import java.util.concurrent.ConcurrentMap;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.processLocals;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessPackages;
+import static org.jetbrains.plugins.groovy.lang.resolve.bindings.BindingsKt.processBindings;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -76,21 +56,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
 
   private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
-  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = () -> {
-    final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
-    return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
-  };
-
   private volatile Boolean myScript;
   private volatile GroovyScriptClass myScriptClass;
   private volatile GrParameter mySyntheticArgsParameter;
   private volatile PsiElement myContext;
-  private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
     super(viewProvider, GroovyLanguage.INSTANCE);
-    myResolveCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(
-      () -> CachedValueProvider.Result.create(buildDeclarationCache(), PsiModificationTracker.MODIFICATION_COUNT, this), false);
   }
 
   @Override
@@ -135,100 +107,28 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-
-    if (isPhysical() && !isScript() &&
-        (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
-      return processCachedDeclarations(processor, state, myResolveCache.getValue());
-    }
-
-    return processDeclarationsNoGuess(processor, state, lastParent, place);
-  }
-
-  private static boolean processCachedDeclarations(@NotNull PsiScopeProcessor processor,
-                                                   @NotNull ResolveState state,
-                                                   MostlySingularMultiMap<String, ResultWithContext> cache) {
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
-      String name = ResolveUtil.getNameHint(each);
-      Processor<ResultWithContext> cacheProcessor = res -> each.execute(
-        res.getElement(), state.put(ClassHint.RESOLVE_CONTEXT, res.getFileContext())
-      );
-      boolean result = name != null ? cache.processForKey(name, cacheProcessor) : cache.processAllValues(cacheProcessor);
-      if (!result) return false;
-    }
-    return true;
-  }
-
-  @NotNull
-  private MostlySingularMultiMap<String, ResultWithContext> buildDeclarationCache() {
-    MostlySingularMultiMap<String, ResultWithContext> results = new MostlySingularMultiMap<>();
-    processDeclarationsNoGuess(new BaseScopeProcessor() {
-      @Override
-      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (element instanceof PsiNamedElement) {
-          PsiElement context = state.get(ClassHint.RESOLVE_CONTEXT);
-          String name = getDeclarationName((PsiNamedElement)element, context);
-          if (name != null) {
-            results.add(name, new ResultWithContext((PsiNamedElement)element, context));
-          }
-        }
-        return true;
-      }
-
-      private String getDeclarationName(@NotNull PsiNamedElement element, @Nullable PsiElement context) {
-        String name = context instanceof GrImportStatement ? ((GrImportStatement)context).getImportedName() : null;
-        return name != null ? name : element.getName();
-      }
-    }, ResolveState.initial(), null, this);
-    return results;
-  }
-
-  private boolean processDeclarationsNoGuess(@NotNull PsiScopeProcessor processor,
-                                             @NotNull ResolveState state,
-                                             @Nullable PsiElement lastParent, @NotNull PsiElement place) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
-    if (myContext != null) {
-      if (ResolveUtil.shouldProcessProperties(classHint)) {
-        if (!processChildrenScopes(processor, state, lastParent, place)) return false;
+    if (getStub() == null) {
+      if (!(lastParent instanceof GrMember)) {
+        // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
+        if (!processLocals(this, processor, state, lastParent, place)) return false;
       }
+      if (!processBindings(this, processor, state, lastParent, place)) return false;
+    }
+
+    if (myContext != null) {
       return true;
     }
 
-    boolean processClasses = ResolveUtil.shouldProcessClasses(classHint);
-
-    GrImportStatement[] importStatements = getImportStatements();
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ALIAS, false)) return false;
-
-    GroovyScriptClass scriptClass = getScriptClass();
-    if (scriptClass != null && StringUtil.isJavaIdentifier(scriptClass.getName())) {
-
-      if (!(lastParent instanceof GrTypeDefinition)) {
-        if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
-      }
-
-      if (processClasses) {
-        if (!ResolveUtil.processElement(processor, scriptClass, state)) return false;
-      }
+    final GroovyScriptClass scriptClass = getScriptClass();
+    if (scriptClass != null && !(lastParent instanceof GrTypeDefinition)) {
+      if (!ResolveUtil.processClassDeclarations(scriptClass, processor, state, lastParent, place)) return false;
     }
 
-    if (processClasses) {
-      for (GrTypeDefinition definition : getTypeDefinitions()) {
-        if (!ResolveUtil.processElement(processor, definition, state)) return false;
-      }
-    }
+    if (!super.processDeclarations(processor, state, lastParent, place)) return false;
 
-    if (ResolveUtil.shouldProcessProperties(classHint)) {
-      if (!processChildrenScopes(processor, state, lastParent, place)) return false;
-    }
-
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ALIAS, true)) return false;
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.SIMPLE, null)) return false;
-    if (!processDeclarationsInPackage(processor, state, lastParent, place)) return false;
-    if (!processImports(processor, state, lastParent, place, importStatements, ImportKind.ON_DEMAND, null)) return false;
-    if (!ImplicitImportsKt.processImplicitImports(processor, state, lastParent, place, this)) return false;
-
-    if (ResolveUtil.shouldProcessPackages(classHint)) {
-
+    if (shouldProcessPackages(processor)) {
       NameHint nameHint = processor.getHint(NameHint.KEY);
       String expectedName = nameHint != null ? nameHint.getName(state) : null;
 
@@ -258,69 +158,9 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return true;
   }
 
-  public boolean isInScriptBody(PsiElement lastParent, PsiElement place) {
-    return isScript() &&
-        !(lastParent instanceof GrTypeDefinition) &&
-        PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null;
-  }
-
-  protected boolean processImports(PsiScopeProcessor processor,
-                                   @NotNull ResolveState state,
-                                   @Nullable PsiElement lastParent,
-                                   @NotNull PsiElement place,
-                                   @NotNull GrImportStatement[] importStatements,
-                                   @NotNull ImportKind kind,
-                                   @Nullable Boolean processStatic) {
-    return GroovyImportHelper.processImports(state, lastParent, place, processor, importStatements, kind, processStatic);
-  }
-
-  @NotNull
-  public ConcurrentMap<String, GrBindingVariable> getBindings() {
-    return CachedValuesManager.getCachedValue(this, BINDING_PROVIDER);
-  }
-
   @Override
   public boolean isTopControlFlowOwner() {
     return true;
-  }
-
-  private boolean processDeclarationsInPackage(@NotNull PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @Nullable PsiElement lastParent,
-                                               @NotNull PsiElement place) {
-    if (ResolveUtil.shouldProcessClasses(processor.getHint(ElementClassHint.KEY))) {
-      PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(getPackageName());
-      if (aPackage != null) {
-        return aPackage.processDeclarations(new PackageSkippingProcessor(processor), state, lastParent, place);
-      }
-    }
-    return true;
-  }
-
-  private boolean processChildrenScopes(@NotNull PsiScopeProcessor processor,
-                                        @NotNull ResolveState state,
-                                        @Nullable PsiElement lastParent,
-                                        @NotNull PsiElement place) {
-    final StubElement<?> stub = getStub();
-    if (stub != null) {
-      return true; // only local usages are traversed here. Having a stub means the clients are outside and won't see our variables
-    }
-
-    PsiElement run = lastParent == null ? getLastChild() : lastParent.getPrevSibling();
-    while (run != null) {
-      if (shouldProcess(lastParent, run) &&
-          !run.processDeclarations(processor, state, null, place)) {
-        return false;
-      }
-      run = run.getPrevSibling();
-    }
-
-    return true;
-  }
-
-  private static boolean shouldProcess(@Nullable PsiElement lastParent, @NotNull PsiElement run) {
-    return run instanceof GrAssignmentExpression || run instanceof GrTupleAssignmentExpression || // binding variables
-           run instanceof GrVariableDeclaration && !(lastParent instanceof GrMember);             // local variables
   }
 
   @Override
@@ -551,6 +391,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     // 2. If place is under a variable then @BaseScript or @Field may be changed,
     //    which actually is a change in Java Structure
     return !isScript() || PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, GrVariableDeclaration.class) != null;
+  }
+
+  protected GroovyFileImports getImports() {
+    return GroovyImports.getImports(this);
   }
 
   @Override

@@ -38,7 +38,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * Date: 04-Apr-2008
  */
 class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private final PsiElement myStatement;

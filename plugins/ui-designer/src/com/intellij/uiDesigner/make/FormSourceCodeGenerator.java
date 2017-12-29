@@ -108,6 +108,7 @@ public final class FormSourceCodeGenerator {
   public void generate(final VirtualFile formFile) {
     myNeedLoadLabelText = false;
     myNeedLoadButtonText = false;
+    myGetFontMethod = null;
 
     final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
     if (module == null) {

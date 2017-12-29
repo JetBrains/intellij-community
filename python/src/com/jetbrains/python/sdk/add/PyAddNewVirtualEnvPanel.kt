@@ -15,57 +15,66 @@
  */
 package com.jetbrains.python.sdk.add
 
-import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.execution.ExecutionException
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.NullableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.packaging.PyPackageService
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import icons.PythonIcons
-import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.Icon
+import javax.swing.event.DocumentEvent
 
 /**
  * @author vlan
  */
 class PyAddNewVirtualEnvPanel(private val project: Project?,
                               private val existingSdks: List<Sdk>,
-                              private val newProjectPath: String?) : PyAddSdkPanel() {
-  companion object {
-    private const val VIRTUALENV_ROOT_DIR_MACRO_NAME = "VIRTUALENV_ROOT_DIR"
-  }
+                              newProjectPath: String?) : PyAddNewEnvPanel() {
+  override val envName = "Virtualenv"
+
+  override var newProjectPath: String? = newProjectPath
+    set(value) {
+      field = value
+      pathField.text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
+    }
 
   val path: String
     get() = pathField.text.trim()
 
-  override val panelName = "New virtual environment"
+  override val panelName = "New environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
-  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null)
+  private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
+    val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
+    val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
+    selectedSdk = when {
+      detectedPreferredSdk != null -> detectedPreferredSdk
+      preferredSdkPath != null -> PyDetectedSdk(preferredSdkPath).apply {
+        childComponent.insertItemAt(this, 0)
+      }
+      else -> items.getOrNull(0)
+    }
+  }
   private val pathField = TextFieldWithBrowseButton().apply {
+    val defaultBasePath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
     val parentPath = PathUtil.getParentPath(defaultBasePath)
     val fileName = PathUtil.getFileName(defaultBasePath)
     text = FileUtil.findSequentNonexistentFile(File(parentPath), fileName, "").path
@@ -79,7 +88,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
       .addLabeledComponent("Location:", pathField)
-      .addLabeledComponent("Base Interpreter:", baseSdkField)
+      .addLabeledComponent("Base interpreter:", baseSdkField)
       .addComponent(inheritSitePackagesField)
       .addComponent(makeSharedField)
       .panel
@@ -92,10 +101,6 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       .filterNotNull()
 
   override fun getOrCreateSdk(): Sdk? {
-    return if (newProjectPath != null) sdk else createSdk()
-  }
-
-  private fun createSdk(): Sdk? {
     val root = pathField.text
     val task = object : Task.WithResult<String, ExecutionException>(project, "Creating Virtual Environment", false) {
       override fun compute(indicator: ProgressIndicator): String {
@@ -112,24 +117,30 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       sdk.associateWithProject(project, newProjectPath != null)
     }
     excludeDirectoryFromProject(root, project)
-    defaultBasePath = pathField.text
+    with(PySdkSettings.instance) {
+      setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
+      preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+    }
     return sdk
   }
 
-  override val sdk: Sdk?
-    get() {
-      val baseName = baseSdkField.selectedSdk?.homePath?.let { PythonSdkType.suggestBaseSdkName(it) }
-      val title = when {
-        baseName != null -> "New ${baseName} virtual environment"
-        else -> "New virtual environment"
+  override fun addChangeListener(listener: Runnable) {
+    pathField.textField.document.addDocumentListener(object: DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent?) {
+        listener.run()
       }
-      return PyLazySdk(title, PythonIcons.Python.Virtualenv, NullableComputable { createSdk() })
-    }
+    })
+    baseSdkField.childComponent.addItemListener { listener.run() }
+  }
 
   private fun excludeDirectoryFromProject(path: String, project: Project?) {
-    val currentProject = project ?: findProjectFromFocus() ?: return
+    val possibleProjects = if (project != null) listOf(project) else ProjectManager.getInstance().openProjects.asList()
     val rootFile = StandardFileSystems.local().refreshAndFindFileByPath(path) ?: return
-    val module = ModuleUtil.findModuleForFile(rootFile, currentProject) ?: return
+    val module = possibleProjects
+                   .asSequence()
+                   .map { ModuleUtil.findModuleForFile(rootFile, it) }
+                   .filterNotNull()
+                   .firstOrNull() ?: return
     val model = ModuleRootManager.getInstance(module).modifiableModel
     val contentEntry = model.contentEntries.firstOrNull {
       val contentFile = it.file
@@ -140,44 +151,6 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       model.commit()
     }
   }
-
-  private fun findProjectFromFocus(): Project? =
-    CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContextFromFocus.resultSync)
-
-  private var defaultBasePath: @SystemDependent String
-    get() {
-      val pathMap = ExpandMacroToPathMap().apply {
-        addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectBasePath)
-        addMacroExpand(VIRTUALENV_ROOT_DIR_MACRO_NAME, defaultVirtualEnvRoot)
-      }
-      val defaultPath = when {
-        defaultVirtualEnvRoot != userHome -> defaultVirtualEnvRoot
-        else -> "$${PathMacroUtil.PROJECT_DIR_MACRO_NAME}$/venv"
-      }
-      val rawSavedPath = PyPackageService.getInstance().getVirtualEnvBasePath() ?: defaultPath
-      val savedPath = pathMap.substitute(rawSavedPath, true)
-      val path = when {
-        FileUtil.isAncestor(projectBasePath, savedPath, true) -> savedPath
-        else -> "$savedPath/${PathUtil.getFileName(projectBasePath)}"
-      }
-      return FileUtil.toSystemDependentName(path)
-    }
-    set(value) {
-      val path = FileUtil.toSystemIndependentName(value)
-      val pathMap = ReplacePathToMacroMap().apply {
-        addMacroReplacement(projectBasePath, PathMacroUtil.PROJECT_DIR_MACRO_NAME)
-        addMacroReplacement(defaultVirtualEnvRoot, VIRTUALENV_ROOT_DIR_MACRO_NAME)
-      }
-      val pathToSave = when {
-        FileUtil.isAncestor(projectBasePath, path, true) -> path.trimEnd { !it.isLetter() }
-        else -> PathUtil.getParentPath(path)
-      }
-      val substituted = pathMap.substitute(pathToSave, true)
-      PyPackageService.getInstance().setVirtualEnvBasePath(substituted)
-    }
-
-  private val defaultVirtualEnvRoot: @SystemIndependent String
-    get() = VirtualEnvSdkFlavor.getDefaultLocation()?.path ?: userHome
 
   private val projectBasePath: @SystemIndependent String
     get() = newProjectPath ?: project?.basePath ?: userHome

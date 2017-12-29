@@ -148,7 +148,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
       ((JComboBox)component).setModel(new DefaultComboBoxModel(model));
     }
     else {
-      ((JBComboBoxTableCellEditorComponent)component).setOptions(model);
+      ((JBComboBoxTableCellEditorComponent)component).setOptions((Object[])model);
     }
   }
 

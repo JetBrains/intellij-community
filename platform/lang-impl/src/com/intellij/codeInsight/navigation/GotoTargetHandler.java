@@ -116,7 +116,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       gotoData.renderers.put(eachTarget, createRenderer(gotoData, eachTarget));
     }
 
-    final String name = ((PsiNamedElement)gotoData.source).getName();
+    final String name = ((NavigationItem)gotoData.source).getName();
     final String title = getChooserTitle(gotoData.source, name, targets.length, finished);
 
     if (shouldSortTargets()) {
@@ -210,7 +210,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   }
 
   @NotNull
-  private PsiElementListCellRenderer getRenderer(Object value, @NotNull GotoData gotoData) {
+  protected PsiElementListCellRenderer getRenderer(Object value, @NotNull GotoData gotoData) {
     PsiElementListCellRenderer renderer = gotoData.getRenderer(value);
     return renderer != null ? renderer : myDefaultTargetElementRenderer;
   }

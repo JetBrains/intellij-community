@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -249,7 +248,8 @@ public abstract class VcsTreeModelData {
       }
     }
 
-    return ListSelection.create(entries, selection);
+    int index = ContainerUtil.indexOfIdentity(entries, selection);
+    return ListSelection.createAt(entries, index);
   }
 
 
@@ -275,7 +275,7 @@ public abstract class VcsTreeModelData {
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       if (project == null) return null;
-      return ChangesUtil.getNavigatableArray(project, mapToVirtualFile(selected(tree)));
+      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(selected(tree)));
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
       return mapToIoFile(selected(tree)).toArray(File[]::new);
@@ -286,18 +286,13 @@ public abstract class VcsTreeModelData {
 
   @NotNull
   private static Stream<Change> mapToChange(@NotNull VcsTreeModelData data) {
-    return data.userObjectsStream().filter(it -> it instanceof Change)
-      .map(entry -> {
-        if (entry instanceof Change) {
-          return (Change)entry;
-        }
-        return null;
-      })
-      .filter(Objects::nonNull);
+    return data.userObjectsStream()
+      .filter(it -> it instanceof Change)
+      .map(entry -> (Change)entry);
   }
 
   @NotNull
-  private static Stream<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
+  private static Stream<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
     return data.userObjectsStream()
       .flatMap(entry -> {
         if (entry instanceof Change) {
@@ -313,13 +308,28 @@ public abstract class VcsTreeModelData {
   }
 
   @NotNull
+  private static Stream<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
+    return data.userObjectsStream()
+      .map(entry -> {
+        if (entry instanceof Change) {
+          FilePath path = ChangesUtil.getAfterPath((Change)entry);
+          return path != null ? path.getVirtualFile() : null;
+        }
+        else if (entry instanceof VirtualFile) {
+          return (VirtualFile)entry;
+        }
+        return null;
+      })
+      .filter(Objects::nonNull);
+  }
+
+  @NotNull
   private static Stream<File> mapToIoFile(@NotNull VcsTreeModelData data) {
     return data.userObjectsStream()
       .map(entry -> {
         if (entry instanceof Change) {
-          ContentRevision afterRevision = ((Change)entry).getAfterRevision();
-          if (afterRevision == null) return null;
-          return afterRevision.getFile().getIOFile();
+          FilePath path = ChangesUtil.getAfterPath((Change)entry);
+          return path != null ? path.getIOFile() : null;
         }
         return null;
       })

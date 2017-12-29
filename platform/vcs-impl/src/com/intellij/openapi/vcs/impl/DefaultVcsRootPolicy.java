@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +31,7 @@ import java.util.Collection;
  */
 public abstract class DefaultVcsRootPolicy {
   public static DefaultVcsRootPolicy getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, DefaultVcsRootPolicy.class);
+    return ServiceManager.getService(project, DefaultVcsRootPolicy.class);
   }
 
   @NotNull

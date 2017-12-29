@@ -17,7 +17,6 @@ package org.jetbrains.ether;
 
 /**
  * @author: db
- * Date: 04.10.11
  */
 public class MethodModifierTest extends IncrementalTestCase {
   public MethodModifierTest() {

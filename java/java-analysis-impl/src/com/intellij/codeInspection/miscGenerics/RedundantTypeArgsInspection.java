@@ -184,7 +184,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
+      return InspectionsBundle.message("inspection.redundant.type.remove.methodref.quickfix");
     }
 
     @Override

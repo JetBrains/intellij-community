@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
@@ -23,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -71,6 +74,20 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new IntroduceVariableFix(true);
   }
 
+  protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
+    if (!(element instanceof PsiExpression)) return null;
+    if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
+
+    final PsiExpression expression = (PsiExpression)element;
+    while (element.getParent() instanceof PsiExpression) {
+      element = element.getParent();
+    }
+    final SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expression, value);
+    // simplify intention already active
+    if (!fix.isAvailable() || SimplifyBooleanExpressionFix.canBeSimplified((PsiExpression)element)) return null;
+    return fix;
+  }
+
   private static boolean isVolatileFieldReference(PsiExpression qualifier) {
     PsiElement target = qualifier instanceof PsiReferenceExpression ? ((PsiReferenceExpression)qualifier).resolve() : null;
     return target instanceof PsiField && ((PsiField)target).hasModifierProperty(PsiModifier.VOLATILE);
@@ -83,6 +100,14 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
     fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
     return fixes;
+  }
+
+  @Override
+  protected LocalQuickFix createRemoveAssignmentFix(PsiAssignmentExpression assignment) {
+    if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
+      return null;
+    }
+    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
   }
 
   @NotNull

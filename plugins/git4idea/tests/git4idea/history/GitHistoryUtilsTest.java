@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
@@ -31,6 +30,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
+import git4idea.config.GitVersion;
 import git4idea.history.browser.SHAHash;
 import git4idea.test.GitSingleRepoTest;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +45,7 @@ import static com.intellij.openapi.vcs.Executor.*;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.USER_EMAIL;
 import static git4idea.test.GitTestUtil.USER_NAME;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests for low-level history methods in GitHistoryUtils.
@@ -60,16 +61,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    try {
-      initTest();
-    }
-    catch (Exception e) {
-      super.tearDown();
-      throw e;
-    }
-  }
 
-  private void initTest() throws IOException {
     myRevisions = new ArrayList<>(7);
     myRevisionsAfterRename = new ArrayList<>(4);
 
@@ -101,12 +93,12 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     // initial
     int commitIndex = 0;
     File afile = touch("a.txt", contents[commitIndex]);
-    addCommit(commitMessages[commitIndex]);
+    addCommit(repo, commitMessages[commitIndex]);
     commitIndex++;
 
     // modify
     overwrite(afile, contents[commitIndex]);
-    addCommit(commitMessages[commitIndex]);
+    addCommit(repo, commitMessages[commitIndex]);
     int RENAME_COMMIT_INDEX = commitIndex;
     commitIndex++;
 
@@ -114,42 +106,36 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     File dir = mkdir("dir");
     bfile = new File(dir.getPath(), "b.txt");
     assertFalse("File " + bfile + " shouldn't have existed", bfile.exists());
-    mv(afile, bfile);
+    mv(repo, afile, bfile);
     assertTrue("File " + bfile + " was not created by mv command", bfile.exists());
-    commit(commitMessages[commitIndex]);
+    commit(repo, commitMessages[commitIndex]);
     commitIndex++;
 
     // modifications
     for (int i = 0; i < 4; i++) {
       overwrite(bfile, contents[commitIndex]);
-      addCommit(commitMessages[commitIndex]);
+      addCommit(repo, commitMessages[commitIndex]);
       commitIndex++;
     }
 
     // Retrieve hashes and timestamps
-    String[] revisions = log("--pretty=format:%H#%at#%P", "-M").split("\n");
+    String[] revisions = log(repo, "--pretty=format:%H#%at#%P", "-M").split("\n");
     assertEquals("Incorrect number of revisions", commitMessages.length, revisions.length);
     // newer revisions go first in the log output
     for (int i = revisions.length - 1, j = 0; i >= 0; i--, j++) {
       String[] details = revisions[j].trim().split("#");
-      String[] parents;
-      if (details.length > 2) {
-        parents = details[2].split(" ");
-      }
-      else {
-        parents = ArrayUtil.EMPTY_STRING_ARRAY;
-      }
-      final GitTestRevision revision = new GitTestRevision(details[0], details[1], parents, commitMessages[i],
-                                                           USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null,
-                                                           contents[i]);
+      GitTestRevision revision = new GitTestRevision(details[0], details[1], commitMessages[i],
+                                                     USER_NAME, USER_EMAIL, USER_NAME, USER_EMAIL, null,
+                                                     contents[i]);
       myRevisions.add(revision);
       if (i > RENAME_COMMIT_INDEX) {
         myRevisionsAfterRename.add(revision);
       }
     }
 
-    assertEquals(myRevisionsAfterRename.size(), 5);
-    cd(myProjectPath);
+    assertEquals("setUp failed", 5, myRevisionsAfterRename.size());
+    cd(projectPath);
+    updateChangeListManager();
   }
 
   @Override
@@ -164,8 +150,8 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     File source = mkdir("source");
     File initialFile = touch("source/PostHighlightingPass.java", "Initial content");
     String initMessage = "Created PostHighlightingPass.java in source";
-    addCommit(initMessage);
-    String hash = last();
+    addCommit(repo, initMessage);
+    String hash = last(this);
     commits.add(new TestCommit(hash, initMessage, initialFile.getPath()));
 
     String filePath = initialFile.getPath();
@@ -225,25 +211,21 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     }
   }
 
-  private static TestCommit move(String file, File dir, String message) {
+  private TestCommit move(String file, File dir, String message) {
     final String NAME = "PostHighlightingPass.java";
-    mv(file, dir.getPath());
+    mv(repo, file, dir.getPath());
     file = new File(dir, NAME).getPath();
-    addCommit(message);
-    String hash = last();
+    addCommit(repo, message);
+    String hash = last(this);
     return new TestCommit(hash, message, file);
   }
 
-  private static TestCommit modify(String file) throws IOException {
-    editAppend(file, "Modified");
+  private TestCommit modify(String file) throws IOException {
+    FileUtil.appendToFile(new File(file), "Modified");
     String message = "Modified PostHighlightingPass";
-    addCommit(message);
-    String hash = last();
+    addCommit(repo, message);
+    String hash = last(this);
     return new TestCommit(hash, message, file);
-  }
-
-  private static void editAppend(String file, String content) throws IOException {
-    FileUtil.appendToFile(new File(file), content);
   }
 
   @NotNull
@@ -252,7 +234,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     StringBuilder sb = new StringBuilder();
     for (VcsFileRevision revision : history) {
       GitFileRevision rev = (GitFileRevision)revision;
-      String relPath = FileUtil.getRelativePath(new File(myProjectPath), rev.getPath().getIOFile());
+      String relPath = FileUtil.getRelativePath(new File(projectPath), rev.getPath().getIOFile());
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(rev.getHash()), rev.getCommitMessage(), relPath));
     }
     return sb.toString();
@@ -262,7 +244,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     int maxSubjectLength = findMaxLength(commits, revision -> revision.getCommitMessage());
     StringBuilder sb = new StringBuilder();
     for (TestCommit commit : commits) {
-      String relPath = FileUtil.getRelativePath(new File(myProjectPath), new File(commit.myPath));
+      String relPath = FileUtil.getRelativePath(new File(projectPath), new File(commit.myPath));
       sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(commit.getHash()), commit.getCommitMessage(), relPath));
     }
     return sb.toString();
@@ -292,10 +274,10 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   public void testGetCurrentRevisionInOtherBranch() throws Exception {
-    checkout("-b feature");
+    checkout(repo, "-b feature");
     overwrite(bfile, "new content");
-    addCommit("new content");
-    final String[] output = log("master --pretty=%H#%at", "-n1").trim().split("#");
+    addCommit(repo, "new content");
+    final String[] output = log(repo, "master --pretty=%H#%at", "-n1").trim().split("#");
 
     GitRevisionNumber revisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(myProject, toFilePath(bfile), "master");
     assertEquals(revisionNumber.getRev(), output[0]);
@@ -321,15 +303,15 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     git("config branch.master.merge refs/heads/master");
 
     git("rm " + bfile.getPath());
-    commit("removed bfile");
-    String[] hashAndDate = log("--pretty=format:%H#%ct", "-n1").split("#");
+    commit(repo, "removed bfile");
+    String[] hashAndDate = log(repo, "--pretty=format:%H#%ct", "-n1").split("#");
     git("update-ref refs/remotes/origin/master HEAD"); // to avoid pushing to this fake origin
 
     touch("dir/b.txt", "content");
-    addCommit("recreated bfile");
+    addCommit(repo, "recreated bfile");
 
     refresh();
-    myRepo.update();
+    repo.update();
 
     final ItemLatestState state = GitHistoryUtils.getLastRevision(myProject, toFilePath(bfile));
     assertTrue(!state.isItemExists());
@@ -347,12 +329,12 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
     Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
     Consumer<VcsException> exceptionConsumer = exception -> fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
-    GitFileHistory.loadHistory(myProject, toFilePath(bfile), myRepo.getRoot(), null, consumer, exceptionConsumer);
+    GitFileHistory.loadHistory(myProject, toFilePath(bfile), repo.getRoot(), null, consumer, exceptionConsumer);
     assertHistory(revisions);
   }
 
   public void testOnlyHashesHistory() throws Exception {
-    final List<Pair<SHAHash, Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile), myProjectRoot);
+    final List<Pair<SHAHash, Date>> history = GitHistoryUtils.onlyHashesHistory(myProject, toFilePath(bfile), projectRoot);
     assertEquals(history.size(), myRevisionsAfterRename.size());
     Iterator<GitTestRevision> itAfterRename = myRevisionsAfterRename.iterator();
     for (Pair<SHAHash, Date> pair : history) {
@@ -367,9 +349,9 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
     String message = "subject containing \u0001 symbol in it\n\ncommit body containing \u0001 symbol in it";
     touch("file.txt", "content");
-    addCommit(message);
+    addCommit(repo, message);
 
-    GitHistoryUtils.loadDetails(myProject, myRepo.getRoot(), details::add);
+    GitHistoryUtils.loadDetails(myProject, repo.getRoot(), details::add);
 
     VcsFullCommitDetails lastCommit = ContainerUtil.getFirstItem(details);
     assertNotNull(lastCommit);
@@ -377,6 +359,9 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   public void testLoadingDetailsWithoutChanges() throws Exception {
+    assumeTrue("Not testing: Git doesn't know --allow-empty-message in " + vcs.getVersion(),
+               vcs.getVersion().isLaterOrEqual(new GitVersion(1, 7, 2, 0)));
+
     List<String> expected = ContainerUtil.newArrayList();
 
     String messageFile = "message.txt";
@@ -385,27 +370,27 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     int commitCount = 100;
     for (int i = 0; i < commitCount; i++) {
       echo("file.txt", "content number " + i);
-      add();
+      add(repo);
       git("commit --allow-empty-message -F " + messageFile);
-      expected.add(last());
+      expected.add(last(this));
     }
     expected = ContainerUtil.reverse(expected);
 
-    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, myRepo.getRoot(),
+    List<String> actualHashes = ContainerUtil.map(GitLogUtil.collectFullDetails(myProject, repo.getRoot(),
                                                                                  "--max-count=" + commitCount),
                                                   detail -> detail.getId().asString());
 
     assertEquals(expected, actualHashes);
   }
 
-  private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws IOException, VcsException {
+  private void assertHistory(@NotNull List<? extends VcsFileRevision> actualRevisions) throws VcsException {
     assertEquals("Incorrect number of commits in history", myRevisions.size(), actualRevisions.size());
     for (int i = 0; i < actualRevisions.size(); i++) {
       assertEqualRevisions((GitFileRevision)actualRevisions.get(i), myRevisions.get(i));
     }
   }
 
-  private static void assertEqualRevisions(GitFileRevision actual, GitTestRevision expected) throws IOException, VcsException {
+  private static void assertEqualRevisions(GitFileRevision actual, GitTestRevision expected) throws VcsException {
     String actualRev = ((GitRevisionNumber)actual.getRevisionNumber()).getRev();
     assertEquals(expected.myHash, actualRev);
     assertEquals(expected.myDate, ((GitRevisionNumber)actual.getRevisionNumber()).getTimestamp());
@@ -432,11 +417,9 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
     final String myCommitterEmail;
     final String myBranchName;
     final byte[] myContent;
-    private String[] myParents;
 
     public GitTestRevision(String hash,
                            String gitTimestamp,
-                           String[] parents,
                            String commitMessage,
                            String authorName,
                            String authorEmail,
@@ -446,7 +429,6 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
                            String content) {
       myHash = hash;
       myDate = gitTimeStampToDate(gitTimestamp);
-      myParents = parents;
       myCommitMessage = commitMessage;
       myAuthorName = authorName;
       myAuthorEmail = authorEmail;

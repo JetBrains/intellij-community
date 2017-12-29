@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ex;
@@ -25,6 +13,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
 import com.intellij.codeInsight.daemon.impl.LocalInspectionsPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
+import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.lang.GlobalInspectionContextExtension;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -51,10 +40,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
@@ -99,7 +85,9 @@ import java.util.stream.Stream;
 
 public class GlobalInspectionContextImpl extends GlobalInspectionContextBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
-
+  //@TestOnly
+  @SuppressWarnings("StaticNonFinalField")
+  public volatile static boolean CREATE_VIEW_FORCE = false;
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup("Inspection Results", ToolWindowId.INSPECTION);
 
   private final NotNullLazyValue<ContentManager> myContentManager;
@@ -152,7 +140,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       myView.getTree().setTreeState(myTreeState);
     }
     myContent = ContentFactory.SERVICE.getInstance().createContent(view, title, false);
-
+    myContent.setHelpId(InspectionResultsView.HELP_ID);
     myContent.setDisposer(myView);
 
     ContentManager contentManager = getContentManager();
@@ -353,7 +341,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void notifyInspectionsFinished(@NotNull final AnalysisScope scope) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !CREATE_VIEW_FORCE) return;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     LOG.info("Code inspection finished. Took " + elapsed + "ms");
@@ -426,16 +414,19 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
     Processor<PsiFile> processor = file -> {
       ProgressManager.checkCanceled();
-      if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+      Boolean readActionSuccess = DumbService.getInstance(getProject()).tryRunReadActionInSmartMode(() -> {
         if (!file.isValid()) {
-          return;
+          return true;
         }
         VirtualFile virtualFile = file.getVirtualFile();
         if (!scope.contains(virtualFile)) {
-          LOG.error(file.getName()+"; scope: "+scope+"; "+virtualFile);
+          LOG.info(file.getName() + "; scope: " + scope + "; " + virtualFile);
+          return true;
         }
         inspectFile(file, getEffectiveRange(searchScope, file), inspectionManager, localTools, globalSimpleTools, map);
-      })) {
+        return true;
+      }, "Inspect code is not available until indices are ready");
+      if (readActionSuccess == null || !readActionSuccess) {
         throw new ProcessCanceledException();
       }
 
@@ -530,11 +521,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private void inspectFile(@NotNull final PsiFile file,
-                              @NotNull final TextRange range,
-                              @NotNull final InspectionManager inspectionManager,
-                              @NotNull List<Tools> localTools,
-                              @NotNull List<Tools> globalSimpleTools,
-                              @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
+                           @NotNull final TextRange range,
+                           @NotNull final InspectionManager inspectionManager,
+                           @NotNull List<Tools> localTools,
+                           @NotNull List<Tools> globalSimpleTools,
+                           @NotNull final Map<String, InspectionToolWrapper> wrappersMap) {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     if (document == null) return;
 
@@ -736,12 +727,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
         addView(view);
       }
     };
-    if (app.isUnitTestMode()) {
-      createView.run();
-      return ActionCallback.DONE;
-    } else {
-      return app.getInvokator().invokeLater(createView);
-    }
+    return app.getInvokator().invokeLater(createView);
   }
 
   private void appendPairedInspectionsForUnfairTools(@NotNull List<Tools> globalTools,
@@ -936,6 +922,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
     setCurrentScope(scope);
     final int fileCount = scope.getFileCount();
     final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
+    progressIndicator.setIndeterminate(false);
 
     final SearchScope searchScope = ReadAction.compute(scope::toSearchScope);
     final TextRange range;
@@ -1030,10 +1017,10 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
       }, ModalityState.defaultModalityState());
       return;
     }
-    
+
     Runnable runnable = () -> {
       if (!FileModificationService.getInstance().preparePsiElementsForWrite(files)) return;
-      CleanupInspectionIntention.applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null, false);
+      CleanupInspectionUtil.getInstance().applyFixesNoSort(getProject(), "Code Cleanup", descriptors, null, false);
       if (postRunnable != null) {
         postRunnable.run();
       }
@@ -1054,7 +1041,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   private void addProblemsToView(List<Tools> tools) {
-    if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() && !CREATE_VIEW_FORCE) {
       return;
     }
     if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, createContentProvider())).booleanValue()) {

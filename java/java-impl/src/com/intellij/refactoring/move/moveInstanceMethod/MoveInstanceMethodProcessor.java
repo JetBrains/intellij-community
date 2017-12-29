@@ -500,8 +500,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                     }
                   }
                 }
-                //Target is a field, replace target.m -> m
-                qualifier.delete();
+                if (expression instanceof PsiMethodReferenceExpression) {
+                  qualifier.replace(factory.createExpressionFromText("this", null));
+                }
+                else {
+                  //Target is a field, replace target.m -> m
+                  qualifier.delete();
+                }
                 return;
               }
               if (myTargetVariable.equals(resolved)) {

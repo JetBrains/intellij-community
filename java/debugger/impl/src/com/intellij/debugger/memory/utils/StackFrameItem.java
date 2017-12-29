@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -11,6 +11,7 @@ import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.CaptureConfigurable;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
+import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.icons.AllIcons;
@@ -218,6 +219,7 @@ public class StackFrameItem {
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
                                                                         XDebuggerFramesList.ItemWithSeparatorAbove {
+    private static final String ASYNC_STACKTRACE_MESSAGE = DebuggerBundle.message("frame.panel.async.stacktrace");
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
@@ -261,27 +263,29 @@ public class StackFrameItem {
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
       component.setIcon(JBUI.scale(EmptyIcon.create(6)));
-      component.append(String.format("%s:%d, %s", myMethodName, myLineNumber, StringUtil.getShortName(myPath)), getAttributes());
-      String packageName = StringUtil.getPackageName(myPath);
-      if (!packageName.trim().isEmpty()) {
-        component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+      component.append(String.format("%s:%d", myMethodName, myLineNumber), getAttributes());
+      ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
+      if (settings.SHOW_CLASS_NAME) {
+        component.append(String.format(", %s", StringUtil.getShortName(myPath)), getAttributes());
+        String packageName = StringUtil.getPackageName(myPath);
+        if (settings.SHOW_PACKAGE_NAME && !packageName.trim().isEmpty()) {
+          component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+        }
       }
     }
 
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
+      XValueChildrenList children = XValueChildrenList.EMPTY;
       if (myVariables == VARS_CAPTURE_DISABLED) {
         node.setMessage(DebuggerBundle.message("message.node.local.variables.capture.disabled"), null,
                         SimpleTextAttributes.REGULAR_ATTRIBUTES, CAPTURE_SETTINGS_OPENER);
       }
       else if (myVariables != null) {
-        XValueChildrenList children = new XValueChildrenList();
+        children = new XValueChildrenList(myVariables.size());
         myVariables.forEach(children::add);
-        node.addChildren(children, true);
       }
-      else {
-        node.addChildren(XValueChildrenList.EMPTY, true);
-      }
+      node.addChildren(children, true);
     }
 
     private SimpleTextAttributes getAttributes() {
@@ -289,6 +293,11 @@ public class StackFrameItem {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+
+    @Override
+    public String getCaptionAboveOf() {
+      return ASYNC_STACKTRACE_MESSAGE;
     }
 
     @Override

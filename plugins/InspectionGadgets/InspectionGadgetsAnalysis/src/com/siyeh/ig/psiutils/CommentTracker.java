@@ -52,6 +52,35 @@ public class CommentTracker {
   }
 
   /**
+   * Marks the expression as unchanged and returns its text, adding parentheses if necessary.
+   * The unchanged elements are assumed to be preserved in the resulting code as is,
+   * so the comments from them will not be extracted.
+   *
+   * @param element    expression to return the text
+   * @param precedence precedence of surrounding operation
+   * @return a text to be inserted into refactored code
+   * @see ParenthesesUtils#getText(PsiExpression, int)
+   */
+  @NotNull
+  public String text(@NotNull PsiExpression element, int precedence) {
+    checkState();
+    addIgnored(element);
+    return ParenthesesUtils.getText(element, precedence + 1);
+  }
+
+  /**
+   * Marks the expression as unchanged and returns a single-parameter lambda text which parameter
+   * is the name of supplied variable and body is the supplied expression
+   *
+   * @param variable   a variable to use as lambda parameter
+   * @param expression an expression to use as lambda body
+   * @return a string representation of lambda
+   */
+  public String lambdaText(@NotNull PsiVariable variable, @NotNull PsiExpression expression) {
+    return variable.getName() + " -> " + text(expression);
+  }
+
+  /**
    * Marks the element as unchanged and returns it. The unchanged elements are assumed to be preserved
    * in the resulting code as is, so the comments from them will not be extracted.
    *
@@ -71,6 +100,9 @@ public class CommentTracker {
    * @param element element to delete
    */
   public void delete(@NotNull PsiElement element) {
+    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement) {
+      element = element.getParent();
+    }
     grabComments(element);
     element.delete();
   }
@@ -214,8 +246,8 @@ public class CommentTracker {
         PsiElement added = parent.addBefore(factory.createCommentFromText(comment.getText(), anchor), anchor);
         PsiElement prevSibling = added.getPrevSibling();
         if (prevSibling instanceof PsiWhiteSpace) {
-          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling);
           PsiElement prev = anchor.getPrevSibling();
+          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling, prev);
           parent.getNode().addChild(whiteSpaceBefore, anchor.getNode());
           if (prev instanceof PsiWhiteSpace) {
             prev.delete();
@@ -227,12 +259,15 @@ public class CommentTracker {
   }
 
   @NotNull
-  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace) {
+  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace, PsiElement nextElement) {
     String text = whiteSpace.getText();
     int endLPos = text.lastIndexOf('\n');
     if(text.lastIndexOf('\n', endLPos-1) >= 0) {
       // has at least two line breaks
       return ASTFactory.whitespace(text.substring(endLPos));
+    }
+    if(nextElement instanceof PsiWhiteSpace && nextElement.getText().contains("\n") && !text.contains("\n")) {
+      text = '\n' + text;
     }
     return ASTFactory.whitespace(text);
   }

@@ -2,6 +2,7 @@ import debugger_unittest
 import sys
 import re
 import os
+import math
 
 CHECK_BASELINE, CHECK_REGULAR, CHECK_CYTHON = 'baseline', 'regular', 'cython'
 
@@ -93,7 +94,7 @@ class WriterThreadPerformance5(PerformanceWriterThread):
 
         self.write_make_initial_run()
         self.finished_ok = True
-
+        
 class WriterThreadPerformance6(PerformanceWriterThread):
 
     TEST_FILE = debugger_unittest._get_debugger_test_file('_performance_3.py')
@@ -114,7 +115,7 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def _get_time_from_result(self, result):
         stdout = ''.join(result['stdout'])
-        match = re.search('TotalTime>>((\d|\.)+)<<', stdout)
+        match = re.search(r'TotalTime>>((\d|\.)+)<<', stdout)
         time_taken = match.group(1)
         return float(time_taken)
 
@@ -151,20 +152,20 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
                 raise AssertionError('Wrong check: %s' % (writer_thread_class.CHECK))
             for project_id in project_ids:
                 api = pyspeedtin.PySpeedTinApi(authorization_key=SPEEDTIN_AUTHORIZATION_KEY, project_id=project_id)
-
+                
                 benchmark_name = writer_thread_class.BENCHMARK_NAME
-
+                
                 if writer_thread_class.CHECK == CHECK_BASELINE:
                     version = '0.0.1_baseline'
                     return # No longer commit the baseline (it's immutable right now).
                 else:
                     version=pydevd.__version__,
-
+                
                 commit_id, branch, commit_date = api.git_commit_id_branch_and_date_from_path(pydevd.__file__)
                 api.add_benchmark(benchmark_name)
                 api.add_measurement(
                     benchmark_name,
-                    value=time_when_debugged,
+                    value=time_when_debugged, 
                     version=version,
                     released=False,
                     branch=branch,
@@ -172,7 +173,7 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
                     commit_date=commit_date,
                 )
                 api.commit()
-
+                
         return '%s: %.3fs ' % (writer_thread_class.BENCHMARK_NAME, time_when_debugged)
 
 
@@ -187,10 +188,10 @@ class CheckDebuggerPerformance(debugger_unittest.DebuggerRunner):
 
     def check_performance4(self):
         return self.obtain_results(WriterThreadPerformance4)
-
+        
     def check_performance5(self):
         return self.obtain_results(WriterThreadPerformance5)
-
+        
     def check_performance6(self):
         return self.obtain_results(WriterThreadPerformance6)
 
@@ -205,9 +206,9 @@ if __name__ == '__main__':
     msgs = []
     for check in (
             # CHECK_BASELINE, -- Checks against the version checked out at X:\PyDev.Debugger.baseline.
-            CHECK_REGULAR,
+            CHECK_REGULAR, 
             CHECK_CYTHON
-    ):
+        ):
         PerformanceWriterThread.CHECK = check
         msgs.append('Checking: %s' % (check,))
         check_debugger_performance = CheckDebuggerPerformance()
@@ -217,7 +218,7 @@ if __name__ == '__main__':
         msgs.append(check_debugger_performance.check_performance4())
         msgs.append(check_debugger_performance.check_performance5())
         msgs.append(check_debugger_performance.check_performance6())
-
+        
     for msg in msgs:
         print(msg)
 

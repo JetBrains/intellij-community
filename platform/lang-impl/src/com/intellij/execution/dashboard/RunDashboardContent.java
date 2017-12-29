@@ -23,6 +23,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
@@ -42,6 +43,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +58,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
 /**
@@ -86,6 +89,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private AbstractTreeNode<?> myLastSelection;
   private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
   private final List<RunDashboardGrouper> myGroupers;
+  private final RunDashboardStatusFilter myStatusFilter = new RunDashboardStatusFilter();
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
@@ -136,21 +140,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentManagerListener = new ContentManagerAdapter() {
       @Override
       public void contentAdded(ContentManagerEvent event) {
-        Content content = event.getContent();
-        RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
-        if (descriptor == null) {
-          return;
-        }
-        RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
-        if (!(layoutUi instanceof RunnerLayoutUiImpl)) {
-          return;
-        }
-        RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
-        layoutUiImpl.setLeftToolbarVisible(false);
-        layoutUiImpl.setContentToolbarBefore(!RunDashboardManager.getInstance(myProject).isShowConfigurations());
-        List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
-        myContentActions.put(content, leftToolbarActions);
-        updateContentToolbar(content);
+        onContentAdded(event.getContent());
       }
 
       @Override
@@ -168,17 +158,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         if (ContentManagerEvent.ContentOperation.add != event.getOperation()) {
           return;
         }
-        contentAdded(event);
-        myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
-          @Override
-          public boolean visit(@NotNull RunDashboardNode node) {
-            if (node.getContent() == event.getContent()) {
-              myBuilder.select(node);
-            }
-            return false;
-          }
-        }));
-        showContentPanel();
+        Content content = event.getContent();
+        onContentAdded(content);
+        onContentSelectionChanged(content);
       }
     };
     myContentManager.addContentManagerListener(myContentManagerListener);
@@ -257,6 +239,16 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
 
     setTreeVisible(dashboardManager.isShowConfigurations());
+
+    // RunDashboardContent may be initialized when some contents have been already added to content manager.
+    // Process already added content.
+    for (Content content : myContentManager.getContents()) {
+      onContentAdded(content);
+    }
+    Content selectedContent = myContentManager.getSelectedContent();
+    if (selectedContent != null) {
+      onContentSelectionChanged(selectedContent);
+    }
   }
 
   private void setTreeVisible(boolean visible) {
@@ -305,9 +297,15 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       updateContentToolbar(content);
       if (content != null) {
         if (content != myContentManager.getSelectedContent()) {
-          myContentManager.removeContentManagerListener(myContentManagerListener);
-          myContentManager.setSelectedContent(content);
-          myContentManager.addContentManagerListener(myContentManagerListener);
+          Content toSelect = content;
+          // Invoke content selection change later after currently selected content lost a focus.
+          SwingUtilities.invokeLater(() -> {
+            if (myContentManager.isDisposed() || myContentManager.getIndexOfContent(toSelect) == -1) return;
+
+            myContentManager.removeContentManagerListener(myContentManagerListener);
+            myContentManager.setSelectedContent(toSelect);
+            myContentManager.addContentManagerListener(myContentManagerListener);
+          });
         }
         showContentPanel();
         return;
@@ -319,6 +317,36 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     }
 
     showMessagePanel(ExecutionBundle.message("run.dashboard.empty.selection.message"));
+  }
+
+  private void onContentAdded(Content content) {
+    RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+    if (descriptor == null) {
+      return;
+    }
+    RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
+    if (!(layoutUi instanceof RunnerLayoutUiImpl)) {
+      return;
+    }
+    RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
+    layoutUiImpl.setLeftToolbarVisible(false);
+    layoutUiImpl.setContentToolbarBefore(false);
+    List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
+    myContentActions.put(content, leftToolbarActions);
+    updateContentToolbar(content);
+  }
+
+  private void onContentSelectionChanged(Content content) {
+    myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(RunDashboardNode.class, new TreeVisitor<RunDashboardNode>() {
+      @Override
+      public boolean visit(@NotNull RunDashboardNode node) {
+        if (node.getContent() == content) {
+          myBuilder.select(node);
+        }
+        return false;
+      }
+    }));
+    showContentPanel();
   }
 
   private void showMessagePanel(String text) {
@@ -338,7 +366,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private void setupBuilder() {
-    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers);
+    RunDashboardTreeStructure structure = new RunDashboardTreeStructure(myProject, myGroupers, ContainerUtil.newSmartList(myStatusFilter));
     myBuilder = new AbstractTreeBuilder(myTree, myTreeModel, structure, IndexComparator.INSTANCE) {
       @Override
       protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
@@ -388,6 +416,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     treeActions.registerCustomShortcutSet(this, null);
     treeGroup.add(treeActions);
 
+    treeGroup.addSeparator();
+    treeGroup.add(new StatusActionGroup());
+
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, true);
     toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.CENTER);
     treeActionsToolBar.setTargetComponent(myTree);
@@ -402,18 +433,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   public void updateContent(boolean withStructure) {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
       boolean showConfigurations = RunDashboardManager.getInstance(myProject).isShowConfigurations();
-
-      Content selectedContent = myContentManager.getSelectedContent();
-      if (selectedContent != null) {
-        RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(selectedContent);
-        if (descriptor != null) {
-          RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
-          if (layoutUi instanceof RunnerLayoutUiImpl) {
-            ((RunnerLayoutUiImpl)layoutUi).setContentToolbarBefore(!showConfigurations);
-          }
-        }
-      }
-
       if (myTreePanel.isVisible() ^ showConfigurations) {
         setTreeVisible(showConfigurations);
 
@@ -485,6 +504,35 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     public void setSelected(AnActionEvent e, boolean state) {
       myGrouper.setEnabled(state);
       updateContent(true);
+    }
+  }
+
+  private class StatusActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+    StatusActionGroup() {
+      setPopup(true);
+
+      getTemplatePresentation().setText(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"));
+      getTemplatePresentation().setIcon(AllIcons.General.Filter);
+
+      for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {
+        add(new ToggleAction(status.getName()) {
+          @Override
+          public boolean isSelected(AnActionEvent e) {
+            return myStatusFilter.isVisible(status);
+          }
+
+          @Override
+          public void setSelected(AnActionEvent e, boolean state) {
+            if (state) {
+              myStatusFilter.show(status);
+            }
+            else {
+              myStatusFilter.hide(status);
+            }
+            updateContent(true);
+          }
+        });
+      }
     }
   }
 }

@@ -167,7 +167,7 @@ public class GitPreservingProcess {
       mySaver.load();
     }
     else {
-      LOG.warn("The changes were already loaded", new Throwable());
+      LOG.info("The changes were already loaded");
     }
   }
 }

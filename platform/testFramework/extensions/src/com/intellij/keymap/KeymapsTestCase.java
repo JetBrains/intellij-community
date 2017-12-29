@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -46,7 +32,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 2",                "FileChooser.GotoProject", "GotoBookmark2", "DuplicatesForm.SendToRight"},
     { "control 3",                "GotoBookmark3", "FileChooser.GotoModule"},
     { "control ADD",              "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
-    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control DIVIDE",           "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
     { "control DOWN",             "EditorScrollDown", "EditorLookupDown"},
     { "control ENTER",            "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorSplitLine", "ViewSource"},
     { "control EQUALS",           "ExpandAll", "ExpandExpandableComponent", "ExpandRegion"},
@@ -57,14 +43,14 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control N",                "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
     { "control R",                "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
-    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize"},
+    { "control SLASH",            "CommentByLineComment", "Images.Editor.ActualSize", "UML.ActualSize"},
     { "control U",                "GotoSuperMethod", "CommanderSwapPanels"},
     { "control UP",               "EditorScrollUp", "EditorLookupUp"},
     { "control SUBTRACT",         "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt E",            "PerforceDirect.Edit", "Console.History.Browse"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
-    { "control alt G",            "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
+    { "control alt G",            "DatabaseView.SqlGenerator", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
     { "control alt R",            "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction", "Django.RunManageTaskAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
@@ -87,7 +73,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control G",          "ClassTemplateNavigation", "GoToClass"},
     { "shift control LEFT",       "EditorPreviousWordWithSelection", "ResizeToolWindowLeft", },
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight", },
-    { "shift control T",          "GotoTest", "Images.ShowThumbnails"},
+    { "shift control T",          "GotoTest", "Images.ShowThumbnails", "RunDashboard.ShowConfigurations"},
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
@@ -154,7 +140,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control N",                "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
     { "control R",                "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "FindPrevious"},
-    { "control SLASH",            "$Undo", "Images.Editor.ActualSize"},
+    { "control SLASH",            "$Undo", "Images.Editor.ActualSize", "UML.ActualSize"},
     { "control UP",               "EditorBackwardParagraph", "EditorLookupUp"},
     { "control DOWN",             "EditorForwardParagraph", "EditorLookupDown"},
     { "control alt A",            "MethodUp", "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
@@ -244,7 +230,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control 2",                "ActivateProjectToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "control 3",                "ActivateProjectToolWindow", "FileChooser.GotoModule"},
     { "control BACK_SPACE",       "EditorDeleteToWordStart", "ToggleDockMode"},
-    { "control DIVIDE",           "CollapseRegionRecursively", "Images.Editor.ActualSize"},
+    { "control DIVIDE",           "CollapseRegionRecursively", "Images.Editor.ActualSize", "UML.ActualSize"},
     { "control M",                "Vcs.ShowMessageHistory", "Move"},
     { "control N",                "NewElement", "FileChooser.NewFolder"},
     { "control R",                "RenameElement", "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "Git.Reword.Commit", "ShelvedChanges.Rename"},
@@ -302,6 +288,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
+    { "meta alt H",               "ChangesView.ShelveSilently", "RunDashboard.ShowConfigurations"}
     });
   }};
   // @formatter:on

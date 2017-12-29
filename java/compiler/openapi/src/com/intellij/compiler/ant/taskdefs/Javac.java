@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 16, 2004
  */
 public class Javac extends Tag {
 

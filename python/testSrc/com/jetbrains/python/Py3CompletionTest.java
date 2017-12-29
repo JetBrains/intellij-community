@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -87,21 +73,20 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-4073
   public void testSpecialFunctionAttributesPy3() {
-    setLanguageLevel(LanguageLevel.PYTHON32);
-    try {
-      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
-      assertNotNull(suggested);
-      assertEmpty(suggested);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON32,
+      () -> {
+        List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+        assertNotNull(suggested);
+        assertEmpty(suggested);
 
-      suggested = doTestByText("def func(): pass; func.__<caret>");
-      assertNotNull(suggested);
-      assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
-                             "__code__", "__name__", "__doc__", "__dict__", "__module__");
-      assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+        suggested = doTestByText("def func(): pass; func.__<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
+                               "__code__", "__name__", "__doc__", "__dict__", "__module__");
+        assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
+      }
+    );
   }
 
   // PY-7375
@@ -214,7 +199,6 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-21060
   public void testGenericTypeInheritor() {
-    myFixture.copyDirectoryToProject("../typing", "");
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 

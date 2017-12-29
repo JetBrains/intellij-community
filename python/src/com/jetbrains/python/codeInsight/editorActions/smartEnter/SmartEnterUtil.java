@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   15.04.2010
- * Time:   19:48:16
  */
 public class SmartEnterUtil {
   private static EditorActionHandler getEnterHandler() {

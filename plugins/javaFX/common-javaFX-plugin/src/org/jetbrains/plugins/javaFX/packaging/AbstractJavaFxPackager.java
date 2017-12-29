@@ -16,8 +16,13 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.CommandLineUtil;
+import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -25,12 +30,14 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Base64;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance(AbstractJavaFxPackager.class);
@@ -77,7 +84,11 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract void registerJavaFxPackagerError(final String message);
 
+  protected abstract void registerJavaFxPackagerInfo(final String message);
+
   protected abstract JavaFxApplicationIcons getIcons();
+
+  protected abstract JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel();
 
   public void buildJavaFxArtifact(final String homePath) {
     if (!checkNotEmpty(getAppClass(), "Application class")) return;
@@ -246,16 +257,59 @@ public abstract class AbstractJavaFxPackager {
 
   private int startProcess(List<String> commands) {
     try {
+      final AtomicInteger exitCode = new AtomicInteger();
+      final StringBuilder errorOutput = new StringBuilder();
+      final List<String> delayedInfoOutput = new ArrayList<>();
+      boolean isVerbose = getMsgOutputLevel() != null && getMsgOutputLevel().isVerbose();
+
       final Process process = new ProcessBuilder(CommandLineUtil.toCommandLine(commands)).start();
-      final String message = new String(FileUtil.loadBytes(process.getErrorStream()));
-      if (!StringUtil.isEmptyOrSpaces(message)) {
-        registerJavaFxPackagerError(message);
-      }
-      final int result = process.waitFor();
+      BaseOSProcessHandler handler = new BaseOSProcessHandler(process, commands.toString(), null);
+      handler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void startNotified(@NotNull ProcessEvent event) {
+          if (isVerbose) {
+            LOG.info("Started " + commands);
+          }
+        }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          if (isVerbose) {
+            LOG.info("Terminated " + commands + ", exit code: " + event.getExitCode());
+          }
+          exitCode.set(event.getExitCode());
+        }
+
+        @Override
+        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+          String message = StringUtil.trimTrailing(event.getText());
+          if (outputType == ProcessOutputTypes.STDERR) {
+            LOG.error(message, (Throwable)null);
+            errorOutput.append(event.getText());
+          }
+          else {
+            LOG.info(message);
+            if (isVerbose) {
+              registerJavaFxPackagerInfo(message);
+            }
+            else {
+              delayedInfoOutput.add(message);
+            }
+          }
+        }
+      });
+
+      handler.startNotify();
+      handler.waitFor();
+
+      int result = exitCode.get();
       if (result != 0) {
-        final String explanationMessage = new String(FileUtil.loadBytes(process.getInputStream()));
-        if (!StringUtil.isEmptyOrSpaces(explanationMessage)) {
-          registerJavaFxPackagerError(explanationMessage);
+        final String message = errorOutput.toString();
+        if (!StringUtil.isEmptyOrSpaces(message)) {
+          registerJavaFxPackagerError(message);
+        }
+        for (String info : delayedInfoOutput) {
+          registerJavaFxPackagerInfo(info);
         }
       }
       return result;
@@ -283,6 +337,10 @@ public abstract class AbstractJavaFxPackager {
                  javaHome + "/lib/ant-javafx.jar" + File.pathSeparator +
                  javaHome + "/jre/lib/jfxrt.jar");
     commands.add("org.apache.tools.ant.launch.Launcher");
+    String cmdLineParam = getMsgOutputLevel() != null ? getMsgOutputLevel().getCmdLineParam() : "";
+    if (!cmdLineParam.isEmpty()) {
+      commands.add(cmdLineParam);
+    }
     commands.add("-f");
     try {
       File tempFile = FileUtil.createTempFile("build", ".xml");

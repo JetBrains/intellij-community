@@ -59,7 +59,6 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiElement endElement) {
     return myType.isValid() &&
            PsiTypesUtil.isDenotableType(myType) &&
-           startElement.isValid() && 
            startElement.getManager().isInProject(startElement);
   }
 

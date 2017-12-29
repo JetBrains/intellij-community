@@ -258,7 +258,7 @@ public class DfaUtil {
         if (!(e instanceof PsiMethodCallExpression)) return false;
         PsiMethodCallExpression call = (PsiMethodCallExpression)e;
         return call.getMethodExpression().isReferenceTo(referrer) &&
-               (isStatic || DfaValueFactory.isEffectivelyUnqualified(call.getMethodExpression()));
+               (isStatic || ExpressionUtils.isEffectivelyUnqualified(call.getMethodExpression()));
       };
       if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
         // current method is definitely called from some field initialization
@@ -271,6 +271,17 @@ public class DfaUtil {
   public static boolean hasInitializationHacks(@NotNull PsiField field) {
     PsiClass containingClass = field.getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
+  }
+
+  public static boolean ignoreInitializer(PsiVariable variable) {
+    // Skip boolean constant fields as they usually used as control knobs to modify program logic
+    // it's better to analyze both true and false values even if it's predefined
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+    return initializer != null &&
+           variable instanceof PsiField &&
+           variable.hasModifierProperty(PsiModifier.FINAL) &&
+           variable.getType().equals(PsiType.BOOLEAN) &&
+           (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) || ExpressionUtils.isLiteral(initializer, Boolean.FALSE));
   }
 
   static boolean isInsideConstructorOrInitializer(PsiElement element) {
@@ -324,10 +335,8 @@ public class DfaUtil {
       PsiExpression place = instruction.getPlace();
       if (place != null) {
         PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
-        final Map<DfaVariableValue,DfaVariableState> map = ((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableStates();
-        for (Map.Entry<DfaVariableValue, DfaVariableState> entry : map.entrySet()) {
-          ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)entry.getValue();
-          DfaVariableValue variableValue = entry.getKey();
+        ((ValuableDataFlowRunner.MyDfaMemoryState)memState).forVariableStates((variableValue, value) -> {
+          ValuableDataFlowRunner.ValuableDfaVariableState state = (ValuableDataFlowRunner.ValuableDfaVariableState)value;
           final FList<PsiExpression> concatenation = state.myConcatenation;
           if (!concatenation.isEmpty() && variableValue.getQualifier() == null) {
             PsiModifierListOwner element = variableValue.getPsiVariable();
@@ -335,7 +344,7 @@ public class DfaUtil {
               result.myValues.put((PsiVariable)element, concatenation);
             }
           }
-        }
+        });
         DfaValue value = instruction.getValue();
         if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getQualifier() == null) {
           PsiModifierListOwner element = ((DfaVariableValue)value).getPsiVariable();

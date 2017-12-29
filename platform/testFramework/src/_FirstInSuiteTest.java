@@ -15,7 +15,6 @@
  */
 
 import com.intellij.TestAll;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
@@ -59,9 +58,6 @@ public class _FirstInSuiteTest extends TestCase {
     if (nothingIsCalled) return;
 
     nothingIsCalled = true;
-
-    // some tests do not initialize Application but want to use parallel streams
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
 
     suiteStarted = System.nanoTime();
 

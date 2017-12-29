@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
@@ -74,11 +75,12 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
+    CommentTracker commentTracker = new CommentTracker();
     if (parameterList != null) {
       final int dotIndex = replacementText.lastIndexOf('.') + 1;
-      replacementText = replacementText.substring(0, dotIndex) + parameterList.getText() + replacementText.substring(dotIndex);
+      replacementText = replacementText.substring(0, dotIndex) + commentTracker.markUnchanged(parameterList).getText() + replacementText.substring(dotIndex);
     }
-    PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + argumentList.getText());
+    PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + commentTracker.markUnchanged(argumentList).getText(), commentTracker);
   }
 
   private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {

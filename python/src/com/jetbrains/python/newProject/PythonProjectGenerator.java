@@ -15,18 +15,26 @@
  */
 package com.jetbrains.python.newProject;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons.General;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.packaging.PackageManagementService.ErrorDescription;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.remote.*;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -37,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -61,11 +70,16 @@ import java.util.function.Consumer;
  *   </li>
  *   </ol>
  * </p>
+ * <h2>How to report framework installation failures</h2>
+ * <p>{@link PyNewProjectSettings#getSdk()} may return null, or something else may prevent package installation.
+ * Use {@link #reportPackageInstallationFailure(String, Pair)} in this case.
+ * </p>
  *
  * @param <T> project settings
  */
 public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
   public static final PyNewProjectSettings NO_SETTINGS = new PyNewProjectSettings();
+  private static final Logger LOGGER = Logger.getInstance(PythonProjectGenerator.class);
 
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final boolean myAllowRemoteProjectCreation;
@@ -279,7 +293,41 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   }
 
   /**
+   * @param sdkAndException if you have SDK and execution exception provide them here (both must not be null).
+   */
+  protected static void reportPackageInstallationFailure(@NotNull final String frameworkName,
+                                                         @Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
+
+    final ErrorDescription errorDescription = getErrorDescription(sdkAndException);
+    final Application app = ApplicationManager.getApplication();
+    app.invokeLater(() -> PackagesNotificationPanel.showError(String.format("Install %s failed", frameworkName), errorDescription));
+  }
+
+  @NotNull
+  private static ErrorDescription getErrorDescription(@Nullable final Pair<Sdk, ExecutionException> sdkAndException) {
+    ErrorDescription errorDescription = null;
+    if (sdkAndException != null) {
+      final ExecutionException exception = sdkAndException.second;
+      errorDescription = PyPackageManagementService.toErrorDescription(Collections.singletonList(exception), sdkAndException.first);
+      if (errorDescription == null) {
+        errorDescription = ErrorDescription.fromMessage(exception.getMessage());
+      }
+    }
+
+    if (errorDescription == null) {
+      errorDescription = ErrorDescription.fromMessage("Choose another SDK");
+    }
+    return errorDescription;
+  }
+
+  @Nullable
+  public String getPreferredEnvironmentType() {
+    return null;
+  }
+
+  /**
    * To be thrown if project can't be created on this sdk
+   *
    * @author Ilya.Kazakevich
    */
   public static class PyNoProjectAllowedOnSdkException extends Exception {

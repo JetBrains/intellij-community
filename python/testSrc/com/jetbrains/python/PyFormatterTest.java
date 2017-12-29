@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.formatting.WrapType;
@@ -26,7 +12,6 @@ import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 
 /**
  * @author yole
@@ -91,13 +76,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   private void doTestPy3() {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
   public void testWrapTuple() {  // PY-1792
@@ -350,13 +329,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testLongWith() {  // PY-8743
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON27);
-    try {
-      doTest();
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   // PY-8961, PY-16050
@@ -857,7 +830,87 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void testMultilineIfConditionKeywordAtEnd() {
+    doTest();
+  }
+
+  // PY-21328
+  public void testMultilineIfConditionLessComparisonsKeywordAtEnd() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionKeywordAtStart() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesKeywordAtEnd() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesNegatedKeywordAtEnd() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesKeywordAtEndSecondOperandIsReference() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesKeywordAtStart() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionNestedExpressions() {
+    doTest();
+  }
+
+  public void testMultilineIfConditionInParenthesesNestedExpressions() {
+    doTest();
+  }
+
+  public void testMultilineElifCondition() {
+    doTest();
+  }
+
+  public void testMultilineElifConditionInParentheses() {
+    doTest();
+  }
+
+  // PY-22035
+  public void testMultilineIfConditionComplex() {
+    doTest();
+  }
+
+  // PY-24160
+  public void testMultilineIfConditionInParenthesesHangingIndent() {
+    doTest();
+  }
+
+  public void testMultilineBinaryExpressionInsideGenerator() {
+    doTest();
+  }
+
+  public void testNotParenthesisedBinaryExpressions() {
+    doTest();
+  }
+
+  public void testGluedStringLiteralInParentheses() {
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = false;
+    doTest();
+    getPythonCodeStyleSettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS = true;
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27266
+  public void testChainedMethodCallsInParentheses() {
+    doTest();
+  }
+
+  // PY-27266
+  public void testChainedAttributeAccessInParentheses() {
+    doTest();
   }
 }

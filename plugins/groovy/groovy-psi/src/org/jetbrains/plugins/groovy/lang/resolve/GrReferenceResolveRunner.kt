@@ -7,7 +7,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
@@ -21,7 +20,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUp
+import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGetArray
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isDefinitelyKeyOfMap
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
@@ -159,7 +158,10 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Array<out GroovyResolveResult> {
   resolvePackageOrClass()?.let { return arrayOf(it) }
-  resolveLocalVariable()?.let { return arrayOf(it) }
+
+  val localVariableResults = resolveLocalVariable()
+  if (localVariableResults.isNotEmpty()) return localVariableResults
+
   if (!canResolveToMethod(this) && isDefinitelyKeyOfMap(this)) return GroovyResolveResult.EMPTY_ARRAY
   val processor = GroovyResolverProcessorBuilder.builder()
     .setForceRValue(forceRValue)
@@ -181,7 +183,7 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
     if (parent is GrMethodCall) return null
     val name = referenceName ?: return null
     if (name.isEmpty() || !name.first().isUpperCase()) return null
-    val qname = getQualifiedReferenceName() ?: return null
+    val qname = qualifiedReferenceName ?: return null
     return facade.findClass(qname, scope)
   }
 
@@ -192,31 +194,15 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   for (parent in parents().drop(1)) {
     if (parent !is GrReferenceExpression) return null
     if (parent.resolveClass() == null) continue
-    val qname = getQualifiedReferenceName()!!
+    val qname = qualifiedReferenceName!!
     return facade.findPackage(qname)
   }
 
   return null
 }
 
-private fun GrReferenceExpression.resolveLocalVariable(): GroovyResolveResult? {
-  if (isQualified) return null
-  val name = referenceName ?: return null
-  val state = ResolveState.initial()
-  val processor = LocalVariableProcessor(name)
-  treeWalkUp(processor, state)
-  return processor.resolveResult
-}
-
-private fun GrReferenceElement<*>.getQualifiedReferenceName(): String? {
-  val parts = mutableListOf<String>()
-  var current = this
-  while (true) {
-    val name = current.referenceName ?: return null
-    parts.add(name)
-    val qualifier = current.qualifier ?: break
-    qualifier as? GrReferenceExpression ?: return null
-    current = qualifier
-  }
-  return parts.reversed().joinToString(separator = ".")
+private fun GrReferenceExpression.resolveLocalVariable(): Array<out GroovyResolveResult> {
+  if (isQualified) return GroovyResolveResult.EMPTY_ARRAY
+  val name = referenceName ?: return GroovyResolveResult.EMPTY_ARRAY
+  return treeWalkUpAndGetArray(LocalVariableProcessor(name))
 }

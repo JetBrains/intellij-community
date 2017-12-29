@@ -25,7 +25,6 @@ import javax.swing.*;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 11/28/12
 */
 public class LoadingProjectTemplate implements ProjectTemplate {
   @NotNull

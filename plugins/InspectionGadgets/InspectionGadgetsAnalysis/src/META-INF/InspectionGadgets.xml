@@ -85,15 +85,16 @@
                      key="public.method.not.in.interface.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.PublicMethodNotExposedInInterfaceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="StaticMethodOnlyUsedInOneClass" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="static.method.only.used.in.one.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.abstraction.StaticMethodOnlyUsedInOneClassInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="StaticMethodOnlyUsedInOneClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                      key="static.method.only.used.in.one.class.display.name" groupBundle="messages.InspectionsBundle"
+                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.siyeh.ig.abstraction.StaticMethodOnlyUsedInOneClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StaticVariableOfConcreteClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.variable.of.concrete.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.abstraction.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.abstraction.StaticVariableOfConcreteClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="TypeMayBeWeakened" bundle="com.siyeh.InspectionGadgetsBundle" key="type.may.be.weakened.display.name"
+    <localInspection groupPath="Java" language="JAVA" shortName="TypeMayBeWeakened" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.type.may.be.weakened.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection"/>
 
@@ -203,6 +204,9 @@
                      key="non.final.field.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CompareToUsesNonFinalVariableInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CopyConstructorMissesField" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="copy.constructor.misses.field.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.bugs.CopyConstructorMissesFieldInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CovariantEquals" bundle="com.siyeh.InspectionGadgetsBundle" key="covariant.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.CovariantEqualsInspection"/>
@@ -655,7 +659,7 @@
                      implementationClass="com.siyeh.ig.controlflow.FallthruInSwitchStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ForLoopReplaceableByWhile" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="for.loop.replaceable.by.while.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.controlflow.ForLoopReplaceableByWhileInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ForLoopWithMissingComponent" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="for.loop.with.missing.component.display.name" groupBundle="messages.InspectionsBundle"
@@ -766,25 +770,25 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryConditionalExpressionInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryBreak" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.break.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryBreakInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryContinue" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.continue.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryContinueInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryDefault" bundle="com.siyeh.InspectionGadgetsBundle" key="unnecessary.default.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.UnnecessaryDefaultInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnBreakStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.label.on.break.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryLabelOnBreakStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryLabelOnContinueStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.label.on.continue.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryLabelOnContinueStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="UnnecessaryReturnStatement" shortName="UnnecessaryReturn" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.return.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="AssertionCanBeIf" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assertion.can.be.if.name" groupBundle="messages.InspectionsBundle"
@@ -909,9 +913,10 @@
                      key="continue.or.break.from.finally.block.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.ContinueOrBreakFromFinallyBlockInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="EmptyCatchBlock" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.catch.block.display.name"
+    <inspectionElementsMerger implementation="com.siyeh.ig.errorhandling.CatchMayIgnoreExceptionMerger"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CatchMayIgnoreException" bundle="com.siyeh.InspectionGadgetsBundle" key="inspection.catch.ignores.exception.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.EmptyCatchBlockInspection"/>
+                     implementationClass="com.siyeh.ig.errorhandling.CatchMayIgnoreExceptionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EmptyFinallyBlock" bundle="com.siyeh.InspectionGadgetsBundle" key="empty.finally.block.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.EmptyFinallyBlockInspection"/>
@@ -973,9 +978,6 @@
                      key="unnecessary.initcause.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.error.handling" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.UnnecessaryInitCauseInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnusedCatchParameter" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.catch.parameter.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.errorhandling.UnusedCatchParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="NewExceptionWithoutArguments" bundle="com.siyeh.InspectionGadgetsBundle" key="new.exception.without.arguments.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.error.handling" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.errorhandling.NewExceptionWithoutArgumentsInspection"/>
@@ -1224,10 +1226,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="recordstore.opened.not.safely.closed.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.j2me.RecordStoreResourceInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableIfStatement" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.j2me.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.j2me.SimplifiableIfStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SingleCharacterStartsWith" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="single.character.startswith.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.j2me.issues" enabledByDefault="false" level="WARNING"
@@ -1454,7 +1452,7 @@
                      implementationClass="com.siyeh.ig.junit.TestCaseWithConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableJUnitAssertion" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.junit.assertion.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.SimplifiableJUnitAssertionInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="SuiteNotDeclaredStatic" shortName="StaticSuite" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="static.suite.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
@@ -1651,7 +1649,8 @@
                      level="WARNING" implementationClass="com.siyeh.ig.naming.NewClassNamingConventionInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.naming.ClassNamingConventionMerger"/>
     <naming.convention.class implementation="com.siyeh.ig.junit.AbstractTestClassNamingConvention" id="JUnitAbstractTestClassNamingConvention" order="first"/>
-    <naming.convention.class implementation="com.siyeh.ig.junit.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.junit.TestSuiteNamingConvention" id="TestSuiteNamingConvention" order="after JUnitAbstractTestClassNamingConvention"/>
+    <naming.convention.class implementation="com.siyeh.ig.junit.TestClassNamingConvention" id="JUnitTestClassNamingConvention" order="after TestSuiteNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.TypeParameterNamingConvention" id="TypeParameterNamingConvention" order="after JUnitTestClassNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.AnnotationNamingConvention" id="AnnotationNamingConvention" order="after TypeParameterNamingConvention"/>
     <naming.convention.class implementation="com.siyeh.ig.naming.EnumeratedClassNamingConvention" id="EnumeratedClassNamingConvention" order="after AnnotationNamingConvention"/>
@@ -1809,7 +1808,7 @@
                      implementationClass="com.siyeh.ig.numeric.ConstantMathCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="divzero" shortName="DivideByZero" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="divide.by.zero.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues"
-                     enabledByDefault="false" level="WARNING" implementationClass="com.siyeh.ig.numeric.DivideByZeroInspection"/>
+                     enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.numeric.DivideByZeroInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="DoubleLiteralMayBeFloatLiteral" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="double.literal.may.be.float.literal.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
@@ -2030,6 +2029,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantStringOperation" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="inspection.redundant.string.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantStringOperationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCollectionOperation" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="inspection.redundant.collection.operation.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING" cleanupTool="true" implementationClass="com.siyeh.ig.redundancy.RedundantCollectionOperationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TailRecursion" bundle="com.siyeh.InspectionGadgetsBundle" key="tail.recursion.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
@@ -2521,6 +2523,10 @@
                      key="array.creation.without.new.keyword.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.ArrayCreationWithoutNewKeywordInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableIfStatement" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.j2me.SimplifiableIfStatementInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
@@ -2783,11 +2789,11 @@
                      implementationClass="com.siyeh.ig.junit.JUnit5PlatformInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="RedundantExplicitVariableType" enabledByDefault="true" level="WARNING"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="redundant.explicit.var.type.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitVariableTypeInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="VariableTypeCanBeExplicit" enabledByDefault="true" level="INFORMATION"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="variable.type.can.be.explicit.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids10"
                      implementationClass="com.intellij.codeInspection.VariableTypeCanBeExplicitInspection"/>
   </extensions>
 

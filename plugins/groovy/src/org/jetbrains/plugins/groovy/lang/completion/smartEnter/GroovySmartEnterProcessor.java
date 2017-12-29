@@ -19,8 +19,8 @@ import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
@@ -28,6 +28,7 @@ import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -178,7 +179,8 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
         CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit(editor);
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+      final CommonCodeStyleSettings settings =
+        CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(GroovyLanguage.INSTANCE);
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       try {
         settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;

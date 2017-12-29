@@ -21,7 +21,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 13, 2007
  */
 public class LibraryDescriptor {
   

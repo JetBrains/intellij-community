@@ -1,28 +1,17 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PsiTestUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyFileType
@@ -33,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitField
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
+import org.jetbrains.plugins.groovy.util.ThrowingDecompiler
 
 import static org.jetbrains.plugins.groovy.config.GroovyFacetUtil.getBundledGroovyJar
 
@@ -45,7 +35,13 @@ class ResolveCompiledTraitTest extends GroovyResolveTestCase {
     @Override
     void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry)
-      PsiTestUtil.addLibrary(module, model, "some-library", "${TestUtils.absoluteTestDataPath}/lib", 'some-library.jar')
+      model.moduleLibraryTable.createLibrary("some-library").modifiableModel.with {
+        def fs = JarFileSystem.instance
+        def root = "${TestUtils.absoluteTestDataPath}/lib"
+        addRoot(fs.refreshAndFindFileByPath("$root/some-library.jar!/"), OrderRootType.CLASSES)
+        addRoot(fs.refreshAndFindFileByPath("$root/some-library-src.jar!/"), OrderRootType.SOURCES)
+        commit()
+      }
     }
   }
 
@@ -291,6 +287,22 @@ def foo(T t) {
 
 new C().<warning descr="Cannot resolve symbol 'privateMethod'">privateMethod</warning>() // via implementation
 '''
+  }
+
+  void 'test do not get mirror in completion'() {
+    ThrowingDecompiler.disableDecompilers(testRootDisposable)
+    fixture.configureByText '_.groovy', '''\
+class CC implements somepackage.TT {
+  def foo() {
+    someMet<caret>
+  }
+}
+'''
+    fixture.completeBasic()
+    assertContainsElements(
+      fixture.lookupElementStrings,
+      "someMethod", "someAbstractMethod", "someStaticMethod"
+    )
   }
 
   private PsiClass configureTraitInheritor() {

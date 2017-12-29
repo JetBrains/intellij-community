@@ -28,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,7 +106,7 @@ public class StaticImportInspectionBase extends BaseInspection {
           referenceTargetMap.put(reference, member);
         }
       }
-      importStatement.delete();
+      new CommentTracker().deleteAndRestoreComments(importStatement);
       for (Map.Entry<PsiJavaCodeReferenceElement, PsiMember> entry : referenceTargetMap.entrySet()) {
         removeReference(entry.getKey(), entry.getValue());
       }
@@ -120,18 +121,18 @@ public class StaticImportInspectionBase extends BaseInspection {
       if (aClass == null) {
         return;
       }
+      CommentTracker tracker = new CommentTracker();
       final String qualifiedName = aClass.getQualifiedName();
-      final String text = reference.getText();
+      final String text = tracker.markUnchanged(reference).getText();
       final String referenceText = qualifiedName + '.' + text;
       if (reference instanceof PsiReferenceExpression) {
-        final PsiExpression newReference = factory.createExpressionFromText(referenceText, reference);
-        final PsiElement insertedElement = reference.replace(newReference);
+        final PsiElement insertedElement = tracker.replaceAndRestoreComments(reference, referenceText);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
       }
       else {
         final PsiJavaCodeReferenceElement referenceElement =
           factory.createReferenceElementByFQClassName(referenceText, reference.getResolveScope());
-        final PsiElement insertedElement = reference.replace(referenceElement);
+        final PsiElement insertedElement = tracker.replaceAndRestoreComments(reference, referenceElement);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(insertedElement);
       }
     }

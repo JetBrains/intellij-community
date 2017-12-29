@@ -33,7 +33,7 @@ import java.awt.*;
 /**
  * @author Sergey Karashevich
  */
-public class GuiScriptEditorPanel implements Disposable {
+public class GuiScriptEditorPanel {
     private JPanel editorPanel;
     private JPanel myPanel;
     private JLabel myStatusLabel;
@@ -59,11 +59,6 @@ public class GuiScriptEditorPanel implements Disposable {
 
     public @NotNull Editor getEditor(){
         return myEditor.getMyEditor();
-    }
-
-    @Override
-    public void dispose() {
-        Disposer.dispose(myEditor);
     }
 
     private void installActionToolbar() {

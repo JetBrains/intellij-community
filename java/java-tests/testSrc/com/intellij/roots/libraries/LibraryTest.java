@@ -259,6 +259,20 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     }
   }
 
+  public void testAddRemoveJarDirectory() {
+    LibraryTable table = getLibraryTable();
+    Library library = WriteAction.compute(() -> table.createLibrary("jar-directory"));
+    Library.ModifiableModel model = library.getModifiableModel();
+    model.addJarDirectory("file://jar-directory", false, OrderRootType.CLASSES);
+    commit(model);
+    assertSameElements(library.getUrls(OrderRootType.CLASSES), "file://jar-directory");
+
+    model = library.getModifiableModel();
+    model.removeRoot("file://jar-directory", OrderRootType.CLASSES);
+    commit(model);
+    assertEmpty(library.getUrls(OrderRootType.CLASSES));
+  }
+
   public void testAddRemoveExcludedRoot() {
     VirtualFile jar = getJDomJar();
     LibraryEx library = (LibraryEx)createLibrary("junit", jar, null);

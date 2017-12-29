@@ -21,13 +21,23 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.IntArrayList;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class SuspiciousMethodCallUtil {
+
+  // List.of/Set.of are unnecessary here as they don't accept nulls
+  private static final CallMatcher.Simple SINGLETON_COLLECTION =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonList", "singleton").parameterCount(1);
+
   static void setupPatternMethods(PsiManager manager,
                                   GlobalSearchScope searchScope,
                                   List<PsiMethod> patternMethods,
@@ -199,6 +209,13 @@ public class SuspiciousMethodCallUtil {
             final PsiType itemType = JavaGenericsUtil.getCollectionItemType(argType, calleeMethod.getResolveScope());
             final PsiType qualifierItemType = JavaGenericsUtil.getCollectionItemType(qualifierType, calleeMethod.getResolveScope());
             if (qualifierItemType != null && itemType != null && !qualifierItemType.isAssignableFrom(itemType)) {
+              if (TypeUtils.isJavaLangObject(itemType) && hasNullCollectionArg(methodExpression)) {
+                // removeAll(Collections.singleton(null)) is a valid way to remove all nulls from collection
+                return null;
+              }
+              if (qualifierItemType.isConvertibleFrom(itemType) && !reportConvertibleMethodCalls) {
+                return null;
+              }
               return InspectionsBundle.message("inspection.suspicious.collections.method.calls.problem.descriptor",
                                                PsiFormatUtil.formatType(qualifierType, 0, PsiSubstitutor.EMPTY),
                                                PsiFormatUtil.formatType(itemType, 0, PsiSubstitutor.EMPTY));
@@ -234,5 +251,19 @@ public class SuspiciousMethodCallUtil {
       return message;
     }
     return null;
+  }
+
+  private static boolean hasNullCollectionArg(PsiReferenceExpression methodExpression) {
+    PsiMethodCallExpression call = ObjectUtils.tryCast(methodExpression.getParent(), PsiMethodCallExpression.class);
+    if (call != null) {
+      PsiExpression arg =
+        ExpressionUtils.resolveExpression(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+      PsiMethodCallExpression argCall =
+        ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(arg), PsiMethodCallExpression.class);
+      if (SINGLETON_COLLECTION.test(argCall) && ExpressionUtils.isNullLiteral(argCall.getArgumentList().getExpressions()[0])) {
+        return true;
+      }
+    }
+    return false;
   }
 }

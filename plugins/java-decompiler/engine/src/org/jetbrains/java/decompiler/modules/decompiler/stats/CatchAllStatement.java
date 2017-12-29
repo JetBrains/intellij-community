@@ -1,36 +1,20 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class CatchAllStatement extends Statement {
 
@@ -70,7 +54,7 @@ public class CatchAllStatement extends Statement {
 
     vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                             new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
-                            (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+                            DecompilerContext.getVarProcessor()));
   }
 
 
@@ -79,13 +63,11 @@ public class CatchAllStatement extends Statement {
   // *****************************************************************************
 
   public static Statement isHead(Statement head) {
-
     if (head.getLastBasicType() != Statement.LASTBASICTYPE_GENERAL) {
       return null;
     }
 
-    HashSet<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
-
+    Set<Statement> setHandlers = DecHelper.getUniquePredExceptions(head);
     if (setHandlers.size() != 1) {
       return null;
     }
@@ -179,14 +161,14 @@ public class CatchAllStatement extends Statement {
     if (this.monitor != null) {
       cas.monitor = new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                                    VarType.VARTYPE_INT,
-                                   (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR));
+                                   DecompilerContext.getVarProcessor());
     }
 
     if (!this.vars.isEmpty()) {
       // FIXME: WTF??? vars?!
       vars.add(new VarExprent(DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER),
                               new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/Throwable"),
-                              (VarProcessor)DecompilerContext.getProperty(DecompilerContext.CURRENT_VAR_PROCESSOR)));
+                              DecompilerContext.getVarProcessor()));
     }
 
     return cas;
@@ -205,26 +187,17 @@ public class CatchAllStatement extends Statement {
     return handler;
   }
 
-
-  public void setHandler(Statement handler) {
-    this.handler = handler;
-  }
-
-
   public boolean isFinally() {
     return isFinally;
   }
-
 
   public void setFinally(boolean isFinally) {
     this.isFinally = isFinally;
   }
 
-
   public VarExprent getMonitor() {
     return monitor;
   }
-
 
   public void setMonitor(VarExprent monitor) {
     this.monitor = monitor;

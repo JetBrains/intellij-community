@@ -56,7 +56,20 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
-    return PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null;
+    if (PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null) {
+      PsiStatement anchor = getAnchor(myReferenceExpression);
+      if (anchor instanceof PsiExpressionStatement) {
+        PsiExpression expression = ((PsiExpressionStatement)anchor).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+          if (method != null && method.isConstructor()) { //this or super call
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -154,7 +167,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
-  private static PsiStatement getAnchor(PsiExpression[] expressionOccurences) {
+  private static PsiStatement getAnchor(PsiExpression... expressionOccurences) {
     PsiElement parent = expressionOccurences[0];
     int minOffset = expressionOccurences[0].getTextRange().getStartOffset();
     for (int i = 1; i < expressionOccurences.length; i++) {

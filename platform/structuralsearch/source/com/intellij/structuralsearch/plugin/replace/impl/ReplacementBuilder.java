@@ -27,8 +27,6 @@ import java.util.Map;
 
 /**
  * @author maxim
- * Date: 24.02.2004
- * Time: 15:34:57
  */
 public final class ReplacementBuilder {
   private final String replacement;

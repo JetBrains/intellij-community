@@ -182,10 +182,13 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   @Nullable
   private static LocalChangeList askTargetList(@NotNull Project project, @NotNull Collection<Change> changes) {
     ChangeListManagerImpl listManager = ChangeListManagerImpl.getInstanceImpl(project);
-    List<LocalChangeList> preferredLists = getPreferredLists(listManager.getChangeListsCopy(), changes);
-    List<LocalChangeList> listsForChooser =
-      preferredLists.isEmpty() ? Collections.singletonList(listManager.getDefaultChangeList()) : preferredLists;
-    ChangeListChooser chooser = new ChangeListChooser(project, listsForChooser, guessPreferredList(preferredLists),
+    List<LocalChangeList> nonAffectedLists = getNonAffectedLists(listManager.getChangeListsCopy(), changes);
+    List<LocalChangeList> suggestedLists = nonAffectedLists.isEmpty()
+                                           ? Collections.singletonList(listManager.getDefaultChangeList())
+                                           : nonAffectedLists;
+    ChangeList defaultSelection = guessPreferredList(nonAffectedLists);
+
+    ChangeListChooser chooser = new ChangeListChooser(project, suggestedLists, defaultSelection,
                                                       ActionsBundle.message("action.ChangesView.Move.text"), null);
     chooser.show();
 
@@ -193,7 +196,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  private static ChangeList guessPreferredList(@NotNull List<LocalChangeList> lists) {
+  public static ChangeList guessPreferredList(@NotNull List<LocalChangeList> lists) {
     LocalChangeList activeChangeList = ContainerUtil.find(lists, LocalChangeList::isDefault);
     if (activeChangeList != null) return activeChangeList;
 
@@ -203,7 +206,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @NotNull
-  private static List<LocalChangeList> getPreferredLists(@NotNull List<LocalChangeList> lists, @NotNull Collection<Change> changes) {
+  private static List<LocalChangeList> getNonAffectedLists(@NotNull List<LocalChangeList> lists, @NotNull Collection<Change> changes) {
     final Set<Change> changesSet = ContainerUtil.newHashSet(changes);
 
     return ContainerUtil.findAll(lists, list -> !ContainerUtil.intersects(changesSet, list.getChanges()));

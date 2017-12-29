@@ -21,6 +21,6 @@ import com.intellij.psi.impl.light.LightParameter
 import org.jetbrains.uast.UastErrorType
 
 class UastPsiParameterNotResolved(
-        declarationScope: PsiElement,
-        language: Language
+  declarationScope: PsiElement,
+  language: Language
 ) : LightParameter("error", UastErrorType, declarationScope, language)

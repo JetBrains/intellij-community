@@ -45,11 +45,11 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 
-public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
   @NonNls private static final String END_MARKER = "<!-- end marker -->";
   private final Project myProject;
 
-  public DaemonTooltipRendererProvider(final Project project) {
+  DaemonTooltipRendererProvider(final Project project) {
     myProject = project;
   }
 

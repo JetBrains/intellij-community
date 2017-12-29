@@ -23,12 +23,20 @@ if PY2:
 else:
     from io import StringIO
 
+# stdin and stdout encodings should be the same.
+# Since stdout may already be monkeypatches, we use stdin
+_ENCODING = sys.stdin.encoding if sys.stdin.encoding else "UTF-8"
+
 
 class FlushingStringIO(StringIO, object):
+
+    encoding = _ENCODING   # stdout must have encoding
+
     def __init__(self, flush_function):
         super(FlushingStringIO, self).__init__()
 
         self._flush_function = flush_function
+        self.encoding = _ENCODING
 
     def _flush_to_flush_function(self):
         self._flush_function(self.getvalue())
@@ -122,6 +130,6 @@ def convert_error_to_string(err, frames_to_skip_from_tail=0):
         if frames_to_skip_from_tail:
             trace = trace[:-frames_to_skip_from_tail]
         return ''.join(trace)
-    except:
+    except Exception:
         tb = traceback.format_exc()
         return "*FAILED TO GET TRACEBACK*: " + tb

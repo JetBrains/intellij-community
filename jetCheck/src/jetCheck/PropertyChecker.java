@@ -10,9 +10,10 @@ import java.util.function.Predicate;
  * An entry point to property-based testing. The main usage pattern: {@code PropertyChecker.forAll(generator).shouldHold(property)}.
  */
 public class PropertyChecker<T> {
+  static final int DEFAULT_MAX_SIZE_HINT = 100;
   private final Generator<T> generator;
   private long globalSeed = new Random().nextLong();
-  private IntUnaryOperator sizeHintFun = iteration -> (iteration - 1) % 100 + 1;
+  private IntUnaryOperator sizeHintFun = iteration -> (iteration - 1) % DEFAULT_MAX_SIZE_HINT + 1;
   private int iterationCount = 100;
 
   private PropertyChecker(Generator<T> generator) {

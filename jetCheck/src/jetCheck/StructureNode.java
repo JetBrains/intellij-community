@@ -1,29 +1,45 @@
 package jetCheck;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
  * @author peter
  */
-interface StructureElement {
-  void shrink(Predicate<StructureElement> suitable);
+abstract class StructureElement {
+  final NodeId id;
+
+  StructureElement(@NotNull NodeId id) {
+    this.id = id;
+  }
+
+  @Nullable
+  abstract ShrinkStep shrink();
+
+  @NotNull
+  abstract StructureElement replace(NodeId id, StructureElement replacement);
+
+  @Nullable
+  abstract StructureElement findChildById(NodeId id);
 }
 
-class StructureNode implements StructureElement {
+class StructureNode extends StructureElement {
   final List<StructureElement> children;
   boolean shrinkProhibited;
 
-  StructureNode() {
-    this(new ArrayList<>());
+  StructureNode(NodeId id) {
+    this(id, new ArrayList<>());
   }
 
-  StructureNode(List<StructureElement> children) {
+  StructureNode(NodeId id, List<StructureElement> children) {
+    super(id);
     this.children = children;
   }
 
@@ -35,8 +51,8 @@ class StructureNode implements StructureElement {
     children.add(child);
   }
 
-  StructureNode subStructure() {
-    StructureNode e = new StructureNode();
+  StructureNode subStructure(@NotNull Generator<?> generator) {
+    StructureNode e = new StructureNode(id.childId(generator));
     addChild(e);
     return e;
   }
@@ -48,79 +64,126 @@ class StructureNode implements StructureElement {
     children.remove(children.size() - 1);
   }
 
+  @Nullable
   @Override
-  public void shrink(Predicate<StructureElement> suitable) {
-    if (shrinkProhibited) return;
+  ShrinkStep shrink() {
+    if (shrinkProhibited) return null;
 
-    List<StructureElement> children = this.children;
-    boolean isList = isList();
-    if (isList) {
-      children = shrinkList(suitable, children);
-    }
-
-    for (int i = isList ? 1 : 0; i < children.size(); i++) {
-      children = shrinkChild(suitable, children, i);
-    }
+    return isList() ? new RemoveListRange(this) : shrinkChild(0);
   }
 
-  private static List<StructureElement> shrinkChild(Predicate<StructureElement> suitable, List<StructureElement> children, int index) {
-    List<StructureElement> result = new ArrayList<>(children);
-    children.get(index).shrink(less -> {
-      List<StructureElement> copy = new ArrayList<>(result);
-      copy.set(index, less);
-      if (suitable.test(new StructureNode(copy))) {
-        result.set(index, less);
-        return true;
+  @Nullable
+  ShrinkStep shrinkChild(int index) {
+    for (; index < children.size(); index++) {
+      ShrinkStep childShrink = children.get(index).shrink();
+      if (childShrink != null) return shrinkNextChildAfter(index, childShrink);
+    }
+    
+    return shrinkRecursion();
+  }
+
+  @Nullable
+  private ShrinkStep shrinkNextChildAfter(int index, @Nullable ShrinkStep step) {
+    if (step == null) return shrinkChild(index + 1);
+    
+    return new ShrinkStep() {
+      @Nullable
+      @Override
+      StructureNode apply(StructureNode root) {
+        return step.apply(root);
       }
-      return false;
-    });
-    return result;
-  }
 
-  private static List<StructureElement> shrinkList(Predicate<StructureElement> suitable, List<StructureElement> listChildren) {
-    int start = 1;
-    int length = 1;
-    int limit = listChildren.size();
-    while (limit > 0) {
-      int lastSuccessfulRemove = -1;
-      while (start < limit && start < listChildren.size()) {
-        StructureNode less = removeRange(listChildren, start, length);
-        if (suitable.test(less)) {
-          listChildren = less.children;
-          length = Math.min(length * 2, listChildren.size() - start);
-          lastSuccessfulRemove = start;
-        } else {
-          if (length > 1) {
-            length /= 2;
-          } else {
-            start++;
-          }
-        }
+      @Override
+      ShrinkStep onSuccess(StructureNode smallerRoot) {
+        StructureNode inheritor = (StructureNode)Objects.requireNonNull(smallerRoot.findChildById(id));
+        assert inheritor.children.size() == children.size();
+        return inheritor.shrinkNextChildAfter(index, step.onSuccess(smallerRoot));
       }
-      limit = lastSuccessfulRemove;
-    }
-    return listChildren;
-  }
 
-  @NotNull
-  private static StructureNode removeRange(List<StructureElement> listChildren, int start, int length) {
-    int newSize = listChildren.size() - length - 1;
-    List<StructureElement> lessItems = new ArrayList<>(newSize + 1);
-    lessItems.add(new IntData(newSize, IntDistribution.uniform(0, newSize)));
-    lessItems.addAll(listChildren.subList(1, start));
-    lessItems.addAll(listChildren.subList(start + length, listChildren.size()));
-    return new StructureNode(lessItems);
+      @Override
+      ShrinkStep onFailure() {
+        return shrinkNextChildAfter(index, step.onFailure());
+      }
+    };
   }
 
   private boolean isList() {
-    if (!children.isEmpty() &&
-        children.get(0) instanceof IntData && ((IntData)children.get(0)).value == children.size() - 1) {
+    if (children.size() > 1 &&
+        children.get(0) instanceof IntData && ((IntData)children.get(0)).value >= children.size() - 1) {
       for (int i = 1; i < children.size(); i++) {
         if (!(children.get(i) instanceof StructureNode)) return false;
       }
       return true;
     }
     return false;
+  }
+
+  private void findChildrenWithGenerator(@NotNull Generator<?> generator, List<StructureNode> result) {
+    for (StructureElement child : children) {
+      if (child instanceof StructureNode) {
+        Generator<?> childGen = child.id.generator;
+        if (childGen != null && generator.getGeneratorFunction().equals(childGen.getGeneratorFunction())) {
+          result.add((StructureNode)child);
+        } else {
+          ((StructureNode)child).findChildrenWithGenerator(generator, result);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private ShrinkStep shrinkRecursion() {
+    if (id.generator != null) {
+      List<StructureNode> sameGeneratorChildren = new ArrayList<>();
+      findChildrenWithGenerator(id.generator, sameGeneratorChildren);
+      return tryReplacing(sameGeneratorChildren, 0);
+    }
+    
+    return null;
+  }
+
+  @Nullable
+  private ShrinkStep tryReplacing(List<StructureNode> candidates, int index) {
+    if (index < candidates.size()) {
+      StructureNode replacement = candidates.get(index);
+      return ShrinkStep.create(id, replacement, __ -> replacement.shrink(), () -> tryReplacing(candidates, index + 1));
+    }
+    return null;
+  }
+
+  @NotNull
+  @Override
+  StructureNode replace(NodeId id, StructureElement replacement) {
+    if (id == this.id) {
+      return (StructureNode)replacement;
+    }
+    
+    if (children.isEmpty()) return this;
+
+    int index = indexOfChildContaining(id);
+    StructureElement oldChild = children.get(index);
+    StructureElement newChild = oldChild.replace(id, replacement);
+    if (oldChild == newChild) return this;
+
+    List<StructureElement> newChildren = new ArrayList<>(this.children);
+    newChildren.set(index, newChild);
+    StructureNode copy = new StructureNode(this.id, newChildren);
+    copy.shrinkProhibited = this.shrinkProhibited;
+    return copy;
+  }
+
+  @Nullable
+  @Override
+  StructureElement findChildById(NodeId id) {
+    if (id == this.id) return this;
+    int index = indexOfChildContaining(id);
+    return index < 0 ? null : children.get(index).findChildById(id);
+  }
+
+  private int indexOfChildContaining(NodeId id) {
+    int i = 0;
+    while (i < children.size() && children.get(i).id.number <= id.number) i++;
+    return i - 1;
   }
 
   @Override
@@ -130,37 +193,56 @@ class StructureNode implements StructureElement {
 
   @Override
   public String toString() {
-    return "(" + children.stream().map(Object::toString).collect(Collectors.joining(", ")) + ")";
+    String inner = children.stream().map(Object::toString).collect(Collectors.joining(", "));
+    return isList() ? "[" + inner + "]" : "(" + inner + ")";
   }
 
 }
 
-class IntData implements StructureElement {
+class IntData extends StructureElement {
   final int value;
   final IntDistribution distribution;
 
-  IntData(int value, IntDistribution distribution) {
+  IntData(NodeId id, int value, IntDistribution distribution) {
+    super(id);
     this.value = value;
     this.distribution = distribution;
   }
 
+  @Nullable
   @Override
-  public void shrink(Predicate<StructureElement> suitable) {
-    if (value == 0 || tryInt(0, suitable)) return;
-
-    int value = this.value;
-    if (value < 0 && tryInt(-value, suitable)) {
-      value = -value;
-    }
-    while (value != 0 && tryInt(value / 2, suitable)) {
-      value /= 2;
-    }
+  ShrinkStep shrink() {
+    return value == 0 ? null : tryInt(0, () -> null, this::tryNegation);
   }
 
-  private boolean tryInt(int value, Predicate<StructureElement> suitable) {
-    return distribution.isValidValue(value) && suitable.test(new IntData(value, distribution));
+  private ShrinkStep tryNegation() {
+    if (value < 0) {
+      return tryInt(-value, () -> divisionLoop(-value), () -> divisionLoop(value));
+    }
+    return divisionLoop(value);
   }
 
+  private ShrinkStep divisionLoop(int value) {
+    if (value == 0) return null;
+    int divided = value / 2;
+    return tryInt(divided, () -> divisionLoop(divided / 2), null);
+  }
+
+  private ShrinkStep tryInt(int value, @NotNull Supplier<ShrinkStep> success, @Nullable Supplier<ShrinkStep> fail) {
+    return distribution.isValidValue(value) ? ShrinkStep.create(id, new IntData(id, value, distribution), __ -> success.get(), fail) : null;
+  }
+
+  @NotNull
+  @Override
+  IntData replace(NodeId id, StructureElement replacement) {
+    return this.id == id ? (IntData)replacement : this;
+  }
+
+  @Nullable
+  @Override
+  StructureElement findChildById(NodeId id) {
+    return id == this.id ? this : null;
+  }
 
   @Override
   public String toString() {

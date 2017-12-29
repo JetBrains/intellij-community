@@ -22,28 +22,28 @@ import org.jetbrains.uast.UObjectLiteralExpression
 import org.jetbrains.uast.UReferenceExpression
 
 class JavaUObjectLiteralExpression(
-        override val psi: PsiNewExpression,
-        givenParent: UElement?
+  override val psi: PsiNewExpression,
+  givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression {
-    override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
+  override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
 
-    override val classReference by lz {
-        psi.classReference?.let { ref ->
-            JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
-        }
+  override val classReference by lz {
+    psi.classReference?.let { ref ->
+      JavaConverter.convertReference(ref, this, null) as? UReferenceExpression
     }
+  }
 
-    override val valueArgumentCount: Int
-        get() = psi.argumentList?.expressions?.size ?: 0
+  override val valueArgumentCount: Int
+    get() = psi.argumentList?.expressions?.size ?: 0
 
-    override val valueArguments by lz {
-        psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
-    }
+  override val valueArguments by lz {
+    psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
+  }
 
-    override val typeArgumentCount by lz { psi.classReference?.typeParameters?.size ?: 0 }
+  override val typeArgumentCount by lz { psi.classReference?.typeParameters?.size ?: 0 }
 
-    override val typeArguments: List<PsiType>
-        get() = psi.classReference?.typeParameters?.toList() ?: emptyList()
+  override val typeArguments: List<PsiType>
+    get() = psi.classReference?.typeParameters?.toList() ?: emptyList()
 
-    override fun resolve() = psi.resolveMethod()
+  override fun resolve() = psi.resolveMethod()
 }

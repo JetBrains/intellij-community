@@ -76,7 +76,7 @@ public class OutputToGeneralTestsEventsConverterTest extends BaseSMTRunnerTestCa
     for (String line : lines) {
       myOutputConsumer.process(line, ProcessOutputTypes.STDOUT);
     }
-    myOutputConsumer.flushBufferBeforeTerminating(0);
+    myOutputConsumer.flushBufferOnProcessTermination(0);
 
     assertEquals(expected, myEnventsProcessor.getOutput());
   }

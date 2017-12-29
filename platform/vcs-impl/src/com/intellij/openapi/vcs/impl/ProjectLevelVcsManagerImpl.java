@@ -631,7 +631,10 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public void startBackgroundVcsOperation() {
-    myBackgroundOperationCounter.incrementAndGet();
+    int counter = myBackgroundOperationCounter.incrementAndGet();
+    if (counter == 1) {
+      myProject.getMessageBus().syncPublisher(BackgroundVfsOperationListener.TOPIC).backgroundVcsOperationStarted();
+    }
   }
 
   @Override
@@ -640,6 +643,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     assert !ApplicationManager.getApplication().isDispatchThread() || ApplicationManager.getApplication().isUnitTestMode();
     int counter = myBackgroundOperationCounter.getAndDecrement();
     LOG.assertTrue(counter > 0, "myBackgroundOperationCounter was " + counter + " while should have been > 0");
+    if (counter == 1) {
+      myProject.getMessageBus().syncPublisher(BackgroundVfsOperationListener.TOPIC).backgroundVcsOperationStopped();
+    }
   }
 
   @Override
@@ -845,13 +851,17 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public boolean isIgnored(VirtualFile vf) {
-    if (Registry.is("ide.hide.excluded.files")) {
-      return myExcludedIndex.isExcludedFile(vf);
-    }
-    else {
-      return myExcludedIndex.isUnderIgnored(vf);
-    }
+  public boolean isIgnored(@NotNull VirtualFile vf) {
+    return ReadAction.compute(() -> {
+      if (myProject.isDisposed()) return false;
+
+      if (Registry.is("ide.hide.excluded.files")) {
+        return myExcludedIndex.isExcludedFile(vf);
+      }
+      else {
+        return myExcludedIndex.isUnderIgnored(vf);
+      }
+    });
   }
 
   private boolean isInDirectoryBasedRoot(@Nullable VirtualFile file) {

@@ -37,23 +37,21 @@ public class AfterSuiteEvent extends AbstractTestEvent {
       final SMTestProxy testProxy = findTestProxy(testId);
       if (testProxy == null) return;
 
-      switch (result) {
-        case SUCCESS:
-          testProxy.setFinished();
-          break;
-        case FAILURE:
-          testProxy.setTestFailed("", null, false);
-          break;
-        case SKIPPED:
-          testProxy.setTestIgnored(null, null);
-          break;
-        case UNKNOWN_RESULT:
-          break;
-      }
-
-      getResultsViewer().onSuiteFinished(testProxy);
-      if(testProxy == getResultsViewer().getTestsRootNode()) {
-        getResultsViewer().onTestingFinished(getResultsViewer().getTestsRootNode());
+      if (testProxy != getResultsViewer().getTestsRootNode()) {
+        switch (result) {
+          case SUCCESS:
+            testProxy.setFinished();
+            break;
+          case FAILURE:
+            testProxy.setTestFailed("", null, false);
+            break;
+          case SKIPPED:
+            testProxy.setTestIgnored(null, null);
+            break;
+          case UNKNOWN_RESULT:
+            break;
+        }
+        getResultsViewer().onSuiteFinished(testProxy);
       }
     });
   }

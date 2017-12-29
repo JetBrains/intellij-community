@@ -75,8 +75,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
     if (super.isSpeedSearchEnabled()) {
       VisiblePack visiblePack = myComponent.getModel().getVisiblePack();
       Set<VirtualFile> roots = visiblePack.getLogProviders().keySet();
-      Set<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(roots, visiblePack.getFilters().getRootFilter(),
-                                                                    visiblePack.getFilters().getStructureFilter());
+      Set<VirtualFile> visibleRoots = VcsLogUtil.getAllVisibleRoots(roots, visiblePack.getFilters());
       for (VirtualFile root : visibleRoots) {
         if (!myIndex.isIndexed(root)) return false;
       }

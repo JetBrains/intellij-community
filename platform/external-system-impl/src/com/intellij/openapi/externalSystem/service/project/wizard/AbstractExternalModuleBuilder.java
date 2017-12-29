@@ -17,11 +17,14 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -68,5 +71,15 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   @NotNull
   public S getExternalProjectSettings() {
     return myExternalProjectSettings;
+  }
+
+  @Nullable
+  @Override
+  public Project createProject(String name, String path) {
+    Project project = super.createProject(name, path);
+    if(project != null) {
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, Boolean.TRUE);
+    }
+    return project;
   }
 }

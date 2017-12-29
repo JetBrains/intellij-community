@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,6 +102,9 @@ public class BasicJarHandler extends ZipHandlerBase {
     return myHandle.getFileStamp();
   }
 
+  private static final ScheduledExecutorService
+    ourScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Zip handle janitor", 1);
+  
   private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
     private ZipFile myFile;
     private long myFileStamp;
@@ -163,8 +167,8 @@ public class BasicJarHandler extends ZipHandlerBase {
       assert myLock.isLocked();
       ScheduledFuture<?> invalidationRequest;
       try {
-        myInvalidationRequest = invalidationRequest = 
-          JobScheduler.getScheduler().schedule(() -> invalidateZipReference(), cacheInvalidationTime(), TimeUnit.MILLISECONDS);
+        myInvalidationRequest = invalidationRequest =
+          ourScheduledExecutorService.schedule(() -> invalidateZipReference(), cacheInvalidationTime(), TimeUnit.MILLISECONDS);
       }
       finally {
         myLock.unlock();

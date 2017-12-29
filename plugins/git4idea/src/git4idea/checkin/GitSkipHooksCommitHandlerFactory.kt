@@ -40,7 +40,7 @@ class GitSkipHooksCommitHandlerFactory : CheckinHandlerFactory() {
   }
 
   private class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
-    private val vcs = GitVcs.getInstance(panel.project)!!
+    private val vcs = GitVcs.getInstance(panel.project)
     private val configurationPanel = MyConfigurationPanel(panel, vcs)
 
     override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {

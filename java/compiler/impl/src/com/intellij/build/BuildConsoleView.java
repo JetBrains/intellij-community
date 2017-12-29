@@ -15,7 +15,6 @@
  */
 package com.intellij.build;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.ui.ComponentContainer;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -24,5 +23,4 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public interface BuildConsoleView extends ComponentContainer, BuildProgressListener {
-  AnAction[] createConsoleActions();
 }

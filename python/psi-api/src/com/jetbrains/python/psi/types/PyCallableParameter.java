@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Predicate;
 
 /**
  * @author vlan
@@ -50,8 +38,13 @@ public interface PyCallableParameter {
 
   boolean hasDefaultValue();
 
+  /**
+   * @apiNote This method will be marked as abstract in 2018.2.
+   */
   @Nullable
-  String getDefaultValueText();
+  default String getDefaultValueText() {
+    return null;
+  }
 
   boolean isPositionalContainer();
 
@@ -78,6 +71,20 @@ public interface PyCallableParameter {
    */
   @NotNull
   String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context);
+
+  /**
+   * @param includeDefaultValue if true, include the default value after an "=".
+   * @param context             context to be used to resolve argument type
+   * @param typeFilter          predicate to be used to ignore resolved argument type
+   * @return canonical representation of parameter.
+   * Includes asterisks for *param and **param.
+   * Also includes argument type if {@code context} is not null and filter returns `false` for it.
+   * @apiNote This method will be marked as abstract in 2018.3.
+   */
+  @NotNull
+  default String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
+    return getPresentableText(includeDefaultValue, context);
+  }
 
   /**
    * @param context context to be used to resolve argument type

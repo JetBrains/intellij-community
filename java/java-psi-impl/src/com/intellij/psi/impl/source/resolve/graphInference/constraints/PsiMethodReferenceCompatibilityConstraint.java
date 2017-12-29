@@ -21,9 +21,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -206,7 +208,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
 
-      if (myExpression.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, qualifierResolveResult.getSubstitutor())) {
+      if (PsiUtil.isRawSubstitutor(containingClass, qualifierResolveResult.getSubstitutor())) {
         session.initBounds(myExpression, containingClass.getTypeParameters());
       }
 
@@ -231,11 +233,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       // the type to search is the result of capture conversion (5.1.10) applied to T;
       // otherwise, the type to search is the same as the type of the first search. Again, the type arguments, if any, are given by the method reference.
       if (PsiUtil.isRawSubstitutor(qContainingClass, psiSubstitutor)) {
+        PsiClassType subclassType;
         if (member instanceof PsiMethod &&
-            PsiMethodReferenceUtil.isSecondSearchPossible(signature.getParameterTypes(), qualifierResolveResult,
-                                                          methodReferenceExpression)) {
-          final PsiType pType = PsiUtil.captureToplevelWildcards(signature.getParameterTypes()[0], methodReferenceExpression);
-          psiSubstitutor = getParameterizedTypeSubstitutor(qContainingClass, pType);
+            PsiMethodReferenceUtil.isSecondSearchPossible(signature.getParameterTypes(), qualifierResolveResult, methodReferenceExpression) &&
+            (subclassType = StrictSubtypingConstraint.getSubclassType(qContainingClass, signature.getParameterTypes()[0], true)) != null &&
+            !subclassType.isRaw()) {
+          final PsiType pType = PsiUtil.captureToplevelWildcards(subclassType, methodReferenceExpression);
+          psiSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(qContainingClass, (PsiClassType)pType);
         }
         else if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor() || member instanceof PsiClass) {
           //15.13.1
@@ -245,10 +249,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           final PsiResolveHelper helper = JavaPsiFacade.getInstance(methodReferenceExpression.getProject()).getResolveHelper();
           final PsiType[] paramTypes =
             member instanceof PsiMethod ? ((PsiMethod)member).getSignature(PsiSubstitutor.EMPTY).getParameterTypes() : PsiType.EMPTY_ARRAY;
-          LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length || 
-                         member instanceof PsiMethod && ((PsiMethod)member).isVarArgs(), "expr: " + methodReferenceExpression + "; " +
-                                                                                    paramTypes.length + "; " +
-                                                                                    Arrays.toString(signature.getParameterTypes()));
+
+          if (paramTypes.length != signature.getParameterTypes().length && !(member instanceof PsiMethod && ((PsiMethod)member).isVarArgs())) {
+            //inapplicable method reference
+            return PsiSubstitutor.EMPTY;
+          }
           if (Arrays.deepEquals(signature.getParameterTypes(), paramTypes)) {
             return PsiSubstitutor.EMPTY;
           }
@@ -270,27 +275,6 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         LOG.assertTrue(psiSubstitutor != null);
       }
     }
-    return psiSubstitutor;
-  }
-
-  public static PsiSubstitutor getParameterizedTypeSubstitutor(PsiClass qContainingClass, @NotNull PsiType pType) {
-    if (pType instanceof PsiIntersectionType) {
-      for (PsiType type : ((PsiIntersectionType)pType).getConjuncts()) {
-        PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
-        if (InheritanceUtil.isInheritorOrSelf(resolveResult.getElement(), qContainingClass, true)) {
-          return getParameterizedTypeSubstitutor(qContainingClass, type);
-        }
-      }
-    }
-    else if (pType instanceof PsiCapturedWildcardType) {
-      pType = ((PsiCapturedWildcardType)pType).getUpperBound();
-    }
-
-    PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(pType);
-    PsiClass paramClass = resolveResult.getElement();
-    LOG.assertTrue(paramClass != null, pType.getCanonicalText());
-    PsiSubstitutor psiSubstitutor = TypeConversionUtil.getClassSubstitutor(qContainingClass, paramClass, resolveResult.getSubstitutor());
-    LOG.assertTrue(psiSubstitutor != null);
     return psiSubstitutor;
   }
 

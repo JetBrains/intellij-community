@@ -22,7 +22,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 6/29/12
  */
 public class LogParser {
 

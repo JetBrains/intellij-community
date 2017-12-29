@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.util;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
@@ -71,8 +57,18 @@ public class JavaRefactoringElementDescriptionProvider implements ElementDescrip
     if ((element instanceof PsiClass)) {
       //TODO : local & anonymous
       PsiClass psiClass = (PsiClass) element;
-      return RefactoringBundle.message("class.description", CommonRefactoringUtil.htmlEmphasize(
-        DescriptiveNameUtil.getDescriptiveName(psiClass)));
+      if (psiClass.isInterface()) {
+        return RefactoringBundle.message("interface.description", CommonRefactoringUtil.htmlEmphasize(
+          DescriptiveNameUtil.getDescriptiveName(psiClass)));
+      }
+      else if (psiClass.isEnum()) {
+        return RefactoringBundle.message("enum.description", CommonRefactoringUtil.htmlEmphasize(
+          DescriptiveNameUtil.getDescriptiveName(psiClass)));
+      }
+      else {
+        return RefactoringBundle.message("class.description", CommonRefactoringUtil.htmlEmphasize(
+          DescriptiveNameUtil.getDescriptiveName(psiClass)));
+      }
     }
     return null;
   }

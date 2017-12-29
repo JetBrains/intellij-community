@@ -25,7 +25,6 @@ import java.util.List;
 /**
  * Provides a way to sort results of multi-resolve.
  * User: dcheryasov
- * Date: Dec 5, 2008 11:06:30 AM
  */
 public class RatedResolveResult implements ResolveResult {
   private final int myRate;

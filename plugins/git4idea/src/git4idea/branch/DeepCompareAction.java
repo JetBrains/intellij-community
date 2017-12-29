@@ -67,7 +67,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
         selectBranchAndPerformAction(ui.getDataPack(), e, selectedBranch -> {
           ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
           dc.highlightInBackground(selectedBranch, dataProvider);
-        }, getAllVisibleRoots(ui));
+        }, VcsLogUtil.getVisibleRoots(ui));
         return;
       }
       dc.highlightInBackground(singleBranchName, dataProvider);
@@ -94,7 +94,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       }
     }.build();
     ListPopup popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup("Select branch to compare", actionGroup, event.getDataContext(), false, false, false, null, -1, null);
+      .createActionGroupPopup("Select Branch to Compare", actionGroup, event.getDataContext(), false, false, false, null, -1, null);
     InputEvent inputEvent = event.getInputEvent();
     if (inputEvent instanceof MouseEvent) {
       popup.show(new RelativePoint((MouseEvent)inputEvent));
@@ -110,17 +110,11 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     e.getPresentation().setEnabledAndVisible(project != null && ui != null &&
-                                             hasGitRoots(project, getAllVisibleRoots(ui)));
+                                             hasGitRoots(project, VcsLogUtil.getVisibleRoots(ui)));
   }
 
   private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<VirtualFile> roots) {
     final GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
     return ContainerUtil.exists(roots, root -> manager.getRepositoryForRootQuick(root) != null);
-  }
-
-  @NotNull
-  private static Set<VirtualFile> getAllVisibleRoots(@NotNull VcsLogUi ui) {
-    return VcsLogUtil.getAllVisibleRoots(ui.getDataPack().getLogProviders().keySet(), ui.getFilterUi().getFilters().getRootFilter(),
-                                         ui.getFilterUi().getFilters().getStructureFilter());
   }
 }

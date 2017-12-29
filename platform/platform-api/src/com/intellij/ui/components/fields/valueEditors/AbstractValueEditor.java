@@ -62,10 +62,12 @@ public abstract class AbstractValueEditor<T> implements ValueEditor<T> {
   /**
    * Check the given value and set it an equivalent text string.
    * @param newValue The new value to set. It must be either a default value or a value following the rules defined in
-   * {@link #assertValid(Object)} method, otherwise the method will fail with assertion.
+   * {@link #isValid(Object)} method, otherwise the default value will be used.
    */
   public void setValue(@NotNull T newValue) {
-    if (!newValue.equals(getDefaultValue())) assertValid(newValue);
+    if (!newValue.equals(getDefaultValue()) && !isValid(newValue)) {
+      newValue = getDefaultValue();
+    }
     setValueText(valueToString(newValue));
   }
 

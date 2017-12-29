@@ -27,19 +27,14 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author max
- * @author peter
- * @author Konstantin Bulenkov
- */
-public class NameUtilMatchingTest extends UsefulTestCase {
-
+public class NameUtilMatchingTest extends TestCase {
   public void testSimpleCases() {
     assertMatches("N", "NameUtilTest");
     assertMatches("NU", "NameUtilTest");
@@ -473,34 +468,34 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   public void testMatchingFragments() {
     @NonNls String sample = "NoClassDefFoundException";
     //                       0 2    7  10   15    21
-    assertOrderedEquals(NameUtil.buildMatcher("ncldfou*ion", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3));
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("ncldfou*ion", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+                                       TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3));
 
     sample = "doGet(HttpServletRequest, HttpServletResponse):void";
     //        0                     22
-    assertOrderedEquals(NameUtil.buildMatcher("d*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("d*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 1), TextRange.from(22, 2));
-    assertOrderedEquals(NameUtil.buildMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 4), TextRange.from(22, 2));
 
     sample = "_test";
-    assertOrderedEquals(NameUtil.buildMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 1));
-    assertOrderedEquals(NameUtil.buildMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 2));
   }
 
   public void testMatchingFragmentsSorted() {
     @NonNls String sample = "SWUPGRADEHDLRFSPR7TEST";
     //                       0        9  12
-    assertOrderedEquals(NameUtil.buildMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1));
   }
 
   public void testPreferCapsMatching() {
     String sample = "getCurrentUser";
     //               0   4     10
-    assertOrderedEquals(NameUtil.buildMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
@@ -685,7 +680,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testOnlyUnderscoresPerformance() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 120, () -> {
+    PlatformTestUtil.startPerformanceTest(getName(), 120, () -> {
       String small = StringUtil.repeat("_", 50000);
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
@@ -694,7 +689,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testRepeatedLetterPerformance() {
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 30, () -> {
+    PlatformTestUtil.startPerformanceTest(getName(), 30, () -> {
       String big = StringUtil.repeat("Aaaaaa", 50000);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
@@ -704,12 +699,12 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   public void testMatchingAllOccurrences() {
     String text = "some text";
     MinusculeMatcher matcher = new AllOccurrencesMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
-    assertOrderedEquals(matcher.matchingFragments(text),
+    UsefulTestCase.assertOrderedEquals(matcher.matchingFragments(text),
                         new TextRange(3, 4), new TextRange(6, 7));
   }
 
   public void testCamelHumpWinsOverConsecutiveCaseMismatch() {
-    assertSize(3, NameUtil.buildMatcher("GEN", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments("GetExtendedName"));
+    UsefulTestCase.assertSize(3, NameUtil.buildMatcher("GEN", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments("GetExtendedName"));
 
     assertPreference("GEN", "GetName", "GetExtendedName");
     assertPreference("*GEN", "GetName", "GetExtendedName");
@@ -720,5 +715,4 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("pl", "printlnFoo");
     assertDoesntMatch("pl", "printlnx");
   }
-
 }

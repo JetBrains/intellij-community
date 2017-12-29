@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 24, 2004
  */
 public class CleanProject extends Generator {
   private final Target myTarget;

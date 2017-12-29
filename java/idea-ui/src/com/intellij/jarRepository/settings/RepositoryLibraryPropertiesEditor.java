@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -55,13 +56,11 @@ public class RepositoryLibraryPropertiesEditor {
   private ComboBox versionSelector;
   private JPanel mainPanel;
   private JButton myReloadButton;
-  private JPanel versionPanel;
-  private JPanel failedToLoadPanel;
-  private JPanel loadingPanel;
   private JBCheckBox downloadSourcesCheckBox;
   private JBCheckBox downloadJavaDocsCheckBox;
   private JBLabel mavenCoordinates;
   private JBCheckBox myIncludeTransitiveDepsCheckBox;
+  private JPanel myPropertiesPanel;
 
   @NotNull private ModelChangeListener onChangeListener;
 
@@ -204,9 +203,7 @@ public class RepositoryLibraryPropertiesEditor {
 
   private void setState(State state) {
     currentState = state;
-    versionPanel.setVisible(state == State.Loaded);
-    failedToLoadPanel.setVisible(state == State.FailedToLoad);
-    loadingPanel.setVisible(state == State.Loading);
+    ((CardLayout)myPropertiesPanel.getLayout()).show(myPropertiesPanel, state.name());
     onChangeListener.onChange(this);
   }
 

@@ -68,14 +68,14 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
     if (splitter is StateSplitterEx) {
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
-        splitter.mergeStateInto(state, subState)
+        splitter.mergeStateInto(state, subState.clone())
       }
     }
     else {
       val subElements = SmartList<Element>()
       for (fileName in storageData.keys()) {
         val subState = storageData.getState(fileName, archive) ?: return null
-        subElements.add(subState)
+        subElements.add(subState.clone())
       }
 
       if (!subElements.isEmpty()) {

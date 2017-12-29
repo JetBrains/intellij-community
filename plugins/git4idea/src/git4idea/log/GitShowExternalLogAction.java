@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.impl.VcsLogContentProvider;
 import com.intellij.vcs.log.impl.VcsLogManager;
@@ -69,13 +68,13 @@ public class GitShowExternalLogAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(e.getProject() != null && GitVcs.getInstance(e.getProject()) != null);
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    final GitVcs vcs = ObjectUtils.assertNotNull(GitVcs.getInstance(project));
+    final GitVcs vcs = GitVcs.getInstance(project);
     final List<VirtualFile> roots = getGitRootsFromUser(project);
     if (roots.isEmpty()) {
       return;

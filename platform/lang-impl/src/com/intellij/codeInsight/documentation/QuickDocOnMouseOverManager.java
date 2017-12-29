@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -31,6 +19,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
@@ -54,6 +43,7 @@ import java.util.Map;
  * @since 7/2/12 9:09 AM
  */
 public class QuickDocOnMouseOverManager {
+  private static final Logger LOG = Logger.getInstance(QuickDocOnMouseOverManager.class);
 
   @NotNull private final MyEditorMouseListener     myMouseListener       = new MyEditorMouseListener();
   @NotNull private final VisibleAreaListener       myVisibleAreaListener = new MyVisibleAreaListener();
@@ -305,14 +295,25 @@ public class QuickDocOnMouseOverManager {
           targetElementRef.set(docManager.findTargetElement(editor, offset, originalElement.getContainingFile(), originalElement));
         }
       }, 5000, 100, myProgressIndicator);
-      
+
+      Ref<String> documentationRef = new Ref<>();
+      if (!targetElementRef.isNull()) {
+        try {
+          documentationRef.set(docManager.generateDocumentation(targetElementRef.get(), originalElement));
+        }
+        catch (Exception e) {
+          LOG.info(e);
+        }
+      }
+
       ApplicationManager.getApplication().invokeLater(() -> {
         myCurrentRequest = null;
 
-        if (editor.isDisposed()) return;
+        if (editor.isDisposed() || IdeTooltipManager.getInstance().hasCurrent() && !docManager.hasActiveDockedDocWindow()) return;
 
         PsiElement targetElement = targetElementRef.get();
-        if (targetElement == null) {
+        String documentation = documentationRef.get();
+        if (targetElement == null || StringUtil.isEmpty(documentation)) {
           closeQuickDocIfPossible();
           return;
         }
@@ -331,7 +332,7 @@ public class QuickDocOnMouseOverManager {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION,
                                 editor.offsetToVisualPosition(originalElement.getTextRange().getStartOffset()));
         try {
-          docManager.showJavaDocInfo(editor, targetElement, originalElement, myHintCloseCallback, true);
+          docManager.showJavaDocInfo(editor, targetElement, originalElement, myHintCloseCallback, documentation, true);
           myDocumentationManager = new WeakReference<>(docManager);
         }
         finally {

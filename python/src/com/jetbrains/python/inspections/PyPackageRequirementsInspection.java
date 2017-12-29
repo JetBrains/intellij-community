@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
@@ -28,10 +14,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
@@ -156,7 +145,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
 
       final PyExpression packageReferenceExpression = PyPsiUtils.getFirstQualifier(importedExpression);
-      if (packageReferenceExpression == null) return;
 
       final String packageName = packageReferenceExpression.getName();
       if (packageName != null && !myIgnoredPackages.contains(packageName)) {
@@ -197,7 +185,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
           final PsiReference reference = packageReferenceExpression.getReference();
           if (reference != null) {
             final PsiElement element = reference.resolve();
-            if (element != null) {
+            if (element instanceof PsiDirectory &&
+                ModuleUtilCore.moduleContainsFile(module, ((PsiDirectory)element).getVirtualFile(), false)) {
+              return;
+            }
+            else if (element != null) {
               final PsiFile file = element.getContainingFile();
               if (file != null) {
                 final VirtualFile virtualFile = file.getVirtualFile();
@@ -266,21 +258,39 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
                                                                  @NotNull Set<String> ignoredPackages) {
     final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-    List<PyRequirement> requirements = manager.getRequirements(module);
+    final List<PyRequirement> requirements = manager.getRequirements(module);
     if (requirements != null) {
       final List<PyPackage> packages = manager.getPackages();
       if (packages == null) {
         return null;
       }
+      final List<PyPackage> packagesInModule = collectPackagesInModule(module);
       final List<PyRequirement> unsatisfied = new ArrayList<>();
       for (PyRequirement req : requirements) {
-        if (!ignoredPackages.contains(req.getName()) && req.match(packages) == null) {
+        if (!ignoredPackages.contains(req.getName()) && req.match(packages) == null && req.match(packagesInModule) == null) {
           unsatisfied.add(req);
         }
       }
       return unsatisfied;
     }
     return null;
+  }
+
+  @NotNull
+  private static List<PyPackage> collectPackagesInModule(@NotNull Module module) {
+    final String[] metadataExtensions = {"egg-info", "dist-info"};
+    final List<PyPackage> result = new SmartList<>();
+
+    for (VirtualFile srcRoot : PyUtil.getSourceRoots(module)) {
+      for (VirtualFile metadata : VfsUtil.getChildren(srcRoot, file -> ArrayUtil.contains(file.getExtension(), metadataExtensions))) {
+        final String[] nameAndVersionAndRest = metadata.getNameWithoutExtension().split("-", 3);
+        if (nameAndVersionAndRest.length >= 2) {
+          result.add(new PyPackage(nameAndVersionAndRest[0], nameAndVersionAndRest[1], null, Collections.emptyList()));
+        }
+      }
+    }
+
+    return result;
   }
 
   private static void setRunningPackagingTasks(@NotNull Module module, boolean value) {

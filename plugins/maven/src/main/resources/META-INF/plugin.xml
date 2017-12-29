@@ -182,6 +182,8 @@
     <postStartupActivity implementation="org.jetbrains.idea.maven.utils.MavenRehighlighter$MavenRehighlighterPostStartupActivity"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.utils.MavenRehighlighter"/>
     <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
+
+    <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">

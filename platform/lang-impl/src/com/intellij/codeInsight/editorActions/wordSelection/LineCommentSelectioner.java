@@ -24,12 +24,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class LineCommentSelectioner extends WordSelectioner {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     if (e instanceof PsiComment) {
       final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(e.getLanguage());
       if (!(commenter instanceof CodeDocumentationAwareCommenter)) return true;
@@ -39,7 +40,7 @@ public class LineCommentSelectioner extends WordSelectioner {
   }
 
   @Override
-  public List<TextRange> select(PsiElement element, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement element, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = super.select(element, editorText, cursorOffset, editor);
 
 

@@ -18,6 +18,7 @@ package com.intellij.internal.statistic.utils
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
+import java.util.*
 
 /**
  * Constructs a proper UsageDescriptor for a boolean value,
@@ -28,7 +29,7 @@ fun getBooleanUsage(key: String, value: Boolean): UsageDescriptor {
 }
 
 fun getEnumUsage(key: String, value: Enum<*>?): UsageDescriptor {
-  return UsageDescriptor(key + "." + value?.name?.toLowerCase(), 1)
+  return UsageDescriptor(key + "." + value?.name?.toLowerCase(Locale.ENGLISH), 1)
 }
 
 /**
@@ -56,21 +57,38 @@ fun getCountingUsage(key: String, value: Int, steps: List<Int>) : UsageDescripto
   if (steps.isEmpty()) return UsageDescriptor("$key.$value", 1)
   if (value < steps[0]) return UsageDescriptor("$key.<${steps[0]}", 1)
 
-  val index = steps.binarySearch(value)
-  val stepIndex : Int
-  if (index == steps.size) {
-    stepIndex = steps.last()
+  var stepIndex = 0
+  while (stepIndex < steps.size - 1) {
+    if (value < steps[stepIndex + 1]) break
+    stepIndex++
   }
-  else if (index >= 0) {
-    stepIndex = index
-  }
-  else {
-    stepIndex = -index - 2
-  }
+
   val step = steps[stepIndex]
   val addPlus = stepIndex == steps.size - 1 || steps[stepIndex + 1] != step + 1
-  val maybePlus = if (addPlus) "+" else ""
-  return UsageDescriptor("$key.${humanize(step)}$maybePlus", 1)
+  val stepName = humanize(step) + if (addPlus) "+" else ""
+  return UsageDescriptor("$key.$stepName", 1)
+}
+
+/**
+ * [getCountingUsage] with steps (0, 1, 2, 3, 5, 10, 15, 30, 50, 100, 500, 1000, 5000, 10000, ...)
+ */
+fun getCountingUsage(key: String, value: Int): UsageDescriptor {
+  if (value > Int.MAX_VALUE / 10) return UsageDescriptor("$key.MANY", 1)
+  if (value < 0) return UsageDescriptor("$key.<0", 1)
+  if (value < 3) return UsageDescriptor("$key.$value", 1)
+
+  val fixedSteps = listOf(3, 5, 10, 15, 30, 50)
+
+  var step = fixedSteps.last { it <= value }
+  while (true) {
+    if (value < step * 2) break
+    step *= 2
+    if (value < step * 5) break
+    step *= 5
+  }
+
+  val stepName = humanize(step)
+  return UsageDescriptor("$key.$stepName+", 1)
 }
 
 private val kilo = 1000

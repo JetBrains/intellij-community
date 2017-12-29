@@ -15,14 +15,16 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -37,6 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -126,7 +130,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
   }
 
-  private static class SwitchBootJdkDialog extends DialogWrapper {
+  private static class SwitchBootJdkDialog extends DialogWrapper implements DataProvider, CopyProvider {
 
     static class JdkBundleItem {
       @Nullable private JdkBundle myBundle;
@@ -274,7 +278,13 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      return myComboBox;
+      JPanel panel = new JPanel(new BorderLayout());
+      panel.add(myComboBox, BorderLayout.CENTER);
+      ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance()
+        .createActionToolbar("SwitchBootJDKCopyAction", new DefaultActionGroup(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY)), true);
+      toolbar.setReservePlaceAutoPopupIcon(false);
+      panel.add(toolbar , BorderLayout.EAST);
+      return panel;
     }
 
     @Nullable
@@ -291,6 +301,30 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
       final JdkBundle bundle = item.getBundle();
 
       return bundle != null ? bundle.getLocation() : null;
+    }
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      File file = getSelectedFile();
+      if (file == null) return;
+      CopyPasteManager.getInstance().setContents(new StringSelection(file.getAbsolutePath()));
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return getSelectedFile() != null;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return getSelectedFile() != null;
+    }
+
+    @Nullable
+    @Override
+    public Object getData(String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) return this;
+      return null;
     }
   }
 

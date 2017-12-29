@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ex;
 
@@ -61,9 +49,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String USED_LEVELS = "used_levels";
   @TestOnly
-  public static boolean INIT_INSPECTIONS = false;
+  public static boolean INIT_INSPECTIONS;
   @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
-  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>();
+  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
   protected volatile Set<String> myChangedToolNames;
   @Attribute("is_locked")
@@ -153,7 +141,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     }
 
     String version = element.getAttributeValue(VERSION_TAG);
-    if (version == null || !version.equals(VALID_VERSION)) {
+    if (!VALID_VERSION.equals(version)) {
       InspectionToolWrapper[] tools = getInspectionTools(null);
       for (Element toolElement : element.getChildren("inspection_tool")) {
         String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
@@ -162,12 +150,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
           continue;
         }
         toolElement.setAttribute(CLASS_TAG, shortName);
-        myUninitializedSettings.put(shortName, toolElement.clone());
+        myUninitializedSettings.put(shortName, JDOMUtil.internElement(toolElement));
       }
     }
     else {
-      for (Element toolElement : element.getChildren(INSPECTION_TOOL_TAG)) {
-        myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), toolElement.clone());
+      List<Element> children = element.getChildren(INSPECTION_TOOL_TAG);
+      for (Element toolElement : children) {
+        myUninitializedSettings.put(toolElement.getAttributeValue(CLASS_TAG), JDOMUtil.internElement(toolElement));
       }
     }
   }
@@ -554,9 +543,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     HighlightDisplayLevel level = baseLevel.getSeverity().compareTo(defaultLevel.getSeverity()) > 0 ? baseLevel : defaultLevel;
     boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : toolWrapper.isEnabledByDefault();
     final ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
-    final Element element = myUninitializedSettings.remove(shortName);
+    Element element = myUninitializedSettings.remove(shortName);
     try {
       if (element != null) {
+        element = element.clone();
         getPathMacroManager().expandPaths(element);
         toolsList.readExternal(element, getProfileManager(), dependencies);
       }

@@ -105,11 +105,11 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
         return;
       }
       final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (NullableNotNullManager.isNullable(lastParameter)) {
-        return;
-      }
       final PsiType type = lastParameter.getType();
       if (!(type instanceof PsiArrayType) || type instanceof PsiEllipsisType) {
+        return;
+      }
+      if (NullableNotNullManager.isNullable(lastParameter)) {
         return;
       }
       final PsiArrayType arrayType = (PsiArrayType)type;

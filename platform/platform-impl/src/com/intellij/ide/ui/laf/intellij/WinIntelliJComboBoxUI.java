@@ -17,9 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.JBDimension;
@@ -50,8 +48,6 @@ import java.beans.PropertyChangeListener;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
-  private static final Logger LOG = Logger.getInstance(WinIntelliJComboBoxUI.class);
-
   private static final String HOVER_PROPERTY = "JComboBox.mouseHover";
   private static final String PRESSED_PROPERTY = "JComboBox.mousePressed";
   private static final Border DEFAULT_EDITOR_BORDER = JBUI.Borders.empty(1, 0);
@@ -168,23 +164,19 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     c.setFont(comboBox.getFont());
     c.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
 
-    if (c instanceof JComponent) {
-      ((JComponent)c).setBorder(DEFAULT_EDITOR_BORDER);
-    }
-
-    // paint selection in table-cell-editor mode correctly
-    boolean changeOpaque = c instanceof JComponent && c.isOpaque();
-    if (changeOpaque) {
-      ((JComponent)c).setOpaque(false);
-    }
-
     Rectangle r = new Rectangle(bounds);
-    Insets i = UIManager.getInsets("ComboBox.padding");
-    if (i == null && c instanceof JComponent) {
-      i = ((JComponent)c).getInsets();
-    }
+    boolean changeOpaque = false;
+    if (c instanceof JComponent) {
+      JComponent jc = (JComponent)c;
+      jc.setBorder(DEFAULT_EDITOR_BORDER);
+      JBInsets.removeFrom(r, jc.getInsets());
 
-    JBInsets.removeFrom(r, i);
+      changeOpaque = c.isOpaque();
+      // paint selection in table-cell-editor mode correctly
+      if (changeOpaque) {
+        jc.setOpaque(false);
+      }
+    }
 
     currentValuePane.paintComponent(g, c, comboBox, r.x, r.y, r.width, r.height, c instanceof JPanel);
 
@@ -244,7 +236,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
           // paint border around button when combobox is editable
           if (comboBox.isEditable() && comboBox.isEnabled()) {
-            Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+            Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
             border.append(outerRect, false);
             border.append(innerRect, false);
 
@@ -262,10 +254,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             int x = JBUI.scale(5);
             int y = (getHeight() - icon.getIconHeight()) / 2;
             icon.paintIcon(this, g2, x, y);
-          } else { // TODO: remove log below when the reason icon is null is detected
-            LOG.error("Can't load comboDropTriangle icon isEnabled = " + isEnabled() +
-                      " laf = " + UIManager.getLookAndFeel().getName() +
-                      " OS name = " + SystemInfo.OS_NAME);
           }
         } finally {
           g2.dispose();
@@ -345,7 +333,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
     if (editor instanceof JComponent) {
       JComponent jEditor = (JComponent)editor;
-      jEditor.setOpaque(false);
       jEditor.setBorder(DEFAULT_EDITOR_BORDER);
 
       editorHoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(comboBox, HOVER_PROPERTY);
@@ -422,7 +409,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         JBInsets.removeFrom(outerRect, JBUI.insets(1));
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(outerRect, false);
       border.append(innerRect, false);
       g2.fill(border);
@@ -485,11 +472,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
           }
         }
-
-        if (comboBox.isEditable() && editor != null) {
-          Rectangle er = rectangleForCurrentValue();
-          editor.setBounds(er);
-        }
+        layoutEditor();
       }
     };
   }

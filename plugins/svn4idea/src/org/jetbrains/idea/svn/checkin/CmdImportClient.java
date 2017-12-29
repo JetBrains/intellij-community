@@ -1,3 +1,4 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -5,35 +6,32 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNCommitHandler;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class CmdImportClient extends BaseSvnClient implements ImportClient {
 
   @Override
   public long doImport(@NotNull File path,
-                       @NotNull SVNURL url,
+                       @NotNull Url url,
                        @Nullable Depth depth,
                        @NotNull String message,
                        boolean noIgnore,
                        @Nullable CommitEventHandler handler,
-                       @Nullable ISVNCommitHandler commitHandler) throws VcsException {
-    // TODO: ISVNFileFilter from ISVNCommitHandler is not currently implemented
+                       @Nullable Predicate<File> filter) throws VcsException {
+    // TODO: Predicate<File> filter is not currently implemented
 
     List<String> parameters = new ArrayList<>();
 
     CommandUtil.put(parameters, path, false);
-    CommandUtil.put(parameters, SvnTarget.fromURL(url), false);
+    CommandUtil.put(parameters, Target.on(url), false);
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, noIgnore, "--no-ignore");
     parameters.add("--message");
@@ -42,7 +40,7 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
     CmdCheckinClient.CommandListener listener = new CmdCheckinClient.CommandListener(handler);
     listener.setBaseDirectory(path);
 
-    execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.importFolder, parameters, listener);
+    execute(myVcs, Target.on(url), SvnCommandName.importFolder, parameters, listener);
 
     return listener.getCommittedRevision();
   }

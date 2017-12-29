@@ -794,7 +794,8 @@ public class PsiEventsTest extends PsiTestCase {
   }
 
   public void testTreeChangePreprocessorThrowsException() throws Exception {
-    VirtualFile vFile = createFile("a.xml", "<tag/>").getVirtualFile();
+    PsiFile psiFile = createFile("a.xml", "<tag/>");
+    VirtualFile vFile = psiFile.getVirtualFile();
     Document document = FileDocumentManager.getInstance().getDocument(vFile);
     assert document != null;
 

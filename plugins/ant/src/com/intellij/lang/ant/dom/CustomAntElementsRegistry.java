@@ -54,7 +54,6 @@ import java.util.*;
  * Storage for user-defined tasks and data types
  * parsed from ant files
  * @author Eugene Zhuravlev
- *         Date: Jul 1, 2010
  */
 public class CustomAntElementsRegistry {
 

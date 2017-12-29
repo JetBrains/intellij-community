@@ -39,14 +39,14 @@
 
     <group id="GoToChangeMarkerGroup">
       <separator/>
-      <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowNextChangeMarkerAction"
+      <action id="VcsShowNextChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Next"
               icon="AllIcons.Actions.NextOccurence"/>
-      <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowPrevChangeMarkerAction"
+      <action id="VcsShowPrevChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Prev"
               icon="AllIcons.Actions.PreviousOccurence"/>
 
       <add-to-group group-id="GoToMenu" anchor="last"/>
     </group>
-    <action id="VcsShowCurrentChangeMarker" class="com.intellij.openapi.vcs.actions.ShowCurrentChangeMarkerAction"/>
+    <action id="VcsShowCurrentChangeMarker" class="com.intellij.openapi.vcs.actions.ShowChangeMarkerAction$Current"/>
 
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" popup="true">
@@ -303,8 +303,9 @@
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
     </action>
 
-    <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback">
-    </action>
+    <action id="Vcs.RollbackChangedLines" class="com.intellij.openapi.vcs.ex.RollbackLineStatusAction" icon="AllIcons.Actions.Rollback"/>
+    <action id="Vcs.MoveChangedLinesToChangelist" class="com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction" icon="AllIcons.Actions.MoveToAnotherChangelist"
+            use-shortcut-of="ChangesView.Move"/>
 
     <action id="WelcomeScreen.GetFromVcs" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVcsAction"
             icon="AllIcons.Welcome.FromVCS">

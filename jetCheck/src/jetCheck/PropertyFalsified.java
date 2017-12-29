@@ -2,7 +2,6 @@ package jetCheck;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -12,13 +11,11 @@ public class PropertyFalsified extends RuntimeException {
   static final String FAILURE_REASON_HAS_CHANGED_DURING_MINIMIZATION = "Failure reason has changed during minimization, see initial failing example below";
   private static final String SEPARATOR = "\n==========================\n";
   private final PropertyFailureImpl<?> failure;
-  private final Supplier<DataStructure> data;
   private final String message;
 
-  PropertyFalsified(PropertyFailureImpl<?> failure, Supplier<DataStructure> data) {
+  PropertyFalsified(PropertyFailureImpl<?> failure) {
     super(failure.getMinimalCounterexample().getExceptionCause());
     this.failure = failure;
-    this.data = data;
     this.message = calcMessage();
   }
 
@@ -126,6 +123,6 @@ public class PropertyFalsified extends RuntimeException {
   }
 
   public DataStructure getData() {
-    return data.get();
+    return failure.getMinimalCounterexample().createReplayData();
   }
 }

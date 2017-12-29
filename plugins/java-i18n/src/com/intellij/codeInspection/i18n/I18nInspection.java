@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.i18n;
 
@@ -50,6 +52,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
 
 public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   public boolean ignoreForAssertStatements = true;
@@ -355,7 +360,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      final ProblemDescriptor[] descriptors = checkElement(initializer.getBody(), manager, isOnTheFly);
       if (descriptors != null) {
         ContainerUtil.addAll(result, descriptors);
       }
@@ -371,7 +376,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (containingClass == null || isClassNonNls(containingClass)) {
       return null;
     }
-    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, false, false)) {
+    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, CHECK_EXTERNAL)) {
       return null;
     }
     final PsiExpression initializer = field.getInitializer();
@@ -449,6 +454,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     }
 
     @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+    }
+
+    @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
@@ -480,7 +489,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         if (PsiUtil.isLanguageLevel5OrHigher(expression)) {
           for (PsiModifierListOwner element : nonNlsTargets) {
-            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true, false)) {
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
               if (!element.getManager().isInProject(element) ||
                   facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
                 fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
@@ -691,7 +700,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
         return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, null, AnnotationUtil.NON_NLS, null, null);
       }
     }
-    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false, false);
+    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, CHECK_EXTERNAL);
   }
 
   private static boolean isInNonNlsEquals(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
@@ -818,7 +827,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     }
     if (method == null) return false;
 
-    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, true, false)) {
+    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
       return true;
     }
     nonNlsTargets.add(method);

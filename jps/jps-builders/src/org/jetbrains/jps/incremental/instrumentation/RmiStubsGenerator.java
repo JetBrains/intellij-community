@@ -50,7 +50,6 @@ import java.util.concurrent.Future;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/30/12
  */
 public class RmiStubsGenerator extends ClassProcessingBuilder {
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');

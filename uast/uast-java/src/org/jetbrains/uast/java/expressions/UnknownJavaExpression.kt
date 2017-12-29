@@ -22,11 +22,11 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
 class UnknownJavaExpression(
-        override val psi: PsiElement,
-        uastParent: UElement?
+  override val psi: PsiElement,
+  uastParent: UElement?
 ) : JavaAbstractUElement(uastParent), UExpression, JvmDeclarationUElement {
-    override fun asLogString() = "[!] " + UnknownJavaExpression::class.java.simpleName + " ($psi)"
+  override fun asLogString() = "[!] " + UnknownJavaExpression::class.java.simpleName + " ($psi)"
 
-    override val annotations: List<UAnnotation>
-        get() = emptyList()
+  override val annotations: List<UAnnotation>
+    get() = emptyList()
 }

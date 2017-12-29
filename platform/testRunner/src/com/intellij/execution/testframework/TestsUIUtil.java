@@ -180,13 +180,19 @@ public class TestsUIUtil {
   }
 
   public static class TestResultPresentation {
-    private AbstractTestProxy myRoot;
-    private boolean myStarted;
-    private String myComment;
+    private final AbstractTestProxy myRoot;
+    private final boolean myStarted;
+    private final String myComment;
+
     private String myTitle;
     private String myText;
     private String myBalloonText;
     private MessageType myType;
+
+    private int myFailedCount;
+    private int myPassedCount;
+    private int myNotStartedCount;
+    private int myIgnoredCount;
 
     public TestResultPresentation(AbstractTestProxy root, boolean started, String comment) {
       myRoot = root;
@@ -214,6 +220,38 @@ public class TestsUIUtil {
       return myType;
     }
 
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getFailedCount() {
+      return myFailedCount;
+    }
+
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getPassedCount() {
+      return myPassedCount;
+    }
+
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getNotStartedCount() {
+      return myNotStartedCount;
+    }
+
+    /**
+     * @deprecated Use {@link #getText()} to get short test result summary.
+     */
+    @Deprecated
+    public int getIgnoredCount() {
+      return myIgnoredCount;
+    }
+
     public TestResultPresentation getPresentation() {
       List allTests = Filter.LEAF.select(myRoot.getAllTests());
       final List<AbstractTestProxy> failed = Filter.DEFECTIVE_LEAF.select(allTests);
@@ -233,33 +271,43 @@ public class TestsUIUtil {
         myBalloonText = myTitle = myStarted ? "Tests were interrupted" : ExecutionBundle.message("test.not.started.progress.text");
         myText = "";
         myType = MessageType.WARNING;
-      } else{
+      }
+      else {
+        myFailedCount = failedCount;
+        myPassedCount = passedCount;
+        myNotStartedCount = notStartedCount;
+        myIgnoredCount = ignoredCount;
+
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
+          myBalloonText = "Tests failed: " + failedCount + ", passed: " + passedCount +
+                          (ignoredCount > 0 ? ", ignored: " + ignoredCount : notStartedCount > 0 ? ", not started: " + notStartedCount : "");
           String notStartedMessage = ignoredCount > 0 ? ", " + ignoredCount + " ignored"
                                                       : notStartedCount > 0 ? ", " + notStartedCount + " not started" : "";
-          myText = passedCount + " passed, " + failedCount + " failed" + notStartedMessage;
+          myText = failedCount + " failed, " + passedCount + " passed" + notStartedMessage;
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
           myTitle = "Tests Ignored";
-          myText = passedCount + " passed, " + ignoredCount + " ignored";
+          myBalloonText = "Tests ignored: " + ignoredCount + ", passed: " + passedCount;
+          myText = ignoredCount + " ignored, " + passedCount + " passed";
           myType = MessageType.WARNING;
         }
         else if (notStartedCount > 0) {
           myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
-          myText = passedCount + " passed, " + notStartedCount + " not started";
+          myBalloonText = "Failed to start: " + notStartedCount + ", passed: " + passedCount;
+          myText = notStartedCount + " not started, " + passedCount + " passed";
           myType = MessageType.ERROR;
         }
         else {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+          myBalloonText = "Tests passed: " + passedCount;
           myText = passedCount + " passed";
           myType = MessageType.INFO;
         }
         if (myComment != null) {
           myText += " " + myComment;
         }
-        myBalloonText = myTitle + ": " + myText;
       }
       return this;
     }

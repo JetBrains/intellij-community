@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl;
 
@@ -28,7 +16,10 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
@@ -42,7 +33,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
@@ -51,9 +41,9 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,11 +57,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author nik
  */
-@State(name = XDebuggerManagerImpl.COMPONENT_NAME, storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class XDebuggerManagerImpl extends XDebuggerManager
-  implements NamedComponent, PersistentStateComponent<XDebuggerManagerImpl.XDebuggerState> {
-
-  @NonNls public static final String COMPONENT_NAME = "XDebuggerManager";
+@State(name = "XDebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class XDebuggerManagerImpl extends XDebuggerManager implements PersistentStateComponent<XDebuggerState> {
   public static final NotificationGroup NOTIFICATION_GROUP =
     NotificationGroup.toolWindowGroup("Debugger messages", ToolWindowId.DEBUG, false);
 
@@ -81,6 +68,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
+
+  private XDebuggerState myState = new XDebuggerState();
 
   public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
     myProject = project;
@@ -172,12 +161,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     return myProject;
   }
 
-  @NotNull
-  @Override
-  public String getComponentName() {
-    return COMPONENT_NAME;
-  }
-
   @Override
   @NotNull
   public XDebugSession startSession(@NotNull ExecutionEnvironment environment, @NotNull XDebugProcessStarter processStarter) throws ExecutionException {
@@ -262,7 +245,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   private void onActiveSessionChanged() {
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
-    ApplicationManager.getApplication().invokeLater(() -> ValueLookupManager.getInstance(myProject).hideHint(), myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ValueLookupManager.getInstance(myProject).hideHint();
+      DebuggerUIUtil.repaintCurrentEditor(myProject); // to update inline debugger data
+    }, myProject.getDisposed());
   }
 
   @Override
@@ -327,7 +313,10 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @Override
   public XDebuggerState getState() {
-    return new XDebuggerState(myBreakpointManager.getState(), myWatchesManager.getState());
+    XDebuggerState state = myState;
+    myBreakpointManager.saveState(state.getBreakpointManagerState());
+    myWatchesManager.saveState(state.getWatchesManagerState());
+    return state;
   }
 
   public boolean isFullLineHighlighter() {
@@ -336,48 +325,12 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   @Override
   public void loadState(@NotNull XDebuggerState state) {
-    myBreakpointManager.loadState(state.myBreakpointManagerState);
-    myWatchesManager.loadState(state.myWatchesManagerState);
+    myState = state;
+    myBreakpointManager.loadState(state.getBreakpointManagerState());
+    myWatchesManager.loadState(state.getWatchesManagerState());
   }
 
   public void showExecutionPosition() {
     myExecutionPointHighlighter.navigateTo();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public static class XDebuggerState {
-    @NotNull
-    private XBreakpointManagerImpl.BreakpointManagerState myBreakpointManagerState;
-    @NotNull
-    private XDebuggerWatchesManager.WatchesManagerState myWatchesManagerState;
-
-    public XDebuggerState() {
-      this(new XBreakpointManagerImpl.BreakpointManagerState(), new XDebuggerWatchesManager.WatchesManagerState());
-    }
-
-    public XDebuggerState(@NotNull XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState, @NotNull XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
-      myBreakpointManagerState = breakpointManagerState;
-      myWatchesManagerState = watchesManagerState;
-    }
-
-    @NotNull
-    @Property(surroundWithTag = false)
-    public XBreakpointManagerImpl.BreakpointManagerState getBreakpointManagerState() {
-      return myBreakpointManagerState;
-    }
-
-    public void setBreakpointManagerState(@NotNull final XBreakpointManagerImpl.BreakpointManagerState breakpointManagerState) {
-      myBreakpointManagerState = breakpointManagerState;
-    }
-
-    @NotNull
-    @Property(surroundWithTag = false)
-    public XDebuggerWatchesManager.WatchesManagerState getWatchesManagerState() {
-      return myWatchesManagerState;
-    }
-
-    public void setWatchesManagerState(@NotNull XDebuggerWatchesManager.WatchesManagerState watchesManagerState) {
-      myWatchesManagerState = watchesManagerState;
-    }
   }
 }

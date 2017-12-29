@@ -40,6 +40,9 @@ public class CommonDataflow {
       if(existing != DfaFactMap.EMPTY) {
         DfaValue value = memState.peek();
         DfaFactMap newMap = memState.getFactMap(value);
+        if (!Boolean.FALSE.equals(newMap.get(DfaFactType.CAN_BE_NULL)) && memState.isNotNull(value)) {
+          newMap = newMap.with(DfaFactType.CAN_BE_NULL, false);
+        }
         myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
       }
     }
@@ -57,7 +60,7 @@ public class CommonDataflow {
       public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
         DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
         PsiExpression place = instruction.getPlace();
-        if (place != null) {
+        if (place != null && !instruction.isReferenceWrite()) {
           for (DfaInstructionState state : states) {
             dfr.add(place, (DfaMemoryStateImpl)state.getMemoryState());
           }
@@ -82,7 +85,7 @@ public class CommonDataflow {
         return states;
       }
     };
-    RunnerResult result = runner.analyzeMethod(block, visitor);
+    RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     return result == RunnerResult.OK ? dfr : null;
   }
 

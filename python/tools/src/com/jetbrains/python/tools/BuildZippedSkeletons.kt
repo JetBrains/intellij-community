@@ -19,6 +19,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.ZipUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker
 import com.jetbrains.python.tools.sdkTools.PySdkTools
@@ -55,10 +56,10 @@ fun main(args: Array<String>) {
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
 
 
-      refresher.regenerateSkeletons(SkeletonVersionChecker(0))
+      refresher.regenerateSkeletons(SkeletonVersionChecker(SkeletonVersionChecker.PREGENERATED_VERSION))
 
 
-      val dirPacked = File(skeletonsDir.parent, refresher.getPregeneratedSkeletonsName(true, true))
+      val dirPacked = File(skeletonsDir.parent, DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true))
       val zip = ZipOutputStream(FileOutputStream(dirPacked))
       ZipUtil.addDirToZipRecursively(zip, dirPacked, skeletonsDir, "", null, null)
       zip.close()

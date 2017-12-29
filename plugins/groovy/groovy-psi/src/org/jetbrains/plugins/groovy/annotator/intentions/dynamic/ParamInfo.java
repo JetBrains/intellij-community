@@ -6,6 +6,9 @@ public class ParamInfo {
   public String name;
   public String type;
 
+  @SuppressWarnings("unused")
+  public ParamInfo() {}
+
   public ParamInfo(String name, String type) {
     this.name = name;
     this.type = type;

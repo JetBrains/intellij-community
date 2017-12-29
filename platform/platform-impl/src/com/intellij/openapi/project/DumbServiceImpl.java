@@ -23,6 +23,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
@@ -387,9 +388,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       if (myState.get() != State.SMART) {
-        if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
+        assertWeAreWaitingToFinish();
         updateFinished();
       }
+    }
+  }
+
+  private void assertWeAreWaitingToFinish() {
+    if (myState.get() != State.WAITING_FOR_FINISH) {
+      Attachment[] attachments = myDumbStart != null ? new Attachment[]{new Attachment("indexingStart.trace", myDumbStart)} : Attachment.EMPTY_ARRAY;
+      throw new RuntimeExceptionWithAttachments(myState.get().toString(), attachments);
     }
   }
 
@@ -411,7 +419,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender.markSuspendable(visibleIndicator);
+    ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
 
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();

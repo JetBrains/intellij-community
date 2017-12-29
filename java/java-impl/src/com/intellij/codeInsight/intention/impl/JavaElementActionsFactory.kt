@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl
 
-import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.java.JavaLanguage
@@ -10,10 +9,7 @@ import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.CreateFieldRequest
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory
-import com.intellij.lang.jvm.actions.MemberRequest
+import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
@@ -27,16 +23,6 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     if (declaration.language != JavaLanguage.INSTANCE) return@with emptyList()
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
-
-  override fun createAddConstructorActions(targetClass: JvmClass, request: MemberRequest.Constructor): List<IntentionAction> =
-    with(request) {
-      val targetClass = targetClass.toJavaClassOrNull() ?: return emptyList()
-      val factory = JVMElementFactories.getFactory(targetClass.language, targetClass.project)!!
-      val conversionHelper = JvmPsiConversionHelper.getInstance(targetClass.project)
-      listOf(AddConstructorFix(targetClass, request.parameters.mapIndexed { i, it ->
-        factory.createParameter(it.name ?: "arg$i", conversionHelper.convertType(it.type), targetClass)
-      }))
-    }
 
   override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
     with(request) {
@@ -77,6 +63,11 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
       CreateMethodAction(javaClass, false, request),
       CreateMethodAction(javaClass, true, request)
     )
+  }
+
+  override fun createAddConstructorActions(targetClass: JvmClass, request: CreateConstructorRequest): List<IntentionAction> {
+    val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
+    return listOf(CreateConstructorAction(javaClass, request))
   }
 }
 

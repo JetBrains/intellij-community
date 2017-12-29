@@ -22,6 +22,7 @@ import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -79,6 +80,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     final PsiExpression[] operands = polyadicExpression.getOperands();
     PsiExpression prevOperand = null;
     PsiJavaToken prevToken = null;
+    CommentTracker commentTracker = new CommentTracker();
     for (PsiExpression operand : operands) {
       final PsiJavaToken currentToken = polyadicExpression.getTokenBeforeOperand(operand);
       if (token == currentToken) {
@@ -133,7 +135,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
           newExpressionText.append(prevToken.getText());
         }
         if (prevOperand != null) {
-          newExpressionText.append(prevOperand.getText());
+          newExpressionText.append(commentTracker.markUnchanged(prevOperand).getText());
         }
         prevOperand = operand;
         prevToken = currentToken;
@@ -143,8 +145,9 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
       newExpressionText.append(prevToken.getText());
     }
     if (prevOperand != null) {
-      newExpressionText.append(prevOperand.getText());
+      newExpressionText.append(commentTracker.markUnchanged(prevOperand).getText());
     }
-    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString());
+
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString(), commentTracker);
   }
 }

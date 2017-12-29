@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.CommonBundle;
@@ -62,7 +48,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import kotlin.Unit;
-import kotlin.reflect.KotlinReflectionInternalError;
+import kotlin.reflect.full.NoSuchPropertyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +90,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
       }
 
       @Override
-      protected RunProfileState getRunProfileState(@NotNull Object o, @NotNull String configuration, @NotNull Executor executor) throws ExecutionException {
+      protected RunProfileState getRunProfileState(@NotNull Object o, @NotNull String configuration, @NotNull Executor executor) {
         return createRunProfileState(configuration);
       }
     };
@@ -147,7 +133,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
 
         // add Kotlin runtime
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Unit.class));
-        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(KotlinReflectionInternalError.class));
+        ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(NoSuchPropertyException.class));
 
         // External system module jars
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(getClass()));
@@ -240,7 +226,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
   }
 
   @Override
-  public void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) throws Exception {
+  public void release(@NotNull String id, @NotNull ProjectSystemId externalSystemId) {
     mySupport.release(this, id);
   }
 

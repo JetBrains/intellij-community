@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -62,6 +50,7 @@ import java.awt.event.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.im.InputContext;
 import java.awt.image.BufferedImage;
@@ -107,6 +96,15 @@ public class UIUtil {
 
     // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
+
+    if (SystemInfo.isLinux && Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI") != null) {
+      float dpi_factor = 96 / (float)72; // J2D factor
+      int gnome_base_font_size = 11;
+      DEF_SYSTEM_FONT_SIZE = gnome_base_font_size * dpi_factor;
+    }
+    else {
+      DEF_SYSTEM_FONT_SIZE = 12;
+    }
   }
 
   public static void decorateFrame(@NotNull JRootPane pane) {
@@ -212,9 +210,7 @@ public class UIUtil {
 
   public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
     return Couple.of(isSel ? table.getSelectionForeground() : table.getForeground(),
-                                 isSel
-                                 ? table.getSelectionBackground()
-                                 : isUnderNimbusLookAndFeel() && row % 2 == 1 ? TRANSPARENT_COLOR : table.getBackground());
+                     isSel ? table.getSelectionBackground() : table.getBackground());
   }
 
   public static void fixOSXEditorBackground(@NotNull JTable table) {
@@ -234,6 +230,13 @@ public class UIUtil {
 
   public static boolean isDialogFont(Font font) {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
+  }
+
+  public static boolean isScrolledToTheBottom(JComponent c) {
+    JScrollPane scrollPane = c != null ? getParentOfType(JScrollPane.class, c) : null;
+    if (scrollPane == null) return true;
+    Rectangle viewRect = scrollPane.getViewport().getViewRect();
+    return (c.getHeight() == viewRect.y + viewRect.height);
   }
 
   public enum FontSize {NORMAL, SMALL, MINI}
@@ -340,7 +343,7 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData;
 
-  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
+  public static final float DEF_SYSTEM_FONT_SIZE;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -702,12 +705,12 @@ public class UIUtil {
     if (x == x1) {
       int minY = Math.min(y, y1);
       int maxY = Math.max(y, y1);
-      graphics.drawLine(x, minY + 1, x1, maxY - 1);
+      drawLine(graphics, x, minY + 1, x1, maxY - 1);
     }
     else if (y == y1) {
       int minX = Math.min(x, x1);
       int maxX = Math.max(x, x1);
-      graphics.drawLine(minX + 1, y, maxX - 1, y1);
+      drawLine(graphics, minX + 1, y, maxX - 1, y1);
     }
     else {
       drawLine(graphics, x, y, x1, y1);
@@ -735,6 +738,41 @@ public class UIUtil {
     final Rectangle stringBounds = font.getStringBounds(string, frc).getBounds();
 
     return (int)(centerY - stringBounds.height / 2.0 - stringBounds.y);
+  }
+
+  public static void drawLabelDottedRectangle(@NotNull final JLabel label, @NotNull final Graphics g) {
+    drawLabelDottedRectangle(label, g, null);
+  }
+
+  public static void drawLabelDottedRectangle(@NotNull final JLabel label, @NotNull final Graphics g, @Nullable Rectangle bounds) {
+    if (bounds == null) {
+      bounds = getLabelTextBounds(label);
+    }
+    // JLabel draws the text relative to the baseline. So, we must ensure
+    // we draw the dotted rectangle relative to that same baseline.
+    FontMetrics fm = label.getFontMetrics(label.getFont());
+    int baseLine = label.getUI().getBaseline(label, label.getWidth(), label.getHeight());
+    int textY = baseLine - fm.getLeading() - fm.getAscent();
+    int textHeight = fm.getHeight();
+    drawDottedRectangle(g, bounds.x, textY, bounds.x + bounds.width - 1, textY + textHeight - 1);
+  }
+
+  public static Rectangle getLabelTextBounds(@NotNull final JLabel label) {
+    final Dimension size = label.getPreferredSize();
+    Icon icon = label.getIcon();
+    final Point point = new Point(0, 0);
+    final Insets insets = label.getInsets();
+    if (icon != null) {
+      point.x += label.getIconTextGap();
+      point.x += icon.getIconWidth();
+    }
+    point.x += insets.left;
+    point.y += insets.top;
+    size.width -= point.x;
+    size.width -= insets.right;
+    size.height -= insets.bottom;
+
+    return new Rectangle(point, size);
   }
 
   /**
@@ -775,6 +813,19 @@ public class UIUtil {
   }
 
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
+    Stroke stroke = ((Graphics2D)g).getStroke();
+    if (stroke instanceof BasicStroke) {
+      if (x1 == x2) {
+        float lineWidth = ((BasicStroke)stroke).getLineWidth();
+        ((Graphics2D)g).fill(new Rectangle2D.Float(x1, Math.min(y1, y2), lineWidth, Math.abs(y1 - y2) + lineWidth));
+        return;
+      }
+      if (y1 == y2) {
+        float lineWidth = ((BasicStroke)stroke).getLineWidth();
+        ((Graphics2D)g).fill(new Rectangle2D.Float(Math.min(x1, x2), y1, Math.abs(x1 - x2) + lineWidth, lineWidth));
+        return;
+      }
+    }
     g.drawLine(x1, y1, x2, y2);
   }
 
@@ -1004,12 +1055,6 @@ public class UIUtil {
   }
 
   public static Color getTreeSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Tree.selectionBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     return UIManager.getColor("Tree.selectionBackground");
   }
 
@@ -1030,12 +1075,6 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      Color color = UIManager.getColor("Table[Enabled+Selected].textBackground");
-      if (color != null) return color;
-      color = UIManager.getColor("nimbusSelectionBackground");
-      if (color != null) return color;
-    }
     return UIManager.getColor("Table.selectionBackground");
   }
 
@@ -1163,9 +1202,6 @@ public class UIUtil {
   }
 
   public static Color getTableSelectionForeground() {
-    if (isUnderNimbusLookAndFeel()) {
-      return UIManager.getColor("Table[Enabled+Selected].textForeground");
-    }
     return UIManager.getColor("Table.selectionForeground");
   }
 
@@ -1182,11 +1218,6 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      final Color color = UIManager.getColor("List.background");
-      //noinspection UseJBColor
-      return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
-    }
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
@@ -1224,9 +1255,6 @@ public class UIUtil {
   }
 
   public static Color getListSelectionBackground() {
-    if (isUnderNimbusLookAndFeel()) {
-      return UIManager.getColor("List[Selected].textBackground");  // Nimbus
-    }
     return UIManager.getColor("List.selectionBackground");
   }
 
@@ -1305,11 +1333,8 @@ public class UIUtil {
 
   public static Color getSeparatorColor() {
     Color separatorColor = getSeparatorForeground();
-    if (isUnderAlloyLookAndFeel()) {
+    if (false) {
       separatorColor = getSeparatorShadow();
-    }
-    if (isUnderNimbusLookAndFeel()) {
-      separatorColor = getSeparatorColorUnderNimbus();
     }
     //under GTK+ L&F colors set hard
     if (isUnderGTKLookAndFeel()) {
@@ -1413,7 +1438,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedCollapsedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
@@ -1425,7 +1449,6 @@ public class UIUtil {
 
   public static Icon getTreeSelectedExpandedIcon() {
     if (isUnderAquaBasedLookAndFeel() ||
-        isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
         isUnderIntelliJLaF() &&
@@ -1451,14 +1474,24 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Alloy");
+    return false;
   }
 
+  /**
+   * Alloy Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
-    return isUnderAlloyLookAndFeel() && UIManager.getLookAndFeel().getName().contains("IDEA");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1472,18 +1505,29 @@ public class UIUtil {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static boolean isUnderNimbusLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("Nimbus");
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
+
+  /**
+   * Nimbus Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static boolean isUnderNimbusLookAndFeel() {
+    return false;
+  }
+
+  /**
+   * JGoodies Look-n-Feel is deprecated and does not supported by IntelliJ Platform
+   * @return false
+   * @deprecated
+   */
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
-    return UIManager.getLookAndFeel().getName().contains("JGoodies");
+    return false;
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -1576,7 +1620,9 @@ public class UIUtil {
   }
 
   public static int getListCellHPadding() {
-    return isUnderNativeMacLookAndFeel() ? 7 : 2;
+    return isUnderDefaultMacTheme() ? 8 :
+           isUnderWin10LookAndFeel() ? 2 :
+           7;
   }
 
   public static int getListCellVPadding() {
@@ -1773,25 +1819,25 @@ public class UIUtil {
     g.fillRect(startX, 3, endX - startX, height - 5);
 
     if (drawRound) {
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
       g.setColor(new Color(100, 100, 100, 50));
-      g.drawLine(startX - 1, 4, startX - 1, height - 4);
-      g.drawLine(endX, 4, endX, height - 4);
+      drawLine(g ,startX - 1, 4, startX - 1, height - 4);
+      drawLine(g ,endX, 4, endX, height - 4);
 
-      g.drawLine(startX, 3, endX - 1, 3);
-      g.drawLine(startX, height - 3, endX - 1, height - 3);
+      drawLine(g ,startX, 3, endX - 1, 3);
+      drawLine(g ,startX, height - 3, endX - 1, height - 3);
     }
 
     config.restore();
   }
 
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
-    g.drawLine(x + 1, y, x + w - 1, y);
-    g.drawLine(x + w, y + 1, x + w, y + h - 1);
-    g.drawLine(x + w - 1, y + h, x + 1, y + h);
-    g.drawLine(x, y + 1, x, y + h - 1);
+    drawLine(g ,x + 1, y, x + w - 1, y);
+    drawLine(g ,x + w, y + 1, x + w, y + h - 1);
+    drawLine(g ,x + w - 1, y + h, x + 1, y + h);
+    drawLine(g ,x, y + 1, x, y + h - 1);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1824,8 +1870,8 @@ public class UIUtil {
     g.setColor(fgColor != null ? fgColor : oldColor);
     // Now draw bold line segments
     for (int dotXi = (startX / step + startPosCorrection) * step; dotXi < endX; dotXi += step) {
-      g.drawLine(dotXi, lineY, dotXi + 1, lineY);
-      g.drawLine(dotXi, lineY + 1, dotXi + 1, lineY + 1);
+      drawLine(g ,dotXi, lineY, dotXi + 1, lineY);
+      drawLine(g ,dotXi, lineY + 1, dotXi + 1, lineY + 1);
     }
 
     // restore color
@@ -1850,16 +1896,11 @@ public class UIUtil {
                                 boolean toolWindow,
                                 boolean drawTopLine,
                                 boolean drawBottomLine) {
-    height++;
     GraphicsConfig config = GraphicsUtil.disableAAPainting(g);
     try {
       g.setColor(getPanelBackground());
       g.fillRect(x, 0, width, height);
 
-      boolean jmHiDPI = isJreHiDPI((Graphics2D)g);
-      if (jmHiDPI) {
-        ((Graphics2D)g).setStroke(new BasicStroke(2f));
-      }
       ((Graphics2D)g).setPaint(getGradientPaint(0, 0, Gray.x00.withAlpha(5), 0, height, Gray.x00.withAlpha(20)));
       g.fillRect(x, 0, width, height);
 
@@ -1868,8 +1909,8 @@ public class UIUtil {
         g.fillRect(x, 0, width, height);
       }
       g.setColor(SystemInfo.isMac && isUnderIntelliJLaF() ? Gray.xC9 : Gray.x00.withAlpha(toolWindow ? 90 : 50));
-      if (drawTopLine) g.drawLine(x, 0, width, 0);
-      if (drawBottomLine) g.drawLine(x, height - (jmHiDPI ? 1 : 2), width, height - (jmHiDPI ? 1 : 2));
+      if (drawTopLine) drawLine(g ,x, 0, width, 0);
+      if (drawBottomLine) drawLine(g ,x, height - 1, width, height - 1);
 
       if (SystemInfo.isMac && isUnderIntelliJLaF()) {
         g.setColor(Gray.xC9);
@@ -1877,7 +1918,7 @@ public class UIUtil {
         g.setColor(isUnderDarcula() ? CONTRAST_BORDER_COLOR : Gray.xFF.withAlpha(100));
       }
 
-      g.drawLine(x, 0, width, 0);
+      drawLine(g ,x, 0, width, 0);
     } finally {
       config.restore();
     }
@@ -1893,10 +1934,10 @@ public class UIUtil {
     g.setColor(fgColor);
     for (int dot = start; dot < end; dot += 3) {
       if (horizontal) {
-        g.drawLine(dot, xOrY, dot, xOrY);
+        drawLine(g ,dot, xOrY, dot, xOrY);
       }
       else {
-        g.drawLine(xOrY, dot, xOrY, dot);
+        drawLine(g ,xOrY, dot, xOrY, dot);
       }
     }
   }
@@ -2244,6 +2285,7 @@ public class UIUtil {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
+        //noinspection CollectionAddedToSelf
         queue.offer(queue);
       }
     });
@@ -2463,7 +2505,6 @@ public class UIUtil {
 
   public static boolean isStandardMenuLAF() {
     return isWinLafOnVista() ||
-           isUnderNimbusLookAndFeel() ||
            isUnderGTKLookAndFeel();
   }
 
@@ -3472,7 +3513,7 @@ public class UIUtil {
                 g.setColor(info.underlineColor);
               }
 
-              g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
+              drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent(), x + maxWidth[0] + 10, yOffset[0] + fm.getDescent());
               if (c != null) {
                 g.setColor(c);
               }
@@ -3480,7 +3521,7 @@ public class UIUtil {
               if (myDrawShadow) {
                 c = g.getColor();
                 g.setColor(myShadowColor);
-                g.drawLine(x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
+                drawLine(g ,x - maxBulletWidth[0] - 10, yOffset[0] + fm.getDescent() + 1, x + maxWidth[0] + 10,
                            yOffset[0] + fm.getDescent() + 1);
                 g.setColor(c);
               }

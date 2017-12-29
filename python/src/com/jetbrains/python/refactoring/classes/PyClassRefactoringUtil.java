@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
@@ -568,7 +567,7 @@ public final class PyClassRefactoringUtil {
    * @param file file to optimize imports
    */
   public static void optimizeImports(@NotNull final PsiFile file) {
-    new PyImportOptimizer().processFile(file).run();
+    PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
   }
 
   /**

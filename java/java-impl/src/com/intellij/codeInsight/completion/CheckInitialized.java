@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.infos.CandidateInfo;
@@ -65,7 +64,7 @@ class CheckInitialized implements ElementFilter {
     }
 
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiReferenceExpression && !DfaValueFactory.isEffectivelyUnqualified((PsiReferenceExpression)parent)) {
+    if (parent instanceof PsiReferenceExpression && !ExpressionUtils.isEffectivelyUnqualified((PsiReferenceExpression)parent)) {
       return Collections.emptySet();
     }
 

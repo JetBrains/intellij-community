@@ -325,7 +325,7 @@ public class GroovyMarkerTypes {
     private final GrMethod myMethod;
 
     public OverridingMethodsUpdater(GrMethod method, PsiElementListCellRenderer renderer) {
-      super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, renderer.getComparator());
+      super(method.getProject(), MarkerType.SEARCHING_FOR_OVERRIDING_METHODS, createComparatorWrapper(renderer.getComparator()));
       myMethod = method;
     }
 

@@ -30,6 +30,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 
 class CreateEnumConstantAction(targetClass: PsiClass, request: CreateFieldRequest) : CreateFieldActionBase(targetClass, request) {
 
@@ -87,6 +88,10 @@ private class EnumConstantData(
 
 private fun extractRenderData(targetClass: PsiClass, request: CreateFieldRequest): EnumConstantData? {
   if (!targetClass.isEnum) return null
+
+  val lastConstant = targetClass.fields.filterIsInstance<PsiEnumConstant>().lastOrNull()
+  if (lastConstant != null && PsiTreeUtil.hasErrorElements(lastConstant)) return null
+
   if (!checkExpectedTypes(request.fieldType, targetClass, targetClass.project)) return null
   return EnumConstantData(targetClass, request.fieldName)
 }

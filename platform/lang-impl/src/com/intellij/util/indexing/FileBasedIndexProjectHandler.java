@@ -23,6 +23,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -133,7 +134,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         long start = System.currentTimeMillis();
-        Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        Collection<VirtualFile> files = ReadAction.compute(() -> index.getFilesToUpdate(project));
         long calcDuration = System.currentTimeMillis() - start;
 
         indicator.setIndeterminate(false);

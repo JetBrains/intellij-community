@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Lists;
@@ -120,7 +118,8 @@ public class PyArgumentListInspection extends PyInspection {
           final PyFunction function = (PyFunction)callable;
 
           // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
-          if (PyUtil.hasCustomDecorators(function) || decoratedClassInitCall(call.getCallee(), function)) {
+          if (PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, context) ||
+              decoratedClassInitCall(call.getCallee(), function, context)) {
             return;
           }
         }
@@ -136,14 +135,18 @@ public class PyArgumentListInspection extends PyInspection {
     inspectPyArgumentList(node, holder, context, 0);
   }
 
-  private static boolean decoratedClassInitCall(@Nullable PyExpression callee, @NotNull PyFunction function) {
+  private static boolean decoratedClassInitCall(@Nullable PyExpression callee,
+                                                @NotNull PyFunction function,
+                                                @NotNull TypeEvalContext context) {
     if (callee instanceof PyReferenceExpression && PyUtil.isInit(function)) {
       final PsiPolyVariantReference classReference = ((PyReferenceExpression)callee).getReference();
 
       return Arrays
         .stream(classReference.multiResolve(false))
         .map(ResolveResult::getElement)
-        .anyMatch(element -> element instanceof PyClass && PyUtil.hasCustomDecorators((PyClass)element));
+        .anyMatch(
+          element -> element instanceof PyClass && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator((PyClass)element, context)
+        );
     }
 
     return false;

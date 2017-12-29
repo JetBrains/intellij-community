@@ -121,6 +121,7 @@ object PsiIndexConsistencyTester {
       override fun performAction(model: Model) {
         PostponedFormatting.performAction(model)
         FileContentUtilCore.reparseFiles(model.vFile)
+        model.onSave()
       }
     }
     object FilePropertiesChanged : SimpleAction() {

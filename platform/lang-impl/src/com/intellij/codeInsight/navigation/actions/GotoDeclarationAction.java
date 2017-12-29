@@ -161,6 +161,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
+    if (!editor.getComponent().isShowing()) return;
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       gotoTargetElement(element, editor, currentFile);
       return true;
@@ -173,7 +174,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
-    if (element.getContainingFile() == currentFile) {
+    if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
       // check that element is really physically inside the file

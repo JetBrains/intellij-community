@@ -22,12 +22,16 @@ import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.or;
 
 /**
  * @author peter
@@ -104,6 +108,21 @@ public class PackageDirectoryCache {
   public Set<String> getSubpackageNames(@NotNull final String packageName) {
     final PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
+  }
+
+  public Set<String> getSubpackageNames(@NotNull final String packageName, @NotNull GlobalSearchScope scope) {
+    final PackageInfo info = getPackageInfo(packageName);
+    if (info == null) return Collections.emptySet();
+
+    final Set<String> result = new HashSet<>();
+    for (Map.Entry<String, Collection<VirtualFile>> entry : info.mySubPackages.getValue().entrySet()) {
+      final String shortName = entry.getKey();
+      final Collection<VirtualFile> directories = entry.getValue();
+      if (or(directories, scope::contains)) {
+        result.add(shortName);
+      }
+    }
+    return Collections.unmodifiableSet(result);
   }
 
   private class PackageInfo {

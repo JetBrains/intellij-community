@@ -39,6 +39,7 @@ import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.Consumer;
@@ -52,16 +53,14 @@ import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import static com.intellij.ide.util.treeView.TreeState.VISIT;
 import static com.intellij.ide.util.treeView.TreeState.expand;
-import static com.intellij.util.ui.UIUtil.putClientProperty;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
 
 class AsyncProjectViewSupport {
@@ -85,23 +84,23 @@ class AsyncProjectViewSupport {
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        updateAll();
+        updateAll(null);
       }
     });
     connection.subscribe(BookmarksListener.TOPIC, new BookmarksListener() {
       @Override
       public void bookmarkAdded(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkRemoved(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
 
       @Override
       public void bookmarkChanged(@NotNull Bookmark bookmark) {
-        updateByFile(bookmark.getFile());
+        updateByFile(bookmark.getFile(), false);
       }
     });
     PsiManager.getInstance(project).addPsiTreeChangeListener(new ProjectViewPsiTreeChangeListener(project) {
@@ -122,36 +121,36 @@ class AsyncProjectViewSupport {
 
       @Override
       protected void addSubtreeToUpdateByRoot() {
-        updateAll();
+        updateAll(null);
       }
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        updateByElement(element);
+        updateByElement(element, true);
         return true;
       }
     }, parent);
     FileStatusManager.getInstance(project).addFileStatusListener(new FileStatusListener() {
       @Override
       public void fileStatusesChanged() {
-        updateAll();
+        updateAllPresentations();
       }
 
       @Override
       public void fileStatusChanged(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updateByFile(file, false);
       }
     }, parent);
-    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(this::updateByElement), parent);
+    CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
     WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updatePresentationsFromRootTo(file);
       }
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        updateByFile(file);
+        updatePresentationsFromRootTo(file);
       }
     }, parent);
   }
@@ -170,18 +169,14 @@ class AsyncProjectViewSupport {
     TreeVisitor visitor = createVisitor(element, file, null);
     if (visitor != null) {
       expand(tree, promise -> myAsyncTreeModel.accept(visitor).processed(path -> {
-        if (path != null) {
-          TreeUtil.selectPath(tree, path);
-          promise.setResult(null);
-        }
-        else if (element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
+        if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
           promise.setResult(null);
         }
         else {
           // try to search the specified file instead of element,
           // because Kotlin files cannot represent containing functions
           myAsyncTreeModel.accept(createVisitor(null, file, null)).processed(path2 -> {
-            if (path2 != null) TreeUtil.selectPath(tree, path2);
+            selectPath(tree, path2);
             promise.setResult(null);
           });
         }
@@ -189,52 +184,83 @@ class AsyncProjectViewSupport {
     }
   }
 
-  public void updateAll() {
+  private static boolean selectPath(@NotNull JTree tree, TreePath path) {
+    if (path == null) return false;
+    tree.expandPath(path); // request to expand found path
+    TreeUtil.selectPath(tree, path); // select and scroll to center
+    return true;
+  }
+
+  public void updateAll(Runnable onDone) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    myStructureTreeModel.invalidate();
+    myStructureTreeModel.invalidate(onDone == null ? null : () -> myAsyncTreeModel.onValidThread(onDone));
   }
 
-  public void update(@NotNull TreePath path) {
-    myStructureTreeModel.invalidate(path, true);
+  public void update(@NotNull TreePath path, boolean structure) {
+    myStructureTreeModel.invalidate(path, structure);
   }
 
-  public void update(@NotNull List<TreePath> list) {
-    for (TreePath path : list) update(path);
+  public void update(@NotNull List<TreePath> list, boolean structure) {
+    for (TreePath path : list) update(path, structure);
   }
 
-  public void updateByFile(@NotNull VirtualFile file) {
-    update(null, file, this::update);
+  public void updateByFile(@NotNull VirtualFile file, boolean structure) {
+    LOG.debug(structure ? "updateChildrenByFile: " : "updatePresentationByFile: ", file);
+    update(null, file, structure);
   }
 
-  public void updateByElement(@NotNull PsiElement element) {
-    update(element, null, this::update);
+  public void updateByElement(@NotNull PsiElement element, boolean structure) {
+    LOG.debug(structure ? "updateChildrenByElement: " : "updatePresentationByElement: ", element);
+    update(element, null, structure);
   }
 
-  private void update(PsiElement element, VirtualFile file, Consumer<List<TreePath>> consumer) {
+  private void update(PsiElement element, VirtualFile file, boolean structure) {
     SmartList<TreePath> list = new SmartList<>();
-    TreeVisitor visitor = createVisitor(element, file, path -> !list.add(path));
-    if (visitor != null) myAsyncTreeModel.accept(visitor).done(path -> consumer.consume(list));
+    acceptAndUpdate(createVisitor(element, file, path -> !list.add(path)), list, structure);
   }
 
-  void accept(List<TreeVisitor> visitors, Consumer<TreePath[]> consumer) {
-    int size = visitors == null ? 0 : visitors.size();
-    if (size == 1) {
-      myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
-        if (path != null) consumer.consume(new TreePath[]{path});
-      });
-    }
-    else if (size > 1) {
-      List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(Collectors.toList());
-      collectResults(promises, true).done(list -> {
-        TreePath[] array = list.toArray(new TreePath[list.size()]);
-        int count = 0;
-        for (int i = 0; i < array.length; i++) {
-          if (array[i] != null) array[count++] = array[i];
-        }
-        if (count > 0) {
-          consumer.consume(count == array.length ? array : Arrays.copyOf(array, count));
-        }
-      });
+  private void acceptAndUpdate(TreeVisitor visitor, List<TreePath> list, boolean structure) {
+    if (visitor != null) myAsyncTreeModel.accept(visitor, false).done(path -> update(list, structure));
+  }
+
+  private void updatePresentationsFromRootTo(@NotNull VirtualFile file) {
+    SmartList<TreePath> list = new SmartList<>();
+    acceptAndUpdate(new ProjectViewFileVisitor(file, null) {
+      @NotNull
+      @Override
+      protected Action visit(@NotNull TreePath path, @NotNull AbstractTreeNode node, @NotNull VirtualFile element) {
+        Action action = super.visit(path, node, element);
+        if (action != Action.SKIP_CHILDREN) list.add(path);
+        return action;
+      }
+    }, list, false);
+  }
+
+  private void updateAllPresentations() {
+    SmartList<TreePath> list = new SmartList<>();
+    acceptAndUpdate(new TreeVisitor() {
+      @NotNull
+      @Override
+      public Action visit(@NotNull TreePath path) {
+        list.add(path);
+        return Action.CONTINUE;
+      }
+    }, list, false);
+  }
+
+  void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
+    if (visitors != null && !visitors.isEmpty()) {
+      if (1 == visitors.size()) {
+        myAsyncTreeModel.accept(visitors.get(0)).done(path -> {
+          if (path != null) consumer.consume(singletonList(path));
+        });
+      }
+      else {
+        List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
+        collectResults(promises, true).done(list -> {
+          if (list != null && !list.isEmpty()) consumer.consume(list);
+        });
+      }
     }
   }
 
@@ -259,18 +285,19 @@ class AsyncProjectViewSupport {
   }
 
   private static TreeVisitor createVisitor(PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
-    if (element != null) return new ProjectViewNodeVisitor(element, file, predicate);
+    if (element != null && element.isValid()) return new ProjectViewNodeVisitor(element, file, predicate);
     if (file != null) return new ProjectViewFileVisitor(file, predicate);
-    LOG.warn("cannot create visitor without element and/or file");
+    LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {
+    RestoreSelectionListener listener = new RestoreSelectionListener();
+    tree.addTreeSelectionListener(listener);
     tree.setModel(model);
-    putClientProperty(tree, VISIT, visitor -> model.accept(visitor, true));
     Disposer.register(model, () -> {
-      putClientProperty(tree, VISIT, null);
       tree.setModel(null);
+      tree.removeTreeSelectionListener(listener);
     });
   }
 }

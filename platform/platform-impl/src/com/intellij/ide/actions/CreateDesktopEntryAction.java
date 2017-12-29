@@ -76,7 +76,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
   };
 
   public static boolean isAvailable() {
-    return SystemInfo.isUnix && SystemInfo.hasXdgOpen();
+    return SystemInfo.isUnix && !PathManager.isSnap() && SystemInfo.hasXdgOpen();
   }
 
   @Override
@@ -158,6 +158,7 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
     if (execPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
     }
+    execPath = StringUtil.wrapWithDoubleQuote(execPath);
 
     String name = ApplicationNamesInfo.getInstance().getFullProductNameWithEdition();
     String wmClass = AppUIUtil.getFrameClass();

@@ -35,6 +35,8 @@ public interface RunDashboardGroupingRule extends TreeAction {
     return res != 0 ? res : (o1.getName().compareTo(o2.getName()));
   };
 
+  Comparator<RunDashboardGroup> GROUP_NAME_COMPARATOR = Comparator.comparing(RunDashboardGroup::getName);
+
   /**
    * Grouping rules are ordered and applied to dashboard nodes according to their priority.
    * The higher the priority, the higher groups produced by this rule are presented in the dashboard tree.
@@ -59,6 +61,10 @@ public interface RunDashboardGroupingRule extends TreeAction {
    */
   @Nullable
   RunDashboardGroup getGroup(AbstractTreeNode<?> node);
+
+  default Comparator<RunDashboardGroup> getGroupComparator() {
+    return GROUP_NAME_COMPARATOR;
+  }
 
   interface Priorities {
     int BY_RUN_CONFIG = 200;

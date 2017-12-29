@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -27,6 +13,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 
 /**
  * @author anna
@@ -57,13 +46,8 @@ public interface OverrideImplementsAnnotationsHandler {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
 
-        if (AnnotationUtil.isAnnotated(source, annotation, false, false) &&
-            !AnnotationUtil.isAnnotated(target, annotation, false, false)) {
-          PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(source, annotation);
-          if (psiAnnotation != null && AnnotationUtil.isInferredAnnotation(psiAnnotation)) {
-            continue;
-          }
-
+        int flags = CHECK_EXTERNAL | CHECK_TYPE;
+        if (AnnotationUtil.isAnnotated(source, annotation, flags) && !AnnotationUtil.isAnnotated(target, annotation, flags)) {
           PsiModifierList modifierList = target.getModifierList();
           assert modifierList != null : target;
           AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, modifierList);

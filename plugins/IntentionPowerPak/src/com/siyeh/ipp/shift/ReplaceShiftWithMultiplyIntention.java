@@ -20,6 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -94,9 +95,10 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     else {
       assignString = "/=";
     }
+    CommentTracker commentTracker = new CommentTracker();
     final String expString =
-      lhs.getText() + assignString + ShiftUtils.getExpBase2(rhs);
-    PsiReplacementUtil.replaceExpression(exp, expString);
+      commentTracker.markUnchanged(lhs).getText() + assignString + ShiftUtils.getExpBase2(rhs);
+    PsiReplacementUtil.replaceExpression(exp, expString, commentTracker);
   }
 
   private static void replaceShiftWithMultiplyOrDivide(PsiElement element)
@@ -121,6 +123,8 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     else {
       lhsText = lhs.getText();
     }
+    CommentTracker commentTracker = new CommentTracker();
+    commentTracker.markUnchanged(lhs);
     String expString =
       lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
     final PsiElement parent = exp.getParent();
@@ -131,6 +135,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
         expString = '(' + expString + ')';
       }
     }
-    PsiReplacementUtil.replaceExpression(exp, expString);
+
+    PsiReplacementUtil.replaceExpression(exp, expString, commentTracker);
   }
 }

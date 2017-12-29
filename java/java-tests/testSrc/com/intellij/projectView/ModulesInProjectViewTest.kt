@@ -111,6 +111,44 @@ class ModulesInProjectViewTest : BaseProjectViewTestCase() {
           """.trimMargin())
   }
 
+  fun `test flatten modules option`() {
+    val root = directoryContent {
+      dir("module1") {}
+      dir("module2") {}
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module1"), root.findChild("module1"))
+    PsiTestUtil.addContentRoot(createModule("foo.bar.module2"), root.findChild("module2"))
+    myStructure.isFlattenModules = true
+    assertStructureEqual("""
+          |Project
+          | foo.bar.module1.iml
+          | foo.bar.module2.iml
+          | module1
+          | module2
+          | test flatten modules option.iml
+          |
+          """.trimMargin())
+  }
+
+  fun `test do not show groups duplicating module names`() {
+    val root = directoryContent {
+      dir("foo") {}
+      dir("foo.bar") {}
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("xxx.foo"), root.findChild("foo"))
+    PsiTestUtil.addContentRoot(createModule("xxx.foo.bar"), root.findChild("foo.bar"))
+    assertStructureEqual("""
+          |Project
+          | Group: xxx
+          |  foo
+          |  foo.bar
+          | test do not show groups duplicating module names.iml
+          | xxx.foo.bar.iml
+          | xxx.foo.iml
+          |
+          """.trimMargin())
+  }
+
   fun `test modules with common parent group`() {
     val root = directoryContent {
       dir("module1") {

@@ -59,17 +59,15 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     @Override
     public void run() {
       try {
-        Lock writeLock = getWriteLock();
-        if (writeLock.tryLock()) {
-          try {
-            myStorage.clearCaches();
-          } finally {
-            writeLock.unlock();
-          }
+        getReadLock().lock();
+        try {
+          myStorage.clearCaches();
+        } finally {
+          getReadLock().unlock();
         }
+
         flush();
-      } catch (StorageException e) {
-        LOG.info(e);
+      } catch (Throwable e) {
         requestRebuild(e);
       }
     }
@@ -77,7 +75,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   protected MapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                            @NotNull IndexStorage<Key, Value> storage,
-                           ForwardIndex<Key, Value> forwardIndex) throws IOException {
+                           ForwardIndex<Key, Value> forwardIndex) {
     myIndexId = extension.getName();
     myExtension = extension;
     myIndexer = myExtension.getIndexer();
@@ -101,7 +99,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public void clear() throws StorageException {
+  public void clear() {
     try {
       getWriteLock().lock();
       doClear();
@@ -247,14 +245,17 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }, new ThrowableRunnable<IOException>() {
       @Override
       public void run() throws IOException {
-        myForwardIndex.putInputData(inputId, data);
+        if (myForwardIndex != null) myForwardIndex.putInputData(inputId, data);
       }
     });
   }
 
   @NotNull
   protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
-    return myForwardIndex.getDiffBuilder(inputId);
+    if (myForwardIndex != null) {
+      return myForwardIndex.getDiffBuilder(inputId);
+    }
+    return new EmptyInputDataDiffBuilder(inputId);
   }
 
   @NotNull
@@ -278,7 +279,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   public abstract void checkCanceled();
 
-  protected abstract void requestRebuild(Exception e);
+  protected abstract void requestRebuild(Throwable e);
 
   public long getModificationStamp() {
     return myModificationStamp.get();
@@ -316,8 +317,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       try {
         ValueContainerImpl.ourDebugIndexInfo.set(myIndexId);
-        updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
-        updateData.updateForwardIndex();
+        boolean hasDifference = updateData.iterateKeys(myAddedKeyProcessor, myUpdatedKeyProcessor, myRemovedKeyProcessor);
+        if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
         throw e;

@@ -32,11 +32,12 @@ public class PyNewProjectSettings {
   @Nullable
   private String myRemotePath;
 
-  public Sdk getSdk() {
+  @Nullable
+  public final Sdk getSdk() {
     return mySdk;
   }
 
-  public void setSdk(Sdk sdk) {
+  public final void setSdk(@Nullable final Sdk sdk) {
     mySdk = sdk;
   }
 

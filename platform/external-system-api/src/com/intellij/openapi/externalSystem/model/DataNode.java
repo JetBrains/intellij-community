@@ -275,6 +275,17 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     myUserData = new UserDataHolderBase();
   }
 
+  public void checkIsSerializable() throws IOException {
+    if (myRawData != null) return;
+    ObjectOutputStream oOut = new ObjectOutputStream(NoopOutputStream.getInstance());
+    try {
+      oOut.writeObject(myData);
+    }
+    finally {
+      oOut.close();
+    }
+  }
+
   public byte[] getDataBytes() throws IOException {
     if (myRawData != null) return myRawData;
 
@@ -282,9 +293,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     ObjectOutputStream oOut = new ObjectOutputStream(bOut);
     try {
       oOut.writeObject(myData);
-      final byte[] bytes = bOut.toByteArray();
-      myRawData = bytes;
-      return bytes;
+      return bOut.toByteArray();
     }
     finally {
       oOut.close();
@@ -406,5 +415,20 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
       copy.addChild(copy(child, copy));
     }
     return copy;
+  }
+
+  private static class NoopOutputStream extends OutputStream {
+
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+    private static NoopOutputStream ourInstance = new NoopOutputStream();
+
+    public static NoopOutputStream getInstance() {
+      return ourInstance;
+    }
+
+    private NoopOutputStream() {}
+
+    @Override
+    public void write(int b) throws IOException {}
   }
 }

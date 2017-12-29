@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
@@ -21,8 +7,6 @@ import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -50,22 +34,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private final NotNullLazyValue<PsiClass> myArrayClass = new AtomicNotNullLazyValue<PsiClass>() {
-    @NotNull
-    @Override
-    protected PsiClass compute() {
-      return createArrayClass("public class __Array__{\n public final int length;\n public Object clone() {}\n}", LanguageLevel.JDK_1_3);
-    }
-  };
-
-  private final NotNullLazyValue<PsiClass> myArrayClass15 = new AtomicNotNullLazyValue<PsiClass>() {
-    @NotNull
-    @Override
-    protected PsiClass compute() {
-      return createArrayClass("public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}", LanguageLevel.JDK_1_5);
-    }
-  };
-
+  private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.newConcurrentMap();
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
@@ -76,14 +45,17 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiClass getArrayClass(@NotNull LanguageLevel languageLevel) {
-    return (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) ? myArrayClass15 : myArrayClass).getValue();
+    return myArrayClasses.computeIfAbsent(languageLevel, this::createArrayClass);
   }
 
-  private PsiClass createArrayClass(String text, LanguageLevel level) {
+  private PsiClass createArrayClass(LanguageLevel level) {
+    String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
+                  "public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
+                  "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
     ensureNonWritable(psiClass);
     PsiFile file = psiClass.getContainingFile();
-    ((PsiJavaFileBaseImpl)file).clearCaches();
+    file.clearCaches();
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(file, level);
     return psiClass;
   }

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.update.ActionInfo;
@@ -30,7 +29,7 @@ import java.util.List;
 
 public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public static ProjectLevelVcsManagerEx getInstanceEx(Project project) {
-    return (ProjectLevelVcsManagerEx) PeriodicalTasksCloser.getInstance().safeGetComponent(project, ProjectLevelVcsManager.class);
+    return (ProjectLevelVcsManagerEx)project.getComponent(ProjectLevelVcsManager.class);
   }
 
   @Nullable

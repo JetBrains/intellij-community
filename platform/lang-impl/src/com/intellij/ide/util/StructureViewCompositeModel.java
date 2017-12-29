@@ -25,29 +25,47 @@ import com.intellij.ide.util.treeView.smartTree.ProvidingTreeModel;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class StructureViewCompositeModel extends StructureViewModelBase implements Disposable {
-  private final StructureViewComposite.StructureViewDescriptor[] myViews;
+public class StructureViewCompositeModel extends StructureViewModelBase
+  implements Disposable,
+             StructureViewModel.ElementInfoProvider, 
+             StructureViewModel.ExpandInfoProvider {
+  private final List<StructureViewComposite.StructureViewDescriptor> myViews;
 
-  public StructureViewCompositeModel(PsiFile file, StructureViewComposite.StructureViewDescriptor[] views) {
-    super(file, createRootNode(file, views));
+  public StructureViewCompositeModel(@NotNull PsiFile file,
+                                     @Nullable Editor editor,
+                                     @NotNull List<StructureViewComposite.StructureViewDescriptor> views) {
+    super(file, editor, createRootNode(file, views));
     myViews = views;
   }
+  
+  @NotNull
+  private JBIterable<StructureViewModel> getModels() {
+    return JBIterable.from(myViews).map(o -> o.structureModel);
+  }
 
-  private static StructureViewTreeElement createRootNode(final PsiFile file, final StructureViewComposite.StructureViewDescriptor[] views) {
+  @Override
+  public Object getCurrentEditorElement() {
+    return getModels().filterMap(o -> o.getCurrentEditorElement()).first();
+  }
+
+  @NotNull
+  private static StructureViewTreeElement createRootNode(@NotNull PsiFile file,
+                                                         @NotNull List<StructureViewComposite.StructureViewDescriptor> views) {
+    JBIterable<TreeElement> children = JBIterable.from(views).map(o -> createTreeElementFromView(file, o));
     return new StructureViewTreeElement() {
       @Override
       public Object getValue() {
@@ -78,10 +96,7 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
       @NotNull
       @Override
       public TreeElement[] getChildren() {
-        ArrayList<TreeElement> elements = new ArrayList<>();
-        for (StructureViewComposite.StructureViewDescriptor view : views) {
-          elements.add(createTreeElementFromView(file, view));
-        }
+        List<TreeElement> elements = children.toList();
         return elements.toArray(new TreeElement[elements.size()]);
       }
     };
@@ -90,27 +105,52 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
   @NotNull
   @Override
   public Collection<NodeProvider> getNodeProviders() {
-    final Set<NodeProvider> providers = new HashSet<>();
-    for (StructureViewComposite.StructureViewDescriptor view : myViews) {
-      final StructureViewModel model = view.structureView.getTreeModel();
-      if (model instanceof ProvidingTreeModel) {
-        providers.addAll(((ProvidingTreeModel)model).getNodeProviders());
-      }
-    }
-    return providers;
+    return getModels().filter(ProvidingTreeModel.class).flatMap(ProvidingTreeModel::getNodeProviders).toSet();
   }
 
   @NotNull
   @Override
   public Filter[] getFilters() {
-    final HashSet<Filter> filters = new HashSet<>();
-    for (StructureViewComposite.StructureViewDescriptor view : myViews) {
-      final StructureViewModel model = view.structureView.getTreeModel();
-      ContainerUtil.addAll(filters, model.getFilters());
-    }
+    Set<Filter> filters = getModels().flatMap(o -> JBIterable.of(o.getFilters())).toSet();
     return filters.toArray(new Filter[filters.size()]);
   }
 
+  @Override
+  public boolean isAlwaysShowsPlus(StructureViewTreeElement element) {
+    for (ElementInfoProvider p : getModels().filter(ElementInfoProvider.class)) {
+      if (p.isAlwaysShowsPlus(element)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(StructureViewTreeElement element) {
+    for (ElementInfoProvider p : getModels().filter(ElementInfoProvider.class)) {
+      if (p.isAlwaysLeaf(element)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
+    if (element.getValue() instanceof StructureViewComposite.StructureViewDescriptor) return true;
+    for (ExpandInfoProvider p : getModels().filter(ExpandInfoProvider.class)) {
+      if (p.isAutoExpand(element)) return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isSmartExpand() {
+    boolean result = false;
+    for (ExpandInfoProvider p : getModels().filter(ExpandInfoProvider.class)) {
+      if (!p.isSmartExpand()) return false;
+      result = true;
+    }
+    return result;
+  }
+
+  @NotNull
   private static TreeElement createTreeElementFromView(final PsiFile file, final StructureViewComposite.StructureViewDescriptor view) {
     return new StructureViewTreeElement() {
       @Override
@@ -160,10 +200,8 @@ public class StructureViewCompositeModel extends StructureViewModelBase implemen
       @NotNull
       @Override
       public TreeElement[] getChildren() {
-        return view.structureView.getTreeModel().getRoot().getChildren();
+        return view.structureModel.getRoot().getChildren();
       }
     };
-
-
   }
 }

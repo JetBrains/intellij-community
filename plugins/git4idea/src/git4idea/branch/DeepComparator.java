@@ -35,6 +35,7 @@ import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import git4idea.GitBranch;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
@@ -278,7 +279,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
           }
         }
       });
-      handler.runInCurrentThread(null);
+      Git.getInstance().runCommandWithoutCollectingOutput(handler);
       return pickedCommits;
     }
   }

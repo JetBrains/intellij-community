@@ -93,7 +93,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
         final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
         if (gradlePath == null) return ActionCallback.REJECTED;
 
-        final String taskName = "Download sources";
+        final String taskName = "DownloadSources";
         String initScript = "allprojects {\n" +
                             "  afterEvaluate { project ->\n" +
                             "    if(project.path == '" + gradlePath + "') {\n" +

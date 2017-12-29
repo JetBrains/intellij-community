@@ -41,7 +41,7 @@ import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
  */
 public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
 
-  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION};
+  @NotNull public static final String[] BUILD_FILE_EXTENSIONS = {GradleConstants.EXTENSION, GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION};
 
   public GradleProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
     super(builder);
@@ -50,7 +50,7 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
   @NotNull
   @Override
   public String[] getSupportedExtensions() {
-    return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME};
+    return new String[] {GradleConstants.DEFAULT_SCRIPT_NAME, GradleConstants.SETTINGS_FILE_NAME, GradleConstants.KOTLIN_DSL_SCRIPT_NAME};
   }
 
   @Override

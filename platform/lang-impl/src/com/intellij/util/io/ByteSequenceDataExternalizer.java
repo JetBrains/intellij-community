@@ -15,7 +15,7 @@
  */
 package com.intellij.util.io;
 
-import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -26,18 +26,18 @@ import java.io.InputStream;
 /**
  * @author Maxim.Mossienko
  */
-public class ByteSequenceDataExternalizer implements DataExternalizer<ByteSequence> {
+public class ByteSequenceDataExternalizer implements DataExternalizer<ByteArraySequence> {
   public static final ByteSequenceDataExternalizer INSTANCE = new ByteSequenceDataExternalizer();
 
   @Override
-  public void save(@NotNull DataOutput out, ByteSequence value) throws IOException {
+  public void save(@NotNull DataOutput out, ByteArraySequence value) throws IOException {
     out.write(value.getBytes(), value.getOffset(), value.getLength()); // todo fix double copying
   }
 
   @Override
-  public ByteSequence read(@NotNull DataInput in) throws IOException {
+  public ByteArraySequence read(@NotNull DataInput in) throws IOException {
     byte[] buf = new byte[((InputStream)in).available()]; // todo fix double copying
     in.readFully(buf);
-    return new ByteSequence(buf);
+    return new ByteArraySequence(buf);
   }
 }

@@ -22,16 +22,36 @@
     <group id="VcsGeneral.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
     <group id="ScrollPaneActions" text="Scroll">
-      <action id="ScrollPane-scrollHome" text="Scroll Home" class="com.intellij.ui.ScrollPaneActions$Home"/>
-      <action id="ScrollPane-scrollEnd" text="Scroll End" class="com.intellij.ui.ScrollPaneActions$End"/>
-      <action id="ScrollPane-unitScrollUp" text="Scroll Up" class="com.intellij.ui.ScrollPaneActions$Up"/>
-      <action id="ScrollPane-unitScrollDown" text="Scroll Down" class="com.intellij.ui.ScrollPaneActions$Down"/>
-      <action id="ScrollPane-unitScrollLeft" text="Scroll Left" class="com.intellij.ui.ScrollPaneActions$Left"/>
-      <action id="ScrollPane-unitScrollRight" text="Scroll Right" class="com.intellij.ui.ScrollPaneActions$Right"/>
-      <action id="ScrollPane-scrollUp" text="Scroll Page Up" class="com.intellij.ui.ScrollPaneActions$PageUp"/>
-      <action id="ScrollPane-scrollDown" text="Scroll Page Down" class="com.intellij.ui.ScrollPaneActions$PageDown"/>
-      <action id="ScrollPane-scrollLeft" text="Scroll Page Left" class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
-      <action id="ScrollPane-scrollRight" text="Scroll Page Right" class="com.intellij.ui.ScrollPaneActions$PageRight"/>
+      <action id="ScrollPane-scrollHome" text="Scroll Home"
+              description="Scrolls the surrounding scrollable area to the top."
+              class="com.intellij.ui.ScrollPaneActions$Home"/>
+      <action id="ScrollPane-scrollEnd" text="Scroll End"
+              description="Scrolls the surrounding scrollable area to the bottom."
+              class="com.intellij.ui.ScrollPaneActions$End"/>
+      <action id="ScrollPane-unitScrollUp" text="Scroll Up"
+              description="Scrolls the surrounding scrollable area up by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Up"/>
+      <action id="ScrollPane-unitScrollDown" text="Scroll Down"
+              description="Scrolls the surrounding scrollable area down by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Down"/>
+      <action id="ScrollPane-unitScrollLeft" text="Scroll Left"
+              description="Scrolls the surrounding scrollable area left by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Left"/>
+      <action id="ScrollPane-unitScrollRight" text="Scroll Right"
+              description="Scrolls the surrounding scrollable area right by one unit."
+              class="com.intellij.ui.ScrollPaneActions$Right"/>
+      <action id="ScrollPane-scrollUp" text="Scroll Page Up"
+              description="Scrolls the surrounding scrollable area up by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageUp"/>
+      <action id="ScrollPane-scrollDown" text="Scroll Page Down"
+              description="Scrolls the surrounding scrollable area down by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageDown"/>
+      <action id="ScrollPane-scrollLeft" text="Scroll Page Left"
+              description="Scrolls the surrounding scrollable area left by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageLeft"/>
+      <action id="ScrollPane-scrollRight" text="Scroll Page Right"
+              description="Scrolls the surrounding scrollable area right by one page."
+              class="com.intellij.ui.ScrollPaneActions$PageRight"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
@@ -212,6 +232,7 @@
       <action id="Diff.ApplyNonConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflicts"/>
       <action id="Diff.ApplyNonConflicts.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflictsLeft"/>
       <action id="Diff.ApplyNonConflicts.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.ApplyNotConflictsRight"/>
+      <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.MagicResolveToolbar"/>
 
       <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4LeftMiddle"/>
       <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction" icon="AllIcons.Diff.Compare4MiddleRight"/>
@@ -309,6 +330,8 @@
           <action id="SelectAllOccurrences" class="com.intellij.openapi.editor.actions.SelectAllOccurrencesAction"/>
           <action id="SelectNextOccurrence" class="com.intellij.openapi.editor.actions.SelectNextOccurrenceAction"/>
           <action id="UnselectPreviousOccurrence" class="com.intellij.openapi.editor.actions.UnselectPreviousOccurrenceAction"/>
+          <action id="GotoNextElementUnderCaretUsage" class="com.intellij.codeInsight.daemon.impl.actions.GotoNextElementUnderCaretUsageAction"/>
+          <action id="GotoPrevElementUnderCaretUsage" class="com.intellij.codeInsight.daemon.impl.actions.GotoPrevElementUnderCaretUsageAction"/>
           <separator/>
           <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
           <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
@@ -533,6 +556,7 @@
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
         <action id="LogDebugConfigure" class="com.intellij.ide.actions.DebugLogConfigureAction"/>
+        <action id="DataSharingOptions" class="com.intellij.ide.actions.DataSharingOptionsAction"/>
         <separator/>
         <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
@@ -546,13 +570,6 @@
       <reference ref="SaveAll"/>
       <reference ref="Synchronize"/>
       <separator/>
-      <reference ref="$Undo"/>
-      <reference ref="$Redo"/>
-      <separator/>
-      <reference ref="$Cut"/>
-      <reference ref="$Copy"/>
-      <reference ref="$Paste"/>
-      <separator/>
       <reference ref="Back"/>
       <reference ref="Forward"/>
       <separator/>
@@ -560,7 +577,6 @@
         <reference ref="ShowSettings"/>
       </group>
       <separator/>
-      <reference ref="HelpTopics"/>
       <reference ref="SearchEverywhere"/>
     </group>
 
@@ -630,6 +646,7 @@
 
     <group id="WelcomeScreen.Documentation">
       <reference ref="HelpTopics"/>
+      <reference ref="About"/>
       <reference ref="ShowTips"/>
       <reference ref="Help.JetBrainsTV"/>
       <reference ref="Help.KeymapReference"/>
@@ -642,8 +659,11 @@
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.General.ExportSettings"/>
 
-      <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
-              icon="AllIcons.Welcome.CreateDesktopEntry"/>
+      <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
+      <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
+
+      <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction" icon="AllIcons.Welcome.CreateDesktopEntry"/>
+
       <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction" text="Check for Updates"/>
     </group>
 
@@ -744,6 +764,7 @@
         <action id="NotificationTestAction" internal="true" class="com.intellij.notification.impl.actions.NotificationTestAction"
                 text="Add Test Notification"/>
         <action id="TestMessageBoxAction" internal="true" class="com.intellij.diagnostic.TestMessageBoxAction" text="Show Test Dialog"/>
+        <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction" text="Show standard panels"/>
         <separator/>
         <action id="EditorRenderingBenchmarkAction" internal="true" class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"
                 text="Editor Rendering Benchmark"/>
@@ -802,10 +823,6 @@
 
       <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.actions.SendStatisticsAction" text="Collect And Send Statistics"/>
 
-      <group id="Internal.Profile" popup="true" text="Profiler">
-        <action id="DTraceAction" internal="true" class="com.intellij.internal.performance.profiler.dtrace.DTraceAction" text="DTrace lwawt"/>
-      </group>
-
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
@@ -818,24 +835,29 @@
     <group id="DirDiffMenu">
       <action id="DirDiffMenu.SynchronizeDiff" class="com.intellij.openapi.actionSystem.EmptyAction" text="Synchronize Selected" icon="AllIcons.Actions.Resume"/>
       <action id="DirDiffMenu.SynchronizeDiff.All" class="com.intellij.openapi.actionSystem.EmptyAction" text="Synchronize All" icon="AllIcons.Actions.Rerun"/>
-      <separator/>
-      <action id="DirDiffMenu.SetCopyToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToRight" text="Set Copy to Right" icon="AllIcons.Vcs.Arrow_right"/>
-      <action id="DirDiffMenu.SetCopyToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToLeft" text="Set Copy to Left" icon="AllIcons.Vcs.Arrow_left"/>
-      <action id="DirDiffMenu.SetDelete" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDelete" text="Set Delete" icon="AllIcons.Vcs.Remove"/>
-      <action id="DirDiffMenu.SetNoOperation" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetNoOperation" text="Set Do Nothing"/>
-      <separator/>
-      <action id="DirDiffMenu.MirrorToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToRightAction" text="Set Mirror to Right" icon="AllIcons.Diff.ArrowRight"/>
-      <action id="DirDiffMenu.MirrorToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToLeftAction" text="Set Mirror to Left" icon="AllIcons.Diff.Arrow"/>
-      <separator/>
-      <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault" text="Set Default"/>
-      <action id="DirDiffMenu.WarnOnDeletion" class="com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion" text="Warn When Delete" />
+      <group id="DirDiffOperationsMenu" compact="true">
+        <separator/>
+        <action id="DirDiffMenu.SetCopyToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToRight" text="Set Copy to Right" icon="AllIcons.Vcs.Arrow_right"/>
+        <action id="DirDiffMenu.SetCopyToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetCopyToLeft" text="Set Copy to Left" icon="AllIcons.Vcs.Arrow_left"/>
+        <action id="DirDiffMenu.SetDelete" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDelete" text="Set Delete" icon="AllIcons.Vcs.Remove"/>
+        <action id="DirDiffMenu.SetNoOperation" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetNoOperation" text="Set Do Nothing"/>
+        <separator/>
+        <action id="DirDiffMenu.MirrorToRight" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToRightAction" text="Set Mirror to Right" icon="AllIcons.Diff.ArrowRight"/>
+        <action id="DirDiffMenu.MirrorToLeft" class="com.intellij.openapi.diff.impl.dir.actions.popup.MirrorToLeftAction" text="Set Mirror to Left" icon="AllIcons.Diff.Arrow"/>
+        <separator/>
+        <action id="DirDiffMenu.SetDefault" class="com.intellij.openapi.diff.impl.dir.actions.popup.SetDefault" text="Set Default"/>
+        <action id="DirDiffMenu.WarnOnDeletion" class="com.intellij.openapi.diff.impl.dir.actions.popup.WarnOnDeletion" text="Warn When Delete"/>
+      </group>
       <separator/>
       <action id="DirDiffMenu.EnableLeft" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show New Files on Left Side" icon="AllIcons.Vcs.Arrow_right"/>
       <action id="DirDiffMenu.EnableRight" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show New Files on Right Side" icon="AllIcons.Vcs.Arrow_left"/>
       <action id="DirDiffMenu.EnableEqual" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Equal Files" icon="AllIcons.Vcs.Equal"/>
       <action id="DirDiffMenu.EnableNotEqual" class="com.intellij.openapi.actionSystem.EmptyAction" text="Show Difference" icon="AllIcons.Vcs.Not_equal"/>
       <separator/>
-
+      <action id="DirDiffMenu.CompareNewFilesWithEachOtherAction" class="com.intellij.openapi.diff.impl.dir.actions.popup.CompareNewFilesWithEachOtherAction"
+              text="Compare New Files with Each Other" icon="AllIcons.Vcs.Merge"/>
+      <action id="DirDiffMenu.CancelComparingNewFilesWithEachOther" class="com.intellij.openapi.diff.impl.dir.actions.popup.CancelComparingNewFilesWithEachOtherAction"
+              text="Cancel Comparing New Files with Each Other" icon="AllIcons.Vcs.Remove"/>
       <add-to-group group-id="Diff.KeymapGroup" anchor="last"/>
     </group>
 

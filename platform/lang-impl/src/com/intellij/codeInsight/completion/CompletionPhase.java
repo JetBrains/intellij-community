@@ -245,7 +245,9 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      indicator.restorePrefix(restorePrefix);
+      if (repeated) {
+        indicator.restorePrefix(restorePrefix);
+      }
       return indicator.nextInvocationCount(time, repeated);
     }
 

@@ -30,11 +30,11 @@ import gnu.trove.TIntStack
  */
 
 private val MasterModels = ConcurrentFactoryMap.createMap<String, MasterModel>(
-  {
-    MasterModel()
-  }, {
-    ContainerUtil.createConcurrentWeakValueMap()
-  })
+    {
+      MasterModel()
+    }, {
+  ContainerUtil.createConcurrentWeakValueMap()
+})
 
 
 private fun assertDispatchThread() = ApplicationManager.getApplication().assertIsDispatchThread()
@@ -53,7 +53,7 @@ fun createModel(persistenceId: String, console: LanguageConsoleView): ConsoleHis
 
 private class PrefixHistoryModel constructor(private val masterModel: MasterModel,
                                              private val getPrefixFn: () -> String) : ConsoleHistoryBaseModel by masterModel,
-                                                                                      ConsoleHistoryModel {
+    ConsoleHistoryModel {
 
   var userContent: String = ""
   override fun setContent(userContent: String) {
@@ -119,23 +119,26 @@ private class PrefixHistoryModel constructor(private val masterModel: MasterMode
 
   override fun getHistoryPrev(): Entry? {
     val entries = myEntries ?: return null
+    val currentPrefix = getPrefixFn()
     if (myPrevEntries.size() > 0) {
       myCurrentIndex = myPrevEntries.pop()
-      return entries[myCurrentIndex].let { Entry(it, -1) }
+      return createPrevEntry(entries[myCurrentIndex], currentPrefix)
     }
     else {
       resetIndex()
-      return Entry(userContent, -1)
+      return createPrevEntry(userContent, currentPrefix)
     }
   }
 
+  private fun createPrevEntry(prevEntry: String, currentPrefix: String): Entry = if (prevEntry.startsWith(currentPrefix)) Entry(prevEntry, currentPrefix.length) else Entry(prevEntry, 0)
+
   override fun getCurrentIndex(): Int =
-    if (myCurrentIndex != -1) {
-      myCurrentIndex
-    }
-    else {
-      entries.size - 1
-    }
+      if (myCurrentIndex != -1) {
+        myCurrentIndex
+      }
+      else {
+        entries.size - 1
+      }
 
   override fun prevOnLastLine(): Boolean = true
 

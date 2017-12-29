@@ -66,8 +66,8 @@ from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, IS_PY36_OR_GREATER, \
-    STATE_RUN
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
@@ -81,7 +81,7 @@ from _pydevd_bundle import pydevd_vm_type
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
 import sys
 import traceback
-from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs, cmp_to_key, to_string
+from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
 from _pydev_bundle import pydev_log
 from _pydev_bundle import _pydev_completer
 
@@ -919,13 +919,13 @@ class ReloadCodeCommand(InternalThreadCommand):
             self.lock.release()
 
         module_name = self.module_name
-        if not dict_contains(sys.modules, module_name):
+        if module_name not in sys.modules:
             if '.' in module_name:
                 new_module_name = module_name.split('.')[-1]
-                if dict_contains(sys.modules, new_module_name):
+                if new_module_name in sys.modules:
                     module_name = new_module_name
 
-        if not dict_contains(sys.modules, module_name):
+        if module_name not in sys.modules:
             sys.stderr.write('pydev debugger: Unable to find module to reload: "' + module_name + '".\n')
             # Too much info...
             # sys.stderr.write('pydev debugger: This usually means you are trying to reload the __main__ module (which cannot be reloaded).\n')
@@ -1026,22 +1026,16 @@ class InternalGetVariable(InternalThreadCommand):
         try:
             xml = StringIO.StringIO()
             xml.write("<xml>")
-            _typeName, valDict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
-            if valDict is None:
-                valDict = {}
+            _typeName, val_dict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            if val_dict is None:
+                val_dict = {}
 
-            keys = valDict.keys()
+            keys = dict_keys(val_dict)
             if _typeName != "OrderedDict" and not IS_PY36_OR_GREATER:
-                if hasattr(keys, 'sort'):
-                    keys.sort(compare_object_attrs) #Python 3.0 does not have it
-                else:
-                    if IS_PY3K:
-                        keys = sorted(keys, key=cmp_to_key(compare_object_attrs)) #Jython 2.1 does not have it (and all must be compared as strings).
-                    else:
-                        keys = sorted(keys, cmp=compare_object_attrs) #Jython 2.1 does not have it (and all must be compared as strings).
+                keys.sort(key=compare_object_attrs_key)
 
             for k in keys:
-                val = valDict[k]
+                val = val_dict[k]
                 evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
                 xml.write(pydevd_xml.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
@@ -1050,7 +1044,8 @@ class InternalGetVariable(InternalThreadCommand):
             xml.close()
             dbg.writer.add_command(cmd)
         except Exception:
-            cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error resolving variables " + get_exception_traceback_str())
+            cmd = dbg.cmd_factory.make_error_message(
+                self.sequence, "Error resolving variables %s" % (get_exception_traceback_str(),))
             dbg.writer.add_command(cmd)
 
 
@@ -1489,7 +1484,7 @@ class InternalLoadFullValue(InternalThreadCommand):
                     var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
                     var_objects.append((var_obj, name))
 
-            t = GetValueAsyncThread(dbg, self.sequence, var_objects)
+            t = GetValueAsyncThread(dbg, self.thread_id, self.frame_id, self.sequence, var_objects)
             t.start()
         except:
             exc = get_exception_traceback_str()
@@ -1499,16 +1494,23 @@ class InternalLoadFullValue(InternalThreadCommand):
 
 
 class GetValueAsyncThread(PyDBDaemonThread):
-    def __init__(self, py_db, seq, var_objects):
+    def __init__(self, py_db, thread_id, frame_id, seq, var_objects):
         PyDBDaemonThread.__init__(self)
         self.py_db = py_db
+        self.thread_id = thread_id
+        self.frame_id = frame_id
         self.seq = seq
         self.var_objs = var_objects
+        self.cancel_event = threading.Event()
 
     def _on_run(self):
+        start = time.time()
         xml = StringIO.StringIO()
         xml.write("<xml>")
         for (var_obj, name) in self.var_objs:
+            current_time = time.time()
+            if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
+                break
             xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
         xml.write("</xml>")
         cmd = self.py_db.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())

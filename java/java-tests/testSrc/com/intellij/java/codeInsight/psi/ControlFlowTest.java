@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author cdr
- * Date: Nov 25, 2002
  */
 public class ControlFlowTest extends LightCodeInsightTestCase {
   @NonNls private static final String BASE_PATH = "/psi/controlFlow";

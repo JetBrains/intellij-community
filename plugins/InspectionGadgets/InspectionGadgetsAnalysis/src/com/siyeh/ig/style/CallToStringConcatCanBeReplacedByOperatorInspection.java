@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -96,10 +97,11 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
         return;
       }
       final PsiExpression argument = arguments[0];
+      CommentTracker tracker = new CommentTracker();
       @NonNls
       final String newExpression =
-        qualifier.getText() + '+' + argument.getText();
-      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression);
+        tracker.markUnchanged(qualifier).getText() + '+' + tracker.markUnchanged(argument).getText();
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, tracker);
     }
   }
 

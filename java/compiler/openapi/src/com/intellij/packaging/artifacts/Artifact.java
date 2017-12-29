@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
+ * Describes an artifact configuration. Use {@link ArtifactManager} to create new and get existing artifacts.
+ *
  * @author nik
  */
 public interface Artifact extends UserDataHolder, ProjectModelElement {
@@ -35,6 +37,9 @@ public interface Artifact extends UserDataHolder, ProjectModelElement {
 
   boolean isBuildOnMake();
 
+  /**
+   * @return the root element in the artifact's output layout tree
+   */
   @NotNull
   CompositePackagingElement<?> getRootElement();
 

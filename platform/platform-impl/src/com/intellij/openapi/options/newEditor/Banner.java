@@ -20,61 +20,52 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
+import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.ui.components.labels.SwingActionLink;
-import com.intellij.ui.components.panels.HorizontalLayout;
 
 import javax.swing.Action;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.util.ArrayList;
+import java.util.Collection;
 
 /**
  * @author Sergey.Malenkov
  */
 final class Banner extends JPanel {
-  private final JPanel myLeftPanel = new JPanel(null);
   private final JLabel myProjectIcon = new JLabel();
+  private final Breadcrumbs myBreadcrumbs = new Breadcrumbs() {
+    protected int getFontStyle(Crumb crumb) {
+      return Font.BOLD;
+    }
+  };
 
   Banner(Action action) {
     super(new BorderLayout(10, 0));
-    myLeftPanel.setLayout(new HorizontalLayout(5));
     myProjectIcon.setMinimumSize(new Dimension(0, 0));
     myProjectIcon.setIcon(AllIcons.General.ProjectConfigurableBanner);
     myProjectIcon.setForeground(JBColor.GRAY);
     myProjectIcon.setVisible(false);
-    add(BorderLayout.WEST, myLeftPanel);
+    add(BorderLayout.WEST, myBreadcrumbs);
     add(BorderLayout.CENTER, myProjectIcon);
     add(BorderLayout.EAST, RelativeFont.BOLD.install(new SwingActionLink(action)));
+    setComponentPopupMenuTo(myBreadcrumbs);
   }
 
-  void setText(String... names) {
-    Component[] components = myLeftPanel.getComponents();
-    for (Component component : components) {
-      component.setVisible(false);
-    }
+  void setText(Collection<String> names) {
+    ArrayList<Crumb> crumbs = new ArrayList<>();
     if (names != null) {
-      int i = 0;
       for (String name : names) {
-        if (i < components.length) {
-          if (i > 0) {
-            components[i - 1].setVisible(true);
-          }
-          components[i].setVisible(true);
-          if (components[i] instanceof JLabel) {
-            ((JLabel)components[i]).setText(name);
-          }
-        }
-        else {
-          if (i > 0) {
-            myLeftPanel.add(RelativeFont.HUGE.install(new JLabel("\u203A")));
-          }
-          myLeftPanel.add(RelativeFont.BOLD.install(new JLabel(name)));
-        }
-        i += 2;
+        crumbs.add(new Crumb.Impl(null, name, null));
       }
     }
+    myBreadcrumbs.setCrumbs(crumbs);
   }
 
   void setProject(Project project) {
@@ -87,5 +78,19 @@ final class Banner extends JPanel {
                                                   ? "configurable.default.project.tooltip"
                                                   : "configurable.current.project.tooltip"));
     }
+  }
+
+  private static void setComponentPopupMenuTo(Breadcrumbs breadcrumbs) {
+    breadcrumbs.setComponentPopupMenu(new JPopupMenu() {
+      @Override
+      public void show(Component invoker, int x, int y) {
+        if (invoker != breadcrumbs) return;
+        super.show(invoker, x, invoker.getHeight());
+      }
+
+      {
+        add(new CopyAction(() -> CopyAction.createTransferable(breadcrumbs.getCrumbs())));
+      }
+    });
   }
 }

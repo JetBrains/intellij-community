@@ -25,14 +25,16 @@ import com.intellij.testFramework.*;
 import com.intellij.tests.ExternalClasspathClassLoader;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.runner.Description;
+import org.junit.runner.RunWith;
 import org.junit.runner.manipulation.Filter;
 import org.junit.runner.manipulation.NoTestsRemainException;
+import org.junit.runners.Parameterized;
 
 import java.io.Closeable;
 import java.io.File;
@@ -128,7 +130,7 @@ public class TestAll implements Test {
     String testRoots = System.getProperty("test.roots");
     if (testRoots != null) {
       System.out.println("Collecting tests from roots specified by test.roots property: " + testRoots);
-      return StreamEx.of(testRoots.split(";")).map(File::new).toList();
+      return ContainerUtil.map(testRoots.split(";"), File::new);
     }
     List<File> roots = ExternalClasspathClassLoader.getRoots();
     if (roots != null) {
@@ -156,12 +158,12 @@ public class TestAll implements Test {
         }
         catch (Throwable ignore) {}
       }
-      return StreamEx.of(System.getProperty("java.class.path").split(File.pathSeparator)).map(File::new).toList();
+      return ContainerUtil.map(System.getProperty("java.class.path").split(File.pathSeparator), File::new);
     }
   }
 
   private static List<File> getClassRoots(URL[] urls) {
-    final List<File> classLoaderRoots = StreamEx.of(urls).map(url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url)))).toList();
+    final List<File> classLoaderRoots = ContainerUtil.map(urls, url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url))));
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
   }
@@ -443,17 +445,30 @@ public class TestAll implements Test {
 
       Method suiteMethod = safeFindMethod(testCaseClass, "suite");
       if (suiteMethod != null && !isPerformanceTestsRun()) {
-        return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_CLASS_ARRAY);
+        return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
 
       if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
-        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
-        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest(null, testCaseClass) && isPerformanceTestsRun();
-        if (!runEverything) {
-          try {
-            adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
+        boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
+        boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
+        if (runEverything) return new JUnit4TestAdapter(testCaseClass);
+
+        final RunWith runWithAnnotation = testCaseClass.getAnnotation(RunWith.class);
+        if (runWithAnnotation != null && Parameterized.class.isAssignableFrom(runWithAnnotation.value())) {
+          if (isPerformanceTestsRun() != isPerformanceTest) {
+            // do not create JUnit4TestAdapter for @Parameterized tests to avoid @Parameters computation - just skip the test
+            return null;
           }
-          catch (NoTestsRemainException ignored) {}
+          else {
+            return new JUnit4TestAdapter(testCaseClass);
+          }
+        }
+
+        JUnit4TestAdapter adapter = new JUnit4TestAdapter(testCaseClass);
+        try {
+          adapter.filter(isPerformanceTestsRun() ? PERFORMANCE_ONLY : NO_PERFORMANCE);
+        }
+        catch (NoTestsRemainException ignored) {
         }
         return adapter;
       }

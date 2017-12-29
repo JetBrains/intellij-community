@@ -1,5 +1,6 @@
 package com.intellij.coverage.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.coverage.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -9,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -264,7 +266,10 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         }, myProject, null);
       if (file != null) {
         final CoverageRunner coverageRunner = getCoverageRunner(file);
-        LOG.assertTrue(coverageRunner != null, file.getExtension());
+        if (coverageRunner == null) {
+          Messages.showErrorDialog(myProject, "No coverage runner available for " + file.getName(), CommonBundle.getErrorTitle());
+          return;
+        }
 
         final CoverageSuite coverageSuite = myCoverageManager
           .addExternalCoverageSuite(file.getName(), file.getTimeStamp(), coverageRunner,

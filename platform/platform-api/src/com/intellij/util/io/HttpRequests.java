@@ -44,6 +44,8 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -502,6 +504,8 @@ public final class HttpRequests {
         builder.myTuner.tune(connection);
       }
 
+      checkRequestHeadersForNulBytes(connection);
+
       if (connection instanceof HttpURLConnection) {
         HttpURLConnection httpURLConnection = (HttpURLConnection)connection;
 
@@ -528,5 +532,27 @@ public final class HttpRequests {
     }
 
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
+  }
+
+  /**
+   * A lot of web servers would not process request and just return 400 (Bad Request) response if any of request headers contains NUL byte.
+   * This method checks if any headers contain NUL byte in value and removes those headers from request.
+   * @param httpURLConnection connection to check
+   */
+  private static void checkRequestHeadersForNulBytes(URLConnection httpURLConnection) {
+    for (Map.Entry<String, List<String>> header : httpURLConnection.getRequestProperties().entrySet()) {
+      boolean shouldBeIgnored = false;
+      for (String headerValue : header.getValue()) {
+        if (headerValue.contains("\0")) {
+          LOG.error(String.format("Problem during request to '%s'. Header's '%s' value contains NUL bytes: '%s'. Omitting this header.",
+                                  httpURLConnection.getURL().toString(), header.getKey(), headerValue));
+          shouldBeIgnored = true;
+          break;
+        }
+      }
+      if (shouldBeIgnored) {
+        httpURLConnection.setRequestProperty(header.getKey(), null);
+      }
+    }
   }
 }

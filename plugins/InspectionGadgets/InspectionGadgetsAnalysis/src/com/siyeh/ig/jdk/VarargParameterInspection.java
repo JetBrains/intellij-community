@@ -23,18 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -118,7 +117,7 @@ public class VarargParameterInspection extends BaseInspection {
         }
         final PsiType arrayType = type.toArrayType();
         final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, "java.lang.SafeVarargs");
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CommonClassNames.JAVA_LANG_SAFE_VARARGS);
         if (annotation != null) {
           annotation.delete();
         }
@@ -129,15 +128,15 @@ public class VarargParameterInspection extends BaseInspection {
     public static void modifyCall(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
       final PsiElement element = reference.getElement();
       final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
+      JavaResolveResult result = call.resolveMethodGenerics();
+      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+        return;
+      }
       final PsiExpressionList argumentList = call.getArgumentList();
       if (argumentList == null) {
         return;
       }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length > indexOfFirstVarargArgument && ExpressionUtils.isNullLiteral(arguments[indexOfFirstVarargArgument]) &&
-          indexOfFirstVarargArgument + 1 == arguments.length) {
-        return;
-      }
       @NonNls final StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];

@@ -24,8 +24,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
@@ -48,6 +48,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       .finishDefault();
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -91,7 +92,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       if (!TestUtils.isJUnitTestMethod(method)) {
         return;
       }
-      if (hasExpectedExceptionAnnotation(method)) {
+      if (TestUtils.hasExpectedExceptionAnnotation(method)) {
         return;
       }
       if (containsAssertion(method)) {
@@ -131,23 +132,6 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
         visitor = new ContainsAssertionVisitor();
       element.accept(visitor);
       return visitor.containsAssertion();
-    }
-
-    private boolean hasExpectedExceptionAnnotation(PsiMethod method) {
-      final PsiModifierList modifierList = method.getModifierList();
-      final PsiAnnotation testAnnotation = modifierList.findAnnotation("org.junit.Test");
-      if (testAnnotation == null) {
-        return false;
-      }
-      final PsiAnnotationParameterList parameterList = testAnnotation.getParameterList();
-      final PsiNameValuePair[] nameValuePairs = parameterList.getAttributes();
-      for (PsiNameValuePair nameValuePair : nameValuePairs) {
-        @NonNls final String parameterName = nameValuePair.getName();
-        if ("expected".equals(parameterName)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 

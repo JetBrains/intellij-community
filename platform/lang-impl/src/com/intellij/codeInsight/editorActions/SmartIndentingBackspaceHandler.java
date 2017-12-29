@@ -55,7 +55,7 @@ public class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHa
     }
     PsiDocumentManager.getInstance(project).commitDocument(document);
     CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);
-    myReplacement = codeStyleFacade.getLineIndent(document, lineStartOffset);
+    myReplacement = codeStyleFacade.getLineIndent(editor, file.getLanguage(), lineStartOffset, true);
     if (myReplacement == null) {
       return;
     }

@@ -17,13 +17,12 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
 /**
  * @author anna
  */
-class Normal8CompletionTest extends LightFixtureCompletionTestCase {
+class Normal8CompletionTest extends NormalCompletionTestCase {
   final LightProjectDescriptor projectDescriptor = JAVA_8
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/"
 
@@ -304,6 +303,25 @@ class Test88 {
   void testPreferVariableToLambda() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
+  }
+
+  void testPreferLambdaToConstructorReference() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '() -> ', 'AbstractMethodError::new'
+  }
+
+  void testPreferLambdaToTooGenericLocalVariables() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
+  }
+
+  void testPreferLambdaToRecentSelections() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'String'
+    myFixture.type('\n str;\n') // select 'String'
+    myFixture.type('s.reduce(')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> ', 's', 'str', 'String'
   }
 
   private checkResultByFileName() {

@@ -28,6 +28,23 @@ class ConstructorExists {
     A.class.getConstructor(Integer.TYPE);
     A.class.getConstructor<warning descr="Constructor is not public">(Boolean.TYPE)</warning>;
     A.class.getConstructor<warning descr="Cannot resolve constructor with specified argument types">(Double.TYPE)</warning>;
+
+    C.class.getConstructor();
+    C.class.getConstructor(new Class[0]);
+    C.class.getConstructor(null);
+
+    A.class.getConstructor<warning descr="Cannot resolve constructor with specified argument types">()</warning>;
+    A.class.getConstructor<warning descr="Cannot resolve constructor with specified argument types">(new Class[0])</warning>;
+    A.class.getConstructor<warning descr="Cannot resolve constructor with specified argument types">(null)</warning>;
+
+    C.class.getDeclaredConstructor();
+    C.class.getDeclaredConstructor(new Class[0]);
+    C.class.getDeclaredConstructor(null);
+
+    A.class.getDeclaredConstructor<warning descr="Cannot resolve constructor with specified argument types">()</warning>;
+    A.class.getDeclaredConstructor<warning descr="Cannot resolve constructor with specified argument types">(new Class[0])</warning>;
+    A.class.getDeclaredConstructor<warning descr="Cannot resolve constructor with specified argument types">(null)</warning>;
+
   }
 
   static class A {
@@ -42,5 +59,6 @@ class ConstructorExists {
 
   static final class C extends A {
     public C(int n) { super(n); }
+    public C() { super(0); }
   }
 }
