@@ -29,7 +29,7 @@ public class ProgressWithTimeoutInDispatch extends AbstractProgressIndicatorExBa
   private final long myTimeoutMs;
   private final long myStartTimeMs;
 
-  private ProgressWithTimeoutInDispatch(long timeoutMs) {
+  public ProgressWithTimeoutInDispatch(long timeoutMs) {
     super();
     myTimeoutMs = timeoutMs;
     myStartTimeMs = System.currentTimeMillis();
