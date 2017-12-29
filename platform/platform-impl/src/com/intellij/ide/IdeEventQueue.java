@@ -133,7 +133,7 @@ public class IdeEventQueue extends EventQueue {
   public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
       if (myRunnablesWaitingFocusChange.containsKey(e)) {
-        FOCUS_AWARE_RUNNABLES_LOG.info("We have already have a runnable for the event: " + e);
+        FOCUS_AWARE_RUNNABLES_LOG.info("We have already had a runnable for the event: " + e);
         myRunnablesWaitingFocusChange.get(e).add(runnable);
       }
       else {
@@ -442,21 +442,18 @@ public class IdeEventQueue extends EventQueue {
         collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
       StreamEx.of(focusEventsList).
         takeWhile(entry -> entry.equals(finalEvent)).
-        collect(Collectors.toList()).forEach(entry -> {
+        collect(Collectors.toList()).stream().map(entry -> {
           focusEventsList.remove(entry);
-          ArrayList<Runnable> listOfRunnables = myRunnablesWaitingFocusChange.remove(entry);
-          if (listOfRunnables != null) {
-            listOfRunnables.forEach(runnable -> {
-              FOCUS_AWARE_RUNNABLES_LOG.info("Remove [" +
-                                             entry.getID() +
-                                             "; " +
-                                             entry.getSource().getClass().getName() +
-                                             "] and run " +
-                                             ((runnable == null) ? "NULL" : runnable.getClass().getName()));
-              if (runnable != null) {
-                runnable.run();
-              }
-            });
+          return myRunnablesWaitingFocusChange.remove(entry);
+        }).
+        filter(lor -> lor != null).
+        flatMap(listOfRunnables -> listOfRunnables.stream()).
+        filter(r -> r != null).
+        forEach(runnable -> {
+          try {
+            runnable.run();
+          } catch (Exception exc) {
+            LOG.info(exc);
           }
         });
     }
