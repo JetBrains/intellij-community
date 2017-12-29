@@ -9,7 +9,7 @@ public class RedundantAssignment {
       if(x % 3 == 1) {
         flag = true;
       } else {
-        <warning descr="Value assigned to the variable is already assigned to it">flag</warning> = false;
+        <warning descr="Variable is already assigned to this value">flag</warning> = false;
       }
     }
     System.out.println(flag);
@@ -19,14 +19,14 @@ public class RedundantAssignment {
     arr[0] = 1;
     arr[1] = 2;
     arr[2] = 3;
-    <warning descr="Value assigned to the variable is already assigned to it">arr[0]</warning> = 1;
+    <warning descr="Variable is already assigned to this value">arr[0]</warning> = 1;
   }
 
   void withTest(int x) {
     if(x != 0) {
       System.out.println(x);
     } else {
-      <warning descr="Value assigned to the variable is already assigned to it">x</warning> = 0;
+      <warning descr="Variable is already assigned to this value">x</warning> = 0;
     }
     System.out.println("oops");
   }
@@ -36,7 +36,7 @@ public class RedundantAssignment {
     if(b.hashCode() > 10) {
       a = null;
     } else {
-      <warning descr="Value assigned to the variable is already assigned to it">a</warning> = b;
+      <warning descr="Variable is already assigned to this value">a</warning> = b;
     }
   }
 }

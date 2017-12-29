@@ -16,7 +16,7 @@ class Test {
       }
 
       if (!rangeMarkersDisposed) {
-        <warning descr="Value assigned to the variable is already assigned to it">foo</warning> = "dd";
+        <warning descr="Variable is already assigned to this value">foo</warning> = "dd";
       }
     }
   }
