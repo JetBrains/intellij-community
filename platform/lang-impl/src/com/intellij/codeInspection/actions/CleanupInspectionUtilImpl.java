@@ -1,5 +1,6 @@
 package com.intellij.codeInspection.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -31,7 +32,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       if (quickfixClass != null && startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
-            .runWriteActionWithProgressInDispatchThread(presentationText, project, null, null, fixesTask::doRun);
+            .runWriteActionWithProgressInDispatchThread(presentationText, project, null, CommonBundle.getCancelButtonText(), fixesTask::doRun);
       }
       else {
         final SequentialModalProgressTask progressTask =
