@@ -27,7 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.filter.BranchPopupBuilder;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;

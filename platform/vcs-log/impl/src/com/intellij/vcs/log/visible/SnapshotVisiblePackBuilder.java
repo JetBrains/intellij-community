@@ -27,7 +27,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.graph.collapsing.CollapsedController;
 import com.intellij.vcs.log.graph.impl.facade.BaseController;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

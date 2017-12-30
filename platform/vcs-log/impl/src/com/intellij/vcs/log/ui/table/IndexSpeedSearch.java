@@ -26,7 +26,7 @@ import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import org.jetbrains.annotations.NotNull;
