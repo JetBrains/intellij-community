@@ -848,9 +848,8 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      List<PsiElement> allElements = Arrays.asList(getSelectedPsiElements());
       ArrayList<PsiElement> validElements = new ArrayList<>();
-      for (PsiElement psiElement : allElements) {
+      for (PsiElement psiElement : getSelectedPsiElements()) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
       final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);

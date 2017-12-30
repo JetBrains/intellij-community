@@ -436,7 +436,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
-    List<ToolWindowEP> beans = Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME));
+    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (ToolWindowEP bean : beans) {
       Condition<Project> condition = bean.getCondition();
       if (condition == null || condition.value(myProject)) {

@@ -944,9 +944,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
       List<PsiElement> validElements = new ArrayList<>();
-      for (PsiElement psiElement : allElements) {
+      for (PsiElement psiElement : getElementsToDelete()) {
         if (psiElement != null && psiElement.isValid()) validElements.add(psiElement);
       }
       final PsiElement[] elements = PsiUtilCore.toPsiElementArray(validElements);

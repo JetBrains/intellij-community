@@ -306,8 +306,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           kids.addAll(collectChildren(rootNode));
         }
         else {
-          List<Object> list = Arrays.asList(getTreeStructure().getChildElements(root));
-          for (Object each : list) {
+          Object[] childElements = getTreeStructure().getChildElements(root);
+          for (Object each : childElements) {
             kids.add((AbstractTreeNode)each);
           }
         }
