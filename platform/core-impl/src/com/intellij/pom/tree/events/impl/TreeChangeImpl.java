@@ -33,11 +33,13 @@ public class TreeChangeImpl implements TreeChange {
   private final LinkedHashSet<TreeElement> myInitialChildren = new LinkedHashSet<>();
   private final Map<TreeElement, Integer> myInitialLengths = new HashMap<>();
   private final Set<TreeElement> myContentChangeChildren = new HashSet<>();
+  private final int myInitialStart;
   private Map<TreeElement, ChangeInfoImpl> myChanges;
 
   public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
+    myInitialStart = myParent.getStartOffset();
     for (TreeElement child : getCurrentChildren()) {
       myInitialChildren.add(child);
       myInitialLengths.put(child, child.getTextLength());
@@ -53,8 +55,8 @@ public class TreeChangeImpl implements TreeChange {
     return JBIterable.generate(myParent.getFirstChildNode(), TreeElement::getTreeNext);
   }
 
-  int getCurrentStart() {
-    return myParent.getStartOffset();
+  int getInitialStart() {
+    return myInitialStart;
   }
 
   int getLengthDelta() {
@@ -128,7 +130,7 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   void fireEvents(PsiFile file) {
-    int start = getCurrentStart();
+    int start = myParent.getStartOffset();
     for (ChangeInfoImpl change : getAllChanges().values()) {
       change.fireEvent(start, file, myParent);
     }

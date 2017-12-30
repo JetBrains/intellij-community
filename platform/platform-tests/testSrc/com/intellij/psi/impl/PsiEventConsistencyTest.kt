@@ -59,6 +59,26 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
     }
   }
 
+  fun `test replace then delete in different AST parents at the same final offset`() {
+    val file = createEmptyFile()
+    WriteCommandAction.runWriteCommandAction(project) {
+      //prepare
+      val root = file.node as FileElement
+      root.replaceChild(root.firstChildNode, composite(compositeTypes[0],
+                                                       composite(compositeTypes[0], leaf(leafTypes[0], "a")),
+                                                       composite(compositeTypes[0], leaf(leafTypes[0], "b"))))
+      
+      ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+        val aComposite = root.firstChildNode.firstChildNode
+        val bComposite = root.firstChildNode.lastChildNode
+        bComposite.replaceChild(bComposite.firstChildNode, leaf(leafTypes[0], "B"))
+        aComposite.removeChild(aComposite.firstChildNode)
+      }, root)
+      assertEquals("B", root.text)
+      assertEquals(root.text, file.viewProvider.document!!.text)
+    }
+  }
+
   fun testPsiDocSynchronization() {
     PropertyChecker.forAll(commands).shouldHold { cmd ->
       runCommand(cmd)

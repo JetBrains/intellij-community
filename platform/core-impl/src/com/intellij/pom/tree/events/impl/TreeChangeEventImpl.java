@@ -145,8 +145,8 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void fireEvents() {
-    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values(), Comparator.comparing(
-      TreeChangeImpl::getCurrentStart));
+    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values(), 
+                                                              Comparator.comparing(TreeChangeImpl::getInitialStart));
     for (TreeChangeImpl change : changes) {
       change.fireEvents((PsiFile)myFileElement.getPsi());
     }
