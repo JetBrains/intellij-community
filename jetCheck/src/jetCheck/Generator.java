@@ -2,7 +2,10 @@ package jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -26,13 +29,16 @@ public class Generator<T> {
   /**
    * Creates a generator from a custom function, that creates objects of the given type based on the data from {@link DataStructure}.
    * The generator may call {@link DataStructure#drawInt} methods directly (and interpret those ints in any way it wishes),
-   * or invoke other generators using {@link DataStructure#generate(Generator)}.<p/>
+   * or (preferably) invoke other generators using {@link DataStructure#generate(Generator)}.<p/>
    * 
    * When a property is falsified, the DataStructure is attempted to be minimized, and the generator will be run on
    * ever "smaller" versions of it, this enables automatic minimization on all kinds of generated types.<p/>
    * 
-   * To ensure test reproducibility during re-run or minimization phase, generators must not have any internal state.
-   * Their result should only depend on the DataStructure.
+   * To ensure test reproducibility during re-run or minimization phase,
+   * the result of the generators should only depend on the DataStructure. Generators should not have any side effects
+   * or depend on the outside world. Generators may have internal mutable state accessible to other (nested) generators,
+   * but that's error-prone, difficult and computationally expensive to minimize. If you still think you need that,
+   * please see {@link ImperativeCommand} for potentially more convenient way of testing stateful systems.
    */
   @NotNull
   public static <T> Generator<T> from(@NotNull Function<DataStructure, T> function) {
