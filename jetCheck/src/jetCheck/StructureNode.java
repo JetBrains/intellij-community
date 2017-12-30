@@ -76,16 +76,18 @@ class StructureNode extends StructureElement {
   ShrinkStep shrinkChild(int index) {
     for (; index < children.size(); index++) {
       ShrinkStep childShrink = children.get(index).shrink();
-      if (childShrink != null) return shrinkNextChildAfter(index, childShrink);
+      if (childShrink != null) return wrapChildShrink(index, childShrink);
     }
     
     return shrinkRecursion();
   }
 
   @Nullable
-  private ShrinkStep shrinkNextChildAfter(int index, @Nullable ShrinkStep step) {
+  private ShrinkStep wrapChildShrink(int index, @Nullable ShrinkStep step) {
     if (step == null) return shrinkChild(index + 1);
-    
+
+    NodeId oldChild = children.get(index).id;
+
     return new ShrinkStep() {
       @Nullable
       @Override
@@ -97,12 +99,16 @@ class StructureNode extends StructureElement {
       ShrinkStep onSuccess(StructureNode smallerRoot) {
         StructureNode inheritor = (StructureNode)Objects.requireNonNull(smallerRoot.findChildById(id));
         assert inheritor.children.size() == children.size();
-        return inheritor.shrinkNextChildAfter(index, step.onSuccess(smallerRoot));
+        if (inheritor.children.get(index).id != oldChild) {
+          return inheritor.shrink();
+        }
+        
+        return inheritor.wrapChildShrink(index, step.onSuccess(smallerRoot));
       }
 
       @Override
       ShrinkStep onFailure() {
-        return shrinkNextChildAfter(index, step.onFailure());
+        return wrapChildShrink(index, step.onFailure());
       }
     };
   }

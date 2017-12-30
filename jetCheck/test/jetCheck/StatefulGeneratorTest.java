@@ -33,25 +33,52 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   public void testImperativeInsertDeleteCheckCommands() {
     Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
-      ImperativeCommand check = env1 -> {
-        env1.logMessage("check");
-        if (sb.indexOf("A") >= 0) throw new AssertionError();
-      };
-      env.executeCommands(recursive(rec -> {
-        ImperativeCommand group = env1 -> {
-          env1.logMessage("Group");
-          env1.executeCommands(rec);
-        };
-        return frequency(2, constant(group),
-                         3, sampledFrom(insertStringCmd(sb), deleteStringCmd(sb), check));
-      }));
-    }), Scenario::ensureSuccessful, 36).getMinimalCounterexample().getExampleValue();
+      env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
+    }), Scenario::ensureSuccessful, 42).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
-                 "  Group\n" +
-                 "    insert A at 0\n" +
-                 "    check", 
+                 "  insert A at 0\n" +
+                 "  check", 
                  minHistory.toString());
+  }
+
+  public void testImperativeInsertReplaceDeleteCommands() {
+    Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+      StringBuilder sb = new StringBuilder();
+      ImperativeCommand replace = env1 -> {
+        if (sb.length() == 0) return;
+        int index = env1.generateValue(integers(0, sb.length() - 1), null);
+        char toReplace = env1.generateValue(asciiLetters().suchThat(c -> c != 'A'), "replace " + sb.charAt(index) + " with %s at " + index);
+        sb.setCharAt(index, toReplace);
+      };
+
+      env.executeCommands(withRecursion(insertStringCmd(sb), replace, deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
+    }), Scenario::ensureSuccessful, 76).getMinimalCounterexample().getExampleValue();
+
+    assertEquals("commands:\n" +
+                 "  insert A at 0\n" +
+                 "  check",
+                 minHistory.toString());
+  }
+
+  @NotNull
+  private static Generator<ImperativeCommand> withRecursion(ImperativeCommand... commands) {
+    return recursive(rec -> {
+      ImperativeCommand group = env -> {
+        env.logMessage("Group");
+        env.executeCommands(rec);
+      };
+      return frequency(2, constant(group), 3, sampledFrom(commands));
+    });
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  @NotNull
+  private static ImperativeCommand checkDoesNotContain(StringBuilder sb, String infix) {
+    return env -> {
+      env.logMessage("check");
+      if (sb.indexOf(infix) >= 0) throw new AssertionError();
+    };
   }
 
   @NotNull

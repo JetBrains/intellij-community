@@ -50,33 +50,32 @@ class ScenarioImpl implements Scenario {
 
       @Override
       public void executeCommands(IntDistribution count, Generator<? extends ImperativeCommand> cmdGen) {
-        data.generate(Generator.listsOf(count, innerCommands(cmdGen)));
+        innerCommandLists(Generator.listsOf(count, innerCommands(cmdGen)));
       }
 
       @Override
       public void executeCommands(Generator<? extends ImperativeCommand> cmdGen) {
-        data.generate(Generator.nonEmptyLists(innerCommands(cmdGen)));
+        innerCommandLists(Generator.nonEmptyLists(innerCommands(cmdGen)));
+      }
+
+      private void innerCommandLists(final Generator<List<Object>> listGen) {
+        data.generate(Generator.from(new EquivalentGenerator<List<Object>>() {
+          @Override
+          public List<Object> apply(DataStructure data) {
+            return listGen.getGeneratorFunction().apply(data);
+          }
+        }));
       }
 
       @NotNull
       private Generator<Object> innerCommands(Generator<? extends ImperativeCommand> cmdGen) {
-        return Generator.from(new Function<DataStructure, Object>() {
+        return Generator.from(new EquivalentGenerator<Object>() {
           @Override
           public Object apply(DataStructure cmdData) {
             List<Object> localLog = new ArrayList<>();
             log.add(localLog);
             performCommand(safeGenerate(cmdData, cmdGen), cmdData, localLog);
             return null;
-          }
-
-          @Override
-          public boolean equals(Object obj) {
-            return getClass() == obj.getClass(); // for recursive shrinking to work
-          }
-
-          @Override
-          public int hashCode() {
-            return getClass().hashCode();
           }
         });
       }
@@ -128,6 +127,19 @@ class ScenarioImpl implements Scenario {
     if (failure instanceof RuntimeException) throw (RuntimeException)failure;
     if (failure != null) throw new RuntimeException(failure);
     return true;
+  }
+  
+  private static abstract class EquivalentGenerator<T> implements Function<DataStructure, T> {
+    @Override
+    public boolean equals(Object obj) {
+      return getClass() == obj.getClass(); // for recursive shrinking to work
+    }
+
+    @Override
+    public int hashCode() {
+      return getClass().hashCode();
+    }
+    
   }
 
 }
