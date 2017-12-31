@@ -437,20 +437,32 @@ public class GitLogProvider implements VcsLogProvider {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);
-    if (branchFilter != null) {
-      GitRepository repository = getRepository(root);
-      assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
-
-      Collection<GitBranch> branches = ContainerUtil
-        .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
-      Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
-      Collection<String> predefinedNames = ContainerUtil.list("HEAD");
-
+    VcsLogRevisionFilter revisionFilter = filterCollection.get(VcsLogFilterCollection.REVISION_FILTER);
+    if (branchFilter != null || revisionFilter != null) {
       boolean atLeastOneBranchExists = false;
-      for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
-        if (branchFilter.matches(branchName)) {
-          filterParameters.add(branchName);
-          atLeastOneBranchExists = true;
+
+      if (branchFilter != null) {
+        GitRepository repository = getRepository(root);
+        assert repository != null : "repository is null for root " + root + " but was previously reported as 'ready'";
+
+        Collection<GitBranch> branches = ContainerUtil
+          .newArrayList(ContainerUtil.concat(repository.getBranches().getLocalBranches(), repository.getBranches().getRemoteBranches()));
+        Collection<String> branchNames = GitBranchUtil.convertBranchesToNames(branches);
+        Collection<String> predefinedNames = ContainerUtil.list("HEAD");
+
+        for (String branchName : ContainerUtil.concat(branchNames, predefinedNames)) {
+          if (branchFilter.matches(branchName)) {
+            filterParameters.add(branchName);
+            atLeastOneBranchExists = true;
+          }
+        }
+      }
+      if (revisionFilter != null) {
+        for (CommitId commit : revisionFilter.getHeads()) {
+          if (commit.getRoot().equals(root)) {
+            filterParameters.add(commit.getHash().asString());
+            atLeastOneBranchExists = true;
+          }
         }
       }
 
