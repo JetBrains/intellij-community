@@ -137,7 +137,6 @@ com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection
 com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection
 com.siyeh.ig.jdk.AutoBoxingInspection
 com.siyeh.ig.junit.TestCaseWithNoTestMethodsInspection
-com.siyeh.ig.junit.TestMethodWithoutAssertionInspection
 com.siyeh.ig.logging.ClassWithMultipleLoggersInspection
 com.siyeh.ig.logging.ClassWithoutLoggerInspection
 com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection
