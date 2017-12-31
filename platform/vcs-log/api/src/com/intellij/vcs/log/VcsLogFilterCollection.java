@@ -30,6 +30,7 @@ import java.util.Objects;
  */
 public interface VcsLogFilterCollection {
   FilterKey<VcsLogBranchFilter> BRANCH_FILTER = FilterKey.create("branch");
+  FilterKey<VcsLogRevisionFilter> REVISION_FILTER = FilterKey.create("revision");
   FilterKey<VcsLogUserFilter> USER_FILTER = FilterKey.create("user");
   FilterKey<VcsLogHashFilter> HASH_FILTER = FilterKey.create("hash");
   FilterKey<VcsLogDateFilter> DATE_FILTER = FilterKey.create("date");
