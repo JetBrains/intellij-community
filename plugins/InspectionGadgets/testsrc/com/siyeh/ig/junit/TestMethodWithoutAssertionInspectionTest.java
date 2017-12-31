@@ -59,6 +59,8 @@ public class TestMethodWithoutAssertionInspectionTest extends LightInspectionTes
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new TestMethodWithoutAssertionInspection();
+    final TestMethodWithoutAssertionInspection inspection = new TestMethodWithoutAssertionInspection();
+    inspection.ignoreIfExceptionThrown = true;
+    return inspection;
   }
 }

@@ -20,6 +20,7 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
 
   protected final MethodMatcher methodMatcher;
   @SuppressWarnings("PublicField") public boolean assertKeywordIsAssertion;
+  @SuppressWarnings("PublicField") public boolean ignoreIfExceptionThrown;
 
   public TestMethodWithoutAssertionInspectionBase() {
     methodMatcher = new MethodMatcher(false, "assertionMethods")
@@ -82,6 +83,9 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
         return;
       }
       if (TestUtils.hasExpectedExceptionAnnotation(method)) {
+        return;
+      }
+      if (ignoreIfExceptionThrown && method.getThrowsList().getReferenceElements().length > 0) {
         return;
       }
       if (containsAssertion(method)) {

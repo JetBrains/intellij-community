@@ -67,4 +67,9 @@ public class TestMethodWithoutAssertion extends TestCase
             messageDAO.toString();
         }};
     }
+
+    @Test
+    public void testMethodWhichThrowsExceptionOnFailure() throws AssertionError {
+        if (true) throw new AssertionError();
+    }
 }
