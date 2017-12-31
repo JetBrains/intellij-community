@@ -119,13 +119,6 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     assertEquals(2, list.size());
   }
 
-  public void testShrinkingNonEmptyList() {
-    List<Integer> list = checkGeneratesExample(nonEmptyLists(integers(0, 100)),
-                                               l -> l.contains(42),
-                                               12);
-    assertEquals(1, list.size());
-  }
-
   public void testRecheckWithGivenSeeds() {
     Generator<List<Integer>> gen = nonEmptyLists(integers(0, 100));
     Predicate<List<Integer>> property = l -> !l.contains(42);
@@ -140,15 +133,6 @@ public class GeneratorTest extends PropertyCheckerTestCase {
 
     e = checkFails(PropertyChecker.forAll(gen).withSeed(failure.getGlobalSeed()), property);
     assertEquals(failure.getIterationNumber(), e.getFailure().getIterationNumber());
-  }
-
-  public void testShrinkingComplexString() {
-    checkFalsified(listsOf(stringsOf(asciiPrintableChars())),
-                   l -> {
-                     String s = l.toString();
-                     return !"abcdefghijklmnopqrstuvwxyz()[]#!".chars().allMatch(c -> s.indexOf((char)c) >= 0);
-                   },
-                   225);
   }
 
   public void testSameFrequency() {
