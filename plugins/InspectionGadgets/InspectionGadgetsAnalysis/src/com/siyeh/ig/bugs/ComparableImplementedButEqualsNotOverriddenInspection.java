@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,8 +139,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
       if (comparableClass == null || !aClass.isInheritor(comparableClass, true)) {
         return;
       }
-      final PsiMethod[] comparableMethods = comparableClass.getMethods();
-      if (comparableMethods.length != 1) { // incorrect/broken jdk
+      final PsiMethod[] comparableMethods = comparableClass.findMethodsByName(HardcodedMethodConstants.COMPARE_TO, false);
+      if (comparableMethods.length == 0) { // incorrect/broken jdk
         return;
       }
       final PsiMethod comparableMethod = MethodSignatureUtil.findMethodBySuperMethod(aClass, comparableMethods[0], false);
