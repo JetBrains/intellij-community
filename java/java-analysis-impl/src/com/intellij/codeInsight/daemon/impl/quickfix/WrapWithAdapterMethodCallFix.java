@@ -26,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -70,7 +71,21 @@ public class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActio
       }
 
       String typeText = variableType.getCanonicalText();
-      PsiExpression replacement = createReplacement(context, "((" + typeText + ")null)");
+      PsiExpression replacement;
+      try {
+        replacement = createReplacement(context, "((" + typeText + ")null)");
+      }
+      catch (IncorrectOperationException ioe) {
+        PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variableType);
+        String message = "Cannot create expression for type " + variableType.getClass() + "\n"
+                         + "Canonical text: " + variableType.getCanonicalText() + "\n"
+                         + "Internal text: " + variableType.getInternalCanonicalText() + "\n";
+        if (aClass != null) {
+          message += "Class: " + aClass.getClass() + "|" + aClass.getQualifiedName() + "\n"
+                     + "File: " + aClass.getContainingFile() + "\n";
+        }
+        throw new IncorrectOperationException(message, (Throwable)ioe);
+      }
       PsiDeclarationStatement declaration =
         JavaPsiFacade.getElementFactory(context.getProject()).createVariableDeclarationStatement("x", outType, replacement, context);
       PsiVariable var = ObjectUtils.tryCast(ArrayUtil.getFirstElement(declaration.getDeclaredElements()), PsiVariable.class);
