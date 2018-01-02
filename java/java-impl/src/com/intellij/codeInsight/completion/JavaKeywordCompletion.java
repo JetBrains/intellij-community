@@ -674,7 +674,7 @@ public class JavaKeywordCompletion {
       if (parent instanceof PsiVariable) parent = parent.getParent();
       return parent instanceof PsiCatchSection || parent instanceof PsiResourceList;
     }
-    return false;
+    return psiElement().insideStarting(psiElement(PsiResourceExpression.class)).accepts(position);
   }
 
   private void addBreakContinue() {
