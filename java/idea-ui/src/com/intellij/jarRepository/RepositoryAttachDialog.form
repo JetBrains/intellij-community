@@ -106,7 +106,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="&amp;Transitive depedencies"/>
+                  <text value="&amp;Transitive dependencies"/>
                 </properties>
               </component>
             </children>
