@@ -76,20 +76,35 @@ class PropertyFailureImpl<T> implements PropertyFailure<T> {
   }
 
   private void shrink() {
-    ShrinkStep step = minimized.data.shrink();
-    while (step != null) {
-      step = findSuccessfulShrink(step);
-      if (step != null) {
-        step = step.onSuccess(minimized.data);
-      }
+    NodeId limit = null;
+    while (true) {
+      ShrinkStep lastSuccessfulShrink = shrinkIteration(limit);
+      if (lastSuccessfulShrink == null) break;
+      limit = lastSuccessfulShrink.getNodeAfter();
     }
   }
 
+  private ShrinkStep shrinkIteration(NodeId limit) {
+    ShrinkStep lastSuccessfulShrink = null;
+    ShrinkStep step = minimized.data.shrink();
+    while (step != null) {
+      step = findSuccessfulShrink(step, limit);
+      if (step != null) {
+        lastSuccessfulShrink = step;
+        step = step.onSuccess(minimized.data);
+      }
+    }
+    return lastSuccessfulShrink;
+  }
+
   @Nullable
-  private ShrinkStep findSuccessfulShrink(ShrinkStep step) {
+  private ShrinkStep findSuccessfulShrink(ShrinkStep step, @Nullable NodeId limit) {
     List<CustomizedNode> combinatorial = new ArrayList<>();
 
     while (step != null) {
+      if (limit != null && limit.number <= step.getNodeAfter().number) {
+        break;
+      }
       StructureNode node = step.apply(minimized.data);
       if (node != null && iteration.session.generatedHashes.add(node.hashCode())) {
         CombinatorialIntCustomizer customizer = new CombinatorialIntCustomizer();

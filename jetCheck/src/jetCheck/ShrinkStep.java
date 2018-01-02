@@ -23,6 +23,9 @@ abstract class ShrinkStep {
   @Nullable
   abstract ShrinkStep onFailure();
 
+  @NotNull 
+  abstract NodeId getNodeAfter();
+
   static ShrinkStep create(@NotNull NodeId replaced,
                            @NotNull StructureElement replacement,
                            @Nullable Function<StructureNode, ShrinkStep> onSuccess,
@@ -44,6 +47,17 @@ abstract class ShrinkStep {
       @Override
       ShrinkStep onFailure() {
         return onFailure == null ? null : onFailure.get();
+      }
+
+      @NotNull
+      @Override
+      NodeId getNodeAfter() {
+        return replacement.id;
+      }
+
+      @Override
+      public String toString() {
+        return "replace " + replaced + " with " + replacement;
       }
     };
   }

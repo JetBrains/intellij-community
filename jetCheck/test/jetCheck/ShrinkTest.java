@@ -3,7 +3,11 @@
  */
 package jetCheck;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import static jetCheck.Generator.*;
 
@@ -17,7 +21,7 @@ public class ShrinkTest extends PropertyCheckerTestCase {
                      String s = l.toString();
                      return !"abcdefghijklmnopqrstuvwxyz()[]#!".chars().allMatch(c -> s.indexOf((char)c) >= 0);
                    },
-                   225);
+                   258);
   }
 
   public void testShrinkingNonEmptyList() {
@@ -25,6 +29,21 @@ public class ShrinkTest extends PropertyCheckerTestCase {
                                                l -> l.contains(42),
                                                12);
     assertEquals(1, list.size());
+  }
+
+  public void testWhenEarlyObjectsCannotBeShrunkBeforeLater() {
+    Generator<String> gen = listsOf(IntDistribution.uniform(0, 2), listsOf(IntDistribution.uniform(0, 2), sampledFrom('a', 'b'))).map(List::toString);
+    Set<String> failing = new HashSet<>(Arrays.asList("[[a, b], [a, b]]", "[[a, b], [a]]", "[[a], [a]]", "[[a]]", "[]"));
+    Predicate<String> property = s -> !failing.contains(s);
+    checkFalsified(gen, property, 0); // prove that it sometimes fails
+    for (int i = 0; i < 1000; i++) {
+      try {
+        PropertyChecker.forAll(gen).shouldHold(property);
+      }
+      catch (PropertyFalsified e) {
+        assertEquals("[]", e.getBreakingValue());
+      }
+    }
   }
 
 }

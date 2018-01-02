@@ -3,6 +3,7 @@
  */
 package jetCheck;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -69,5 +70,21 @@ class RemoveListRange extends ShrinkStep {
     
     int newLength = Math.min(length * 2, start - 1);
     return new RemoveListRange(inheritor, start, start - newLength, newLength);
+  }
+
+  @NotNull
+  @Override
+  NodeId getNodeAfter() {
+    return node.id;
+  }
+
+  @Override
+  public String toString() {
+    return "RemoveListRange{" +
+           "last=" + lastSuccessfulRemove +
+           ", start=" + start +
+           ", length=" + length +
+           ", node=" + node.id + ": " + node +
+           '}';
   }
 }

@@ -20,7 +20,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testListSumMod() {
     checkFalsified(nonEmptyLists(integers()),
                    l -> l.stream().mapToInt(Integer::intValue).sum() % 10 != 0,
-                   181);
+                   390);
   }
 
   public void testListContainsDivisible() {
@@ -44,7 +44,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testIsSorted() {
     PropertyFailure<List<Integer>> failure = checkFalsified(nonEmptyLists(integers()),
                                                             l -> l.stream().sorted().collect(Collectors.toList()).equals(l),
-                                                            20);
+                                                            22);
     List<Integer> value = failure.getMinimalCounterexample().getExampleValue();
     assertEquals(2, value.size());
     assertTrue(value.toString(), value.stream().allMatch(i -> Math.abs(i) < 2));
@@ -57,7 +57,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSortedDoublesNonDescending() {
     PropertyFailure<List<Double>> failure = checkFalsified(listsOf(doubles()),
                                                            l -> isSorted(l.stream().sorted().collect(Collectors.toList())),
-                                                           35);
+                                                           41);
     assertEquals(2, failure.getMinimalCounterexample().getExampleValue().size());
   }
 

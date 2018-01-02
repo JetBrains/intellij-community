@@ -110,6 +110,17 @@ class StructureNode extends StructureElement {
       ShrinkStep onFailure() {
         return wrapChildShrink(index, step.onFailure());
       }
+
+      @NotNull
+      @Override
+      NodeId getNodeAfter() {
+        return step.getNodeAfter();
+      }
+
+      @Override
+      public String toString() {
+        return "-" + step.toString();
+      }
     };
   }
 
