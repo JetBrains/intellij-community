@@ -66,6 +66,7 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
           }
         }
       }
+      return true;
     }
     return false;
   }
