@@ -165,6 +165,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testSpaceAfterSemicolon() { mySettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_SEMICOLON = true; doTest(); }
   public void testNoSpaceAfterSemicolon() { myJavaSettings.SPACE_AFTER_SEMICOLON = false; doTest(); }
   public void testForUpdateGeneration() { doTest(); }
+  public void testReformatForHeader() { doTest(); }
   public void testValidCodeBlock() { doTest(); }
   public void testValidCodeBlockWithEmptyLineAfterIt() { doTest(); }
   public void testFromJavadocParameterDescriptionEndToNextParameter() { doTest(); }
