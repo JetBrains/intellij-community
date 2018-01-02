@@ -580,5 +580,10 @@ public class SearchTextField extends JPanel {
         search.requestFocus();
       }
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabledAndVisible(e.getData(KEY) != null);
+    }
   }
 }
