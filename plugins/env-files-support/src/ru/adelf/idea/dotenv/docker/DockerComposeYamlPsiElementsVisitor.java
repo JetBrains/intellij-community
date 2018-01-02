@@ -2,10 +2,10 @@ package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import javafx.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.*;
+import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
@@ -34,7 +34,7 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
             for(YAMLSequenceItem yamlSequenceItem : getSequenceItems(yamlKeyValue)) {
                 YAMLValue el = yamlSequenceItem.getValue();
                 if(el instanceof YAMLScalar) {
-                    Pair<String, String> keyValue = EnvironmentVariablesUtil.getKeyValueFromString(((YAMLScalar) el).getTextValue());
+                    EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(((YAMLScalar) el).getTextValue());
 
                     if(StringUtils.isNotBlank(keyValue.getKey())) {
                         collectedItems.add(new KeyValuePsiElement(keyValue.getKey(), keyValue.getValue(), el));

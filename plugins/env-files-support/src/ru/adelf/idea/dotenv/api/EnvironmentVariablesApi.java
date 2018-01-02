@@ -6,11 +6,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
 import ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex;
+import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
@@ -26,7 +26,7 @@ public class EnvironmentVariablesApi {
         fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, s -> {
             if(fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, s, GlobalSearchScope.allScope(project)).size() > 0) {
 
-                Pair<String, String> keyValue = EnvironmentVariablesUtil.getKeyValueFromString(s);
+                EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(s);
 
                 if(keyValues.containsKey(keyValue.getKey())) return true;
 

@@ -2,7 +2,7 @@ package ru.adelf.idea.dotenv;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
-import javafx.util.Pair;
+import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
@@ -23,7 +23,7 @@ class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     private void visitProperty(DotEnvProperty property) {
-        Pair<String, String> keyValue = EnvironmentVariablesUtil.getKeyValueFromString(property.getText());
+        EnvironmentKeyValue keyValue = EnvironmentVariablesUtil.getKeyValueFromString(property.getText());
 
         collectedItems.add(new KeyValuePsiElement(keyValue.getKey(), keyValue.getValue(), property));
     }

@@ -1,8 +1,8 @@
 package ru.adelf.idea.dotenv.util;
 
 import com.intellij.psi.PsiElement;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.models.EnvironmentKeyValue;
 import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
@@ -12,13 +12,13 @@ import java.util.stream.Collectors;
 
 public class EnvironmentVariablesUtil {
     @NotNull
-    public static Pair<String, String> getKeyValueFromString(@NotNull String s) {
+    public static EnvironmentKeyValue getKeyValueFromString(@NotNull String s) {
         int pos = s.indexOf("=");
 
         if(pos == -1) {
-            return new Pair<>(s.trim(), "");
+            return new EnvironmentKeyValue(s.trim(), "");
         } else {
-            return new Pair<>(s.substring(0, pos).trim(), s.substring(pos + 1).trim());
+            return new EnvironmentKeyValue(s.substring(0, pos).trim(), s.substring(pos + 1).trim());
         }
     }
 
@@ -42,13 +42,6 @@ public class EnvironmentVariablesUtil {
         } else {
             return s.substring(pos + 1).trim();
         }
-    }
-
-    @NotNull
-    public static Collection<Pair<String, String>> getKeyValues(Collection<KeyValuePsiElement> items) {
-        return items.stream().map(item -> {
-            return new Pair<>(item.getKey(), item.getValue());
-        }).collect(Collectors.toList());
     }
 
     @NotNull
