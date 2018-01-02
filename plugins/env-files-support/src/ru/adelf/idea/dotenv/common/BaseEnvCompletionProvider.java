@@ -17,10 +17,10 @@ abstract public class BaseEnvCompletionProvider extends CompletionContributor im
             LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
 
             if(StringUtils.isNotEmpty(entry.getValue())) {
-                completionResultSet.addElement(lockup.withTailText(" = " + entry.getValue(), true));
-            } else {
-                completionResultSet.addElement(lockup);
+                lockup = lockup.withTailText(" = " + entry.getValue(), true);
             }
+
+            completionResultSet.addElement(PrioritizedLookupElement.withPriority(lockup, 10));
         }
     }
 }

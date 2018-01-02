@@ -38,7 +38,6 @@ class PythonEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-
     private void visitIndex(PySubscriptionExpression expression) {
         if(PythonPsiHelper.checkIndexCall(expression) &&
                 expression.getIndexExpression() instanceof PyStringLiteralExpression) {
