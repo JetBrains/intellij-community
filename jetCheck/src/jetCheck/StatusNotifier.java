@@ -14,6 +14,17 @@ import java.util.Locale;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class StatusNotifier {
+  static final StatusNotifier SILENT = new StatusNotifier(0) {
+    @Override
+    boolean shouldPrint() {
+      return false;
+    }
+
+    @Override
+    void counterExampleFound(Iteration<?> iteration) {
+    }
+  };
+  
   private final int iterationCount;
   private int currentIteration;
   private long lastPrinted = System.currentTimeMillis();
@@ -34,7 +45,7 @@ class StatusNotifier {
     System.err.println(formatCurrentTime() + ": failed on iteration " + currentIteration + " (" + iteration.printSeeds() + "), shrinking...");
   }
 
-  private boolean shouldPrint() {
+  boolean shouldPrint() {
     if (System.currentTimeMillis() - lastPrinted > 5_000) {
       lastPrinted = System.currentTimeMillis();
       return true;

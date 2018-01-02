@@ -101,13 +101,13 @@ class CheckSession<T> {
   final int iterationCount;
   final IntUnaryOperator sizeHintFun;
 
-  CheckSession(Generator<T> generator, Predicate<T> property, long globalSeed, int iterationCount, IntUnaryOperator sizeHintFun) {
+  CheckSession(Generator<T> generator, Predicate<T> property, long globalSeed, int iterationCount, IntUnaryOperator sizeHintFun, boolean silent) {
     this.generator = generator;
     this.property = property;
     this.globalSeed = globalSeed;
     this.iterationCount = iterationCount;
     this.sizeHintFun = sizeHintFun;
-    notifier = new StatusNotifier(iterationCount);
+    notifier = silent ? StatusNotifier.SILENT : new StatusNotifier(iterationCount);
   }
 
   Iteration<T> firstIteration() {

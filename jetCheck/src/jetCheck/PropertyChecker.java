@@ -15,6 +15,7 @@ public class PropertyChecker<T> {
   private long globalSeed = new Random().nextLong();
   private IntUnaryOperator sizeHintFun = iteration -> (iteration - 1) % DEFAULT_MAX_SIZE_HINT + 1;
   private int iterationCount = 100;
+  private boolean silent;
 
   private PropertyChecker(Generator<T> generator) {
     this.generator = generator;
@@ -61,6 +62,15 @@ public class PropertyChecker<T> {
   }
 
   /**
+   * Suppresses all output during property check and shrinking
+   * @return this PropertyChecker
+   */
+  public PropertyChecker<T> silently() {
+    this.silent = true;
+    return this;
+  }
+
+  /**
    * Checks the property within a single iteration by using specified seed and size hint. Useful to debug the test after it's failed.
    */
   public PropertyChecker<T> rechecking(long seed, int sizeHint) {
@@ -72,7 +82,7 @@ public class PropertyChecker<T> {
    * given number of times (see {@link #withIterationCount(int)}).
    */
   public void shouldHold(@NotNull Predicate<T> property) {
-    Iteration<T> iteration = new CheckSession<>(generator, property, globalSeed, iterationCount, sizeHintFun).firstIteration();
+    Iteration<T> iteration = new CheckSession<>(generator, property, globalSeed, iterationCount, sizeHintFun, silent).firstIteration();
     while (iteration != null) {
       iteration = iteration.performIteration();
     }

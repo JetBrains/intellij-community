@@ -11,7 +11,7 @@ abstract class PropertyCheckerTestCase extends TestCase {
 
   protected <T> PropertyFalsified checkFails(PropertyChecker<T> checker, Predicate<T> predicate) {
     try {
-      checker.shouldHold(predicate);
+      checker.silently().shouldHold(predicate);
       throw new AssertionError("Can't falsify " + getName());
     }
     catch (PropertyFalsified e) {
@@ -28,9 +28,11 @@ abstract class PropertyCheckerTestCase extends TestCase {
     //noinspection unchecked
     PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
 
+    /*
     System.out.println(" " + getName());
     System.out.println("Value: " + e.getBreakingValue());
     System.out.println("Data: " + e.getData());
+    */
     assertEquals(minimizationSteps, failure.getTotalMinimizationExampleCount()); // to track if framework changes don't increase shrinking time significantly on average
     assertEquals(e.getBreakingValue(), generator.getGeneratorFunction().apply(e.getData()));
 
