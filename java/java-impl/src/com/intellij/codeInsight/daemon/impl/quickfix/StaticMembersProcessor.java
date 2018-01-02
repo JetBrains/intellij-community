@@ -43,7 +43,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
 
   private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<>();
 
-  private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<>();
+  private final Map<String, Boolean> myPossibleClasses = new HashMap<>();
 
   @NotNull private final PsiElement myPlace;
   @NotNull private final SearchMode mySearchMode;
@@ -124,13 +124,15 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
                               Collection<T> members,
                               List<T> list,
                               List<T> applicableList) {
-    Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
-    if (alreadyMentioned == Boolean.TRUE) return;
-    if (containingClass.getQualifiedName() == null) {
+    String qualifiedName = containingClass.getQualifiedName();
+    if (qualifiedName == null) {
       return;
     }
+
+    Boolean alreadyMentioned = myPossibleClasses.get(qualifiedName);
+    if (alreadyMentioned == Boolean.TRUE) return;
     if (alreadyMentioned == null) {
-      myPossibleClasses.put(containingClass, false);
+      myPossibleClasses.put(qualifiedName, false);
     }
     for (T member : members) {
       if (!member.hasModifierProperty(PsiModifier.STATIC)) {
@@ -147,7 +149,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
       if (isApplicable(member, myPlace)) {
         applicableList.add(member);
-        myPossibleClasses.put(containingClass, true);
+        myPossibleClasses.put(qualifiedName, true);
         break;
       }
     }
