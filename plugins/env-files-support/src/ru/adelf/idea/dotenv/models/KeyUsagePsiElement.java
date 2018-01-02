@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
  * Environment key usage PsiElement representation with key
  */
 public class KeyUsagePsiElement {
+
     private final String key;
     private final PsiElement element;
 

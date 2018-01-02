@@ -1,7 +1,6 @@
 package ru.adelf.idea.dotenv.python;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -9,14 +8,12 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
+import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
-import java.util.Map;
-
-public class PythonEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
+public class PythonEnvCompletionProvider extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
     public PythonEnvCompletionProvider() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
@@ -27,15 +24,7 @@ public class PythonEnvCompletionProvider extends CompletionContributor implement
                     return;
                 }
 
-                for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
-                    LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
-
-                    if(StringUtils.isNotEmpty(entry.getValue())) {
-                        completionResultSet.addElement(lockup.withTailText(" = " + entry.getValue(), true));
-                    } else {
-                        completionResultSet.addElement(lockup);
-                    }
-                }
+                fillCompletionResultSet(completionResultSet, psiElement.getProject());
             }
         });
     }

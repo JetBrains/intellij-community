@@ -1,25 +1,23 @@
 package ru.adelf.idea.dotenv.ruby;
 
 import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.basicTypes.stringLiterals.RStringLiteral;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RArrayIndexing;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RConstant;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
+import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
-import java.util.Map;
 import java.util.Objects;
 
-public class RubyEnvCompletionProvider extends CompletionContributor implements GotoDeclarationHandler {
+public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider implements GotoDeclarationHandler {
     public RubyEnvCompletionProvider() {
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<CompletionParameters>() {
             @Override
@@ -30,15 +28,7 @@ public class RubyEnvCompletionProvider extends CompletionContributor implements 
                     return;
                 }
 
-                for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
-                    LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
-
-                    if(StringUtils.isNotEmpty(entry.getValue())) {
-                        completionResultSet.addElement(lockup.withTailText(" = " + entry.getValue(), true));
-                    } else {
-                        completionResultSet.addElement(lockup);
-                    }
-                }
+                fillCompletionResultSet(completionResultSet, psiElement.getProject());
             }
         });
     }
