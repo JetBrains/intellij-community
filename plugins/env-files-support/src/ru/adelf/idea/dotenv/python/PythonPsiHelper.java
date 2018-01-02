@@ -29,7 +29,7 @@ class PythonPsiHelper {
 
         String name = qualifiedName.toString();
 
-        return name != null && name.equals("os.environ.get");
+        return name != null && (name.equals("os.environ.get") || name.equals("os.getenv"));
     }
 
     /**
