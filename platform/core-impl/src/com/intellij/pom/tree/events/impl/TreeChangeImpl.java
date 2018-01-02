@@ -22,24 +22,23 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class TreeChangeImpl implements TreeChange {
+public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   private final CompositeElement myParent;
   private final List<CompositeElement> mySuperParents;
   private final LinkedHashSet<TreeElement> myInitialChildren = new LinkedHashSet<>();
   private final Map<TreeElement, Integer> myInitialLengths = new HashMap<>();
   private final Set<TreeElement> myContentChangeChildren = new HashSet<>();
-  private final int myInitialStart;
   private Map<TreeElement, ChangeInfoImpl> myChanges;
 
   public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
-    myInitialStart = myParent.getStartOffset();
     for (TreeElement child : getCurrentChildren()) {
       myInitialChildren.add(child);
       myInitialLengths.put(child, child.getTextLength());
@@ -55,8 +54,29 @@ public class TreeChangeImpl implements TreeChange {
     return JBIterable.generate(myParent.getFirstChildNode(), TreeElement::getTreeNext);
   }
 
-  int getInitialStart() {
-    return myInitialStart;
+  @Override
+  public int compareTo(@NotNull TreeChangeImpl o) {
+    List<CompositeElement> thisParents = getSuperParents();
+    List<CompositeElement> thatParents = o.getSuperParents();
+    for (int i = 1; i <= thisParents.size() && i <= thatParents.size(); i++) {
+      CompositeElement thisParent = i < thisParents.size() ? thisParents.get(thisParents.size() - i) : myParent;
+      CompositeElement thatParent = i < thatParents.size() ? thatParents.get(thatParents.size() - i) : o.myParent;
+      int result = compareNodePositions(thisParent, thatParent);
+      if (result != 0) return result;
+    }
+    return 0;
+  }
+
+  private static int compareNodePositions(CompositeElement node1, CompositeElement node2) {
+    if (node1 == node2) return 0;
+    
+    int o1 = node1.getStartOffsetInParent();
+    int o2 = node2.getStartOffsetInParent();
+    return o1 != o2 ? Integer.compare(o1, o2) : Integer.compare(getChildIndex(node1), getChildIndex(node2));
+  }
+
+  private static int getChildIndex(CompositeElement e) {
+    return ArrayUtil.indexOf(e.getTreeParent().getChildren(null), e);
   }
 
   int getLengthDelta() {
