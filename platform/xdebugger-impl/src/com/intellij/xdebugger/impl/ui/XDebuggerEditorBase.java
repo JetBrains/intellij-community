@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -171,7 +173,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     panel.add(factoryPanel, BorderLayout.WEST);
 
     if (!multiline && showEditor) {
-      component = addExpand(component);
+      component = addExpand(component, false);
     }
 
     panel.addToCenter(component);
@@ -193,12 +195,20 @@ public abstract class XDebuggerEditorBase implements Expandable {
     return panel;
   }
 
-  public JComponent addExpand(JComponent component) {
-    BorderLayoutPanel panel = new BorderLayoutPanel() {
-      @Override public Color getBackground() {
-        return component.getBackground();
-      }
-    };
+  protected JComponent addExpand(JComponent component, boolean inheritBackground) {
+    BorderLayoutPanel panel;
+    if (inheritBackground) {
+      panel = new BorderLayoutPanel() {
+        @Override
+        public Color getBackground() {
+          return component.getBackground();
+        }
+      };
+    }
+    else {
+      panel = JBUI.Panels.simplePanel();
+      panel.setOpaque(false);
+    }
     panel.addToCenter(component);
     panel.addToRight(myExpandButton);
     return panel;

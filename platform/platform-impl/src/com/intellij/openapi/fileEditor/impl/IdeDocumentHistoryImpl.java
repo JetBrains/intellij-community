@@ -76,7 +76,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private PlaceInfo myCommandStartPlace;
   private boolean myCurrentCommandIsNavigation;
   private boolean myCurrentCommandHasChanges;
-  private final Set<VirtualFile> myChangedFilesInCurrentCommand = new THashSet<>();
+  private final Set<VirtualFile> myChangedFilesInCurrentCommand = Collections.synchronizedSet(new THashSet<>());
   private boolean myCurrentCommandHasMoves;
 
   private final CommandListener myCommandListener = new CommandListener() {

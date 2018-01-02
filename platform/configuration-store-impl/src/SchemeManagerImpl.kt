@@ -135,7 +135,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
               continue@eventLoop
             }
 
-            val oldCurrentScheme = currentScheme
+            val oldCurrentScheme = activeScheme
             val changedScheme = findExternalizableSchemeByFileName(fileName)
 
             if (callSchemeContentChangedIfSupported(changedScheme, fileName, event.file)) {
@@ -172,7 +172,7 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
             }
           }
           is VFileDeleteEvent -> {
-            val oldCurrentScheme = currentScheme
+            val oldCurrentScheme = activeScheme
             if (event.file.isDirectory) {
               val dir = virtualDirectory
               if (event.file == dir) {
@@ -237,14 +237,14 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
     }
 
     private fun updateCurrentScheme(oldScheme: T?, newScheme: T? = null) {
-      if (currentScheme != null) {
+      if (activeScheme != null) {
         return
       }
 
-      if (oldScheme != currentScheme) {
+      if (oldScheme != activeScheme) {
         val scheme = newScheme ?: schemes.firstOrNull()
         currentPendingSchemeName = null
-        currentScheme = scheme
+        activeScheme = scheme
         // must be equals by reference
         if (oldScheme !== scheme) {
           processor.onCurrentSchemeSwitched(oldScheme, scheme)
@@ -389,10 +389,10 @@ class SchemeManagerImpl<T : Any, in MUTABLE_SCHEME : T>(val fileSpec: String,
         continue
       }
 
-      currentScheme?.let {
+      activeScheme?.let {
         if (scheme === it) {
           currentPendingSchemeName = processor.getSchemeKey(it)
-          currentScheme = null
+          activeScheme = null
         }
       }
 

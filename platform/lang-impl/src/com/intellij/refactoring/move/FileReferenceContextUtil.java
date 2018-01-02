@@ -113,7 +113,7 @@ public class FileReferenceContextUtil {
       PsiReference[] refs = element.getReferences();
       for (PsiReference ref : refs) {
         if (ref instanceof FileReferenceOwner) {
-          final PsiFileReference fileReference = ((FileReferenceOwner)refs[0]).getLastFileReference();
+          final PsiFileReference fileReference = ((FileReferenceOwner)ref).getLastFileReference();
           if (fileReference != null) {
             try {
               PsiElement newElement = fileReference.bindToElement(item);

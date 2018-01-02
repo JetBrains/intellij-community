@@ -183,9 +183,9 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
             ProgressManager.checkCanceled();
 
             myKeyHashToVirtualFileMapping.processAll(key -> {
+              ProgressManager.checkCanceled();
               if (!idFilter.containsFileId(key[1])) return true;
               finalHashMaskSet.add(key[0]);
-              ProgressManager.checkCanceled();
               return true;
             }, IntPairInArrayKeyDescriptor.INSTANCE);
           });

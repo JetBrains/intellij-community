@@ -14,28 +14,20 @@
  * limitations under the License.
  */
 
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.testFramework.EdtTestUtil;
-import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.testFramework.PlatformTestUtil.captureMemorySnapshot;
+import static com.intellij.testFramework.PlatformTestUtil.disposeApplicationAndCheckForProjectLeaks;
 
 /**
  * This must be the last test.
@@ -68,38 +60,7 @@ public class _LastInSuiteTest extends TestCase {
       return;
     }
 
-    EdtTestUtil.runInEdtAndWait(() -> {
-      try {
-        LightPlatformTestCase.initApplication(); // in case nobody cared to init. LightPlatformTestCase.disposeApplication() would not work otherwise.
-      }
-      catch (RuntimeException e) {
-        throw e;
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-
-      PlatformTestUtil.cleanupAllProjects();
-
-      ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-      System.out.println(application.writeActionStatistics());
-      System.out.println(ActionUtil.ActionPauses.STAT.statistics());
-      System.out.println(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).statistics());
-      System.out.println("ProcessIOExecutorService threads created: " + ((ProcessIOExecutorService)ProcessIOExecutorService.INSTANCE).getThreadCounter());
-
-      try {
-        LeakHunter.checkNonDefaultProjectLeak();
-      }
-      catch (AssertionError | Exception e) {
-        captureMemorySnapshot();
-        ExceptionUtil.rethrowAllAsUnchecked(e);
-      }
-      finally {
-        application.setDisposeInProgress(true);
-        LightPlatformTestCase.disposeApplication();
-        UIUtil.dispatchAllInvocationEvents();
-      }
-    });
+    disposeApplicationAndCheckForProjectLeaks();
 
     try {
       Disposer.assertIsEmpty(true);
@@ -119,19 +80,4 @@ public class _LastInSuiteTest extends TestCase {
     LightPlatformTestCase.reportTestExecutionStatistics();
   }
 
-  private static void captureMemorySnapshot() {
-    try {
-      Method snapshot = ReflectionUtil.getMethod(Class.forName("com.intellij.util.ProfilingUtil"), "captureMemorySnapshot");
-      if (snapshot != null) {
-        Object path = snapshot.invoke(null);
-        System.out.println("Memory snapshot captured to '" + path + "'");
-      }
-    }
-    catch (ClassNotFoundException e) {
-      // ProfilingUtil is missing from the classpath, ignore
-    }
-    catch (Exception e) {
-      e.printStackTrace(System.err);
-    }
-  }
 }

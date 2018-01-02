@@ -15,7 +15,9 @@
  */
 /* Android Studio: we do not download the Kotlin plugin from Maven
 repositories {
-  maven { url 'http://repo.labs.intellij.net/plugins.jetbrains.com' }
+  if (project.ext.inJetBrainsNetwork) {
+    maven { url 'http://repo.labs.intellij.net/plugins.jetbrains.com' }
+  }
   maven { url 'http://plugins.jetbrains.com/maven/' }
 }
 

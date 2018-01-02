@@ -774,7 +774,9 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       myUpdateQueue.queue(new Update("RootsChanged") {
         @Override
         public void run() {
+          myTreeExpansionMonitor.freeze();
           refreshScope(getCurrentScope());
+          doWhenDone(() -> myTreeExpansionMonitor.restore());
         }
 
         @Override

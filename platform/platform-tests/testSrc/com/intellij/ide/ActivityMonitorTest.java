@@ -19,6 +19,7 @@ import com.intellij.mock.MockProject;
 import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BusyObject;
@@ -126,6 +127,9 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
 
   public void testModalityState() {
     assumeFalse("Test cannot be run in headless environment", GraphicsEnvironment.isHeadless());
+    assertTrue(ApplicationManager.getApplication() instanceof ApplicationImpl);
+    assertTrue(ApplicationManager.getApplication().isDispatchThread());
+
     assertReady(null);
 
     myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
@@ -144,8 +148,12 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
       assertBusy(null);
 
       Dialog popup = new Dialog(dialog, "popup", true);
+      LaterInvocator.enterModal(popup);
       ModalityState m2 = ApplicationManager.getApplication().getModalityStateForComponent(popup);
+      LaterInvocator.leaveModal(popup);
+
       assertTrue("m1: "+m1+"; m2:"+m2, m2.dominates(m1));
+
       myMonitor.addActivity(new UiActivity("modal_2"), m2);
       assertBusy(null);
     }

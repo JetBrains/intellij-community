@@ -50,22 +50,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory {
-  private final NotNullLazyValue<PsiClass> myArrayClass = new AtomicNotNullLazyValue<PsiClass>() {
-    @NotNull
-    @Override
-    protected PsiClass compute() {
-      return createArrayClass("public class __Array__{\n public final int length;\n public Object clone() {}\n}", LanguageLevel.JDK_1_3);
-    }
-  };
-
-  private final NotNullLazyValue<PsiClass> myArrayClass15 = new AtomicNotNullLazyValue<PsiClass>() {
-    @NotNull
-    @Override
-    protected PsiClass compute() {
-      return createArrayClass("public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}", LanguageLevel.JDK_1_5);
-    }
-  };
-
+  private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = ContainerUtil.newConcurrentMap();
 
   public PsiElementFactoryImpl(final PsiManagerEx manager) {
@@ -76,10 +61,13 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiClass getArrayClass(@NotNull LanguageLevel languageLevel) {
-    return (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) ? myArrayClass15 : myArrayClass).getValue();
+    return myArrayClasses.computeIfAbsent(languageLevel, this::createArrayClass);
   }
 
-  private PsiClass createArrayClass(String text, LanguageLevel level) {
+  private PsiClass createArrayClass(LanguageLevel level) {
+    String text = level.isAtLeast(LanguageLevel.JDK_1_5) ?
+                  "public class __Array__<T> {\n public final int length;\n public T[] clone() {}\n}" :
+                  "public class __Array__{\n public final int length;\n public Object clone() {}\n}";
     PsiClass psiClass = ((PsiExtensibleClass)createClassFromText(text, null)).getOwnInnerClasses().get(0);
     ensureNonWritable(psiClass);
     PsiFile file = psiClass.getContainingFile();

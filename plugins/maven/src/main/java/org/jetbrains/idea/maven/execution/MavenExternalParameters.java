@@ -45,6 +45,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
@@ -349,15 +350,11 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = System.getenv("JAVA_HOME");
+      final String javaHome = EnvironmentUtil.getEnvironmentMap().get("JAVA_HOME");
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }
-      final Sdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
-      if (jdk == null) {
-        throw new ExecutionException(RunnerBundle.message("maven.java.home.invalid", javaHome));
-      }
-      return jdk;
+      return JavaSdk.getInstance().createJdk("", javaHome);
     }
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {

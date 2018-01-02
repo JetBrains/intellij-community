@@ -281,10 +281,10 @@ internal object JavaConverter {
     return with(requiredType) {
       when (el) {
         is PsiDeclarationStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement()!!)
+          convertDeclarations(el.declaredElements, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
         }
         is PsiExpressionListStatement -> expr<UDeclarationsExpression> {
-          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement()!!)
+          convertDeclarations(el.expressionList.expressions, givenParent ?: JavaConverter.unwrapElements(el.parent).toUElement())
         }
         is PsiBlockStatement -> expr<UBlockExpression>(build(::JavaUBlockExpression))
         is PsiLabeledStatement -> expr<ULabeledExpression>(build(::JavaULabeledExpression))
@@ -308,7 +308,7 @@ internal object JavaConverter {
     }
   }
 
-  private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement): UDeclarationsExpression {
+  private fun convertDeclarations(elements: Array<out PsiElement>, parent: UElement?): UDeclarationsExpression {
     return JavaUDeclarationsExpression(parent).apply {
       val declarations = mutableListOf<UDeclaration>()
       for (element in elements) {

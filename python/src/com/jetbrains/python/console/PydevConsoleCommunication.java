@@ -401,7 +401,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return; //TODO: handle text input and other cases
     }
     nextResponse = null;
-    if (waitingForInput) {
+    if (waitingForInput && myConsoleView.isInitialized()) {
       inputReceived = command.getText();
       waitingForInput = false;
       //the thread that we started in the last exec is still alive if we were waiting for an input.

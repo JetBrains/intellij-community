@@ -58,6 +58,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
 
   @Override
   protected boolean isHidden(AnActionEvent event) {
-    return !PyDebugSupportUtils.isCurrentPythonDebugProcess(event.getData(CommonDataKeys.PROJECT));
+    Project project = event.getData(CommonDataKeys.PROJECT);
+    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(project);
   }
 }

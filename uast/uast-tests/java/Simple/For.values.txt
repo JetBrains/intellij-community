@@ -22,3 +22,26 @@ UFile (package = ) [public class For {...]
                                 USimpleNameReferenceExpression (identifier = i) [i] = (var i = Undetermined)
                 UReturnExpression [return result] = Nothing
                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined (depending on: (var i = Undetermined), (var i = Phi(1, 0)), (var i = 0)))
+        UMethod (name = foo2) [public static fun foo2() : int {...}]
+            UBlockExpression [{...}] = Nothing
+                UDeclarationsExpression [var result: int = 0] = Undetermined
+                    ULocalVariable (name = result) [var result: int = 0]
+                        ULiteralExpression (value = 0) [0] = 0
+                UForExpression [for (var i: int = 0...}] = Undetermined
+                    UDeclarationsExpression [var i: int = 0...var j: int = 0] = Undetermined
+                        ULocalVariable (name = i) [var i: int = 0]
+                            ULiteralExpression (value = 0) [0] = 0
+                        ULocalVariable (name = j) [var j: int = 0]
+                            ULiteralExpression (value = 0) [0] = 0
+                    UBinaryExpression (operator = <) [i < 10] = true (depending on: (var i = 0))
+                        USimpleNameReferenceExpression (identifier = i) [i] = (var i = 0)
+                        ULiteralExpression (value = 10) [10] = 10
+                    UDeclarationsExpression [] = Undetermined
+                    UBlockExpression [{...}] = 0 (depending on: (var result = 0 (depending on: (var i = 0), (var j = 0))), (var i = 0), (var j = 0))
+                        UBinaryExpression (operator = +=) [result += i - j] = 0 (depending on: (var result = 0 (depending on: (var i = 0), (var j = 0))), (var i = 0), (var j = 0))
+                            USimpleNameReferenceExpression (identifier = result) [result] = (var result = 0 (depending on: (var i = 0), (var j = 0)))
+                            UBinaryExpression (operator = -) [i - j] = 0 (depending on: (var i = 0), (var j = 0))
+                                USimpleNameReferenceExpression (identifier = i) [i] = (var i = 0)
+                                USimpleNameReferenceExpression (identifier = j) [j] = (var j = 0)
+                UReturnExpression [return result] = Nothing
+                    USimpleNameReferenceExpression (identifier = result) [result] = (var result = 0 (depending on: (var i = 0), (var j = 0)))

@@ -114,16 +114,6 @@ class TeamcityReport(Plugin):
                     capture_plugin._buf.flush()
                 return old_format_error(test, err)
 
-            def newCaptureAfterTest(test):
-                if isinstance(capture_plugin._buf, FlushingStringIO):
-                    capture_plugin._buf.flush()
-                old_after_test(test)
-
-            def newCaptureFormatError(test, err):
-                if isinstance(capture_plugin._buf, FlushingStringIO):
-                    capture_plugin._buf.flush()
-                old_format_error(test, err)
-
             capture_plugin.beforeTest = newCaptureBeforeTest
             capture_plugin.afterTest = newCaptureAfterTest
             capture_plugin.formatError = newCaptureFormatError

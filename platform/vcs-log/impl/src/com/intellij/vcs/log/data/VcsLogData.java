@@ -93,8 +93,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(project, VcsUserRegistry.class);
     myFatalErrorsConsumer = fatalErrorsConsumer;
 
-    VcsLogProgress progress = new VcsLogProgress();
-    Disposer.register(this, progress);
+    VcsLogProgress progress = new VcsLogProgress(project, this);
 
     VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
     if (invalidator.isValid()) {
@@ -124,6 +123,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
                                           this::fireDataPackChangeEvent, FAILING_EXCEPTION_HANDLER, RECENT_COMMITS_COUNT);
+    Disposer.register(this, myRefresher);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
 

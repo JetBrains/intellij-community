@@ -41,6 +41,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -291,8 +292,9 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (offset >= 0) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        final List<CompletionContributor> list = CompletionContributor.forLanguage(element.getLanguage());
-        for (CompletionContributor contributor : list) {
+        List<CompletionContributor> allContributors = CompletionContributor.forLanguage(element.getLanguage());
+        List<CompletionContributor> availableContributors = DumbService.getInstance(file.getProject()).filterByDumbAwareness(allContributors);
+        for (CompletionContributor contributor : availableContributors) {
           if (contributor.invokeAutoPopup(element, charTyped)) {
             LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
             return true;

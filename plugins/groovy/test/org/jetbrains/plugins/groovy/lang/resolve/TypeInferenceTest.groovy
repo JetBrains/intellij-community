@@ -800,4 +800,8 @@ def bar(CharSequence xx) {
 }
 ''', 'java.lang.String'
   }
+
+  void 'test enum values() type'() {
+    doExprTest 'enum E {}; E.values()', 'E[]'
+  }
 }

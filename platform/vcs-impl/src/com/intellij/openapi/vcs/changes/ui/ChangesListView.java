@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getAfterRevisionsFiles;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getFiles;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
@@ -156,13 +157,13 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       sink.put(VcsDataKeys.VIRTUAL_FILE_STREAM, getSelectedFiles());
     }
     else if (key == CommonDataKeys.NAVIGATABLE) {
-      VirtualFile file = getIfSingle(getSelectedFiles());
+      VirtualFile file = getIfSingle(getNavigatableFiles());
       if (file != null && !file.isDirectory()) {
         sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, file, 0));
       }
     }
     else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles()));
     }
     else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
       if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
@@ -236,7 +237,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  private Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
+  protected Stream<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     return getSelectionNodesStream(tag)
       .flatMap(ChangesBrowserNode::getFilesUnderStream)
       .distinct();
@@ -317,7 +318,15 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  protected Stream<VirtualFile> getSelectedFiles() {
+  private Stream<VirtualFile> getSelectedFiles() {
+    return Stream.concat(
+      getAfterRevisionsFiles(getSelectedChanges()),
+      getSelectedVirtualFiles(null)
+    ).distinct();
+  }
+
+  @NotNull
+  private Stream<VirtualFile> getNavigatableFiles() {
     return Stream.concat(
       getFiles(getSelectedChanges()),
       getSelectedVirtualFiles(null)

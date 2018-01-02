@@ -201,7 +201,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       else {
         result!!.sortWith(deprecatedComparator)
         StreamProviderFactory.EP_NAME.getExtensions(project).computeIfAny {
-          LOG.runAndLogException { it.customizeStorageSpecs(component, project, result!!, operation) }
+          LOG.runAndLogException { it.customizeStorageSpecs(component, project, stateSpec, result!!, operation) }
         }?.let {
           // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
           return it

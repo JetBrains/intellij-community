@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -259,7 +260,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     }
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-    if (file == null) return null;
+    if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
 

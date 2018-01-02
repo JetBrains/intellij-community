@@ -28,7 +28,6 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.html.HtmlTagImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +48,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   static boolean canSelectElement(final PsiElement e) {
-    if (e instanceof XmlToken || PsiTreeUtil.getParentOfType(e, HtmlTagImpl.class, true) != null) {
+    if (e instanceof XmlToken) {
       return HtmlUtil.hasHtml(e.getContainingFile()) || HtmlUtil.supportsXmlTypedHandlers(e.getContainingFile());
     }
     return false;

@@ -510,6 +510,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myPromptView.setPromptAttributes(textAttributes);
   }
 
+  public boolean isInitialized() {
+    return myInitialized.isDone();
+  }
+
   public void initialized() {
     myInitialized.setDone();
   }

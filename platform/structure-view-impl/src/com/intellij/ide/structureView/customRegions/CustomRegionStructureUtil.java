@@ -19,6 +19,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.folding.*;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,6 +47,7 @@ public class CustomRegionStructureUtil {
     if (customRegions.size() > 0) {
       List<StructureViewTreeElement> result = new ArrayList<>(customRegions);
       for (StructureViewTreeElement element : originalElements) {
+        ProgressManager.checkCanceled();
         boolean isInCustomRegion = false;
         for (CustomRegionTreeElement customRegion : customRegions) {
           if (customRegion.containsElement(element)) {
@@ -88,6 +90,7 @@ public class CustomRegionStructureUtil {
     CustomRegionTreeElement currRegionElement = null;
     CustomFoldingProvider provider = null;
     while (iterator.hasNext()) {
+      ProgressManager.checkCanceled();
       PsiElement child = iterator.next();
       if (provider == null) provider = getProvider(child);
       if (provider != null) {

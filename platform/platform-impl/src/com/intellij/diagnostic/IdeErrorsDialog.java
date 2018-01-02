@@ -900,7 +900,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       Container parentComponent;
       if (dialogClosed) {
         IdeFrame ideFrame = UIUtil.getParentOfType(IdeFrame.class, getContentPane());
-        parentComponent = ideFrame.getComponent();
+        parentComponent = ideFrame != null ? ideFrame.getComponent() : WindowManager.getInstance().findVisibleFrame();
       }
       else {
         parentComponent = getContentPane();

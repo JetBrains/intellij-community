@@ -132,4 +132,9 @@ public class PyiTypeTest extends PyTestCase {
   public void testOverloadedNotMatchedGenericType() {
     doTest("Union[Dict[str, Any], list]");
   }
+
+  // PY-24929
+  public void testInstanceAttributeAnnotation() {
+    doTest("int");
+  }
 }

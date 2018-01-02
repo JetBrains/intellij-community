@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,7 +60,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
     myVisiblePackBuilder = builder;
     myState = new State(initialSortType);
 
-    myTaskController = new SingleTaskController<Request, State>(state -> {
+    myTaskController = new SingleTaskController<Request, State>(project, state -> {
       boolean hasChanges = myState.getVisiblePack() != state.getVisiblePack();
       myState = state;
       if (hasChanges) {
@@ -67,7 +68,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
           listener.onVisiblePackChange(state.getVisiblePack());
         }
       }
-    }, true) {
+    }, true, this) {
       @NotNull
       @Override
       protected ProgressIndicator startNewBackgroundTask() {

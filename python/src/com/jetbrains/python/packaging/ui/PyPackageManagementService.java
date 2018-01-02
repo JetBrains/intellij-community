@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
@@ -93,34 +94,37 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    final Map<String, String> packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-    final List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
-    packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
-    return packages;
-  }
-
-  @NotNull
-  protected static List<RepoPackage> versionMapToPackageList(@NotNull Map<String, String> packageToVersionMap) {
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
-    final List<RepoPackage> packages = new ArrayList<>();
-    for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
-      packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
-    }
-    return packages;
+    PyPIPackageUtil.INSTANCE.loadAndGetPackages();
+    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(false);
+    return getAllPackagesCached();
   }
 
   @NotNull
   @Override
   public List<RepoPackage> reloadAllPackages() throws IOException {
-    PyPIPackageUtil.INSTANCE.clearPackagesCache();
-    return getAllPackages();
+    PyPIPackageUtil.INSTANCE.updatePyPICache();
+    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(true);
+    return getAllPackagesCached();
   }
 
   @NotNull
   @Override
   public List<RepoPackage> getAllPackagesCached() {
-    return versionMapToPackageList(PyPIPackageUtil.getPyPIPackages());
+    // Make a copy, since ManagePackagesDialog attempts to change the passed in collection directly
+    final List<RepoPackage> result = new ArrayList<>();
+    if (!PyPackageService.getInstance().PYPI_REMOVED) {
+      result.addAll(getCachedPyPIPackages());
+    }
+    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
+    return result;
+  }
+
+  @NotNull
+  private static List<RepoPackage> getCachedPyPIPackages() {
+    // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
+    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
+    return ContainerUtil.map(PyPIPackageCache.getInstance().getPackageNames(), name -> new RepoPackage(name, url, null));
   }
 
   @Override

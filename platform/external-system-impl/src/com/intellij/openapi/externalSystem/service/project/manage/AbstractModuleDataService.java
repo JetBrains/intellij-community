@@ -424,6 +424,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
       setBytecodeTargetLevel(project, module, moduleDataNode.getData());
+      moduleDataNode.putUserData(MODULE_KEY, null);
+      moduleDataNode.putUserData(ORDERED_DATA_MAP_KEY, null);
     }
 
     for (Module module : modelsProvider.getModules()) {
