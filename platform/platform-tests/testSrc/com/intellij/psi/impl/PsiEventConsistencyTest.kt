@@ -5,6 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.CharTableImpl
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
@@ -12,10 +13,9 @@ import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import one.util.streamex.IntStreamEx
 import org.jetbrains.jetCheck.Generator
+import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.IntDistribution
-import org.jetbrains.jetCheck.PropertyChecker
 
 /**
  * @author peter
@@ -127,88 +127,71 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   fun testPsiDocSynchronization() {
-    PropertyChecker.forAll(commands).shouldHold { cmd ->
-      runCommand(cmd)
-      true
-    }
+    ImperativeCommand.checkScenarios { RandomAstChanges() }
   }
 
-  private fun runCommand(cmd: AstCommand) {
-    val file = createEmptyFile()
+  private inner class RandomAstChanges: ImperativeCommand {
+    val file = PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true,
+                                                                      false)!!
     val document = file.viewProvider.document!!
-    WriteCommandAction.runWriteCommandAction(project) {
-      cmd.performChange(file)
-      assertEquals(document.text, file.text)
-      assertEquals(document.text, file.node.text)
+
+    override fun performCommand(env: ImperativeCommand.Environment) {
+      WriteCommandAction.runWriteCommandAction(project) {
+        env.executeCommands(commands)
+        assertEquals(document.text, file.text)
+        assertEquals(document.text, file.node.text)
+      }
+    }
+
+    private val commands: Generator<ImperativeCommand> = Generator.recursive { rec -> Generator.frequency(
+      1,
+      Generator.constant(ImperativeCommand { env ->
+        env.logMessage("ChangeAction:")
+        ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+          env.executeCommands(IntDistribution.uniform(1, 5), rec)
+        }, file.node as FileElement)
+      }),
+      5,
+      Generator.sampledFrom(DeleteElement(), ReplaceElement(), AddElement())
+    ) }
+
+    private fun randomNode(env: ImperativeCommand.Environment): TreeElement {
+      val allNodes = SyntaxTraverser.astTraverser(file.node).toList()
+      return env.generateValue(Generator.sampledFrom(allNodes), null) as TreeElement
+    }
+
+    private inner class DeleteElement : ImperativeCommand {
+      override fun performCommand(env: ImperativeCommand.Environment) {
+        val node = randomNode(env)
+        val parent = node.treeParent ?: return
+        env.logMessage("Deleting $node")
+        parent.deleteChildInternal(node)
+      }
+    }
+    private inner class ReplaceElement : ImperativeCommand {
+      override fun performCommand(env: ImperativeCommand.Environment) {
+        val node = randomNode(env)
+        val parent = node.treeParent ?: return
+        val replacement = env.generateValue(nodes, "Replacing $node with %s")
+        parent.replaceChild(node, replacement)
+      }
+    }
+    private inner class AddElement : ImperativeCommand {
+      override fun performCommand(env: ImperativeCommand.Environment) {
+        val composite = randomNode(env).let { it as? CompositeElement ?: it.treeParent }
+        val children = composite.getChildren(null)
+        val toAdd = env.generateValue(nodes, null)
+        val anchorIndex = env.generateValue(Generator.integers(0, children.size), "Adding $toAdd into $composite at %s")
+        composite.addChild(toAdd, if (anchorIndex == 0) null else children[anchorIndex - 1])
+      }
     }
   }
 
-  private fun createEmptyFile() : PsiFile = 
+  private fun createEmptyFile() : PsiFile =
     PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
 
-  private interface AstCommand {
-    fun performChange(file: PsiFile)
-  }
-  
-  private data class CommandGroup(val inside: List<AstCommand>): AstCommand {
-    override fun performChange(file: PsiFile) {
-      ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction { 
-        inside.forEach { it.performChange(file) }
-      }, file.node as FileElement)
-    }
-  }
-
-  private data class DeleteElement(val coord: NodeCoordinates): AstCommand {
-    override fun performChange(file: PsiFile) {
-      val node = coord.findNode(file)
-      node.treeParent?.deleteChildInternal(node)
-    }
-  }
-
-  private data class ReplaceElement(val coord: NodeCoordinates, val replacement: TreeElement): AstCommand {
-    override fun performChange(file: PsiFile) {
-      val node = coord.findNode(file)
-      node.treeParent?.replaceChild(node, replacement)
-    }
-  }
-
-  private data class AddElement(val coord: NodeCoordinates, val indexHint: Int, val toAdd : TreeElement): AstCommand {
-    override fun performChange(file: PsiFile) {
-      val composite = coord.findNode(file).let { it as? CompositeElement ?: it.treeParent }
-      val children = composite.getChildren(null)
-      val anchorIndex = indexHint % (children.size + 1)
-      composite.addChild(toAdd, if (anchorIndex == 0) null else children[anchorIndex - 1])
-    }
-  }
-
-  private data class NodeCoordinates(val offsetHint: Int, val depth: Int) {
-    var found : String? = null
-    fun findNode(file: PsiFile): TreeElement {
-      val node = file.node as FileElement
-      found = node.toString()
-      var elem : TreeElement = node.findLeafElementAt(offsetHint % (file.textLength + 1)) ?: return node
-      for (i in 0..depth) {
-        elem = elem.treeParent ?: break
-      }
-      found = elem.toString()
-      return elem
-    }
-
-    override fun toString() = found ?: "never"
-  }
-
-  private val genCoords = Generator.zipWith(Generator.naturals(), Generator.integers(0, 5), ::NodeCoordinates)
-  private val commands: Generator<AstCommand> = Generator.recursive { rec -> Generator.frequency(
-    1, Generator.listsOf(IntDistribution.uniform(1, 5), rec).map(::CommandGroup),
-    5, genCoords.flatMap { coords ->
-    Generator.anyOf(
-      Generator.constant(DeleteElement(coords)),
-      nodes.map { ReplaceElement(coords, it) },
-      Generator.zipWith(nodes, Generator.naturals()) { n, i -> AddElement(coords, i, n) }
-    ) }) }
-
-  private val leafTypes = IntStreamEx.range(1, 5).mapToObj { i -> IElementType("Leaf" + i, null) }.toList()
-  private val compositeTypes = IntStreamEx.range(1, 5).mapToObj { i -> IElementType("Composite" + i, null) }.toList()
+  private val leafTypes = (1..5).map { i -> IElementType("Leaf" + i, null) }
+  private val compositeTypes = (1..5).map { i -> IElementType("Composite" + i, null) }
 
   private val leaves = Generator.zipWith(Generator.sampledFrom(leafTypes), Generator.asciiLetters()) { type, c ->
     leaf(type, c.toString())
