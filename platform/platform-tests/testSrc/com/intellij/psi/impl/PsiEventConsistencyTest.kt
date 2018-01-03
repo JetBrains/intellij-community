@@ -12,10 +12,10 @@ import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import one.util.streamex.IntStreamEx
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.IntDistribution
 import org.jetbrains.jetCheck.PropertyChecker
-import one.util.streamex.IntStreamEx
 
 /**
  * @author peter
@@ -100,6 +100,28 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
         }, root)
       }, root)
       assertEquals("ph", root.text)
+      assertEquals(root.text, file.viewProvider.document!!.text)
+    }
+  }
+
+  fun `test another case of changes in different AST parents at the same initial offset`() {
+    val file = createEmptyFile()
+    WriteCommandAction.runWriteCommandAction(project) {
+      //prepare
+      val root = file.node as FileElement
+      root.replaceChild(root.firstChildNode, composite(compositeTypes[0],
+                                                       composite(compositeTypes[0], leaf(leafTypes[0], "h")),
+                                                       composite(compositeTypes[0], composite(compositeTypes[0]))))
+      
+      ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+        val emptyComposite = root.firstChildNode.lastChildNode.lastChildNode
+        val hComposite = root.firstChildNode.firstChildNode
+        ChangeUtil.prepareAndRunChangeAction(ChangeUtil.ChangeAction {
+          emptyComposite.addChild(leaf(leafTypes[0], "v"))
+          hComposite.replaceChild(hComposite.firstChildNode, composite(compositeTypes[0]))
+        }, root)
+      }, root)
+      assertEquals("v", root.text)
       assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }

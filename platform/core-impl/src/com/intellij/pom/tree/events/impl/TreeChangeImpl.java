@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,11 +57,11 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   @Override
   public int compareTo(@NotNull TreeChangeImpl o) {
-    List<CompositeElement> thisParents = getSuperParents();
-    List<CompositeElement> thatParents = o.getSuperParents();
+    List<CompositeElement> thisParents = ContainerUtil.reverse(getSuperParents());
+    List<CompositeElement> thatParents = ContainerUtil.reverse(o.getSuperParents());
     for (int i = 1; i <= thisParents.size() && i <= thatParents.size(); i++) {
-      CompositeElement thisParent = i < thisParents.size() ? thisParents.get(thisParents.size() - i) : myParent;
-      CompositeElement thatParent = i < thatParents.size() ? thatParents.get(thatParents.size() - i) : o.myParent;
+      CompositeElement thisParent = i < thisParents.size() ? thisParents.get(i) : myParent;
+      CompositeElement thatParent = i < thatParents.size() ? thatParents.get(i) : o.myParent;
       int result = compareNodePositions(thisParent, thatParent);
       if (result != 0) return result;
     }
