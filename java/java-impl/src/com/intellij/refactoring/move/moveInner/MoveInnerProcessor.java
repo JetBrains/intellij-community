@@ -42,7 +42,6 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.HashMap;
@@ -220,11 +219,14 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
 
       // correct references in usages
       for (UsageInfo usage : usages) {
-        if (usage.isNonCodeUsage || myParameterNameOuterClass == null) continue; // should pass outer as parameter
+        if (usage.isNonCodeUsage) continue; // should pass outer as parameter
 
-        MoveInnerClassUsagesHandler usagesHandler = MoveInnerClassUsagesHandler.EP_NAME.forLanguage(usage.getElement().getLanguage());
+        PsiElement element = usage.getElement();
+        if (element == null) continue;
+
+        MoveInnerClassUsagesHandler usagesHandler = MoveInnerClassUsagesHandler.EP_NAME.forLanguage(element.getLanguage());
         if (usagesHandler != null) {
-          usagesHandler.correctInnerClassUsage(usage, myOuterClass);
+          usagesHandler.correctInnerClassUsage(usage, myOuterClass, myParameterNameOuterClass);
         }
       }
 
