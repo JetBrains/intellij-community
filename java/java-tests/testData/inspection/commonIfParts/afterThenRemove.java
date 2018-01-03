@@ -11,7 +11,7 @@ public class IfStatementWithIdenticalBranches {
 
   int work() {
       int x = getX();
-      if (!true) {
+      if (false) {
           return x;
       }
   }
