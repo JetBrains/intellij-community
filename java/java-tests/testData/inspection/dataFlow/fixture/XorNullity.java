@@ -2,7 +2,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// IDEABKL7233
+// IDEABKL-7233
 public class XorNullity {
   void test(CreateForm createForm) {
     if(createForm.getOpenIdIdentity() == null ^ createForm.getOpenIdProvider() == null) {
