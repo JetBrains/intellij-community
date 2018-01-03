@@ -43,7 +43,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -306,8 +305,8 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           kids.addAll(collectChildren(rootNode));
         }
         else {
-          List<Object> list = Arrays.asList(getTreeStructure().getChildElements(root));
-          for (Object each : list) {
+          Object[] childElements = getTreeStructure().getChildElements(root);
+          for (Object each : childElements) {
             kids.add((AbstractTreeNode)each);
           }
         }
