@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij;
@@ -46,6 +34,8 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.TestCaseLoader.*;
+
 @SuppressWarnings({"HardCodedStringLiteral", "CallToPrintStackTrace", "UseOfSystemOutOrSystemErr", "TestOnlyProblems", "BusyWait"})
 public class TestAll implements Test {
   static {
@@ -60,10 +50,6 @@ public class TestAll implements Test {
 
   private static final int ourMode = SAVE_MEMORY_SNAPSHOT /*| START_GUARD | RUN_GC | CHECK_MEMORY*/ | FILTER_CLASSES;
 
-  private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(TestCaseLoader.PERFORMANCE_TESTS_ONLY_FLAG) != null;
-  private static final boolean INCLUDE_PERFORMANCE_TESTS = System.getProperty(TestCaseLoader.INCLUDE_PERFORMANCE_TESTS_FLAG) != null;
-  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = System.getProperty(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG) != null;
-
   private static final int MAX_FAILURE_TEST_COUNT = 150;
 
   private static final Filter PERFORMANCE_ONLY = new Filter() {
@@ -71,7 +57,7 @@ public class TestAll implements Test {
     public boolean shouldRun(Description description) {
       String className = description.getClassName();
       String methodName = description.getMethodName();
-      return UsefulTestCase.isPerformanceTest(methodName, className);
+      return TestRunnerUtilBase.isPerformanceTest(methodName, className);
     }
 
     @Override
@@ -108,7 +94,7 @@ public class TestAll implements Test {
     this(rootPackage, getClassRoots());
   }
 
-  public TestAll(String rootPackage, List<File> classesRoots) throws IOException, ClassNotFoundException {
+  public TestAll(String rootPackage, List<File> classesRoots) throws ClassNotFoundException {
     String classFilterName = "tests/testGroups.properties";
     if ((ourMode & FILTER_CLASSES) == 0) {
       classFilterName = "";
@@ -117,7 +103,7 @@ public class TestAll implements Test {
     myTestCaseLoader = new TestCaseLoader(classFilterName);
     myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
     myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
-    fillTestCases(myTestCaseLoader, rootPackage, classesRoots);
+    myTestCaseLoader.fillTestCases(rootPackage, classesRoots);
   
     outClassLoadingProblems.addAll(myTestCaseLoader.getClassLoadingErrors());
   }
@@ -166,29 +152,6 @@ public class TestAll implements Test {
     final List<File> classLoaderRoots = ContainerUtil.map(urls, url -> new File(VfsUtilCore.urlToPath(VfsUtilCore.convertFromUrl(url))));
     System.out.println("Collecting tests from " + classLoaderRoots);
     return classLoaderRoots;
-  }
-
-  public static void fillTestCases(TestCaseLoader testCaseLoader, String rootPackage, List<File> classesRoots) throws IOException {
-    long before = System.currentTimeMillis();
-    for (File classesRoot : classesRoots) {
-      int oldCount = testCaseLoader.getClasses().size();
-      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      testCaseLoader.loadTestCases(classesRoot.getName(), classFinder.getClasses());
-      int newCount = testCaseLoader.getClasses().size();
-      if (newCount != oldCount) {
-        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classesRoot);
-      }
-    }
-
-    if (testCaseLoader.getClasses().size() == 1) {
-      testCaseLoader.clearClasses();
-    }
-    long after = System.currentTimeMillis();
-    
-    String message = "Number of test classes found: " + testCaseLoader.getClasses().size() 
-                      + " time to load: " + (after - before) / 1000 + "s.";
-    System.out.println(message);
-    log(message);
   }
 
   @Override
@@ -424,14 +387,6 @@ public class TestAll implements Test {
     return realFreeMemory < needed;
   }
 
-  static boolean isPerformanceTestsRun() {
-    return PERFORMANCE_TESTS_ONLY;
-  }
-  
-  private static boolean isIncludingPerformanceTestsRun() {
-    return INCLUDE_PERFORMANCE_TESTS;
-  }
-
   @Nullable
   private static Test getTest(@NotNull final Class<?> testCaseClass) {
     try {
@@ -439,7 +394,7 @@ public class TestAll implements Test {
         return null;
       }
       Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
-      if (classBomb != null && PlatformTestUtil.bombExplodes(classBomb)) {
+      if (classBomb != null && PlatformTestUtilBase.bombExplodes(classBomb)) {
         return new ExplodedBomb(testCaseClass.getName(), classBomb);
       }
 
@@ -448,7 +403,7 @@ public class TestAll implements Test {
         return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
 
-      if (TestRunnerUtil.isJUnit4TestClass(testCaseClass)) {
+      if (TestRunnerUtilBase.isJUnit4TestClass(testCaseClass)) {
         boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return new JUnit4TestAdapter(testCaseClass);
@@ -495,7 +450,7 @@ public class TestAll implements Test {
               if (methodBomb == null) {
                 doAddTest(test);
               }
-              else if (PlatformTestUtil.bombExplodes(methodBomb)) {
+              else if (PlatformTestUtilBase.bombExplodes(methodBomb)) {
                 doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
               }
             }
@@ -520,14 +475,6 @@ public class TestAll implements Test {
       t.printStackTrace(System.err);
       return null;
     }
-  }
-
-  static boolean shouldIncludePerformanceTestCase(Class aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null,aClass);
-  }
-
-  private static boolean isPerformanceTest(String methodName, Class aClass) {
-    return UsefulTestCase.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2014 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark {@link UsefulTestCase} implementations using this annotation if they require UI environment to run
- *
- * @author nik
+ * Mark dog slow {@link com.intellij.testFramework.UsefulTestCase} implementations for skip in local test pass
+ * if "skip.slow.tests.locally" property is defined.
  */
+@SuppressWarnings("JavadocReference")
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface SkipInHeadlessEnvironment {
-}
+public @interface SkipSlowTestLocally { }

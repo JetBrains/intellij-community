@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.testFramework;
 
@@ -15,7 +15,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.ide.util.treeView.*;
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -63,7 +62,10 @@ import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
@@ -96,9 +98,6 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "TestOnlyProblems"})
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
-
-  public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
-  public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
 
   private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
   private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
@@ -444,22 +443,6 @@ public class PlatformTestUtil {
     return event1;
   }
 
-  private static Date raidDate(Bombed bombed) {
-    final Calendar instance = Calendar.getInstance();
-    instance.set(Calendar.YEAR, bombed.year());
-    instance.set(Calendar.MONTH, bombed.month());
-    instance.set(Calendar.DAY_OF_MONTH, bombed.day());
-    instance.set(Calendar.HOUR_OF_DAY, bombed.time());
-    instance.set(Calendar.MINUTE, 0);
-
-    return instance.getTime();
-  }
-
-  public static boolean bombExplodes(Bombed bombedAnnotation) {
-    Date now = new Date();
-    return now.after(raidDate(bombedAnnotation));
-  }
-
   public static StringBuilder print(AbstractTreeStructure structure, Object node, int currentLevel, @Nullable Comparator comparator,
                                     int maxRowCount, char paddingChar, @Nullable Queryable.PrintInfo printInfo) {
     return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, o -> toString(o, printInfo));
@@ -623,25 +606,6 @@ public class PlatformTestUtil {
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public static TestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable test) {
     return new TestInfo(test, expectedMs, what);
-  }
-
-  public static boolean canRunTest(@NotNull Class testCaseClass) {
-    if (!SKIP_SLOW && !SKIP_HEADLESS) {
-      return true;
-    }
-
-    for (Class<?> clazz = testCaseClass; clazz != null; clazz = clazz.getSuperclass()) {
-      if (SKIP_HEADLESS && clazz.getAnnotation(SkipInHeadlessEnvironment.class) != null) {
-        System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it requires working UI environment");
-        return false;
-      }
-      if (SKIP_SLOW && clazz.getAnnotation(SkipSlowTestLocally.class) != null) {
-        System.out.println("Class '" + testCaseClass.getName() + "' is skipped because it is dog slow");
-        return false;
-      }
-    }
-
-    return true;
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {

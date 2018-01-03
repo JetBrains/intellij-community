@@ -20,8 +20,9 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.JITSensitive;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.TestRunnerUtil;
+import com.intellij.testFramework.PlatformTestUtilBase;
+import com.intellij.testFramework.TeamCityLogger;
+import com.intellij.testFramework.TestRunnerUtilBase;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -29,6 +30,7 @@ import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.AnnotatedElement;
@@ -42,6 +44,10 @@ public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
+
+  private static final boolean PERFORMANCE_TESTS_ONLY = System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG) != null;
+  private static final boolean INCLUDE_PERFORMANCE_TESTS = System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG) != null;
+  private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG) != null;
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -70,7 +76,7 @@ public class TestCaseLoader {
       List<URL> groupingFileUrls = Collections.emptyList();
       if (!StringUtil.isEmpty(classFilterName)) {
         try {
-          groupingFileUrls = Collections.list(getClass().getClassLoader().getResources(classFilterName));
+          groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
         }
         catch (IOException e) {
           e.printStackTrace();
@@ -120,7 +126,7 @@ public class TestCaseLoader {
   void addClassIfTestCase(Class testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
-        PlatformTestUtil.canRunTest(testCaseClass)) {
+        PlatformTestUtilBase.canRunTest(testCaseClass)) {
       myClassList.add(testCaseClass);
     }
   }
@@ -152,11 +158,11 @@ public class TestCaseLoader {
     }
     catch (NoSuchMethodException ignored) { }
 
-    return TestRunnerUtil.isJUnit4TestClass(testCaseClass);
+    return TestRunnerUtilBase.isJUnit4TestClass(testCaseClass);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
-    if (!myForceLoadPerformanceTests && !TestAll.shouldIncludePerformanceTestCase(testCaseClass)) return true;
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
@@ -165,13 +171,13 @@ public class TestCaseLoader {
   public static boolean isBombed(final AnnotatedElement element) {
     final Bombed bombedAnnotation = element.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
-    return !PlatformTestUtil.bombExplodes(bombedAnnotation);
+    return !PlatformTestUtilBase.bombExplodes(bombedAnnotation);
   }
   
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
-        Class candidateClass = Class.forName(className, false, getClass().getClassLoader());
+        Class candidateClass = Class.forName(className, false, getClassLoader());
         addClassIfTestCase(candidateClass, moduleName);
       }
       catch (Throwable e) {
@@ -182,6 +188,10 @@ public class TestCaseLoader {
     }
   }
 
+  protected ClassLoader getClassLoader() {
+    return getClass().getClassLoader();
+  }
+
   public List<Throwable> getClassLoadingErrors() {
     return myClassLoadingErrors;
   }
@@ -189,7 +199,7 @@ public class TestCaseLoader {
   private static final List<String> ourRankList = getTeamCityRankList();
 
   private static List<String> getTeamCityRankList() {
-    if (TestAll.isPerformanceTestsRun()) {
+    if (isPerformanceTestsRun()) {
       // let performance test order be stable to decrease the variation in their timings
       return Collections.emptyList();
     }
@@ -206,7 +216,7 @@ public class TestCaseLoader {
   }
 
   private static int getRank(Class aClass) {
-    if (TestAll.isPerformanceTestsRun()) {
+    if (isPerformanceTestsRun()) {
       return moveToStart(aClass) ? 0 : 1;
     }
 
@@ -238,5 +248,44 @@ public class TestCaseLoader {
 
   public void clearClasses() {
     myClassList.clear();
+  }
+
+  static boolean isPerformanceTestsRun() {
+    return PERFORMANCE_TESTS_ONLY;
+  }
+
+  static boolean isIncludingPerformanceTestsRun() {
+    return INCLUDE_PERFORMANCE_TESTS;
+  }
+
+  static boolean shouldIncludePerformanceTestCase(Class aClass) {
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null,aClass);
+  }
+
+  static boolean isPerformanceTest(String methodName, Class aClass) {
+    return TestRunnerUtilBase.isPerformanceTest(methodName, aClass.getSimpleName());
+  }
+
+  public void fillTestCases(String rootPackage, List<File> classesRoots) {
+    long before = System.currentTimeMillis();
+    for (File classesRoot : classesRoots) {
+      int oldCount = getClasses().size();
+      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
+      loadTestCases(classesRoot.getName(), classFinder.getClasses());
+      int newCount = getClasses().size();
+      if (newCount != oldCount) {
+        System.out.println("Loaded " + (newCount - oldCount) + " tests from class root " + classesRoot);
+      }
+    }
+
+    if (getClasses().size() == 1) {
+      clearClasses();
+    }
+    long after = System.currentTimeMillis();
+    
+    String message = "Number of test classes found: " + getClasses().size() 
+                      + " time to load: " + (after - before) / 1000 + "s.";
+    System.out.println(message);
+    TeamCityLogger.info(message);
   }
 }
