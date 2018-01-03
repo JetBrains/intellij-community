@@ -1371,6 +1371,12 @@
   <item name="java.util.Collections void swap(java.util.List&lt;?&gt;, int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.Deque E pollFirst()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.Deque E pollLast()'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1612,6 +1618,7 @@
       <val name="source" val="&quot;this.values&quot;"/>
       <val name="sourceIsContainer" val="true" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Map V put(K, V) 0'>
     <annotation name='org.intellij.lang.annotations.Flow'>
@@ -1629,6 +1636,7 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Map V remove(java.lang.Object)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1638,11 +1646,13 @@
       <val name="source" val="&quot;this.values&quot;"/>
       <val name="sourceIsContainer" val="true" />
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Map V replace(K, V)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Map boolean remove(java.lang.Object, java.lang.Object)'>
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1804,11 +1814,13 @@
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Queue E poll()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Queue E remove()'>
     <annotation name='org.jetbrains.annotations.Contract'>
