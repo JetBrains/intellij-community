@@ -256,12 +256,16 @@ public abstract class AbstractExternalFilter {
       StringBuilder classDetails = new StringBuilder();
       while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails, endSection)) return;
-        appendLine(classDetails, read);
+        if (!skipBlockList(read)) {
+          appendLine(classDetails, read);
+        }
       }
 
-      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(P) && !StringUtil.toUpperCase(read).equals(HR)) {
+      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails, endSection)) return;
-        appendLine(data, read.replaceAll(DT, DT + BR));
+        if (!skipBlockList(read)) {
+          appendLine(data, read.replaceAll(DT, DT + BR));
+        }
       }
 
       data.append(classDetails);
@@ -274,14 +278,18 @@ public abstract class AbstractExternalFilter {
     while (((read = buf.readLine()) != null) &&
            !endSection.matcher(read).find() &&
            StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) == -1) {
-      if (!StringUtil.toUpperCase(read).contains(HR)
-          && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
-          && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
+      if (!skipBlockList(read)) {
         appendLine(data, read);
       }
     }
 
     data.append(HTML_CLOSE);
+  }
+
+  private static boolean skipBlockList(String read) {
+    return StringUtil.toUpperCase(read).contains(HR) || 
+           StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") || 
+           StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
   @NotNull
