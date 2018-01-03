@@ -640,6 +640,9 @@ public class JavaKeywordCompletion {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
         }
       }
+      if (expressionPosition && !session.isKeywordAlreadyProcessed(PsiKeyword.VOID)) {
+        result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
+      }
     }
     if (declaration) {
       LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID);
