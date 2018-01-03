@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.Parameterized;
-import com.intellij.testFramework.TestRunnerUtilBase;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import junit.framework.TestCase;
@@ -319,7 +319,7 @@ public class PathManagerEx {
 
   @SuppressWarnings("TestOnlyProblems")
   private static boolean isJUnitClass(Class<?> clazz) {
-    return TestCase.class.isAssignableFrom(clazz) || TestRunnerUtilBase.isJUnit4TestClass(clazz) || Parameterized.class.isAssignableFrom(clazz);
+    return TestCase.class.isAssignableFrom(clazz) || TestFrameworkUtil.isJUnit4TestClass(clazz) || Parameterized.class.isAssignableFrom(clazz);
   }
 
   @Nullable

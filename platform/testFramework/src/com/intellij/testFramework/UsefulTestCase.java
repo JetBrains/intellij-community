@@ -354,7 +354,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   protected boolean shouldRunTest() {
-    return PlatformTestUtilBase.canRunTest(getClass());
+    return TestFrameworkUtil.canRunTest(getClass());
   }
 
   protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
@@ -850,7 +850,7 @@ public abstract class UsefulTestCase extends TestCase {
   public boolean isPerformanceTest() {
     String testName = getName();
     String className = getClass().getName();
-    return TestRunnerUtilBase.isPerformanceTest(testName, className);
+    return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 
   /**
@@ -864,7 +864,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   private static boolean isStressTest(String testName, String className) {
-    return TestRunnerUtilBase.isPerformanceTest(testName, className) ||
+    return TestFrameworkUtil.isPerformanceTest(testName, className) ||
            containsStressWords(testName) ||
            containsStressWords(className);
   }

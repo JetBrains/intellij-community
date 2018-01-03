@@ -57,7 +57,7 @@ public class TestAll implements Test {
     public boolean shouldRun(Description description) {
       String className = description.getClassName();
       String methodName = description.getMethodName();
-      return TestRunnerUtilBase.isPerformanceTest(methodName, className);
+      return TestFrameworkUtil.isPerformanceTest(methodName, className);
     }
 
     @Override
@@ -394,7 +394,7 @@ public class TestAll implements Test {
         return null;
       }
       Bombed classBomb = testCaseClass.getAnnotation(Bombed.class);
-      if (classBomb != null && PlatformTestUtilBase.bombExplodes(classBomb)) {
+      if (classBomb != null && TestFrameworkUtil.bombExplodes(classBomb)) {
         return new ExplodedBomb(testCaseClass.getName(), classBomb);
       }
 
@@ -403,7 +403,7 @@ public class TestAll implements Test {
         return (Test)suiteMethod.invoke(null, ArrayUtil.EMPTY_OBJECT_ARRAY);
       }
 
-      if (TestRunnerUtilBase.isJUnit4TestClass(testCaseClass)) {
+      if (TestFrameworkUtil.isJUnit4TestClass(testCaseClass)) {
         boolean isPerformanceTest = isPerformanceTest(null, testCaseClass);
         boolean runEverything = isIncludingPerformanceTestsRun() || isPerformanceTest && isPerformanceTestsRun();
         if (runEverything) return new JUnit4TestAdapter(testCaseClass);
@@ -450,7 +450,7 @@ public class TestAll implements Test {
               if (methodBomb == null) {
                 doAddTest(test);
               }
-              else if (PlatformTestUtilBase.bombExplodes(methodBomb)) {
+              else if (TestFrameworkUtil.bombExplodes(methodBomb)) {
                 doAddTest(new ExplodedBomb(method.getDeclaringClass().getName() + "." + method.getName(), methodBomb));
               }
             }

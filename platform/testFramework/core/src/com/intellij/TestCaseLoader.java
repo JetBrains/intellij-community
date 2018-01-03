@@ -20,9 +20,8 @@ import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.JITSensitive;
-import com.intellij.testFramework.PlatformTestUtilBase;
 import com.intellij.testFramework.TeamCityLogger;
-import com.intellij.testFramework.TestRunnerUtilBase;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -126,7 +125,7 @@ public class TestCaseLoader {
   void addClassIfTestCase(Class testCaseClass, String moduleName) {
     if (shouldAddTestCase(testCaseClass, moduleName, true) &&
         testCaseClass != myFirstTestClass && testCaseClass != myLastTestClass &&
-        PlatformTestUtilBase.canRunTest(testCaseClass)) {
+        TestFrameworkUtil.canRunTest(testCaseClass)) {
       myClassList.add(testCaseClass);
     }
   }
@@ -158,7 +157,7 @@ public class TestCaseLoader {
     }
     catch (NoSuchMethodException ignored) { }
 
-    return TestRunnerUtilBase.isJUnit4TestClass(testCaseClass);
+    return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
   }
 
   private boolean shouldExcludeTestClass(String moduleName, Class testCaseClass) {
@@ -171,7 +170,7 @@ public class TestCaseLoader {
   public static boolean isBombed(final AnnotatedElement element) {
     final Bombed bombedAnnotation = element.getAnnotation(Bombed.class);
     if (bombedAnnotation == null) return false;
-    return !PlatformTestUtilBase.bombExplodes(bombedAnnotation);
+    return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
   }
   
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
@@ -263,7 +262,7 @@ public class TestCaseLoader {
   }
 
   static boolean isPerformanceTest(String methodName, Class aClass) {
-    return TestRunnerUtilBase.isPerformanceTest(methodName, aClass.getSimpleName());
+    return TestFrameworkUtil.isPerformanceTest(methodName, aClass.getSimpleName());
   }
 
   public void fillTestCases(String rootPackage, List<File> classesRoots) {

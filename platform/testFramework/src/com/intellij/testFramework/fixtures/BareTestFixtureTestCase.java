@@ -10,15 +10,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipInHeadlessEnvironment;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.TestRunnerUtilBase;
+import com.intellij.testFramework.TestFrameworkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import static com.intellij.testFramework.PlatformTestUtilBase.SKIP_HEADLESS;
-import static com.intellij.testFramework.PlatformTestUtilBase.SKIP_SLOW;
+import static com.intellij.testFramework.TestFrameworkUtil.SKIP_HEADLESS;
+import static com.intellij.testFramework.TestFrameworkUtil.SKIP_SLOW;
 import static org.junit.Assume.assumeFalse;
 
 public abstract class BareTestFixtureTestCase {
@@ -29,7 +29,7 @@ public abstract class BareTestFixtureTestCase {
 
   @Before
   public final void setupFixture() throws Exception {
-    ApplicationInfoImpl.setInStressTest(TestRunnerUtilBase.isPerformanceTest(null, getClass().getName()));
+    ApplicationInfoImpl.setInStressTest(TestFrameworkUtil.isPerformanceTest(null, getClass().getName()));
 
     boolean headless = SKIP_HEADLESS && getClass().getAnnotation(SkipInHeadlessEnvironment.class) != null;
     assumeFalse("Class '" + getClass().getName() + "' is skipped because it requires working UI environment", headless);
