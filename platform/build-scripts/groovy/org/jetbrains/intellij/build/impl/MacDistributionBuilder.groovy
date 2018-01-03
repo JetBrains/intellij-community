@@ -260,6 +260,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: "$target/bin", includes: "*.py", eol: "unix")
   }
 
+  // Android Studio: modified by Change Idc07b110 / commit f20681e
   private String buildMacZip(String jdkDirectoryPath, String macDistPath) {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
@@ -307,6 +308,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           }
         }
 
+        // Android Studio: added by Change Idc07b110 / commit f20681e
         // Bundle JDK
         def binaries = ["Contents/Home/bin/*", "Contents/Home/jre/bin/*", "Contents/Home/jre/lib/jspawnhelper", "Contents/Home/jre/lib/*.dylib.*"]
         zipfileset(dir: jdkDirectoryPath, prefix: "$zipRoot/jre/jdk") {

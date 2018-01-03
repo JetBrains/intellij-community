@@ -70,6 +70,7 @@ class BuildContextImpl extends BuildContext {
 
     def appInfoFile = findApplicationInfoInSources(project, productProperties, messages)
     applicationInfo = new ApplicationInfoProperties(appInfoFile.absolutePath)
+    // Android Studio: modified by Change Idc07b110 / commit f20681e
     bundledJreManager = new BundledJreManager(this, compilationContext.paths.communityHome)
 
     // Android Studio: buildNumber is either SNAPSHOT or the one passed from build_studio.sh. fullBuildNumber includes the branch.
@@ -257,6 +258,7 @@ class BuildContextImpl extends BuildContext {
                                      windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                      proprietaryBuildTools)
     child.paths.artifacts = paths.artifacts
+    // Android Studio: modified by Change Idc07b110 / commit f20681e
     child.bundledJreManager.baseDirectoryForJdk = bundledJreManager.baseDirectoryForJdk
     return child
   }
@@ -273,6 +275,7 @@ class BuildContextImpl extends BuildContext {
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer, proprietaryBuildTools)
     copy.paths.artifacts = paths.artifacts
+    // Android Studio: modified by Change Idc07b110 / commit f20681e
     copy.bundledJreManager.baseDirectoryForJdk = bundledJreManager.baseDirectoryForJdk
     copy.compilationContext.prepareForBuild()
     return copy

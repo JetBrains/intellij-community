@@ -220,11 +220,12 @@ IDS_VM_OPTIONS=$vmOptions
     }
   }
 
+  // Android Studio: modified by Change Idc07b110 / commit f20681e
   private void buildWinZip(String jdkDirectoryPath, String zipNameSuffix, String winDistPath) {
     buildContext.messages.block("Build Windows ${zipNameSuffix}.zip distribution") {
       def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${zipNameSuffix}.zip"
       def zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
-      def dirs = [buildContext.paths.distAll, winDistPath]
+      def dirs = [buildContext.paths.distAll, winDistPath]  // Android Studio: modified by Change Idc07b110 / commit f20681e
       buildContext.messages.progress("Building Windows ${zipNameSuffix}.zip archive")
       buildContext.ant.zip(zipfile: targetPath, filesonly: true) { // Android Studio: filter out empty directories, due to b/68162671
         dirs.each {
