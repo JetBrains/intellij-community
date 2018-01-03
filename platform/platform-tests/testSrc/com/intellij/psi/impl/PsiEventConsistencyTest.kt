@@ -12,9 +12,9 @@ import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
-import jetCheck.Generator
-import jetCheck.IntDistribution
-import jetCheck.PropertyChecker
+import org.jetbrains.jetCheck.Generator
+import org.jetbrains.jetCheck.IntDistribution
+import org.jetbrains.jetCheck.PropertyChecker
 import one.util.streamex.IntStreamEx
 
 /**

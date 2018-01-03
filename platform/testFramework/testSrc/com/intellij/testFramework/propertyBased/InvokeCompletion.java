@@ -40,8 +40,8 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import jetCheck.Generator;
-import jetCheck.IntDistribution;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.IntDistribution;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
