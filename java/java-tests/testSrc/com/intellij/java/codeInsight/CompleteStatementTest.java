@@ -123,6 +123,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testMethodBeforeAnnotation() { doTest(); }
   public void testMethodBeforeCommentField() { doTest(); }
   public void testMethodBeforeCommentMethod() { doTest(); }
+  public void testCloseAnnotationWithArrayInitializer() { doTest(); }
   public void testParenthesized() { doTest(); }
   public void testCompleteBreak() { doTest(); }
   public void testCompleteIfNextLineBraceStyle() { myJavaSettings.BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE; doTest(); }

@@ -290,6 +290,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
                                                               PsiStatement.class,
                                                               PsiCodeBlock.class,
                                                               PsiMember.class,
+                                                              PsiAnnotation.class,
                                                               PsiComment.class,
                                                               PsiImportStatementBase.class,
                                                               PsiPackageStatement.class
@@ -305,6 +306,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
     return statementAtCaret instanceof PsiStatement ||
            statementAtCaret instanceof PsiMember ||
+           statementAtCaret instanceof PsiAnnotation ||
            statementAtCaret instanceof PsiImportStatementBase ||
            statementAtCaret instanceof PsiPackageStatement
            ? statementAtCaret
