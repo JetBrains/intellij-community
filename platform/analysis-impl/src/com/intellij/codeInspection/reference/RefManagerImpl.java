@@ -169,6 +169,17 @@ public class RefManagerImpl extends RefManager {
       annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting);
     }
   }
+  
+  void fireNodeMarkedReferenced(RefElement refWhat,
+                                RefElement refFrom,
+                                boolean referencedFromClassInitializer,
+                                final boolean forReading,
+                                final boolean forWriting,
+                                PsiElement element) {
+    for (RefGraphAnnotator annotator : myGraphAnnotators) {
+      annotator.onMarkReferenced(refWhat, refFrom, referencedFromClassInitializer, forReading, forWriting, element);
+    }
+  }
 
   public void fireNodeMarkedReferenced(PsiElement what, PsiElement from) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
