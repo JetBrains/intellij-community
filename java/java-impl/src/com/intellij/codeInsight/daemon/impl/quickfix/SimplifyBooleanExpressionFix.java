@@ -115,7 +115,12 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    if (!isAvailable()) return;
+    if (isAvailable()) {
+      doSimplify();
+    }
+  }
+
+  public void doSimplify() {
     PsiExpression subExpression = getSubExpression();
     if (subExpression == null) return;
     if (shouldExtractSideEffect()) {
@@ -139,7 +144,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
     }
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(subExpression.getProject());
     final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(mySubExpressionValue), subExpression);
     PsiExpression expression = (PsiExpression)subExpression.replace(constExpression);
     while (expression.getParent() instanceof PsiExpression) {

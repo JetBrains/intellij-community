@@ -15,21 +15,21 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Objects;
 
 public class ConstantIfStatementInspection extends BaseInspection {
 
@@ -59,9 +59,6 @@ public class ConstantIfStatementInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    //if (PsiUtil.isInJspFile(location)) {
-    //    return null;
-    //}
     return new ConstantIfStatementFix();
   }
 
@@ -75,83 +72,12 @@ public class ConstantIfStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiElement ifKeyword = descriptor.getPsiElement();
-      final PsiIfStatement statement =
-        (PsiIfStatement)ifKeyword.getParent();
-      assert statement != null;
-      final PsiStatement thenBranch = statement.getThenBranch();
-      final PsiStatement elseBranch = statement.getElseBranch();
-      final PsiExpression condition = statement.getCondition();
-      if (BoolUtils.isFalse(condition)) {
-        if (elseBranch != null) {
-          replaceStatementWithUnwrapping(elseBranch, statement);
-        }
-        else {
-          deleteElement(statement);
-        }
-      }
-      else {
-        replaceStatementWithUnwrapping(thenBranch, statement);
-      }
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiElement ifKeyword = descriptor.getPsiElement();
+      PsiExpression condition = Objects.requireNonNull(((PsiIfStatement)ifKeyword.getParent()).getCondition());
+      new SimplifyBooleanExpressionFix(condition, BoolUtils.isTrue(condition)).doSimplify();
     }
 
-    private static void replaceStatementWithUnwrapping(PsiStatement branch, PsiIfStatement statement)
-      throws IncorrectOperationException {
-      if (branch instanceof PsiBlockStatement &&
-          !(statement.getParent() instanceof PsiIfStatement)) {
-        final PsiCodeBlock parentBlock =
-          PsiTreeUtil.getParentOfType(branch, PsiCodeBlock.class);
-        if (parentBlock == null) {
-          replaceWithBranch(branch, statement);
-          return;
-        }
-        final PsiCodeBlock block =
-          ((PsiBlockStatement)branch).getCodeBlock();
-        final boolean hasConflicts =
-          DeclarationSearchUtils.containsConflictingDeclarations(
-            block, parentBlock);
-        if (hasConflicts) {
-          replaceWithBranch(branch, statement);
-        }
-        else {
-          final PsiElement containingElement = statement.getParent();
-          final PsiStatement[] statements = block.getStatements();
-          if (statements.length > 0) {
-            assert containingElement != null;
-            final PsiJavaToken lBrace = block.getLBrace();
-            final PsiJavaToken rBrace = block.getRBrace();
-            PsiElement added = null;
-            if (lBrace != null && rBrace != null) {
-              final PsiElement firstNonBrace = lBrace.getNextSibling();
-              final PsiElement lastNonBrace = rBrace.getPrevSibling();
-              if (firstNonBrace != null && lastNonBrace != null) {
-                added = containingElement.addRangeBefore(firstNonBrace, lastNonBrace, statement);
-              }
-            }
-            if (added == null) {
-              added = containingElement.addRangeBefore(statements[0],
-                                                       statements[statements.length - 1], statement);
-            }
-            final Project project = statement.getProject();
-            final CodeStyleManager codeStyleManager =
-              CodeStyleManager.getInstance(project);
-            codeStyleManager.reformat(added);
-          }
-          statement.delete();
-        }
-      }
-      else {
-        replaceWithBranch(branch, statement);
-      }
-    }
-
-    private static void replaceWithBranch(PsiStatement branch, PsiIfStatement statement) {
-      CommentTracker commentTracker = new CommentTracker();
-      final String elseText = commentTracker.markUnchanged(branch).getText();
-      PsiReplacementUtil.replaceStatement(statement, elseText, commentTracker);
-    }
   }
 
   private static class ConstantIfStatementVisitor
