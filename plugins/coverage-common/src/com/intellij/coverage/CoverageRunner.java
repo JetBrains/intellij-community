@@ -25,6 +25,11 @@ public abstract class CoverageRunner {
   @NonNls
   public abstract String getDataFileExtension();
 
+  @NonNls
+  public String[] getDataFileExtensions() {
+    return new String[]{getDataFileExtension()};
+  }
+
   public abstract boolean acceptsCoverageEngine(@NotNull final CoverageEngine engine);
 
   public static <T extends CoverageRunner> T getInstance(@NotNull Class<T> coverageRunnerClass) {
