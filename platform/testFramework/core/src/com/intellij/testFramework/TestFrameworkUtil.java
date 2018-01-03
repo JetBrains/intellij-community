@@ -55,8 +55,8 @@ public class TestFrameworkUtil {
   }
 
   @TestOnly
-  public static boolean isJUnit4TestClass(final Class aClass) {
-    final int modifiers = aClass.getModifiers();
+  public static boolean isJUnit4TestClass(@NotNull Class aClass) {
+    int modifiers = aClass.getModifiers();
     if ((modifiers & Modifier.ABSTRACT) != 0) return false;
     if ((modifiers & Modifier.PUBLIC) == 0) return false;
     if (aClass.getAnnotation(RunWith.class) != null) return true;
