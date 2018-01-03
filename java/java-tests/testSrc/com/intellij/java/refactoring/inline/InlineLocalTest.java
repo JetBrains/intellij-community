@@ -301,9 +301,8 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
-  public void testLocalInsideLambdaWithNestedLambda() {
-    doTest(true);
-  }
+  public void testLocalInsideLambdaWithNestedLambda() { doTest(true); }
+  public void testDefInMultiAssignmentStatement() { doTest(true); }
 
   private void doTest(final boolean inlineDef, String conflictMessage) {
     try {

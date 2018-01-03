@@ -273,7 +273,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
 
           if (inlineAll.get()) {
             if (!isInliningVariableInitializer(defToInline)) {
-              defToInline.getParent().delete();
+              deleteInitializer(defToInline);
             } else {
               defToInline.delete();
             }
@@ -304,6 +304,19 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     };
 
     CommandProcessor.getInstance().executeCommand(project, () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(runnable), RefactoringBundle.message("inline.command", localName), null);
+  }
+
+  private static void deleteInitializer(@NotNull PsiExpression defToInline) {
+    PsiElement parent = defToInline.getParent();
+    if (parent instanceof PsiAssignmentExpression) {
+      PsiElement gParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+      if (!(gParent instanceof PsiExpressionStatement)) {
+        parent.replace(defToInline);
+        return;
+      }
+    }
+    
+    parent.delete();
   }
 
   @Nullable
