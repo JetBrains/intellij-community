@@ -431,11 +431,10 @@ public class ReplaceInProjectManager {
     int[] replacedCount = {0};
     final boolean[] success = {true};
 
-    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       FindBundle.message("find.replace.all.confirmation.title"),
       myProject, 
       null,
-      "Stop",
       indicator -> {
         int processed = 0;
         VirtualFile lastFile = null;

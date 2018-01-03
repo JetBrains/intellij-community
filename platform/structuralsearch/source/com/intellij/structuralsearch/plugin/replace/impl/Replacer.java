@@ -165,11 +165,10 @@ public class Replacer {
       }
     }
 
-    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       SSRBundle.message("structural.replace.title"),
       project,
       null,
-      "Stop",
       indicator -> {
         indicator.setIndeterminate(false);
         try {
