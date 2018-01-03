@@ -132,9 +132,11 @@ public abstract class Logger {
 
   public abstract void warn(@NonNls String message, @Nullable Throwable t);
 
+  // Android Studio: excluded from exception counts
   public static class EmptyThrowable extends Throwable {}
 
   public void error(@NonNls String message) {
+    // Android Studio: exclude from exception counts
     error(message, new EmptyThrowable(), ArrayUtil.EMPTY_STRING_ARRAY);
   }
   public void error(Object message) {
@@ -153,6 +155,7 @@ public abstract class Logger {
   }
 
   public void error(@NonNls String message, @NonNls @NotNull String... details) {
+    // Android Studio: exclude from exception counts
     error(message, new EmptyThrowable(), details);
   }
 
