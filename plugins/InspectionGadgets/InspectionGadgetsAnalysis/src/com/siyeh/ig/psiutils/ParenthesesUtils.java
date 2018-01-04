@@ -471,7 +471,7 @@ public class ParenthesesUtils {
       return false;
     }
     final PsiExpression child = expression.getExpression();
-    if (child == null) {
+    if (child == null || child instanceof PsiLambdaExpression) {
       return true;
     }
     if (parent instanceof PsiArrayAccessExpression) {
