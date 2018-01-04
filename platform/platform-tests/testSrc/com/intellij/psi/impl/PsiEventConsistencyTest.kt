@@ -125,6 +125,17 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
       assertEquals(root.text, file.viewProvider.document!!.text)
     }
   }
+  
+  fun `test changes on AST without PSI`() {
+    val file = createEmptyFile()
+    WriteCommandAction.runWriteCommandAction(project) {
+      val root = file.node as FileElement
+      root.replaceChild(root.firstChildNode, leaf(leafTypes[0], "A"))
+      
+      assertEquals("A", root.text)
+      assertEquals(root.text, file.viewProvider.document!!.text)
+    }
+  }
 
   fun testPsiDocSynchronization() {
     ImperativeCommand.checkScenarios { RandomAstChanges() }
@@ -198,6 +209,13 @@ class PsiEventConsistencyTest : LightPlatformCodeInsightFixtureTestCase() {
   }
 
   private fun leaf(type: IElementType, text: String): TreeElement {
+    if (text[0].isUpperCase()) {
+      // no PSI
+      return withDummyHolder(object : LeafElement(type, text) {
+        override fun toString() = text
+      })
+    }
+
     return withDummyHolder(object : LeafPsiElement(type, text) {
       override fun toString() = text
     })

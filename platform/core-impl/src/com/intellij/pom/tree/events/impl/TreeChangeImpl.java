@@ -39,6 +39,7 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
+    assert myParent.getPsi() != null;
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
     for (TreeElement child : getCurrentChildren()) {
       myInitialChildren.add(child);
@@ -152,7 +153,13 @@ public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
 
   void fireEvents(PsiFile file) {
     int start = myParent.getStartOffset();
-    for (ChangeInfoImpl change : getAllChanges().values()) {
+    Collection<ChangeInfoImpl> changes = getAllChanges().values();
+    if (ContainerUtil.exists(changes, c -> c.hasNoPsi())) {
+      ChangeInfoImpl.childrenChanged(ChangeInfoImpl.createEvent(file, start), myParent, myParent.getTextLength() - getLengthDelta());
+      return;
+    }
+    
+    for (ChangeInfoImpl change : changes) {
       change.fireEvent(start, file, myParent);
     }
   }

@@ -22,6 +22,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ChangeInfoImpl implements ChangeInfo {
@@ -64,12 +65,10 @@ public class ChangeInfoImpl implements ChangeInfo {
   }
 
   void fireEvent(int parentStart, PsiFile file, CompositeElement parent) {
-    PsiTreeChangeEventImpl e = new PsiTreeChangeEventImpl(file.getManager());
-    e.setFile(file);
-    e.setOffset(myOffset + parentStart);
+    PsiTreeChangeEventImpl e = createEvent(file, myOffset + parentStart);
 
     if (myOldChild == myNewChild && myNewChild != null) {
-      childrenChanged(e, myNewChild);
+      childrenChanged(e, myNewChild, myOldLength);
     }
     else if (myOldChild != null && myNewChild != null) {
       childReplaced(e, myOldChild, myNewChild, parent);
@@ -80,6 +79,19 @@ public class ChangeInfoImpl implements ChangeInfo {
     else if (myNewChild != null) {
       childAdded(e, myNewChild, parent);
     }
+  }
+
+  @NotNull
+  static PsiTreeChangeEventImpl createEvent(PsiFile file, int offset) {
+    PsiTreeChangeEventImpl e = new PsiTreeChangeEventImpl(file.getManager());
+    e.setFile(file);
+    e.setOffset(offset);
+    return e;
+  }
+
+  boolean hasNoPsi() {
+    return myOldChild != null && myOldChild.getPsi() == null || 
+           myNewChild != null && myNewChild.getPsi() == null;
   }
 
   private static void childAdded(PsiTreeChangeEventImpl e, TreeElement child, CompositeElement parent) {
@@ -104,9 +116,9 @@ public class ChangeInfoImpl implements ChangeInfo {
     getPsiManagerImpl(e).childReplaced(e);
   }
 
-  private void childrenChanged(PsiTreeChangeEventImpl e, TreeElement parent) {
+  static void childrenChanged(PsiTreeChangeEventImpl e, TreeElement parent, int oldLength) {
     e.setParent(parent.getPsi());
-    e.setOldLength(myOldLength);
+    e.setOldLength(oldLength);
     getPsiManagerImpl(e).childrenChanged(e);
   }
 
