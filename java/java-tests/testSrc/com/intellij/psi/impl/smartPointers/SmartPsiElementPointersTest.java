@@ -1066,4 +1066,12 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     }
   }
 
+  public void testCanRestoreErrorElementsAtSameOffset() throws Exception {
+    PsiFile file = createFile("a.java", "class Foo { void foo() { if(IdeaLogger.ourErrorsOccurred != null) try(hrow IdeaLogger.ourErrorsOccurred; } }");
+    for (PsiElement element : SyntaxTraverser.psiTraverser(file)) {
+      SmartPointerEx<PsiElement> pointer = createPointer(element);
+      assertEquals(element, pointer.getElement());
+    }
+  }
+
 }
