@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -53,16 +52,16 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
   }
 
   @Override
-  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
-    SMTestProxy proxy = super.createProxy(testName, locationHint, id, parentNodeId);
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    SMTestProxy proxy = super.createProxy(testName, locationHint, metaInfo, id, parentNodeId);
     SMTestProxy currentSuite = getCurrentSuite();
     currentSuite.addChild(proxy);
     return proxy;
   }
 
   @Override
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
-    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, id, parentNodeId);
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    SMTestProxy newSuite = super.createSuite(suiteName, locationHint, metaInfo, id, parentNodeId);
     final SMTestProxy parentSuite = getCurrentSuite();
 
     parentSuite.addChild(newSuite);
