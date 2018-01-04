@@ -325,6 +325,12 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals("<html>boolean b</html>", parameterPresentation(-1));
   }
 
+  public void testInferredWithVarargs() {
+    myFixture.configureByText(JavaFileType.INSTANCE, 
+                              "import java.util.*; class C { void m(Object objects[], List<Object> list) { Collections.addAll(<caret>list, objects);} }");
+    assertEquals("<html>Collection&lt;? super Object&gt; collection, @NotNull Object... ts</html>", parameterPresentation(-1));
+  }
+
   private void checkHighlighted(int lineIndex) {
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     CreateParameterInfoContext context = createContext();
