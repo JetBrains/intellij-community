@@ -304,4 +304,7 @@ class A {
     PsiTestUtil.checkStubsMatchText(psiFile)
   }
 
+  void "test broken nested anonymous"() {
+    PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", "class A { { new A(new B[a]{b}); } }"))
+  }
 }

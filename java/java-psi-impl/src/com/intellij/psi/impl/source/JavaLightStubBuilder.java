@@ -136,10 +136,10 @@ public class JavaLightStubBuilder extends LightStubBuilder {
       // anonymous classes
       else if (type == JavaTokenType.NEW_KEYWORD) {
         seenNew = true;
-        seenLParen = false;
       }
       else if (seenNew && type == JavaTokenType.SEMICOLON) {
         seenNew = false;
+        seenLParen = false;
       }
       else if (seenNew && type == JavaTokenType.LBRACE && seenLParen) {
         return (result = false);
