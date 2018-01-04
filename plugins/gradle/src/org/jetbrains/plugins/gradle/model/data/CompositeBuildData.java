@@ -20,13 +20,14 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  * @since 2/17/2017
  */
-public class CompositeBuildData {
+public class CompositeBuildData implements Serializable {
 
   @NotNull
   public static final Key<CompositeBuildData> KEY = Key.create(CompositeBuildData.class, ProjectKeys.PROJECT.getProcessingWeight() + 1);
