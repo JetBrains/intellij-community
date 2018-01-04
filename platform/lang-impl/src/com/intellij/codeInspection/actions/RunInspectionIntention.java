@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -78,9 +79,10 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
     if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+      PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+      final VirtualFile virtualFile = topLevelFile.getVirtualFile();
       if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
-        analysisScope = new AnalysisScope(file);
+        analysisScope = new AnalysisScope(topLevelFile);
       }
     }
 
