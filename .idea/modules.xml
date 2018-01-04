@@ -306,9 +306,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/terminal.iml" filepath="$PROJECT_DIR$/plugins/terminal/terminal.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/extensions/testExtensions.iml" filepath="$PROJECT_DIR$/platform/testFramework/extensions/testExtensions.iml" group="platform" />
-      <module fileurl="file://$PROJECT_DIR$/platform/testFramework/core/testFramework.core.iml" filepath="$PROJECT_DIR$/platform/testFramework/core/testFramework.core.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/testFramework.iml" filepath="$PROJECT_DIR$/platform/testFramework/testFramework.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/testFramework/testFramework-java.iml" filepath="$PROJECT_DIR$/java/testFramework/testFramework-java.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/platform/testFramework/core/testFramework.core.iml" filepath="$PROJECT_DIR$/platform/testFramework/core/testFramework.core.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/testGuiFramework/testGuiFramework.iml" filepath="$PROJECT_DIR$/platform/testGuiFramework/testGuiFramework.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/testRunner/testRunner.iml" filepath="$PROJECT_DIR$/platform/testRunner/testRunner.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/testng/testng.iml" filepath="$PROJECT_DIR$/plugins/testng/testng.iml" group="plugins" />
