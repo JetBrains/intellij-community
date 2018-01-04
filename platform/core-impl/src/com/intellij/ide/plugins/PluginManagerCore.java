@@ -227,10 +227,6 @@ public class PluginManagerCore {
     return app != null && app.isUnitTestMode();
   }
 
-  private static boolean isUITestMode() {
-    return !StringUtil.isEmpty(System.getenv("UI_TEST_MODE"));
-  }
-
   public static void addDisablePluginListener(@NotNull Runnable listener) {
     if (myDisablePluginListeners == null) {
       myDisablePluginListeners = new ArrayList<>();
@@ -453,7 +449,7 @@ public class PluginManagerCore {
                                                      @NotNull ClassLoader[] parentLoaders,
                                                      @NotNull IdeaPluginDescriptor pluginDescriptor) {
 
-    if (pluginDescriptor.getUseIdeaClassLoader() || isUITestMode()) {
+    if (pluginDescriptor.getUseIdeaClassLoader()) {
       try {
         final ClassLoader loader = PluginManagerCore.class.getClassLoader();
         final Method addUrlMethod = getAddUrlMethod(loader);
