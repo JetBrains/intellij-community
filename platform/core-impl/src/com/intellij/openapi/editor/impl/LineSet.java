@@ -24,7 +24,6 @@ import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TByteArrayList;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Arrays;
 
@@ -72,17 +71,29 @@ public class LineSet{
       return createLineSet(replacement, !wholeTextReplaced);
     }
 
+    // if we're breaking or creating a '\r\n' pair, expand the changed range to include it fully
+    CharSequence newText = StringUtil.replaceSubSequence(prevText, start, end, replacement);
+    if (hasChar(prevText, start - 1, '\r') &&
+        (hasChar(prevText, start, '\n') != hasChar(newText, start, '\n'))) {
+      replacement = new MergingCharSequence("\r", replacement);
+      start--;
+    }
+
+    if (hasChar(prevText, end, '\n') &&
+        (hasChar(prevText, end -1, '\r') != hasChar(newText, start + replacement.length() - 1, '\r'))) {
+      replacement = new MergingCharSequence(replacement, "\n");
+      end++;
+    }
+
     LineSet result = isSingleLineChange(start, end, replacement)
                      ? updateInsideOneLine(findLineIndex(start), replacement.length() - (end - start))
                      : genericUpdate(prevText, start, end, replacement);
 
-    if (doTest) {
-      MergingCharSequence newText = new MergingCharSequence(
-        new MergingCharSequence(prevText.subSequence(0, start), replacement),
-        prevText.subSequence(end, prevText.length()));
-      result.checkEquals(createLineSet(newText));
-    }
     return wholeTextReplaced ? result.clearModificationFlags() : result;
+  }
+
+  private static boolean hasChar(CharSequence s, int index, char c) {
+    return index >= 0 && index < s.length() && s.charAt(index) == c;
   }
 
   private boolean isSingleLineChange(int start, int end, @NotNull CharSequence replacement) {
@@ -105,19 +116,11 @@ public class LineSet{
   }
 
   private LineSet genericUpdate(CharSequence prevText, int _start, int _end, CharSequence replacement) {
-    int startOffset = _start;
-    if (replacement.length() > 0 && replacement.charAt(0) == '\n' && startOffset > 0 && prevText.charAt(startOffset - 1) == '\r') {
-      startOffset--;
-    }
-    int startLine = findLineIndex(startOffset);
-    startOffset = getLineStart(startLine);
+    int startLine = findLineIndex(_start);
+    int startOffset = getLineStart(startLine);
 
-    int endOffset = _end;
-    if (replacement.length() > 0 && replacement.charAt(replacement.length() - 1) == '\r' && endOffset < prevText.length() && prevText.charAt(endOffset) == '\n') {
-      endOffset++;
-    }
-    int endLine = findLineIndex(endOffset);
-    endOffset = getLineEnd(endLine);
+    int endLine = findLineIndex(_end);
+    int endOffset = getLineEnd(endLine);
     if (!isLastEmptyLine(endLine)) endLine++;
 
     if (startOffset < _start) {
@@ -129,20 +132,6 @@ public class LineSet{
 
     LineSet patch = createLineSet(replacement, true);
     return applyPatch(startOffset, endOffset, startLine, endLine, patch);
-  }
-
-  private void checkEquals(@NotNull LineSet fresh) {
-    if (getLineCount() != fresh.getLineCount()) {
-      throw new AssertionError();
-    }
-    for (int i = 0; i < getLineCount(); i++) {
-      boolean start = getLineStart(i) != fresh.getLineStart(i);
-      boolean end = getLineEnd(i) != fresh.getLineEnd(i);
-      boolean sep = getSeparatorLength(i) != fresh.getSeparatorLength(i);
-      if (start || end || sep) {
-        throw new AssertionError();
-      }
-    }
   }
 
   @NotNull
@@ -263,13 +252,6 @@ public class LineSet{
   final int getLineCount() {
     return myStarts.length + (isLastEmptyLine(myStarts.length) ? 1 : 0);
   }
-
-  @TestOnly
-  public static void setTestingMode(boolean testMode) {
-    doTest = testMode;
-  }
-
-  private static boolean doTest;
 
   int getLength() {
     return myLength;
