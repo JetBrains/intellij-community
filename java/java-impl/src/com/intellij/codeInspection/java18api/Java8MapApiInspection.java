@@ -340,7 +340,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private static void register(MapCheckCondition condition, ProblemsHolder holder, boolean informationLevel, ReplaceWithSingleMapOperation fix) {
     if (informationLevel && !holder.isOnTheFly()) return;
-    holder.registerProblem(condition.getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.getName()),
+    holder.registerProblem(condition.getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName),
                            informationLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
   }
 
