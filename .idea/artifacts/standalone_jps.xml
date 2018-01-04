@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact name="standalone-jps">
-    <output-path>$PROJECT_DIR$/build/lib/jps</output-path>
+    <output-path>$PROJECT_DIR$/community/build/lib/jps</output-path>
     <root id="root">
       <element id="archive" name="util.jar">
         <element id="module-output" name="util" />
@@ -42,6 +42,9 @@
       </element>
       <element id="archive" name="aether-dependency-resolver.jar">
         <element id="module-output" name="aether-dependency-resolver" />
+      </element>
+      <element id="archive" name="testFramework.core.jar">
+        <element id="module-output" name="testFramework.core" />
       </element>
     </root>
   </artifact>
