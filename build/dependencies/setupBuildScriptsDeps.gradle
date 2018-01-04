@@ -35,6 +35,7 @@ dependencies {
   buildScriptsDeps loadLibraryMavenId("Trove4j")
   buildScriptsDeps loadLibraryMavenId("NanoXML")
   buildScriptsDeps loadLibraryMavenId("Guava")
+  buildScriptsDeps loadLibraryMavenId("JUnit4")
   buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
 }
 
