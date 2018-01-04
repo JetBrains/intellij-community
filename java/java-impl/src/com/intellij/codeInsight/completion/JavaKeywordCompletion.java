@@ -12,6 +12,7 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -19,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -124,7 +124,7 @@ public class JavaKeywordCompletion {
   }
 
   private static PsiElement prevSignificantLeaf(PsiElement position) {
-    return JBIterable.generate(position, PsiTreeUtil::prevVisibleLeaf).skip(1).skipWhile(e -> PsiTreeUtil.getNonStrictParentOfType(e, PsiComment.class) != null).first();
+    return FilterPositionUtil.searchNonSpaceNonCommentBack(position);
   }
 
   private void addKeyword(LookupElement element) {
