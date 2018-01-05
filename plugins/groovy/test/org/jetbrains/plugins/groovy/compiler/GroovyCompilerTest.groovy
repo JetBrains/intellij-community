@@ -33,6 +33,9 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -994,6 +997,16 @@ class Bar {}'''
       def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
+    }
+
+    @Override
+    void runTest() {
+      if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+        println "Groovy-Eclipse doesn't support JDK9 yet"
+        return
+      }
+
+      super.runTest()
     }
   }
 }
