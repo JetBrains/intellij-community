@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 
 
@@ -19,7 +21,8 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "dom-openapi",
     "execution-openapi",
     "remote-servers-java-api",
-    "testFramework-java"
+    "testFramework-java",
+    "testFramework.core"
   ]
   protected static final List<String> JAVA_IMPLEMENTATION_MODULES = [
     "compiler-impl",
