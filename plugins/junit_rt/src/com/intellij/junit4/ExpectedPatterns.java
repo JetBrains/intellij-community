@@ -33,7 +33,8 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     "expected:<(.*?)> but was:<(.*?)>",
     "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
     "expected: (.*)\\s*but: was (.*)",
-    "expected: (.*)\\s*but was: (.*)"
+    "expected: (.*)\\s*but was: (.*)",
+    "expecting:\\s*<(.*)> to be equal to:\\s*<(.*)>\\s*but was not"
   };
 
   private static final String MESSAGE_LENGTH_FOR_PATTERN_MATCHING = "idea.junit.message.length.threshold";
