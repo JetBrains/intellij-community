@@ -34,9 +34,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposable {
@@ -124,10 +126,13 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
       return null;
     }
 
-    final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
-    if (index.getChangedFileCount() < ourMinFilesToStartDumMode) {
-      if (index.getChangedFilesSize() < ourMinFilesSizeToStartDumMode) return null;
+    FileBasedIndexImpl index = (FileBasedIndexImpl)i;
+    if (index.getChangedFileCount() < ourMinFilesToStartDumMode && index.getChangedFilesSize() < ourMinFilesSizeToStartDumMode) {
+      return null;
     }
+
+    Collection<VirtualFile> files = getFilesToReindexIfTooMany(project, index);
+    if (files == null) return null;
 
     return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
       @Override
@@ -149,9 +154,31 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
 
       @Override
       public String toString() {
-        return getClass().getName() + "[" + index.dumpSomeChangedFiles() + "]";
+        return getClass().getName() + "[" + StreamEx.of(files).limit(20).map(VirtualFile::getPath).joining(", ") + "]";
       }
     };
+  }
+
+  @Nullable
+  private static Collection<VirtualFile> getFilesToReindexIfTooMany(Project project, FileBasedIndexImpl index) {
+    long start = System.currentTimeMillis();
+
+    Collection<VirtualFile> files = new ArrayList<>();
+    try {
+      files = index.getFilesToUpdate(project);
+      if (files.size() < ourMinFilesToStartDumMode &&
+          files.stream().filter(VirtualFile::isValid).mapToLong(VirtualFile::getLength).sum() < ourMinFilesSizeToStartDumMode) {
+        return null;
+      }
+    }
+    finally {
+      long took = System.currentTimeMillis() - start;
+      if (took > 10) {
+        LOG.info("Synchronous checking for files to reindex took " + took + "ms, " +
+                 "found " + files.size() + " of total " + index.getChangedFileCount() + " changed");
+      }
+    }
+    return files;
   }
 
   private static void reindexRefreshedFiles(ProgressIndicator indicator,
