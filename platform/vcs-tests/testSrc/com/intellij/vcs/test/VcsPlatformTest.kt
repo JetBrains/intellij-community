@@ -87,6 +87,14 @@ abstract class VcsPlatformTest : PlatformTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
+      .append(ThrowableRunnable {
+        // if CLM starts async update after waitEverythingDoneInTestMode but before projectClosed then the VCS may start its command,
+        // it will be cancelled with indicator, but inherited threads in DataBaseReader can survive for a while,
+        // because the synchronized block in BaseDataReader.doRun() can postpone stop method while holding mySleepMonitor.
+        // ThreadChecker doesn't interrupt such threads and catches them in a waiting state -> a thread leak may appear.
+        changeListManager.freeze("For Tests")
+      })
+      .append(ThrowableRunnable { changeListManager.waitEverythingDoneInTestMode() })
       .append(ThrowableRunnable { if (wasInit { vcsNotifier }) vcsNotifier.cleanup() })
       .append(ThrowableRunnable { waitForPendingTasks() })
       .append(ThrowableRunnable { if (myAssertionsInTestDetected) TestLoggerFactory.dumpLogToStdout(testStartedIndicator) })
