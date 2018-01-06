@@ -28,10 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -221,6 +219,8 @@ public class PointlessNullCheckInspection extends BaseInspection {
       if (!(expression instanceof PsiMethodCallExpression)) return null;
       PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
       if (!PsiType.BOOLEAN.equals(call.getType())) return null;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (qualifier != null && SideEffectChecker.mayHaveSideEffects(qualifier)) return null;
       PsiMethod method = call.resolveMethod();
       if (method == null) return null;
       List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, call);
@@ -250,6 +250,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
         // variable is reused for something else
         return null;
       }
+      if (Stream.of(args).anyMatch(SideEffectChecker::mayHaveSideEffects)) return null;
       return reference;
     }
 
