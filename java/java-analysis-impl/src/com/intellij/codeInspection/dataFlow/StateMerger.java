@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
@@ -479,9 +478,9 @@ class StateMerger {
       }
     }
 
-    for (UnorderedPair<EqClass> classPair : state.getDistinctClassPairs()) {
-      EqClassInfo info1 = classInfo.computeIfAbsent(classPair.first, EqClassInfo::new);
-      EqClassInfo info2 = classInfo.computeIfAbsent(classPair.second, EqClassInfo::new);
+    for (DistinctPairSet.DistinctPair classPair : state.getDistinctClassPairs()) {
+      EqClassInfo info1 = classInfo.computeIfAbsent(classPair.getFirst(), EqClassInfo::new);
+      EqClassInfo info2 = classInfo.computeIfAbsent(classPair.getSecond(), EqClassInfo::new);
 
       for (DfaVariableValue var1 : info1.vars) {
         for (DfaVariableValue var2 : info2.vars) {
