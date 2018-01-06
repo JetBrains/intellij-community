@@ -39,7 +39,6 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.read
 import kotlin.concurrent.withLock
 
 class DocumentTracker : Disposable {
@@ -189,6 +188,13 @@ class DocumentTracker : Disposable {
     }
   }
 
+  private fun updateFrozenContentIfNeeded() {
+    // ensure blocks are up to date
+    updateFrozenContentIfNeeded(Side.LEFT)
+    updateFrozenContentIfNeeded(Side.RIGHT)
+    refreshDirty(fastRefresh = false, forceInFrozen = true)
+  }
+
   private fun updateFrozenContentIfNeeded(side: Side) {
     assert(LOCK.isHeldByCurrentThread)
     if (!freezeHelper.isFrozen(side)) return
@@ -209,11 +215,7 @@ class DocumentTracker : Disposable {
 
     doFrozen(side) {
       val appliedBlocks = LOCK.write {
-        // ensure blocks are up to date
-        updateFrozenContentIfNeeded(Side.LEFT)
-        updateFrozenContentIfNeeded(Side.RIGHT)
-        refreshDirty(fastRefresh = false, forceInFrozen = true)
-
+        updateFrozenContentIfNeeded()
         tracker.partiallyApplyBlocks(side, condition)
       }
 
@@ -232,9 +234,11 @@ class DocumentTracker : Disposable {
     }
   }
 
+  @CalledInAwt
   fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
     val otherSide = side.other()
-    val affectedBlocks = LOCK.read {
+    val affectedBlocks = LOCK.write {
+      updateFrozenContentIfNeeded()
       tracker.blocks.filter(condition)
     }
 

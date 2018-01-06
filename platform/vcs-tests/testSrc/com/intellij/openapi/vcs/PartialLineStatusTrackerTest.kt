@@ -281,9 +281,9 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
           val helper = partialTracker.handlePartialCommit(Side.LEFT, "Default")
           helper.applyChanges()
 
-          assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
+          assertHelperContentIs("A_X_Y_Z_C_D_E_F_M_G_H_", helper)
           assertTextContentIs("A_X_Y_Z_C_E_F_M_G_N_H_")
-          assertBaseTextContentIs("A_B1_C_D_E_F_M_G_H_")
+          assertBaseTextContentIs("A_X_Y_Z_C_D_E_F_M_G_H_")
           assertAffectedChangelists("Test")
         }
       })
@@ -315,9 +315,9 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
           helper.applyChanges()
 
-          assertHelperContentIs("A_B1_C_D_E_F_M_G_H_", helper)
+          assertHelperContentIs("A_X_Y_Z_C_D_E_F_M_G_H_", helper)
           assertTextContentIs("A_X_Y_Z_C_E_F_M2_G_N2_H_")
-          assertBaseTextContentIs("A_B1_C_D_E_F_M_G_H_")
+          assertBaseTextContentIs("A_X_Y_Z_C_D_E_F_M_G_H_")
           assertAffectedChangelists("Test")
         }
       })
