@@ -17,7 +17,9 @@ package com.intellij.openapi.vcs
 
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.Side
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
@@ -27,11 +29,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.ex.LineStatusTracker
+import com.intellij.openapi.vcs.changes.LocalChangeListImpl
+import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.LineStatusTracker.Mode
-import com.intellij.openapi.vcs.ex.Range
-import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
-import com.intellij.openapi.vcs.ex.createRanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightPlatformTestCase.assertOrderedEquals
@@ -47,35 +47,67 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
   }
 
   protected fun test(text: String, vcsText: String, smart: Boolean = false, task: Test.() -> Unit) {
+    val mode = if (smart) Mode.SMART else Mode.DEFAULT
+    doTest(text, vcsText,
+           { document, file -> SimpleLocalLineStatusTracker.createTracker(getProject(), document, file, mode) },
+           { tracker -> Test(tracker) },
+           task)
+  }
+
+  protected fun testPartial(text: String, task: PartialTest.() -> Unit) {
+    testPartial(text, text, task)
+  }
+
+  protected fun testPartial(text: String, vcsText: String, task: PartialTest.() -> Unit) {
+    doTest(text, vcsText,
+           { document, file -> PartialLocalLineStatusTracker.createTracker(getProject(), document, file, Mode.SMART) },
+           { tracker -> PartialTest(tracker) },
+           task)
+  }
+
+  protected fun <Tracker : LineStatusTracker<*>, TestHelper : Test> doTest(text: String, vcsText: String,
+                                                                           createTracker: (Document, VirtualFile) -> Tracker,
+                                                                           createTestHelper: (Tracker) -> TestHelper,
+                                                                           task: TestHelper.() -> Unit) {
     val file = LightVirtualFile("LSTTestFile", PlainTextFileType.INSTANCE, parseInput(text))
     val document = FileDocumentManager.getInstance().getDocument(file)!!
     val tracker = runWriteAction {
-      val tracker = SimpleLocalLineStatusTracker.createTracker(getProject(), document, file, if (smart) Mode.SMART else Mode.DEFAULT)
+      val tracker = createTracker(document, file)
       tracker.setBaseRevision(parseInput(vcsText))
       tracker
     }
 
     try {
-      val test = Test(tracker)
-      test.verify()
+      val testHelper = createTestHelper(tracker)
+      testHelper.verify()
 
-      task(test)
+      task(testHelper)
 
-      test.verify()
+      testHelper.verify()
     }
     finally {
       tracker.release()
     }
   }
 
-  protected class Test(val tracker: LineStatusTracker<*>) {
+
+  protected open class Test(val tracker: LineStatusTracker<*>) {
     val file: VirtualFile = tracker.virtualFile
     val document: Document = tracker.document
     val vcsDocument: Document = tracker.vcsDocument
+    private val documentTracker = tracker.getDocumentTrackerInTestMode()
 
+
+    fun assertHelperContentIs(expected: String, helper: PartialLocalLineStatusTracker.PartialCommitHelper) {
+      assertEquals(parseInput(expected), helper.content)
+    }
 
     fun assertTextContentIs(expected: String) {
       assertEquals(parseInput(expected), document.text)
+    }
+
+    fun assertBaseTextContentIs(expected: String) {
+      assertEquals(parseInput(expected), vcsDocument.text)
     }
 
     fun assertRangesEmpty() {
@@ -83,13 +115,13 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
     }
 
     fun assertRanges(vararg expected: Range) {
-      assertEqualRanges(expected.toList(), tracker.getRanges()!!)
+      assertEqualRanges(tracker.getRanges()!!, expected.toList())
     }
 
     fun compareRanges() {
       val expected = createRanges(document, vcsDocument)
       val actual = tracker.getRanges()!!
-      assertEqualRanges(expected, actual)
+      assertEqualRanges(actual, expected)
     }
 
 
@@ -97,6 +129,7 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
       CommandProcessor.getInstance().executeCommand(getProject(), {
         ApplicationManager.getApplication().runWriteAction(task)
       }, "", null)
+
       verify()
     }
 
@@ -243,19 +276,27 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
 
 
     fun verify() {
-      checkValid()
-      checkCantTrim()
-      checkCantMerge()
-      checkInnerRanges()
+      checkBlocksAreValid()
+
+      if (!documentTracker.isFrozen()) {
+        checkCantTrim()
+        checkCantMerge()
+        checkInnerRanges()
+      }
     }
 
-    private fun checkValid() {
-      val diffRanges = tracker.getRanges()!!.map { DiffRange(it.vcsLine1, it.vcsLine2, it.line1, it.line2) }
-      val iterable = fair(DiffIterableUtil.create(diffRanges, DiffUtil.getLineCount(vcsDocument), DiffUtil.getLineCount(document)))
+    private fun checkBlocksAreValid() {
+      val content1 = documentTracker.getContent(Side.LEFT)
+      val content2 = documentTracker.getContent(Side.RIGHT)
+      val lineOffsets1 = LineOffsetsUtil.create(content1)
+      val lineOffsets2 = LineOffsetsUtil.create(content2)
+
+      val diffRanges = documentTracker.blocks.map { it.range }.filter { !it.isEmpty }
+      val iterable = fair(DiffIterableUtil.create(diffRanges, lineOffsets1.lineCount, lineOffsets2.lineCount))
 
       for (range in iterable.iterateUnchanged()) {
-        val lines1 = DiffUtil.getLines(vcsDocument, range.start1, range.end1)
-        val lines2 = DiffUtil.getLines(document, range.start2, range.end2)
+        val lines1 = DiffUtil.getLines(content1, lineOffsets1, range.start1, range.end1)
+        val lines2 = DiffUtil.getLines(content2, lineOffsets2, range.start2, range.end2)
         assertOrderedEquals(lines1, lines2)
       }
     }
@@ -265,8 +306,8 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
       for (range in ranges) {
         if (range.type != Range.MODIFIED) continue
 
-        val lines1 = DiffUtil.getLines(vcsDocument, range.vcsLine1, range.vcsLine2)
-        val lines2 = DiffUtil.getLines(document, range.line1, range.line2)
+        val lines1 = getVcsLines(range)
+        val lines2 = getCurrentLines(range)
 
         val f1 = ContainerUtil.getFirstItem(lines1)
         val f2 = ContainerUtil.getFirstItem(lines2)
@@ -305,8 +346,8 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
         }
         assertEquals(last, range.line2 - range.line1)
 
-        val lines1 = DiffUtil.getLines(vcsDocument, range.vcsLine1, range.vcsLine2)
-        val lines2 = DiffUtil.getLines(document, range.line1, range.line2)
+        val lines1 = getVcsLines(range)
+        val lines2 = getCurrentLines(range)
 
         var start = 0
         for (innerRange in innerRanges) {
@@ -322,14 +363,78 @@ abstract class BaseLineStatusTrackerTestCase : LightPlatformTestCase() {
         }
       }
     }
+
+
+    private fun getVcsLines(range: Range): List<String> = DiffUtil.getLines(vcsDocument, range.vcsLine1, range.vcsLine2)
+    private fun getCurrentLines(range: Range): List<String> = DiffUtil.getLines(document, range.line1, range.line2)
   }
 
+  protected class PartialTest(val partialTracker: PartialLocalLineStatusTracker) : Test(partialTracker) {
+    var defaultList: String = "Default"
+    val changelists = mutableSetOf(defaultList)
+
+    init {
+      partialTracker.initChangeTracking(defaultList, changelists.toList())
+    }
+
+
+    fun assertAffectedChangelists(vararg expected: String) {
+      assertSameElements(partialTracker.affectedChangeListsIds, expected.toList())
+    }
+
+    fun Range.assertChangelist(list: String) {
+      val localRange = this as PartialLocalLineStatusTracker.LocalRange
+      assertEquals(localRange.changelistId, list)
+    }
+
+
+    fun createChangelist(list: String) {
+      assertDoesntContain(changelists, list)
+      changelists.add(list)
+    }
+
+    fun removeChangelist(list: String) {
+      assertFalse(defaultList == list)
+      assertContainsElements(changelists, list)
+      partialTracker.changeListRemoved(list)
+      changelists.remove(list)
+    }
+
+    fun setDefaultChangelist(list: String) {
+      changelists.add(list)
+      partialTracker.defaultListChanged(defaultList, list)
+      defaultList = list
+    }
+
+
+    fun moveChanges(fromList: String, toList: String) {
+      assertContainsElements(changelists, fromList)
+      assertContainsElements(changelists, toList)
+      partialTracker.moveChanges(fromList, toList)
+    }
+
+    fun moveAllChangesTo(toList: String) {
+      assertContainsElements(changelists, toList)
+      partialTracker.moveChangesTo(toList)
+    }
+
+
+    fun Range.moveTo(list: String) {
+      val fakeChangelist = LocalChangeListImpl.createEmptyChangeListImpl(getProject(), list, list)
+      partialTracker.moveToChangelist(this, fakeChangelist)
+    }
+
+    fun moveChangesTo(lines: BitSet, list: String) {
+      val fakeChangelist = LocalChangeListImpl.createEmptyChangeListImpl(getProject(), list, list)
+      partialTracker.moveToChangelist(lines, fakeChangelist)
+    }
+  }
 
   companion object {
-    private fun parseInput(input: String) = input.replace('_', '\n')
+    internal fun parseInput(input: String) = input.replace('_', '\n')
 
     @JvmStatic
-    fun assertEqualRanges(expected: List<Range>, actual: List<Range>) {
+    fun assertEqualRanges(actual: List<Range>, expected: List<Range>) {
       assertOrderedEquals("", actual, expected) { r1, r2 ->
         r1.line1 == r2.line1 &&
         r1.line2 == r2.line2 &&

@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.nullize
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 abstract class LineStatusTrackerBase<R : Range> {
@@ -446,4 +447,8 @@ abstract class LineStatusTrackerBase<R : Range> {
     @JvmStatic protected fun Block.isSelectedByLine(line: Int) = DiffUtil.isSelectedByLine(line, this.range.start2, this.range.end2)
     @JvmStatic protected fun Block.isSelectedByLine(lines: BitSet) = DiffUtil.isSelectedByLine(lines, this.range.start2, this.range.end2)
   }
+
+
+  @TestOnly
+  fun getDocumentTrackerInTestMode() = documentTracker
 }
