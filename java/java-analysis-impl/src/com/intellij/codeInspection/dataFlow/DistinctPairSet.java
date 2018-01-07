@@ -28,23 +28,43 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     other.myData.forEach(myData::add);
   }
 
-  void add(int firstIndex, int secondIndex) {
-    myData.add(createPair(firstIndex, secondIndex));
+  boolean add(int firstIndex, int secondIndex, boolean ordered) {
+    if (ordered) {
+      TLongHashSet toAdd = new TLongHashSet();
+      toAdd.add(createPair(firstIndex, secondIndex, true));
+      for(DistinctPair pair : this) {
+        if (!pair.isOrdered()) continue;
+        if (pair.myFirst == secondIndex) {
+          if (pair.mySecond == firstIndex || myData.contains(createPair(pair.mySecond, firstIndex, true))) return false;
+          toAdd.add(createPair(firstIndex, pair.mySecond, true));
+        } else if (pair.mySecond == firstIndex) {
+          if (myData.contains(createPair(secondIndex, pair.myFirst, true))) return false;
+          toAdd.add(createPair(pair.myFirst, secondIndex, true));
+        }
+      }
+      myData.addAll(toAdd.toArray());
+    } else {
+      if (!myData.contains(createPair(firstIndex, secondIndex, true)) &&
+          !myData.contains(createPair(secondIndex, firstIndex, true))) {
+        myData.add(createPair(firstIndex, secondIndex, false));
+      }
+    }
+    return true;
   }
 
   @Override
   public boolean contains(Object o) {
-    if(!(o instanceof DistinctPair)) return false;
+    if (!(o instanceof DistinctPair)) return false;
     DistinctPair dp = (DistinctPair)o;
     EqClass first = dp.getFirst();
     EqClass second = dp.getSecond();
-    if(first.isEmpty() || second.isEmpty()) return false;
+    if (first.isEmpty() || second.isEmpty()) return false;
     int firstVal = first.get(0);
     int secondVal = second.get(0);
     int firstIndex = myState.getEqClassIndex(myState.getFactory().getValue(firstVal));
     int secondIndex = myState.getEqClassIndex(myState.getFactory().getValue(secondVal));
     if (firstIndex == -1 || secondIndex == -1) return false;
-    long pair = createPair(firstIndex, secondIndex);
+    long pair = createPair(firstIndex, secondIndex, dp.isOrdered());
     return myData.contains(pair) && decode(pair).equals(dp);
   }
 
@@ -103,51 +123,54 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     for (int i = 0; i < c2Pairs.size(); i++) {
       long c = c2Pairs.get(i);
       myData.remove(c);
-      myData.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c)));
+      if (c >= 0) {
+        myData.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c), false));
+      }
+      else if (low(c) == c2Index) {
+        myData.add(createPair(c1Index, high(c), true));
+      }
+      else {
+        myData.add(createPair(low(c), c1Index, true));
+      }
     }
     return true;
   }
 
-  public boolean areDistinct(int c1Index, int c2Index) {
-    long pair = createPair(c1Index, c2Index);
-    return myData.contains(pair);
+  public boolean areDistinctUnordered(int c1Index, int c2Index) {
+    return myData.contains(createPair(c1Index, c2Index, false));
   }
 
   private DistinctPair decode(long encoded) {
-    return new DistinctPair(low(encoded), high(encoded), myState.getEqClasses());
+    boolean ordered = encoded < 0;
+    encoded = Math.abs(encoded);
+    return new DistinctPair(low(encoded), high(encoded), ordered, myState.getEqClasses());
   }
 
-  private static long createPair(int i1, int i2) {
-    if (i1 < i2) {
-      long l = i1;
-      l <<= 32;
-      l += i2;
-      return l;
+  private static long createPair(int low, int high, boolean ordered) {
+    if (ordered) {
+      return -(((long)high << 32) + low);
     }
-    else {
-      long l = i2;
-      l <<= 32;
-      l += i1;
-      return l;
-    }
+    return low < high ? ((long)low << 32) + high : ((long)high << 32) + low;
   }
 
   private static int low(long l) {
-    return (int)l;
+    return (int)(Math.abs(l));
   }
 
   private static int high(long l) {
-    return (int)((l & 0xFFFFFFFF00000000L) >> 32);
+    return (int)((Math.abs(l) & 0xFFFFFFFF00000000L) >> 32);
   }
 
   static final class DistinctPair {
     private final int myFirst;
     private final int mySecond;
+    private final boolean myOrdered;
     private List<EqClass> myList;
 
-    private DistinctPair(int first, int second, List<EqClass> list) {
+    private DistinctPair(int first, int second, boolean ordered, List<EqClass> list) {
       myFirst = first;
       mySecond = second;
+      myOrdered = ordered;
       myList = list;
     }
 
@@ -161,22 +184,16 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       return myList.get(mySecond);
     }
 
-    public int getOtherClass(int eqClassIndex) {
-      if(myFirst == eqClassIndex) {
-        return mySecond;
-      }
-      if(mySecond == eqClassIndex) {
-        return myFirst;
-      }
-      return -1;
+    public boolean isOrdered() {
+      return myOrdered;
     }
 
     @Nullable
-    EqClass getOtherClass(EqClass eqClass) {
-      if (getFirst() == eqClass) {
+    public EqClass getOtherClass(int eqClassIndex) {
+      if (myFirst == eqClassIndex) {
         return getSecond();
       }
-      if (getSecond() == eqClass) {
+      if (mySecond == eqClassIndex) {
         return getFirst();
       }
       return null;
@@ -187,18 +204,19 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
       if (obj == this) return true;
       if (!(obj instanceof DistinctPair)) return false;
       DistinctPair that = (DistinctPair)obj;
+      if (that.myOrdered != this.myOrdered) return false;
       return that.getFirst().equals(this.getFirst()) && that.getSecond().equals(this.getSecond()) ||
-             that.getSecond().equals(this.getFirst()) && that.getFirst().equals(this.getSecond());
+             (!myOrdered && that.getSecond().equals(this.getFirst()) && that.getFirst().equals(this.getSecond()));
     }
 
     @Override
     public int hashCode() {
-      return getFirst().hashCode() + getSecond().hashCode();
+      return getFirst().hashCode() * (myOrdered ? 31 : 1) + getSecond().hashCode();
     }
 
     @Override
     public String toString() {
-      return "{" + myFirst + ", " + mySecond + "}";
+      return "{" + myFirst + (myOrdered ? "<" : "!=") + mySecond + "}";
     }
   }
 }

@@ -605,7 +605,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
 
-    return myDistinctClasses.areDistinct(c1Index, c2Index);
+    return myDistinctClasses.areDistinctUnordered(c1Index, c2Index);
   }
 
   @Override
@@ -898,8 +898,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (!applyRelation(dfaLeft, dfaRight, isNegated)) {
-      return false;
+    if (dfaRelation.getRelation() == RelationType.LT) {
+      if (!applyLessThanRelation(dfaLeft, dfaRight)) return false;
+    } else if (dfaRelation.getRelation() == RelationType.GT) {
+      if (!applyLessThanRelation(dfaRight, dfaLeft)) return false;
+    } else {
+      if (!applyRelation(dfaLeft, dfaRight, isNegated)) return false;
     }
     if (!checkCompareWithBooleanLiteral(dfaLeft, dfaRight, isNegated)) {
       return false;
@@ -986,11 +990,29 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
-      myDistinctClasses.add(c1Index, c2Index);
+      myDistinctClasses.add(c1Index, c2Index, false);
     }
     myCachedHash = null;
 
     return true;
+  }
+
+  private boolean applyLessThanRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight) {
+    if (isUnknownState(dfaLeft) || isUnknownState(dfaRight)) {
+      return true;
+    }
+
+    // DfaConstValue || DfaVariableValue
+    Integer c1Index = getOrCreateEqClassIndex(dfaLeft);
+    Integer c2Index = getOrCreateEqClassIndex(dfaRight);
+    if (c1Index == null || c2Index == null) {
+      return true;
+    }
+
+    if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
+    if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
+    myCachedHash = null;
+    return myDistinctClasses.add(c1Index, c2Index, true);
   }
 
   /**
@@ -1215,7 +1237,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (eqClass.findConstant(true) != null) return true;
 
     for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
-      EqClass otherClass = pair.getOtherClass(eqClass);
+      EqClass otherClass = pair.getOtherClass(eqClassIndex);
       if (otherClass != null && otherClass.findConstant(true) != null) {
         return true;
       }
@@ -1305,7 +1327,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
         for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
           DistinctPairSet.DistinctPair pair = iterator.next();
-          if (pair.getOtherClass(varClassIndex) != -1) {
+          if (pair.getOtherClass(varClassIndex) != null) {
             iterator.remove();
           }
         }
@@ -1313,8 +1335,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       else if (varClass.containsConstantsOnly()) {
         for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
           DistinctPairSet.DistinctPair pair = iterator.next();
-          int other = pair.getOtherClass(varClassIndex);
-          if (other != -1 && myEqClasses.get(other).containsConstantsOnly()) {
+          EqClass other = pair.getOtherClass(varClassIndex);
+          if (other != null && other.containsConstantsOnly()) {
             iterator.remove();
           }
         }

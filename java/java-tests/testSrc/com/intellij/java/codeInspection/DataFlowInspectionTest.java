@@ -580,4 +580,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testRedundantAssignment() { doTest(); }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
+  public void testLessThanRelations() { doTest(); }
 }
