@@ -69,7 +69,7 @@ public class TestUtil {
         Disposable.class, Module.class, String.class, String.class, String[].class));
       methodHandle.invoke(projectDisposable, module, libName, libPath, new String[]{jarArr});
     } catch (Throwable throwable) {
-      System.err.println(throwable);
+      PsiTestUtil.addLibrary(module, libName, libPath, jarArr);
     }
   }
 

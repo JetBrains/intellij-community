@@ -2,8 +2,8 @@
 <problems>
   <problem>
     <file>Test.java</file>
-    <line>11</line>
-    <entry_point TYPE="field" FQNAME="Test finalPackageProperty"/>
+    <line>2</line>
+    <entry_point TYPE="field" FQNAME="Test finalIntProperty"/>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
     <description>Not generating setter for this field: Setters cannot be generated for final fields.</description>
   </problem>
@@ -18,24 +18,24 @@
 
   <problem>
     <file>Test.java</file>
-    <line>14</line>
-    <entry_point TYPE="field" FQNAME="Test finalPrivateProperty"/>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
-    <description>Not generating setter for this field: Setters cannot be generated for final fields.</description>
-  </problem>
-
-  <problem>
-    <file>Test.java</file>
-    <line>2</line>
-    <entry_point TYPE="field" FQNAME="Test finalIntProperty"/>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
-    <description>Not generating setter for this field: Setters cannot be generated for final fields.</description>
-  </problem>
-
-  <problem>
-    <file>Test.java</file>
     <line>8</line>
     <entry_point TYPE="field" FQNAME="Test finalProtectedProperty"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Not generating setter for this field: Setters cannot be generated for final fields.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>11</line>
+    <entry_point TYPE="field" FQNAME="Test finalPackageProperty"/>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
+    <description>Not generating setter for this field: Setters cannot be generated for final fields.</description>
+  </problem>
+
+  <problem>
+    <file>Test.java</file>
+    <line>14</line>
+    <entry_point TYPE="field" FQNAME="Test finalPrivateProperty"/>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Lombok annotations inspection</problem_class>
     <description>Not generating setter for this field: Setters cannot be generated for final fields.</description>
   </problem>
