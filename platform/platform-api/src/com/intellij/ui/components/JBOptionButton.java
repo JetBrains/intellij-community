@@ -16,16 +16,12 @@
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
-import com.intellij.openapi.wm.IdeGlassPane;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -35,13 +31,11 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class JBOptionButton extends JButton implements MouseMotionListener, Weighted {
+public class JBOptionButton extends JButton implements Weighted {
   private Rectangle myMoreRec;
   private Rectangle myMoreRecMouse;
   private Action[] myOptions;
@@ -54,9 +48,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   private Set<OptionInfo> myOptionInfos = new HashSet<>();
   private boolean myOkToProcessDefaultMnemonics = true;
 
-  private IdeGlassPane myGlassPane;
-  private final Disposable myDisposable = Disposer.newDisposable();
-
   public JBOptionButton(Action action, Action[] options) {
     super(action);
     myMoreRec = new Rectangle(0, 0, AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
@@ -66,65 +57,8 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
   }
 
   @Override
-  public void addNotify() {
-    super.addNotify();
-    if (!ScreenUtil.isStandardAddRemoveNotify(this))
-      return;
-    myGlassPane = IdeGlassPaneUtil.find(this);
-    if (myGlassPane != null) {
-      myGlassPane.addMouseMotionPreprocessor(this, myDisposable);
-    }
-  }
-
-  @Override
-  public void removeNotify() {
-    super.removeNotify();
-    if (!ScreenUtil.isStandardAddRemoveNotify(this))
-      return;
-    Disposer.dispose(myDisposable);
-  }
-
-  @Override
   public double getWeight() {
     return 0.5;
-  }
-
-  @Override
-  public void mouseDragged(MouseEvent e) {
-  }
-
-  @Override
-  public void mouseMoved(MouseEvent e) {
-    if(isSimpleButton()) {
-      return;
-    }
-
-    final MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, getParent());
-    final boolean insideRec = getBounds().contains(event.getPoint());
-    boolean buttonsNotPressed = (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK |
-                                                       InputEvent.BUTTON3_DOWN_MASK)) == 0;
-    if (!myPopupIsShowing && insideRec && buttonsNotPressed) {
-      showPopup(null, false);
-    } else if (myPopupIsShowing && !insideRec) {
-      final Component over = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-      if (over != null && myPopup.isShowing()) {
-        final Rectangle rec = new Rectangle(myPopup.getLocationOnScreen(), myPopup.getSize());
-        int delta = 15;
-        rec.x -= delta;
-        rec.width += delta * 2;
-        rec.y -= delta;
-        rec.height += delta * 2;
-
-        final Point eventPoint = e.getPoint();
-        SwingUtilities.convertPointToScreen(eventPoint, e.getComponent());
-        
-        if (rec.contains(eventPoint)) {
-          return;
-        }
-      }
-
-      closePopup();
-    }
   }
 
   @Override
@@ -251,7 +185,6 @@ public class JBOptionButton extends JButton implements MouseMotionListener, Weig
 
   private void applyOptions() {
     myPopup = fillMenu();
-    enableEvents(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
   }
 
   private boolean isSimpleButton() {
