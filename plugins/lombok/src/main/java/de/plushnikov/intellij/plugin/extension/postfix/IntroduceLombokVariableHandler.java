@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
@@ -21,19 +20,27 @@ public class IntroduceLombokVariableHandler extends IntroduceVariableHandler {
     this.selectedTypeFQN = selectedTypeFQN;
   }
 
+  /*
+   * This method with JavaReplaceChoice parameter exists from 2017.2
+   */
   @Override
-  public final IntroduceVariableSettings getSettings(Project project, Editor editor, final PsiExpression expr,
-                                                     PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
-                                                     boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
-                                                     PsiElement anchor, OccurrencesChooser.ReplaceChoice replaceChoice) {
+  public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,
+                                               PsiExpression[] occurrences, TypeSelectorManagerImpl typeSelectorManager,
+                                               boolean declareFinalIfAll, boolean anyAssignmentLHS, InputValidator validator,
+                                               PsiElement anchor, JavaReplaceChoice replaceChoice) {
     final IntroduceVariableSettings variableSettings;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       variableSettings = new UnitTestMockVariableSettings(expr);
     } else {
-      variableSettings = super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS, validator, anchor, replaceChoice);
+      variableSettings = super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll,
+        anyAssignmentLHS, validator, anchor, replaceChoice);
     }
 
+    return getIntroduceVariableSettings(project, variableSettings);
+  }
+
+  private IntroduceVariableSettings getIntroduceVariableSettings(Project project, IntroduceVariableSettings variableSettings) {
     final PsiClassType psiClassType = PsiType.getTypeByName(selectedTypeFQN, project, GlobalSearchScope.projectScope(project));
     if (null != psiClassType) {
       return new IntroduceVariableSettingsDelegate(variableSettings, psiClassType);
