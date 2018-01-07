@@ -530,7 +530,7 @@ public class ReplaceInProjectManager {
     if (textOffset < 0 || textOffset >= document.getTextLength()) {
       return false;
     }
-    if (textEndOffset < 0 || textOffset > document.getTextLength()) {
+    if (textEndOffset < 0 || textEndOffset > document.getTextLength()) {
       return false;
     }
     FindManager findManager = FindManager.getInstance(myProject);
