@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.InspectionTestCase;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathUtil;
+import de.plushnikov.TestUtil;
 import de.plushnikov.intellij.plugin.inspection.LombokInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +73,7 @@ public class InspectionTest extends InspectionTestCase {
   @Override
   protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
     super.setupRootModel(testDir, sourceDir, sdkName);
-    PsiTestUtil.addLibrary(getModule(), "Lombok", PathUtil.toSystemIndependentName(new File(getTestDataPath(), "lib").getAbsolutePath()), "lombok.jar");
+    TestUtil.addLibrary(getTestRootDisposable(), getModule(), "Lombok", PathUtil.toSystemIndependentName(new File(getTestDataPath(), "lib").getAbsolutePath()), "lombok.jar");
   }
 
 }

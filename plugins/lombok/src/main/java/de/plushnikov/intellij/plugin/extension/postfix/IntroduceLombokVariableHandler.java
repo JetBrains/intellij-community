@@ -21,7 +21,8 @@ public class IntroduceLombokVariableHandler extends IntroduceVariableHandler {
   }
 
   /*
-   * This method with JavaReplaceChoice parameter exists from 2017.2
+   * This method with OccurrencesChooser.ReplaceChoice parameter exists up to 2017.2
+   * Started from 2017.2 it use JavaReplaceChoice parameter
    */
   @Override
   public IntroduceVariableSettings getSettings(Project project, Editor editor, PsiExpression expr,

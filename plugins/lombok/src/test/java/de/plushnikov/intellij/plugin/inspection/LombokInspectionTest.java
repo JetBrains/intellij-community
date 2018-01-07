@@ -9,10 +9,10 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.PathUtil;
 import com.siyeh.ig.LightInspectionTestCase;
+import de.plushnikov.TestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,7 +27,8 @@ public abstract class LombokInspectionTest extends LightInspectionTestCase {
     super.setUp();
     final String lombokLibPath = PathUtil.toSystemIndependentName(new File(TEST_DATA_INSPECTION_DIRECTORY, "lib").getAbsolutePath());
     VfsRootAccess.allowRootAccess(lombokLibPath);
-    PsiTestUtil.addLibrary(getModule(), "Lombok", lombokLibPath, "lombok.jar");
+
+    TestUtil.addLibrary(myFixture, getModule(), "Lombok", lombokLibPath, "lombok.jar");
   }
 
   @NotNull
