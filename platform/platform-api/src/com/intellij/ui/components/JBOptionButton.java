@@ -81,11 +81,7 @@ public class JBOptionButton extends JButton implements Weighted {
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (!isSimpleButton() && myMoreRec.x < event.getX()) {
-      return myOptionTooltipText;
-    } else {
-      return super.getToolTipText(event);
-    }
+    return !isSimpleButton() ? myOptionTooltipText : super.getToolTipText(event);
   }
 
   @Override

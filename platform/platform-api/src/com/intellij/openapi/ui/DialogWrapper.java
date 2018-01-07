@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -55,6 +54,8 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getKeystrokeText;
 
 /**
  * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
@@ -738,9 +739,9 @@ public abstract class DialogWrapper {
   @NotNull
   private JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
+    String tooltip = String.format("Show drop-down menu (%s)", getKeystrokeText(SHOW_OPTION_KEYSTROKE));
+    optionButton.setOptionTooltipText(tooltip);
     optionButton.setOkToProcessDefaultMnemonics(false);
-    optionButton.setOptionTooltipText(
-      "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
 
     final Set<JBOptionButton.OptionInfo> infos = optionButton.getOptionInfos();
     for (final JBOptionButton.OptionInfo eachInfo : infos) {
@@ -1867,7 +1868,7 @@ public abstract class DialogWrapper {
 
   private void recordAction(String name, AWTEvent event) {
     if (event instanceof KeyEvent) {
-      String shortcut = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
+      String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
       ActionsCollector.getInstance().record(name + " " + shortcut);
     }
   }
