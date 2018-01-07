@@ -16,6 +16,8 @@
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
@@ -31,6 +33,7 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
@@ -54,6 +57,8 @@ public class JBOptionButton extends JButton implements Weighted {
 
     myOptions = options;
     applyOptions();
+
+    installShowPopupShortcut();
   }
 
   @Override
@@ -179,6 +184,11 @@ public class JBOptionButton extends JButton implements Weighted {
     repaint();
   }
 
+  private void installShowPopupShortcut() {
+    DumbAwareAction.create(e -> showPopup(null, true))
+      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0)), this);
+  }
+
   private void applyOptions() {
     myPopup = fillMenu();
   }
@@ -186,7 +196,6 @@ public class JBOptionButton extends JButton implements Weighted {
   private boolean isSimpleButton() {
     return myOptions == null || myOptions.length == 0;
   }
-
 
   private JPopupMenu fillMenu() {
     final JPopupMenu result = new JBPopupMenu();
