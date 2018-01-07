@@ -144,7 +144,7 @@ public class JBOptionButton extends JButton implements Weighted {
 
       Action selection = actionToSelect;
       if (selection == null && myOptions.length > 0 && ensureSelection) {
-        selection = getAction();
+        selection = myOptions[0];
       }
 
       if (selection == null) return;
