@@ -92,6 +92,8 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testNullableField() { doTest(); }
+
   private void doTest() {
     doTest(false);
   }
