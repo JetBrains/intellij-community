@@ -60,9 +60,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract <T> T runProcess(@NotNull Computable<T> process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
   @Override
-  public ProgressIndicator getProgressIndicator() {
-    return null;
-  }
+  public abstract ProgressIndicator getProgressIndicator();
 
   public static void progress(@NotNull String text) throws ProcessCanceledException {
     progress(text, "");

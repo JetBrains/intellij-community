@@ -122,8 +122,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
       final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
-        //can't be
-        return null;
+        throw new IllegalStateException("There should be at least one inspection profile");
       }
       profile = profileManager.getProfile(availableProfileNames[0], true);
     }
