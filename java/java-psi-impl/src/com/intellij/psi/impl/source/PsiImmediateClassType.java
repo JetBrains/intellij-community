@@ -202,6 +202,9 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
         }
         buildText(baseClass, baseResolveResult.getSubstitutor(), buffer, textType, false);
       }
+      else {
+        buffer.append(((PsiAnonymousClass)aClass).getBaseClassReference().getCanonicalText());
+      }
       return;
     }
 
