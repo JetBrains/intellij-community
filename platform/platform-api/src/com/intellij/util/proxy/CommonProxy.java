@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
+// Copyright 2000-2018 JetBrains s.r.o.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import gnu.trove.THashMap;
@@ -50,13 +49,7 @@ public class CommonProxy extends ProxySelector {
   private static final AtomicReference<Map<String, String>> ourProps = new AtomicReference<>();
 
   static {
-    if (isUseProxySelector()) {
-      ProxySelector.setDefault(ourInstance);
-    }
-  }
-
-  private static boolean isUseProxySelector() {
-    return SystemProperties.getBooleanProperty("idea.set.proxy.selector", false);
+    ProxySelector.setDefault(ourInstance);
   }
 
   private final Object myLock = new Object();
@@ -74,10 +67,6 @@ public class CommonProxy extends ProxySelector {
   }
 
   public static void isInstalledAssertion() {
-    if (!isUseProxySelector()) {
-      return;
-    }
-
     final ProxySelector aDefault = ProxySelector.getDefault();
     if (ourInstance != aDefault) {
       // to report only once
