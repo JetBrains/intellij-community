@@ -55,8 +55,8 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val PROJECT_FILE = "\$PROJECT_FILE$"
-const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
+internal const val PROJECT_FILE = "\$PROJECT_FILE$"
+internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 
 val IProjectStore.nameFile: Path
   get() = Paths.get(directoryStorePath, ProjectImpl.NAME_FILE)
@@ -64,7 +64,7 @@ val IProjectStore.nameFile: Path
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
-abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
+internal abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -88,6 +88,11 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   }
 
   override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
+
+  /**
+   * `null` for default or non-directory based project.
+   */
+  override fun getProjectConfigDir() = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
 
   override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
