@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.DialogWrapperButtonLayout;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
@@ -59,18 +60,13 @@ public class JBOptionButton extends JButton implements Weighted {
     applyOptions();
 
     installShowPopupShortcut();
+
+    putClientProperty(DialogWrapperButtonLayout.EXTRA_WIDTH_KEY, myMoreRec.width);
   }
 
   @Override
   public double getWeight() {
     return 0.5;
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    final Dimension size = super.getPreferredSize();
-    size.width += myMoreRec.width;
-    return size;
   }
 
   @Override
