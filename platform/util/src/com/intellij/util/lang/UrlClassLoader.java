@@ -108,6 +108,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAllowBootstrapResources;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
+    private boolean myErrorOnMissingJar = true;
 
     private Builder() { }
 
@@ -151,6 +152,7 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
     /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
     public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
@@ -191,7 +193,8 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
+                                builder.myErrorOnMissingJar);
   }
 
   public static URL internProtocol(@NotNull URL url) {
