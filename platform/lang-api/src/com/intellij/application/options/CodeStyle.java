@@ -39,6 +39,7 @@ public class CodeStyle {
    */
   @NotNull
   public static CodeStyleSettings getDefaultSettings() {
+    //noinspection deprecation
     return CodeStyleSettingsManager.getInstance().getCurrentSettings();
   }
 
@@ -64,6 +65,19 @@ public class CodeStyle {
     if (file.isValid()) {
       Project project = file.getProject();
       return CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+    }
+    return getDefaultSettings();
+  }
+
+
+  public static CodeStyleSettings getSettings(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    if (project != null) {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+      if (file != null) {
+        return getSettings(file);
+      }
+      return getSettings(project);
     }
     return getDefaultSettings();
   }

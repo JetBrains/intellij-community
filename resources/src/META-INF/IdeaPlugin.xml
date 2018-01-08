@@ -143,12 +143,13 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
 
     <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
 
     <editorNotificationProvider implementation="com.intellij.execution.jshell.SnippetEditorDecorator"/>
-
-    <codeInsight.implementedAtRuntime implementation="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeConditionImpl"/>
 
     <applicationService serviceInterface="com.intellij.debugger.engine.DebuggerUtils"
                         serviceImplementation="com.intellij.debugger.impl.DebuggerUtilsImpl"/>

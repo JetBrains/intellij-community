@@ -101,9 +101,9 @@ public class DarculaButtonUI extends BasicButtonUI {
             g2.translate(r.x, r.y);
             g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColor1(), r.x + r.width,
                                                 r.y + r.height, getButtonColor2()));
-            double arc = JBUI.scale(2.0f);
-            double bw = DarculaUIUtil.bw();
-            g2.fill(new RoundRectangle2D.Double(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
+            float arc = JBUI.scale(2.0f);
+            float bw = DarculaUIUtil.bw();
+            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
           }
           else {
             g2.setPaint(isDefaultButton(c) ?

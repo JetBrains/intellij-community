@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.plugins.groovy.intentions.conversions
 
 import com.intellij.openapi.editor.Editor
@@ -31,7 +33,6 @@ class RenameClassToFileNameIntention : Intention() {
     var clazz: PsiClass? = null
     val predicate = ClassNameDiffersFromFileNamePredicate(classConsumer = Consumer { clazz = it })
     if (!predicate.satisfiedBy(element)) return
-    assert(clazz != null)
-    RefactoringFactory.getInstance(project).createRename(clazz, myFileName).run()
+    RefactoringFactory.getInstance(project).createRename(clazz!!, myFileName).run()
   }
 }

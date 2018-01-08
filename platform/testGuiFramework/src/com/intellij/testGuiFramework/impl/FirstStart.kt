@@ -148,7 +148,7 @@ abstract class FirstStart(val ideType: IdeType) {
   protected fun acceptAgreement() {
     if (!needToShowAgreement()) return
     with(myRobot) {
-      val policyAgreementTitle = "Licence Agreement"
+      val policyAgreementTitle = "License Agreement"
       try {
         LOG.info("Waiting for '$policyAgreementTitle' dialog")
         with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
@@ -176,6 +176,21 @@ abstract class FirstStart(val ideType: IdeType) {
       LOG.info("Click OK on 'Do not import settings'")
       radioButton("Do not import settings").select()
       button("OK").click()
+    }
+  }
+
+  protected fun acceptDataSharing() {
+    with(myRobot) {
+      LOG.info("Accepting Data Sharing")
+      val title = "Data Sharing Options"
+      try {
+        dialog(title, timeoutSeconds = 5)
+        button("OK").click()
+        LOG.info("Data sharing accepted")
+      } catch (e: WaitTimedOutError) {
+        LOG.info("Data sharing dialog hasn't been shown")
+        return
+      }
     }
   }
 

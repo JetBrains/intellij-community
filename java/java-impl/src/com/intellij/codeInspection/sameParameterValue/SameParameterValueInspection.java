@@ -21,11 +21,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -44,8 +46,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -115,7 +116,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
         }
       }
       if (parameter == null) return;
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, parameter)) return;
+     
 
       final PsiExpression defToInline;
       try {
@@ -135,14 +136,30 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
 
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-      JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
-      final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
-      for (PsiReference reference : refsToInline) {
-        PsiElement referenceElement = reference.getElement();
-        if (referenceElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
-          conflicts.putValue(referenceElement, "Parameter has write usages. Inline is not supported");
-          break;
+      Collection<PsiMethod> methods = new ArrayList<>();
+      methods.add(method);
+      Project project = method.getProject();
+      if (!ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(() -> { methods.addAll(OverridingMethodsSearch.search(method).findAll()); },
+                                             "Search for Overriding Methods...", true, project)) {
+        return;
+      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methods, true)) return;
+
+      int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+      Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
+      for (PsiMethod psiMethod : methods) {
+        PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
+        JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, psiMethod, psiParameter);
+        final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
+        for (PsiReference reference : refsToInline) {
+          PsiElement referenceElement = reference.getElement();
+          if (referenceElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+            conflicts.putValue(referenceElement, "Parameter has write usages. Inline is not supported");
+            break;
+          }
         }
+        paramsToInline.put(psiParameter, refsToInline);
       }
       if (!conflicts.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -150,27 +167,30 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
             throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
           }
         }
-        else if (!new ConflictsDialog(parameter.getProject(), conflicts).showAndGet()) {
+        else if (!new ConflictsDialog(project, conflicts).showAndGet()) {
           return;
         }
       }
 
       ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
-          int idx = 0;
-          for (PsiReference reference : refsToInline) {
-            if (reference instanceof PsiJavaCodeReferenceElement) {
-              exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, (PsiJavaCodeReferenceElement)reference);
+        for (Map.Entry<PsiParameter, Collection<PsiReference>> entry : paramsToInline.entrySet()) {
+          Collection<PsiReference> refsToInline = entry.getValue();
+          try {
+            PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
+            int idx = 0;
+            for (PsiReference reference : refsToInline) {
+              if (reference instanceof PsiJavaCodeReferenceElement) {
+                exprs[idx++] = InlineUtil.inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference);
+              }
+            }
+
+            for (final PsiExpression expr : exprs) {
+              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
             }
           }
-
-          for (final PsiExpression expr : exprs) {
-            if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
           }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
         }
       });
 

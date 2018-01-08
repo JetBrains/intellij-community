@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -471,7 +472,8 @@ public class ParenthesesUtils {
       return false;
     }
     final PsiExpression child = expression.getExpression();
-    if (child == null) {
+    if (child == null || 
+        child instanceof PsiLambdaExpression && PsiUtil.skipParenthesizedExprUp(parent) instanceof PsiReferenceExpression) {
       return true;
     }
     if (parent instanceof PsiArrayAccessExpression) {

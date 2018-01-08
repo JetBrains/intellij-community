@@ -31,8 +31,9 @@ public abstract class InputDataDiffBuilder<Key, Value> {
   protected InputDataDiffBuilder(int id) {myInputId = id;}
   /**
    * produce a diff between existing data and newData and consume result to addProcessor, updateProcessor and removeProcessor.
+   * @return false if there is no difference and true otherwise
    */
-  public abstract void differentiate(@NotNull Map<Key, Value> newData,
+  public abstract boolean differentiate(@NotNull Map<Key, Value> newData,
                                      @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
                                      @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
                                      @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException;

@@ -268,12 +268,36 @@ public class FoldingUpdate {
     @NotNull
     public final FoldingDescriptor descriptor;
     public final PsiElement element;
+    public final String signature;
     public final boolean collapsedByDefault;
 
     private RegionInfo(@NotNull FoldingDescriptor descriptor, @NotNull PsiElement psiElement) {
       this.descriptor = descriptor;
       this.element = psiElement;
       this.collapsedByDefault = FoldingPolicy.isCollapseByDefault(psiElement);
+      this.signature = createSignature(psiElement);
+    }
+
+    private static String createSignature(@NotNull PsiElement element) {
+      String signature = FoldingPolicy.getSignature(element);
+      if (signature != null) {
+        PsiFile containingFile = element.getContainingFile();
+        PsiElement restoredElement = FoldingPolicy.restoreBySignature(containingFile, signature);
+        if (!element.equals(restoredElement)) {
+          StringBuilder trace = new StringBuilder();
+          PsiElement restoredAgain = FoldingPolicy.restoreBySignature(containingFile, signature, trace);
+          LOG.error("element: " + element + "(" + element.getText()
+                    + "); restoredElement: " + restoredElement
+                    + "; signature: '" + signature
+                    + "'; file: " + containingFile
+                    + "; injected: " + InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment(containingFile)
+                    + "; languages: " + containingFile.getViewProvider().getLanguages()
+                    + "; restored again: " + restoredAgain +
+                    "; restore produces same results: " + (restoredAgain == restoredElement)
+                    + "; trace:\n" + trace);
+        }
+      }
+      return signature;
     }
 
     @Override

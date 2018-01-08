@@ -54,6 +54,19 @@ public class PyRequirement {
   @NotNull
   private static final String NAME_GROUP = "name";
 
+  // PEP-508
+  // https://www.python.org/dev/peps/pep-0508/
+
+  @NotNull
+  private static final String IDENTIFIER_REGEXP = "[A-Za-z0-9]([-_\\.]?[A-Za-z0-9])*";
+
+  @NotNull
+  private static final String NAME_REGEXP = "(?<" + NAME_GROUP + ">" + IDENTIFIER_REGEXP + ")";
+
+  @NotNull
+  private static final String EXTRAS_REGEXP =
+    "\\[" + IDENTIFIER_REGEXP + "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*" + "\\]";
+
   // archive-related regular expressions
 
   @NotNull
@@ -109,11 +122,23 @@ public class PyRequirement {
   private static final String VCS_EGG_AFTER_SUBDIR_GROUP = "egga";
 
   @NotNull
+  private static final String VCS_EXTRAS_BEFORE_SUBDIR_GROUP = "extrasb";
+
+  @NotNull
+  private static final String VCS_EXTRAS_AFTER_SUBDIR_GROUP = "extrasa";
+
+  @NotNull
   private static final String VCS_PARAMS_REGEXP =
     "(" +
-    "(#egg=(?<" + VCS_EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s]+)(&subdirectory=\\S+)?)" +
+    "(" +
+    "#egg=(?<" + VCS_EGG_BEFORE_SUBDIR_GROUP + ">[^&\\s\\[\\]]+)(?<" + VCS_EXTRAS_BEFORE_SUBDIR_GROUP + ">" + EXTRAS_REGEXP + ")?" +
+    "(&subdirectory=\\S+)?" +
+    ")" +
     "|" +
-    "(#subdirectory=[^&\\s]+&egg=(?<" + VCS_EGG_AFTER_SUBDIR_GROUP + ">\\S+))" +
+    "(" +
+    "#subdirectory=[^&\\s]+" +
+    "&egg=(?<" + VCS_EGG_AFTER_SUBDIR_GROUP + ">[^\\s\\[\\]]+)(?<" + VCS_EXTRAS_AFTER_SUBDIR_GROUP + ">" + EXTRAS_REGEXP + ")?" +
+    ")" +
     ")?";
 
   @NotNull
@@ -146,25 +171,14 @@ public class PyRequirement {
   // requirement-related regular expressions
   // don't forget to update calculateRequirementInstallOptions(Matcher) after this section changing
 
-  // PEP-508 + PEP-440
-  // https://www.python.org/dev/peps/pep-0508/
-  // https://www.python.org/dev/peps/pep-0440/
-  @NotNull
-  private static final String IDENTIFIER_REGEXP = "[A-Za-z0-9]([-_\\.]?[A-Za-z0-9])*";
-
-  @NotNull
-  private static final String REQUIREMENT_NAME_REGEXP = "(?<" + NAME_GROUP + ">" + IDENTIFIER_REGEXP + ")";
-
   @NotNull
   private static final String REQUIREMENT_EXTRAS_GROUP = "extras";
 
   @NotNull
-  private static final String REQUIREMENT_EXTRAS_REGEXP =
-    "(?<" + REQUIREMENT_EXTRAS_GROUP + ">" +
-    "\\[" +
-    IDENTIFIER_REGEXP + "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + IDENTIFIER_REGEXP + ")*" +
-    "\\]" +
-    ")?";
+  private static final String REQUIREMENT_EXTRAS_REGEXP = "(?<" + REQUIREMENT_EXTRAS_GROUP + ">" + EXTRAS_REGEXP + ")?";
+
+  // PEP-440
+  // https://www.python.org/dev/peps/pep-0440/
 
   @NotNull
   private static final String REQUIREMENT_VERSIONS_SPECS_GROUP = "versionspecs";
@@ -190,7 +204,7 @@ public class PyRequirement {
   @NotNull
   private static final Pattern REQUIREMENT = Pattern.compile(
     "(?<" + REQUIREMENT_GROUP + ">" +
-    REQUIREMENT_NAME_REGEXP +
+    NAME_REGEXP +
     LINE_WS_REGEXP + "*" +
     REQUIREMENT_EXTRAS_REGEXP +
     LINE_WS_REGEXP + "*" +
@@ -458,8 +472,9 @@ public class PyRequirement {
     final Matcher matcher = ARCHIVE_URL.matcher(line);
 
     if (matcher.matches()) {
-      return createVcsOrArchiveRequirement(Collections.singletonList(dropComments(line, matcher)),
-                                           parseNameAndVersionFromVcsOrArchive(matcher.group(NAME_GROUP)));
+      return createVcsOrArchiveRequirement(parseNameAndVersionFromVcsOrArchive(matcher.group(NAME_GROUP)),
+                                           Collections.singletonList(dropComments(line, matcher)),
+                                           null);
     }
 
     return null;
@@ -564,16 +579,28 @@ public class PyRequirement {
   }
 
   @NotNull
-  private static PyRequirement createVcsOrArchiveRequirement(@NotNull List<String> installOptions,
-                                                             @NotNull Pair<String, String> nameAndVersion) {
+  private static PyRequirement createVcsOrArchiveRequirement(@NotNull Pair<String, String> nameAndVersion,
+                                                             @NotNull List<String> installOptions,
+                                                             @Nullable String extras) {
     final String name = nameAndVersion.getFirst();
     final String version = nameAndVersion.getSecond();
 
     if (version == null) {
-      return new PyRequirement(name, Collections.emptyList(), installOptions);
+      if (extras == null) {
+        return new PyRequirement(name, Collections.emptyList(), installOptions);
+      }
+      else {
+        return new PyRequirement(name, Collections.emptyList(), installOptions, extras);
+      }
     }
 
-    return new PyRequirement(name, Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ)), installOptions);
+    final List<PyRequirementVersionSpec> versionSpecs = Collections.singletonList(calculateVersionSpec(version, PyRequirementRelation.EQ));
+    if (extras == null) {
+      return new PyRequirement(name, versionSpecs, installOptions);
+    }
+    else {
+      return new PyRequirement(name, versionSpecs, installOptions, extras);
+    }
   }
 
   @NotNull
@@ -585,7 +612,7 @@ public class PyRequirement {
     final Pair<String, String> nameAndVersion =
       parseNameAndVersionFromVcsOrArchive(egg == null ? StringUtil.trimEnd(project, ".git") : egg);
 
-    return createVcsOrArchiveRequirement(calculateVcsInstallOptions(matcher), nameAndVersion);
+    return createVcsOrArchiveRequirement(nameAndVersion, calculateVcsInstallOptions(matcher), getVcsExtras(matcher));
   }
 
   @NotNull
@@ -741,6 +768,13 @@ public class PyRequirement {
     }
 
     return path;
+  }
+
+  @Nullable
+  private static String getVcsExtras(@NotNull Matcher matcher) {
+    final String beforeSubdir = matcher.group(VCS_EXTRAS_BEFORE_SUBDIR_GROUP);
+
+    return beforeSubdir == null ? matcher.group(VCS_EXTRAS_AFTER_SUBDIR_GROUP) : beforeSubdir;
   }
 
   @Nullable

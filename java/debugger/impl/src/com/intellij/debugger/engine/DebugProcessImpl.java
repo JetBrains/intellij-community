@@ -2022,6 +2022,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             }
           }));
         }
+        else {
+          fail();
+        }
       }
 
       @Override

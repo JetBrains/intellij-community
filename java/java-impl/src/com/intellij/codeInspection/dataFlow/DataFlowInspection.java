@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
@@ -99,6 +100,14 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(methodRef));
     fixes.add(new ReplaceWithTernaryOperatorFix.ReplaceMethodRefWithTernaryOperatorFix());
     return fixes;
+  }
+
+  @Override
+  protected LocalQuickFix createRemoveAssignmentFix(PsiAssignmentExpression assignment) {
+    if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
+      return null;
+    }
+    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
   }
 
   @NotNull

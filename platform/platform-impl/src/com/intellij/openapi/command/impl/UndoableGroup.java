@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -34,7 +36,7 @@ class UndoableGroup {
   private EditorAndState myStateAfter;
   private final Project myProject;
   private final UndoConfirmationPolicy myConfirmationPolicy;
-  private final boolean myTemporary;
+  private boolean myTemporary;
 
   private boolean myValid;
 
@@ -58,7 +60,7 @@ class UndoableGroup {
     myTransparent = transparent;
     myValid = valid;
     composeStartFinishGroup(manager.getUndoStacksHolder());
-    myTemporary = !manager.getRedoStacksHolder().collectClashingActions(this).isEmpty();
+    myTemporary = transparent;
   }
 
   public boolean isGlobal() {
@@ -69,8 +71,18 @@ class UndoableGroup {
     return myTransparent;
   }
 
+  /**
+   * We allow transparent actions to be performed while we're in the middle of undo stack, without breaking it (i.e. without dropping
+   * redo stack contents). Such actions are stored in undo stack as 'temporary' actions, and are dropped (not further kept in stacks)
+   * on undo/redo. If a non-transparent action is performed after a temporary one, the latter is converted to normal (permanent) action,
+   * and redo stack is cleared.
+   */
   public boolean isTemporary() {
     return myTemporary;
+  }
+
+  public void makePermanent() {
+    myTemporary = false;
   }
 
   public boolean isUndoable() {

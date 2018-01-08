@@ -20,7 +20,7 @@
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="Groovy" level="project" />
     <orderEntry type="module" module-name="testRunner" />
-    <orderEntry type="module" module-name="smRunner" />
+    <orderEntry type="module" module-name="smRunner" exported="" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />

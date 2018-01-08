@@ -25,7 +25,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -940,7 +939,7 @@ public class ExpressionUtils {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) return qualifier;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
-    PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+    PsiMember member = tryCast(ref.resolve(), PsiMember.class);
     if (member != null) {
       PsiClass memberClass = member.getContainingClass();
       if (memberClass != null) {
@@ -978,7 +977,7 @@ public class ExpressionUtils {
     if(newName.equals(nameElement.getText())) return;
     PsiClass aClass = null;
     if(ref.getQualifierExpression() == null) {
-      PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+      PsiMember member = tryCast(ref.resolve(), PsiMember.class);
       if (member != null && ImportUtils.isStaticallyImported(member, ref)) {
         aClass = member.getContainingClass();
       }
@@ -987,7 +986,7 @@ public class ExpressionUtils {
     PsiIdentifier identifier = factory.createIdentifier(newName);
     nameElement.replace(identifier);
     if(aClass != null) {
-      PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+      PsiMember member = tryCast(ref.resolve(), PsiMember.class);
       if (member == null || member.getContainingClass() != aClass) {
         ref.setQualifierExpression(factory.createReferenceExpression(aClass));
       }
@@ -1019,7 +1018,7 @@ public class ExpressionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression reference = (PsiReferenceExpression)expression;
-      PsiLocalVariable variable = ObjectUtils.tryCast(reference.resolve(), PsiLocalVariable.class);
+      PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
       if (variable != null) {
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
@@ -1033,9 +1032,9 @@ public class ExpressionUtils {
   @Contract(value = "null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
-    PsiReferenceExpression referenceExpression = ObjectUtils.tryCast(expression, PsiReferenceExpression.class);
+    PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
-    return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+    return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
   }
 
   public static boolean isOctalLiteral(PsiLiteralExpression literal) {

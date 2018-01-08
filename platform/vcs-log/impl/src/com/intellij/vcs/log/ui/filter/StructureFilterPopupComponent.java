@@ -37,7 +37,7 @@ import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import com.intellij.vcs.log.impl.VcsLogFileFilter;
 import com.intellij.vcs.log.impl.VcsLogRootFilterImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import org.intellij.lang.annotations.JdkConstants;

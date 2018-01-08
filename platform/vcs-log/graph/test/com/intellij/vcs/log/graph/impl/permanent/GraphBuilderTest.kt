@@ -16,14 +16,11 @@
 
 package com.intellij.vcs.log.graph.impl.permanent
 
-import com.intellij.util.NotNullFunction
-import com.intellij.vcs.log.graph.*
+import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
+import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.CommitIdManager
-import org.junit.Test
-
-import java.io.IOException
-
 import org.junit.Assert.assertEquals
+import org.junit.Test
 
 abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : AbstractTestWithTwoTextFile("graphBuilder/") {
 
@@ -31,11 +28,7 @@ abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : AbstractTestW
     val commits = getCommitIdManager().parseCommitList(`in`)
 
     val graphBuilder = PermanentLinearGraphBuilder.newInstance<CommitId>(commits)
-    val graph = graphBuilder.build(object : NotNullFunction<CommitId, Int> {
-      override fun `fun`(dom: CommitId): Int {
-        return -getCommitIdManager().toInt(dom)
-      }
-    })
+    val graph = graphBuilder.build { dom -> -getCommitIdManager().toInt(dom) }
 
     val actual = graph.asString(false)
     assertEquals(out, actual)
@@ -43,39 +36,48 @@ abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : AbstractTestW
 
   protected abstract fun getCommitIdManager(): CommitIdManager<CommitId>
 
-  @Test fun simple() {
+  @Test
+  fun simple() {
     doTest("simple")
   }
 
-  @Test fun manyNodes() {
+  @Test
+  fun manyNodes() {
     doTest("manyNodes")
   }
 
-  @Test fun manyUpNodes() {
+  @Test
+  fun manyUpNodes() {
     doTest("manyUpNodes")
   }
 
-  @Test fun manyDownNodes() {
+  @Test
+  fun manyDownNodes() {
     doTest("manyDownNodes")
   }
 
-  @Test fun oneNode() {
+  @Test
+  fun oneNode() {
     doTest("oneNode")
   }
 
-  @Test fun oneNodeNotFullGraph() {
+  @Test
+  fun oneNodeNotFullGraph() {
     doTest("oneNodeNotFullGraph")
   }
 
-  @Test fun notFullGraph() {
+  @Test
+  fun notFullGraph() {
     doTest("notFullGraph")
   }
 
-  @Test fun parentsOrder() {
+  @Test
+  fun parentsOrder() {
     doTest("parentsOrder")
   }
 
-  @Test fun duplicateParents() {
+  @Test
+  fun duplicateParents() {
     doTest("duplicateParents")
   }
 

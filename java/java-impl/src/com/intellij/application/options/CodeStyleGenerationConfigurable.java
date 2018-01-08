@@ -69,6 +69,10 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private JBCheckBox myReplaceInstanceOfCb;
   private JBCheckBox myReplaceCastCb;
   private JBCheckBox myReplaceNullCheckCb;
+  private JTextField myTestClassPrefix;
+  private JTextField myTestClassSuffix;
+  private JTextField mySubclassPrefix;
+  private JTextField mySubclassSuffix;
   private CommenterForm myCommenterForm;
   private SortedListModel<String> myRepeatAnnotationsModel;
 
@@ -110,11 +114,15 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     myStaticFieldPrefixField.setText(javaSettings.STATIC_FIELD_NAME_PREFIX);
     myParameterPrefixField.setText(javaSettings.PARAMETER_NAME_PREFIX);
     myLocalVariablePrefixField.setText(javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
+    mySubclassPrefix.setText(javaSettings.SUBCLASS_NAME_PREFIX);
+    myTestClassPrefix.setText(javaSettings.TEST_NAME_PREFIX);
 
     myFieldSuffixField.setText(javaSettings.FIELD_NAME_SUFFIX);
     myStaticFieldSuffixField.setText(javaSettings.STATIC_FIELD_NAME_SUFFIX);
     myParameterSuffixField.setText(javaSettings.PARAMETER_NAME_SUFFIX);
     myLocalVariableSuffixField.setText(javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    mySubclassSuffix.setText(javaSettings.SUBCLASS_NAME_SUFFIX);
+    myTestClassSuffix.setText(javaSettings.TEST_NAME_SUFFIX);
 
     myCbGenerateFinalLocals.setSelected(javaSettings.GENERATE_FINAL_LOCALS);
     myCbGenerateFinalParameters.setSelected(javaSettings.GENERATE_FINAL_PARAMETERS);
@@ -145,11 +153,15 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     javaSettings.STATIC_FIELD_NAME_PREFIX = setPrefixSuffix(myStaticFieldPrefixField.getText(), true);
     javaSettings.PARAMETER_NAME_PREFIX = setPrefixSuffix(myParameterPrefixField.getText(), true);
     javaSettings.LOCAL_VARIABLE_NAME_PREFIX = setPrefixSuffix(myLocalVariablePrefixField.getText(), true);
+    javaSettings.SUBCLASS_NAME_PREFIX = setPrefixSuffix(mySubclassPrefix.getText(), true);
+    javaSettings.TEST_NAME_PREFIX = setPrefixSuffix(myTestClassPrefix.getText(), true);
 
     javaSettings.FIELD_NAME_SUFFIX = setPrefixSuffix(myFieldSuffixField.getText(), false);
     javaSettings.STATIC_FIELD_NAME_SUFFIX = setPrefixSuffix(myStaticFieldSuffixField.getText(), false);
     javaSettings.PARAMETER_NAME_SUFFIX = setPrefixSuffix(myParameterSuffixField.getText(), false);
     javaSettings.LOCAL_VARIABLE_NAME_SUFFIX = setPrefixSuffix(myLocalVariableSuffixField.getText(), false);
+    javaSettings.SUBCLASS_NAME_SUFFIX = setPrefixSuffix(mySubclassSuffix.getText(), false);
+    javaSettings.TEST_NAME_SUFFIX = setPrefixSuffix(myTestClassSuffix.getText(), false);
 
     javaSettings.GENERATE_FINAL_LOCALS = myCbGenerateFinalLocals.isSelected();
     javaSettings.GENERATE_FINAL_PARAMETERS = myCbGenerateFinalParameters.isSelected();
@@ -194,11 +206,15 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     isModified |= isModified(myStaticFieldPrefixField, javaSettings.STATIC_FIELD_NAME_PREFIX);
     isModified |= isModified(myParameterPrefixField, javaSettings.PARAMETER_NAME_PREFIX);
     isModified |= isModified(myLocalVariablePrefixField, javaSettings.LOCAL_VARIABLE_NAME_PREFIX);
+    isModified |= isModified(mySubclassPrefix, javaSettings.SUBCLASS_NAME_PREFIX);
+    isModified |= isModified(myTestClassPrefix, javaSettings.TEST_NAME_PREFIX);
 
     isModified |= isModified(myFieldSuffixField, javaSettings.FIELD_NAME_SUFFIX);
     isModified |= isModified(myStaticFieldSuffixField, javaSettings.STATIC_FIELD_NAME_SUFFIX);
     isModified |= isModified(myParameterSuffixField, javaSettings.PARAMETER_NAME_SUFFIX);
     isModified |= isModified(myLocalVariableSuffixField, javaSettings.LOCAL_VARIABLE_NAME_SUFFIX);
+    isModified |= isModified(mySubclassSuffix, javaSettings.SUBCLASS_NAME_SUFFIX);
+    isModified |= isModified(myTestClassSuffix, javaSettings.TEST_NAME_SUFFIX);
 
     isModified |= isModified(myCbGenerateFinalLocals, javaSettings.GENERATE_FINAL_LOCALS);
     isModified |= isModified(myCbGenerateFinalParameters, javaSettings.GENERATE_FINAL_PARAMETERS);

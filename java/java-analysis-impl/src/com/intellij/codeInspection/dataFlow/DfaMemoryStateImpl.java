@@ -22,15 +22,16 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.*;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   // dfa value id -> indices in myEqClasses list of the classes which contain the id (or wrapped)
   private final TIntObjectHashMap<int[]> myIdToEqClassesIndices;
   private final Stack<DfaValue> myStack;
-  private final TLongHashSet myDistinctClasses;
+  private final DistinctPairSet myDistinctClasses;
   private final LinkedHashMap<DfaVariableValue,DfaVariableState> myVariableStates;
   private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
   private final LinkedHashSet<DfaVariableValue> myUnknownVariables;
@@ -60,7 +61,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myEqClasses = ContainerUtil.newArrayList();
     myUnknownVariables = ContainerUtil.newLinkedHashSet();
     myVariableStates = ContainerUtil.newLinkedHashMap();
-    myDistinctClasses = new TLongHashSet();
+    myDistinctClasses = new DistinctPairSet(this);
     myStack = new Stack<>();
     myIdToEqClassesIndices = new MyIdMap(20);
   }
@@ -71,8 +72,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDefaultVariableStates = toCopy.myDefaultVariableStates; // shared between all states
     
     myStack = new Stack<>(toCopy.myStack);
-    myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.size());
-    toCopy.myDistinctClasses.forEach(myDistinctClasses::add);
+    myDistinctClasses = new DistinctPairSet(this, toCopy.myDistinctClasses);
     myUnknownVariables = ContainerUtil.newLinkedHashSet(toCopy.myUnknownVariables);
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
@@ -83,7 +83,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     });
     myVariableStates = ContainerUtil.newLinkedHashMap(toCopy.myVariableStates);
     
-    myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
     myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
     myCachedHash = toCopy.myCachedHash;
   }
@@ -140,15 +139,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return myVariableStates.equals(that.myVariableStates);
   }
 
-  private LinkedHashSet<UnorderedPair<EqClass>> myCachedDistinctClassPairs;
-  LinkedHashSet<UnorderedPair<EqClass>> getDistinctClassPairs() {
-    if (myCachedDistinctClassPairs != null) return myCachedDistinctClassPairs;
-
-    LinkedHashSet<UnorderedPair<EqClass>> result = ContainerUtil.newLinkedHashSet();
-    for (long encodedPair : myDistinctClasses.toArray()) {
-      result.add(new UnorderedPair<>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
-    }
-    return myCachedDistinctClassPairs = result;
+  DistinctPairSet getDistinctClassPairs() {
+    return myDistinctClasses;
   }
 
   private LinkedHashSet<EqClass> myCachedNonTrivialEqClasses;
@@ -200,8 +192,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
-      String distincts =
-        StreamEx.of(getDistinctClassPairs()).map(pair -> "{" + pair.first + ", " + pair.second + "}").sorted().joining(" ");
+      String distincts = StreamEx.of(getDistinctClassPairs()).map(DistinctPairSet.DistinctPair::toString).sorted().joining(" ");
       result.append(distincts);
     }
 
@@ -349,12 +340,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     int[] classes = myIdToEqClassesIndices.get(id);
     if (classes == null) {
       classes = new int[]{index};
-      myIdToEqClassesIndices.put(id, classes);
     }
     else {
       classes = ArrayUtil.append(classes, index);
-      myIdToEqClassesIndices.put(id, classes);
     }
+    myIdToEqClassesIndices.put(id, classes);
   }
 
   private void removeFromMap(int id, int index) {
@@ -456,7 +446,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  private int getEqClassIndex(@NotNull final DfaValue dfaValue) {
+  List<EqClass> getEqClasses() {
+    return myEqClasses;
+  }
+
+  int getEqClassIndex(@NotNull final DfaValue dfaValue) {
     final int id = unwrap(dfaValue).getID();
     int[] classes = myIdToEqClassesIndices.get(id);
 
@@ -549,23 +543,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     if (ContainerUtil.intersects(vars, negatedVars)) return false;
 
-    TLongArrayList c2Pairs = new TLongArrayList();
-    long[] distincts = myDistinctClasses.toArray();
-    for (long distinct : distincts) {
-      int pc1 = low(distinct);
-      int pc2 = high(distinct);
-      boolean addedToC1 = false;
-
-      if (pc1 == c1Index || pc2 == c1Index) {
-        addedToC1 = true;
-      }
-
-      if (pc1 == c2Index || pc2 == c2Index) {
-        if (addedToC1) return false;
-        c2Pairs.add(distinct);
-      }
-    }
-
     EqClass newClass = new EqClass(c1);
 
     myEqClasses.set(c1Index, newClass);
@@ -576,10 +553,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       addToMap(c, c1Index);
     }
 
-    for (int i = 0; i < c2Pairs.size(); i++) {
-      long c = c2Pairs.get(i);
-      myDistinctClasses.remove(c);
-      myDistinctClasses.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c)));
+    if (!myDistinctClasses.unite(c1Index, c2Index)) {
+      return false;
     }
     myEqClasses.set(c2Index, null);
     checkInvariants();
@@ -597,33 +572,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       return true;
     });
-  }
-
-  private static int low(long l) {
-    return (int)l;
-  }
-
-  private static int high(long l) {
-    return (int)((l & 0xFFFFFFFF00000000L) >> 32);
-  }
-
-  private static long createPair(int i1, int i2) {
-    if (i1 < i2) {
-      long l = i1;
-      l <<= 32;
-      l += i2;
-      return l;
-    }
-    else {
-      long l = i2;
-      l <<= 32;
-      l += i1;
-      return l;
-    }
-  }
-
-  private void makeClassesDistinct(int c1Index, int c2Index) {
-    myDistinctClasses.add(createPair(c1Index, c2Index));
   }
 
   @Override
@@ -657,15 +605,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return false;
     }
 
-    long[] pairs = myDistinctClasses.toArray();
-    for (long pair : pairs) {
-      if (c1Index == low(pair) && c2Index == high(pair) ||
-          c1Index == high(pair) && c2Index == low(pair)) {
-        return true;
-      }
-    }
-
-    return false;
+    return myDistinctClasses.areDistinctUnordered(c1Index, c2Index);
   }
 
   @Override
@@ -941,11 +881,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     final boolean containsCalls = dfaLeft instanceof DfaVariableValue && ((DfaVariableValue)dfaLeft).containsCalls();
 
-    // track "x" property state only inside "if (getX() != null) ..."
-    if (containsCalls && !isNotNull(dfaLeft) && isNull(dfaRight) && !isNegated) {
-      return true;
-    }
-
     if (dfaLeft == dfaRight) {
       return containsCalls || !isNegated;
     }
@@ -963,8 +898,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
-    if (!applyRelation(dfaLeft, dfaRight, isNegated)) {
-      return false;
+    if (dfaRelation.getRelation() == RelationType.LT) {
+      if (!applyLessThanRelation(dfaLeft, dfaRight)) return false;
+    } else if (dfaRelation.getRelation() == RelationType.GT) {
+      if (!applyLessThanRelation(dfaRight, dfaLeft)) return false;
+    } else {
+      if (!applyRelation(dfaLeft, dfaRight, isNegated)) return false;
     }
     if (!checkCompareWithBooleanLiteral(dfaLeft, dfaRight, isNegated)) {
       return false;
@@ -1035,29 +974,62 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     if (!isNegated) { //Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return true;
+      if (isUnstableValue(dfaLeft) || isUnstableValue(dfaRight)) return true;
       if (!uniteClasses(c1Index, c2Index)) return false;
 
-      for (long encodedPair : myDistinctClasses.toArray()) {
-        EqClass c1 = myEqClasses.get(low(encodedPair));
-        EqClass c2 = myEqClasses.get(high(encodedPair));
-        DfaConstValue const1 = (DfaConstValue)c1.findConstant(false);
-        DfaConstValue const2 = (DfaConstValue)c2.findConstant(false);
+      for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+        DistinctPairSet.DistinctPair pair = iterator.next();
+        DfaConstValue const1 = (DfaConstValue)pair.getFirst().findConstant(false);
+        DfaConstValue const2 = (DfaConstValue)pair.getSecond().findConstant(false);
         if (const1 != null && const2 != null && !preserveConstantDistinction(const1.getValue(), const2.getValue())) {
-          myDistinctClasses.remove(encodedPair);
+          iterator.remove();
         }
       }
-      myCachedDistinctClassPairs = null;
       myCachedNonTrivialEqClasses = null;
-      myCachedHash = null;
     }
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
-      makeClassesDistinct(c1Index, c2Index);
-      myCachedDistinctClassPairs = null;
-      myCachedHash = null;
+      myDistinctClasses.add(c1Index, c2Index, false);
+    }
+    myCachedHash = null;
+
+    return true;
+  }
+
+  private boolean applyLessThanRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight) {
+    if (isUnknownState(dfaLeft) || isUnknownState(dfaRight)) {
+      return true;
     }
 
+    // DfaConstValue || DfaVariableValue
+    Integer c1Index = getOrCreateEqClassIndex(dfaLeft);
+    Integer c2Index = getOrCreateEqClassIndex(dfaRight);
+    if (c1Index == null || c2Index == null) {
+      return true;
+    }
+
+    if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
+    if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
+    myCachedHash = null;
+    return myDistinctClasses.add(c1Index, c2Index, true);
+  }
+
+  /**
+   * Returns true if value represents an "unstable" value. An unstable value is a value of an object type which could be
+   * a newly object every time it's accessed. Such value is still useful as its nullability is stable
+   *
+   * @param value to check.
+   * @return true if value might be unstable, false otherwise
+   */
+  private boolean isUnstableValue(DfaValue value) {
+    if (!(value instanceof DfaVariableValue)) return false;
+    DfaVariableValue var = (DfaVariableValue)value;
+    PsiModifierListOwner owner = var.getPsiVariable();
+    if (!(owner instanceof PsiMethod)) return false;
+    if (var.getVariableType() instanceof PsiPrimitiveType) return false;
+    if (PropertyUtilBase.isSimplePropertyGetter((PsiMethod)owner)) return false;
+    if (isNull(var)) return false;
     return true;
   }
 
@@ -1250,7 +1222,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     for (DfaVariableValue value : vars) {
       if (value.isFlushableByCalls() && (value.getQualifier() == null ||
-          !Boolean.FALSE.equals(getValueFact(value.getQualifier(), DfaFactType.MUTABLE)))) {
+                                         getValueFact(value.getQualifier(), DfaFactType.MUTABILITY) != Mutability.UNMODIFIABLE)) {
         doFlush(value, shouldMarkUnknown(value));
       }
     }
@@ -1264,9 +1236,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (eqClass == null) return false;
     if (eqClass.findConstant(true) != null) return true;
 
-    for (UnorderedPair<EqClass> pair : getDistinctClassPairs()) {
-      if (pair.first == eqClass && pair.second.findConstant(true) != null ||
-          pair.second == eqClass && pair.first.findConstant(true) != null) {
+    for (DistinctPairSet.DistinctPair pair : getDistinctClassPairs()) {
+      EqClass otherClass = pair.getOtherClass(eqClassIndex);
+      if (otherClass != null && otherClass.findConstant(true) != null) {
         return true;
       }
     }
@@ -1353,18 +1325,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (varClass.isEmpty()) {
         myEqClasses.set(varClassIndex, null);
 
-        for (TLongIterator iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
-          long pair = iterator.next();
-          if (low(pair) == varClassIndex || high(pair) == varClassIndex) {
+        for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+          DistinctPairSet.DistinctPair pair = iterator.next();
+          if (pair.getOtherClass(varClassIndex) != null) {
             iterator.remove();
           }
         }
       }
       else if (varClass.containsConstantsOnly()) {
-        for (TLongIterator iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
-          long pair = iterator.next();
-          if (low(pair) == varClassIndex && myEqClasses.get(high(pair)).containsConstantsOnly() ||
-              high(pair) == varClassIndex && myEqClasses.get(low(pair)).containsConstantsOnly()) {
+        for (Iterator<DistinctPairSet.DistinctPair> iterator = myDistinctClasses.iterator(); iterator.hasNext(); ) {
+          DistinctPairSet.DistinctPair pair = iterator.next();
+          EqClass other = pair.getOtherClass(varClassIndex);
+          if (other != null && other.containsConstantsOnly()) {
             iterator.remove();
           }
         }
@@ -1375,7 +1347,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     removeAllFromMap(idNegated);
     checkInvariants();
     myCachedNonTrivialEqClasses = null;
-    myCachedDistinctClassPairs = null;
     myCachedHash = null;
   }
 

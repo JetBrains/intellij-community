@@ -499,14 +499,22 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     myOKButton.addActionListener(myOkActionListener);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
 
-    DumbAwareAction.create(e -> {
-      if (enterAsOK) {
-        myOkActionListener.actionPerformed(null);
+    new DumbAwareAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
-      else {
-        navigateToSelectedUsage();
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (enterAsOK) {
+          myOkActionListener.actionPerformed(null);
+        }
+        else {
+          navigateToSelectedUsage();
+        }
       }
-    }).registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
+    }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
     DumbAwareAction.create(e -> {
       if (enterAsOK) {
         navigateToSelectedUsage();

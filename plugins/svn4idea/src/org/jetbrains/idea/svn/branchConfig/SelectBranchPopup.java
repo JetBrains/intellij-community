@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,8 +20,7 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.jetbrains.idea.svn.api.Url;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,7 +53,7 @@ public class SelectBranchPopup {
                           @Nullable String title,
                           @Nullable Component component) {
     SvnFileUrlMapping urlMapping = SvnVcs.getInstance(project).getSvnFileUrlMapping();
-    SVNURL svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
+    Url svnurl = urlMapping.getUrlForFile(virtualToIoFile(file));
 
     if (svnurl != null) {
       RootUrlInfo rootUrlInfo = urlMapping.getWcRootForUrl(svnurl);
@@ -112,7 +97,7 @@ public class SelectBranchPopup {
 
   @NotNull
   private static String getBranchName(@NotNull SvnBranchItem branch) {
-    return SVNPathUtil.tail(branch.getUrl());
+    return Url.tail(branch.getUrl());
   }
 
   private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
@@ -209,7 +194,7 @@ public class SelectBranchPopup {
       JBList<Object> branchList = new JBList<>(items);
       branchList.setCellRenderer(new BranchRenderer());
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-        .setTitle(SVNPathUtil.tail(selectedValue))
+        .setTitle(Url.tail(selectedValue))
         .setResizable(true)
         .setItemChoosenCallback(() -> {
           if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {

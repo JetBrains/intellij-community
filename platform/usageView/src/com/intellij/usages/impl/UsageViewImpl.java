@@ -13,7 +13,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -27,15 +26,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -103,7 +99,7 @@ public class UsageViewImpl implements UsageView {
   private final Project myProject;
 
   private volatile boolean mySearchInProgress = true;
-  private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this);
+  private final ExporterToTextFile myTextFileExporter = new ExporterToTextFile(this, getUsageViewSettings());
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
   private final ExclusionHandler<DefaultMutableTreeNode> myExclusionHandler;
@@ -181,7 +177,7 @@ public class UsageViewImpl implements UsageView {
     UsageModelTracker myModelTracker = new UsageModelTracker(project);
     Disposer.register(this, myModelTracker);
 
-    myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project), getActiveFilteringRules(project), myRoot, myProject);
+    myBuilder = new UsageNodeTreeBuilder(myTargets, getActiveGroupingRules(project, getUsageViewSettings()), getActiveFilteringRules(project), myRoot, myProject);
 
     final MessageBusConnection messageBusConnection = myProject.getMessageBus().connect(this);
     messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, this::rulesChanged);
@@ -347,6 +343,10 @@ public class UsageViewImpl implements UsageView {
     };
   }
 
+  public UsageViewSettings getUsageViewSettings() {
+    return UsageViewSettings.getInstance();
+  }
+
   // nodes just changed: parent node -> changed child
   // this collection is needed for firing javax.swing.tree.DefaultTreeModel.nodesChanged() events in batch
   // has to be linked because events for child nodes should be fired after events for parent nodes
@@ -504,8 +504,8 @@ public class UsageViewImpl implements UsageView {
 
     myCentralPanel.add(myPreviewSplitter, BorderLayout.CENTER);
 
-    if (UsageViewSettings.getInstance().IS_PREVIEW_USAGES) {
-      myPreviewSplitter.setProportion(UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS);
+    if (getUsageViewSettings().isPreviewUsages()) {
+      myPreviewSplitter.setProportion(getUsageViewSettings().getPreviewUsagesSplitterProportion());
       treePane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.RIGHT);
       final JBTabbedPane tabbedPane = new JBTabbedPane(SwingConstants.BOTTOM){
         @NotNull
@@ -580,11 +580,11 @@ public class UsageViewImpl implements UsageView {
   }
 
   @NotNull
-  private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project) {
+  private static UsageGroupingRule[] getActiveGroupingRules(@NotNull final Project project, @NotNull UsageViewSettings usageViewSettings) {
     final UsageGroupingRuleProvider[] providers = Extensions.getExtensions(UsageGroupingRuleProvider.EP_NAME);
     List<UsageGroupingRule> list = new ArrayList<>(providers.length);
     for (UsageGroupingRuleProvider provider : providers) {
-      ContainerUtil.addAll(list, provider.getActiveRules(project));
+      ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
     }
 
     Collections.sort(list, Comparator.comparingInt(UsageGroupingRule::getRank));
@@ -740,7 +740,7 @@ public class UsageViewImpl implements UsageView {
       @Override
       public void expandAll() {
         UsageViewImpl.this.expandAll();
-        UsageViewSettings.getInstance().setExpanded(true);
+        getUsageViewSettings().setExpanded(true);
       }
 
       @Override
@@ -751,7 +751,7 @@ public class UsageViewImpl implements UsageView {
       @Override
       public void collapseAll() {
         UsageViewImpl.this.collapseAll();
-        UsageViewSettings.getInstance().setExpanded(false);
+        getUsageViewSettings().setExpanded(false);
       }
 
       @Override
@@ -783,7 +783,7 @@ public class UsageViewImpl implements UsageView {
       collapseAllAction,
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
-      actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
+      actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider(getUsageViewSettings())),
       actionsManager.createExportToTextFileAction(myTextFileExporter)
     };
   }
@@ -806,8 +806,7 @@ public class UsageViewImpl implements UsageView {
     if (description == null) {
       description = "Show find usages settings dialog";
     }
-    String finalDescription = description;
-    return new EmptyAction.MyDelegatingAction(ActionManager.getInstance().getAction("FindInPath")) {
+    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {
@@ -816,28 +815,17 @@ public class UsageViewImpl implements UsageView {
       }
 
       @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setText("Settings...");
-        e.getPresentation().setDescription(finalDescription);
-        e.getPresentation().setIcon(AllIcons.General.ProjectSettings);
-      }
-
-      @Override
       public boolean startInTransaction() {
         return true;
       }
 
       @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
+      }
+
+      @Override
       public void actionPerformed(AnActionEvent e) {
-        Component data = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-        if (data instanceof EditorComponentImpl) {
-          String toFind = ((EditorComponentImpl)data).getSelectedText();
-          if (!StringUtil.isEmpty(toFind)) {
-            super.actionPerformed(e);//call myDelegate (namely, FindInPathAction)
-            return;
-          }
-        }
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };
@@ -892,7 +880,7 @@ public class UsageViewImpl implements UsageView {
     Collections.sort(allUsages, USAGE_COMPARATOR);
     final Set<Usage> excludedUsages = getExcludedUsages();
     reset();
-    myBuilder.setGroupingRules(getActiveGroupingRules(myProject));
+    myBuilder.setGroupingRules(getActiveGroupingRules(myProject, getUsageViewSettings()));
     myBuilder.setFilteringRules(getActiveFilteringRules(myProject));
     ApplicationManager.getApplication().runReadAction(() -> {
       for (Usage usage : allUsages) {
@@ -1038,12 +1026,12 @@ public class UsageViewImpl implements UsageView {
 
     @Override
     protected boolean getOptionValue() {
-      return UsageViewSettings.getInstance().isFilterDuplicatedLine();
+      return getUsageViewSettings().isFilterDuplicatedLine();
     }
 
     @Override
     protected void setOptionValue(boolean value) {
-      UsageViewSettings.getInstance().setFilterDuplicatedLine(value);
+      getUsageViewSettings().setFilterDuplicatedLine(value);
     }
   }
 
@@ -1268,7 +1256,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private void saveSplitterProportions() {
-    UsageViewSettings.getInstance().PREVIEW_USAGES_SPLITTER_PROPORTIONS = myPreviewSplitter.getProportion();
+    getUsageViewSettings().setPreviewUsagesSplitterProportion(myPreviewSplitter.getProportion());
   }
 
   @Override
@@ -1281,17 +1269,6 @@ public class UsageViewImpl implements UsageView {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
       myUpdateAlarm.cancelAllRequests();
-    }
-    disposeSmartPointers();
-  }
-
-  private void disposeSmartPointers() {
-    SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
-    for (Usage usage : myUsageNodes.keySet()) {
-      if (usage instanceof UsageInfo2UsageAdapter) {
-        SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
-        pointerManager.removePointer(pointer);
-      }
     }
   }
 
@@ -1314,7 +1291,7 @@ public class UsageViewImpl implements UsageView {
           return;
         }
         showNode(firstUsageNode);
-        if (UsageViewSettings.getInstance().isExpanded() && myUsageNodes.size() < 10000) {
+        if (getUsageViewSettings().isExpanded() && myUsageNodes.size() < 10000) {
           expandAll();
         }
       });
@@ -1765,14 +1742,20 @@ public class UsageViewImpl implements UsageView {
   }
 
   private static class MyAutoScrollToSourceOptionProvider implements AutoScrollToSourceOptionProvider {
+    @NotNull private final UsageViewSettings myUsageViewSettings;
+
+    public MyAutoScrollToSourceOptionProvider(@NotNull UsageViewSettings usageViewSettings) {
+      myUsageViewSettings = usageViewSettings;
+    }
+
     @Override
     public boolean isAutoScrollMode() {
-      return UsageViewSettings.getInstance().IS_AUTOSCROLL_TO_SOURCE;
+      return myUsageViewSettings.isAutoScrollToSource();
     }
 
     @Override
     public void setAutoScrollMode(boolean state) {
-      UsageViewSettings.getInstance().IS_AUTOSCROLL_TO_SOURCE = state;
+      myUsageViewSettings.setAutoScrollToSource(state);
     }
   }
 
@@ -1940,7 +1923,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   private boolean isFilterDuplicateLines() {
-    return myPresentation.isMergeDupLinesAvailable() && UsageViewSettings.getInstance().isFilterDuplicatedLine();
+    return myPresentation.isMergeDupLinesAvailable() && getUsageViewSettings().isFilterDuplicatedLine();
   }
 
   public Usage getNextToSelect(@NotNull Usage toDelete) {

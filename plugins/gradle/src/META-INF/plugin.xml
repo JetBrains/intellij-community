@@ -111,7 +111,6 @@
                               order="last"/>
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer"
                               order="last"/>
-    <runConfigurationExtension implementation="org.jetbrains.plugins.gradle.execution.ProgramRunConfigurationExtension"/>
 
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>

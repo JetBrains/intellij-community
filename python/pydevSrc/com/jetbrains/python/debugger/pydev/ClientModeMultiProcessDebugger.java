@@ -39,8 +39,6 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     myPort = port;
 
     myMainDebugger = createDebugger();
-
-    myOtherDebuggers.add(myMainDebugger);
   }
 
   @NotNull
@@ -55,7 +53,7 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
 
   @Override
   public boolean isConnected() {
-    return getOtherDebuggers().stream().anyMatch(RemoteDebugger::isConnected);
+    return allDebuggers().stream().anyMatch(RemoteDebugger::isConnected);
   }
 
   @Override
@@ -101,7 +99,9 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
   private List<RemoteDebugger> allDebuggers() {
     List<RemoteDebugger> result;
     synchronized (myOtherDebuggersObject) {
-      result = new ArrayList<>(myOtherDebuggers);
+      result = new ArrayList<>(myOtherDebuggers.size() + 1);
+      result.add(myMainDebugger);
+      result.addAll(myOtherDebuggers);
     }
     return result;
   }

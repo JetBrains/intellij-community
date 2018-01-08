@@ -80,7 +80,10 @@ public class BoolUtils {
     }
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      return '(' + getNegatedExpressionText(parenthesizedExpression.getExpression(), tracker) + ')';
+      PsiExpression operand = parenthesizedExpression.getExpression();
+      if (operand != null) {
+        return '(' + getNegatedExpressionText(operand, tracker) + ')';
+      }
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
@@ -145,6 +148,12 @@ public class BoolUtils {
         };
         final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
         return (newPrecedence > precedence) ? '(' + join + ')' : join;
+      }
+    }
+    if (expression instanceof PsiLiteralExpression) {
+      Object value = ((PsiLiteralExpression)expression).getValue();
+      if (value instanceof Boolean) {
+        return String.valueOf(!((Boolean)value));
       }
     }
     return '!' + ParenthesesUtils.getText(tracker.markUnchanged(expression), ParenthesesUtils.PREFIX_PRECEDENCE);

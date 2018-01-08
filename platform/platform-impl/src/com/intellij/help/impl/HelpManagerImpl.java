@@ -23,6 +23,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -31,7 +32,6 @@ import com.intellij.openapi.help.WebHelpProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,14 +86,7 @@ public class HelpManagerImpl extends HelpManager {
       if (!url.endsWith("/")) url += "/";
       url += productVersion + "/?" + id;
 
-      if (PlatformUtils.isJetBrainsProduct()) {
-        String productCode = info.getBuild().getProductCode();
-        if(!StringUtil.isEmpty(productCode)) {
-          url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=" + productCode + "&utm_content=" + productVersion;
-        }
-      }
-
-      BrowserUtil.browse(url);
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
       return;
     }
 

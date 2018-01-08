@@ -109,8 +109,8 @@ public class FileTypesTest extends PlatformTestCase {
       String name = String.valueOf(i % 10 * 10 + i * 100 + i + 1);
       names[i] = name + name + name + name;
     }
-    PlatformTestUtil.startPerformanceTest("isFileIgnored", 150, () -> {
-      for (int i=0;i<1000;i++) {
+    PlatformTestUtil.startPerformanceTest("isFileIgnored", 15_000, () -> {
+      for (int i = 0; i < 100_000; i++) {
         for (String name : names) {
           myFileTypeManager.isFileIgnored(name);
         }
@@ -262,9 +262,9 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void test7BitIsText() throws IOException {
     File d = createTempDirectory();
-    File f = new File(d, "xx.asfdasdfas");
     byte[] bytes = {9, 10, 13, 'x', 'a', 'b'};
     assertEquals(CharsetToolkit.GuessedEncoding.SEVEN_BIT, new CharsetToolkit(bytes).guessFromContent(bytes.length));
+    File f = new File(d, "xx.asfdasdfas");
     FileUtil.writeToFile(f, bytes);
     VirtualFile vFile = getVirtualFile(f);
 

@@ -78,6 +78,9 @@ public interface PsiLanguageInjectionHost extends PsiElement {
     @Nullable
     PsiLanguageInjectionHost getHost();
 
+    /**
+     * @return range in decoded PSI
+     */
     @NotNull
     TextRange getRange();
 

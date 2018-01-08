@@ -124,7 +124,7 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
       final PsiTryStatement tryStatement = catchSection.getTryStatement();
       final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
       int index = 0;
-      while (catchSections[index] != catchSection && index < catchSections.length) {
+      while (catchSections[index] != catchSection) {
         index++;
       }
       final PsiType type = parameter.getType();

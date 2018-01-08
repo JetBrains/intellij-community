@@ -34,7 +34,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -484,7 +483,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       };
       ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithProgressInDispatchThread(commandName, myProject, null, null, indicator -> performRefactoringRunnable.run());
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
       }
       else {
         app.runWriteAction(performRefactoringRunnable);
@@ -498,7 +497,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
       myTransaction.commit();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithProgressInDispatchThread(commandName, myProject, null, null, indicator -> performPsiSpoilingRefactoring());
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performPsiSpoilingRefactoring());
       }
       else {
         app.runWriteAction(() -> performPsiSpoilingRefactoring());

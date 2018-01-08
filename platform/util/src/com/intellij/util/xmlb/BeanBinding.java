@@ -464,8 +464,13 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     XCollection xCollection = accessor.getAnnotation(XCollection.class);
-    if (xCollection != null && (xCollection.propertyElementName().length() != 0 || xCollection.style() == XCollection.Style.v2)) {
+    if (xCollection != null && (!xCollection.propertyElementName().isEmpty() || xCollection.style() == XCollection.Style.v2)) {
       return new TagBinding(accessor, xCollection.propertyElementName());
+    }
+
+    MapAnnotation xMap = accessor.getAnnotation(MapAnnotation.class);
+    if (xMap != null && (!xMap.propertyElementName().isEmpty())) {
+      return new TagBinding(accessor, xMap.propertyElementName());
     }
 
     if (propertyStyle == Property.Style.ATTRIBUTE) {

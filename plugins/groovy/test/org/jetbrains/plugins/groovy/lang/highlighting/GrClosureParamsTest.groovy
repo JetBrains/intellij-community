@@ -130,7 +130,7 @@ def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Doubl
 def m() {
     def a;
     m1<warning descr="Method call is ambiguous">(a)</warning> {
-        long l -> println(l)
+        <error descr="No applicable signature found">long l</error> -> println(l)
     }
 }
 '''

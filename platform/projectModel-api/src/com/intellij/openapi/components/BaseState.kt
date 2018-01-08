@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.components
 
+import com.intellij.configurationStore.properties.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.util.SmartList
@@ -12,16 +13,20 @@ import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import gnu.trove.THashMap
 import java.nio.charset.Charset
+import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
 private val LOG = logger<BaseState>()
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
+  companion object {
+    private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
+  }
+
   private val properties: MutableList<StoredProperty> = SmartList()
 
   @Volatile
   @Transient
-  @JvmField
-  internal var ownModificationCount: Long = 0
+  private var ownModificationCount: Long = 0
 
   fun <T> property(): StoredPropertyBase<T?> {
     val result = ObjectStoredProperty<T?>(null)
@@ -114,13 +119,13 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
-    val result = IntStoredProperty(defaultValue)
+    val result = IntStoredProperty(defaultValue, null)
     properties.add(result)
     return result
   }
 
   fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
-    val result = LongStoredProperty(defaultValue)
+    val result = LongStoredProperty(defaultValue, null)
     properties.add(result)
     return result
   }
@@ -143,7 +148,11 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   }
 
   protected fun incrementModificationCount() {
-    ownModificationCount++
+    intIncrementModificationCount()
+  }
+
+  internal fun intIncrementModificationCount() {
+    MOD_COUNT_UPDATER.incrementAndGet(this)
   }
 
   override fun accepts(accessor: Accessor, bean: Any): Boolean {

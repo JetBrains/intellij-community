@@ -42,9 +42,9 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
-import jetCheck.DataStructure;
-import jetCheck.Generator;
-import jetCheck.IntDistribution;
+import org.jetbrains.jetCheck.DataStructure;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.IntDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

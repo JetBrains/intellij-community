@@ -490,8 +490,31 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     LocalInspectionTool tool = toolWrapper.getTool();
     if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool)) return;
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
-    HighlightInfo info = createHighlightInfo(descriptor, toolWrapper, level, emptyActionRegistered, element);
+    @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
+
+    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
+    final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
+    if (!inspectionProfile.isToolEnabled(key, getFile())) return;
+
+    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
+    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
+    @NonNls String link = "";
+    if (showToolDescription(toolWrapper)) {
+      link = " <a "
+             + "href=\"#inspection/" + tool.getShortName() + "\""
+             + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
+             + ">" + DaemonBundle.message("inspection.extended.description")
+             + "</a> " + myShortcutText;
+    }
+
+    @NonNls String tooltip = null;
+    if (descriptor.showTooltip()) {
+      tooltip = tooltips.intern(XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link));
+    }
+    List<IntentionAction> fixes = getQuickFixes(toolWrapper, descriptor, emptyActionRegistered);
+    HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, fixes);
     if (info == null) return;
+    registerQuickFixes(toolWrapper, info, fixes);
 
     PsiFile context = getTopLevelFileInBaseLanguage(element);
     PsiFile myContext = getTopLevelFileInBaseLanguage(getFile());
@@ -501,17 +524,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (toolClassLoader instanceof PluginClassLoader) {
         pluginId = ((PluginClassLoader)toolClassLoader).getPluginId();
       }
-      String message = "Reported element " + element +
+      String errorMessage = "Reported element " + element +
                        " is not from the file '" + file +
                        "' the inspection '" + toolWrapper +
                        "' (" + tool.getClass() +
                        ") was invoked for. Message: '" + descriptor + "'.\nElement' containing file: " +
                        context + "\nInspection invoked for file: " + myContext + "\n";
       if (pluginId == null) {
-        LOG.error(message);
+        LOG.error(errorMessage);
       }
       else {
-        LOG.error(new PluginException(message, pluginId));
+        LOG.error(new PluginException(errorMessage, pluginId));
       }
     }
     boolean isInjected = file != getFile();
@@ -519,6 +542,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       outInfos.add(info);
       return;
     }
+    injectToHost(outInfos, ilManager, file, documentRange, toolWrapper, element, fixes, info);
+  }
+
+  private static void injectToHost(@NotNull List<HighlightInfo> outInfos,
+                                   @NotNull InjectedLanguageManager ilManager,
+                                   @NotNull PsiFile file,
+                                   @NotNull Document documentRange,
+                                   @NotNull LocalInspectionToolWrapper toolWrapper,
+                                   @NotNull PsiElement element, 
+                                   @NotNull List<IntentionAction> fixes, 
+                                   @NotNull HighlightInfo info) {
     // todo we got to separate our "internal" prefixes/suffixes from user-defined ones
     // todo in the latter case the errors should be highlighted, otherwise not
     List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, new TextRange(info.startOffset, info.endOffset));
@@ -538,7 +572,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       HighlightInfo patched = builder.createUnconditionally();
       if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
         patched.setFromInjection(true);
-        registerQuickFixes(toolWrapper, patched, getQuickFixes(toolWrapper, descriptor, emptyActionRegistered));
+        registerQuickFixes(toolWrapper, patched, fixes);
         outInfos.add(patched);
       }
     }
@@ -552,40 +586,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
 
   private static final WeakInterner<String> tooltips = new WeakInterner<>();
-  @Nullable
-  private HighlightInfo createHighlightInfo(@NotNull ProblemDescriptor descriptor,
-                                            @NotNull LocalInspectionToolWrapper tool,
-                                            @NotNull HighlightInfoType level,
-                                            @NotNull Set<Pair<TextRange, String>> emptyActionRegistered,
-                                            @NotNull PsiElement element) {
-    @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
-
-    final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
-    final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
-    if (!inspectionProfile.isToolEnabled(key, getFile())) return null;
-
-    HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
-    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
-    @NonNls String link = "";
-    if (showToolDescription(tool)) {
-      link = " <a "
-             + "href=\"#inspection/" + tool.getShortName() + "\""
-             + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
-             + ">" + DaemonBundle.message("inspection.extended.description")
-             + "</a> " + myShortcutText;
-    }
-
-    @NonNls String tooltip = null;
-    if (descriptor.showTooltip()) {
-      tooltip = tooltips.intern(XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link));
-    }
-    List<IntentionAction> quickFixes = getQuickFixes(tool, descriptor, emptyActionRegistered);
-    HighlightInfo info = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip, element, quickFixes);
-    if (info != null) {
-      registerQuickFixes(tool, info, quickFixes);
-    }
-    return info;
-  }
 
   private static boolean showToolDescription(@NotNull LocalInspectionToolWrapper tool) {
     return tool.getStaticDescription() == null || !tool.getStaticDescription().isEmpty();

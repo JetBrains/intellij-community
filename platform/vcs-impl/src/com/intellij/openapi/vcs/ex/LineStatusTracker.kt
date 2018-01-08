@@ -114,19 +114,19 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
       actions.add(ShowPrevChangeMarkerAction(editor, range))
       actions.add(ShowNextChangeMarkerAction(editor, range))
       actions.add(RollbackLineStatusRangeAction(editor, range))
-      actions.add(ShowLineStatusRangeDiffAction(range))
-      actions.add(CopyLineStatusRangeAction(range))
+      actions.add(ShowLineStatusRangeDiffAction(editor, range))
+      actions.add(CopyLineStatusRangeAction(editor, range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
     }
 
     override fun getFileType(): FileType = tracker.virtualFile.fileType
 
-    private inner class RollbackLineStatusRangeAction(private val editor: Editor, range: Range)
-      : RangeMarkerAction(range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
-      override fun isEnabled(range: Range): Boolean = true
+    private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
+      : RangeMarkerAction(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK) {
+      override fun isEnabled(editor: Editor, range: Range): Boolean = true
 
-      override fun actionPerformed(range: Range) {
+      override fun actionPerformed(editor: Editor, range: Range) {
         RollbackLineStatusAction.rollback(tracker, range, editor)
       }
     }

@@ -5,6 +5,7 @@ package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,11 +130,14 @@ public final class JavaVersion {
     return current;
   }
 
+  private static final int MAX_ACCEPTED_VERSION = 25;  // sanity check
+
   /**
    * <p>Parses a Java version string.</p>
    *
    * <p>Supports various sources, including (but not limited to):<br>
    *   - {@code "java.*version"} system properties (a version number without any decoration)<br>
+   *   - values of Java compiler -source/-target/--release options ("$MAJOR", "1.$MAJOR")</br>
    *   - output of "{@code java -version}" (usually "java version \"$VERSION\"")<br>
    *   - a second line of the above command (something like to "Java(TM) SE Runtime Environment (build $VERSION)")<br>
    *   - output of "{@code java --full-version}" ("java $VERSION")</p>
@@ -144,7 +148,7 @@ public final class JavaVersion {
    */
   public static @NotNull JavaVersion parse(@NotNull String versionString) throws IllegalArgumentException {
     // trimming
-    String str = versionString;
+    String str = versionString.trim();
     if (str.contains("Runtime Environment")) {
       int p = str.indexOf("(build ");
       if (p > 0) str = str.substring(p);
@@ -169,7 +173,7 @@ public final class JavaVersion {
         int feature = Integer.parseInt(numbers.get(0)), minor = 0, update = 0, build = 0;
         boolean ea = false;
 
-        if (feature > 8 && feature < 50 /*sanity check*/) {
+        if (feature > 8 && feature < MAX_ACCEPTED_VERSION) {
           // Java 9+
           p = 1;
           while (p < separators.size() && ".".equals(separators.get(p))) p++;
@@ -195,7 +199,7 @@ public final class JavaVersion {
         else if (feature == 1 && numbers.size() > 1 && separators.size() > 1 && ".".equals(separators.get(1))) {
           // Java 1.0 .. 1.8
           feature = Integer.parseInt(numbers.get(1));
-          if (feature <= 8) {
+          if (feature <= MAX_ACCEPTED_VERSION) {
             if (numbers.size() > 2 && separators.size() > 2 && ".".equals(separators.get(2))) {
               minor = Integer.parseInt(numbers.get(2));
               if (numbers.size() > 3 && separators.size() > 3 && "_".equals(separators.get(3))) {
@@ -225,5 +229,19 @@ public final class JavaVersion {
 
   private static boolean startsWithWord(String s, String word) {
     return s.startsWith(word) && (s.length() == word.length() || !Character.isLetterOrDigit(s.charAt(word.length())));
+  }
+
+  /**
+   * A safe version of {@link #parse(String)} - returns {@code null} if can't parse a version string.
+   */
+  public static @Nullable JavaVersion tryParse(String versionString) {
+    if (versionString != null) {
+      try {
+        return parse(versionString);
+      }
+      catch (IllegalArgumentException ignored) { }
+    }
+
+    return null;
   }
 }

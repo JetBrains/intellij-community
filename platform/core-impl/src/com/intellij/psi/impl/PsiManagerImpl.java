@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -288,9 +289,14 @@ public class PsiManagerImpl extends PsiManagerEx {
     beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("beforePropertyChange: element = " + logPsi(event.getElement()) + ", propertyName = " + event.getPropertyName() + ", oldValue = " + event.getOldValue());
+      LOG.debug("beforePropertyChange: element = " + logPsi(event.getElement()) + ", propertyName = " + event.getPropertyName() + ", oldValue = " +
+                arrayToString(event.getOldValue()));
     }
     fireEvent(event);
+  }
+
+  private static Object arrayToString(Object value) {
+    return value instanceof Object[] ? Arrays.deepToString((Object[])value) : value;
   }
 
   public void childAdded(@NotNull PsiTreeChangeEventImpl event) {
@@ -344,8 +350,8 @@ public class PsiManagerImpl extends PsiManagerEx {
       LOG.debug(
         "propertyChanged: element = " + logPsi(event.getElement())
         + ", propertyName = " + event.getPropertyName()
-        + ", oldValue = " + event.getOldValue()
-        + ", newValue = " + event.getNewValue()
+        + ", oldValue = " + arrayToString(event.getOldValue())
+        + ", newValue = " + arrayToString(event.getNewValue())
       );
     }
     fireEvent(event);

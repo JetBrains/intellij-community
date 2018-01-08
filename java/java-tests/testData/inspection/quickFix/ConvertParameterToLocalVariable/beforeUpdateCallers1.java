@@ -1,4 +1,4 @@
-// "Convert to local variable" "true"
+// "Convert to local" "true"
 class Temp {
 
   void foo(int <caret>x, int k) {

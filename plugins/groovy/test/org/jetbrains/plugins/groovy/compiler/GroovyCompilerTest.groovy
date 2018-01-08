@@ -33,6 +33,9 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -901,10 +904,8 @@ class AppTest {
     addGroovyLibrary(anotherModule)
 
     PsiTestUtil.addProjectLibrary(myModule, "junit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit3"))
-
-    def cliPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/../../build/lib")
-    PsiTestUtil.addLibrary(myModule, "cli", cliPath, "commons-cli-1.2.jar")
-    PsiTestUtil.addLibrary(anotherModule, "cli", cliPath, "commons-cli-1.2.jar")
+    PsiTestUtil.addProjectLibrary(myModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("build", "commons-cli").classesPaths)
+    PsiTestUtil.addProjectLibrary(anotherModule, "cli", IntelliJProjectConfiguration.getModuleLibrary("build", "commons-cli").classesPaths)
 
     myFixture.addFileToProject("a.groovy", "class Foo extends GroovyTestCase {}")
     myFixture.addFileToProject("b.groovy", "class Bar extends CliBuilder {}")
@@ -996,6 +997,16 @@ class Bar {}'''
       def jarPath = FileUtil.toCanonicalPath(PluginPathManager.getPluginHomePath("groovy") + "/lib/" + jarName)
 
       GreclipseIdeaCompilerSettings.getSettings(project).greclipsePath = jarPath
+    }
+
+    @Override
+    void runTest() {
+      if (JavaSdkVersionUtil.getJavaSdkVersion(ModuleRootManager.getInstance(myModule).sdk)?.isAtLeast(JavaSdkVersion.JDK_1_9)) {
+        println "Groovy-Eclipse doesn't support JDK9 yet"
+        return
+      }
+
+      super.runTest()
     }
   }
 }

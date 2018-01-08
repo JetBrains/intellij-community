@@ -40,6 +40,9 @@ public class UnnecessaryParenthesesQuickFixTest extends IGQuickFixesTestCase {
   public void testArrayAccessExpression() { doTest(); }
   public void testArrayAccessExpression2() { doTest(); }
   public void testSimplePrecedence() { assertQuickfixNotAvailable(); }
+  public void testLambdaQualifier() { assertQuickfixNotAvailable(); }
+  public void testLambdaInTernary() { doTest(); }
+  public void testLambdaCast() { doTest(); }
   @Override
   protected BaseInspection getInspection() {
     return new UnnecessaryParenthesesInspection();

@@ -15,16 +15,11 @@
  */
 package org.jetbrains.idea.svn.api;
 
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public enum EventAction {
 
   // currently used to represent some not used event action from SVNKit
@@ -82,10 +77,5 @@ public enum EventAction {
 
   private static void register(@NotNull EventAction action) {
     ourAllActions.put(action.myKey, action);
-  }
-
-  @NotNull
-  public static EventAction from(@NotNull SVNEventAction action) {
-    return ObjectUtils.notNull(ourAllActions.get(action.toString()), UNKNOWN);
   }
 }

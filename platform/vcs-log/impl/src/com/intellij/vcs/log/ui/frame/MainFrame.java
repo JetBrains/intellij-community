@@ -28,7 +28,7 @@ import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -109,6 +109,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myTextFilter = myFilterUi.createTextFilter();
     myToolbar = createActionsToolbar();
+    myChangesBrowser.setToolbarHeightReferent(myToolbar);
 
     JComponent toolbars = new JPanel(new BorderLayout());
     toolbars.add(myToolbar, BorderLayout.NORTH);

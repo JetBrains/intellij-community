@@ -4,6 +4,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
@@ -13,7 +14,9 @@ import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
@@ -36,19 +39,27 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     presentation.updateContent();
 
-    final SearchScope searchScope = context.getCurrentScope().toSearchScope();
+    AnalysisScope scope = context.getCurrentScope();
+    if (scope == null) return false;
+    final SearchScope searchScope = scope.toSearchScope();
     if (searchScope instanceof LocalSearchScope) {
       final Map<String, Set<RefEntity>> contents = presentation.getContent();
       final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
       for (Set<RefEntity> entities : contents.values()) {
-        for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext(); ) {
+        for (Iterator<RefEntity> iterator = entities.iterator(); iterator.hasNext();) {
           RefEntity entity = iterator.next();
           if (entity instanceof RefElement) {
-            final PsiElement element = ((RefElement)entity).getElement();
-            if (element != null) {
-              final TextRange range = element.getTextRange();
-              if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
-                continue;
+            SmartPsiElementPointer pointer = ((RefElement)entity).getPointer();
+            if (pointer != null) {
+              VirtualFile vFile = pointer.getVirtualFile();
+              if (vFile != null && searchScope.contains(vFile)) {
+                final PsiElement element = ((RefElement)entity).getElement();
+                if (element != null) {
+                  final TextRange range = element.getTextRange();
+                  if (range != null && ((LocalSearchScope)searchScope).containsRange(element.getContainingFile(), range)) {
+                    continue;
+                  }
+                }
               }
             }
           }

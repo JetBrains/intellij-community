@@ -187,7 +187,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
       if (startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
-          .runWriteActionWithProgressInDispatchThread(templatePresentationText, project, null, null, performFixesTask::doRun);
+          .runWriteActionWithNonCancellableProgressInDispatchThread(templatePresentationText, project, null, performFixesTask::doRun);
       }
       else {
         final SequentialModalProgressTask progressTask =

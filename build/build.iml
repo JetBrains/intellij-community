@@ -4,7 +4,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/scripts" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/groovy" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/groovy" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/dependencies/build" />
       <excludeFolder url="file://$MODULE_DIR$/jdk" />
       <excludeFolder url="file://$MODULE_DIR$/restApiDocGenerator/node_modules" />
@@ -24,12 +24,15 @@
     <orderEntry type="module" module-name="jps-model-api" exported="" />
     <orderEntry type="module" module-name="jps-standalone-builder" exported="" />
     <orderEntry type="module-library" exported="" scope="PROVIDED">
-      <library>
+      <library name="commons-cli" type="repository">
+        <properties maven-id="commons-cli:commons-cli:1.2" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-cli-1.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.2/commons-cli-1.2.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.2/commons-cli-1.2-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="antlayout" exported="" />

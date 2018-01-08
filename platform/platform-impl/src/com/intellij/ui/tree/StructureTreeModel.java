@@ -87,7 +87,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   private boolean isValidThread() {
     if (invoker.isValidThread()) return true;
-    LOG.warn("StructureTreeModel is used from unexpected thread");
+    LOG.warn(new IllegalStateException("StructureTreeModel is used from unexpected thread"));
     return false;
   }
 
@@ -109,13 +109,26 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       invoker.invokeLaterIfNeeded(() -> {
         Node node = (Node)component;
         if (disposed) return;
-        boolean updated = node.update();
-        if (structure) {
-          node.invalidate();
-          treeStructureChanged(path, null, null);
+        if (isNodeRemoved(node)) return;
+        if (isValid(node.getElement())) {
+          boolean updated = node.update();
+          if (structure) {
+            node.invalidate();
+            treeStructureChanged(path, null, null);
+          }
+          else if (updated) {
+            treeNodesChanged(path, null, null);
+          }
         }
-        else if (updated) {
-          treeNodesChanged(path, null, null);
+        else {
+          LOG.debug("invalid element cannot be updated: ", path);
+          TreePath parent = path.getParentPath();
+          if (parent != null) {
+            invalidate(parent, true);
+          }
+          else {
+            invalidate(null);
+          }
         }
       });
     }
@@ -135,7 +148,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
   private Node getNode(Object object) {
     if (disposed || !(object instanceof Node) || !isValidThread()) return null;
     Node node = (Node)object;
-    if (!node.isNodeAncestor(root.get())) return null; // node was removed before
+    if (isNodeRemoved(node)) return null;
     if (!node.children.isValid()) {
       List<Node> newChildren = getValidChildren(node);
       List<Node> oldChildren = node.children.set(newChildren);
@@ -144,6 +157,10 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
       LOG.debug("children updated: ", node);
     }
     return node;
+  }
+
+  private boolean isNodeRemoved(Node node) {
+    return !node.isNodeAncestor(root.get());
   }
 
   @Override

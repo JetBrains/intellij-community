@@ -283,11 +283,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       
       if (result.length == 0 && variable == null) {
         String qualifiedName = getQualifiedName();
-        PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
-                          ? JavaPsiFacade.getInstance(getProject()).findClass(qualifiedName, getResolveScope()) 
-                          : null;
-        if (aClass != null) {
-          result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, this, false)};
+        if (qualifiedName != null) {
+          result = PsiJavaCodeReferenceElementImpl.tryClassResult(qualifiedName, this, result);
         }
       }
 
@@ -675,7 +672,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (isReferenceTo(element)) return this;
 
     final PsiManager manager = getManager();
-    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(getProject()).getParserFacade();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiJavaParserFacade parserFacade = facade.getParserFacade();
     if (element instanceof PsiClass) {
       final boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified(this);
       String qName = ((PsiClass)element).getQualifiedName();
@@ -684,6 +682,11 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       }
       else if (JavaPsiFacade.getInstance(manager.getProject()).findClass(qName, getResolveScope()) == null && !preserveQualification) {
         return this;
+      }
+      else if (facade.getResolveHelper().resolveReferencedClass(qName, this) == null &&
+               facade.getResolveHelper().resolveReferencedClass(StringUtil.getPackageName(qName), this) != null) {
+        qName = ((PsiClass)element).getName();
+        assert qName != null : element;
       }
       PsiExpression ref = parserFacade.createExpressionFromText(qName, this);
       getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());

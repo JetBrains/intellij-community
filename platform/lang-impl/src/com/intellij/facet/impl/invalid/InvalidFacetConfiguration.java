@@ -16,14 +16,11 @@
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.FacetConfiguration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.serialization.facet.FacetState;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.serialization.facet.FacetState;
 
 /**
  * @author nik
@@ -47,14 +44,6 @@ public class InvalidFacetConfiguration implements FacetConfiguration {
     return new FacetEditorTab[] {
       new InvalidFacetEditor(editorContext, myErrorMessage)
     };
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
   }
 
   public String getErrorMessage() {

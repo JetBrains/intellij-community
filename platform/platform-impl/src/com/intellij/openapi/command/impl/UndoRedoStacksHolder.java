@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.command.undo.DocumentReference;
@@ -163,6 +165,16 @@ class UndoRedoStacksHolder {
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);
+  }
+
+  void convertTemporaryActionsToPermanent(boolean global, @NotNull Set<DocumentReference> affectedRefs) {
+    for (LinkedList<UndoableGroup> stack : getAffectedStacks(global, affectedRefs)) {
+      for (int i = stack.size() - 1; i >= 0; i--) {
+        UndoableGroup group = stack.get(i);
+        if (!group.isTemporary()) break;
+        group.makePermanent();
+      }
+    }
   }
 
   private <T extends UserDataHolder> void cleanWeaklyTrackedEmptyStacks(@NotNull Collection<T> stackHolders) {

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.testFramework.vcs.ExecutableHelper
-import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 import git4idea.commands.getGitCommandInstance

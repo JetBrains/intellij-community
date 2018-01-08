@@ -45,6 +45,7 @@ import java.awt.image.BufferedImage;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -328,7 +329,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myId2Button.get(id);
   }
 
-  private Component getDecoratorById(final String id) {
+  private InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
   }
 
@@ -827,22 +828,43 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           });
         }
         JComponent c = getComponentAt(anchor);
+        //If all components are hidden for anchor we should find the second component to put in a splitter
+        //Otherwise we add empty splitter
+        if (c == null) {
+          List<String> ids = ToolWindowsPane.this.myManager.getIdsOn(anchor);
+          ids.remove(myInfo.getId());
+          for (Iterator<String> iterator = ids.iterator(); iterator.hasNext(); ) {
+            String id = iterator.next();
+            ToolWindow window = myManager.getToolWindow(id);
+            if (window == null || window.isSplitMode() == myInfo.isSplit() || !window.isVisible()) iterator.remove();
+          }
+          if (!ids.isEmpty()) {
+            InternalDecorator anotherDecorator = getDecoratorById(ids.get(0));
+            if (anotherDecorator!= null) {
+              c = anotherDecorator;
+            }
+          }
+          if (c == null) {
+            LOG.error("Empty splitter @ " + anchor + " during AddAndSplitDockedComponentCmd for " + myInfo.getId());
+          }
+        }
         float newWeight;
         if (c instanceof InternalDecorator) {
           InternalDecorator oldComponent = (InternalDecorator)c;
+          WindowInfoImpl oldInfo = oldComponent.getWindowInfo();
           if (myInfo.isSplit()) {
             splitter.setFirstComponent(oldComponent);
             splitter.setSecondComponent(myNewComponent);
-            float proportion = getPreferredSplitProportion(oldComponent.getWindowInfo().getId(),
-                                                           normalizeWeigh(oldComponent.getWindowInfo().getSideWeight() /
-                                                                          (oldComponent.getWindowInfo().getSideWeight() +
+            float proportion = getPreferredSplitProportion(oldInfo.getId(),
+                                                           normalizeWeigh(oldInfo.getSideWeight() /
+                                                                          (oldInfo.getSideWeight() +
                                                                            myInfo.getSideWeight())));
             splitter.setProportion(proportion);
             if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
-              newWeight = normalizeWeigh(oldComponent.getWindowInfo().getWeight() + myInfo.getWeight());
+              newWeight = normalizeWeigh(oldInfo.getWeight() + myInfo.getWeight());
             }
             else {
-              newWeight = normalizeWeigh(oldComponent.getWindowInfo().getWeight());
+              newWeight = normalizeWeigh(oldInfo.getWeight());
             }
           }
           else {
@@ -850,7 +872,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
             splitter.setSecondComponent(oldComponent);
             splitter.setProportion(normalizeWeigh(myInfo.getSideWeight()));
             if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
-              newWeight = normalizeWeigh(oldComponent.getWindowInfo().getWeight() + myInfo.getWeight());
+              newWeight = normalizeWeigh(oldInfo.getWeight() + myInfo.getWeight());
             }
             else {
               newWeight = normalizeWeigh(myInfo.getWeight());

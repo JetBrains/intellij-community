@@ -167,7 +167,9 @@ public class FileManagerImpl implements FileManager {
     assert !file.isDirectory();
     FileViewProvider viewProvider = findCachedViewProvider(file);
     if (viewProvider != null) return viewProvider;
-
+    if (file instanceof VirtualFileWindow) {
+      throw new IllegalStateException("File " + file + " is invalid");
+    }
     viewProvider = createFileViewProvider(file, true);
     if (file instanceof LightVirtualFile) {
       return file.putUserDataIfAbsent(myPsiHardRefKey, viewProvider);

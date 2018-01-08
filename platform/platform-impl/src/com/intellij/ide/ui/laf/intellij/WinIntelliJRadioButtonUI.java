@@ -42,13 +42,7 @@ public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
 
     // Paint the radio button
     int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
-    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
+    int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y + JBUI.scale(1);
     icon.paintIcon(c, g, x, y);
-  }
-
-  @Override
-  protected void drawText(AbstractButton b, Graphics2D g, String text, Rectangle textRect, FontMetrics fm) {
-    textRect.y -= JBUI.scale(1); // Move one pixel up
-    super.drawText(b, g, text, textRect, fm);
   }
 }

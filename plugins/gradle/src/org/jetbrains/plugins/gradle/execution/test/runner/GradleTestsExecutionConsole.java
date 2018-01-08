@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
-import com.intellij.execution.testframework.JavaTestLocator;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
@@ -52,6 +51,6 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
   }
 
   public SMTestLocator getUrlProvider() {
-    return JavaTestLocator.INSTANCE;
+    return GradleConsoleProperties.GRADLE_TEST_LOCATOR;
   }
 }

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -217,6 +219,7 @@ public class StackFrameItem {
 
   public static class CapturedStackFrame extends XStackFrame implements JVMStackFrameInfoProvider,
                                                                         XDebuggerFramesList.ItemWithSeparatorAbove {
+    private static final String ASYNC_STACKTRACE_MESSAGE = DebuggerBundle.message("frame.panel.async.stacktrace");
     private final XSourcePosition mySourcePosition;
     private final boolean myIsSynthetic;
     private final boolean myIsInLibraryContent;
@@ -290,6 +293,11 @@ public class StackFrameItem {
         return SimpleTextAttributes.GRAYED_ATTRIBUTES;
       }
       return SimpleTextAttributes.REGULAR_ATTRIBUTES;
+    }
+
+    @Override
+    public String getCaptionAboveOf() {
+      return ASYNC_STACKTRACE_MESSAGE;
     }
 
     @Override

@@ -18,7 +18,6 @@ package com.intellij.tasks.vcs;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.ObjectUtils;
@@ -44,20 +43,6 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     HgVcs hgVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
     hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      // if CLM starts async update after waitEverythingDoneInTestMode but before projectClosed then Hg may start its command, 
-      // it will be cancelled with indicator, but inherited threads in DataBaseReader can survive for a while,
-      // because synchronize block in com.intellij.util.io.BaseDataReader.doRun() can postpone stop method while holding mySleepMonitor. 
-      // ThreadChecker doesn't interrupt such threads and catches them in a waiting state -> Thread leak may appear.
-      ChangeListManagerImpl.getInstanceImpl(myProject).freeze("For Tests");
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   @NotNull

@@ -83,9 +83,10 @@
       <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceFunctionalParameter"/>
     </action>
 
-    <action id="RefactoringMenuRenameFile" class="com.intellij.refactoring.actions.RenameFileAction">
+    <group id="RefactoringMenuRenameFile">
+      <reference id="RenameFile"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="RenameElement"/>
-    </action>
+    </group>
 
     <group id="RefactoringMenu4">
       <action id="TurnRefsToSuper" class="com.intellij.refactoring.actions.TurnRefsToSuperAction"/>

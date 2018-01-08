@@ -28,9 +28,9 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.history.SvnFileRevision;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
@@ -104,8 +104,8 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
     return myRevisionMap.get(revision);
   }
 
-  public void setFirstRevision(SVNRevision svnRevision) {
-    myFirstRevisionNumber = new SvnRevisionNumber(svnRevision);
+  public void setFirstRevision(Revision revision) {
+    myFirstRevisionNumber = new SvnRevisionNumber(revision);
   }
 
   public SvnRevisionNumber getFirstRevisionNumber() {
@@ -158,7 +158,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   public VcsRevisionNumber getLineRevisionNumber(final int lineNumber) {
     CommitInfo info = myInfos.getOrNull(lineNumber);
 
-    return info != null && info.getRevision() >= 0 ? new SvnRevisionNumber(SVNRevision.create(info.getRevision())) : null;
+    return info != null && info.getRevision() >= 0 ? new SvnRevisionNumber(Revision.of(info.getRevision())) : null;
   }
 
   @Override
@@ -229,7 +229,7 @@ public abstract class BaseSvnFileAnnotation extends FileAnnotation {
       if (myInfos.isValid(lineNum)) {
         final long revision = getRevision(lineNum);
         if (revision >= 0) {
-          showAllAffectedPaths(new SvnRevisionNumber(SVNRevision.create(revision)));
+          showAllAffectedPaths(new SvnRevisionNumber(Revision.of(revision)));
         }
       }
     }

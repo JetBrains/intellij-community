@@ -824,4 +824,8 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'out', 'exit'    
   }
 
+  void testPreferTypeToGeneratedMethod() {
+    checkPreferredItems 0, 'String', 'public String getZoo', 'public String toString'
+  }
+
 }

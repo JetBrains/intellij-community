@@ -303,7 +303,7 @@ public class DataFlowRunner {
   private static DfaValue makeInitialValue(DfaVariableValue var, PsiElement block) {
     if(var.getQualifier() != null) return null;
     PsiField field = ObjectUtils.tryCast(var.getPsiVariable(), PsiField.class);
-    if (field == null || DfaUtil.hasInitializationHacks(field)) return null;
+    if (field == null || DfaUtil.ignoreInitializer(field) || DfaUtil.hasInitializationHacks(field)) return null;
     return DfaUtil.getPossiblyNonInitializedValue(var.getFactory(), field, block);
   }
 

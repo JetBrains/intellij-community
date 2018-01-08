@@ -76,7 +76,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   public OrderedSet<String> myStopClassSet = new OrderedSet<>();
 
 
-  private ListWrappingTableModel myStopClassesModel = new ListWrappingTableModel(myStopClassSet, InspectionGadgetsBundle
+  private final ListWrappingTableModel myStopClassesModel = new ListWrappingTableModel(myStopClassSet, InspectionGadgetsBundle
     .message("inspection.type.may.be.weakened.add.stop.class.selection.table"));
 
   class AddStopWordQuickfix implements LowPriorityAction, LocalQuickFix {

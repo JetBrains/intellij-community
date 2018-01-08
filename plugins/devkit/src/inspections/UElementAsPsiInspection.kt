@@ -100,6 +100,13 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
       return false;
     }
 
+    override fun visitBinaryExpressionWithType(node: UBinaryExpressionWithType): Boolean {
+      if (isUElementType(node.operand.getExpressionType()) && isPsiElementType(node.typeReference?.type)) {
+        node.operand.sourcePsiElement?.let { reportedElements.add(it) }
+      }
+      return false
+    }
+
     override fun visitVariable(node: UVariable): Boolean {
       if (isUElementType(node.uastInitializer?.getExpressionType()) && isPsiElementType(node.type)) {
         node.uastInitializer.sourcePsiElement?.let { reportedElements.add(it) }

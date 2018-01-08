@@ -16,12 +16,16 @@
 package com.intellij.ide.impl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.projectView.impl.ShowModulesAction;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BooleanSupplier;
@@ -47,9 +51,13 @@ public class FlattenModulesToggleAction extends ToggleAction implements DumbAwar
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject));
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabledAndVisible(ModuleGrouperKt.isQualifiedModuleNamesEnabled(myProject) && ShowModulesAction.hasModules());
     if (!myIsEnabled.getAsBoolean()) {
-      e.getPresentation().setEnabled(false);
+      presentation.setEnabled(false);
+      if (ActionPlaces.isPopupPlace(e.getPlace()) || ToolWindowContentUi.POPUP_PLACE.equals(e.getPlace())) {
+        presentation.setVisible(false);
+      }
     }
   }
 

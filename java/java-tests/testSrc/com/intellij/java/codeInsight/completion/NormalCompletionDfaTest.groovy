@@ -55,6 +55,10 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testNoUnnecessaryCastDfa() { doTest() }
   void testNoUnnecessaryCastRawDfa() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
+  void testComplexInstanceOfDfa() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'
+  }
 
   void testCastTwice() {
     configureByTestName()

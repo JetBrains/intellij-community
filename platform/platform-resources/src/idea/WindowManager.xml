@@ -2,19 +2,19 @@
   <!-- default layout for all projects -->
   <layout>
     <!-- left stripe -->
-    <window_info id="Project" active="false" anchor="left" order="0" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" content_ui="combo" />
-    <window_info id="Structure" active="false" anchor="left" order="1" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
+    <window_info id="Project" order="0" weight="0.25" content_ui="combo" />
+    <window_info id="Structure" order="1" weight="0.25" />
     <!-- bottom stripe -->
-    <window_info id="Message" active="false" anchor="bottom" order="0" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.33" />
-    <window_info id="Find" active="false" anchor="bottom" order="1" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.33" />
-    <window_info id="Run" active="false" anchor="bottom" order="2" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.33" />
-    <window_info id="Debug" active="false" anchor="bottom" order="3" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.4" />
-    <window_info id="Cvs" active="false" anchor="bottom" order="4" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
-    <window_info id="Inspection" active="false" anchor="bottom" order="5" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.4" />
-    <window_info id="TODO" active="false" anchor="bottom" order="6" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.33" />
+    <window_info id="Message" anchor="bottom" order="0" />
+    <window_info id="Find" anchor="bottom" order="1" />
+    <window_info id="Run" anchor="bottom" order="2" />
+    <window_info id="Debug" anchor="bottom" order="3" weight="0.4" />
+    <window_info id="Cvs" anchor="bottom" order="4" weight="0.25" />
+    <window_info id="Inspection" anchor="bottom" order="5" weight="0.4" />
+    <window_info id="TODO" anchor="bottom" order="6" />
     <!-- right stripe -->
-    <window_info id="Commander" active="false" anchor="right" order="0" auto_hide="false" internal_type="sliding" type="sliding" visible="false" weight="0.4" />
-    <window_info id="Ant Build" active="false" anchor="right" order="1" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" />
-    <window_info id="Hierarchy" active="false" anchor="right" order="2" auto_hide="false" internal_type="docked" type="docked" visible="false" weight="0.25" content_ui="combo"/>
+    <window_info id="Commander" anchor="right" order="0" internal_type="sliding" type="sliding" weight="0.4" />
+    <window_info id="Ant Build" anchor="right" order="1" weight="0.25" />
+    <window_info id="Hierarchy" anchor="right" order="2" weight="0.25" content_ui="combo"/>
   </layout>
 </component>

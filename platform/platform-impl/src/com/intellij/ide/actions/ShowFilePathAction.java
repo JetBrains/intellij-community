@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -33,6 +35,9 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -269,12 +274,10 @@ public class ShowFilePathAction extends AnAction {
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
     if (SystemInfo.isWindows) {
-      String call = toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"';
-      LOG.debug(call);
-      File script = ExecUtil.createTempExecutableScript("idea_show_file_", ".bat", call);
-      GeneralCommandLine cmd = new GeneralCommandLine(script.getPath());
-      OSProcessHandler.deleteFileOnTermination(cmd, script);
-      ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
+      String cmd = toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"';
+      LOG.debug(cmd);
+      Process process = Runtime.getRuntime().exec(cmd);  // no advanced quoting/escaping is needed
+      new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
     }
     else if (SystemInfo.isMac) {
       GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
@@ -294,6 +297,17 @@ public class ShowFilePathAction extends AnAction {
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
     }
+  }
+
+  private static String shortPath(String path) {
+    if (path.contains("  ")) {
+      char[] result = new char[WinDef.MAX_PATH];
+      if (Kernel32.INSTANCE.GetShortPathName(path, result, result.length) <= result.length) {
+        return Native.toString(result);
+      }
+    }
+
+    return path;
   }
 
   private static void schedule(GeneralCommandLine cmd) {

@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Provides the Content tab to the ChangesView log toolwindow.
@@ -137,7 +135,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Nullable
   public static VcsLogContentProvider getInstance(@NotNull Project project) {
     ChangesViewContentEP[] extensions = project.getExtensions(ChangesViewContentEP.EP_NAME);
-    for (ChangesViewContentEP ep: extensions) {
+    for (ChangesViewContentEP ep : extensions) {
       if (ep.getClassName().equals(VcsLogContentProvider.class.getName())) {
         return (VcsLogContentProvider)ep.getCachedInstance();
       }

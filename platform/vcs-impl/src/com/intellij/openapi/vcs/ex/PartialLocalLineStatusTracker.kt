@@ -417,11 +417,11 @@ class PartialLocalLineStatusTracker(project: Project,
       return actions
     }
 
-    private inner class SetChangeListAction(val editor: Editor, range: Range, val mousePosition: Point?)
-      : RangeMarkerAction(range, IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST) {
-      override fun isEnabled(range: Range): Boolean = range is LocalRange
+    private inner class SetChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
+      : RangeMarkerAction(editor, range, IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST) {
+      override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
-      override fun actionPerformed(range: Range) {
+      override fun actionPerformed(editor: Editor, range: Range) {
         MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
 
         val newRange = tracker.findRange(range)

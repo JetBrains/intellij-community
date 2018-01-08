@@ -18,6 +18,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -532,5 +533,27 @@ public class EditorImplTest extends AbstractEditorTest {
     ((EditorEx)myEditor).setPrefixTextAndAttributes(">", new TextAttributes());
     runWriteCommand(() -> myEditor.getDocument().deleteString(0, myEditor.getDocument().getTextLength()));
     assertEquals(0, ((EditorImpl)myEditor).getVisibleLineCount());
+  }
+
+  public void testDragInsideSelectionWithDndDisabled() {
+    initText("abcdef");
+    EditorTestUtil.setEditorVisibleSize(myEditor, 100, 100);
+    myEditor.getSettings().setDndEnabled(false);
+    EditorMouseFixture mouse = mouse();
+    mouse.pressAt(0, 0).dragTo(0, 3).release();
+    checkResultByText("<selection>abc<caret></selection>def");
+    mouse.pressAt(0, 1);
+    checkResultByText("a<caret>bcdef");
+    mouse.dragTo(0, 4);
+    checkResultByText("a<selection>bcd<caret></selection>ef");
+    mouse.release();
+    checkResultByText("a<selection>bcd<caret></selection>ef");
+  }
+
+  public void testCreateRectangularSelectionWithDndDisabled() {
+    initText("ab\ncd<caret>");
+    myEditor.getSettings().setDndEnabled(false);
+    mouse().alt().shift().middle().clickAt(0, 0);
+    checkResultByText("<selection><caret>ab</selection>\n<selection><caret>cd</selection>");
   }
 }

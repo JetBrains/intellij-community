@@ -1,23 +1,13 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ui.util;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,7 +42,12 @@ public abstract class SynchronizedBidiMultiMap<K, V> {
   }
 
   public synchronized void put(K key, V... values) {
-    myKey2Values.merge(key, values, this::merge);
+    myKey2Values.merge(key, values, (/*@NotNull*/ arr1, arr2) -> {
+      V[] mergeResult = arrayFactory().create(arr1.length + arr2.length);
+      System.arraycopy(arr1, 0, mergeResult, 0, arr1.length);
+      System.arraycopy(arr2, 0, mergeResult, arr1.length, arr2.length);
+      return mergeResult;
+    });
     for (V value : values) {
       myValue2Keys.put(value, key);
     }
@@ -97,7 +92,9 @@ public abstract class SynchronizedBidiMultiMap<K, V> {
     return myValue2Keys.isEmpty();
   }
 
-  public abstract V[] merge(V[] values1, V[] values2);
+  @TestOnly
+  public Map<K, V[]> getMap() { return myKey2Values; }
 
-  public abstract ArrayFactory<V> arrayFactory();
+  @NotNull
+  protected abstract ArrayFactory<V> arrayFactory();
 }

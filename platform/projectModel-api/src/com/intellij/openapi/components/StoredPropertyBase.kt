@@ -26,11 +26,3 @@ abstract class StoredPropertyBase<T> : ReadWriteProperty<BaseState, T>, StoredPr
     return this
   }
 }
-
-internal abstract class PrimitiveStoredPropertyBase<T> : StoredPropertyBase<T>() {
-  abstract val value: Any?
-
-  protected abstract val defaultValue: Any?
-
-  override fun isEqualToDefault() = value == defaultValue
-}

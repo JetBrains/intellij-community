@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.psi.usages;
 
 import com.intellij.openapi.util.Disposer;
@@ -23,10 +25,10 @@ public class JavaUsageViewTreeTest extends LightCodeInsightFixtureTestCase {
     XmlSerializerUtil.copyBean(settings.getState(), oldSettingsState);
     disposeOnTearDown(() -> settings.loadState(oldSettingsState));
 
-    settings.GROUP_BY_MODULE = false;
-    settings.GROUP_BY_FILE_STRUCTURE = true;
-    settings.GROUP_BY_USAGE_TYPE = false;
-    settings.GROUP_BY_PACKAGE = false;
+    settings.setGroupByModule(false);
+    settings.setGroupByFileStructure(true);
+    settings.setGroupByUsageType(false);
+    settings.setGroupByPackage(false);
   }
 
   public void testSimpleModule() {

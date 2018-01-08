@@ -466,7 +466,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       Icon icon = ActionButton.this.getIcon();
       if (icon instanceof Accessible) {
         AccessibleContext context = ((Accessible)icon).getAccessibleContext();
-        if (context != null && context instanceof AccessibleIcon) {
+        if (context instanceof AccessibleIcon) {
           return new AccessibleIcon[]{(AccessibleIcon)context};
         }
       }

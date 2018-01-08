@@ -334,13 +334,16 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       return null;
     }
     if (methodName == null) return null;
-    String parameterName = leftVar.getName();
     String text;
     if (!methodName.startsWith("comparing")) {
       text = "java.util.Comparator." + methodName + "()";
     }
     else {
-      text = "java.util.Comparator." + methodName + "(" + (parameterName + " -> " + left.getText()) + ")";
+      String parameterName = leftVar.getName();
+      PsiTypeElement typeElement = leftVar.getTypeElement();
+      String parameterDeclaration = typeElement == null ? parameterName : "(" + typeElement.getText() + " " + parameterName + ")";
+      text = "java.util.Comparator." + methodName + "(" +
+             (parameterDeclaration + " -> " + left.getText()) + ")";
     }
     return text;
   }

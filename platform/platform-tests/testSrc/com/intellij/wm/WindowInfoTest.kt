@@ -3,16 +3,10 @@
  */
 package com.intellij.wm
 
-import com.intellij.configurationStore.deserialize
-import com.intellij.configurationStore.serialize
-import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.WindowInfoImpl
 import com.intellij.testFramework.ProjectRule
-import com.intellij.testFramework.assertions.Assertions.assertThat
-import org.intellij.lang.annotations.Language
-import org.jdom.Element
+import com.intellij.testFramework.assertions.doSerializerTest
 import org.junit.ClassRule
 import org.junit.Test
 import java.awt.Rectangle
@@ -53,21 +47,14 @@ internal class WindowInfoTest {
     a.floatingBounds = Rectangle(1, 42, 23, 4)
     doSerializerTest("""<window_info x="1" y="42" width="23" height="4" id="a" />""", a)
   }
-}
 
-private fun <T : BaseState> doSerializerTest(@Language("XML") expectedText: String, bean: T): T {
-  // test deserializer
-  val expectedTrimmed = expectedText.trimIndent()
-  val element = assertSerializer(bean, expectedTrimmed)
-
-  // test deserializer
-  val o = (element ?: Element("state")).deserialize(bean.javaClass)
-  assertSerializer(o, expectedTrimmed, "Deserialization failure")
-  return o
-}
-
-private fun assertSerializer(bean: Any, expected: String, description: String = "Serialization failure"): Element? {
-  val element = bean.serialize()
-  assertThat(element?.let { JDOMUtil.writeElement(element).trim() }).`as`(description).isEqualTo(expected)
-  return element
+  @Test
+  fun `weight`() {
+    val a = WindowInfoImpl()
+    a.id = "a"
+    a.weight = 0.3f
+    doSerializerTest("""<window_info id="a" weight="0.3" />""", a)
+    a.weight = WindowInfoImpl.DEFAULT_WEIGHT
+    doSerializerTest("""<window_info id="a" />""", a)
+  }
 }

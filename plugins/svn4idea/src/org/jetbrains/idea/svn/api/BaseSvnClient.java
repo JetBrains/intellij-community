@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jetbrains.idea.svn.api;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,23 +23,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
 import org.jetbrains.idea.svn.commandLine.*;
-import org.jetbrains.idea.svn.diff.DiffOptions;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public abstract class BaseSvnClient implements SvnClient {
   protected SvnVcs myVcs;
   protected ClientFactory myFactory;
@@ -57,19 +60,19 @@ public abstract class BaseSvnClient implements SvnClient {
     myIsActive = isActive;
   }
 
-  protected void assertUrl(@NotNull SvnTarget target) {
-    if (!target.isURL()) {
+  protected void assertUrl(@NotNull Target target) {
+    if (!target.isUrl()) {
       throw new IllegalArgumentException("Target should be url " + target);
     }
   }
 
-  protected void assertFile(@NotNull SvnTarget target) {
+  protected void assertFile(@NotNull Target target) {
     if (!target.isFile()) {
       throw new IllegalArgumentException("Target should be file " + target);
     }
   }
 
-  protected void assertDirectory(@NotNull SvnTarget target) {
+  protected void assertDirectory(@NotNull Target target) {
     assertFile(target);
     if (!target.getFile().isDirectory()) {
       throw new IllegalArgumentException("Target should be directory " + target);
@@ -85,7 +88,7 @@ public abstract class BaseSvnClient implements SvnClient {
 
   @NotNull
   public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull SvnTarget target,
+                                 @NotNull Target target,
                                  @NotNull SvnCommandName name,
                                  @NotNull List<String> parameters,
                                  @Nullable LineCommandListener listener) throws SvnBindException {
@@ -94,7 +97,7 @@ public abstract class BaseSvnClient implements SvnClient {
 
   @NotNull
   public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull SvnTarget target,
+                                 @NotNull Target target,
                                  @Nullable File workingDirectory,
                                  @NotNull SvnCommandName name,
                                  @NotNull List<String> parameters,
@@ -108,7 +111,7 @@ public abstract class BaseSvnClient implements SvnClient {
 
   @NotNull
   public CommandExecutor execute(@NotNull SvnVcs vcs,
-                                 @NotNull SvnTarget target,
+                                 @NotNull Target target,
                                  @Nullable File workingDirectory,
                                  @NotNull Command command,
                                  @Nullable LineCommandListener listener) throws SvnBindException {
@@ -129,14 +132,9 @@ public abstract class BaseSvnClient implements SvnClient {
     return new CommandRuntime(vcs, new AuthenticationService(vcs, myIsActive));
   }
 
-  protected static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws VcsException {
+  public static void callHandler(@Nullable ProgressTracker handler, @NotNull ProgressEvent event) throws SvnBindException {
     if (handler != null) {
-      try {
-        handler.consume(event);
-      }
-      catch (SVNException e) {
-        throw new SvnBindException(e);
-      }
+      handler.consume(event);
     }
   }
 
@@ -145,40 +143,8 @@ public abstract class BaseSvnClient implements SvnClient {
     return new ProgressEvent(path, 0, null, null, action, null, null);
   }
 
-  @Nullable
-  protected static ISVNEventHandler toEventHandler(@Nullable final ProgressTracker handler) {
-    ISVNEventHandler result = null;
-
-    if (handler != null) {
-      result = new ISVNEventHandler() {
-        @Override
-        public void handleEvent(SVNEvent event, double progress) throws SVNException {
-          handler.consume(ProgressEvent.create(event));
-        }
-
-        @Override
-        public void checkCancelled() throws SVNCancelException {
-          handler.checkCancelled();
-        }
-      };
-    }
-
-    return result;
-  }
-
-  @Nullable
-  protected static SVNDiffOptions toDiffOptions(@Nullable DiffOptions options) {
-    return options != null ? new SVNDiffOptions(options.isIgnoreAllWhitespace(), options.isIgnoreAmountOfWhitespace(),
-                                                options.isIgnoreEOLStyle()) : null;
-  }
-
-  @Nullable
-  protected static SVNDepth toDepth(@Nullable Depth depth) {
-    return depth != null ? SVNDepth.fromString(depth.getName()) : null;
-  }
-
   @NotNull
-  protected static SVNRevision notNullize(@Nullable SVNRevision revision) {
-    return revision != null ? revision : SVNRevision.UNDEFINED;
+  protected static Revision notNullize(@Nullable Revision revision) {
+    return revision != null ? revision : Revision.UNDEFINED;
   }
 }

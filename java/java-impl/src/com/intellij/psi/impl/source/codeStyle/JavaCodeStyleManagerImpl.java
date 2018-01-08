@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -130,7 +131,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public PsiImportList prepareOptimizeImportsResult(@NotNull PsiJavaFile file) {
-    return new ImportHelper(getSettings()).prepareOptimizeImportsResult(file);
+    return new ImportHelper(CodeStyle.getSettings(file)).prepareOptimizeImportsResult(file);
   }
 
   @Override
@@ -140,7 +141,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass) {
-    return new ImportHelper(getSettings()).addImport(file, refClass);
+    return new ImportHelper(CodeStyle.getSettings(file)).addImport(file, refClass);
   }
 
   @Override
@@ -216,7 +217,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   @Override
   public int findEntryIndex(@NotNull PsiImportStatementBase statement) {
-    return new ImportHelper(getSettings()).findEntryIndex(statement);
+    return new ImportHelper(CodeStyle.getSettings(statement.getContainingFile())).findEntryIndex(statement);
   }
 
   @NotNull
@@ -1152,13 +1153,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   @NotNull
-  private CodeStyleSettings getSettings() {
-    return CodeStyleSettingsManager.getSettings(myProject);
-  }
-
-  @NotNull
   private JavaCodeStyleSettings getJavaSettings() {
-    return getSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    return CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
   }
 
   private static boolean isStringPsiLiteral(@NotNull PsiElement element) {

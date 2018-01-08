@@ -47,9 +47,17 @@ public class BaseFixture implements IdeaTestFixture {
   public void tearDown() throws Exception {
     Assert.assertTrue("setUp() has not been called", myInitialized);
     Assert.assertFalse("tearDown() already has been called", myDisposed);
-    EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(myTestRootDisposable));
+    disposeRootDisposable();
     myDisposed = true;
     resetClassFields(getClass());
+  }
+
+  protected void disposeRootDisposable() {
+    EdtTestUtil.runInEdtAndWait(() -> {
+      if (!Disposer.isDisposed(myTestRootDisposable)) {
+        Disposer.dispose(myTestRootDisposable);
+      }
+    });
   }
 
   private void resetClassFields(final Class<?> aClass) {

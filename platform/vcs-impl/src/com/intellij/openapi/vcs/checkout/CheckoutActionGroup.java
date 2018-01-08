@@ -38,6 +38,11 @@ public class CheckoutActionGroup extends ComputableActionGroup.Simple {
   @NotNull
   @Override
   protected AnAction[] computeChildren(@NotNull ActionManager manager) {
+    return getActions();
+  }
+
+  @NotNull
+  public AnAction[] getActions() {
     CheckoutProvider[] providers = CheckoutProvider.EXTENSION_POINT_NAME.getExtensions();
     if (providers.length == 0) {
       return EMPTY_ARRAY;

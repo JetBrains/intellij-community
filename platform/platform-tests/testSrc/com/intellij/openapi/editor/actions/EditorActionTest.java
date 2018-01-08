@@ -254,4 +254,10 @@ public class EditorActionTest extends AbstractEditorTest {
     left();
     checkResultByText("a<caret>" + SURROGATE_PAIR + "b");
   }
+
+  public void testDeleteToWordStartWithEscapedQuote() {
+    init("class Foo { String s = \"\\\"a<caret>\"; }", TestFileType.JAVA);
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_START);
+    checkResultByText("class Foo { String s = \"\\\"<caret>\"; }");
+  }
 }

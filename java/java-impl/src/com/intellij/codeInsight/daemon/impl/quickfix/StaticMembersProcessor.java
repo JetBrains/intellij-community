@@ -23,6 +23,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.LinkedMultiMap;
 import com.intellij.util.containers.MultiMap;
@@ -43,12 +44,12 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
 
   private final MultiMap<PsiClass, T> mySuggestions = new LinkedMultiMap<>();
 
-  private final Map<PsiClass, Boolean> myPossibleClasses = new HashMap<>();
+  private final Map<String, Boolean> myPossibleClasses = new HashMap<>();
 
   @NotNull private final PsiElement myPlace;
   @NotNull private final SearchMode mySearchMode;
   private final boolean myShowMembersFromDefaultPackage;
-  private PsiType myExpectedType;
+  private ExpectedTypeInfo[] myExpectedTypes;
 
   protected StaticMembersProcessor(@NotNull PsiElement place,
                                    boolean showMembersFromDefaultPackage,
@@ -56,7 +57,6 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     myPlace = place;
     mySearchMode = searchMode;
     myShowMembersFromDefaultPackage = showMembersFromDefaultPackage && PsiUtil.isFromDefaultPackage(place);
-    myExpectedType = PsiType.NULL;
   }
 
   protected abstract boolean isApplicable(T member, PsiElement place);
@@ -74,17 +74,24 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
     return result;
   }
 
-  public PsiType getExpectedType() {
-    if (myExpectedType == PsiType.NULL) {
-      myExpectedType = getExpectedTypeInternal();
+  protected ExpectedTypeInfo[] getExpectedTypes() {
+    if (myExpectedTypes == null) {
+      if (myPlace instanceof PsiExpression) {
+        myExpectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiExpression)myPlace, false);
+      }
+      else {
+        myExpectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
+      }
     }
-    return myExpectedType;
+    return myExpectedTypes;
   }
 
-  private PsiType getExpectedTypeInternal() {
-    if (!(myPlace instanceof PsiExpression)) return null;
-    ExpectedTypeInfo[] types = ExpectedTypesProvider.getExpectedTypes((PsiExpression)myPlace, false);
-    return types.length > 0 ? types[0].getType() : null;
+  protected boolean isApplicableFor(PsiType fieldType) {
+    ExpectedTypeInfo[] expectedTypes = getExpectedTypes();
+    for (ExpectedTypeInfo info : expectedTypes) {
+      if (TypeConversionUtil.isAssignable(info.getType(), fieldType)) return true;
+    }
+    return expectedTypes.length == 0;
   }
 
   @Override
@@ -124,13 +131,15 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
                               Collection<T> members,
                               List<T> list,
                               List<T> applicableList) {
-    Boolean alreadyMentioned = myPossibleClasses.get(containingClass);
-    if (alreadyMentioned == Boolean.TRUE) return;
-    if (containingClass.getQualifiedName() == null) {
+    String qualifiedName = containingClass.getQualifiedName();
+    if (qualifiedName == null) {
       return;
     }
+
+    Boolean alreadyMentioned = myPossibleClasses.get(qualifiedName);
+    if (alreadyMentioned == Boolean.TRUE) return;
     if (alreadyMentioned == null) {
-      myPossibleClasses.put(containingClass, false);
+      myPossibleClasses.put(qualifiedName, false);
     }
     for (T member : members) {
       if (!member.hasModifierProperty(PsiModifier.STATIC)) {
@@ -147,7 +156,7 @@ abstract class StaticMembersProcessor<T extends PsiMember & PsiDocCommentOwner> 
       }
       if (isApplicable(member, myPlace)) {
         applicableList.add(member);
-        myPossibleClasses.put(containingClass, true);
+        myPossibleClasses.put(qualifiedName, true);
         break;
       }
     }
