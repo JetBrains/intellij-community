@@ -287,6 +287,27 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
     myFixture.checkHighlighting();
   }
 
+  public void testNestedEnumWithReferenceByName() {
+    myFixture.allowTreeAccessForAllFiles();
+    addJavaFile("x/Outer.java", "package x;\n" +
+                                "public class Outer {\n" +
+                                "    enum E {A}\n" +
+                                "    static final E abc = E.A;\n" +
+                                "\n" +
+                                "    public static void main(String[] args) {\n" +
+                                "        System.out.println(abc.ordinal());\n" +
+                                "    }\n" +
+                                "}\n");
+    addJavaFile("x/Consumer.java", "package x;\n" +
+                                 "public class Consumer {\n" +
+                                 "    public String foo() {\n" +
+                                 "       return Outer.abc.name();\n" +
+                                 "    }\n" +
+                                 "}");
+    myFixture.configureByFiles("x/Outer.java", "x/Consumer.java");
+    myFixture.checkHighlighting();
+  }
+
   public void testSuggestPackagePrivateForTopLevelClassSetting() {
     myFixture.allowTreeAccessForAllFiles();
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
