@@ -362,7 +362,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
     final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
        if (!PsiUtil.canBeOverridden((PsiMethod)element)) {
-         return new LocalSearchScope(element.getContainingFile());
+         return element.getUseScope();
        }
       final PsiClass[] memberClass = getClassesWithMember(referenceExpression, (PsiMember)element);
       if (memberClass != null && memberClass.length == 1) {
