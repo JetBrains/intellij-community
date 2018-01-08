@@ -21,6 +21,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.*;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -722,9 +723,19 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
-      ASTNode dot = findChildByRole(ChildRole.DOT);
-      super.deleteChildInternal(child);
-      deleteChildInternal(dot);
+      ASTNode dot = findChildByType(JavaTokenType.DOT, child);
+      assert dot != null : this;
+      deleteChildRange(child.getPsi(), dot.getPsi());
+
+      ASTNode first = getFirstChildNode();
+      if (getChildRole(first) == ChildRole.REFERENCE_PARAMETER_LIST && first.getFirstChildNode() == null) {
+        ASTNode start = first.getTreeNext();
+        if (PsiImplUtil.isWhitespaceOrComment(start)) {
+          ASTNode next = PsiImplUtil.skipWhitespaceAndComments(start);
+          assert next != null : this;
+          CodeEditUtil.removeChildren(this, start, next.getTreePrev());
+        }
+      }
     }
     else if (child.getElementType() == JavaElementType.REFERENCE_PARAMETER_LIST) {
       replaceChildInternal(child, createEmptyRefParameterList(getProject()));
