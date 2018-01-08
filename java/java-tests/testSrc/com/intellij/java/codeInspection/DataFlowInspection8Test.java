@@ -209,7 +209,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testCastInstanceOf() { doTest(); }
 
   public void testMutabilityBasics() {
-    myFixture.addClass("package org.jetbrains.annotations;public @interface ReadOnly {}");
+    myFixture.addClass("package org.jetbrains.annotations;public @interface Unmodifiable {}");
     doTest();
   }
 

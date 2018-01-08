@@ -74,17 +74,17 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
-  public static final DfaFactType<Boolean> MUTABLE = new DfaFactType<Boolean>("Mutable") {
+  public static final DfaFactType<Mutability> MUTABILITY = new DfaFactType<Mutability>("Mutable") {
     @Override
-    String toString(@NotNull Boolean fact) {
-      return fact ? "Mutable" : "ReadOnly";
+    boolean isUnknown(@NotNull Mutability fact) {
+      return fact == Mutability.UNKNOWN;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
+    Mutability calcFromVariable(@NotNull DfaVariableValue value) {
       PsiModifierListOwner variable = value.getPsiVariable();
-      return MutationSignature.getMutabilityFact(variable);
+      return Mutability.getMutability(variable);
     }
   };
 

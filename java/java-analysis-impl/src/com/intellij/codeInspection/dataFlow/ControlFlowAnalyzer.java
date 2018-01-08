@@ -1473,7 +1473,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       qualifierExpression.accept(this);
     }
     else if (myThisReadOnly) {
-      addInstruction(new PushInstruction(myFactory.getFactValue(DfaFactType.MUTABLE, false), null));
+      addInstruction(new PushInstruction(myFactory.getFactValue(DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE), null));
     } else {
       pushUnknown();
     }
@@ -1553,7 +1553,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
       return CachedValueProvider.Result
-        .create(Collections.<StandardMethodContract>emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        .create(Collections.emptyList(), method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
@@ -1768,7 +1768,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     DfaValue value = myFactory.createTypeValue(expression.getType(), Nullness.NOT_NULL);
     if (myThisReadOnly) {
-      value = myFactory.withFact(value, DfaFactType.MUTABLE, false);
+      value = myFactory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
     }
     addInstruction(new PushInstruction(value, expression));
     finishElement(expression);
