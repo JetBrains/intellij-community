@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.postfix.templates.editable;
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public interface PostfixEditableTemplateProvider extends PostfixTemplateProvider {
+public interface PostfixEditableTemplateProvider<T extends PostfixTemplate> extends PostfixTemplateProvider {
   @NotNull
   @Override
   default Set<PostfixTemplate> getTemplates() {
@@ -40,10 +41,10 @@ public interface PostfixEditableTemplateProvider extends PostfixTemplateProvider
   String getName();
 
   @Nullable
-  PostfixTemplateEditor createEditor();
+  PostfixTemplateEditor<T> createEditor(@Nullable Project project);
 
   @NotNull
-  PostfixTemplate readExternal(@NotNull String key, @NotNull Element template);
+  T readExternal(@NotNull String key, @NotNull Element template);
 
   void writeExternal(@NotNull PostfixTemplate template, @NotNull Element parentElement);
 }

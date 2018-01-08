@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateMetaData;
@@ -94,6 +94,10 @@ public abstract class PostfixTemplate {
     return myProvider;
   }
 
+  /**
+   * Builtin templates cannot be removed
+   * If they are editable, they can be restored to default
+   */
   public boolean isBuiltin() {
     return true;
   }
