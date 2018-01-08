@@ -481,7 +481,7 @@ public class GroovyCompletionUtil {
       newStartOffset = marker.getStartOffset();
     }
 
-    if (toDelete.isValid()) {
+    if (toDelete != null && toDelete.isValid()) {
       document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
     }
 
