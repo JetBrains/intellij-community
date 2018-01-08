@@ -233,6 +233,13 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testCollectorsInsideCollect() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'toCollection', 'toList', 'toSet'
+    selectItem(myItems[1])
+    checkResultByFileName()
+  }
+
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('empty') })
