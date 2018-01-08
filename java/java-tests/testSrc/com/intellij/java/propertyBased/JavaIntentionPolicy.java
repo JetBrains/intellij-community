@@ -18,7 +18,10 @@ package com.intellij.java.propertyBased;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiImportList;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,6 +92,11 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag")
       ;
     return !commentChangingActions;
+  }
+
+  @Override
+  public boolean trackComment(PsiComment comment) {
+    return PsiTreeUtil.getParentOfType(comment, PsiImportList.class) == null;
   }
 
   @Override

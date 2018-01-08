@@ -34,9 +34,9 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetCheck.Generator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -144,7 +144,8 @@ public class InvokeIntention extends ActionOnRange {
 
   protected List<String> extractCommentsReformattedToSingleWhitespace(PsiFile file) {
     return PsiTreeUtil.findChildrenOfType(file, PsiComment.class)
-      .stream().map(comment -> comment.getText().replaceAll("[\\s*]+", " ")).collect(Collectors.toList());
+      .stream()
+      .filter(comment -> myPolicy.trackComment(comment)).map(comment -> comment.getText().replaceAll("[\\s*]+", " ")).collect(Collectors.toList());
   }
 
   private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
