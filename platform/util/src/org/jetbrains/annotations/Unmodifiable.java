@@ -9,11 +9,13 @@ import java.lang.annotation.*;
  * An annotation which depicts that method returns an unmodifiable value or a variable
  * contains an unmodifiable value. Unmodifiable value means that calling methods which may
  * mutate this value (alter visible behavior) either don't have any effect or throw
- * an exception.
+ * an exception. Also unlike unmodifiable view (see {@link UnmodifiableView}) unmodifiable value cannot
+ * be modified by any other code as well.
  * <p>
  * This annotation is experimental and may be changed/removed in future
  * without additional notice!
  * </p>
+ * @see UnmodifiableView
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
