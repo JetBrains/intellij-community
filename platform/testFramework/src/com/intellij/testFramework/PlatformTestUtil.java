@@ -643,7 +643,7 @@ public class PlatformTestUtil {
 
     static {
       // to use JobSchedulerImpl.getJobPoolParallelism() in tests which don't init application
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     }
 
     private TestInfo(@NotNull ThrowableRunnable test, int expectedMs, @NotNull String what) {

@@ -96,7 +96,7 @@ public class Main {
     }
   }
 
-  private static boolean isHeadless(String[] args) {
+  public static boolean isHeadless(String[] args) {
     if (Boolean.valueOf(System.getProperty(AWT_HEADLESS))) {
       return true;
     }

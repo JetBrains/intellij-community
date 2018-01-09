@@ -150,7 +150,7 @@ public class IdeaApplication {
   }
 
   private static void patchSystem(boolean headless) {
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool();
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(headless);
     LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors()+"; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
 
     System.setProperty("sun.awt.noerasebackground", "true");
