@@ -7,7 +7,9 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
-import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
+import com.jetbrains.env.python.testing.CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask;
+import com.jetbrains.env.python.testing.CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask;
+import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.testing.PyNoseTestConfiguration;
@@ -158,18 +160,14 @@ public final class PythonNoseTestingTest extends PyEnvTestCase {
 
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() {
-
-    final PyConfigurationCreationTask<PyNoseTestConfiguration> task =
-      new PyConfigurationCreationTask<PyNoseTestConfiguration>() {
-        @NotNull
-        @Override
-        protected PyNoseTestFactory createFactory() {
-          return PyNoseTestFactory.INSTANCE;
-        }
-      };
-    runPythonTest(task);
-    task.checkEmptyTarget();
+  public void testValidation() throws Throwable {
+    new PyConfigurationValidationTask<PyNoseTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyNoseTestFactory createFactory() {
+        return PyNoseTestFactory.INSTANCE;
+      }
+    }.fetchException(this::runPythonTest);
   }
 
   @Test
