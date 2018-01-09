@@ -351,9 +351,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     removed?.let { removeConfigurations(it) }
   }
 
-  // comparator is null if want just to save current order (e.g. if want to keep order even after reload)
-  // yes, on hot reload, because our DeprecatedProjectRunConfigurationManager doesn't use SchemeManager and change of some RC file leads to reload of all configurations
-  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
+  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>) {
     lock.write {
       listManager.setOrder(comparator)
     }
@@ -373,6 +371,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   fun requestSort() {
     lock.write {
       listManager.requestSort()
+      allSettings
     }
   }
 
@@ -526,6 +525,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
+    projectRunConfigurationFirstLoaded()
   }
 
   override fun loadState(parentNode: Element) {
@@ -573,21 +573,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     workspaceSchemeManager.reload()
 
     lock.write {
-      listManager.loadOrder(parentNode.getChildren("list").mapNotNull { it.getAttributeValue("itemvalue") })
-
       recentlyUsedTemporaries.clear()
-      val recentNode = parentNode.getChild(RECENT)
-      if (recentNode != null) {
-        val list = SmartList<String>()
-        @Suppress("DEPRECATION")
-        com.intellij.openapi.util.JDOMExternalizableStringList.readList(list, recentNode)
-        for (id in list) {
+      val recentListElement = parentNode.getChild(RECENT)?.getChild("list")
+      if (recentListElement != null) {
+        for (id in recentListElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") }) {
           idToSettings.get(id)?.let {
             recentlyUsedTemporaries.add(it)
           }
         }
       }
-      listManager.immutableSortedSettingsList = null
 
       selectedConfigurationId = parentNode.getAttributeValue(SELECTED_ATTR)
     }
@@ -596,6 +590,15 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       loadSharedRunConfigurations()
     }
 
+    // apply order after loading shared RC
+    lock.write {
+      parentNode.getChild("list")?.let { listElement ->
+        listManager.setCustomOrder(listElement.getChildren("item").mapNotNull { it.getAttributeValue("itemvalue") })
+      }
+      listManager.immutableSortedSettingsList = null
+    }
+
+    projectRunConfigurationFirstLoaded()
     fireBeforeRunTasksUpdated()
 
     if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
@@ -614,8 +617,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         projectSchemeManager.reload()
       }
     }
-
-    projectRunConfigurationFirstLoaded()
   }
 
   private fun projectRunConfigurationFirstLoaded() {
