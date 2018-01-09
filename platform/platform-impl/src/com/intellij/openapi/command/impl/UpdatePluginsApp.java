@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.command.impl;
 
@@ -24,13 +12,16 @@ import com.intellij.openapi.updateSettings.impl.UpdateInstaller;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BuildNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * @author Konstantin Bulenkov
@@ -53,31 +44,43 @@ public class UpdatePluginsApp extends ApplicationStarterEx {
 
   @Override
   public void main(String[] args) {
-    List<String> pluginsToUpdate = getPluginsToUpdate(args);
-      ActionCallback callback = new ActionCallback()
-        .doWhenDone(() -> System.exit(0))
-        .doWhenRejected(() -> System.exit(1));
+    Set<String> pluginsToUpdate = getPluginsToUpdate(args);
+    ActionCallback callback = new ActionCallback()
+      .doWhenDone(() -> System.exit(0))
+      .doWhenRejected(() -> System.exit(1));
 
-      Runnable update = () -> updateAllPlugins(callback, pluginsToUpdate);
-      ApplicationManager.getApplication().executeOnPooledThread(update);
+    Runnable update = () -> updateAllPlugins(callback, pluginsToUpdate, getBuildNumber(args, callback));
+    ApplicationManager.getApplication().executeOnPooledThread(update);
   }
 
   @Nullable
-  private static List<String> getPluginsToUpdate(String[] args) {
+  private static Set<String> getPluginsToUpdate(String[] args) {
     if (args.length < 2) return null;
-    ArrayList<String> pluginIds = new ArrayList<>(args.length - 1);
     //skip "update" command and read plugin ids
-    for (int i = 1; i < args.length; i++) {
-      pluginIds.add(i - 1, args[i]);
-    }
-    return pluginIds;
+    final int fromIndex = "-b".equals(args[1]) ? 3 : 1;
+    return newTroveSet(Arrays.asList(args).subList(fromIndex, args.length));
   }
 
-  private static void updateAllPlugins(ActionCallback callback, @Nullable List<String> plugins) {
+  @NotNull
+  private static BuildNumber getBuildNumber(final String[] args, final ActionCallback callback) {
+    if (args.length > 2 && "-b".equals(args[1])) {
+      final BuildNumber buildNumber = BuildNumber.fromString(args[2]);
+      if (buildNumber != null) {
+        return buildNumber;
+      }
+      else {
+        log("Invalid build number: " + args[2]);
+        callback.setRejected();
+      }
+    }
+    return BuildNumber.currentVersion();
+  }
+
+  private static void updateAllPlugins(ActionCallback callback, @Nullable Set<String> plugins, BuildNumber buildNumber) {
     Collection<PluginDownloader> availableUpdates = UpdateChecker.checkPluginsUpdate(UpdateSettings.getInstance(),
                                                                                     new EmptyProgressIndicator(),
                                                                                     new HashSet<>(),
-                                                                                    BuildNumber.currentVersion());
+                                                                                    buildNumber);
     if (availableUpdates == null) {
       log("All plugins up to date.");
       callback.setDone();
