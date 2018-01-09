@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
@@ -53,11 +55,19 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Hamlet D'Arcy
  */
 public class PointlessNullCheckInspection extends BaseInspection {
+  public boolean REPORT_CALLS = true;
+
   @Nls
   @NotNull
   @Override
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("pointless.nullcheck.display.name");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("pointless.nullcheck.option.report.calls"), this, "REPORT_CALLS");
   }
 
   @NotNull
@@ -73,7 +83,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new PointlessNullCheckVisitor();
+    return new PointlessNullCheckVisitor(REPORT_CALLS);
   }
 
   @Override
@@ -122,6 +132,11 @@ public class PointlessNullCheckInspection extends BaseInspection {
   }
 
   private static class PointlessNullCheckVisitor extends BaseInspectionVisitor {
+    private final boolean myReportCalls;
+
+    private PointlessNullCheckVisitor(boolean reportCalls) {
+      myReportCalls = reportCalls;
+    }
 
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
@@ -195,10 +210,10 @@ public class PointlessNullCheckInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiReferenceExpression getReferenceFromImplicitNullCheckExpression(PsiExpression expression) {
+    private PsiReferenceExpression getReferenceFromImplicitNullCheckExpression(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       PsiReferenceExpression checked = getReferenceFromInstanceofExpression(expression);
-      if (checked == null) {
+      if (checked == null && myReportCalls) {
         checked = getReferenceFromBooleanCall(expression);
       }
       if (checked == null) {
@@ -255,7 +270,7 @@ public class PointlessNullCheckInspection extends BaseInspection {
     }
 
     @Nullable
-    private static PsiReferenceExpression getReferenceFromOrChain(PsiExpression expression) {
+    private PsiReferenceExpression getReferenceFromOrChain(PsiExpression expression) {
       if (!(expression instanceof PsiPolyadicExpression)) return null;
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
