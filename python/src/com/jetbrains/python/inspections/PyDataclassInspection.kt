@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
@@ -122,6 +123,32 @@ class PyDataclassInspection : PyInspection() {
           val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
           processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+        }
+      }
+    }
+
+    override fun visitPyReferenceExpression(node: PyReferenceExpression?) {
+      super.visitPyReferenceExpression(node)
+
+      if (node != null && node.isQualified) {
+        val cls = getInstancePyClass(node.qualifier) ?: return
+
+        if (parseDataclassParameters(cls, myTypeEvalContext) != null) {
+          cls.processClassLevelDeclarations { element, _ ->
+            if (element is PyTargetExpression && element.name == node.name) {
+              val type = myTypeEvalContext.getType(element)
+
+              if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+                registerProblem(node.lastChild,
+                                "'${cls.name}' object could have no attribute '${element.name}' because it is declared as init-only",
+                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+
+                return@processClassLevelDeclarations false
+              }
+            }
+
+            true
+          }
         }
       }
     }
