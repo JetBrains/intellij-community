@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.folding.impl;
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -163,15 +162,17 @@ class DocumentFoldingInfo implements CodeFoldingState {
     myRangeMarkers.clear();
   }
 
-  void writeExternal(final Element element) throws WriteExternalException {
+  void writeExternal(@NotNull Element element) {
     if (myInfos.isEmpty() && myRangeMarkers.isEmpty()){
-      throw new WriteExternalException();
+      return;
     }
 
     for (Info info : myInfos) {
       Element e = new Element(ELEMENT_TAG);
       e.setAttribute(SIGNATURE_ATT, info.signature);
-      e.setAttribute(EXPANDED_ATT, Boolean.toString(info.expanded));
+      if (info.expanded) {
+        e.setAttribute(EXPANDED_ATT, Boolean.toString(true));
+      }
       element.addContent(e);
     }
 
@@ -208,13 +209,13 @@ class DocumentFoldingInfo implements CodeFoldingState {
       if (document == null) return;
 
       String date = null;
-      for (final Object o : element.getChildren()) {
-        Element e = (Element)o;
-        Boolean expanded = Boolean.valueOf(e.getAttributeValue(EXPANDED_ATT));
+      for (final Element e : element.getChildren()) {
         String signature = e.getAttributeValue(SIGNATURE_ATT);
         if (signature == null) {
           continue;
         }
+
+        boolean expanded = Boolean.parseBoolean(e.getAttributeValue(EXPANDED_ATT));
         if (ELEMENT_TAG.equals(e.getName())) {
           myInfos.add(new Info(signature, expanded));
         }
