@@ -15,4 +15,17 @@ public class FlipConditionalIntentionTest extends IPPTestCase {
            "class X {    void test(boolean foo, boolean bar) {        boolean c = false;        boolean b = !foo ? c || bar : true;//comment at the end\n" +
            "    }}");
   }
+
+  public void testIncomplete() {
+    doTest("class X {\n" +
+           "  void test() {\n" +
+           "    System.out.println(/*_Flip '?:'*/!()?\"foo\":\"bar\");\n" +
+           "  }\n" +
+           "}",
+           "class X {\n" +
+           "  void test() {\n" +
+           "    System.out.println(() ? \"bar\" : \"foo\");\n" +
+           "  }\n" +
+           "}");
+  }
 }

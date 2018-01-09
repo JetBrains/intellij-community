@@ -58,7 +58,8 @@ public class BoolUtils {
       return null;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    return ParenthesesUtils.stripParentheses(operand);
+    PsiExpression stripped = ParenthesesUtils.stripParentheses(operand);
+    return stripped == null ? operand : stripped;
   }
 
   @NotNull
@@ -95,10 +96,9 @@ public class BoolUtils {
     }
     if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
-      if (negated == null) {
-        return "";
+      if (negated != null) {
+        return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
       }
-      return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
