@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
+import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
@@ -52,23 +53,33 @@ class PyDataclassInspection : PyInspection() {
             }
           }
 
+          val hasPostInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext) != null
+
           node.processClassLevelDeclarations { element, _ ->
             if (element is PyTargetExpression && element.annotationValue != null) {
               val annotation = element.annotation
 
               if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, myTypeEvalContext)) {
                 val value = element.findAssignedValue()
-                val cls = getInstancePyClass(value)
+                val valueClass = getInstancePyClass(value)
 
-                if (cls != null) {
+                if (valueClass != null) {
                   val builtinCache = PyBuiltinCache.getInstance(node)
 
-                  if (cls == builtinCache.listType?.pyClass ||
-                      cls == builtinCache.setType?.pyClass ||
-                      cls == builtinCache.tupleType?.pyClass) {
+                  if (valueClass == builtinCache.listType?.pyClass ||
+                      valueClass == builtinCache.setType?.pyClass ||
+                      valueClass == builtinCache.tupleType?.pyClass) {
                     registerProblem(value,
-                                    "mutable default '${cls.name}' is not allowed",
+                                    "mutable default '${valueClass.name}' is not allowed",
                                     ProblemHighlightType.GENERIC_ERROR)
+                  }
+                }
+                else if (!hasPostInit) {
+                  val type = myTypeEvalContext.getType(element)
+                  if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
+                    registerProblem(element,
+                                    "attribute '${element.name}' is useless until '${DUNDER_POST_INIT}' is declared",
+                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL)
                   }
                 }
               }

@@ -56,6 +56,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27398
+  public void testUselessInitVar() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(
