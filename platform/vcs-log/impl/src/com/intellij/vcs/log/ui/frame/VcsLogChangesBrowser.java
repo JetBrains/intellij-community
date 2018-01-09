@@ -107,7 +107,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @NotNull
   @Override
-  protected JComponent getToolbarComponent() {
+  protected JComponent createToolbarComponent() {
     return myToolbarWrapper;
   }
 

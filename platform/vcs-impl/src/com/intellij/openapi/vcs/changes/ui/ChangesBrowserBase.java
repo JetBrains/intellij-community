@@ -78,7 +78,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     setFocusable(false);
 
     JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(getToolbarComponent(), BorderLayout.CENTER);
+    topPanel.add(createToolbarComponent(), BorderLayout.CENTER);
 
     JComponent headerPanel = createHeaderPanel();
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
@@ -93,7 +93,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   @NotNull
-  protected JComponent getToolbarComponent() {
+  protected JComponent createToolbarComponent() {
     return myToolbar.getComponent();
   }
 
