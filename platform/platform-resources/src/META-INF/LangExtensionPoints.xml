@@ -921,6 +921,8 @@
                     beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.stubs.PrebuiltStubsProvider"/>
     </extensionPoint>
+    
+    <extensionPoint name="languageLightRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageLightRefAdapter"/>
   </extensionPoints>
 </idea-plugin>
 

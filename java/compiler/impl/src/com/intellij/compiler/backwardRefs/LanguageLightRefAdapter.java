@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -34,8 +35,10 @@ import java.util.Set;
 /**
  * An interface to provide connection between compact internal representation of indexed elements and PSI
  */
-public interface LanguageLightRefAdapter  {
-  LanguageLightRefAdapter[] INSTANCES = new LanguageLightRefAdapter[]{new JavaLightUsageAdapter()};
+public interface LanguageLightRefAdapter {
+  ExtensionPointName<LanguageLightRefAdapter> EP_NAME = ExtensionPointName.create("com.intellij.languageLightRefAdapter");
+  
+  LanguageLightRefAdapter[] INSTANCES = EP_NAME.getExtensions();
 
   @Nullable
   static LanguageLightRefAdapter findAdapter(@NotNull VirtualFile file) {
