@@ -291,6 +291,11 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
 
   //TODO: Add "addMetaClass" or move methods out of here
 
+  @NotNull
+  default List<PyClassLikeType> getAncestorTypesWithMetaClassInstances(@NotNull TypeEvalContext context) {
+    return getAncestorTypes(context);
+  }
+
   /**
    * Returns the type representing the metaclass of the class if it is explicitly set, null otherwise.
    * <p/>
