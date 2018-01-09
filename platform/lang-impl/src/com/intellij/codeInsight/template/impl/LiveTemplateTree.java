@@ -50,6 +50,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
   LiveTemplateTree(final CheckboxTreeCellRenderer renderer, final CheckedTreeNode root, TemplateListPanel configurable) {
     super(renderer, root);
     myConfigurable = configurable;
+    setDragEnabled(true);
   }
 
   @Override
