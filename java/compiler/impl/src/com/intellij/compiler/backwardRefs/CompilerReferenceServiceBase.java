@@ -211,7 +211,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  private Integer calculateOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
+  protected Integer calculateOccurrenceCount(@NotNull PsiElement element, boolean isConstructorSuggestion) {
     LanguageLightRefAdapter adapter = null;
     if (isConstructorSuggestion) {
       adapter = ReadAction.compute(() -> LanguageLightRefAdapter.findAdapter(element));
@@ -247,10 +247,10 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private CompilerHierarchyInfoImpl getHierarchyInfo(@NotNull PsiNamedElement aClass,
-                                                     @NotNull GlobalSearchScope searchScope,
-                                                     @NotNull FileType searchFileType,
-                                                     @NotNull CompilerHierarchySearchType searchType) {
+  protected CompilerHierarchyInfoImpl getHierarchyInfo(@NotNull PsiNamedElement aClass,
+                                                       @NotNull GlobalSearchScope searchScope,
+                                                       @NotNull FileType searchFileType,
+                                                       @NotNull CompilerHierarchySearchType searchType) {
     if (!isServiceEnabledFor(aClass) || searchScope == LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()) return null;
 
     try {
@@ -289,9 +289,9 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     return myReader != null && CompilerReferenceService.isEnabled();
   }
 
-  private Map<VirtualFile, SearchId[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                                 @NotNull FileType searchFileType,
-                                                                 @NotNull CompilerHierarchySearchType searchType) {
+  protected Map<VirtualFile, SearchId[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
+                                                                   @NotNull FileType searchFileType,
+                                                                   @NotNull CompilerHierarchySearchType searchType) {
     SearchScope scope = aClass.getUseScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
     final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false, true);
@@ -313,7 +313,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private GlobalSearchScope calculateScopeWithoutReferences(@NotNull PsiElement element) {
+  protected GlobalSearchScope calculateScopeWithoutReferences(@NotNull PsiElement element) {
     TIntHashSet referentFileIds = getReferentFileIds(element);
     if (referentFileIds == null) return null;
 
@@ -323,7 +323,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
+  protected TIntHashSet getReferentFileIds(@NotNull PsiElement element) {
     final CompilerElementInfo compilerElementInfo = asCompilerElements(element, true, true);
     if (compilerElementInfo == null) return null;
 
@@ -349,7 +349,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
+  protected CompilerElementInfo asCompilerElements(@NotNull PsiElement psiElement,
                                                  boolean buildHierarchyForLibraryElements,
                                                  boolean checkNotDirty) {
     myReadDataLock.lock();
@@ -480,7 +480,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     private final TIntHashSet myReferentIds;
     private final ProjectFileIndex myIndex;
 
-    private ScopeWithoutReferencesOnCompilation(TIntHashSet ids, ProjectFileIndex index) {
+    public ScopeWithoutReferencesOnCompilation(TIntHashSet ids, ProjectFileIndex index) {
       myReferentIds = ids;
       myIndex = index;
     }
@@ -515,7 +515,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     final ElementPlace place;
     final LightRef[] searchElements;
 
-    private CompilerElementInfo(ElementPlace place, LightRef... searchElements) {
+    public CompilerElementInfo(ElementPlace place, LightRef... searchElements) {
       this.place = place;
       this.searchElements = searchElements;
     }
@@ -525,7 +525,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     private final CompilerHierarchySearchType mySearchType;
     private final FileType mySearchFileType;
 
-    HierarchySearchKey(CompilerHierarchySearchType searchType, FileType searchFileType) {
+    public HierarchySearchKey(CompilerHierarchySearchType searchType, FileType searchFileType) {
       mySearchType = searchType;
       mySearchFileType = searchFileType;
     }
