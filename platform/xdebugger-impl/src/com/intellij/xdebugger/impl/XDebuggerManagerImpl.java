@@ -48,9 +48,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -64,8 +64,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
-  private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
+  private final Map<ProcessHandler, XDebugSessionImpl> mySessions = new ConcurrentHashMap<>();
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   private XDebuggerState myState = new XDebuggerState();
@@ -74,7 +74,6 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myProject = project;
     myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
     myWatchesManager = new XDebuggerWatchesManager();
-    mySessions = new LinkedHashMap<>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
