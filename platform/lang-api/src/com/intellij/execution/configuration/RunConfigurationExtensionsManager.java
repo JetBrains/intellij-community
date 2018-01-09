@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.configuration;
 
@@ -42,12 +42,16 @@ public class RunConfigurationExtensionsManager<U extends RunConfigurationBase, T
   }
 
   public void readExternal(@NotNull U configuration, @NotNull Element parentNode) {
+    List<Element> children = parentNode.getChildren(getExtensionRootAttr());
+    if (children.isEmpty()) {
+      return;
+    }
+
     Map<String, T> extensions = new THashMap<>();
     for (T extension : getApplicableExtensions(configuration)) {
       extensions.put(extension.getSerializationId(), extension);
     }
 
-    List<Element> children = parentNode.getChildren(getExtensionRootAttr());
     // if some of extensions settings weren't found we should just keep it because some plugin with extension
     // may be turned off
     boolean hasUnknownExtension = false;
