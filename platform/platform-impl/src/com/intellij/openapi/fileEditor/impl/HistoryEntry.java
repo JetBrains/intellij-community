@@ -17,13 +17,13 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -181,28 +181,28 @@ final class HistoryEntry {
   }
 
   @NotNull
-  private static EntryData parseEntry(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
+  private static EntryData parseEntry(@NotNull Project project, @NotNull Element e) {
     if (!e.getName().equals(TAG)) {
       throw new IllegalArgumentException("unexpected tag: " + e);
     }
 
     String url = e.getAttributeValue(FILE_ATTR);
-    List<Pair<FileEditorProvider, FileEditorState>> providerStates = new ArrayList<>();
+    List<Pair<FileEditorProvider, FileEditorState>> providerStates = new SmartList<>();
     FileEditorProvider selectedProvider = null;
 
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
 
-    for (Element _e : e.getChildren(PROVIDER_ELEMENT)) {
-      String typeId = _e.getAttributeValue(EDITOR_TYPE_ID_ATTR);
+    for (Element providerElement : e.getChildren(PROVIDER_ELEMENT)) {
+      String typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR);
       FileEditorProvider provider = FileEditorProviderManager.getInstance().getProvider(typeId);
       if (provider == null) {
         continue;
       }
-      if (Boolean.valueOf(_e.getAttributeValue(SELECTED_ATTR_VALUE))) {
+      if (Boolean.valueOf(providerElement.getAttributeValue(SELECTED_ATTR_VALUE))) {
         selectedProvider = provider;
       }
 
-      Element stateElement = _e.getChild(STATE_ELEMENT);
+      Element stateElement = providerElement.getChild(STATE_ELEMENT);
       if (stateElement == null) {
         throw new InvalidDataException();
       }
