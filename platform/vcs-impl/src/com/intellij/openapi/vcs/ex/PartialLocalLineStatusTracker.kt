@@ -78,11 +78,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
-
     affectedChangeLists.add(defaultMarker.changelistId)
-
-    documentTracker.addListener(MyLineTrackerListener())
-    assert(blocks.isEmpty())
 
     val connection = application.messageBus.connect(disposable)
     connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
@@ -91,11 +87,14 @@ class PartialLocalLineStatusTracker(project: Project,
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
       CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
     }
+
+    assert(blocks.isEmpty())
   }
 
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
                                                         this.marker.changelistId)
 
+  override fun createDocumentTrackerHandler(): DocumentTracker.Handler = PartialDocumentTrackerHandler()
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
@@ -259,14 +258,18 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
-  private inner class MyLineTrackerListener : DocumentTracker.Listener {
+  private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
     override fun onRangeAdded(block: Block) {
+      super.onRangeAdded(block)
+
       if (block.ourData.marker == null) { // do not override markers, that are set via other methods of this listener
         block.marker = defaultMarker
       }
     }
 
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
+      super.onRangeRefreshed(before, after)
+
       val marker = before.marker
       for (block in after) {
         block.marker = marker
@@ -274,6 +277,8 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangesChanged(before: List<Block>, after: Block) {
+      super.onRangesChanged(before, after)
+
       val affectedMarkers = before.map { it.marker }.distinct()
 
       val _currentMarker = currentMarker
@@ -292,13 +297,17 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangeShifted(before: Block, after: Block) {
+      super.onRangeShifted(before, after)
+
       after.marker = before.marker
     }
 
     override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
+      val superMergeable = super.onRangesMerged(range1, range2, merged)
+
       if (range1.marker == range2.marker) {
         merged.marker = range1.marker
-        return true
+        return superMergeable
       }
 
       if (range1.range.isEmpty || range2.range.isEmpty) {
@@ -311,25 +320,33 @@ class PartialLocalLineStatusTracker(project: Project,
         else {
           merged.marker = range1.marker
         }
-        return true
+        return superMergeable
       }
 
       return false
     }
 
     override fun afterRefresh() {
+      super.afterRefresh()
+
       updateAffectedChangeLists()
     }
 
     override fun afterRangeChange() {
+      super.afterRangeChange()
+
       updateAffectedChangeLists()
     }
 
     override fun afterExplicitChange() {
+      super.afterExplicitChange()
+
       updateAffectedChangeLists()
     }
 
     override fun onUnfreeze(side: Side) {
+      super.onUnfreeze(side)
+
       if (isValid()) eventDispatcher.multicaster.onBecomingValid()
     }
   }
