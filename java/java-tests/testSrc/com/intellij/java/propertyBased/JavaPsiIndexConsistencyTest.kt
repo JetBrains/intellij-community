@@ -33,8 +33,8 @@ import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Action.*
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Model
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.RefKind
-import jetCheck.Generator
-import jetCheck.PropertyChecker
+import org.jetbrains.jetCheck.Generator
+import org.jetbrains.jetCheck.PropertyChecker
 
 /**
  * @author peter

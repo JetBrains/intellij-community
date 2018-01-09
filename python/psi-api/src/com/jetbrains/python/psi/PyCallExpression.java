@@ -7,7 +7,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Predicate;
 import com.jetbrains.python.FunctionParameter;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -35,7 +37,21 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     final PyExpression callee = getCallee();
-    return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+    if (callee instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedCallee = (PyQualifiedExpression)callee;
+      final Predicate<String> isConstructorName = name -> PyNames.INIT.equals(name) || PyNames.NEW.equals(name);
+
+      if (resolvedCallee instanceof PyFunction &&
+          qualifiedCallee.isQualified() &&
+          isConstructorName.apply(resolvedCallee.getName()) &&
+          !isConstructorName.apply(qualifiedCallee.getName())) {
+        return qualifiedCallee;
+      }
+
+      return qualifiedCallee.getQualifier();
+    }
+
+    return null;
   }
 
   @NotNull

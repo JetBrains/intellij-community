@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.ui;
 
@@ -33,13 +35,12 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   public ProblemDescriptionNode(RefEntity element,
                                 CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolPresentation presentation) {
-    this(element, descriptor, presentation, true, null);
+    this(element, descriptor, presentation, null);
   }
 
   protected ProblemDescriptionNode(@Nullable RefEntity element,
                                    CommonProblemDescriptor descriptor,
                                    @NotNull InspectionToolPresentation presentation,
-                                   boolean doInit,
                                    @Nullable IntSupplier lineNumberCounter) {
     super(descriptor, presentation);
     myElement = element;
@@ -49,9 +50,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
     myLevel = descriptor instanceof ProblemDescriptor
               ? profile.getErrorLevel(HighlightDisplayKey.find(shortName), ((ProblemDescriptor)descriptor).getStartElement())
               : profile.getTools(shortName, presentation.getContext().getProject()).getLevel();
-    if (doInit) {
-      init(presentation.getContext().getProject());
-    }
     myLineNumber = myDescriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)myDescriptor).getLineNumber() : (lineNumberCounter == null ? -1 : lineNumberCounter.getAsInt());
   }
 

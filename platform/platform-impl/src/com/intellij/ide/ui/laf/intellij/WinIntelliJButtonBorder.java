@@ -66,7 +66,7 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
         }
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(outerRect, false);
 
       Rectangle innerRect = new Rectangle(outerRect);

@@ -58,7 +58,8 @@ public class BoolUtils {
       return null;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    return ParenthesesUtils.stripParentheses(operand);
+    PsiExpression stripped = ParenthesesUtils.stripParentheses(operand);
+    return stripped == null ? operand : stripped;
   }
 
   @NotNull
@@ -80,7 +81,10 @@ public class BoolUtils {
     }
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      return '(' + getNegatedExpressionText(parenthesizedExpression.getExpression(), tracker) + ')';
+      PsiExpression operand = parenthesizedExpression.getExpression();
+      if (operand != null) {
+        return '(' + getNegatedExpressionText(operand, tracker) + ')';
+      }
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
@@ -92,10 +96,9 @@ public class BoolUtils {
     }
     if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
-      if (negated == null) {
-        return "";
+      if (negated != null) {
+        return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
       }
-      return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
@@ -145,6 +148,12 @@ public class BoolUtils {
         };
         final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
         return (newPrecedence > precedence) ? '(' + join + ')' : join;
+      }
+    }
+    if (expression instanceof PsiLiteralExpression) {
+      Object value = ((PsiLiteralExpression)expression).getValue();
+      if (value instanceof Boolean) {
+        return String.valueOf(!((Boolean)value));
       }
     }
     return '!' + ParenthesesUtils.getText(tracker.markUnchanged(expression), ParenthesesUtils.PREFIX_PRECEDENCE);

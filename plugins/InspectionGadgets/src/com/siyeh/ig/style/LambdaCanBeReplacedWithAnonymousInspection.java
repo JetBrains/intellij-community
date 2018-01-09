@@ -166,9 +166,9 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
     final PsiElement body = lambdaExpression.getBody();
     if (body instanceof PsiExpression) {
       final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);
-      blockText = "{";
+      blockText = "{\n";
       blockText += PsiType.VOID.equals(returnType) ? "" : "return ";
-      blockText +=  body.getText() + ";}";
+      blockText +=  body.getText() + ";\n}";
     } else if (body != null) {
       blockText = body.getText();
     } else {

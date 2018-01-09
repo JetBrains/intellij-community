@@ -14,9 +14,34 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import java.util.*
 
 class PyNamedTupleInspection : PyInspection() {
+
+  companion object {
+    fun inspectFieldsOrder(cls: PyClass, context: TypeEvalContext, callback: (PsiElement, String, ProblemHighlightType) -> Unit) {
+      val fieldsProcessor = FieldsProcessor(context)
+
+      cls.processClassLevelDeclarations(fieldsProcessor)
+
+      registerErrorOnTargetsAboveBound(fieldsProcessor.lastFieldWithoutDefaultValue,
+                                       fieldsProcessor.fieldsWithDefaultValue,
+                                       "Fields with a default value must come after any fields without a default.",
+                                       callback)
+    }
+
+    private fun registerErrorOnTargetsAboveBound(bound: PyTargetExpression?,
+                                                 targets: TreeSet<PyTargetExpression>,
+                                                 message: String,
+                                                 callback: (PsiElement, String, ProblemHighlightType) -> Unit) {
+      if (bound != null) {
+        targets
+          .headSet(bound)
+          .forEach { callback(it, message, ProblemHighlightType.GENERIC_ERROR) }
+      }
+    }
+  }
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
@@ -28,35 +53,19 @@ class PyNamedTupleInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (node != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) && isTypingNTInheritor(node)) {
-        val fieldsProcessor = FieldsProcessor()
-
-        node.processClassLevelDeclarations(fieldsProcessor)
-
-        registerErrorOnTargetsAboveBound(fieldsProcessor.lastFieldWithoutDefaultValue,
-                                         fieldsProcessor.fieldsWithDefaultValue,
-                                         "Fields with a default value must come after any fields without a default.")
+        inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
       }
     }
 
     private fun isTypingNTInheritor(cls: PyClass): Boolean {
       val isTypingNT: (PyClassLikeType?) -> Boolean =
-        { it != null && !(it is PyNamedTupleType) && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
+        { it != null && it !is PyNamedTupleType && PyTypingTypeProvider.NAMEDTUPLE == it.classQName }
 
       return cls.getSuperClassTypes(myTypeEvalContext).find(isTypingNT) != null
     }
-
-    private fun registerErrorOnTargetsAboveBound(bound: PyTargetExpression?,
-                                                 targets: TreeSet<PyTargetExpression>,
-                                                 message: String) {
-      if (bound != null) {
-        targets
-          .headSet(bound)
-          .forEach { registerProblem(it, message, ProblemHighlightType.GENERIC_ERROR) }
-      }
-    }
   }
 
-  private class FieldsProcessor : PsiScopeProcessor {
+  private class FieldsProcessor(private val context: TypeEvalContext) : PsiScopeProcessor {
 
     val lastFieldWithoutDefaultValue: PyTargetExpression?
       get() = lastFieldWithoutDefaultValueBox.result
@@ -67,11 +76,16 @@ class PyNamedTupleInspection : PyInspection() {
     init {
       val offsetComparator = compareBy(PyTargetExpression::getTextOffset)
       lastFieldWithoutDefaultValueBox = MaxBy(offsetComparator)
-      fieldsWithDefaultValue = TreeSet<PyTargetExpression>(offsetComparator)
+      fieldsWithDefaultValue = TreeSet(offsetComparator)
     }
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
       if (element is PyTargetExpression) {
+        val annotation = element.annotation
+        if (annotation != null && PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
+          return true
+        }
+
         when {
           element.findAssignedValue() != null -> fieldsWithDefaultValue.add(element)
           else -> lastFieldWithoutDefaultValueBox.apply(element)

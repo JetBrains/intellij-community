@@ -30,6 +30,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
@@ -188,12 +190,29 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myHelper = createHelper();
 
     myHistoryPopupButton = createButton(new ShowHistoryAction());
-    DumbAwareAction.create(e -> IdeTooltipManager.getInstance().show(
-      new IdeTooltip(myTextArea, new Point(), new JLabel(
-        "The shortcut was changed. Press " +
-        KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
-        " to open search history.")), true, true))
-      .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_H, InputEvent.CTRL_DOWN_MASK)), myTextArea);
+    final KeyStroke oldHistoryKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_H, CTRL_DOWN_MASK);
+    new DumbAwareAction() {
+      @Override
+      public void update(AnActionEvent e) {
+        Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+        while(keymap != null) {
+          if ("Visual Studio".equals(keymap.getName())) {
+            e.getPresentation().setEnabled(false);
+            return;
+          }
+          keymap = keymap.getParent();
+        }
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        IdeTooltipManager.getInstance().show(
+          new IdeTooltip(myTextArea, new Point(), new JLabel(
+            "The shortcut was changed. Press " +
+            KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
+            " to open search history.")), true, true);
+      }
+    }.registerCustomShortcutSet(new CustomShortcutSet(oldHistoryKeyStroke), myTextArea);
     myClearButton = createButton(new ClearAction());
     myNewLineButton = createButton(new NewLineAction());
     myNewLineButton.setVisible(searchMode);
@@ -605,9 +624,9 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
         }
 
         int bw = JBUI.scale(1);
-        Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
-        border.append(new Rectangle2D.Double(0, 0, width, height), false);
-        border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new Rectangle2D.Float(0, 0, width, height), false);
+        border.append(new Rectangle2D.Float(bw, bw, width - bw*2, height - bw*2), false);
 
         g2.fill(border);
       } finally {

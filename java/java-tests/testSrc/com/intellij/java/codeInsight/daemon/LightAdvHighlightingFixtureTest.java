@@ -140,6 +140,20 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.checkHighlighting();
   }
 
+  public void testClassPackageConflict() {
+    myFixture.addClass("package a; public class b {}");
+    myFixture.addClass("package c; public class a {}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testClassPackageConflict1() {
+    myFixture.addClass("package a; public class b {}");
+    myFixture.addClass("package c.d; public class a {}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advFixture";

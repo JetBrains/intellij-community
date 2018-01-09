@@ -13,7 +13,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
@@ -27,15 +26,12 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiInvalidElementAccessException;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -810,8 +806,7 @@ public class UsageViewImpl implements UsageView {
     if (description == null) {
       description = "Show find usages settings dialog";
     }
-    String finalDescription = description;
-    return new EmptyAction.MyDelegatingAction(ActionManager.getInstance().getAction("FindInPath")) {
+    return new AnAction("Settings...", description, AllIcons.General.ProjectSettings) {
       {
         KeyboardShortcut shortcut = configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
         if (shortcut != null) {
@@ -820,28 +815,17 @@ public class UsageViewImpl implements UsageView {
       }
 
       @Override
-      public void update(AnActionEvent e) {
-        super.update(e);
-        e.getPresentation().setText("Settings...");
-        e.getPresentation().setDescription(finalDescription);
-        e.getPresentation().setIcon(AllIcons.General.ProjectSettings);
-      }
-
-      @Override
       public boolean startInTransaction() {
         return true;
       }
 
       @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
+      }
+
+      @Override
       public void actionPerformed(AnActionEvent e) {
-        Component data = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-        if (data instanceof EditorComponentImpl) {
-          String toFind = ((EditorComponentImpl)data).getSelectedText();
-          if (!StringUtil.isEmpty(toFind)) {
-            super.actionPerformed(e);//call myDelegate (namely, FindInPathAction)
-            return;
-          }
-        }
         FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
       }
     };
@@ -1285,17 +1269,6 @@ public class UsageViewImpl implements UsageView {
         ToolTipManager.sharedInstance().unregisterComponent(myTree);
       }
       myUpdateAlarm.cancelAllRequests();
-    }
-    disposeSmartPointers();
-  }
-
-  private void disposeSmartPointers() {
-    SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
-    for (Usage usage : myUsageNodes.keySet()) {
-      if (usage instanceof UsageInfo2UsageAdapter) {
-        SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
-        pointerManager.removePointer(pointer);
-      }
     }
   }
 

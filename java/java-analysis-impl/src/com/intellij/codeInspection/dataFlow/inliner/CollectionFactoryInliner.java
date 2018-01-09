@@ -99,7 +99,8 @@ public class CollectionFactoryInliner implements CallInliner {
       builder.pop();
     }
     DfaValueFactory factory = builder.getFactory();
-    DfaValue result = factory.withFact(factory.createTypeValue(call.getType(), Nullness.NOT_NULL), DfaFactType.MUTABLE, false);
+    DfaValue result =
+      factory.withFact(factory.createTypeValue(call.getType(), Nullness.NOT_NULL), DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
     if (factoryInfo.mySize == -1) {
       builder.push(result);
     } else {

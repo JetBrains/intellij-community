@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -16,6 +18,8 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
@@ -56,26 +60,26 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     // check hints appearance on completion
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
 
     // check that hints don't disappear after daemon highlighting passes
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
 
     // test Tab/Shift+Tab navigation
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
 
     // test hints remain shown while entering parameter values
     myFixture.type("\"a");
     next();
     myFixture.type("\"b");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <HINT text=\"value:\"/>\"b<caret>\") } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"value:\"/>\"b<caret>\") } }");
 
     // test hints disappearance when caret moves out of parameter list
     right();
@@ -91,26 +95,26 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     // check hints appearance on completion
     configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
-    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
     // check that hints don't disappear after daemon highlighting passes
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
     // test Tab/Shift+Tab navigation
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <HINT text=\"radix:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>, <HINT text=\"radix:\"/><caret>) } }");
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
     // test hints remain shown while entering parameter values
     myFixture.type("1");
     next();
     myFixture.type("2");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
 
     // test hints don't disappear when caret moves out of parameter list
     right();
@@ -129,10 +133,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
       configureJava("class C { void m() { Character.for<caret> } }");
       complete("forDigit");
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
       waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
     }
     finally {
       option.set(savedValue);
@@ -146,7 +150,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     showParameterInfo();
     methodOverloadDown();
     checkResultWithInlays(
-      "class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>, <hint text=\"dst:\"/>, <hint text=\"dstIndex:\"/>) } }");
+      "class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/><caret>, <Hint text=\"dst:\"/>, <Hint text=\"dstIndex:\"/>) } }");
   }
 
   public void testSwitchingOverloadsWithParameterFilled() {
@@ -156,7 +160,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { Character.toChars(<HINT text=\"codePoint:\"/>123<caret>) } }");
     showParameterInfo();
     methodOverloadDown();
-    checkResultWithInlays("class C { void m() { Character.toChars(<hint text=\"codePoint:\"/>123, <HINT text=\"dst:\"/><caret>, <hint text=\"dstIndex:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.toChars(<Hint text=\"codePoint:\"/>123, <HINT text=\"dst:\"/><caret>, <Hint text=\"dstIndex:\"/>) } }");
   }
 
   public void testSwitchingOverloadsForMethodWithDisabledHints() throws Exception {
@@ -169,7 +173,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C {\n" +
                           "  int some(int from, int to) { return 0; }\n" +
                           "  int some(int from, int to, int other) { return 0; }\n" +
-                          "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>, <hint text=\"other:\"/>) }\n" +
+                          "  void m() { some(<HINT text=\"from:\"/><caret>, <Hint text=\"to:\"/>, <Hint text=\"other:\"/>) }\n" +
                           "}");
     showParameterInfo();
     checkHintContents("<html><b>int from</b>, int to</html>\n" +
@@ -180,7 +184,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C {\n" +
                           "  int some(int from, int to) { return 0; }\n" +
                           "  int some(int from, int to, int other) { return 0; }\n" +
-                          "  void m() { some(<HINT text=\"from:\"/><caret>, <hint text=\"to:\"/>) }\n" +
+                          "  void m() { some(<HINT text=\"from:\"/><caret>, <Hint text=\"to:\"/>) }\n" +
                           "}");
     checkHintContents("[<html><b>int from</b>, int to</html>]\n" +
                       "-\n" +
@@ -207,11 +211,11 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
   }
 
   public void testTabWithNestedCompletion() throws Exception {
@@ -221,16 +225,16 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>)<caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>)<caret>, <Hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <HINT text=\"value:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <HINT text=\"value:\"/><caret>) } }");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <hint text=\"value:\"/>)<caret> } }");
@@ -245,7 +249,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testHintsDisappearWhenNumberOfParametersIsChangedDirectly() throws Exception {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
-    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>) } }");
     delete();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { System.getProperty(<caret> ) } }");
@@ -254,7 +258,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testHintsDisappearWhenNumberOfParametersIsChangedDirectlyWithNoOverloads() throws Exception {
     configureJava("class C { void m() { Character.for<caret> } }");
     complete("forDigit");
-    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
     delete();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { Character.forDigit(<caret> ) } }");
@@ -266,7 +270,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     type("new String().trim");
     myFixture.complete(CompletionType.SMART);
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>new String().trim(), <HINT text=\"value:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>new String().trim(), <HINT text=\"value:\"/><caret>) } }");
   }
 
   public void testNoHintsDuplicationWhenTypingToTheLeftOfHint() throws Exception {
@@ -277,7 +281,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     right();
     type("2");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<HINT text=\"radix:\"/>2<caret> ) } }");
+    checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1,<HINT text=\"radix:\"/>2<caret> ) } }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }<caret>");
@@ -330,7 +334,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     next();
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
   }
 
   public void testPrevParameterFromOutsideWhenParametersAreNotEmpty() throws Exception {
@@ -342,26 +346,26 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     next();
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/><caret>\"b\") } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/><caret>\"b\") } }");
   }
 
   public void testVararg() throws Exception {
     configureJava("class C { void m() { String.for<caret> } }");
     complete();
-    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><hint text=\", args:\"/>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\", args:\"/>) } }");
     type("\"a");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\", <HINT text=\"args:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<Hint text=\"format:\"/>\"a\", <HINT text=\"args:\"/><caret>) } }");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\"<hint text=\", args:\"/>)<caret> } }");
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { String.format(<hint text=\"format:\"/>\"a\", <HINT text=\"args:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<Hint text=\"format:\"/>\"a\", <HINT text=\"args:\"/><caret>) } }");
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/>\"a\"<caret><hint text=\", args:\"/>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/>\"a\"<caret><Hint text=\", args:\"/>) } }");
   }
 
   public void testVarargWithNoMandatoryArguments() throws Exception {
@@ -373,7 +377,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     type("1");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<Hint text=\"args:\"/>1, <caret>) } }");
     checkHintContents("<html><b>int...</b></html>");
     next();
     waitForAllAsyncStuff();
@@ -381,7 +385,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents(null);
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<hint text=\"args:\"/>1, <caret>) } }");
+    checkResultWithInlays("class C { int vararg(int... args){ return 0; } void m() { vararg(<Hint text=\"args:\"/>1, <caret>) } }");
     checkHintContents("<html><b>int...</b></html>");
     prev();
     waitForAllAsyncStuff();
@@ -392,45 +396,45 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testVarargWithTwoMandatoryArguments() throws Exception {
     configureJava("class C { int vararg(int a, int b, int... args){ return 0; } void m() { varar<caret> } }");
     complete();
-    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/><hint text=\", args:\"/>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/><Hint text=\", args:\"/>) } }");
     type("1");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret><hint text=\", args:\"/>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/><caret><Hint text=\", args:\"/>) } }");
     type("2");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <HINT text=\"args:\"/><caret>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"args:\"/><caret>) } }");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2<hint text=\", args:\"/>)<caret> } }");
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2, <HINT text=\"args:\"/><caret>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<Hint text=\"a:\"/>1, <Hint text=\"b:\"/>2, <HINT text=\"args:\"/><caret>) } }");
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret><hint text=\", args:\"/>) } }");
+    checkResultWithInlays("class C { int vararg(int a, int b, int... args){ return 0; } void m() { vararg(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret><Hint text=\", args:\"/>) } }");
   }
 
   public void testVarargHintsDontSwitchPlaces() throws Exception {
     configureJava("class C { void m() { java.util.Collections.add<caret> } }");
     complete();
-    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><hint text=\", elements:\"/>) } }");
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><Hint text=\", elements:\"/>) } }");
     left();
     type('s');
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/>s<caret><hint text=\", elements:\"/>) } }");
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/>s<caret><Hint text=\", elements:\"/>) } }");
     backspace();
-    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><hint text=\", elements:\"/>) } }");
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><Hint text=\", elements:\"/>) } }");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><hint text=\", elements:\"/>) } }");
+    checkResultWithInlays("class C { void m() { java.util.Collections.addAll(<HINT text=\"c:\"/><caret><Hint text=\", elements:\"/>) } }");
   }
 
   public void testHintsDontDisappearWhenNavigatingAwayFromUncompletedInvocation() throws Exception {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
     home();
     type(' ');
     waitForAllAsyncStuff();
@@ -461,7 +465,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                           "}\n" +
                           "class C extends P {\n" +
                           "    void method(int a, int b) {\n" +
-                          "        super.method(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/>);\n" +
+                          "        super.method(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>);\n" +
                           "    }\n" +
                           "}");
     complete("a, b");
@@ -485,26 +489,26 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
       // check hints appearance on completion
       configureJava("class C { void m() { Character.for<caret> } }");
       complete("forDigit");
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
       // check that hints don't disappear after daemon highlighting passes
       waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
       // test Tab/Shift+Tab navigation
       next();
       waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <HINT text=\"radix:\"/><caret>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>, <HINT text=\"radix:\"/><caret>) } }");
       prev();
       waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <hint text=\"radix:\"/>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<HINT text=\"digit:\"/><caret>, <Hint text=\"radix:\"/>) } }");
 
       // test hints remain shown while entering parameter values
       myFixture.type("1");
       next();
       myFixture.type("2");
       waitForAllAsyncStuff();
-      checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
+      checkResultWithInlays("class C { void m() { Character.forDigit(<Hint text=\"digit:\"/>1, <HINT text=\"radix:\"/>2<caret>) } }");
 
       // test hints disappear when caret moves out of parameter list
       right();
@@ -527,7 +531,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete();
     checkResultWithInlays("class C {\n" +
                           "    void mmm(int a, int b, int c, int d, int e, int f) {}\n" +
-                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <hint text=\"b:\"/>, <hint text=\"c:\"/>, <hint text=\"d:\"/>, <hint text=\"e:\"/>, <hint text=\"f:\"/>); }\n" +
+                          "    void m2() { mmm(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>, <Hint text=\"c:\"/>, <Hint text=\"d:\"/>, <Hint text=\"e:\"/>, <Hint text=\"f:\"/>); }\n" +
                           "}");
   }
   
@@ -538,27 +542,27 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>)<caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>)<caret>, <Hint text=\"value:\"/>) } }");
     left();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>), <hint text=\"value:\"/>) } }");
   }
 
   public void testHintPopupContentsForMethodWithOverloads() throws Exception {
     configureJava("class C { void m() { System.getPro<caret> } }");
     complete("getProperty(String key, String def)");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret>, <hint text=\"def:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"def:\"/>) } }");
     checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>a default value.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
@@ -571,11 +575,11 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     configureJava("class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <hint text=\"value:\"/>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
     checkHintContents("<html><b>@NotNull String</b>&nbsp;&nbsp;<i>the name of the system property.  </i></html>");
     next();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { System.setProperty(<Hint text=\"key:\"/>, <HINT text=\"value:\"/><caret>) } }");
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>the value of the system property.  </i></html>");
     showParameterInfo();
     waitForAllAsyncStuff();
@@ -647,14 +651,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C {\n" +
                           "  void a(int p, int q) {}\n" +
                           "  void a(int p, int q, int r) {}\n" +
-                          "  void m() { a(<HINT text=\"p:\"/><caret>, <hint text=\"q:\"/>) }\n" +
+                          "  void m() { a(<HINT text=\"p:\"/><caret>, <Hint text=\"q:\"/>) }\n" +
                           "}");
     next();
     waitForAllAsyncStuff();
     checkResultWithInlays("class C {\n" +
                           "  void a(int p, int q) {}\n" +
                           "  void a(int p, int q, int r) {}\n" +
-                          "  void m() { a(<hint text=\"p:\"/>, <HINT text=\"q:\"/><caret>) }\n" +
+                          "  void m() { a(<Hint text=\"p:\"/>, <HINT text=\"q:\"/><caret>) }\n" +
                           "}");
   }
 
@@ -708,7 +712,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     assertEquals("local", myFixture.getLookupElements()[0].getLookupString());
     myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_REPLACE);
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getProperty(<hint text=\"key:\"/>local, <HINT text=\"def:\"/><caret>) } }");
+    checkResultWithInlays("class C { void m() { String local = \"a\"; String local2 = \"b\"; System.getProperty(<Hint text=\"key:\"/>local, <HINT text=\"def:\"/><caret>) } }");
   }
 
   public void testGenericType() throws Exception {
@@ -721,19 +725,19 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testCompletionBetweenVarargHints() {
     configureJava("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { varar<caret> } }");
     complete();
-    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><hint text=\", b:\"/>); } }");
+    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/>); } }");
     type("myVa");
     complete();
-    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>myVal<caret><hint text=\", b:\"/>); } }");
+    checkResultWithInlays("class C { int myVal = 1; void vararg(int a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>myVal<caret><Hint text=\", b:\"/>); } }");
   }
 
   public void testEnteringSpaceBetweenVarargHints() throws Exception {
     configureJava("class C { void vararg(Object a, int... b) {} void m() { varar<caret> } }");
     complete();
-    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><hint text=\", b:\"/>); } }");
+    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/><caret><Hint text=\", b:\"/>); } }");
     type("new ");
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>new <caret><hint text=\", b:\"/>); } }");
+    checkResultWithInlays("class C { void vararg(Object a, int... b) {} void m() { vararg(<HINT text=\"a:\"/>new <caret><Hint text=\", b:\"/>); } }");
   }
 
   public void testNoTooltipForInvalidParameter() throws Exception {
@@ -784,9 +788,50 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
   public void testNoLinksInParameterJavadoc() throws Exception {
     configureJava("class C { void m() { String.for<caret> } }");
     complete();
-    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><hint text=\", args:\"/>) } }");
+    checkResultWithInlays("class C { void m() { String.format(<HINT text=\"format:\"/><caret><Hint text=\", args:\"/>) } }");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>String</b>&nbsp;&nbsp;<i>         A format string  </i></html>");
+  }
+
+  public void testBasicScenarioForConstructor() throws Exception {
+    enableConstructorVariantsCompletion();
+
+    // check hints appearance on completion
+    configureJava("class C { C(int a, int b) {} void m() { new C<caret> } }");
+    complete("C(int a, int b)");
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>) } }");
+    // check that hints don't disappear after daemon highlighting passes
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>) } }");
+
+    // test Tab/Shift+Tab navigation
+    next();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<Hint text=\"a:\"/>, <HINT text=\"b:\"/><caret>) } }");
+    prev();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<HINT text=\"a:\"/><caret>, <Hint text=\"b:\"/>) } }");
+
+    // test hints remain shown while entering parameter values
+    myFixture.type("1");
+    next();
+    myFixture.type("2");
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<Hint text=\"a:\"/>1, <HINT text=\"b:\"/>2<caret>) } }");
+
+    // test hints don't disappear when caret moves out of parameter list
+    right();
+    right();
+    right();
+    right();
+
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2) } <caret>}");
+  }
+
+  private void enableConstructorVariantsCompletion() {
+    Registry.get("java.completion.show.constructors").setValue(true);
+    Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
   }
 
   private void checkResult(String text) {

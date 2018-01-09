@@ -72,7 +72,7 @@ public class CodeFormatterFacade {
   /**
    * This key is used as a flag that indicates if {@code 'wrap long line during formatting'} activity is performed now.
    *
-   * @see CodeStyleSettings#WRAP_LONG_LINES
+   * @see CommonCodeStyleSettings#WRAP_LONG_LINES
    */
   public static final Key<Boolean> WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY
     = new Key<>("WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY");

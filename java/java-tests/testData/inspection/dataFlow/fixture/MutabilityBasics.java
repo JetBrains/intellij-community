@@ -1,5 +1,5 @@
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.ReadOnly;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class MutabilityBasics {
-  @ReadOnly
+  @Unmodifiable
   static <T> List<T> emptyList() {
     return Collections.emptyList();
   }
@@ -43,7 +43,7 @@ public class MutabilityBasics {
     }
   }
 
-  @ReadOnly
+  @Unmodifiable
   static Point getZero() {
     return new Point() {
       @Override
@@ -59,12 +59,12 @@ public class MutabilityBasics {
   }
 
   // Differs from getZero as getZero() is considered as getter with predefined value
-  @ReadOnly
+  @Unmodifiable
   static Point zero() {
     return getZero();
   }
 
-  @ReadOnly List<String> list = Arrays.asList("foo", "bar", "baz");
+  @Unmodifiable List<String> list = Arrays.asList("foo", "bar", "baz");
 
   void test() {
     List<String> collection = emptyList();

@@ -59,4 +59,18 @@ public class MutabilityJdk {
     }
     return result;
   }
+
+  void testNoFlush() {
+    List<String> list1 = Collections.emptyList();
+    List<String> list2 = new ArrayList<>();
+    List<String> list3 = Collections.unmodifiableList(list2);
+    if(<warning descr="Condition 'list1.isEmpty()' is always 'true'">list1.isEmpty()</warning>) System.out.println("ok");
+    if(!list3.isEmpty()) return;
+    if(<warning descr="Condition '!list3.isEmpty()' is always 'false'">!<warning descr="Condition 'list3.isEmpty()' is always 'true'">list3.isEmpty()</warning></warning>) return;
+    list2.add("foo");
+    // list1 size is not flushed (UNMODIFIABLE)
+    if(<warning descr="Condition 'list1.isEmpty()' is always 'true'">list1.isEmpty()</warning>) System.out.println("ok");
+    // list3 size is flushed (UNMODIFIABLE_VIEW)
+    if(!list3.isEmpty()) return;
+  }
 }

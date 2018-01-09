@@ -52,7 +52,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class HighlightInfo implements Segment {
@@ -758,6 +760,10 @@ public class HighlightInfo implements Segment {
 
     boolean isError() {
       return mySeverity == null || mySeverity.compareTo(HighlightSeverity.ERROR) >= 0;
+    }
+    
+    boolean isInformation() {
+      return HighlightSeverity.INFORMATION.equals(mySeverity);
     }
 
     boolean canCleanup(@NotNull PsiElement element) {

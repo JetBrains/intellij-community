@@ -290,6 +290,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
                                                               PsiStatement.class,
                                                               PsiCodeBlock.class,
                                                               PsiMember.class,
+                                                              PsiAnnotation.class,
                                                               PsiComment.class,
                                                               PsiImportStatementBase.class,
                                                               PsiPackageStatement.class
@@ -305,6 +306,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
     return statementAtCaret instanceof PsiStatement ||
            statementAtCaret instanceof PsiMember ||
+           statementAtCaret instanceof PsiAnnotation ||
            statementAtCaret instanceof PsiImportStatementBase ||
            statementAtCaret instanceof PsiPackageStatement
            ? statementAtCaret
@@ -338,6 +340,16 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       reformat(elt);
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = old;
       editor.getCaretModel().moveToOffset(caretOffset - 1);
+
+      reformatBlockParentIfNeeded(editor, file);
+    }
+  }
+
+  private void reformatBlockParentIfNeeded(@NotNull Editor editor, @NotNull PsiFile file) {
+    commit(editor);
+    PsiCodeBlock block = PsiTreeUtil.findElementOfClassAtOffset(file, editor.getCaretModel().getOffset(), PsiCodeBlock.class, false);
+    if (block != null && psiElement().withParents(PsiBlockStatement.class, PsiForStatement.class).accepts(block)) {
+      reformat(block.getParent().getParent());
     }
   }
 

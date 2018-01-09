@@ -33,8 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.intellij.vcs.log.impl.VcsLogUtil.MAX_SELECTED_COMMITS;
-import static com.intellij.vcs.log.impl.VcsLogUtil.collectFirstPack;
+import static com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS;
+import static com.intellij.vcs.log.util.VcsLogUtil.collectFirstPack;
 
 public abstract class VcsLogAction<Repo extends Repository> extends DumbAwareAction {
 

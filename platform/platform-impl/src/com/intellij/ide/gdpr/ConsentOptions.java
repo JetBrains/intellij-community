@@ -246,8 +246,16 @@ public final class ConsentOptions {
 
   @NotNull
   private static Collection<ConsentAttributes> fromJson(String json) {
-    final ConsentAttributes[] data = StringUtil.isEmptyOrSpaces(json)? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
-    return data != null ? Arrays.asList(data) : Collections.emptyList();
+    try {
+      final ConsentAttributes[] data = StringUtil.isEmptyOrSpaces(json)? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
+      if (data != null) {
+        return Arrays.asList(data);
+      }
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+    return Collections.emptyList();
   }
 
   private static String consentsToJson(Stream<Consent> consents) {

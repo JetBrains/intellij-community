@@ -3814,7 +3814,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
         else {
-          if (!myMousePressedInsideSelectionForDrag && getSelectionModel().hasSelection()) {
+          if (!myMousePressedInsideSelectionForDrag && getSelectionModel().hasSelection() && !isCreateRectangularSelectionEvent(e)) {
             setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
             mySelectionModel.setSelection(caretOffset, caretOffset);
           }

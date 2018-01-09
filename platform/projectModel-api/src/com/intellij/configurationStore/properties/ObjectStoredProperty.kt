@@ -14,7 +14,7 @@ internal abstract class ObjectStateStoredPropertyBase<T>(protected var value: T)
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: T) {
     if (value != newValue) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
       value = newValue
     }
   }

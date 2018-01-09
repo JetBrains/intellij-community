@@ -225,6 +225,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestLambdaParameter();
   }
 
+  public void testLocalClassInsideAnonymous() throws Exception {
+    doTestAtCaret();
+  }
+
   private void doTestClass() throws Exception {
     PsiClass psiClass = getTestClass();
     verifyJavaDoc(psiClass);

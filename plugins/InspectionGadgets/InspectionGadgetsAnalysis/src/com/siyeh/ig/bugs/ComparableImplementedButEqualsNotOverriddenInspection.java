@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
   private static class AddNoteFix extends InspectionGadgetsFix {
 
     private static final Pattern PARAM_PATTERN = Pattern.compile("\\*[ \t]+@");
+    private static final String NOTE = " * Note: this class has a natural ordering that is inconsistent with equals.\n";
 
     @Nls
     @NotNull
@@ -103,28 +104,17 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiClass aClass = (PsiClass)descriptor.getPsiElement().getParent();
       final PsiDocComment comment = aClass.getDocComment();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (comment == null) {
-        final PsiDocComment newComment = factory.createDocCommentFromText(
-          "/**\n" +
-          "* Note: this class has a natural ordering that is inconsistent with equals.\n" +
-          "*/", aClass);
+        final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText("/**\n" + NOTE + "*/", aClass);
         aClass.addBefore(newComment, aClass.getFirstChild());
       }
       else {
         final String text = comment.getText();
         final Matcher matcher = PARAM_PATTERN.matcher(text);
-        String newCommentText;
-        if (matcher.find()) {
-          newCommentText = text.substring(0, matcher.start()) +
-                           " * Note: this class has a natural ordering that is inconsistent with equals.\n" +
-                           text.substring(matcher.start());
-        }
-        else {
-          newCommentText = text.substring(0, text.length() - 2) +
-                           " * Note: this class has a natural ordering that is inconsistent with equals.\n*/";
-        }
-        final PsiDocComment newComment = factory.createDocCommentFromText(newCommentText);
+        final String newCommentText = matcher.find()
+                                      ? text.substring(0, matcher.start()) + NOTE + text.substring(matcher.start())
+                                      : text.substring(0, text.length() - 2) + NOTE + "*/";
+        final PsiDocComment newComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(newCommentText);
         comment.replace(newComment);
       }
     }
@@ -149,8 +139,8 @@ public class ComparableImplementedButEqualsNotOverriddenInspection extends BaseI
       if (comparableClass == null || !aClass.isInheritor(comparableClass, true)) {
         return;
       }
-      final PsiMethod[] comparableMethods = comparableClass.getMethods();
-      if (comparableMethods.length != 1) { // incorrect/broken jdk
+      final PsiMethod[] comparableMethods = comparableClass.findMethodsByName(HardcodedMethodConstants.COMPARE_TO, false);
+      if (comparableMethods.length == 0) { // incorrect/broken jdk
         return;
       }
       final PsiMethod comparableMethod = MethodSignatureUtil.findMethodBySuperMethod(aClass, comparableMethods[0], false);

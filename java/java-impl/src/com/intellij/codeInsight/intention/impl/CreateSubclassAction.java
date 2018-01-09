@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
@@ -48,13 +49,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,6 @@ import java.util.List;
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.ImplementAbstractClassAction");
   private String myText = CodeInsightBundle.message("intention.implement.abstract.class.default.text");
-  @NonNls private static final String IMPL_SUFFIX = "Impl";
 
   @Override
   @NotNull
@@ -163,7 +163,8 @@ public class CreateSubclassAction extends BaseIntentionAction {
         LOG.assertTrue(containingClass != null);
 
         final PsiTypeParameterList oldTypeParameterList = aClass.getTypeParameterList();
-        PsiClass classFromText = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass(aClass.getName() + IMPL_SUFFIX);
+        PsiClass classFromText = JavaPsiFacade.getElementFactory(aClass.getProject()).createClass(
+          suggestTargetClassName(aClass));
         classFromText = (PsiClass)containingClass.addAfter(classFromText, aClass);
         startTemplate(oldTypeParameterList, aClass.getProject(), aClass, classFromText, true);
       }
@@ -179,12 +180,17 @@ public class CreateSubclassAction extends BaseIntentionAction {
 
   @Nullable
   public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass) {
+    return chooseSubclassToCreate(psiClass, suggestTargetClassName(psiClass));
+  }
+
+  @Nullable
+  public static CreateClassDialog chooseSubclassToCreate(PsiClass psiClass, final String targetClassName) {
     final PsiDirectory sourceDir = psiClass.getContainingFile().getContainingDirectory();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex();
     final PsiPackage aPackage = sourceDir != null ? JavaDirectoryService.getInstance().getPackage(sourceDir) : null;
     final CreateClassDialog dialog = new CreateClassDialog(
       psiClass.getProject(), getTitle(psiClass),
-      psiClass.getName() + IMPL_SUFFIX,
+      targetClassName,
       aPackage != null ? aPackage.getQualifiedName() : "",
       CreateClassKind.CLASS, true, ModuleUtilCore.findModuleForPsiElement(psiClass)) {
       @Override
@@ -203,6 +209,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
     final PsiDirectory targetDirectory = dialog.getTargetDirectory();
     if (targetDirectory == null) return null;
     return dialog;
+  }
+
+  public static String suggestTargetClassName(PsiClass psiClass) {
+    JavaCodeStyleSettings javaSettings = CodeStyle.getSettings(psiClass.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    return javaSettings.SUBCLASS_NAME_PREFIX + psiClass.getName() + javaSettings.SUBCLASS_NAME_SUFFIX;
   }
 
   public static PsiClass createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className) {

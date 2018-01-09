@@ -60,14 +60,16 @@ public class PyKnownDecoratorUtil {
     UNITTEST_EXPECTED_FAILURE("unittest.case.expectedFailure"),
     UNITTEST_MOCK_PATCH("unittest.mock.patch"),
 
-    TYPING_OVERLOAD("typing.overload"),
+    TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
     TYPING_RUNTIME("typing.runtime"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
 
     PYRAMID_DECORATOR_REIFY("pyramid.decorator.reify"),
     DJANGO_UTILS_FUNCTIONAL_CACHED_PROPERTY("django.utils.functional.cached_property"),
-    KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property");
+    KOMBU_UTILS_CACHED_PROPERTY("kombu.utils.cached_property"),
+
+    DATACLASSES_DATACLASS("dataclasses.dataclass");
 
     private final QualifiedName myQualifiedName;
 

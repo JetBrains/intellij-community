@@ -66,7 +66,7 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
                                    height - (i.top + i.bottom));
             g2.fill(shape);
         } else {
-          Path2D path = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+          Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
           path.moveTo(i.left + VALUE_OFFSET, i.top);
           path.lineTo(i.left + VALUE_OFFSET, height - i.bottom);
           path.lineTo(i.left + arc, height - i.bottom);
@@ -78,7 +78,7 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
         }
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
       border.append(new RoundRectangle2D.Double(JBUI.scale(3), JBUI.scale(3),
                                            width - JBUI.scale(3)*2,
@@ -146,14 +146,14 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
 
   @Override
   protected void clipForBorder(Component c, Graphics2D g2, int width, int height) {
+    float lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
     Area area = new Area(new Rectangle2D.Double(0, 0, width, height));
-    double lw = JBUI.scale(UIUtil.isRetina(g2) ? 0.5f : 1.0f);
     Shape innerShape = isRound(c) ?
-           new RoundRectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
+           new RoundRectangle2D.Float(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
                                        width - (JBUI.scale(3) + lw) * 2,
                                        height - (JBUI.scale(3) + lw) * 2,
                                        JBUI.scale(3) + lw, JBUI.scale(3) + lw) :
-           new Rectangle2D.Double(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
+           new Rectangle2D.Float(JBUI.scale(3) + lw, JBUI.scale(3) + lw,
                                   width - (JBUI.scale(3) + lw) * 2,
                                   height - (JBUI.scale(3) + lw) * 2);
 

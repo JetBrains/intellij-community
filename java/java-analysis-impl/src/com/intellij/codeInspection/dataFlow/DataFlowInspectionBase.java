@@ -25,6 +25,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -218,6 +219,10 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     return null;
   }
 
+  protected LocalQuickFix createRemoveAssignmentFix(PsiAssignmentExpression assignment) {
+    return null;
+  }
+
   protected LocalQuickFix createReplaceWithTrivialLambdaFix(Object value) {
     return null;
   }
@@ -286,6 +291,36 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                InspectionsBundle.message("dataflow.message.immutable.modified"));
     reportMutabilityViolations(holder, reportedAnchors, visitor.getMutabilityViolations(false),
                                InspectionsBundle.message("dataflow.message.immutable.passed"));
+
+    reportDuplicateAssignments(holder, reportedAnchors, visitor);
+  }
+
+  private void reportDuplicateAssignments(ProblemsHolder holder,
+                                          HashSet<PsiElement> reportedAnchors,
+                                          DataFlowInstructionVisitor visitor) {
+    visitor.sameValueAssignments().forEach(expr -> {
+      if(!reportedAnchors.add(expr)) return;
+      PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expr, PsiAssignmentExpression.class);
+      PsiElement context = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class, PsiClassInitializer.class);
+      if (context instanceof PsiForStatement && PsiTreeUtil.isAncestor(((PsiForStatement)context).getInitialization(), expr, true)) {
+        return;
+      }
+      if (context instanceof PsiClassInitializer && expr instanceof PsiReferenceExpression) {
+        if (assignment != null) {
+          Object constValue = ExpressionUtils.computeConstantExpression(assignment.getRExpression());
+          if (constValue == PsiTypesUtil.getDefaultValue(expr.getType())) {
+            PsiReferenceExpression ref = (PsiReferenceExpression)expr;
+            PsiElement target = ref.resolve();
+            if (target instanceof PsiField &&
+                (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isEffectivelyUnqualified(ref)) &&
+                ((PsiField)target).getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
+              return;
+            }
+          }
+        }
+      }
+      holder.registerProblem(expr, InspectionsBundle.message("dataflow.message.redundant.assignment"), createRemoveAssignmentFix(assignment));
+    });
   }
 
   private static void reportMutabilityViolations(ProblemsHolder holder,

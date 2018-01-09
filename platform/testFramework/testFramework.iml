@@ -27,5 +27,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="boot" />
     <orderEntry type="module" module-name="jetCheck" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="testFramework.core" exported="" />
   </component>
 </module>

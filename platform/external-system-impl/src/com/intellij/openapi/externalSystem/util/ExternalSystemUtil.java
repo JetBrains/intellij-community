@@ -78,6 +78,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -588,6 +589,7 @@ public class ExternalSystemUtil {
     };
 
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(FileDocumentManager.getInstance()::saveAllDocuments);
 
     final String title;
     switch (progressExecutionMode) {

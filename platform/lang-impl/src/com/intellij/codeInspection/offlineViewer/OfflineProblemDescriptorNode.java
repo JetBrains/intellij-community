@@ -17,12 +17,11 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
   private OfflineProblemDescriptorNode(OfflineDescriptorResolveResult descriptorResolveResult,
                                        @NotNull InspectionToolPresentation presentation,
                                        @NotNull OfflineProblemDescriptor offlineDescriptor) {
-    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, false, offlineDescriptor::getLine);
+    super(descriptorResolveResult.getResolvedEntity(), descriptorResolveResult.getResolvedDescriptor(), presentation, offlineDescriptor::getLine);
     myDescriptorResolveResult = descriptorResolveResult;
     if (descriptorResolveResult.getResolvedDescriptor() == null) {
       setUserObject(offlineDescriptor);
     }
-    init(presentation.getContext().getProject());
   }
 
   static OfflineProblemDescriptorNode create(@NotNull OfflineProblemDescriptor offlineDescriptor,

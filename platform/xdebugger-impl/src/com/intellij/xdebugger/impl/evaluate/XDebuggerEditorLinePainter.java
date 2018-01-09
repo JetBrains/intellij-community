@@ -196,9 +196,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
     @Override
     public int hashCode() {
-      int result = lineNumber;
-      result = 31 * result + name.hashCode();
-      return result;
+      return Objects.hash(lineNumber, name);
     }
   }
 

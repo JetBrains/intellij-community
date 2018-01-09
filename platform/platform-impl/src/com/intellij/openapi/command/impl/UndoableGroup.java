@@ -71,6 +71,12 @@ class UndoableGroup {
     return myTransparent;
   }
 
+  /**
+   * We allow transparent actions to be performed while we're in the middle of undo stack, without breaking it (i.e. without dropping
+   * redo stack contents). Such actions are stored in undo stack as 'temporary' actions, and are dropped (not further kept in stacks)
+   * on undo/redo. If a non-transparent action is performed after a temporary one, the latter is converted to normal (permanent) action,
+   * and redo stack is cleared.
+   */
   public boolean isTemporary() {
     return myTemporary;
   }

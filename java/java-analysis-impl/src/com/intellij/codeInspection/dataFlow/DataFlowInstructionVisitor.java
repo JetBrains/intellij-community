@@ -2,10 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -36,7 +33,43 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
+  private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
+
+  @Override
+  public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    PsiExpression left = instruction.getLExpression();
+    if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
+      DfaValue dest = memState.peek();
+      // Reporting of floating zero is skipped, because this produces false-positives on the code like
+      // if(x == -0.0) x = 0.0;
+      if (dest instanceof DfaVariableValue || (dest instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)dest).getValue()))) {
+        DfaMemoryState copy = memState.createCopy();
+        copy.pop();
+        DfaValue src = copy.peek();
+        boolean sameValue = !copy.applyCondition(runner.getFactory().createCondition(dest, DfaRelationValue.RelationType.NE, src));
+        mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
+      }
+      else {
+        mySameValueAssigned.put(left, Boolean.FALSE);
+      }
+    }
+    return super.visitAssign(instruction, runner, memState);
+  }
+
+  private static boolean isFloatingZero(Object value) {
+    if (value instanceof Double) {
+      return ((Double)value).doubleValue() == 0.0;
+    }
+    if (value instanceof Float) {
+      return ((Float)value).floatValue() == 0.0f;
+    }
+    return false;
+  }
+
+  StreamEx<PsiExpression> sameValueAssignments() {
+    return StreamEx.ofKeys(mySameValueAssigned, Boolean::booleanValue);
+  }
 
   @Override
   protected void onInstructionProducesCCE(TypeCastInstruction instruction) {

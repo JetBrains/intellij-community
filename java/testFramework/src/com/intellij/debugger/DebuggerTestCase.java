@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger;
 
@@ -284,6 +272,9 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     return debuggerSession[0];
   }
 
+  private static String generateShmemAddress() {
+    return "javadebug_" + (int)(Math.random() * 1000);
+  }
 
   protected DebuggerSession createRemoteProcess(final int transport, final boolean serverMode, JavaParameters javaParameters)
           throws ExecutionException {
@@ -292,7 +283,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     RemoteConnection remoteConnection = new RemoteConnection(
       useSockets,
       "127.0.0.1",
-      String.valueOf(DEFAULT_ADDRESS),
+      useSockets ? String.valueOf(DEFAULT_ADDRESS) : generateShmemAddress(),
       serverMode);
 
     String launchCommandLine = remoteConnection.getLaunchCommandLine();
@@ -302,7 +293,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
 
     launchCommandLine = StringUtil.replace(launchCommandLine, "suspend=n", "suspend=y");
 
-    println(launchCommandLine, ProcessOutputTypes.SYSTEM);
+    //println(launchCommandLine, ProcessOutputTypes.SYSTEM);
 
     for(StringTokenizer tokenizer = new StringTokenizer(launchCommandLine);tokenizer.hasMoreTokens();) {
       String token = tokenizer.nextToken();

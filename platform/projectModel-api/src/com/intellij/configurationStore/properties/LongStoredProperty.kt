@@ -16,7 +16,7 @@ internal class LongStoredProperty(private val defaultValue: Long, private val va
   override fun setValue(thisRef: BaseState, property: KProperty<*>, value: Long) {
     val newValue = valueNormalizer?.invoke(value) ?: value
     if (this.value != newValue) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
       this.value = newValue
     }
   }

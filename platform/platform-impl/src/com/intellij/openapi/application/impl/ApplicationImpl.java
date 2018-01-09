@@ -17,7 +17,6 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -955,7 +954,22 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithProgressInDispatchThread(
+  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(
+    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
+    @NotNull Consumer<ProgressIndicator> action
+  ) {
+    return runEdtProgressWriteAction(title, project, parentComponent, null, action);
+  }
+
+  @ApiStatus.Experimental
+  public boolean runWriteActionWithCancellableProgressInDispatchThread(
+    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
+    @NotNull Consumer<ProgressIndicator> action
+  ) {
+    return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
+  }
+
+  private boolean runEdtProgressWriteAction(
     @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
     @NotNull Consumer<ProgressIndicator> action
   ) {

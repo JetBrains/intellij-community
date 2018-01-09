@@ -334,6 +334,8 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       }
     }
 
+    reparseByTextIfNeeded(key, document);
+
     Collection<Disposable> toDispose = Collections.emptyList();
     try {
       // process all roots in viewProvider to find marked for reformat before elements and create appropriate range markers
@@ -362,8 +364,6 @@ public class PostprocessReformattingAspect implements PomModelAspect {
             viewProvider.getPsi(viewProvider.getBaseLanguage()), () -> normalizedAction.execute(viewProvider));
         }
       }
-
-      reparseByTextIfNeeded(key, document);
     }
     finally {
       for (Disposable disposable : toDispose) {

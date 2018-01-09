@@ -263,4 +263,10 @@ public void testConvertToObjectStream() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "isEmpty", "s -> ", "getSomeGenericValue");
   }
+
+  public void testNoInaccessibleConstructorRef() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "() -> ");
+  }
+
 }

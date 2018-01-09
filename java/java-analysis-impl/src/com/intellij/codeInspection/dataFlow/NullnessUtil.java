@@ -172,10 +172,6 @@ public class NullnessUtil {
     if (expression instanceof PsiTypeCastExpression) {
       return getExpressionNullness(((PsiTypeCastExpression)expression).getOperand(), useDataflow);
     }
-    if (expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
-    }
     if (expression instanceof PsiAssignmentExpression) {
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)expression;
       if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
@@ -185,6 +181,10 @@ public class NullnessUtil {
     }
     if (useDataflow) {
       return fromBoolean(CommonDataflow.getExpressionFact(expression, DfaFactType.CAN_BE_NULL));
+    }
+    if (expression instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
     }
     if (expression instanceof PsiMethodCallExpression) {
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();

@@ -145,10 +145,18 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void fireEvents() {
-    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values(), Comparator.comparing(
-      TreeChangeImpl::getCurrentStart));
+    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values());
     for (TreeChangeImpl change : changes) {
       change.fireEvents((PsiFile)myFileElement.getPsi());
+    }
+  }
+
+  @Override
+  public void beforeNestedTransaction() {
+    // compute changes and remember them, to prevent lazy computation to happen in another transaction
+    // when more changes might have occurred but shouldn't count in this transaction 
+    for (TreeChangeImpl change : myChangedElements.values()) {
+      change.getAffectedChildren(); 
     }
   }
 

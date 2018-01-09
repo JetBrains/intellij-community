@@ -19,12 +19,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
-import com.intellij.testFramework.UsefulTestCase;
+import junit.framework.TestCase;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class RangeBuilderTest extends UsefulTestCase {
+public class RangeBuilderTest extends TestCase {
   public void testIdenticalContents() {
     String upToDateContent = "a\na\na\na\n";
     assertTrue(RangesBuilder.createRanges(new DocumentImpl(upToDateContent),
@@ -129,7 +129,7 @@ public class RangeBuilderTest extends UsefulTestCase {
   private static void doTest(CharSequence upToDateContent, CharSequence currentContent, Range[] expected) {
     List<Range> result = RangesBuilder.createRanges(new DocumentImpl(currentContent),
                                                     new DocumentImpl(upToDateContent));
-    BaseLineStatusTrackerTestCase.assertEqualRanges(Arrays.asList(expected), result);
+    BaseLineStatusTrackerTestCase.assertEqualRanges(result, Arrays.asList(expected));
   }
 
   private static String createContentOn(String[] content) {

@@ -136,19 +136,25 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     for (FileStatusProvider extension : myExtensions.getValue()) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
-        LOG.debug(String.format("File status for file [%s] from provider %s: %s", virtualFile, extension.getClass().getName(), status));
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("File status for file [%s] from provider %s: %s", virtualFile, extension.getClass().getName(), status));
+        }
         return status;
       }
     }
 
     if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
       FileStatus status = myFileStatusProvider.getFileStatus(virtualFile);
-      LOG.debug(String.format("File status for file [%s] from default provider %s: %s", virtualFile, myFileStatusProvider, status));
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("File status for file [%s] from default provider %s: %s", virtualFile, myFileStatusProvider, status));
+      }
       return status;
     }
 
     FileStatus defaultStatus = getDefaultStatus(virtualFile);
-    LOG.debug(String.format("Default status for file [%s]: %s", virtualFile, defaultStatus));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Default status for file [%s]: %s", virtualFile, defaultStatus));
+    }
     return defaultStatus;
   }
 
@@ -251,7 +257,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
 
     FileStatus status = getCachedStatus(file);
-    LOG.debug("Cached status for file [" + file + "] is " + status);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Cached status for file [" + file + "] is " + status);
+    }
     if (status == null || status == FileStatusNull.INSTANCE) {
       status = calcStatus(file);
       cacheChangedFileStatus(file, status);

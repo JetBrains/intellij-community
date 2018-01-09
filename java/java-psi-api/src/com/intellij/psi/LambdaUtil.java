@@ -337,9 +337,9 @@ public class LambdaUtil {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
-      if (parent instanceof PsiConditionalExpression &&
-          ((PsiConditionalExpression)parent).getThenExpression() != element &&
-          ((PsiConditionalExpression)parent).getElseExpression() != element) break;
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
+        return PsiType.BOOLEAN;
+      }
       element = parent;
       parent = parent.getParent();
     }

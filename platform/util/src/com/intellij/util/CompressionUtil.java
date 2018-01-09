@@ -62,7 +62,7 @@ public class CompressionUtil {
   private static final AtomicLong mySizeAfterCompression = new AtomicLong();
 
   public static final boolean DUMP_COMPRESSION_STATS = SystemProperties.getBooleanProperty("idea.dump.compression.stats", false);
-  public static final boolean USE_SNAPPY = SystemProperties.getBooleanProperty("idea.use.snappy", true);
+  public static final boolean USE_SNAPPY = SystemProperties.getBooleanProperty("idea.use.snappy", false);
 
   public static int writeCompressedWithoutOriginalBufferLength(@NotNull DataOutput out, @NotNull byte[] bytes, int length) throws IOException {
     long started = DUMP_COMPRESSION_STATS ? System.nanoTime() : 0;

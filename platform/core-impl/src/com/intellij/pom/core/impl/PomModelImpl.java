@@ -147,6 +147,12 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     List<Throwable> throwables = new ArrayList<>(0);
     final PomModelAspect aspect = transaction.getTransactionAspect();
     startTransaction(transaction);
+
+    Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
+    if (block != null) {
+      block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
+    }
+
     try{
       DebugUtil.startPsiModification(null);
       Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
@@ -167,10 +173,8 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       finally{
         blockedAspects.pop();
       }
-      final Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
       if(block != null){
-        final PomModelEvent currentEvent = block.getSecond().getAccumulatedEvent();
-        currentEvent.merge(event);
+        block.getSecond().getAccumulatedEvent().merge(event);
         return;
       }
 

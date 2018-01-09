@@ -198,6 +198,17 @@ nid=0x898 runnable [0x4424f000]
     assert ThreadDumpParser.parse(UnscrambleDialog.normalizeText(text)).size() == 2
   }
 
+  void testJsonEscapes() {
+    doTest '''\
+ "error": "java.lang.RuntimeException: Error creating table\\n\\tat org.kablambda.aws.dynamodb.DBImpl.createTable(DBImpl.java:63)\\n\\tat org.kablambda.aws.handler.InstallHandler.lambda$new$1(InstallHandler.java:16)\\n\\tat org.kablambda.aws.handler.PathHandler.handle(PathHandler.java:26)\\n\\tat
+''', '''\
+ "error": "java.lang.RuntimeException: Error creating table
+\tat org.kablambda.aws.dynamodb.DBImpl.createTable(DBImpl.java:63)
+\tat org.kablambda.aws.handler.InstallHandler.lambda$new$1(InstallHandler.java:16)
+\tat org.kablambda.aws.handler.PathHandler.handle(PathHandler.java:26)
+\tat''' 
+  }
+
   private static void doTest(@NonNls String stackTrace, @NonNls String expected) {
     String normalized = UnscrambleDialog.normalizeText(stackTrace)
     assertEquals(expected, normalized)

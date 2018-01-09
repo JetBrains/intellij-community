@@ -54,13 +54,17 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
   @Override
   public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     JavaResolveResult[] cachedResult = myCachedResult;
-    if (cachedResult != null && cachedResult.length == 1 && cachedResult[0].isAccessible()) {
+    if (cachedResult != null && cachedResult.length == 1 && stopAtFoundResult(cachedResult[0])) {
       return false;
     }
     if (myName == null || PsiUtil.checkName(element, myName, myPlace)) {
       return super.execute(element, state);
     }
     return true;
+  }
+
+  protected boolean stopAtFoundResult(JavaResolveResult cachedResult) {
+    return cachedResult.isAccessible();
   }
 
   @Override

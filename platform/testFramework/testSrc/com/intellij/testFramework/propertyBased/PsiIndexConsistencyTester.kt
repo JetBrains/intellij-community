@@ -29,7 +29,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
-import jetCheck.Generator
+import org.jetbrains.jetCheck.Generator
 
 /**
  * @author peter

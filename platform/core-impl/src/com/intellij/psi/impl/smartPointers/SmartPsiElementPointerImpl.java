@@ -30,9 +30,7 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.tree.IStubFileElementType;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,14 +199,15 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     if (elementRange == null) {
       return new HardElementInfo(project, element);
     }
-    if (elementRange.isEmpty() && PsiTreeUtil.findChildOfType(element, ForeignLeafPsiElement.class) != null) {
-      // PSI built on C-style macro expansions. It has empty ranges, no text, but complicated structure. It can't be reliably
+    Identikit.ByType identikit = Identikit.fromPsi(element, LanguageUtil.getRootLanguage(element));
+    if (elementRange.isEmpty() && 
+        identikit.findPsiElement(containingFile, elementRange.getStartOffset(), elementRange.getEndOffset()) != element) {
+      // PSI has empty range, no text, but complicated structure (e.g. PSI built on C-style macro expansions). It can't be reliably
       // restored by just one offset in a file, so hold it on a hard reference
       return new HardElementInfo(project, element);
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
-
-    return new SelfElementInfo(project, proper, Identikit.fromPsi(element, LanguageUtil.getRootLanguage(element)), containingFile, forInjected);
+    return new SelfElementInfo(project, proper, identikit, containingFile, forInjected);
   }
 
   @Nullable

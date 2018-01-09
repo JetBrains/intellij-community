@@ -46,15 +46,9 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
     if (icon != null) {
       int x = (iconRect.width - icon.getIconWidth()) / 2 + iconRect.x;
-      int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y;
+      int y = (iconRect.height - icon.getIconHeight()) / 2 + iconRect.y + JBUI.scale(1);
       icon.paintIcon(c, g, x, y);
     }
-  }
-
-  @Override
-  protected void drawText(JComponent c, Graphics2D g, AbstractButton b, FontMetrics fm, Rectangle textRect, String text) {
-    textRect.y -= JBUI.scale(1); // Move one pixel up
-    super.drawText(c, g, b, fm, textRect, text);
   }
 
   private static boolean isCellRollover(AbstractButton checkBox) {

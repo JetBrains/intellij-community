@@ -17,7 +17,7 @@ package git4idea.revert
 
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber

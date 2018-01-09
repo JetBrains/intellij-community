@@ -16,6 +16,7 @@
 package com.intellij.lang.html;
 
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -164,7 +165,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     public static void runOnElement(@NotNull CodeStyleSettings.QuoteStyle quoteStyle, @NotNull PsiElement element) {
-      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(null);
+      PostFormatProcessorHelper postFormatProcessorHelper = new PostFormatProcessorHelper(CodeStyle.getDefaultSettings());
       postFormatProcessorHelper.setResultTextRange(element.getTextRange());
       new HtmlQuotesConverter(quoteStyle, element, postFormatProcessorHelper).run();
     }

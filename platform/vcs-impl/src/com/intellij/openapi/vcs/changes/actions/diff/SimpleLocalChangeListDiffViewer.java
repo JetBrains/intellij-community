@@ -65,7 +65,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   @NotNull
   @Override
   protected List<AnAction> createEditorPopupActions() {
-    List<AnAction> group = new ArrayList<>(super.createToolbarActions());
+    List<AnAction> group = new ArrayList<>(super.createEditorPopupActions());
 
     group.add(new MoveSelectedChangesToAnotherChangelistAction(false));
 

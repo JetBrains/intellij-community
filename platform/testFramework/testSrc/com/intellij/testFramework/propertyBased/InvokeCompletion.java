@@ -36,14 +36,16 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import jetCheck.Generator;
-import jetCheck.IntDistribution;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.IntDistribution;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -96,7 +98,8 @@ public class InvokeCompletion extends ActionOnRange {
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
-        performCompletion(editor);
+        Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
+        performCompletion(caretEditor, PsiUtilBase.getPsiFileInEditor(caretEditor, project));
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
       }
       finally {
@@ -107,16 +110,16 @@ public class InvokeCompletion extends ActionOnRange {
     });
   }
 
-  private void performCompletion(Editor editor) {
+  private void performCompletion(@NotNull Editor editor, @NotNull PsiFile file) {
     int caretOffset = editor.getCaretModel().getOffset();
-    int adjustedOffset = TargetElementUtil.adjustOffset(getFile(), getDocument(), caretOffset);
+    int adjustedOffset = TargetElementUtil.adjustOffset(file, getDocument(), caretOffset);
 
-    PsiElement leaf = getFile().findElementAt(adjustedOffset);
-    PsiReference ref = getFile().findReferenceAt(adjustedOffset);
+    PsiElement leaf = file.findElementAt(adjustedOffset);
+    PsiReference ref = file.findReferenceAt(adjustedOffset);
 
-    String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, getFile(), leaf, ref);
+    String expectedVariant = leaf == null ? null : myPolicy.getExpectedVariant(editor, file, leaf, ref);
     boolean prefixEqualsExpected = isPrefixEqualToExpectedVariant(caretOffset, leaf, ref, expectedVariant);
-    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, getFile(), leaf);
+    boolean shouldCheckDuplicates = myPolicy.shouldCheckDuplicates(editor, file, leaf);
     long stampBefore = getDocument().getModificationStamp();
 
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), editor);

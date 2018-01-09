@@ -38,7 +38,7 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.DataPackBase;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import git4idea.GitUtil;
 import git4idea.rebase.GitCommitEditingAction;

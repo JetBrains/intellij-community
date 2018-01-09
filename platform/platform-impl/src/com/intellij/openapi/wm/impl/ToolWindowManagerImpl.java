@@ -436,7 +436,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   }
 
   private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
-    List<ToolWindowEP> beans = Arrays.asList(Extensions.getExtensions(ToolWindowEP.EP_NAME));
+    ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (ToolWindowEP bean : beans) {
       Condition<Project> condition = bean.getCondition();
       if (condition == null || condition.value(myProject)) {
@@ -1609,12 +1609,17 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     myLayout.setSplitMode(id, isSplit);
 
     boolean wasActive = info.isActive();
-    if (wasActive) {
-      deactivateToolWindowImpl(id, true, commandList);
+    boolean wasVisible = info.isVisible();
+    // We should hide the window and show it in a 'new place' to automatically hide possible window that is already located in a 'new place'
+    if (wasActive || wasVisible) {
+      hideToolWindow(id, false);
     }
     final WindowInfoImpl[] infos = myLayout.getInfos();
     for (WindowInfoImpl info1 : infos) {
       appendApplyWindowInfoCmd(info1, commandList);
+    }
+    if (wasVisible || wasActive) {
+      showToolWindowImpl(id, true, commandList);
     }
     if (wasActive) {
       activateToolWindowImpl(id, commandList, true, true);

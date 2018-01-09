@@ -31,7 +31,7 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       if (quickfixClass != null && startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
-            .runWriteActionWithProgressInDispatchThread(presentationText, project, null, null, fixesTask::doRun);
+            .runWriteActionWithCancellableProgressInDispatchThread(presentationText, project, null, fixesTask::doRun);
       }
       else {
         final SequentialModalProgressTask progressTask =

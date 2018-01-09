@@ -11,7 +11,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsUserUtil;

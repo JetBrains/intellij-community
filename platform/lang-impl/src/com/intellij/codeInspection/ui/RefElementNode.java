@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInspection.ui;
 
@@ -26,7 +28,6 @@ public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
   public RefElementNode(@Nullable RefEntity userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject, presentation);
-    init(presentation.getContext().getProject());
     final RefEntity refEntity = getElement();
     myIcon = refEntity == null ? null : refEntity.getIcon(false);
   }

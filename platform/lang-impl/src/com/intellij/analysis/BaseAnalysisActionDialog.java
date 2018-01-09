@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
@@ -44,7 +45,9 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final JCheckBox myInspectTestSource = new JCheckBox();
   private final List<ModelScopeItemView> myViewItems;
 
-  // backward compatibility
+  /**
+   * @deprecated Use {@link BaseAnalysisActionDialog#BaseAnalysisActionDialog(String, String, Project, List, AnalysisUIOptions, boolean, boolean)} instead.
+   */
   @Deprecated
   public BaseAnalysisActionDialog(@NotNull String title,
                                    @NotNull String analysisNoon,
@@ -57,7 +60,9 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     this(title, analysisNoon, project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, rememberScope, analysisUIOptions, context);
   }
 
-  // backward compatibility
+  /**
+   * @deprecated Use {@link BaseAnalysisActionDialog#BaseAnalysisActionDialog(String, String, Project, List, AnalysisUIOptions, boolean, boolean)} instead.
+   */
   @Deprecated
   public BaseAnalysisActionDialog(@NotNull String title,
                                   @NotNull String analysisNoon,
@@ -218,9 +223,37 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     return super.getPreferredFocusedComponent();
   }
 
+  /**
+   * @deprecated Use {@link BaseAnalysisActionDialog#getScope(AnalysisScope)} instead.
+   */
   @Deprecated
   public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
     return getScope(defaultScope);
+  }
+
+  public boolean isProjectScopeSelected() {
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.PROJECT)
+      .findFirst().map(x -> x.button.isSelected()).orElse(false);
+  }
+
+  public boolean isModuleScopeSelected() {
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.MODULE)
+      .findFirst().map(x -> x.button.isSelected()).orElse(false);
+  }
+
+  public boolean isUncommittedFilesSelected(){
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.UNCOMMITTED_FILES)
+      .findFirst().map(x -> x.button.isSelected()).orElse(false);
+  }
+
+  @Nullable
+  public SearchScope getCustomScope(){
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.CUSTOM && x.button.isSelected())
+      .findFirst().map(x -> x.model.getScope().toSearchScope()).orElse(null);
   }
 
   public boolean isInspectTestSources() {

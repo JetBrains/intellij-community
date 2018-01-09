@@ -31,7 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import git4idea.GitBranch;

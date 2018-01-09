@@ -1222,37 +1222,30 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void tearDown() throws Exception {
-    try {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        try {
-          DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
-          closeOpenFiles();
-          DaemonCodeAnalyzerImpl daemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
-          daemonCodeAnalyzer.cleanupAfterTest();
-          // clear order entry roots cache
-          WriteAction.run(()->ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+    new RunAll()
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> {
+        DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true); // return default value to avoid unnecessary save
+        closeOpenFiles();
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).cleanupAfterTest();
+        // clear order entry roots cache
+        WriteAction.run(()->ProjectRootManagerEx.getInstanceEx(getProject()).makeRootsChange(EmptyRunnable.getInstance(), false, true));
+      }))
+      .append(() -> {
+        myEditor = null;
+        myFile = null;
+        myPsiManager = null;
+        myChooseByNamePopup = null;
+      })
+      // don't use method references here to make stack trace reading easier 
+      .append(() -> disposeRootDisposable()) 
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown())) 
+      .append(() -> EdtTestUtil.runInEdtAndWait(() -> myTempDirFixture.tearDown()))
+      .append(() -> super.tearDown())
+      .append(() -> {
+        if (myVirtualFilePointerTracker != null) {
+          myVirtualFilePointerTracker.assertPointersAreDisposed();
         }
-        finally {
-          myEditor = null;
-          myFile = null;
-          myPsiManager = null;
-          myChooseByNamePopup = null;
-
-          try {
-            myProjectFixture.tearDown();
-          }
-          finally {
-            myTempDirFixture.tearDown();
-          }
-        }
-      });
-    }
-    finally {
-      super.tearDown();
-      if (myVirtualFilePointerTracker != null) {
-        myVirtualFilePointerTracker.assertPointersAreDisposed();
-      }
-    }
+      }).run();
   }
 
   private void closeOpenFiles() {

@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -261,7 +262,7 @@ public class JavaDocUtil {
       shortName = "null";
     }
     PsiClass containingClass = aClass.getContainingClass();
-    while (containingClass != null && containingClass.isPhysical()) {
+    while (containingClass != null && containingClass.isPhysical() && !PsiUtil.isLocalOrAnonymousClass(containingClass)) {
       shortName = containingClass.getName() + "." + shortName;
       containingClass = containingClass.getContainingClass();
     }

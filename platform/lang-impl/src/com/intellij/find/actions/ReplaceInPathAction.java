@@ -33,7 +33,7 @@ public class ReplaceInPathAction extends AnAction {
       return;
     }
 
-    replaceManager.replaceInProject(dataContext);
+    replaceManager.replaceInProject(dataContext, null);
   }
 
   @Override

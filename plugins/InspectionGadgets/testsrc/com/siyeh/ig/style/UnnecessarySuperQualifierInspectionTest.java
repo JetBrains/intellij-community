@@ -27,6 +27,13 @@ public class UnnecessarySuperQualifierInspectionTest extends LightInspectionTest
   public void testUnnecessarySuperQualifier() {
     doTest();
   }
+  
+  public void testIgnoreClarificationSuperQualifier() {
+    UnnecessarySuperQualifierInspection inspection = (UnnecessarySuperQualifierInspection)getInspection();
+    inspection.ignoreClarification = true;
+    myFixture.enableInspections(inspection);
+    doTest();
+  }
 
   @Nullable
   @Override

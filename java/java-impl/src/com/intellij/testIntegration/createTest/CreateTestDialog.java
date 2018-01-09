@@ -16,6 +16,7 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.CommonBundle;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.icons.AllIcons;
@@ -47,6 +48,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.ui.MemberSelectionTable;
@@ -119,7 +121,10 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   protected String suggestTestClassName(PsiClass targetClass) {
-    return targetClass.getName() + "Test";
+    JavaCodeStyleSettings customSettings = CodeStyle.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
+    String prefix = customSettings.TEST_NAME_PREFIX;
+    String suffix = customSettings.TEST_NAME_SUFFIX;
+    return prefix + targetClass.getName() + suffix;
   }
 
   private boolean isSuperclassSelectedManually() {

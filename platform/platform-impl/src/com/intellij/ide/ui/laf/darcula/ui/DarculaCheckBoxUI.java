@@ -113,7 +113,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                              w/2, h, getFocusedBackgroundColor2(armed, selected || overrideBg)));
           g.fillRoundRect(0, 0, w, h, R, R);
 
-          DarculaUIUtil.paintFocusRing(g, new Rectangle(offset, offset, w - offset * 2, h - offset * 2));
+          float bw = DarculaUIUtil.bw();
+          g.translate(-bw, -bw);
+          DarculaUIUtil.paintFocusBorder(g, (int)(iconRect.width - bw), (int)(iconRect.height - bw), DarculaUIUtil.arc(), true);
+          g.translate(bw, bw);
         } else {
           if (c.isEnabled() || !UIUtil.isUnderDarcula()) {
             g.setPaint(UIUtil.getGradientPaint(w / 2, offset, getBackgroundColor1(enabled, selected || overrideBg),

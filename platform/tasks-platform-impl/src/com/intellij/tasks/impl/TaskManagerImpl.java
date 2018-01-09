@@ -49,9 +49,9 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -968,7 +968,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public static class Config {
 
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "task")
+    @XCollection(elementName = "task")
     public List<LocalTaskImpl> tasks = new ArrayList<>();
 
     public int localTasksCounter = 1;

@@ -19,7 +19,7 @@ internal open class CollectionStoredProperty<E, C : MutableCollection<E>>(protec
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: C) {
     if (doSetValue(value, newValue)) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
     }
   }
 
@@ -56,7 +56,7 @@ internal class MapStoredProperty<K: Any, V>(private val value: MutableMap<K, V>)
 
   override fun setValue(thisRef: BaseState, property: KProperty<*>, @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE") newValue: MutableMap<K, V>) {
     if (doSetValue(value, newValue)) {
-      thisRef.ownModificationCount++
+      thisRef.intIncrementModificationCount()
     }
   }
 
