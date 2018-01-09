@@ -1448,6 +1448,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
+    return ContainerUtil.filter(getAncestorTypesWithMetaClassInstances(context), type -> type == null || type.isDefinition());
+  }
+
+  @Override
+  @NotNull
+  public List<PyClassLikeType> getAncestorTypesWithMetaClassInstances(@NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(this, context, contextArgument -> {
       List<PyClassLikeType> ancestorTypes;
       if (isNewStyleClass(contextArgument)) {

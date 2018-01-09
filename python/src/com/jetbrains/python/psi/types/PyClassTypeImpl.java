@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -387,7 +386,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (!inherited) {
       return as(myClass.getMetaClassType(context), PyClassLikeType.class);
     }
-    final List<PyClassLikeType> metaClassTypes = getAllExplicitMetaClassTypes(context);
+    final List<PyClassLikeType> metaClassTypes = getAllPossibleMetaClassTypes(context);
     final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
     return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(myClass).getObjectType("type");
   }
@@ -430,17 +429,23 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private static final class NotDerivedClassTypeException extends RuntimeException {
   }
 
-  private List<PyClassLikeType> getAllExplicitMetaClassTypes(@NotNull TypeEvalContext context) {
+  @NotNull
+  private List<PyClassLikeType> getAllPossibleMetaClassTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> results = Lists.newArrayList();
     final PyClassLikeType ownMeta = getMetaClassType(context, false);
     if (ownMeta != null) {
       results.add(ownMeta);
     }
-    for (PyClassLikeType ancestor : myClass.getAncestorTypes(context)) {
+    for (PyClassLikeType ancestor : myClass.getAncestorTypesWithMetaClassInstances(context)) {
       if (ancestor != null) {
-        final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
-        if (ancestorMeta != null) {
-          results.add(ancestorMeta);
+        if (!ancestor.isDefinition()) {
+          results.add(ancestor.toClass());
+        }
+        else {
+          final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
+          if (ancestorMeta != null) {
+            results.add(ancestorMeta);
+          }
         }
       }
     }
