@@ -29,6 +29,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -421,14 +422,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
 
         val listElement = Element("list")
-        element.addContent(listElement)
-
         for (settings in idToSettings.values) {
           if (settings.type is UnknownConfigurationType) {
             continue
           }
 
           listElement.addContent(Element("item").setAttribute("itemvalue", settings.uniqueID))
+        }
+
+        if (!listElement.isEmpty()) {
+          element.addContent(listElement)
         }
       }
 
