@@ -90,6 +90,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -98,10 +99,7 @@ import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -110,6 +108,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
@@ -1470,6 +1469,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   int getChangedFileCount() {
     return myChangedFilesCollector.myVfsEventsMerger.getApproximateChangesCount() + myChangedFilesCollector.myFilesToUpdate.size();
+  }
+
+  String dumpSomeChangedFiles() {
+    Stream<VirtualFile> events = myChangedFilesCollector.myVfsEventsMerger.getChangedFiles();
+    Stream<VirtualFile> files = myChangedFilesCollector.myFilesToUpdate.values().stream();
+    return StreamEx.of(events).append(files).limit(20).map(VirtualFile::getPath).joining(", ");
   }
 
   @NotNull
