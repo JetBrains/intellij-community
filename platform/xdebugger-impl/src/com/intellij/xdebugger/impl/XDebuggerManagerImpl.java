@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl;
 
@@ -29,8 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.*;
@@ -44,6 +42,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -219,7 +218,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     return session;
   }
 
-  public void removeSession(@NotNull final XDebugSessionImpl session) {
+  void removeSession(@NotNull final XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
     mySessions.remove(session.getDebugProcess().getProcessHandler());
     if (sessionTab != null &&
@@ -276,17 +275,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @NotNull
   @Override
   public <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
-    List<T> list = null;
-    for (XDebugSessionImpl session : mySessions.values()) {
-      final XDebugProcess process = session.getDebugProcess();
-      if (processClass.isInstance(process)) {
-        if (list == null) {
-          list = new SmartList<>();
-        }
-        list.add(processClass.cast(process));
-      }
-    }
-    return ContainerUtil.notNullize(list);
+    return StreamEx.of(mySessions.values()).map(XDebugSessionImpl::getDebugProcess).select(processClass).toList();
   }
 
   @Override
