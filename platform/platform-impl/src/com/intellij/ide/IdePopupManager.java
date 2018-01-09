@@ -47,6 +47,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     return myDispatchStack.size() > 0;
   }
 
+  @Override
   public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
