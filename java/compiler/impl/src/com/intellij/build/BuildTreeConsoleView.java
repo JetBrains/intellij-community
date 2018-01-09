@@ -23,7 +23,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
-import com.intellij.notification.Notification;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -46,7 +45,9 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -71,8 +72,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
@@ -614,11 +613,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
   }
 
   private static class DetailsHandler {
-    private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");
-    private static final Pattern A_PATTERN = Pattern.compile("<a ([^>]* )?href=[\"\']([^>]*)[\"\'][^>]*>");
-    private static final String A_CLOSING = "</a>";
-    private static final Set<String> NEW_LINES = ContainerUtil.set("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>", "<pre>", "</pre>");
-
     private final ThreeComponentsSplitter mySplitter;
     @Nullable
     private ExecutionNode myExecutionNode;
@@ -664,12 +658,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       boolean hasChanged = false;
       for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
         Failure failure = iterator.next();
-        String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
-        if (text == null && failure.getError() != null) {
-          text = failure.getError().getMessage();
-        }
-        if (text == null) continue;
-        printDetails(failure, text);
+        if (!printFailure(failure)) continue;
         hasChanged = true;
         if (iterator.hasNext()) {
           myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
@@ -689,44 +678,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    public void printDetails(Failure failure, String text) {
-      String content = StringUtil.convertLineSeparators(text);
-      while (true) {
-        Matcher tagMatcher = TAG_PATTERN.matcher(content);
-        if (!tagMatcher.find()) {
-          myConsole.print(content, ConsoleViewContentType.ERROR_OUTPUT);
-          break;
-        }
-        String tagStart = tagMatcher.group();
-        myConsole.print(content.substring(0, tagMatcher.start()), ConsoleViewContentType.ERROR_OUTPUT);
-        Matcher aMatcher = A_PATTERN.matcher(tagStart);
-        if (aMatcher.matches()) {
-          final String href = aMatcher.group(2);
-          int linkEnd = content.indexOf(A_CLOSING, tagMatcher.end());
-          if (linkEnd > 0) {
-            String linkText = content.substring(tagMatcher.end(), linkEnd).replaceAll(TAG_PATTERN.pattern(), "");
-            myConsole.printHyperlink(linkText, new HyperlinkInfo() {
-              @Override
-              public void navigate(Project project) {
-                Notification notification = failure.getNotification();
-                if (notification != null && notification.getListener() != null) {
-                  notification.getListener().hyperlinkUpdate(
-                    notification, IJSwingUtilities.createHyperlinkEvent(href, myConsole.getComponent()));
-                }
-              }
-            });
-            content = content.substring(linkEnd + A_CLOSING.length());
-            continue;
-          }
-        }
-        if (NEW_LINES.contains(tagStart)) {
-          myConsole.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-        }
-        else {
-          myConsole.print(content.substring(tagMatcher.start(), tagMatcher.end()), ConsoleViewContentType.ERROR_OUTPUT);
-        }
-        content = content.substring(tagMatcher.end());
-      }
+    private boolean printFailure(Failure failure) {
+      return BuildConsoleUtils.printFailure(myConsole, failure);
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {
