@@ -8,6 +8,8 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
 import com.jetbrains.extensions.python.afterDefInMethod
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
+import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
@@ -38,7 +40,7 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
             if (name != null && annotationValue != null) {
               val type = typeEvalContext.getType(element)
 
-              if (type is PyClassType && type.classQName == "dataclasses.InitVar") {
+              if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
                 val typeHint = annotationValue.indexExpression.let { if (it == null) "" else ": ${it.text}" }
                 postInitParameters.add(name + typeHint)
               }
@@ -48,7 +50,7 @@ class PyDataclassPostInitCompletionContributor : CompletionContributor() {
           true
         }
 
-        addMethodToResult(result, cls, typeEvalContext, "__post_init__", postInitParameters.joinToString(prefix = "(", postfix = ")"))
+        addMethodToResult(result, cls, typeEvalContext, DUNDER_POST_INIT, postInitParameters.joinToString(prefix = "(", postfix = ")"))
       }
     }
   }

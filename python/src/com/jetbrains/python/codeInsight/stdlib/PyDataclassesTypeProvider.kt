@@ -17,7 +17,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
   }
 
   override fun getParameterType(param: PyNamedParameter, func: PyFunction, context: TypeEvalContext): Ref<PyType>? {
-    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null && func.name == "__post_init__") {
+    if (!param.isPositionalContainer && !param.isKeywordContainer && param.annotationValue == null && func.name == DUNDER_POST_INIT) {
       val cls = func.containingClass
 
       if (cls != null && parseDataclassParameters(cls, context)?.init == true) {
@@ -78,7 +78,7 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
 
   private fun getTypeForParameter(element: PyTargetExpression, context: TypeEvalContext): PyType? {
     val type = context.getType(element)
-    if (type is PyCollectionType && type is PyClassType && type.classQName == "dataclasses.InitVar") {
+    if (type is PyCollectionType && type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
       return type.elementTypes.firstOrNull()
     }
     return type
