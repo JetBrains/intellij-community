@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -471,7 +472,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
-
+    if (project != null && !project.isDisposed()) {
+      AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+    }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
       .append(this::disposeRootDisposable)
       .append(() -> {
