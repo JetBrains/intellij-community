@@ -54,7 +54,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.*;
 public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
-  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".1";
+  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".2";
 
   @NotNull
   private final Project myProject;
