@@ -168,7 +168,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
     try {
       files = index.getFilesToUpdate(project);
       if (files.size() < ourMinFilesToStartDumMode &&
-          files.stream().mapToLong(VirtualFile::getLength).sum() < ourMinFilesSizeToStartDumMode) {
+          files.stream().filter(VirtualFile::isValid).mapToLong(VirtualFile::getLength).sum() < ourMinFilesSizeToStartDumMode) {
         return null;
       }
     }
