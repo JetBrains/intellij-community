@@ -59,7 +59,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       assert pair.first.hashCode() == myIdentikit.hashCode();
       myIdentikit = pair.first;
       setRange(pair.second.getTextRange());
-    } else {
+    }
+    else {
       setRange(element.getTextRange());
     }
   }
@@ -68,7 +69,8 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (range != null) {
       myStartOffset = range.getStartOffset();
       myEndOffset = range.getEndOffset();
-    } else {
+    }
+    else {
       myStartOffset = -1;
       myEndOffset = -1;
     }
@@ -110,6 +112,10 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   @Override
   TextRange getPsiRange() {
     return calcPsiRange();
+  }
+
+  boolean isForInjected() {
+    return myForInjected;
   }
 
   @Nullable
