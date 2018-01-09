@@ -179,7 +179,8 @@ public class ChangeListWorker {
   }
 
   @NotNull
-  private ListData getMainList(@NotNull PartialChangeTracker oldTracker) {
+  private ListData getMainList(@Nullable PartialChangeTracker oldTracker) {
+    if (oldTracker == null) return myDefault;
     List<String> changelistIds = oldTracker.getAffectedChangeListsIds();
     if (changelistIds.size() == 1) {
       ListData list = getDataByIdVerify(changelistIds.get(0));
