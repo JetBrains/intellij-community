@@ -217,7 +217,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
 
     @Override
     public String toString() {
-      return "{" + myFirst + (myOrdered ? "<" : "!=") + mySecond + "}";
+      return "{" + getFirst() + (myOrdered ? "<" : "!=") + getSecond() + "}";
     }
   }
 }
