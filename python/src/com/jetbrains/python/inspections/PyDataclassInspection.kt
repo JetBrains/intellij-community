@@ -53,7 +53,13 @@ class PyDataclassInspection : PyInspection() {
             }
           }
 
-          val hasPostInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext) != null
+          val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
+
+          if (postInit != null && !dataclassParameters.init) {
+            registerProblem(postInit.nameIdentifier,
+                            "'${DUNDER_POST_INIT}' would not be called until 'init' parameter is set to True",
+                            ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+          }
 
           node.processClassLevelDeclarations { element, _ ->
             if (element is PyTargetExpression && element.annotationValue != null) {
@@ -74,7 +80,7 @@ class PyDataclassInspection : PyInspection() {
                                     ProblemHighlightType.GENERIC_ERROR)
                   }
                 }
-                else if (!hasPostInit) {
+                else if (postInit == null) {
                   val type = myTypeEvalContext.getType(element)
                   if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
                     registerProblem(element,
