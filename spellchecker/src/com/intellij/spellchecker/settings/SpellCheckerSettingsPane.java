@@ -2,15 +2,18 @@
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
@@ -19,6 +22,7 @@ import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.OptionalChooserComponent;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +31,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
+import static com.intellij.openapi.extensions.PluginId.getId;
 import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
@@ -39,6 +45,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel panelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
   private JSpinner myMaxCorrectionsSpinner;
+  private JBLabel myAddDictionaryLabel;
   private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
   private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
@@ -62,6 +69,7 @@ public class SpellCheckerSettingsPane implements Disposable {
         }
       }
     });
+    myAddDictionaryLabel.setText(SpellCheckerBundle.message("add.dictionary.description") + getHunspellDescription());
     myMaxCorrectionsSpinner.setModel(new SpinnerNumberModel(1, MIN_CORRECTIONS, MAX_CORRECTIONS, 1));
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
@@ -107,6 +115,17 @@ public class SpellCheckerSettingsPane implements Disposable {
     panelForAcceptedWords.setLayout(new BorderLayout());
     panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
 
+  }
+
+  private static String getHunspellDescription() {
+    final PluginId hunspellId = getId("hunspell");
+    final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(hunspellId);
+    if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
+      return ", " + SpellCheckerBundle.message("hunspell.description");
+    }
+    else {
+      return "";
+    }
   }
 
   public JComponent getPane() {
