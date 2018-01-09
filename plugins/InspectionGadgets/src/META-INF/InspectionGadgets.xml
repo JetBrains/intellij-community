@@ -625,9 +625,6 @@
                      key="constant.conditional.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ConstantConditionalExpressionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantIfStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="constant.if.statement.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.ConstantIfStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ContinueStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="continue.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.ContinueStatementInspection"/>
