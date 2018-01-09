@@ -19,6 +19,8 @@ import org.jetbrains.uast.*
 
 fun literalExpression() = ULiteralExpressionPattern()
 
+fun stringLiteralExpression() = literalExpression().filter(ULiteralExpression::isStringLiteral)
+
 fun callExpression() = UCallExpressionPattern()
 
 fun <T : UElement> capture(clazz: Class<T>) = UElementPattern.Capture(clazz)
