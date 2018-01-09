@@ -80,6 +80,10 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     checkAnnotations(TestConflict.class);
   }
 
+  public void testHashCollision() {
+    checkAnnotations(TestHashCollision.class);
+  }
+
   public void testConverter() {
     checkCompoundIds(Test01.class);
     checkCompoundIds(TestConverterData.class);

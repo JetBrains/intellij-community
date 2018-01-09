@@ -59,6 +59,9 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
 
   private static final VirtualFileGist<Map<HMethod, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new EquationsExternalizer(), new ClassDataIndexer());
+  // Hash collision is possible: resolve it just flushing all the equations for colliding methods (unless equations are the same)
+  static final BinaryOperator<Equations> MERGER =
+    (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
   @NotNull
   @Override
@@ -176,10 +179,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
 
     @Override
     public Map<HMethod, Equations> read(@NotNull DataInput in) throws IOException {
-      // Hash collision is possible: resolve it just flushing all the equations for colliding methods (unless equations are the same)
-      BinaryOperator<Equations> merger = (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
       return StreamEx.of(DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in)))).
-        toMap(p -> p.getFirst(), p -> p.getSecond(), merger);
+        toMap(p -> p.getFirst(), p -> p.getSecond(), MERGER);
     }
 
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {
