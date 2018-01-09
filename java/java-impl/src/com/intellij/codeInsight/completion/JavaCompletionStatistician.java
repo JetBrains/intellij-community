@@ -84,7 +84,10 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     PsiType expectedType = firstInfo != null ? firstInfo.getDefaultType() : null;
-    String context = JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) ? JavaStatisticsManager.getAfterNewKey(expectedType) : "";
+    String context =
+      JavaClassNameCompletionContributor.AFTER_NEW.accepts(position) ? JavaStatisticsManager.getAfterNewKey(expectedType) :
+      PreferByKindWeigher.isExceptionPosition(position) ? "exception" :
+      "";
     return new StatisticsInfo(context, JavaStatisticsManager.getMemberUseKey2(psiClass));
   }
 
