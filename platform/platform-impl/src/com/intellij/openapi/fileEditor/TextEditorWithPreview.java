@@ -292,11 +292,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
   }
 
   public class SplitEditorToolbar extends JPanel implements Disposable {
-    private static final String LEFT_TOOLBAR_GROUP_ID = "Markdown.Toolbar.Left";
-    private static final String RIGHT_TOOLBAR_GROUP_ID = "Markdown.Toolbar.Right";
-
-    //private final MySpacingPanel mySpacingPanel;
-
     private final ActionToolbar myRightToolbar;
 
     private final List<EditorGutterComponentEx> myGutters = new ArrayList<>();
@@ -360,15 +355,6 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
           leftMostGutter = gutter;
         }
       }
-
-      final int spacing;
-      if (leftMostGutter == null) {
-        spacing = 0;
-      }
-      else {
-        spacing = leftMostGutter.getWhitespaceSeparatorOffset();
-      }
-      //mySpacingPanel.setSpacing(spacing);
 
       revalidate();
       repaint();
