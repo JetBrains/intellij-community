@@ -66,7 +66,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
     SearchScope scope;
     SearchScope useScope;
-    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, parameters.getScope(), project);
+    CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
     if (info == null) {
       scope = parameters.getScope();
       useScope = ReadAction.compute(baseClass::getUseScope);
@@ -273,9 +273,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
 
   @Nullable
   private static CompilerDirectHierarchyInfo performSearchUsingCompilerIndices(@NotNull DirectClassInheritorsSearch.SearchParameters parameters,
-                                                                               @NotNull SearchScope useScope,
                                                                                @NotNull Project project) {
-    if (!(useScope instanceof GlobalSearchScope)) return null;
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
 
