@@ -226,11 +226,7 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   }
 
   public void testLocalClassInsideAnonymous() throws Exception {
-    PsiClass testClass = getTestClass();
-    PsiExpression initializer = testClass.getFields()[0].getInitializer();
-    assertInstanceOf(initializer, PsiNewExpression.class);
-    PsiClass localClass = ((PsiNewExpression)initializer).getAnonymousClass().getInnerClasses()[0];
-    verifyJavaDoc(localClass);
+    doTestAtCaret();
   }
 
   private void doTestClass() throws Exception {
