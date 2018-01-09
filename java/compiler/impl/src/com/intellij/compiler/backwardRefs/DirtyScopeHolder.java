@@ -108,7 +108,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  void compilerActivityStarted() {
+  public void compilerActivityStarted() {
     final ExcludeEntryDescription[] excludeEntryDescriptions =
       CompilerConfiguration.getInstance(myService.getProject()).getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     synchronized (myLock) {
@@ -119,7 +119,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  void upToDateChecked(boolean isUpToDate) {
+  public void upToDateChecked(boolean isUpToDate) {
     final Module[] modules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -135,7 +135,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     });
   }
 
-  void compilerActivityFinished() {
+  public void compilerActivityFinished() {
     final List<Module> compiledModules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {
@@ -164,7 +164,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     myExcludedFilesScope = ExcludedFromCompileFilesUtil.getExcludedFilesScope(descriptions, myService.getFileTypes(), myService.getProject(), myService.getFileIndex());
   }
 
-  GlobalSearchScope getDirtyScope() {
+  public GlobalSearchScope getDirtyScope() {
     final Project project = myService.getProject();
     return ReadAction.compute(() -> {
       synchronized (myLock) {
@@ -190,7 +190,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   @NotNull
-  Set<Module> getAllDirtyModules() {
+  public Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules = new THashSet<>(myVFSChangedModules);
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
@@ -209,11 +209,11 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     return dirtyModules;
   }
 
-  boolean contains(VirtualFile file) {
+  public boolean contains(VirtualFile file) {
     return getDirtyScope().contains(file);
   }
 
-  void installVFSListener() {
+  public void installVFSListener() {
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {

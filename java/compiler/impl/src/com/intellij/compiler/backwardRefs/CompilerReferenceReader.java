@@ -16,9 +16,6 @@ import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndexUtil;
 import java.io.File;
 import java.util.Map;
 
-/**
- * Created by sugakandrey.
- */
 public abstract class CompilerReferenceReader<Index extends CompilerReferenceIndex<?>> {
   protected final Index myIndex;
   protected final File myBuildDir;
@@ -29,11 +26,11 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
   }
 
   @NotNull
-  NameEnumerator getNameEnumerator() {
+  public NameEnumerator getNameEnumerator() {
     return myIndex.getByteSeqEum();
   }
 
-  void close(boolean removeIndex) {
+  public void close(boolean removeIndex) {
     myIndex.close();
     if (removeIndex) {
       CompilerReferenceIndexUtil.removeIndexFiles(myBuildDir, myIndex.getDescriptor());
@@ -45,25 +42,25 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
   }
 
   @Nullable
-  abstract TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
+  public abstract TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
 
   @Nullable
-  abstract Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull LightRef searchElement,
-                                                            @NotNull GlobalSearchScope searchScope,
-                                                            @NotNull GlobalSearchScope dirtyScope,
-                                                            @NotNull FileType fileType,
-                                                            @NotNull CompilerHierarchySearchType searchType) throws StorageException;
+  public abstract Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull LightRef searchElement,
+                                                                   @NotNull GlobalSearchScope searchScope,
+                                                                   @NotNull GlobalSearchScope dirtyScope,
+                                                                   @NotNull FileType fileType,
+                                                                   @NotNull CompilerHierarchySearchType searchType) throws StorageException;
 
 
   @Nullable
-  abstract Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions);
+  public abstract Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions);
 
-  abstract int getOccurrenceCount(@NotNull LightRef element);
+  public abstract int getOccurrenceCount(@NotNull LightRef element);
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  abstract LightRef.LightClassHierarchyElementDef[] getHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement,
-                                                                 boolean checkBaseClassAmbiguity,
-                                                                 boolean includeAnonymous,
-                                                                 int interruptNumber);
+  public abstract LightRef.LightClassHierarchyElementDef[] getHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement,
+                                                                        boolean checkBaseClassAmbiguity,
+                                                                        boolean includeAnonymous,
+                                                                        int interruptNumber);
 }
 

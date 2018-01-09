@@ -3,9 +3,6 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.openapi.project.Project;
 
-/**
- * Created by sugakandrey.
- */
 public interface CompilerReferenceReaderFactory<Reader extends CompilerReferenceReader<?>> {
   Reader create(Project project);
 }

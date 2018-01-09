@@ -18,6 +18,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexDescriptor;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
@@ -30,9 +31,6 @@ import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
-/**
- * Created by sugakandrey.
- */
 public class BackwardReferenceIndexReaderFactory implements CompilerReferenceReaderFactory<BackwardReferenceIndexReaderFactory.BackwardReferenceReader> {
   public static final BackwardReferenceIndexReaderFactory INSTANCE = new BackwardReferenceIndexReaderFactory();
   
@@ -42,7 +40,7 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
   @Nullable
   public BackwardReferenceReader create(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    if (!CompilerReferenceIndexUtil.existsUpToDate(buildDir, CompilerIndices.INSTANCE)) return null;
+    if (!CompilerReferenceIndexUtil.existsUpToDate(buildDir, BackwardReferenceIndexDescriptor.INSTANCE)) return null;
     try {
       return new BackwardReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
     }
@@ -59,7 +57,7 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
 
     @Override
     @Nullable
-    TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
+    public TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
       LightRef.NamedLightRef[] hierarchy;
       if (ref instanceof LightRef.LightClassHierarchyElementDef) {
         hierarchy = new LightRef.NamedLightRef[]{(LightRef.NamedLightRef)ref};
@@ -85,11 +83,11 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
      */
     @Override
     @NotNull
-    Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull LightRef searchElement,
-                                                     @NotNull GlobalSearchScope searchScope,
-                                                     @NotNull GlobalSearchScope dirtyScope,
-                                                     @NotNull FileType fileType,
-                                                     @NotNull CompilerHierarchySearchType searchType) throws StorageException {
+    public Map<VirtualFile, SearchId[]> getDirectInheritors(@NotNull LightRef searchElement,
+                                                            @NotNull GlobalSearchScope searchScope,
+                                                            @NotNull GlobalSearchScope dirtyScope,
+                                                            @NotNull FileType fileType,
+                                                            @NotNull CompilerHierarchySearchType searchType) throws StorageException {
       GlobalSearchScope effectiveSearchScope = GlobalSearchScope.notScope(dirtyScope).intersectWith(searchScope);
       LanguageLightRefAdapter adapter = LanguageLightRefAdapter.findAdapter(fileType);
       LOG.assertTrue(adapter != null, "adapter is null for file type: " + fileType);
@@ -110,7 +108,7 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
 
     @Override
     @Nullable
-    Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) {
+    public Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) {
       try {
         if (checkDefinitions && getDefinitionCount(classDef) != DefCount.ONE) {
           return null;
@@ -131,7 +129,7 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
     }
 
     @Override
-    int getOccurrenceCount(@NotNull LightRef element) {
+    public int getOccurrenceCount(@NotNull LightRef element) {
       try {
         int[] result = new int[]{0};
         myIndex.get(CompilerIndices.BACK_USAGES).getData(element).forEach(
@@ -214,10 +212,10 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
 
     @Override
     @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-    LightRef.LightClassHierarchyElementDef[] getHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement,
-                                                          boolean checkBaseClassAmbiguity,
-                                                          boolean includeAnonymous,
-                                                          int interruptNumber) {
+    public LightRef.LightClassHierarchyElementDef[] getHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement,
+                                                                 boolean checkBaseClassAmbiguity,
+                                                                 boolean includeAnonymous,
+                                                                 int interruptNumber) {
       try {
         Set<LightRef.LightClassHierarchyElementDef> result = new THashSet<>();
         Queue<LightRef.LightClassHierarchyElementDef> q = new Queue<>(10);
