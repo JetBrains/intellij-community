@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBSplitter;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,17 +107,13 @@ public class TextEditorWithPreview extends UserDataHolderBase implements FileEdi
         myToolbarWrapper.addGutterToTrack(((EditorGutterComponentEx)((TextEditor)myPreview).getEditor().getGutter()));
       }
 
-      final JPanel result = new JPanel(new BorderLayout());
-      result.add(myToolbarWrapper, BorderLayout.NORTH);
-      result.add(splitter, BorderLayout.CENTER);
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
         myLayout = Layout.fromName(lastUsed, Layout.SHOW_EDITOR_AND_PREVIEW);
       }
       adjustEditorsVisibility();
 
-      myComponent = result;
-
+      myComponent = JBUI.Panels.simplePanel(splitter).addToTop(myToolbarWrapper);
     }
     return myComponent;
   }
