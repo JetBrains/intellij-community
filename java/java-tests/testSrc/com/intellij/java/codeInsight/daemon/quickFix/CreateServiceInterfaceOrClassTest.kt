@@ -4,9 +4,11 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 
@@ -27,13 +29,25 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
                           "}", true)
   }
 
+  fun testSameModuleExistingPackageInterface() {
+    addFile("foo/bar/Anything.java", "package foo.bar; class Anything { }")
+
+    val moduleInfo = myFixture.configureByText("module-info.java", "module foo.bar { uses foo.bar.<caret>MyService; }") as PsiJavaFile
+    doAction("foo.bar.MyService", moduleInfo, isClass = false)
+
+    myFixture.checkResult("foo/bar/MyService.java",
+                          "package foo.bar;\n\n" +
+                          "public interface MyService {\n" +
+                          "}", true)
+  }
+
   fun testOtherModuleExistingPackage() {
-    val apiModuleInfo = moduleInfo("module foo.bar.other { exports foo.bar.other; }", OTHER)
+    val otherModuleInfo = moduleInfo("module foo.bar.other { exports foo.bar.other; }", OTHER)
       .let { PsiManager.getInstance(project).findFile(it) as PsiJavaFile }
     addFile("foo/bar/other/Anything.java", "package foo.bar.other; class Anything { }", OTHER)
 
     myFixture.configureByText("module-info.java", "module foo.bar { requires foo.bar.other; uses foo.bar.other.<caret>MyService; }")
-    doAction("foo.bar.other.MyService", apiModuleInfo)
+    doAction("foo.bar.other.MyService", otherModuleInfo, otherModuleInfo.containingDirectory)
 
     myFixture.checkResult("../${OTHER.rootName}/foo/bar/other/MyService.java",
                           "package foo.bar.other;\n\n" +
@@ -70,7 +84,11 @@ class CreateServiceInterfaceOrClassTest : LightJava9ModulesCodeInsightFixtureTes
 
   fun testExistingLibraryOuterClass() = doTestNoAction("module foo.bar { uses java.io.File.<caret>MyService; }")
 
-  private fun doAction(interfaceFQN: String, moduleInfo: PsiJavaFile) {
+  private fun doAction(interfaceFQN: String, moduleInfo: PsiJavaFile,
+                       rootDirectory: PsiDirectory? = null, isClass: Boolean = true) {
+    file.putUserData(CreateServiceClassFixBase.SERVICE_ROOT_DIR, rootDirectory ?: file.containingDirectory)
+    file.putUserData(CreateServiceClassFixBase.SERVICE_IS_CLASS, isClass)
+
     val action = myFixture.findSingleIntention("Create interface or class '$interfaceFQN'")
     myFixture.launchAction(action)
     myFixture.checkHighlighting(false, false, false) // no error

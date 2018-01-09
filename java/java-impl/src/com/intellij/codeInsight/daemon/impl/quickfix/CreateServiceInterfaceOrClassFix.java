@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -97,17 +98,22 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     if (psiPackage != null) {
       Map<Module, PsiDirectory[]> psiRootDirs = getModuleRootDirs(psiPackage);
       if (!psiRootDirs.isEmpty()) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
+          Boolean isClass = file.getUserData(SERVICE_IS_CLASS);
+          if (rootDir != null && isClass != null) {
+            WriteAction.run(() -> createClassInRoot(myInterfaceName, isClass, rootDir, null));
+          }
+          return;
+        }
         CreateServiceInterfaceDialog dialog = new CreateServiceInterfaceDialog(project, psiRootDirs);
         if (dialog.showAndGet()) {
-          PsiClass psiClass =
-            WriteAction.compute(() -> {
-              PsiDirectory rootDir = dialog.getRootDir();
-              if (rootDir != null) {
-                return createClassInRoot(dialog.getClassKind(), myInterfaceName, rootDir, null);
-              }
-              return null;
-            });
-          positionCursor(psiClass);
+          PsiDirectory rootDir = dialog.getRootDir();
+          boolean isClass = dialog.isClass();
+          if (rootDir != null) {
+            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, isClass, rootDir, null));
+            positionCursor(psiClass);
+          }
         }
       }
     }
@@ -203,9 +209,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       return (PsiDirectory)myRootDirCombo.getSelectedItem();
     }
 
-    @NotNull
-    public CreateClassKind getClassKind() {
-      return CreateClassKind.valueOf(myKindCombo.getSelectedName());
+    public boolean isClass() {
+      return CreateClassKind.CLASS.name().equals(myKindCombo.getSelectedName());
     }
   }
 }

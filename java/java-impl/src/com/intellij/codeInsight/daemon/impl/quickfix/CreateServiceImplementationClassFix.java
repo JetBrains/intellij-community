@@ -4,6 +4,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBRadioButton;
@@ -108,6 +110,14 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
         }
       }
 
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
+        Boolean isSubclass = file.getUserData(SERVICE_IS_SUBCLASS);
+        if (rootDir != null && isSubclass != null) {
+          WriteAction.run(() -> createClassInRoot(rootDir, isSubclass));
+        }
+        return;
+      }
       PsiDirectory[] psiRootDirs = getModuleRootDirs(module);
 
       CreateServiceImplementationDialog dialog = new CreateServiceImplementationDialog(project, psiRootDirs, mySuperClassName);
@@ -124,12 +134,13 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
 
   private PsiClass createClassInRoot(@NotNull PsiDirectory psiRootDir, boolean isSubclass) {
     Project project = psiRootDir.getProject();
-    PsiClass psiImplClass = createClassInRoot(CreateClassKind.CLASS, myImplementationClassName,
+    PsiClass psiImplClass = createClassInRoot(myImplementationClassName, true,
                                               psiRootDir, isSubclass ? mySuperClassName : null);
     if (psiImplClass != null && !isSubclass) {
       String text = "public static " + mySuperClassName + " provider() { return null;}";
       PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, psiImplClass.getLBrace());
-      psiImplClass.addAfter(method, psiImplClass.getLBrace());
+      method = (PsiMethod)psiImplClass.addAfter(method, psiImplClass.getLBrace());
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(method);
     }
     return psiImplClass;
   }

@@ -5,10 +5,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -26,7 +26,9 @@ import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
  * @author Pavel.Dolgov
  */
 public abstract class CreateServiceClassFixBase implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance(CreateServiceClassFixBase.class);
+  public static final Key<PsiDirectory> SERVICE_ROOT_DIR = Key.create("SERVICE_ROOT_DIR");
+  public static final Key<Boolean> SERVICE_IS_CLASS = Key.create("SERVICE_IS_CLASS");
+  public static final Key<Boolean> SERVICE_IS_SUBCLASS = Key.create("SERVICE_IS_SUBCLASS");
 
   @Override
   public boolean startInWriteAction() {
@@ -75,8 +77,8 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
   }
 
   @Nullable
-  protected static PsiClass createClassInRoot(@NotNull CreateClassKind classKind,
-                                              @NotNull String classFQN,
+  protected static PsiClass createClassInRoot(@NotNull String classFQN,
+                                              boolean isClass,
                                               @NotNull PsiDirectory rootDir,
                                               @Nullable String superClassName) {
     PsiDirectory directory = rootDir;
@@ -98,7 +100,7 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
       }
     }
 
-    PsiClass psiClass = createClass(classKind, lastName, directory);
+    PsiClass psiClass = createClass(lastName, isClass, directory);
     if (psiClass != null) {
       PsiUtil.setModifierProperty(psiClass, PsiModifier.PUBLIC, true);
       if (superClassName != null) {
@@ -109,16 +111,12 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
   }
 
   @Nullable
-  private static PsiClass createClass(@NotNull CreateClassKind classKind, String name, PsiDirectory directory) {
+  private static PsiClass createClass(String name, boolean isClass, PsiDirectory directory) {
     try {
-      switch (classKind) {
-        case CLASS:
-          return JavaDirectoryService.getInstance().createClass(directory, name);
-        case INTERFACE:
-          return JavaDirectoryService.getInstance().createInterface(directory, name);
-        default:
-          LOG.error("Unsupported kind of service class: " + classKind);
+      if (isClass) {
+        return JavaDirectoryService.getInstance().createClass(directory, name);
       }
+      return JavaDirectoryService.getInstance().createInterface(directory, name);
     }
     catch (final IncorrectOperationException e) {
       scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);

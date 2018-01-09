@@ -4,9 +4,11 @@
 package com.intellij.java.codeInsight.daemon.quickFix
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaFile
 import junit.framework.TestCase
 
@@ -81,6 +83,22 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
                           "}", true)
   }
 
+  fun testNestedNonexistentPackageProviderMethod() {
+    addFile("foo/bar/MyService.java", "package foo.bar; public class MyService { }")
+
+    doAction("module foo.bar { provides foo.bar.MyService with foo.bar.<caret>baz.boo.MyServiceImpl; }",
+             "foo.bar.baz.boo.MyServiceImpl", isSubclass = false)
+    myFixture.checkResult("foo/bar/baz/boo/MyServiceImpl.java",
+                          "package foo.bar.baz.boo;\n\n" +
+                          "import foo.bar.MyService;\n" +
+                          "\n" +
+                          "public class MyServiceImpl {\n" +
+                          "    public static MyService provider() {\n" +
+                          "        return null;\n" +
+                          "    }\n" +
+                          "}", true)
+  }
+
   fun testMultipleImplementations() {
     addFile("foo/bar/MyService.java", "package foo.bar; public class MyService { }")
     addFile("foo/bar/other/MyServiceOther.java", "package foo.bar.other; import foo.bar.MyService; public class MyServiceOther extends MyService { }")
@@ -152,8 +170,12 @@ class CreateServiceImplementationClassTest : LightJava9ModulesCodeInsightFixture
     TestCase.assertEquals(listOf<IntentionAction>(), filtered)
   }
 
-  private fun doAction(moduleInfoText: String, implementationFQN: String) {
+  private fun doAction(moduleInfoText: String, implementationFQN: String,
+                       rootDirectory: PsiDirectory? = null, isSubclass: Boolean = true) {
     val moduleInfo = myFixture.configureByText("module-info.java", moduleInfoText) as PsiJavaFile
+    moduleInfo.putUserData(CreateServiceClassFixBase.SERVICE_ROOT_DIR, rootDirectory ?: moduleInfo.containingDirectory)
+    moduleInfo.putUserData(CreateServiceClassFixBase.SERVICE_IS_SUBCLASS, isSubclass)
+
     val action = myFixture.findSingleIntention("Create class '$implementationFQN'")
     myFixture.launchAction(action)
     myFixture.checkHighlighting(false, false, false) // no error
