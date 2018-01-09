@@ -990,7 +990,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
-      myDistinctClasses.add(c1Index, c2Index, false);
+      myDistinctClasses.addUnordered(c1Index, c2Index);
     }
     myCachedHash = null;
 
@@ -1012,7 +1012,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
     if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
     myCachedHash = null;
-    return myDistinctClasses.add(c1Index, c2Index, true);
+    return myDistinctClasses.addOrdered(c1Index, c2Index);
   }
 
   /**
