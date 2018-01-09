@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
@@ -38,7 +38,6 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel myPanelForBundledDictionaries;
   private JPanel panelForAcceptedWords;
   private JPanel myPanelForCustomDictionaries;
-  private JPanel userDictionariesPanel;
   private JSpinner myMaxCorrectionsSpinner;
   private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
@@ -66,26 +65,6 @@ public class SpellCheckerSettingsPane implements Disposable {
     myMaxCorrectionsSpinner.setModel(new SpinnerNumberModel(1, MIN_CORRECTIONS, MAX_CORRECTIONS, 1));
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
-
-    if (!project.isDefault()) {
-      userDictionariesPanel.setVisible(true);
-      userDictionariesPanel.setLayout(new VerticalFlowLayout());
-      final HyperlinkLabel projectDictionaryLink = new HyperlinkLabel(SpellCheckerBundle.message("project.dictionary"));
-      projectDictionaryLink.addHyperlinkListener(e -> {
-        if (e.getEventType() == ACTIVATED) {
-          manager.openDictionaryInEditor(manager.getProjectDictionaryPath());
-        }
-      });
-      userDictionariesPanel.add(projectDictionaryLink);
-
-      final HyperlinkLabel appDictionaryLink = new HyperlinkLabel(SpellCheckerBundle.message("app.dictionary"));
-      appDictionaryLink.addHyperlinkListener(e -> {
-        if (e.getEventType() == ACTIVATED) {
-          manager.openDictionaryInEditor(manager.getAppDictionaryPath());
-        }
-      });
-      userDictionariesPanel.add(appDictionaryLink);
-    }
 
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
     fillBundledDictionaries();
