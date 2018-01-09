@@ -26,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.messages.MessageBus;
@@ -70,9 +69,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
+  public XDebuggerManagerImpl(final Project project, MessageBus messageBus) {
     myProject = project;
-    myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
+    myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
