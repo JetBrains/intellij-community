@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
@@ -102,6 +103,8 @@ import java.util.List;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
+  private static long DOC_GENERATION_TIMEOUT_MS = 5000;
+  private static long DOC_GENERATION_RETRY_DELAY_MS = 100;
   private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
@@ -653,7 +656,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     myDocAlarm.addRequest(() -> {
       final Ref<String> fullTextRef = new Ref<>();
       final Ref<String> qualifiedNameRef = new Ref<>();
-      ApplicationManager.getApplication().runReadAction(() -> {
+      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         if (anchorElement.isValid() && originalElement.isValid()) {
           try {
             fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
@@ -665,7 +668,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
           }
         }
-      });
+      }, DOC_GENERATION_TIMEOUT_MS, DOC_GENERATION_RETRY_DELAY_MS, null);
       String fullText = fullTextRef.get();
       if (fullText == null) {
         return;
