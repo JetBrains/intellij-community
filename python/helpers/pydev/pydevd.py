@@ -750,14 +750,10 @@ class PyDB:
 
             if curr_func_name == func_name:
                 line = next_line
-                if frame.f_lineno == line:
-                    stop = True
-                else:
-                    if frame.f_trace is None:
-                        frame.f_trace = self.trace_dispatch
-                    frame.f_lineno = line
-                    frame.f_trace = None
-                    stop = True
+                if frame.f_trace is None:
+                    frame.f_trace = self.trace_dispatch
+                frame.f_lineno = line
+                stop = True
             else:
                 response_msg = "jump is available only within the bottom frame"
         return stop, old_line, response_msg
@@ -856,14 +852,15 @@ class PyDB:
                     info.pydev_message = ''
 
                 if stop:
-                    info.pydev_state = STATE_RUN
-                    # `f_line` should be assigned within a tracing function, so, we can't assign it here
-                    # for the frame evaluation debugger. For tracing debugger it will be assigned, but we should
-                    # revert the previous value, because both debuggers should behave the same way
-                    try:
-                        self.set_next_statement(frame, event, info.pydev_func_name, old_line)
-                    except:
-                        pass
+                    cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+                    self.writer.add_command(cmd)
+                    if suspend_type == "trace":
+                        info.pydev_state = STATE_SUSPEND
+                        thread.stop_reason= CMD_SET_NEXT_STATEMENT
+                        self.do_wait_suspend(thread, frame, event, arg, "trace")
+                    else:
+                        info.pydev_step_stop = frame
+                    return
                 else:
                     info.pydev_step_cmd = -1
                     info.pydev_state = STATE_SUSPEND
