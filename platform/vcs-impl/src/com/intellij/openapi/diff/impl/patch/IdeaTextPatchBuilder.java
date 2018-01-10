@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.patch;
 
+import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -22,12 +23,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.changes.BinaryContentRevision;
-import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,26 +53,38 @@ public class IdeaTextPatchBuilder {
       final Collection<Change> rootChanges = byRoots.get(root);
 
       if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
-        addConvertChanges(rootChanges, result, null);
+        addConvertChanges(project, rootChanges, result, null);
       }
       else {
         final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
         final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
         rootChanges.removeAll(basedOnLocal);
 
-        addConvertChanges(rootChanges, result, null);
-        addConvertChanges(basedOnLocal, result, provider);
+        addConvertChanges(project, rootChanges, result, null);
+        addConvertChanges(project, basedOnLocal, result, provider);
       }
     }
     return result;
   }
 
-  private static void addConvertChanges(@NotNull Collection<Change> changes,
+  private static void addConvertChanges(@NotNull Project project,
+                                        @NotNull Collection<Change> changes,
                                         @NotNull List<BeforeAfter<AirContentRevision>> result,
-                                        @Nullable VcsOutgoingChangesProvider provider) {
-    for (Change change : changes) {
-      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), provider),
-                                   convertRevision(change.getAfterRevision(), provider)));
+                                        @Nullable VcsOutgoingChangesProvider<?> provider) {
+    List<Change> otherChanges = PartialChangesUtil.processPartialChanges(project, changes, false, (partialChanges, tracker) -> {
+      List<String> changelistIds = ContainerUtil.map(partialChanges, ChangeListChange::getChangeListId);
+      Change change = partialChanges.get(0).getChange();
+
+      String actualText = tracker.getPartiallyAppliedContent(Side.LEFT, changelistIds);
+
+      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, provider),
+                                   convertRevision(change.getAfterRevision(), actualText, provider)));
+      return true;
+    });
+
+    for (Change change : otherChanges) {
+      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), null, provider),
+                                   convertRevision(change.getAfterRevision(), null, provider)));
     }
   }
 
@@ -84,7 +96,8 @@ public class IdeaTextPatchBuilder {
     } else {
       revisions = new ArrayList<>(changes.size());
       for (Change change : changes) {
-        revisions.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision()), convertRevision(change.getAfterRevision())));
+        revisions.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision()),
+                                        convertRevision(change.getAfterRevision())));
       }
     }
     return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive,
@@ -93,31 +106,39 @@ public class IdeaTextPatchBuilder {
 
   @Nullable
   private static AirContentRevision convertRevision(@Nullable ContentRevision cr) {
-    return convertRevision(cr, null);
+    return convertRevision(cr, null, null);
   }
 
   @Nullable
-  private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable VcsOutgoingChangesProvider provider) {
+  private static AirContentRevision convertRevision(@Nullable ContentRevision cr,
+                                                    @Nullable String actualTextContent,
+                                                    @Nullable VcsOutgoingChangesProvider provider) {
     if (cr == null) return null;
     if (provider != null) {
-      // dates are here instead of numbers
       final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
       final Long ts = date == null ? null : date.getTime();
-      return convertRevisionToAir(cr, ts);
+      return convertRevisionToAir(cr, actualTextContent, ts);
     }
     else {
-      return convertRevisionToAir(cr, null);
+      return convertRevisionToAir(cr, actualTextContent, null);
     }
   }
 
   @NotNull
-  private static AirContentRevision convertRevisionToAir(@NotNull ContentRevision cr, @Nullable Long ts) {
+  private static AirContentRevision convertRevisionToAir(@NotNull ContentRevision cr,
+                                                         @Nullable String actualTextContent,
+                                                         @Nullable Long ts) {
     final FilePath fp = cr.getFile();
     final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(),
                                                                         ts == null ? fp.getIOFile().lastModified() : ts, fp.getPath());
-    if (cr instanceof BinaryContentRevision) {
+
+    if (actualTextContent != null) {
+      return new PartialTextAirContentRevision(actualTextContent, cr, description, ts);
+    }
+    else if (cr instanceof BinaryContentRevision) {
       return new BinaryAirContentRevision((BinaryContentRevision)cr, description, ts);
-    } else {
+    }
+    else {
       return new TextAirContentRevision(cr, description, ts);
     }
   }
@@ -208,6 +229,28 @@ public class IdeaTextPatchBuilder {
     public String getLineSeparator() {
       VirtualFile virtualFile = myRevision.getFile().getVirtualFile();
       return virtualFile != null ? virtualFile.getDetectedLineSeparator() : null;
+    }
+  }
+
+  private static class PartialTextAirContentRevision extends TextAirContentRevision {
+    @NotNull private final String myContent;
+
+    public PartialTextAirContentRevision(@NotNull String content,
+                                         @NotNull ContentRevision delegateRevision,
+                                         @NotNull StaticPathDescription description,
+                                         @Nullable Long timestamp) {
+      super(delegateRevision, description, timestamp);
+      myContent = content;
+    }
+
+    @Override
+    public String getContentAsString() {
+      return myContent;
+    }
+
+    @Override
+    public byte[] getContentAsBytes() {
+      return myContent.getBytes(getCharset());
     }
   }
 }

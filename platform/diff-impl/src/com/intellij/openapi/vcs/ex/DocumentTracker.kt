@@ -234,7 +234,6 @@ class DocumentTracker : Disposable {
     }
   }
 
-  @CalledInAwt
   fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
     val otherSide = side.other()
     val affectedBlocks = LOCK.write {
