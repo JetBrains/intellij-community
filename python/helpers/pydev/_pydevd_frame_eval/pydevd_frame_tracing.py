@@ -1,12 +1,14 @@
+from types import CodeType
+
 import sys
 
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
-from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
+from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 from _pydevd_bundle.pydevd_frame import handle_breakpoint_condition, handle_breakpoint_expression
 
-
+import opcode
 class DummyTracingHolder:
     dummy_trace_func = None
 
@@ -54,7 +56,7 @@ def _pydev_stop_at_break():
     frame = sys._getframe(1)
     t = threading.currentThread()
     if t.additional_info.is_tracing:
-        return
+        return False
 
     if t.additional_info.pydev_step_cmd == -1 and frame.f_trace in (None, dummy_tracing_holder.dummy_trace_func):
         # do not handle breakpoints while stepping, because they're handled by old tracing function
@@ -74,16 +76,40 @@ def _pydev_stop_at_break():
         except KeyError:
             pydev_log.debug("Couldn't find breakpoint in the file {} on line {}".format(frame.f_code.co_filename, line))
             t.additional_info.is_tracing = False
-            return
+            return False
         if breakpoint and handle_breakpoint(frame, t, debugger, breakpoint):
             pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, line))
             debugger.set_suspend(t, CMD_SET_BREAK)
             debugger.do_wait_suspend(t, frame, 'line', None, "frame_eval")
-
         t.additional_info.is_tracing = False
+        return t.additional_info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT
+    return False
 
 
 def pydev_trace_code_wrapper():
     # import this module again, because it's inserted inside user's code
     global _pydev_stop_at_break
-    _pydev_stop_at_break()
+    return _pydev_stop_at_break()
+
+
+
+def create_code_wrapper(offset):
+    co = pydev_trace_code_wrapper.__code__
+    # 0 + offset LOAD_GLOBAL              0 (_pydev_stop_at_break)
+    # 2 + offset CALL_FUNCTION            0
+    # 4 + offset POP_JUMP_IF_TRUE         offset
+    byte_code = [116, 0, 131, 0]
+    if offset > 0xFF:
+        byte_code += [opcode.EXTENDED_ARG, offset >> 8]
+    byte_code += [115, offset & 0xFF]
+
+    #below code is just function trailer and gets removed
+    byte_code += [100, 0, 83, 0]
+    return CodeType(
+        co.co_argcount, co.co_kwonlyargcount, co.co_nlocals,
+        co.co_stacksize,
+        co.co_flags,
+        bytes(byte_code),
+        co.co_consts, co.co_names, co.co_varnames, co.co_filename,
+        co.co_name, co.co_firstlineno, co.co_lnotab, co.co_freevars,
+        co.co_cellvars)

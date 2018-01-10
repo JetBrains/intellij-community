@@ -3,7 +3,7 @@ from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
 from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict, dummy_tracing_holder
+from _pydevd_frame_eval.pydevd_frame_tracing import create_code_wrapper, update_globals_dict, dummy_tracing_holder
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
@@ -107,13 +107,16 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
         code_object = frame.f_code
         if breakpoints:
             breakpoints_to_update = []
+            injected_code_size = 0
             for offset, line in dis.findlinestarts(code_object):
                 if line in breakpoints:
                     breakpoint = breakpoints[line]
                     if code_object not in breakpoint.code_objects:
                         # This check is needed for generator functions, because after each yield the new frame is created
                         # but the former code object is used
-                        success, new_code = insert_code(frame.f_code, pydev_trace_code_wrapper.__code__, line)
+                        injected_code = create_code_wrapper(offset + injected_code_size)
+                        success, new_code = insert_code(frame.f_code, injected_code , line)
+                        injected_code_size += len(injected_code.co_code)
                         if success:
                             breakpoints_to_update.append(breakpoint)
                             Py_INCREF(new_code)
