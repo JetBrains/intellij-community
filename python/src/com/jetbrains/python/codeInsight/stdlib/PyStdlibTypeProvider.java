@@ -630,9 +630,19 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     );
 
+    final PyNoneLiteralExpression ellipsis = PyElementGenerator.getInstance(cls.getProject()).createEllipsis();
+
     final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
       Collectors.toMap(PyTargetExpression::getName,
-                       field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
+                       field -> {
+                         final PyExpression value = context.maySwitchToAST(field)
+                                                    ? field.findAssignedValue()
+                                                    : field.hasAssignedValue()
+                                                      ? ellipsis
+                                                      : null;
+
+                         return new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), value);
+                       },
                        (v1, v2) -> v2,
                        LinkedHashMap::new);
 

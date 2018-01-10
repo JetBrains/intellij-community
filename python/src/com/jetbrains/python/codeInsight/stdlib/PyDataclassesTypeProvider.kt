@@ -60,10 +60,17 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
     }
 
     val parameters = ArrayList<PyCallableParameter>()
+    val ellipsis = PyElementGenerator.getInstance(cls.project).createEllipsis()
 
     cls.processClassLevelDeclarations { element, _ ->
       if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, context)) {
-        parameters.add(PyCallableParameterImpl.nonPsi(element.name, getTypeForParameter(element, context), element.findAssignedValue()))
+        val value = when {
+          context.maySwitchToAST(element) -> element.findAssignedValue()
+          element.hasAssignedValue() -> ellipsis
+          else -> null
+        }
+
+        parameters.add(PyCallableParameterImpl.nonPsi(element.name, getTypeForParameter(element, context), value))
       }
 
       true

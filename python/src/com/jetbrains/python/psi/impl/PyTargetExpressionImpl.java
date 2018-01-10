@@ -792,4 +792,13 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   public String getTypeCommentAnnotation() {
     return getTypeCommentAnnotationFromStubOrPsi(this);
   }
+
+  @Override
+  public boolean hasAssignedValue() {
+    final PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.hasAssignedValue();
+    }
+    return findAssignedValue() != null;
+  }
 }

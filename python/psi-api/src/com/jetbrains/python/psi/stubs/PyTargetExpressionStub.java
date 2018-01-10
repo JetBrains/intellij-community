@@ -63,4 +63,6 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression>, P
 
   @Nullable
   String getDocString();
+
+  boolean hasAssignedValue();
 }
