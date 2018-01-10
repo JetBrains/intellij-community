@@ -55,9 +55,8 @@ public class ExtractWhileLoopConditionToIfStatementIntention extends Intention {
       newElement = codeBlock.addBefore(ifStatement, codeBlock.getFirstBodyElement());
     }
     else if (body != null) {
-      final PsiBlockStatement newBody = BlockUtils.expandSingleStatementToBlockStatement(body);
-      final PsiCodeBlock codeBlock = newBody.getCodeBlock();
-      newElement = codeBlock.addBefore(ifStatement, codeBlock.getStatements()[0]);
+      final PsiStatement newStatement = BlockUtils.expandSingleStatementToBlockStatement(body);
+      newElement = newStatement.getParent().addBefore(ifStatement, newStatement);
     }
     else {
       return;
