@@ -7,6 +7,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -14,11 +15,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.scheduleFileOrPackageCreationFailedMessageBox;
 
@@ -77,14 +83,13 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
   }
 
   @Nullable
-  protected static PsiClass createClassInRoot(@NotNull String classFQN,
-                                              boolean isClass,
-                                              @NotNull PsiDirectory rootDir,
-                                              @Nullable String superClassName) {
+  public static PsiDirectory getOrCreatePackageDirInRoot(@NotNull String packageName, @NotNull PsiDirectory rootDir) {
+    if (packageName.isEmpty()) {
+      return rootDir;
+    }
     PsiDirectory directory = rootDir;
-    String lastName;
-    StringTokenizer st = new StringTokenizer(classFQN, ".");
-    for (lastName = st.nextToken(); st.hasMoreTokens(); lastName = st.nextToken()) {
+    String[] shortNames = packageName.split("\\.");
+    for (String lastName : shortNames) {
       PsiDirectory subdirectory = directory.findSubdirectory(lastName);
       if (subdirectory != null) {
         directory = subdirectory;
@@ -99,29 +104,24 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
         }
       }
     }
-
-    PsiClass psiClass = createClass(lastName, isClass, directory);
-    if (psiClass != null) {
-      PsiUtil.setModifierProperty(psiClass, PsiModifier.PUBLIC, true);
-      if (superClassName != null) {
-        CreateFromUsageUtils.setupSuperClassReference(psiClass, superClassName);
-      }
-    }
-    return psiClass;
+    return directory;
   }
 
   @Nullable
-  private static PsiClass createClass(String name, boolean isClass, PsiDirectory directory) {
-    try {
-      if (isClass) {
-        return JavaDirectoryService.getInstance().createClass(directory, name);
-      }
-      return JavaDirectoryService.getInstance().createInterface(directory, name);
-    }
-    catch (final IncorrectOperationException e) {
-      scheduleFileOrPackageCreationFailedMessageBox(e, name, directory, false);
-    }
-    return null;
+  protected static PsiClass createClassInRoot(@NotNull String classFQN,
+                                              boolean isClass,
+                                              @NotNull PsiDirectory rootDir,
+                                              @NotNull PsiElement contextElement,
+                                              @Nullable String superClassName) {
+    String packageName = StringUtil.getPackageName(classFQN);
+    int lastDot = classFQN.lastIndexOf('.');
+    String className = lastDot >= 0 ? classFQN.substring(lastDot + 1) : classFQN;
+    PsiDirectory packageDir = getOrCreatePackageDirInRoot(packageName, rootDir);
+    if (packageDir == null) return null;
+
+    return CreateFromUsageUtils.createClass(isClass ? CreateClassKind.CLASS : CreateClassKind.INTERFACE,
+                                            packageDir, className, contextElement.getManager(),
+                                            contextElement, null, superClassName);
   }
 
   protected static PsiDirectory[] getModuleRootDirs(Module module) {
@@ -136,9 +136,19 @@ public abstract class CreateServiceClassFixBase implements IntentionAction {
       .toArray(PsiDirectory[]::new);
   }
 
-  protected static void positionCursor(@Nullable PsiClass psiClass) {
+  public static void positionCursor(@Nullable PsiClass psiClass) {
     if (psiClass != null) {
       CodeInsightUtil.positionCursor(psiClass.getProject(), psiClass.getContainingFile(), psiClass);
+    }
+  }
+
+  public static class PsiDirectoryListCellRenderer extends ListCellRendererWrapper<PsiDirectory> {
+    @Override
+    public void customize(JList list, PsiDirectory psiDir, int index, boolean selected, boolean hasFocus) {
+      if (psiDir != null) {
+        String text = ProjectUtil.calcRelativeToProjectPath(psiDir.getVirtualFile(), psiDir.getProject(), true, false, true);
+        setText(text);
+      }
     }
   }
 }

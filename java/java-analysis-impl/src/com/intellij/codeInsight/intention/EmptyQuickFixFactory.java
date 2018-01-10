@@ -707,4 +707,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @Nullable
+  @Override
+  public IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName) {
+    return QuickFixes.EMPTY_FIX;
+  }
 }
