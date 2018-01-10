@@ -105,7 +105,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Override
   protected DocumentationComponent createComponent() {
-    return new DocumentationComponent(this, createActions());
+    return new DocumentationComponent(this);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     if (myToolWindow != null) {
       myToolWindow.getComponent().putClientProperty(ChooseByNameBase.TEMPORARILY_FOCUSABLE_COMPONENT_KEY, Boolean.TRUE);
-      
+
       if (myRestorePopupAction != null) {
         ShortcutSet quickDocShortcut = ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC).getShortcutSet();
         myRestorePopupAction.registerCustomShortcutSet(quickDocShortcut, myToolWindow.getComponent());

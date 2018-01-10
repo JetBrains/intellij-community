@@ -122,7 +122,7 @@ public class ShowByteCodeAction extends AnAction {
             Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Bytecode not Found");
             return;
           }
-          final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
+          final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project);
           component.setText(myByteCode, targetElement);
           Processor<JBPopup> pinCallback = popup -> {
             codeViewerManager.recreateToolWindow(targetElement, targetElement);

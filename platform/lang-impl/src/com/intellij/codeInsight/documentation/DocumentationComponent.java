@@ -181,7 +181,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
   }
 
-  public DocumentationComponent(final DocumentationManager manager, final AnAction[] additionalActions) {
+  public DocumentationComponent(final DocumentationManager manager) {
     myManager = manager;
     myIsEmpty = true;
     myIsShown = false;
@@ -403,13 +403,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    if (additionalActions != null) {
-      for (final AnAction action : additionalActions) {
-        actions.add(action);
-        ShortcutSet shortcutSet = action.getShortcutSet();
-        action.registerCustomShortcutSet(shortcutSet, this);
-      }
-    }
 
     new NextLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this);
     new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
@@ -452,10 +445,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static boolean isMonospacedFont(String fontName) {
     return FontInfo.isMonospaced(new Font(fontName, Font.PLAIN, 12));
-  }
-
-  public DocumentationComponent(final DocumentationManager manager) {
-    this(manager, null);
   }
 
   @Override

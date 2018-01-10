@@ -105,6 +105,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     setToolwindowDefaultState();
     
     ((ToolWindowEx)myToolWindow).setTitleActions(createRestorePopupAction());
+    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
 
     final ContentManager contentManager = myToolWindow.getContentManager();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
