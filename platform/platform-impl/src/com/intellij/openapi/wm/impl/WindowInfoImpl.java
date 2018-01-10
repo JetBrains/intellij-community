@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -275,24 +276,24 @@ public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, Wind
     if (element.getAttributeValue(SHOW_STRIPE_BUTTON) != null) {
       myShowStripeButton = Boolean.parseBoolean(element.getAttributeValue(SHOW_STRIPE_BUTTON));
     }
-    try {
-      myWeight = Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
-    }
-    catch (NumberFormatException ignored) {
-    }
-    try {
-      String value = element.getAttributeValue(SIDE_WEIGHT_ATTR);
-      if (value != null) {
-        mySideWeight = Float.parseFloat(value);
-      }
-    }
-    catch (NumberFormatException ignored) {
-    }
+
+    myWeight = parseFloat(element.getAttributeValue(WEIGHT_ATTR), DEFAULT_WEIGHT);
+    mySideWeight = parseFloat(element.getAttributeValue(SIDE_WEIGHT_ATTR), DEFAULT_SIDE_WEIGHT);
+
     myOrder = StringUtilRt.parseInt(element.getAttributeValue(ORDER_ATTR), myOrder);
     myFloatingBounds = ProjectFrameBoundsKt.deserializeBounds(element);
     mySplitMode = Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
 
     myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR));
+  }
+
+  private static float parseFloat(@Nullable String value, float defaultValue) {
+    try {
+      return StringUtil.isEmpty(value) ? defaultValue : Float.parseFloat(value);
+    }
+    catch (NumberFormatException e) {
+      return defaultValue;
+    }
   }
 
   private static boolean canActivateOnStart(String id) {
