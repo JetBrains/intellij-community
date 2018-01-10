@@ -419,12 +419,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (!Registry.is("documentation.show.toolbar")) {
       ActionPopupMenu menu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ActionPlaces.JAVADOC_TOOLBAR, actions,
                                                                                                     new MenuItemPresentationFactory(true));
-      myEditorPane.addMouseListener(new PopupHandler() {
+      PopupHandler popupHandler = new PopupHandler() {
         @Override
         public void invokePopup(Component comp, int x, int y) {
           menu.getComponent().show(comp, x, y);
         }
-      });
+      };
+      myEditorPane.addMouseListener(popupHandler);
+      Disposer.register(this, () -> myEditorPane.removeMouseListener(popupHandler));
     }
 
     new NextLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this);
