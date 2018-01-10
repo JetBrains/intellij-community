@@ -56,6 +56,9 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract String getShowInToolWindowProperty();
   protected abstract String getAutoUpdateEnabledProperty();
+  protected boolean getAutoUpdateDefault() {
+    return false;
+  }
 
   protected abstract String getAutoUpdateTitle();
   protected abstract String getRestorePopupDescription();
@@ -143,7 +146,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
                                            AllIcons.General.AutoscrollFromSource) {
       @Override
       public boolean isSelected(AnActionEvent e) {
-        return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty());
+        return PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(),
+                                                            getAutoUpdateDefault());
       }
 
       @Override

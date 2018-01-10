@@ -123,6 +123,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return "Auto-update from Source";
   }
 
+  @Override
+  protected boolean getAutoUpdateDefault() {
+    return true;
+  }
+
   @NotNull
   @Override
   protected AnAction createRestorePopupAction() {
