@@ -25,15 +25,15 @@ class RunConfigurationHandler: ConfigurationHandler {
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration { typeName, name, cfg ->
-      RunConfigHandlerExtensionManager.handlerForType(
-        typeName)?.process(module, name, cfg )
+      RunConfigHandlerExtensionManager.handlerForType(typeName)
+        ?.process(module, name, cfg )
     }
   }
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration { typeName, name, cfg ->
-      RunConfigHandlerExtensionManager.handlerForType(
-        typeName)?.process(project, name, cfg)
+      RunConfigHandlerExtensionManager.handlerForType(typeName)
+        ?.process(project, name, cfg)
     }
   }
 
