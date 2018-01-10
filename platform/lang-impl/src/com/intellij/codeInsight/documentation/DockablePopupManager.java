@@ -103,7 +103,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     myToolWindow.setToHideOnEmptyContent(false);
 
     setToolwindowDefaultState();
-    
+
     ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
 
     final ContentManager contentManager = myToolWindow.getContentManager();
@@ -121,7 +121,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     new UiNotifyConnector(component, new Activatable() {
       @Override
       public void showNotify() {
-        restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty()));
+        restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));
       }
 
       @Override
@@ -152,7 +152,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
-        PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state);
+        PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state, getAutoUpdateDefault());
         restartAutoUpdate(state);
       }
     };
