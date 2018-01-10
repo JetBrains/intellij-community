@@ -49,6 +49,8 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.intellij.util.ThreeState
+import com.jetbrains.extensions.asPsiElement
+import com.jetbrains.extensions.asVirtualFile
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.ModuleBasedContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
@@ -246,8 +248,8 @@ private val DEFAULT_PATH = ""
 /**
  * Target depends on target type. It could be path to file/folder or python target
  */
-data class ConfigurationTarget(@ConfigField var target: String,
-                               @ConfigField var targetType: PyTargetType) {
+data class ConfigurationTarget(@ConfigField override var target: String,
+                               @ConfigField override var targetType: PyTargetType) : TargetWithType {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -266,29 +268,8 @@ data class ConfigurationTarget(@ConfigField var target: String,
     }
   }
 
-  /**
-   * Converts target to PSI element if possible resolving it against roots and working directory
-   */
-  fun asPsiElement(configuration: PyAbstractTestConfiguration): PsiElement? {
-    if (targetType == PyTargetType.PYTHON) {
-      val module = configuration.module ?: return null
-      val context = TypeEvalContext.userInitiated(configuration.project, null)
-      val workDir = configuration.getWorkingDirectoryAsVirtual()
-      val name = QualifiedName.fromDottedString(target)
-      return name.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module), configuration.sdk, context, workDir, true))
-    }
-    return null
-  }
-
-  /**
-   * Converts target to file if possible
-   */
-  fun asVirtualFile(): VirtualFile? {
-    if (targetType == PyTargetType.PATH) {
-      return LocalFileSystem.getInstance().findFileByPath(target)
-    }
-    return null
-  }
+  fun asPsiElement(configuration: PyAbstractTestConfiguration) =
+    asPsiElement(configuration, configuration.getWorkingDirectoryAsVirtual())
 
   fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
     when (targetType) {
