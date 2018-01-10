@@ -1,0 +1,7 @@
+// Known incompatibilities between Android Studio Canary 8 and kotlin-plugin-1.2.10-release-Studio31x-1. Do NOT add to this list!
+org.jetbrains.kotlin::Invocation of unresolved method org.jetbrains.kotlin.idea.debugger.stepping.KotlinStepOverInlinedLinesHint.access\$getLOG\$p\(KotlinStepOverInlinedLinesHint\).*
+org.jetbrains.kotlin::Invocation of unresolved method org.jetbrains.kotlin.idea.injection.KotlinLanguageInjector.access\$getConfiguration\$p\(KotlinLanguageInjector\).*
+org.jetbrains.kotlin::Invocation of unresolved method org.jetbrains.kotlin.idea.injection.KotlinLanguageInjector.access\$retrievePlaceTargetClassesFQNs\(KotlinLanguageInjector, InjectionPlace\).*
+org.jetbrains.kotlin::Invocation of unresolved method org.json.JSONTokener.<init>\(Reader\).*
+org.jetbrains.kotlin::Invocation of unresolved method org.jetbrains.kotlin.idea.quickfix.AddModifierFix.Companion.createIfApplicable\(KtModifierListOwner, KtModifierKeywordToken\).*
+org.jetbrains.kotlin::Access to unresolved class com.android.dx.*

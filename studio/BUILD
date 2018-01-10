@@ -37,6 +37,23 @@ java_test(
     ],
 )
 
+java_test(
+    name = "KotlinBinaryCompatibilityTest",
+    srcs = ["src/test/java/com/android/tools/KotlinBinaryCompatibilityTest.java"],
+    data = [
+        "kotlin_known_problems.txt",
+        "//prebuilts/tools/common/intellij-plugin-verifier:verifier-all.jar",
+        "//tools/idea:android-studio.tar.gz",
+    ],
+    tags = ["no_test_mac"],  # TODO: we run out of file handles on Mac, double-check whether 'sysctl kern.maxfiles' is sane
+    deps = [
+        "build-scripts-deps/commons-compress-1.10.jar",
+        "//tools/base/testutils:tools.testutils",
+        "//tools/base/third_party:com.google.truth_truth",
+        "//tools/base/third_party:junit_junit",
+    ],
+)
+
 filegroup(
     name = "ant_prebuilts",
     srcs = glob(["build-scripts-deps/*.jar"]),
