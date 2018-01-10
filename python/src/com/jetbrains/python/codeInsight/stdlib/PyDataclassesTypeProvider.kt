@@ -62,12 +62,8 @@ class PyDataclassesTypeProvider : PyTypeProviderBase() {
     val parameters = ArrayList<PyCallableParameter>()
 
     cls.processClassLevelDeclarations { element, _ ->
-      if (element is PyTargetExpression && element.annotationValue != null) {
-        val annotation = element.annotation
-
-        if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
-          parameters.add(PyCallableParameterImpl.nonPsi(element.name, getTypeForParameter(element, context), element.findAssignedValue()))
-        }
+      if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, context)) {
+        parameters.add(PyCallableParameterImpl.nonPsi(element.name, getTypeForParameter(element, context), element.findAssignedValue()))
       }
 
       true

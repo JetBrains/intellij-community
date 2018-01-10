@@ -8,7 +8,6 @@ import com.google.common.collect.Sets;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -1245,15 +1244,15 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     return Ref.create(PyTypeParser.getTypeByName(call, type, context));
   }
 
-  public static boolean isClassVarAnnotation(@NotNull PyAnnotation annotation, @NotNull TypeEvalContext context) {
-    final PyExpression value = annotation.getValue();
+  public static boolean isClassVar(@NotNull PyAnnotationOwner annotationOwner, @NotNull TypeEvalContext context) {
+    final PyExpression annotationValue = getAnnotationValue(annotationOwner, context);
 
-    if (value instanceof PySubscriptionExpression) {
-      final PyExpression operand = ((PySubscriptionExpression)value).getOperand();
+    if (annotationValue instanceof PySubscriptionExpression) {
+      final PyExpression operand = ((PySubscriptionExpression)annotationValue).getOperand();
       return operand instanceof PyReferenceExpression && resolveToQualifiedNames(operand, context).contains(CLASSVAR);
     }
-    else if (value instanceof PyReferenceExpression) {
-      return resolveToQualifiedNames(value, context).contains(CLASSVAR);
+    else if (annotationValue instanceof PyReferenceExpression) {
+      return resolveToQualifiedNames(annotationValue, context).contains(CLASSVAR);
     }
 
     return false;

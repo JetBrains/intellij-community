@@ -54,13 +54,9 @@ class PyDataclassInspection : PyInspection() {
           val initVars = mutableListOf<PyTargetExpression>()
 
           node.processClassLevelDeclarations { element, _ ->
-            if (element is PyTargetExpression && element.annotationValue != null) {
-              val annotation = element.annotation
-
-              if (annotation != null && !PyTypingTypeProvider.isClassVarAnnotation(annotation, myTypeEvalContext)) {
+            if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
                 processDefaultFieldValue(element)
                 processAsInitVar(element, postInit)?.let { initVars.add(it) }
-              }
             }
 
             true

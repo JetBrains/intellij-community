@@ -75,8 +75,7 @@ class PyNamedTupleInspection : PyInspection() {
 
     override fun execute(element: PsiElement, state: ResolveState): Boolean {
       if (element is PyTargetExpression) {
-        val annotation = element.annotation
-        if (annotation != null && PyTypingTypeProvider.isClassVarAnnotation(annotation, context)) {
+        if (PyTypingTypeProvider.isClassVar(element, context)) {
           return true
         }
 
