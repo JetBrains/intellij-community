@@ -104,7 +104,6 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     setToolwindowDefaultState();
     
-    ((ToolWindowEx)myToolWindow).setTitleActions(createRestorePopupAction());
     ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
 
     final ContentManager contentManager = myToolWindow.getContentManager();
@@ -157,12 +156,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         restartAutoUpdate(state);
       }
     };
-    return new AnAction[]{toggleAutoUpdateAction};
+    return new AnAction[]{createRestorePopupAction(), toggleAutoUpdateAction};
   }
 
   @NotNull
   protected AnAction createRestorePopupAction() {
-    return new AnAction("Restore Popup", getRestorePopupDescription(), AllIcons.General.AutohideOffPressed) {
+    return new AnAction("Open as Popup", getRestorePopupDescription(), AllIcons.General.AutohideOffPressed) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         restorePopupBehavior();
