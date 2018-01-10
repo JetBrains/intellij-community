@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.codeInsight.stdlib.DATACLASSES_INITVAR_TYPE
 import com.jetbrains.python.codeInsight.stdlib.DUNDER_POST_INIT
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
@@ -61,6 +62,8 @@ class PyDataclassInspection : PyInspection() {
                             ProblemHighlightType.LIKE_UNUSED_SYMBOL)
           }
 
+          val initVars = mutableListOf<String?>()
+
           node.processClassLevelDeclarations { element, _ ->
             if (element is PyTargetExpression && element.annotationValue != null) {
               val annotation = element.annotation
@@ -80,18 +83,45 @@ class PyDataclassInspection : PyInspection() {
                                     ProblemHighlightType.GENERIC_ERROR)
                   }
                 }
-                else if (postInit == null) {
+                else {
                   val type = myTypeEvalContext.getType(element)
                   if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
-                    registerProblem(element,
-                                    "attribute '${element.name}' is useless until '${DUNDER_POST_INIT}' is declared",
-                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+                    if (postInit == null) {
+                      registerProblem(element,
+                                      "attribute '${element.name}' is useless until '${DUNDER_POST_INIT}' is declared",
+                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+                    }
+                    else {
+                      initVars.add(element.name)
+                    }
                   }
                 }
               }
             }
 
             true
+          }
+
+          if (postInit != null) {
+            val parameters = ContainerUtil.subList(postInit.getParameters(myTypeEvalContext), 1)
+
+            if (parameters.size != initVars.size) {
+              registerProblem(postInit.parameterList,
+                              "'${DUNDER_POST_INIT}' should take all init-only variables in the same order as they are defined",
+                              ProblemHighlightType.GENERIC_ERROR)
+            }
+            else {
+              parameters
+                .asSequence()
+                .zip(initVars.asSequence())
+                .all { it.first.name == it.second }
+                .also {
+                  if (!it) {
+                    registerProblem(postInit.parameterList,
+                                    "'${DUNDER_POST_INIT}' should take all init-only variables in the same order as they are defined")
+                  }
+                }
+            }
           }
 
           PyNamedTupleInspection.inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)

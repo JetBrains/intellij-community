@@ -66,6 +66,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27398
+  public void testWrongDunderPostInitSignature() {
+    doTest();
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(
