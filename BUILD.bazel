@@ -423,7 +423,9 @@ iml_project(
         "//tools/vendor/intellij/cidr/cidr-lang-dfa",
         "//tools/vendor/intellij/cidr/cidr-util",
         "//tools/vendor/intellij/cidr:cidr-common",
+        "//tools/vendor/intellij/cidr:cidr-ide",
         "//tools/vendor/intellij/cidr:cidr-lang",
+        "//tools/vendor/intellij/cidr:clion",
         "//tools/vendor/intellij/cidr:clion-build",
         "//tools/vendor/intellij/cidr:doxygen",
         "//tools:fest-swing",
@@ -657,6 +659,7 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8",
         "//tools/idea/plugins/maven:maven2-server-impl",
         "//tools/vendor/intellij/cidr:doxygen",
+        "//tools/idea/plugins/settings-repository",
     ],
     # do not sort: must match IML order
     deps = [

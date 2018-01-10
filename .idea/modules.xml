@@ -76,9 +76,11 @@
       <module fileurl="file://$PROJECT_DIR$/../base/chunkio-processor/chunkio-processor.iml" filepath="$PROJECT_DIR$/../base/chunkio-processor/chunkio-processor.iml" group="android/sdktools" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-common/cidr-common.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-debugger/cidr-debugger.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/cidr-ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-ide/cidr-ide.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang/cidr-lang.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/cidr-lang-dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-lang-dfa/cidr-lang-dfa.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/cidr-util.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-util/cidr-util.iml" group="java" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion/clion.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion/clion.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/clion-build/clion-build.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/clion-build/clion-build.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/colorSchemes/colorSchemes.iml" filepath="$PROJECT_DIR$/colorSchemes/colorSchemes.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/commander/commander.iml" filepath="$PROJECT_DIR$/plugins/commander/commander.iml" group="plugins" />
