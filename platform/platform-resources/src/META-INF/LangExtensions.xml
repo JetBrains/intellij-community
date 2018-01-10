@@ -512,6 +512,12 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
 
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$LineCommentStart"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$BlockCommentStart"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$BlockCommentEnd"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$AnyCommentStart"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CommentMacro$AnyCommentEnd"/>
+
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.EnumMacro"/>
     <internalFileTemplate name="HTML File"/>
     <internalFileTemplate name="HTML4 File"/>
