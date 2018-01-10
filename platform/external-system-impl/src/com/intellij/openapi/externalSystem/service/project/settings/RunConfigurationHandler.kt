@@ -85,7 +85,7 @@ class ApplicationRunConfigurationImporter : RunConfigurationImporter {
     val runnerAndConfigurationSettings = runManager.createConfiguration(name, cfgType.configurationFactories[0])
     val appConfig = runnerAndConfigurationSettings.configuration as ApplicationConfiguration
 
-    appConfig.setMainClassName(cfg["mainClass"] as? String)
+    appConfig.mainClassName = cfg["mainClass"] as? String
     appConfig.vmParameters = cfg["jvmArgs"] as? String
     appConfig.setModule(module)
 
