@@ -24,6 +24,7 @@ import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
+import com.intellij.ide.structureView.newStructureView.TreeActionWrapper;
 import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -166,6 +167,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt, "FileStructurePopup");
 
     myTreeActionsOwner = new TreeStructureActionsOwner(myTreeModel);
+    myTreeActionsOwner.setActionIncluded(Sorter.ALPHA_SORTER, true);
     myTreeModelWrapper = new TreeModelWrapper(myTreeModel, myTreeActionsOwner);
 
     myTreeStructure = new SmartTreeStructure(project, myTreeModelWrapper) {
@@ -688,11 +690,16 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     label.setBorder(JBUI.Borders.empty(0, 2));
     label.setHorizontalAlignment(SwingConstants.RIGHT);
     label.setVerticalAlignment(SwingConstants.CENTER);
+
+    List<AnAction> sorters = createSorters();
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         DefaultActionGroup group = new DefaultActionGroup();
-        //addSorters(group);
+        if (!sorters.isEmpty()) {
+          group.addAll(sorters);
+          group.addSeparator();
+        }
         //addGroupers(group);
         //addFilters(group);
 
@@ -726,6 +733,44 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     }.installOn(label);
     return label;
+  }
+
+  protected List<AnAction> createSorters() {
+    List<AnAction> actions = new ArrayList<>();
+    for (Sorter sorter : myTreeModel.getSorters()) {
+      if (sorter.isVisible()) {
+        actions.add(new MyTreeActionWrapper(sorter));
+      }
+    }
+    return actions;
+  }
+
+  private class MyTreeActionWrapper extends TreeActionWrapper {
+    private final TreeAction myAction;
+
+    public MyTreeActionWrapper(TreeAction action) {
+      super(action, myTreeActionsOwner);
+      myAction = action;
+      myTreeActionsOwner.setActionIncluded(action, getDefaultValue(action));
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setIcon(null);
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      boolean actionState = TreeModelWrapper.shouldRevert(myAction) ? !state : state;
+      myTreeActionsOwner.setActionIncluded(myAction, actionState);
+      saveState(myAction, state);
+      rebuild(false).processed(ignore -> {
+        if (mySpeedSearch.isPopupActive()) {
+          mySpeedSearch.refreshSelection();
+        }
+      });
+    }
   }
 
   @Nullable
@@ -866,19 +911,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private static boolean getDefaultValue(TreeAction action) {
-    if (action instanceof PropertyOwner) {
-      String propertyName = ((PropertyOwner)action).getPropertyName();
-      return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName));
-    }
-
-    return false;
+    String propertyName = action instanceof PropertyOwner ? ((PropertyOwner)action).getPropertyName() : action.getName();
+    return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName));
   }
 
   private static void saveState(TreeAction action, boolean state) {
-    if (action instanceof PropertyOwner) {
-      String propertyName = ((PropertyOwner)action).getPropertyName();
-      PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), state);
-    }
+    String propertyName = action instanceof PropertyOwner ? ((PropertyOwner)action).getPropertyName() : action.getName();
+    PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), state);
   }
 
   public void setTitle(String title) {
