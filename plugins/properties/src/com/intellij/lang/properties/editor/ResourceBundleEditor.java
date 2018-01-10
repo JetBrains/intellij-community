@@ -295,15 +295,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
                      ? ((ResourceBundlePropertyStructureViewElement)element).getPsiElement()
                      : null;
-      if (value != null) {
-        final IProperty property = PropertiesImplUtil.getProperty(value);
-        if (propertyName.equals(property.getUnescapedKey())) {
-          myStructureViewComponent.select(property, true);
-          selectionChanged();
-          return;
-        }
-      }
-      else {
+      final IProperty property = PropertiesImplUtil.getProperty(value);
+      if (property != null && propertyName.equals(property.getUnescapedKey())) {
+        myStructureViewComponent.select(property, true);
+        selectionChanged();
+        return;
+      } else {
         for (TreeElement treeElement : element.getChildren()) {
           toCheck.push(treeElement);
         }
