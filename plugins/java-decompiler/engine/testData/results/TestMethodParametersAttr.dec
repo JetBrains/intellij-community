@@ -12,7 +12,7 @@ public class TestMethodParametersAttr {
 
    void local() {
       class Local {
-         Local(final int this$0) {
+         Local(int p31) {
          }// 36
 
          void m(int p32) {
@@ -51,7 +51,7 @@ public class TestMethodParametersAttr {
    }
 
    class C1 {
-      C1(final int this$0) {
+      C1(int p11) {
       }// 24
 
       void m(int p12) {

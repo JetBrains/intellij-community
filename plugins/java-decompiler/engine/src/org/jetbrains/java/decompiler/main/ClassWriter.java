@@ -716,8 +716,8 @@ public class ClassWriter {
 
             appendParameterAnnotations(buffer, mt, paramCount);
 
-            if (methodParameters != null && paramCount < methodParameters.size()) {
-              appendModifiers(buffer, methodParameters.get(paramCount).myAccessFlags, CodeConstants.ACC_FINAL, isInterface, 0);
+            if (methodParameters != null && i < methodParameters.size()) {
+              appendModifiers(buffer, methodParameters.get(i).myAccessFlags, CodeConstants.ACC_FINAL, isInterface, 0);
             }
             else if (methodWrapper.varproc.getVarFinal(new VarVersionPair(index, 0)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
               buffer.append("final ");
@@ -755,8 +755,8 @@ public class ClassWriter {
             buffer.append(' ');
 
             String parameterName;
-            if (methodParameters != null && paramCount < methodParameters.size()) {
-              parameterName = methodParameters.get(paramCount).myName;
+            if (methodParameters != null && i < methodParameters.size()) {
+              parameterName = methodParameters.get(i).myName;
             }
             else {
               parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
