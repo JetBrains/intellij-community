@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.service.project.settings;
 
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -27,9 +29,10 @@ import java.util.Map;
 public interface RunConfigurationImporter {
   ExtensionPointName<RunConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationImporter");
 
-  default void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {}
-  default void process(@NotNull Module module, @NotNull  String name, @NotNull Map<String, Object> cfg) {}
+  default void process(@NotNull Project project, @NotNull RunConfiguration runConfiguration, @NotNull Map<String, Object> cfg) {}
+  default void process(@NotNull Module module, @NotNull RunConfiguration runConfiguration, @NotNull Map<String, Object> cfg) {}
   default boolean canHandle(@NotNull String typeName) {
     return false;
   }
+  @NotNull ConfigurationFactory getConfigurationFactory();
 }

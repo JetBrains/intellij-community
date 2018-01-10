@@ -15,8 +15,9 @@
  */
 package com.intellij.execution.junit
 
-import com.intellij.execution.RunManager
+import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.module.Module
 import com.intellij.rt.execution.junit.RepeatCount
@@ -29,13 +30,10 @@ import java.util.*
 class JUnitRunConfigurationImporter : RunConfigurationImporter {
   override fun canHandle(typeName: String): Boolean = "junit" == typeName
 
-  override fun process(module: Module, name: String, cfg: MutableMap<String, *>) {
-    val cfgType = ConfigurationTypeUtil.findConfigurationType<JUnitConfigurationType>(JUnitConfigurationType::class.java)
-    val runManager = RunManager.getInstance(module.project)
-    val runnerAndConfigurationSettings = runManager.createConfiguration(name, cfgType.configurationFactories[0])
-    val junitConfig = runnerAndConfigurationSettings.configuration as JUnitConfiguration
-    junitConfig.setModule(module)
-
+  override fun process(module: Module, runConfig: RunConfiguration, cfg: MutableMap<String, *>) {
+    if (runConfig !is JUnitConfiguration) {
+      throw IllegalArgumentException("Unexpected type of run configuration: ${runConfig::class.java}")
+    }
 
     val testKind = cfg.keys.firstOrNull { it in listOf("package", "directory", "pattern", "class", "method", "category") }
     val testKindValue = cfg[testKind] as? String
@@ -44,7 +42,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
       return
     }
 
-    val data = junitConfig.persistentData
+    val data = runConfig.persistentData
     when (testKind) {
       "package"   -> { data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE; data.PACKAGE_NAME = testKindValue }
       "directory" -> { data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY; data.dirName = testKindValue  }
@@ -64,20 +62,21 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
         data.TEST_OBJECT = JUnitConfiguration.TEST_CATEGORY
         data.setCategoryName(testKindValue)
       }
-      null -> return
     }
 
     val repeatValue = cfg["repeat"]
-    junitConfig.repeatMode = when {
-      repeatValue == null           -> { RepeatCount.ONCE }
-      repeatValue == "untilStop"    -> { RepeatCount.UNLIMITED }
-      repeatValue == "untilFailure" -> { RepeatCount.UNTIL_FAILURE }
-      repeatValue is Number         -> { junitConfig.repeatCount = repeatValue.toInt(); RepeatCount.N }
-      else                          -> { RepeatCount.ONCE }
+    runConfig.repeatMode = when (repeatValue) {
+      "untilStop"    -> RepeatCount.UNLIMITED
+      "untilFailure" -> RepeatCount.UNTIL_FAILURE
+      is Number      -> RepeatCount.N.also { runConfig.repeatCount = repeatValue.toInt() }
+      else           -> RepeatCount.ONCE
     }
 
-    (cfg["jvmArgs"] as? String)?.let { junitConfig.vmParameters = it }
-
-    runManager.addConfiguration(runnerAndConfigurationSettings)
+    (cfg["jvmArgs"] as? String)?.let { runConfig.vmParameters = it }
   }
+
+  override fun getConfigurationFactory(): ConfigurationFactory =
+    ConfigurationTypeUtil
+      .findConfigurationType<JUnitConfigurationType>(JUnitConfigurationType::class.java)
+      .configurationFactories[0]
 }
