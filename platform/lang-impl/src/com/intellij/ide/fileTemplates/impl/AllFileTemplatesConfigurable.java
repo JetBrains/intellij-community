@@ -305,6 +305,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
+        if (myCurrentTab == null) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         final FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
         e.getPresentation().setEnabled(selectedItem instanceof BundledFileTemplate && !selectedItem.isDefault());
       }
