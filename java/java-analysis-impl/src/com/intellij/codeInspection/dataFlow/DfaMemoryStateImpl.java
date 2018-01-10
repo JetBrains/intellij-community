@@ -1298,6 +1298,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     final int idPlain = varPlain.getID();
     final int idNegated = varNegated == null ? -1 : varNegated.getID();
 
+    if(isNull(varPlain) || isNotNull(varPlain)) {
+      DfaVariableState state = myVariableStates.get(varPlain);
+      if (state != null) {
+        setVariableState(varPlain, state.withoutFact(DfaFactType.CAN_BE_NULL));
+      }
+    }
+
     int[] classes = myIdToEqClassesIndices.get(idPlain);
     int[] negatedClasses = myIdToEqClassesIndices.get(idNegated);
     int[] result = ArrayUtil
