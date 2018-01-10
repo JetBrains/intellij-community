@@ -112,7 +112,7 @@ public class ModelMergerImpl implements ModelMerger {
         }
         if ("equals".equals(methodName)) {
           final Object arg = args[0];
-          return arg != null && arg instanceof MergedObject && implementations.equals(((MergedObject)arg).getImplementations());
+          return arg instanceof MergedObject && implementations.equals(((MergedObject)arg).getImplementations());
 
         }
         return null;

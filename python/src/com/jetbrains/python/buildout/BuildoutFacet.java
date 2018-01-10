@@ -329,7 +329,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
         final PsiFile configFile = PsiFileFactory
           .getInstance(getModule().getProject()).createFileFromText("buildout.cfg",
                                                                     BuildoutCfgLanguage.INSTANCE, text);
-        if (configFile != null && configFile instanceof BuildoutCfgFile) {
+        if (configFile instanceof BuildoutCfgFile) {
           return (BuildoutCfgFile)configFile;
         }
       }

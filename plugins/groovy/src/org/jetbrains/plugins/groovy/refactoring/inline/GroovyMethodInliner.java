@@ -244,7 +244,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       while (element != null && element.getParent() != owner) {
         element = element.getParent();
       }
-      assert element != null && element instanceof GrStatement;
+      assert element instanceof GrStatement;
       GrStatement anchor = (GrStatement) element;
 
       if (!resultOfCallExplicitlyUsed) {

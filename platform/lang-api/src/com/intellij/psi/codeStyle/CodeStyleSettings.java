@@ -1036,7 +1036,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   
   @Nullable
   private IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
-    if (fileType == null || !(fileType instanceof LanguageFileType)) return null;
+    if (!(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
     return getIndentOptions(lang);
   }

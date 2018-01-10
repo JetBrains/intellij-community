@@ -154,7 +154,7 @@ public class JBMacMessages extends MacMessagesEmulation {
       //At least our frame should have a title
     }
 
-    while (Registry.is("skip.untitled.windows.for.mac.messages") && _window != null && _window instanceof JDialog && !((JDialog)_window).isModal()) {
+    while (Registry.is("skip.untitled.windows.for.mac.messages") && _window instanceof JDialog && !((JDialog)_window).isModal()) {
       _window = _window.getOwner();
     }
 

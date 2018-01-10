@@ -49,7 +49,7 @@ public class StdArrangementTokenType {
   @Override
   public boolean equals(Object o) {
     if (this == o) {return true;}
-    if (o == null || !(o instanceof StdArrangementTokenType)) {
+    if (!(o instanceof StdArrangementTokenType)) {
       return false;
     }
     StdArrangementTokenType oType = (StdArrangementTokenType) o;

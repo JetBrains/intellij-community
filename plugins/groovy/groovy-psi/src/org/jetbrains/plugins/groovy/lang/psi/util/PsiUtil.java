@@ -1409,7 +1409,7 @@ public class PsiUtil {
     return CachedValuesManager.getCachedValue(block, () -> CachedValueProvider.Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        return returnValue == null || !(returnValue instanceof GrLiteral);
+        return !(returnValue instanceof GrLiteral);
       }
     }), PsiModificationTracker.MODIFICATION_COUNT));
   }

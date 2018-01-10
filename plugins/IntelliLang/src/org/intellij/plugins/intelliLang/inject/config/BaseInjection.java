@@ -196,7 +196,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @SuppressWarnings({"RedundantIfStatement"})
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (o == null || !(o instanceof BaseInjection)) return false;
+    if (!(o instanceof BaseInjection)) return false;
 
     final BaseInjection that = (BaseInjection)o;
 

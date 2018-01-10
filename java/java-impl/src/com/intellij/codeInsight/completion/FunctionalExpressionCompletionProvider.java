@@ -57,8 +57,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
   private static boolean isLambdaContext(@NotNull PsiElement element) {
     final PsiElement rulezzRef = element.getParent();
-    return rulezzRef != null &&
-           rulezzRef instanceof PsiReferenceExpression &&
+    return rulezzRef instanceof PsiReferenceExpression &&
            ((PsiReferenceExpression)rulezzRef).getQualifier() == null &&
            LambdaUtil.isValidLambdaContext(rulezzRef.getParent());
   }

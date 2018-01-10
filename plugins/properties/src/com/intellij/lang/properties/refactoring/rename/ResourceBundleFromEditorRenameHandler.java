@@ -57,11 +57,11 @@ public class ResourceBundleFromEditorRenameHandler implements RenameHandler {
       return false;
     }
     final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-    if (fileEditor == null || !(fileEditor instanceof ResourceBundleEditor)) {
+    if (!(fileEditor instanceof ResourceBundleEditor)) {
       return false;
     }
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    return !(virtualFile == null || !(virtualFile instanceof ResourceBundleAsVirtualFile));
+    return !(!(virtualFile instanceof ResourceBundleAsVirtualFile));
   }
 
   @Override

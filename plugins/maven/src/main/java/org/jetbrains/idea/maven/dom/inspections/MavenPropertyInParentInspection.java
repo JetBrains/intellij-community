@@ -124,7 +124,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     if (psiReference == null) return null;
 
     PsiElement resolvedElement = psiReference.resolve();
-    if (resolvedElement == null || !(resolvedElement instanceof MavenPsiElementWrapper)) return null;
+    if (!(resolvedElement instanceof MavenPsiElementWrapper)) return null;
 
     PsiElement xmlTag = ((MavenPsiElementWrapper)resolvedElement).getWrappee();
     if (!(xmlTag instanceof XmlTag)) return null;

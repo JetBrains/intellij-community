@@ -40,7 +40,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
 
     final PsiExpression condition = ifStatement.getCondition();
 
-    if (condition == null || !(condition instanceof PsiPolyadicExpression)) {
+    if (!(condition instanceof PsiPolyadicExpression)) {
       return false;
     }
 
@@ -92,7 +92,7 @@ public class ExtractIfConditionAction extends PsiElementBaseIntentionAction {
 
     final PsiExpression condition = ifStatement.getCondition();
 
-    if (condition == null || !(condition instanceof PsiPolyadicExpression)) {
+    if (!(condition instanceof PsiPolyadicExpression)) {
       return null;
     }
 

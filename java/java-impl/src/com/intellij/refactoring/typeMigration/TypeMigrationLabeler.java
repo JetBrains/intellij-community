@@ -357,7 +357,7 @@ public class TypeMigrationLabeler {
           MultiMap<PsiType, PsiVariable> variablesByMigrationType = new MultiMap<>();
           for (TypeMigrationUsageInfo migration : migrations) {
             final PsiElement var = migration.getElement();
-            if (var == null || !(var instanceof PsiLocalVariable || var instanceof PsiField)) {
+            if (!(var instanceof PsiLocalVariable || var instanceof PsiField)) {
               continue;
             }
             final PsiType type = getTypeEvaluator().getType(migration);
@@ -388,7 +388,7 @@ public class TypeMigrationLabeler {
 
     private void migrateMultiDeclarationVariable(TypeMigrationUsageInfo varUsageInfo) {
       final PsiElement var = varUsageInfo.getElement();
-      if (var == null || !(var instanceof PsiLocalVariable || var instanceof PsiField)) return;
+      if (!(var instanceof PsiLocalVariable || var instanceof PsiField)) return;
       ((PsiVariable) var).normalizeDeclaration();
       TypeMigrationReplacementUtil.migrateMemberOrVariableType(var, var.getProject(), getTypeEvaluator().getType(varUsageInfo));
     }

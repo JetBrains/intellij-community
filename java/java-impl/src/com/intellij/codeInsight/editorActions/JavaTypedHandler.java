@@ -275,7 +275,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     PsiElement currElement = file.findElementAt(offset - 1);
     if (currElement != null) {
       PsiElement parent = currElement.getParent();
-      if (parent != null && parent instanceof PsiSwitchLabelStatement) {
+      if (parent instanceof PsiSwitchLabelStatement) {
         CodeStyleManager.getInstance(project).adjustLineIndent(file, parent.getTextOffset());
         return true;
       }

@@ -105,7 +105,7 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         Object node = path.getLastPathComponent();
-        if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+        if ((!(node instanceof DefaultMutableTreeNode))) {
           return "";
         }
         if (node instanceof TooltipNode) {
@@ -164,7 +164,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof EditableTreeNode) {
+        if (node instanceof EditableTreeNode) {
           JComponent editedComponent = (JComponent)node.getUserObject();
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) {
@@ -190,7 +190,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void editingCanceled(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof EditableTreeNode) {
+        if (node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnCancel();
         }
         resetEditSync();
@@ -216,7 +216,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void focusLost(FocusEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof RepositoryNode && myTree.isEditing()) {
+        if (node instanceof RepositoryNode && myTree.isEditing()) {
           //need to force repaint foreground  for non-focused editing node
           myTree.getCellEditor().getTreeCellEditorComponent(myTree, node, true, false, false, myTree.getRowForPath(
             TreeUtil.getPathFromRoot(node)));
