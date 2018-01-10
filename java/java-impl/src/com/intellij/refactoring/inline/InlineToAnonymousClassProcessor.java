@@ -108,11 +108,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return super.getElementsToWrite(descriptor);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     assert elements.length == 1;
     myClass = (PsiClass) elements [0];
   }
 
+  @Override
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     for(UsageInfo usage: usages) {
@@ -324,6 +326,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return superType;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }

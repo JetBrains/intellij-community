@@ -55,8 +55,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
   private final int myCaretOffset;
 
   IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {

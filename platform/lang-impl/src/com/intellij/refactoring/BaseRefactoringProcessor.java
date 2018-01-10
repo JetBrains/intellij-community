@@ -184,7 +184,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(() -> findUsages()));
+        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -256,7 +256,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
@@ -500,7 +500,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performPsiSpoilingRefactoring());
       }
       else {
-        app.runWriteAction(() -> performPsiSpoilingRefactoring());
+        app.runWriteAction(this::performPsiSpoilingRefactoring);
       }
     }
     finally {
@@ -552,7 +552,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(() -> doRun());
+      DumbService.getInstance(myProject).smartInvokeLater(this::doRun);
     }
     else {
       doRun();
@@ -675,7 +675,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     @NotNull
-    public Language getElementLanguage() {
+    Language getElementLanguage() {
       return myElementLanguage;
     }
   }
@@ -684,7 +684,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     private final Project myProject;
     private final String myRefactoringId;
 
-    public UndoRefactoringAction(Project project, String refactoringId) {
+    UndoRefactoringAction(@NotNull Project project, @NotNull String refactoringId) {
       myProject = project;
       myRefactoringId = refactoringId;
     }

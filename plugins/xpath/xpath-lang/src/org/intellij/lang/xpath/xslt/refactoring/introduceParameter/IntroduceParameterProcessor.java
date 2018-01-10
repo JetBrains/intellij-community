@@ -102,6 +102,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         return usageInfos;
     }
 
+    @Override
     protected void refreshElements(@NotNull PsiElement[] psiElements) {
         // TODO When's that called? What should it do?
     }
@@ -163,6 +164,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         }
     }
 
+    @NotNull
     protected String getCommandName() {
         return XsltIntroduceParameterAction.COMMAND_NAME;
     }
