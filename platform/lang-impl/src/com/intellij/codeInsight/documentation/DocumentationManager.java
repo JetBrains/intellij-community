@@ -39,8 +39,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -167,7 +166,16 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public boolean isCloseOnSneeze() {
     return myCloseOnSneeze;
   }
-  
+
+  @Override
+  protected void setToolwindowDefaultState() {
+    final Rectangle rectangle = WindowManager.getInstance().getIdeFrame(myProject).suggestChildFrameBounds();
+    myToolWindow.setDefaultState(ToolWindowAnchor.RIGHT, ToolWindowType.DOCKED, new Rectangle(rectangle.width / 4, rectangle.height));
+    myToolWindow.setType(ToolWindowType.DOCKED, null);
+    myToolWindow.setSplitMode(true, null);
+    myToolWindow.setAutoHide(false);
+  }
+
   public static DocumentationManager getInstance(Project project) {
     return ServiceManager.getService(project, DocumentationManager.class);
   }

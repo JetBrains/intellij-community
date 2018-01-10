@@ -106,9 +106,6 @@
 
     <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
-                    serviceImplementation="com.jetbrains.python.PyDocumentationManager" overrides="true"/>
-
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
