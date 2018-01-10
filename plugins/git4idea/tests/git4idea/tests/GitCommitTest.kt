@@ -245,7 +245,7 @@ class GitCommitTest : GitSingleRepoTest() {
       modified("c.java")
     }
 
-    val expected = if (SystemInfo.isFileSystemCaseSensitive) {
+    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive) {
       STAGED_CONTENT
     }
     else {
@@ -254,8 +254,8 @@ class GitCommitTest : GitSingleRepoTest() {
       // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
       UNSTAGED_CONTENT
     }
-    assertEquals(expected, git("show :c.java"))
-    assertEquals(expected, FileUtil.loadFile(File(projectPath, "c.java")))
+    assertEquals(expectedIndexContent, git("show :c.java"))
+    assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
   }
 
   fun `test commit case rename with additional non-staged changes should commit everything`() {
