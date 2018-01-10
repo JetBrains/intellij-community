@@ -19,13 +19,24 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.application.ApplicationConfiguration;
+import com.intellij.execution.configuration.AbstractRunConfiguration;
+import com.intellij.execution.configurations.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.sm.runner.MockRuntimeConfiguration;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.externalSystem.service.project.settings.ApplicationRunConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -35,11 +46,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -186,6 +199,37 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertNull(app2Settings.get("jvmArgs"));
   }
 
+
+  @Test
+  public void testDefaultRCSettingsImport() throws Exception {
+    RunConfigurationImporter appcConfigImporter = new ApplicationRunConfigurationImporter();
+    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(appcConfigImporter);
+
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
+        "idea {\n" +
+        "  module.settings {\n" +
+        "    runConfigurations {\n" +
+        "       defaults(Application) {\n" +
+        "           jvmArgs =   '-DmyKey=myVal'\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
+    final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
+
+    assertNotNull(parameters);
+    assertTrue(parameters.contains("-DmyKey=myVal"));
+  }
+
+
   @Test
   public void testFacetSettingsImport() throws Exception {
 
@@ -265,18 +309,24 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   }
 
   @Override
-  public void process(@NotNull Project project, @NotNull String name, @NotNull Map<String, Object> cfg) {
-    myConfigs.put(name, cfg);
+  public void process(@NotNull Project project, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg) {
+    myConfigs.put(runConfig.getName(), cfg);
   }
 
   @Override
-  public void process(@NotNull Module module, @NotNull String name, @NotNull Map<String, Object> cfg) {
-    myConfigs.put(name, cfg);
+  public void process(@NotNull Module module, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg) {
+    myConfigs.put(runConfig.getName(), cfg);
   }
 
   @Override
   public boolean canHandle(@NotNull String typeName) {
     return myTypeName.equals(typeName);
+  }
+
+  @NotNull
+  @Override
+  public ConfigurationFactory getConfigurationFactory() {
+    return UnknownConfigurationType.FACTORY;
   }
 
   public Map<String, Map<String, Object>> getConfigs() {
