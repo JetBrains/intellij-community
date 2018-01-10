@@ -40,7 +40,7 @@ class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?
 
   override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
 
-  override fun getMethods(): Array<UMethod> = super.getMethods()
+  override fun getMethods(): Array<UMethod> = grElement.codeMethods.map { GrUMethod(it, { this }) }.toTypedArray()
 
   override fun getInnerClasses(): Array<UClass> = super.getInnerClasses()
   override fun getOriginalElement(): PsiElement = grElement.originalElement
