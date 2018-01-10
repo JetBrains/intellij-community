@@ -96,6 +96,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private DocumentationComponent myTestDocumentationComponent;
   
   private AnAction myRestorePopupAction;
+  private AnAction myFontSizeAction;
 
   @Override
   protected String getToolwindowId() {
@@ -443,7 +444,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
         if (!sameElement || !component.isUpToDate()) {
-          content.setDisplayName("for " + getTitle(element, true));
+          content.setDisplayName(getTitle(element, true));
           fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
         }
       }
@@ -550,7 +551,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+    return _short ? "for " + (title != null ? title : element.getText()) : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
   public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
