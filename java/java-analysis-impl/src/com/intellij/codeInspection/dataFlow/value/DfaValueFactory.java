@@ -177,11 +177,13 @@ public class DfaValueFactory {
 
     if(dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaFactMapValue) {
       if(relationType == RelationType.IS || relationType == RelationType.IS_NOT) {
-        boolean isSuperState = ((DfaFactMapValue)dfaRight).getFacts().isSuperStateOf(((DfaFactMapValue)dfaLeft).getFacts());
+        DfaFactMap leftFacts = ((DfaFactMapValue)dfaLeft).getFacts();
+        DfaFactMap rightFacts = ((DfaFactMapValue)dfaRight).getFacts();
+        boolean isSuperState = rightFacts.isSuperStateOf(leftFacts);
         if (isSuperState) {
           return getBoolean(relationType == RelationType.IS);
         }
-        boolean isDistinct = ((DfaFactMapValue)dfaRight).getFacts().isDistinct(((DfaFactMapValue)dfaLeft).getFacts());
+        boolean isDistinct = rightFacts.intersect(leftFacts) == null;
         if (isDistinct) {
           return getBoolean(relationType == RelationType.IS_NOT);
         }
@@ -261,4 +263,7 @@ public class DfaValueFactory {
   public DfaFactMapValue.Factory getFactFactory() {
     return myFactFactory;
   }
+
+  @NotNull
+  public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 }

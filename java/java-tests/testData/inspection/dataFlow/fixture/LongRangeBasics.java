@@ -99,6 +99,11 @@ public class LongRangeBasics {
     }
   }
 
+  static final String FOO = "bar";
+
+  void testStaticLength() {
+    if(<warning descr="Condition 'FOO.isEmpty()' is always 'false'">FOO.isEmpty()</warning>) System.out.println("nope");
+  }
 
   void testWrongMerge(boolean a, boolean b, int c) {
     int currentLevel = 0;

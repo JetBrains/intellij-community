@@ -221,20 +221,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     addInstruction(new AssignInstruction(rExpr, myFactory.createValue(lExpr)));
 
-    flushArrayElementsOnUnknownIndexAssignment(lExpr);
-
     finishElement(expression);
-  }
-
-  private void flushArrayElementsOnUnknownIndexAssignment(PsiExpression lExpr) {
-    if (lExpr instanceof PsiArrayAccessExpression &&
-        !(myFactory.createValue(lExpr) instanceof DfaVariableValue) // check for unknown index, otherwise AssignInstruction will flush only that element
-      ) {
-      DfaValue arrayVar = myFactory.createValue(((PsiArrayAccessExpression)lExpr).getArrayExpression());
-      if (arrayVar instanceof DfaVariableValue) {
-        addInstruction(new FlushVariableInstruction((DfaVariableValue)arrayVar, true));
-      }
-    }
   }
 
   private void generateDefaultAssignmentBinOp(PsiExpression lExpr, PsiExpression rExpr, final PsiType exprType) {
@@ -555,8 +542,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       });
     }
 
-    addCountingLoopBound(statement);
-
     PsiExpression condition = statement.getCondition();
     if (condition != null) {
       condition.accept(this);
@@ -577,6 +562,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       update.accept(this);
     }
 
+    addCountingLoopBound(statement);
+
     ControlFlow.ControlFlowOffset offset = initialization != null
                  ? getEndOffset(initialization)
                  : getStartOffset(statement);
@@ -592,7 +579,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   /**
    * Add known-to-be-true condition inside counting loop, effectively converting
-   * {@code for(int i=origin; i<bound; i++)} to {@code for(int i=origin; i>=origin && i<bound; i++)}.
+   * {@code for(int i=origin; i<bound; i++)} to
+   * {@code int i = origin; while(i < bound) {... i++; if(i <= origin) break;}}.
    * This adds a range knowledge to data flow analysis.
    * <p>
    * Does nothing if the statement is not a counting loop.
@@ -626,7 +614,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (origin == null || VariableAccessUtils.variableIsAssigned(counter, statement.getBody())) return;
     addInstruction(new PushInstruction(myFactory.getVarFactory().createVariableValue(counter, false), null));
     addInstruction(new PushInstruction(origin, null));
-    addInstruction(new BinopInstruction(JavaTokenType.LT, null, myProject));
+    addInstruction(new BinopInstruction(JavaTokenType.LE, null, myProject));
     addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), false, null));
   }
 

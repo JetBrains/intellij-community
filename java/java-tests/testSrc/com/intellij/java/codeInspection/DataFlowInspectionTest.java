@@ -581,4 +581,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testLessThanRelations() { doTest(); }
+  public void testAdvancedArrayAccess() { doTest(); }
 }

@@ -1153,4 +1153,49 @@ public class ExpressionUtils {
     if (diffConstant == null) return false;
     return diffConstant == toConstant - fromConstant;
   }
+
+  /**
+   * Returns an expression which represents an array element with given index if array is known to be never modified
+   * after initialization.
+   *
+   * @param array an array variable
+   * @param index an element index
+   * @return an expression or null if index is out of bounds or array could be modified after initialization
+   */
+  @Nullable
+  public static PsiExpression getConstantArrayElement(PsiVariable array, int index) {
+    if (index < 0) return null;
+    PsiExpression initializer = array.getInitializer();
+    if (initializer instanceof PsiNewExpression) initializer = ((PsiNewExpression)initializer).getArrayInitializer();
+    if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
+    PsiExpression[] initializers = ((PsiArrayInitializerExpression)initializer).getInitializers();
+    if (index >= initializers.length) return null;
+    if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
+      return null;
+    }
+    Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
+      .create(isConstantArray(array), PsiModificationTracker.MODIFICATION_COUNT));
+    return Boolean.TRUE.equals(isConstantArray) ? initializers[index] : null;
+  }
+
+  private static boolean isConstantArray(PsiVariable array) {
+    PsiElement scope = PsiTreeUtil.getParentOfType(array, array instanceof PsiField ? PsiClass.class : PsiCodeBlock.class);
+    if (scope == null) return false;
+    return PsiTreeUtil.processElements(scope, e -> {
+      if (!(e instanceof PsiReferenceExpression)) return true;
+      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+      if (!ref.isReferenceTo(array)) return true;
+      PsiExpression parent = tryCast(PsiUtil.skipParenthesizedExprUp(ref.getParent()), PsiExpression.class);
+      if (parent == null) return false;
+      if (parent instanceof PsiReferenceExpression) {
+        if (isReferenceTo(getArrayFromLengthExpression(parent), array)) return true;
+        if (parent.getParent() instanceof PsiMethodCallExpression &&
+            MethodCallUtils.isCallToMethod((PsiMethodCallExpression)parent.getParent(), CommonClassNames.JAVA_LANG_OBJECT,
+                                           null, "clone", PsiType.EMPTY_ARRAY)) {
+          return true;
+        }
+      }
+      return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(parent);
+    });
+  }
 }
