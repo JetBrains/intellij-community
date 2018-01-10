@@ -8,11 +8,13 @@ import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
   private static final String ACTION_EMPTY = "!!!EmptyAction";
+  private static final String CTRL_ALT_L_ACTION = "!!!CtrlAltLAction";
   private static final String OUR_KEYMAP_NAME = "IdeKeyEventDispatcherTestKeymap";
 
   private final JTextField myTextField = new JTextField();
@@ -85,6 +87,77 @@ public class IdeKeyEventDispatcherTest extends LightPlatformTestCase {
     assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED,'q', KeyEvent.KEY_LOCATION_UNKNOWN)));
     assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED,'q', KeyEvent.KEY_LOCATION_UNKNOWN)));
     assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, 0, KeyEvent.VK_ENTER, (char)0, KeyEvent.KEY_LOCATION_STANDARD)));
+  }
+
+  public void testPolish() {
+    final KeyboardFocusManager oldKeyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    try {
+      // Test setup
+      KeyboardFocusManager.setCurrentKeyboardFocusManager(new DefaultKeyboardFocusManager() {
+        @Override
+        public Component getFocusOwner() {
+          return myTextField;
+        }
+      });
+
+      final boolean[] actionPerformed = new boolean[] { false };
+      ActionManager.getInstance().registerAction(CTRL_ALT_L_ACTION, new AnAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          actionPerformed[0] = true;
+        }
+      });
+      myKeymap.addShortcut(CTRL_ALT_L_ACTION,
+                           new KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK | InputEvent.ALT_MASK), null));
+
+      IdeKeyEventDispatcher dispatcher = new IdeKeyEventDispatcher(null);
+
+      // Case 1: Right Alt + L on Polish keyboard. Expected: Type 'ł' character. (last key press event NOT HANDLED; action NOT PERFORMED)
+      actionPerformed[0] = false;
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_RIGHT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, 'ł', KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, InputEvent.ALT_GRAPH_MASK, KeyEvent.VK_UNDEFINED, 'ł', KeyEvent.KEY_LOCATION_UNKNOWN)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, 'ł', KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, 0, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_RIGHT)));
+      assertFalse(actionPerformed[0]);
+
+      // Case 2: Left Ctrl + Left Alt + L on Polish keyboard. Expected: Assigned shortcut. (last key press event HANDLED; action PERFORMED)
+      actionPerformed[0] = false;
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertTrue(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, 'ł', KeyEvent.KEY_LOCATION_STANDARD)));
+      assertTrue(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, InputEvent.ALT_GRAPH_MASK, KeyEvent.VK_UNDEFINED, 'ł', KeyEvent.KEY_LOCATION_UNKNOWN)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, 'ł', KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, 0, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertTrue(actionPerformed[0]);
+
+      // Case 3: Alt + L on English (US) keyboard. Expected: nothing happens. (last key press event NOT HANDLED; action NOT PERFORMED)
+      actionPerformed[0] = false;
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.ALT_MASK, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_RIGHT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.ALT_MASK, KeyEvent.VK_L, 'l', KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_TYPED, 0, InputEvent.ALT_MASK, KeyEvent.VK_UNDEFINED, 'l', KeyEvent.KEY_LOCATION_UNKNOWN)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, 'l', KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, 0, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_RIGHT)));
+      assertFalse(actionPerformed[0]);
+
+      // Case 4: Ctrl + Alt + L on English (US) keyboard. Expected: Assigned shortcut. (last key press event HANDLED; action PERFORMED)
+      actionPerformed[0] = false;
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertTrue(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_PRESSED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.CTRL_MASK | InputEvent.ALT_MASK, KeyEvent.VK_L, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_STANDARD)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, InputEvent.ALT_MASK, KeyEvent.VK_CONTROL, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertFalse(dispatcher.dispatchKeyEvent(new KeyEvent(myTextField, KeyEvent.KEY_RELEASED, 0, 0, KeyEvent.VK_ALT, KeyEvent.CHAR_UNDEFINED, KeyEvent.KEY_LOCATION_LEFT)));
+      assertTrue(actionPerformed[0]);
+    } finally {
+      // Test cleanup
+
+      KeyboardFocusManager.setCurrentKeyboardFocusManager(oldKeyboardFocusManager);
+      ActionManager.getInstance().unregisterAction(CTRL_ALT_L_ACTION);
+    }
   }
 
   private static class EmptyAction extends AnAction {

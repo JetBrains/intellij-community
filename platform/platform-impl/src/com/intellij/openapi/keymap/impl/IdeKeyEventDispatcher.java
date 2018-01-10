@@ -146,17 +146,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+    if (e.getKeyCode() == KeyEvent.VK_CONTROL && e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
+        myLeftCtrlPressed = true;
       }
       else if (e.getID() == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
       }
     }
-    else if (e.getKeyCode() == KeyEvent.VK_ALT) {
+    else if (e.getKeyCode() == KeyEvent.VK_ALT && e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
+        myRightAltPressed = true;
       }
       else if (e.getID() == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
@@ -381,10 +381,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
-  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv"
-  ));
-
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
@@ -392,21 +388,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyEvent e = myContext.getInputEvent();
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
-      if (Registry.is("actionSystem.force.alt.gr")) {
-        return false;
-      }
-      final InputContext inputContext = focusOwner.getInputContext();
-      if (inputContext != null) {
-        Locale locale = inputContext.getLocale();
-        if (locale != null) {
-          @NonNls final String language = locale.getLanguage();
-          if (ALT_GR_LAYOUTS.contains(language)) {
-            // don't search for shortcuts
-            return false;
-          }
-        }
-      }
+    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null &&
+        (e.getModifiers() | InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK) &&
+        e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
+      return false;
     }
 
     KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
