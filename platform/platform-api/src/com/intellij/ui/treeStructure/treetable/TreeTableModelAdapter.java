@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
+import com.intellij.util.containers.TransferToEDTQueue;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -38,6 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TreeTableModelAdapter extends AbstractTableModel {
 
   private final AtomicInteger modificationStamp = new AtomicInteger();
+  private final TransferToEDTQueue<Runnable> laterInvocator =
+    TransferToEDTQueue.createRunnableMerger("TreeTableModelAdapter later invocator");
 
   private final JTree tree;
   private final TreeTableModel treeTableModel;
@@ -128,8 +131,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
    */
   protected void delayedFireTableDataChanged() {
     long stamp = modificationStamp.incrementAndGet();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(() -> {
+    laterInvocator.offer(() -> {
       if (stamp != modificationStamp.get()) return;
       fireTableDataChanged();
     });
