@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
@@ -1426,7 +1427,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return ContainerUtil.filter(getAncestorTypesWithMetaClassInstances(context), type -> type == null || type.isDefinition());
   }
 
-  @Override
   @NotNull
   public List<PyClassLikeType> getAncestorTypesWithMetaClassInstances(@NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(this, context, contextArgument -> {
@@ -1492,6 +1492,79 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     return null;
   }
+
+  @Override
+  @Nullable
+  public PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
+    if (!inherited) {
+      return as(getMetaClassType(context), PyClassLikeType.class);
+    }
+    final List<PyClassLikeType> metaClassTypes = getAllPossibleMetaClassTypes(context);
+    final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
+    return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(this).getObjectType("type");
+  }
+
+  @Nullable
+  private static PyClassLikeType getMostDerivedClassType(@NotNull List<PyClassLikeType> classTypes,
+                                                         @NotNull final TypeEvalContext context) {
+    if (classTypes.isEmpty()) {
+      return null;
+    }
+    try {
+      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
+
+      return classTypes
+        .stream()
+        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .max(
+          (t1, t2) -> {
+            if (Objects.equals(t1, t2)) {
+              return 0;
+            }
+            else if (t2 == null || t1 != null && t1.getAncestorTypes(context).contains(t2)) {
+              return 1;
+            }
+            else if (t1 == null || t2.getAncestorTypes(context).contains(t1)) {
+              return -1;
+            }
+            else {
+              throw new NotDerivedClassTypeException();
+            }
+          }
+        )
+        .orElse(null);
+    }
+    catch (NotDerivedClassTypeException ignored) {
+      return null;
+    }
+  }
+
+  private static final class NotDerivedClassTypeException extends RuntimeException {
+  }
+
+  @NotNull
+  private List<PyClassLikeType> getAllPossibleMetaClassTypes(@NotNull TypeEvalContext context) {
+    final List<PyClassLikeType> results = Lists.newArrayList();
+    final PyClassLikeType ownMeta = getMetaClassType(false, context);
+    if (ownMeta != null) {
+      results.add(ownMeta);
+    }
+    for (PyClassLikeType ancestor : getAncestorTypesWithMetaClassInstances(context)) {
+      if (ancestor != null) {
+        if (!ancestor.isDefinition()) {
+          results.add(ancestor.toClass());
+        }
+        else {
+          final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
+          if (ancestorMeta != null) {
+            results.add(ancestorMeta);
+          }
+        }
+      }
+    }
+    return results;
+  }
+
 
   @Nullable
   private QualifiedName getMetaClassQName() {
