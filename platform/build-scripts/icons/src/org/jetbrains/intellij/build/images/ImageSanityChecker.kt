@@ -90,7 +90,7 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     log(severity, message, module, result)
   }
 
-  abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>)
+  internal abstract fun log(severity: Severity, message: String, module: JpsModule, images: Collection<ImagePaths>)
 
   enum class Severity { INFO, WARNING, ERROR }
 }

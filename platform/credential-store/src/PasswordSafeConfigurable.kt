@@ -254,7 +254,7 @@ private fun normalizeSelectedFile(file: VirtualFile): String {
   }
 }
 
-enum class ProviderType {
+internal enum class ProviderType {
   MEMORY_ONLY, KEYCHAIN, KEEPASS,
 
   // unused, but we cannot remove it because enum value maybe stored in the config and we must correctly deserialize it

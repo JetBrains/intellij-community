@@ -23,7 +23,7 @@ internal fun stringPointer(data: ByteArray, clearInput: Boolean = false): Dispos
 }
 
 // we use default collection, it seems no way to use custom
-class SecretCredentialStore(schemeName: String) : CredentialStore {
+internal class SecretCredentialStore(schemeName: String) : CredentialStore {
   private val serviceAttributeNamePointer by lazy { stringPointer("service".toByteArray()) }
   private val accountAttributeNamePointer by lazy { stringPointer("account".toByteArray()) }
 
