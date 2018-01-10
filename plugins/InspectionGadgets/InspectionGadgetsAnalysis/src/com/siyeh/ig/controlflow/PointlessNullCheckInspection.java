@@ -15,12 +15,15 @@
  */
 package com.siyeh.ig.controlflow;
 
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SetInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,6 +31,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
@@ -55,6 +59,8 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author Hamlet D'Arcy
  */
 public class PointlessNullCheckInspection extends BaseInspection {
+  private static final String REPORT_CALLS_OPTION = "REPORT_CALLS";
+
   public boolean REPORT_CALLS = true;
 
   @Nls
@@ -86,10 +92,30 @@ public class PointlessNullCheckInspection extends BaseInspection {
     return new PointlessNullCheckVisitor(REPORT_CALLS);
   }
 
+  @NotNull
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
-    return new PointlessNullCheckFix(expression.getText());
+    PsiExpression parent = PsiTreeUtil.getParentOfType((PsiElement)infos[1], PsiInstanceOfExpression.class, PsiMethodCallExpression.class);
+    PointlessNullCheckFix removeNullCheckFix = new PointlessNullCheckFix(expression.getText());
+    if (parent instanceof PsiMethodCallExpression) {
+      return new InspectionGadgetsFix[]{removeNullCheckFix, new DoNotReportOnCallsFix(this)};
+    }
+    else {
+      return new InspectionGadgetsFix[]{removeNullCheckFix};
+    }
+  }
+
+  private static class DoNotReportOnCallsFix extends DelegatingFix implements LowPriorityAction, Iconable {
+    public DoNotReportOnCallsFix(PointlessNullCheckInspection inspection) {
+      super(new SetInspectionOptionFix(inspection, REPORT_CALLS_OPTION,
+                                       InspectionGadgetsBundle.message("pointless.nullcheck.option.report.calls.off"), false));
+    }
+
+    @Override
+    public Icon getIcon(int flags) {
+      return ((Iconable)delegate).getIcon(flags);
+    }
   }
 
   private static class PointlessNullCheckFix extends InspectionGadgetsFix {
