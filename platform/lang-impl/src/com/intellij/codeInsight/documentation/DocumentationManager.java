@@ -443,7 +443,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           }
         }
         if (!sameElement || !component.isUpToDate()) {
-          content.setDisplayName(getTitle(element, true));
+          content.setDisplayName("for " + getTitle(element, true));
           fetchDocInfo(getDefaultCollector(element, originalElement), component, true);
         }
       }
