@@ -665,6 +665,10 @@ class StateMerger {
 
     @Override
     void removeFromState(@NotNull DfaMemoryStateImpl state) {
+      if(!myPositive && state.isNotNull(myVar) && state.isNull(myArg)) {
+        // merging "x == null" and "x != null" should be possible with marking "x" as nullable
+        state.forceVariableFact(myVar, CAN_BE_NULL, true);
+      }
       state.removeEquivalenceRelations(myVar);
     }
   }
