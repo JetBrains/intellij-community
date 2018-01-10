@@ -15,6 +15,8 @@ import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +41,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollPane;
@@ -127,6 +130,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   };
 
+
+  public AnAction[] getActions() {
+    return myToolBar.getActions().stream().filter((action -> !(action instanceof Separator))).toArray(AnAction[]::new);
+  }
+
+  public AnAction getFontSizeAction() {
+    return myShowSettingsButton.getAction();
+  }
+
   private static class Context {
     private final SmartPsiElementPointer element;
     private final String text;
@@ -148,7 +160,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JPanel myControlPanel;
   private boolean myControlPanelVisible;
-  private final ExternalDocAction myExternalDocAction;
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
 
@@ -377,9 +388,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     final BackAction back = new BackAction();
     final ForwardAction forward = new ForwardAction();
     EditDocumentationSourceAction edit = new EditDocumentationSourceAction();
+    ExternalDocAction externalDoc = new ExternalDocAction();
     actions.add(back);
     actions.add(forward);
-    actions.add(myExternalDocAction = new ExternalDocAction());
     actions.add(edit);
 
     try {
@@ -401,8 +412,20 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       LOG.error(e);
     }
     
-    myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
+    externalDoc.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
+    externalDoc.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
+
+    if (!Registry.is("documentation.show.toolbar")) {
+      ActionPopupMenu menu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ActionPlaces.JAVADOC_TOOLBAR, actions,
+                                                                                                    new MenuItemPresentationFactory(true));
+      myEditorPane.addMouseListener(new PopupHandler() {
+        @Override
+        public void invokePopup(Component comp, int x, int y) {
+          menu.getComponent().show(comp, x, y);
+        }
+      });
+    }
 
     new NextLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this);
     new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
@@ -700,8 +723,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private void updateControlState() {
     ElementLocationUtil.customizeElementLabel(myElement != null ? myElement.getElement() : null, myElementLabel);
-    myToolBar.updateActionsImmediately(); // update faster
-    setControlPanelVisible();
+    if (Registry.is("documentation.show.toolbar")) {
+      myToolBar.updateActionsImmediately(); // update faster
+      setControlPanelVisible();
+    }
   }
 
   private class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -718,6 +743,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myBackStack.isEmpty());
+      if (!isToolbar(e)) {
+        presentation.setVisible(presentation.isEnabled());
+        presentation.setIcon(AllIcons.Actions.Left);
+      }
     }
   }
 
@@ -735,6 +764,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     public void update(AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(!myForwardStack.isEmpty());
+      if (!isToolbar(e)) {
+        presentation.setVisible(presentation.isEnabled());
+        presentation.setIcon(AllIcons.Actions.Right);
+      }
     }
   }
 
@@ -744,6 +777,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(true);
       getTemplatePresentation().setIcon(AllIcons.Actions.EditSource);
       getTemplatePresentation().setText("Edit Source");
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      if (!isToolbar(e)) {
+        e.getPresentation().setIcon(AllIcons.General.Inline_edit);
+        e.getPresentation().setHoveredIcon(AllIcons.General.Inline_edit_hovered);
+      }
     }
 
     @Override
@@ -765,6 +807,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
       return null;
     }
+  }
+
+  private static boolean isToolbar(AnActionEvent e) {
+    return ActionPlaces.JAVADOC_TOOLBAR.equals(e.getPlace());
   }
 
 
@@ -806,9 +852,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void registerActions() {
-    myExternalDocAction
-      .registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
-
     // With screen readers, we want the default keyboard behavior inside
     // the document text editor, i.e. the caret moves with cursor keys, etc.
     if (!ScreenReader.isActive()) {
@@ -996,6 +1039,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private class MyShowSettingsAction extends ToggleAction {
+    public MyShowSettingsAction() {
+      super("Adjust font size");
+    }
 
     @Override
     public boolean isSelected(AnActionEvent e) {

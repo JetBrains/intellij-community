@@ -40,6 +40,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -96,7 +97,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private DocumentationComponent myTestDocumentationComponent;
   
   private AnAction myRestorePopupAction;
-  private AnAction myFontSizeAction;
 
   @Override
   protected String getToolwindowId() {
@@ -166,6 +166,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    */
   public boolean isCloseOnSneeze() {
     return myCloseOnSneeze;
+  }
+
+  @Override
+  protected void installComponentActions(ToolWindow toolWindow, DocumentationComponent component) {
+    ((ToolWindowEx)toolWindow).setTitleActions(component.getActions());
+    DefaultActionGroup group = new DefaultActionGroup(createActions());
+    group.add(component.getFontSizeAction());
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
   }
 
   @Override

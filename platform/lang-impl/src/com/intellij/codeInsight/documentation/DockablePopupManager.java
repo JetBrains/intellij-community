@@ -104,7 +104,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     setToolwindowDefaultState();
 
-    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
+    installComponentActions(myToolWindow, component);
 
     final ContentManager contentManager = myToolWindow.getContentManager();
     final ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
@@ -134,6 +134,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
     PropertiesComponent.getInstance().setValue(getShowInToolWindowProperty(), Boolean.TRUE.toString());
     restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), true));
     doUpdateComponent(element, originalElement, component);
+  }
+
+  protected void installComponentActions(ToolWindow toolWindow, T component) {
+    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(new DefaultActionGroup(createActions()));
   }
 
   protected void setToolwindowDefaultState() {
