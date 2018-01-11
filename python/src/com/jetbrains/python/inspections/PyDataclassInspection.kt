@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.*
 
@@ -55,8 +56,9 @@ class PyDataclassInspection : PyInspection() {
 
           node.processClassLevelDeclarations { element, _ ->
             if (element is PyTargetExpression && !PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
-                processDefaultFieldValue(element)
-                processAsInitVar(element, postInit)?.let { initVars.add(it) }
+              processDefaultFieldValue(element)
+              processAsInitVar(element, postInit)?.let { initVars.add(it) }
+              processFieldFunctionCall(element)
             }
 
             true
@@ -187,6 +189,15 @@ class PyDataclassInspection : PyInspection() {
       }
 
       return null
+    }
+
+    private fun processFieldFunctionCall(field: PyTargetExpression) {
+      val fieldStub = PyDataclassFieldStubImpl.create(field)
+      if (fieldStub != null && fieldStub.hasDefault() && fieldStub.hasDefaultFactory()) {
+        val call = field.findAssignedValue() as? PyCallExpression ?: return
+
+        registerProblem(call.argumentList, "cannot specify both default and default_factory", ProblemHighlightType.GENERIC_ERROR)
+      }
     }
 
     private fun processPostInitDefinition(postInit: PyFunction,
