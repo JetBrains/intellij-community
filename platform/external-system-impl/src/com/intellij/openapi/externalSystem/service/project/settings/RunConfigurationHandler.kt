@@ -46,7 +46,7 @@ class RunConfigurationHandler: ConfigurationHandler {
 
     if (runCfgMap !is List<*>) return
 
-    runCfgMap.forEach { cfg ->
+    runCfgMap.sortedBy { !((it as? Map<*,*>)?.get("defaults").isTrue()) }.forEach { cfg ->
       if (cfg !is Map<*, *>) {
         LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
         return@forEach
