@@ -430,11 +430,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   private static PyType getGenericTypeFromTarget(@NotNull PsiElement target,
                                                  @NotNull TypeEvalContext context,
                                                  @NotNull PyReferenceExpression anchor) {
-    if (!(target instanceof PyTargetExpression)) {  // PyTargetExpression will ask about its type itself
-      final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
-      if (pyType != null) {
-        return pyType;
-      }
+    // PyTargetExpression will ask about its type itself
+    final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
+    if (pyType != null) {
+      return pyType;
     }
     if (target instanceof PyTargetExpression) {
       final String name = ((PyTargetExpression)target).getName();
