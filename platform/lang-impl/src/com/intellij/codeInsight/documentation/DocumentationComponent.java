@@ -281,7 +281,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     myEditorPane.setEditorKit(editorKit);
     myScrollPane = new MyScrollPane();
-    myScrollPane.setBorder(null);
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
     final MouseListener mouseAdapter = new MouseAdapter() {
@@ -1188,6 +1187,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     public void resetCorners() {
       setupCorners();
+    }
+
+    @Override
+    protected void setupCorners() {
+      super.setupCorners();
+      setBorder(JBUI.Borders.empty());
     }
 
     @Override
