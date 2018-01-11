@@ -409,10 +409,10 @@ public class PyStubsTest extends PyTestCase {
     final PyClass c = file.findTopLevelClass("C");
     assertNotNull(c);
     final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
-    assertNotNull(c.getMetaClassType(context));
+    assertNotNull(c.getMetaClassType(false, context));
     final PyClass d = file.findTopLevelClass("D");
     assertNotNull(d);
-    assertNotNull(d.getMetaClassType(context));
+    assertNotNull(d.getMetaClassType(false, context));
     assertNotParsed(file);
   }
 
@@ -923,5 +923,53 @@ public class PyStubsTest extends PyTestCase {
       pyClass.getText();
       assertNotNull(pyClass.findClassAttribute("foo", false, context));
     });
+  }
+
+  // PY-27398
+  public void testDataclassField() {
+    class FieldChecker {
+
+      @NotNull
+      private final PyClass myClass;
+
+      private FieldChecker(@NotNull PyClass cls) {
+        myClass = cls;
+      }
+
+      private void check(@NotNull String name, boolean hasDefault, boolean hasDefaultFactory, boolean initValue) {
+        final TypeEvalContext context = TypeEvalContext.codeInsightFallback(myFixture.getProject());
+        final PyTargetExpression field = myClass.findClassAttribute(name, false, context);
+
+        final PyDataclassFieldStub fieldStub = field.getStub().getCustomStub(PyDataclassFieldStub.class);
+        assertNotNull(fieldStub);
+
+        assertEquals(hasDefault, fieldStub.hasDefault());
+        assertEquals(hasDefaultFactory, fieldStub.hasDefaultFactory());
+        assertEquals(initValue, fieldStub.initValue());
+      }
+    }
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final PyFile file1 = getTestFile("dataclassField/a.py");
+        final PyFile file2 = getTestFile("dataclassField/dataclasses.py");
+        final PyFile file3 = getTestFile("dataclassField/b.py");
+
+        final FieldChecker checker = new FieldChecker(file1.findTopLevelClass("A"));
+        checker.check("a", true, false, true);
+        checker.check("b", false, true, true);
+        checker.check("c", false, false, false);
+        checker.check("d", false, false, true);
+        checker.check("e", false, false, false);
+        checker.check("f", false, false, false);
+        checker.check("g", false, false, true); // fallback `init` value
+        checker.check("h", false, false, true);
+
+        assertNotParsed(file1);
+        assertNotParsed(file2);
+        assertNotParsed(file3);
+      }
+    );
   }
 }

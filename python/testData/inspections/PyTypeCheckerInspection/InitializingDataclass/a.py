@@ -83,3 +83,21 @@ class D1:
 
 D1(1, 2)
 D1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'int', got 'str' instead">"2"</warning>)
+
+
+@dataclasses.dataclass
+class E1:
+    a: int = dataclasses.field()
+    b: str = dataclasses.field(init=True)
+    c: int = dataclasses.field(init=False)
+    d: bytes = dataclasses.field(default=b"b")
+    e: int = dataclasses.field(default_factory=int)
+
+E1(1, "1")
+E1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'str', got 'int' instead">1</warning>)
+
+E1(1, "1", b"1")
+E1(<warning descr="Expected type 'int', got 'bytes' instead">b"1"</warning>, "1", <warning descr="Expected type 'bytes', got 'int' instead">1</warning>)
+
+E1(1, "1", b"1", 1)
+E1(<warning descr="Expected type 'int', got 'str' instead">"1"</warning>, <warning descr="Expected type 'str', got 'bytes' instead">b"1"</warning>, <warning descr="Expected type 'bytes', got 'str' instead">"1"</warning>, <warning descr="Expected type 'int', got 'str' instead">"1"</warning>)
