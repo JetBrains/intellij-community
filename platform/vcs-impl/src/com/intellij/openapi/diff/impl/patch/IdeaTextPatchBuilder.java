@@ -43,34 +43,36 @@ public class IdeaTextPatchBuilder {
   private IdeaTextPatchBuilder() {
   }
 
-  public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(final Project project, final List<Change> changes) throws VcsException {
+  public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(@NotNull Project project,
+                                                                         @NotNull List<Change> changes) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
     Map<VcsRoot, List<Change>> byRoots =
       groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
 
     for (VcsRoot root : byRoots.keySet()) {
       final Collection<Change> rootChanges = byRoots.get(root);
-      if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
-        addConvertChanges(rootChanges, result);
-        continue;
-      }
-      final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
-      final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
-      rootChanges.removeAll(basedOnLocal);
-      addConvertChanges(rootChanges, result);
 
-      for (Change change : basedOnLocal) {
-        // dates are here instead of numbers
-        result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), provider),
-                                     convertRevision(change.getAfterRevision(), provider)));
+      if (root.getVcs() == null || root.getVcs().getOutgoingChangesProvider() == null) {
+        addConvertChanges(rootChanges, result, null);
+      }
+      else {
+        final VcsOutgoingChangesProvider<?> provider = root.getVcs().getOutgoingChangesProvider();
+        final Collection<Change> basedOnLocal = provider.filterLocalChangesBasedOnLocalCommits(rootChanges, root.getPath());
+        rootChanges.removeAll(basedOnLocal);
+
+        addConvertChanges(rootChanges, result, null);
+        addConvertChanges(basedOnLocal, result, provider);
       }
     }
     return result;
   }
 
-  private static void addConvertChanges(final Collection<Change> changes, final List<BeforeAfter<AirContentRevision>> result) {
+  private static void addConvertChanges(@NotNull Collection<Change> changes,
+                                        @NotNull List<BeforeAfter<AirContentRevision>> result,
+                                        @Nullable VcsOutgoingChangesProvider provider) {
     for (Change change : changes) {
-      result.add(new BeforeAfter<>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
+      result.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision(), provider),
+                                   convertRevision(change.getAfterRevision(), provider)));
     }
   }
 
@@ -82,7 +84,7 @@ public class IdeaTextPatchBuilder {
     } else {
       revisions = new ArrayList<>(changes.size());
       for (Change change : changes) {
-        revisions.add(new BeforeAfter<>(convertRevisionToAir(change.getBeforeRevision()), convertRevisionToAir(change.getAfterRevision())));
+        revisions.add(new BeforeAfter<>(convertRevision(change.getBeforeRevision()), convertRevision(change.getAfterRevision())));
       }
     }
     return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, SystemInfo.isFileSystemCaseSensitive,
@@ -90,13 +92,26 @@ public class IdeaTextPatchBuilder {
   }
 
   @Nullable
-  private static AirContentRevision convertRevisionToAir(final ContentRevision cr) {
-    return convertRevisionToAir(cr, null);
+  private static AirContentRevision convertRevision(@Nullable ContentRevision cr) {
+    return convertRevision(cr, null);
   }
 
   @Nullable
-  private static AirContentRevision convertRevisionToAir(final ContentRevision cr, final Long ts) {
+  private static AirContentRevision convertRevision(@Nullable ContentRevision cr, @Nullable VcsOutgoingChangesProvider provider) {
     if (cr == null) return null;
+    if (provider != null) {
+      // dates are here instead of numbers
+      final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
+      final Long ts = date == null ? null : date.getTime();
+      return convertRevisionToAir(cr, ts);
+    }
+    else {
+      return convertRevisionToAir(cr, null);
+    }
+  }
+
+  @NotNull
+  private static AirContentRevision convertRevisionToAir(@NotNull ContentRevision cr, @Nullable Long ts) {
     final FilePath fp = cr.getFile();
     final StaticPathDescription description = new StaticPathDescription(fp.isDirectory(),
                                                                         ts == null ? fp.getIOFile().lastModified() : ts, fp.getPath());
@@ -105,14 +120,6 @@ public class IdeaTextPatchBuilder {
     } else {
       return new TextAirContentRevision(cr, description, ts);
     }
-  }
-
-  @Nullable
-  private static AirContentRevision convertRevision(@Nullable final ContentRevision cr, final VcsOutgoingChangesProvider provider) {
-    if (cr == null) return null;
-    final Date date = provider.getRevisionDate(cr.getRevisionNumber(), cr.getFile());
-    final Long ts = date == null ? null : date.getTime();
-    return convertRevisionToAir(cr, ts);
   }
 
   private static class BinaryAirContentRevision implements AirContentRevision {
@@ -190,6 +197,7 @@ public class IdeaTextPatchBuilder {
       return myDescription;
     }
 
+    @NotNull
     @Override
     public Charset getCharset() {
       return myRevision.getFile().getCharset();
