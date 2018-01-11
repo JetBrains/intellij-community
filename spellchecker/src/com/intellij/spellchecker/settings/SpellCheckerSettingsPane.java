@@ -9,11 +9,11 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
@@ -22,17 +22,22 @@ import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.OptionalChooserComponent;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
 import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
 import static com.intellij.openapi.extensions.PluginId.getId;
+import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
+import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
 import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
@@ -46,6 +51,8 @@ public class SpellCheckerSettingsPane implements Disposable {
   private JPanel myPanelForCustomDictionaries;
   private JSpinner myMaxCorrectionsSpinner;
   private JBLabel myAddDictionaryLabel;
+  private JBCheckBox myUseSingleDictionary;
+  private ComboBox<String> myDictionariesComboBox;
   private OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
   private final CustomDictionariesPanel myDictionariesPanel;
   private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
@@ -69,8 +76,16 @@ public class SpellCheckerSettingsPane implements Disposable {
         }
       }
     });
+    myUseSingleDictionary.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
+      }
+    });
     myAddDictionaryLabel.setText(SpellCheckerBundle.message("add.dictionary.description") + getHunspellDescription());
     myMaxCorrectionsSpinner.setModel(new SpinnerNumberModel(1, MIN_CORRECTIONS, MAX_CORRECTIONS, 1));
+    myDictionariesComboBox.addItem(APP.getName());
+    myDictionariesComboBox.addItem(PROJECT.getName());
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 
@@ -136,7 +151,9 @@ public class SpellCheckerSettingsPane implements Disposable {
     return wordsPanel.isModified() ||
            myBundledDictionariesChooserComponent.isModified() ||
            myDictionariesPanel.isModified() ||
-           settings.getCorrectionsLimit() != getLimit();
+           settings.getCorrectionsLimit() != getLimit() ||
+           settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected() ||
+           (settings.isUseSingleDictionaryToSave() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem());
   }
 
   public void apply() throws ConfigurationException {
@@ -146,6 +163,13 @@ public class SpellCheckerSettingsPane implements Disposable {
     if (settings.getCorrectionsLimit() != getLimit()) {
       settings.setCorrectionsLimit(getLimit());
     }
+    if (settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected()) {
+      settings.setUseSingleDictionaryToSave(myUseSingleDictionary.isSelected());
+    }
+    if (myUseSingleDictionary.isSelected() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem()) {
+      settings.setDictionaryToSave((String)myDictionariesComboBox.getSelectedItem());
+    }
+    SpellCheckerManager.restartInspections();
     if (!myBundledDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()){
       return;
     }
@@ -162,6 +186,9 @@ public class SpellCheckerSettingsPane implements Disposable {
 
   public void reset() {
     myMaxCorrectionsSpinner.setValue(settings.getCorrectionsLimit());
+    myUseSingleDictionary.setSelected(settings.isUseSingleDictionaryToSave());
+    myDictionariesComboBox.setSelectedItem(settings.getDictionaryToSave());
+    myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
     myDictionariesPanel.reset();
     myBundledDictionariesChooserComponent.reset();
   }
