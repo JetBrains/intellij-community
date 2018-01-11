@@ -611,7 +611,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     else if (JavaTokenType.PLUS == opSign) {
-      result = instruction.getNonNullStringValue(runner.getFactory());
+      PsiElement expr = instruction.getPsiAnchor();
+      PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
+      if(PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
+        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
+        if(left != null && right != null) {
+          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.add(right, PsiType.LONG.equals(type)));
+        } else {
+          result = DfaUnknownValue.getInstance();
+        }
+      } else {
+        result = instruction.getNonNullStringValue(runner.getFactory());
+      }
     }
     else {
       if (instruction instanceof InstanceofInstruction) {

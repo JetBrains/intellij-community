@@ -1171,7 +1171,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateOther(PsiPolyadicExpression expression, IElementType op, PsiExpression[] operands, PsiType type) {
-    op = substituteBinaryOperation(op, type);
+    op = substituteBinaryOperation(expression, op);
 
     PsiExpression lExpr = operands[0];
     lExpr.accept(this);
@@ -1190,11 +1190,27 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   @Nullable
-  private static IElementType substituteBinaryOperation(IElementType op, PsiType type) {
-    if (JavaTokenType.PLUS == op && (type == null || !type.equalsToText(JAVA_LANG_STRING))) {
+  private static IElementType substituteBinaryOperation(PsiPolyadicExpression expression, IElementType op) {
+    if (JavaTokenType.PLUS == op) {
+      PsiType type = expression.getType();
+      if (type == null) return null;
+      if (type.equalsToText(JAVA_LANG_STRING)) return op;
+      if ((PsiType.INT.equals(type) || PsiType.LONG.equals(type)) && isAcceptableContextForMathOperation(expression)) return op;
       return null;
     }
     return op;
+  }
+
+  private static boolean isAcceptableContextForMathOperation(PsiExpression context) {
+    PsiElement parent = context.getParent();
+    while (parent != null && !(parent instanceof PsiAssignmentExpression) && !(parent instanceof PsiStatement) && !(parent instanceof PsiLambdaExpression)) {
+      if (parent instanceof PsiExpressionList) return true;
+      if (parent instanceof PsiBinaryExpression && DfaRelationValue.RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
   }
 
   private void acceptBinaryRightOperand(@Nullable IElementType op, PsiType type,
