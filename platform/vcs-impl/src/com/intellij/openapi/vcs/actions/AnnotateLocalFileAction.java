@@ -72,26 +72,23 @@ public class AnnotateLocalFileAction {
   }
 
   private static boolean isAnnotated(AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (editor != null) {
-      return editor.getGutter().isAnnotationsShown();
-    }
-
-    return ContainerUtil.exists(getEditors(e.getDataContext()), editor1 -> editor1.getGutter().isAnnotationsShown());
+    List<Editor> editors = getEditors(e.getDataContext());
+    return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
     if (!selected) {
-      for (Editor editor : getEditors(e.getDataContext())) {
+      List<Editor> editors = getEditors(e.getDataContext());
+      for (Editor editor : editors) {
         editor.getGutter().closeAllAnnotations();
       }
     }
     else {
       Project project = assertNotNull(e.getProject());
-      VirtualFile selectedFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
 
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor == null) {
+        VirtualFile selectedFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
         FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(selectedFile, false);
         for (FileEditor fileEditor : fileEditors) {
           if (fileEditor instanceof TextEditor) {
@@ -160,6 +157,9 @@ public class AnnotateLocalFileAction {
 
   @NotNull
   private static List<Editor> getEditors(@NotNull DataContext context) {
+    Editor editor = context.getData(CommonDataKeys.EDITOR);
+    if (editor != null) return Collections.singletonList(editor);
+
     Project project = context.getData(CommonDataKeys.PROJECT);
     VirtualFile file = context.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || file == null) return Collections.emptyList();
