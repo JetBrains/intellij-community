@@ -37,3 +37,21 @@ class A4:
     bar2: ClassVar = 2
     baz2: int
     foo2: int = 3
+
+
+@dataclasses.dataclass
+class B1:
+    a: int = dataclasses.field()
+    b: int
+
+
+@dataclasses.dataclass
+class B2:
+    <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = dataclasses.field(default=1)
+    b: int = dataclasses.field()
+
+
+@dataclasses.dataclass
+class B3:
+    <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = dataclasses.field(default_factory=int)
+    b: int = dataclasses.field()

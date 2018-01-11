@@ -68,7 +68,20 @@ class PyDataclassInspection : PyInspection() {
             processPostInitDefinition(postInit, dataclassParameters, initVars)
           }
 
-          PyNamedTupleInspection.inspectFieldsOrder(node, myTypeEvalContext, this::registerProblem)
+          PyNamedTupleInspection.inspectFieldsOrder(
+            node,
+            this::registerProblem,
+            { !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) },
+            {
+              val fieldStub = PyDataclassFieldStubImpl.create(it)
+              if (fieldStub != null) {
+                fieldStub.hasDefault() || fieldStub.hasDefaultFactory()
+              }
+              else {
+                it.hasAssignedValue()
+              }
+            }
+          )
         }
       }
     }
