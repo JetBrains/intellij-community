@@ -38,7 +38,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyBrowseActionListener;
 import com.jetbrains.python.run.PyCommonOptionsFormFactory;
-import com.jetbrains.python.run.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
 import com.jetbrains.reflection.ReflectionUtilsKt;
 import com.jetbrains.reflection.SimplePropertiesProvider;
 import org.jetbrains.annotations.NotNull;

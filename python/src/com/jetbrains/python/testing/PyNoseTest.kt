@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.ConfigField
-import com.jetbrains.python.run.PyTargetType
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
 
 /**
  * Nose runner

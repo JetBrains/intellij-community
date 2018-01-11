@@ -37,7 +37,7 @@ import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.ConfigField
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
-import com.jetbrains.python.run.PyTargetType
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType
 import com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer
 import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration

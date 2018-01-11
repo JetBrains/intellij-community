@@ -22,7 +22,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
-import com.jetbrains.python.run.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

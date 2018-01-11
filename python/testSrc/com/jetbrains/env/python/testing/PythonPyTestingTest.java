@@ -16,7 +16,7 @@ import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurat
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.run.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
 import com.jetbrains.python.testing.PyTestConfiguration;
 import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PyTestFrameworkService;

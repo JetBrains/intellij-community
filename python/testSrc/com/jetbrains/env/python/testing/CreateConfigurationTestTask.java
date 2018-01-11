@@ -29,7 +29,7 @@ import com.intellij.util.ObjectUtils;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.run.PythonRunConfiguration;
-import com.jetbrains.python.run.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;

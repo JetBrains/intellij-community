@@ -6,9 +6,9 @@ package com.jetbrains.extensions
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.run.TargetWithType
-import com.jetbrains.python.run.targetAsPsiElement
-import com.jetbrains.python.run.targetAsVirtualFile
+import com.jetbrains.python.run.targetBasedConfiguration.TargetWithType
+import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
+import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
 
 
 /**

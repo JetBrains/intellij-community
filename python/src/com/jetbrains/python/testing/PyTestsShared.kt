@@ -42,12 +42,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
-import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.asPsiElement
 import com.jetbrains.extensions.asVirtualFile
@@ -62,6 +59,9 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.*
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
+import com.jetbrains.python.run.targetBasedConfiguration.TargetWithType
+import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.reflection.DelegationProperty
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
@@ -393,16 +393,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
   @DelegationProperty
   val legacyConfigurationAdapter = PyTestLegacyConfigurationAdapter(this)
 
-  /**
-   * Renames working directory if folder physically renamed
-   */
-  private open inner class PyConfigurationRenamer(private val workingDirectoryFile: VirtualFile?) : UndoRefactoringElementAdapter() {
-    override fun refactored(element: PsiElement, oldQualifiedName: String?) {
-      if (workingDirectoryFile != null) {
-        workingDirectory = workingDirectoryFile.path
-      }
-    }
-  }
 
   /**
    * For real launch use [getWorkingDirectorySafe] instead
@@ -423,50 +413,16 @@ abstract class PyAbstractTestConfiguration(project: Project,
     return target.getElementDirectory(this)?.path ?: super.getWorkingDirectorySafe()
   }
 
-  /**
-   * Renames python target if python symbol, module or folder renamed
-   */
-  private inner class PyElementTargetRenamer(private val originalElement: PsiElement,
-                                             workingDirectoryFile: VirtualFile?) :
-    PyAbstractTestConfiguration.PyConfigurationRenamer(workingDirectoryFile) {
-    override fun refactored(element: PsiElement, oldQualifiedName: String?) {
-      super.refactored(element, oldQualifiedName)
-      if (originalElement is PyQualifiedNameOwner) {
-        target.target = originalElement.qualifiedName ?: return
-      }
-      else if (originalElement is PsiNamedElement) {
-        target.target = originalElement.name ?: return
-      }
-    }
-  }
-
-  /**
-   * Renames folder target if file or folder really renamed
-   */
-  private inner class PyVirtualFileRenamer(private val virtualFile: VirtualFile,
-                                           workingDirectoryFile: VirtualFile?) :
-    PyAbstractTestConfiguration.PyConfigurationRenamer(workingDirectoryFile) {
-    override fun refactored(element: PsiElement, oldQualifiedName: String?) {
-      super.refactored(element, oldQualifiedName)
-      target.target = virtualFile.path
-    }
-  }
 
   override fun getRefactoringElementListener(element: PsiElement?): RefactoringElementListener? {
-    val targetElement = target.asPsiElement(this)
-    val workingDirectoryFile = getWorkingDirectoryAsVirtual()
-    val targetFile = target.asVirtualFile()
-
-
-    if (targetElement != null && PsiTreeUtil.isAncestor(element, targetElement, false)) {
-      return PyElementTargetRenamer(targetElement, workingDirectoryFile)
+    if (element == null) return null
+    var renamer = CompositeRefactoringElementListener(PyWorkingDirectoryRenamer(getWorkingDirectoryAsVirtual(), this))
+    createRefactoringListenerIfPossible(element, target.asPsiElement(this), target.asVirtualFile(), { target.target = it })?.let {
+      renamer = renamer.plus(it)
     }
-    if (targetFile != null && element is PsiFileSystemItem && VfsUtil.isAncestor(
-      element.virtualFile, targetFile, false)) {
-      return PyVirtualFileRenamer(targetFile, workingDirectoryFile)
-    }
-    return null
+    return renamer
   }
+
 
   override fun checkConfiguration() {
     super.checkConfiguration()

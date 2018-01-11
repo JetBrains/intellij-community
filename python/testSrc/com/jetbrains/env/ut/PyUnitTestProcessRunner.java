@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
-import com.jetbrains.python.run.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

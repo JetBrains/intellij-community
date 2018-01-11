@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-package com.jetbrains.python.run
+package com.jetbrains.python.run.targetBasedConfiguration
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,6 +11,8 @@ import com.jetbrains.extenstions.ModuleBasedContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.run.PythonRunConfigurationForm
 
 /**
  * Types of target (symbol, path or custom) many python runners may have
