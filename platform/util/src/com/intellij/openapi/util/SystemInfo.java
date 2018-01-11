@@ -194,7 +194,7 @@ public class SystemInfo extends SystemInfoRt {
   private static boolean isStudioJvm() {
     final String vendor = SystemProperties.getJavaVendor();
     final String url = System.getProperty("java.vendor.url");
-    return "Google Inc.".equals(vendor) && "http://developer.android.com/sdk/index.html".equals(url);
+    return ("Google Inc.".equals(vendor) || ("Google LLC".equals(vendor))) && "http://developer.android.com/sdk/index.html".equals(url);
   }
 
   // Android Studio: added by Change Ia9fc708c / commit b9214e0

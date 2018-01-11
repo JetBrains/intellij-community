@@ -4,4 +4,4 @@ Edition (www.jetbrains.com/idea).
 Copyright (C) 2000 - 2017 JetBrains s.r.o. All Rights Reserved.
 CLion, IntelliJ, and JetBrains are the registered trademarks of JetBrains s.r.o
 
-Google Inc. Privacy & Terms: https://www.google.com/policies/
+Google LLC Privacy & Terms: https://www.google.com/policies/
