@@ -135,6 +135,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
     return (JavaChangeInfoImpl)super.getChangeInfo();
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);

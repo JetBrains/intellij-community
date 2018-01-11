@@ -175,6 +175,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle
       .message("refactoring.introduce.parameter.object.command.name", myClassDescriptor.getClassName(), myMethod.getName());

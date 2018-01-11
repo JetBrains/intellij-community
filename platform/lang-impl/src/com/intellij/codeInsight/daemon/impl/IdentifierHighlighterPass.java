@@ -55,20 +55,21 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
   private final Editor myEditor;
-  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
-  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<TextRange>());
+  private final Collection<TextRange> myReadAccessRanges = Collections.synchronizedList(new ArrayList<>());
+  private final Collection<TextRange> myWriteAccessRanges = Collections.synchronizedList(new ArrayList<>());
   private final int myCaretOffset;
+  private final HighlightUsagesHandlerBase<PsiElement> myHighlightUsagesHandler;
 
   IdentifierHighlighterPass(@NotNull Project project, @NotNull PsiFile file, @NotNull Editor editor) {
     super(project, editor.getDocument(), false);
     myFile = file;
     myEditor = editor;
     myCaretOffset = myEditor.getCaretModel().getOffset();
+    myHighlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
   }
 
   @Override
   public void doCollectInformation(@NotNull final ProgressIndicator progress) {
-    HighlightUsagesHandlerBase<PsiElement> myHighlightUsagesHandler = HighlightUsagesHandler.createCustomHandler(myEditor, myFile);
     if (myHighlightUsagesHandler != null) {
       List<PsiElement> targets = myHighlightUsagesHandler.getTargets();
       myHighlightUsagesHandler.computeUsages(targets);

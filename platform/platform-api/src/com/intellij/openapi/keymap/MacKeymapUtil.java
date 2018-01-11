@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -58,7 +59,8 @@ public class MacKeymapUtil {
   public static final String POWER3	 = "\u233D";
   public static final String NUM_PAD     = "\u2328";
 
-  public static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+  @NotNull
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
     StringBuilder buf = new StringBuilder();
     if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(get(CONTROL, "Ctrl+"));
     if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(get(OPTION, "Alt+"));
@@ -70,6 +72,7 @@ public class MacKeymapUtil {
 
   }
 
+  @NotNull
   public static String getKeyText(int code) {
     switch (code) {
       case KeyEvent.VK_BACK_SPACE:     return get(BACKSPACE, "Backspace");
@@ -110,13 +113,15 @@ public class MacKeymapUtil {
     return KeyEvent.getKeyText(code);
   }
 
-  public static String getKeyStrokeText(KeyStroke keyStroke) {
+  @NotNull
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
     final String modifiers = getModifiersText(keyStroke.getModifiers());
     final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
     return modifiers + key;
   }
 
-  private static String get(String value, String replacement) {
+  @NotNull
+  private static String get(@NotNull String value, @NotNull String replacement) {
     Font font = UIUtil.getLabelFont();
     return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
   }

@@ -343,7 +343,8 @@ public class UsageViewImpl implements UsageView {
     };
   }
 
-  public UsageViewSettings getUsageViewSettings() {
+  @NotNull
+  UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
   }
 
@@ -1352,7 +1353,7 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void addPerformOperationAction(@NotNull final Runnable processRunnable,
-                                        final String commandName,
+                                        @NotNull final String commandName,
                                         final String cannotMakeString,
                                         @NotNull String shortDescription) {
     addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, true);
@@ -1360,18 +1361,12 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                        String commandName,
+                                        @NotNull String commandName,
                                         String cannotMakeString,
                                         @NotNull String shortDescription,
                                         boolean checkReadOnlyStatus) {
-    addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus), shortDescription);
-  }
-
-  @NotNull
-  private MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
-                                                                 String commandName,
-                                                                 String cannotMakeString, boolean checkReadOnlyStatus) {
-    return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName, checkReadOnlyStatus);
+    Runnable runnable = new MyPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus);
+    addButtonToLowerPane(runnable, shortDescription);
   }
 
   private boolean allTargetsAreValid() {
@@ -1744,7 +1739,7 @@ public class UsageViewImpl implements UsageView {
   private static class MyAutoScrollToSourceOptionProvider implements AutoScrollToSourceOptionProvider {
     @NotNull private final UsageViewSettings myUsageViewSettings;
 
-    public MyAutoScrollToSourceOptionProvider(@NotNull UsageViewSettings usageViewSettings) {
+    MyAutoScrollToSourceOptionProvider(@NotNull UsageViewSettings usageViewSettings) {
       myUsageViewSettings = usageViewSettings;
     }
 
@@ -1841,9 +1836,7 @@ public class UsageViewImpl implements UsageView {
     private final String myCommandName;
     private final boolean myCheckReadOnlyStatus;
 
-    private MyPerformOperationRunnable(final String cannotMakeString,
-                                       final Runnable processRunnable,
-                                       final String commandName,
+    private MyPerformOperationRunnable(@NotNull Runnable processRunnable, @NotNull String commandName, final String cannotMakeString,
                                        boolean checkReadOnlyStatus) {
       myCannotMakeString = cannotMakeString;
       myProcessRunnable = processRunnable;

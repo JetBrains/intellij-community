@@ -218,6 +218,7 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     InlineUtil.inlineVariable(myField, initializer1, (PsiJavaCodeReferenceElement)expr, invalidationCopy);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("inline.field.command", DescriptiveNameUtil.getDescriptiveName(myField));
