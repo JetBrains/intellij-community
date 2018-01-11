@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JsPsiHelper {
 
@@ -28,5 +29,21 @@ public class JsPsiHelper {
         }
 
         return ((JSReferenceExpression) parent).getCanonicalText().startsWith("process.env");
+    }
+
+    /**
+     * Checks whole process.env.SOME_KEY reference element
+     * @param referenceExpression checking expression
+     * @return null or Environment key
+     */
+    @Nullable
+    public static String checkReferenceExpression(@NotNull JSReferenceExpression referenceExpression) {
+        String text = referenceExpression.getCanonicalText();
+
+        if(!text.startsWith("process.env.") || text.length() < 13) {
+            return null;
+        }
+
+        return text.substring(12);
     }
 }

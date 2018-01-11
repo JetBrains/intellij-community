@@ -1,5 +1,6 @@
 package ru.adelf.idea.dotenv.js;
 
+import com.intellij.lang.javascript.psi.JSReferenceExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -14,8 +15,12 @@ class JsEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
     @Override
     public void visitElement(PsiElement element) {
 
-        if(JsPsiHelper.checkPsiElement(element)) {
-            collectedItems.add(new KeyUsagePsiElement(element.getText(), element));
+        if(element instanceof JSReferenceExpression) {
+            String possibleKey = JsPsiHelper.checkReferenceExpression((JSReferenceExpression) element);
+
+            if(possibleKey != null) {
+                collectedItems.add(new KeyUsagePsiElement(possibleKey, element));
+            }
         }
 
         super.visitElement(element);
