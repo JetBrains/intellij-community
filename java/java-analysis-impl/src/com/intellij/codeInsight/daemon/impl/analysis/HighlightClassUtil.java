@@ -103,7 +103,8 @@ public class HighlightClassUtil {
         QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(anyMethodToImplement, PsiModifier.PUBLIC, true, true));
       }
     }
-    if (!(aClass instanceof PsiAnonymousClass)
+    if (!(aClass instanceof PsiAnonymousClass) && 
+        !aClass.isEnum()
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {
       QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.ABSTRACT, true, false));
     }
