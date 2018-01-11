@@ -10,7 +10,7 @@ import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 import java.util.Collection;
 import java.util.HashSet;
 
-class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
+public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     private final Collection<KeyValuePsiElement> collectedItems = new HashSet<>();
 
     @Override
@@ -28,7 +28,7 @@ class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
         collectedItems.add(new KeyValuePsiElement(keyValue.getKey(), keyValue.getValue(), property));
     }
 
-    Collection<KeyValuePsiElement> getCollectedItems() {
+    public Collection<KeyValuePsiElement> getCollectedItems() {
         return collectedItems;
     }
 }

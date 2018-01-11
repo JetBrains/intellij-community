@@ -20,7 +20,7 @@ abstract public class BaseEnvCompletionProvider extends CompletionContributor im
                 lockup = lockup.withTailText(" = " + entry.getValue(), true);
             }
 
-            completionResultSet.addElement(PrioritizedLookupElement.withPriority(lockup, 10));
+            completionResultSet.addElement(PrioritizedLookupElement.withPriority(lockup, 100));
         }
     }
 }

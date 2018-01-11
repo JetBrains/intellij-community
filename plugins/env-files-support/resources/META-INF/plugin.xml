@@ -72,6 +72,10 @@
     <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
     <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
     <lang.commenter language="DotEnv" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCommenter"/>
+
+    <localInspection language="DotEnv" groupName="DotEnv"
+                     shortName="DotEnvDuplicateKeyInspection" displayName="Duplicate keys" enabledByDefault="true" level="WARNING"
+                     implementationClass="ru.adelf.idea.dotenv.inspections.DuplicateKeyInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
