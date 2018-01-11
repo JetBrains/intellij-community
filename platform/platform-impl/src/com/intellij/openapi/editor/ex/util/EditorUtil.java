@@ -602,16 +602,18 @@ public final class EditorUtil {
     scrollToTheEnd(editor, false);
   }
 
-  public static void scrollToTheEnd(@NotNull Editor editor, boolean verticalScrollOnly) {
+  public static void scrollToTheEnd(@NotNull Editor editor, boolean preferVerticalScroll) {
     editor.getSelectionModel().removeSelection();
-    int lastLine = Math.max(0, editor.getDocument().getLineCount() - 1);
+    Document document = editor.getDocument();
+    int lastLine = Math.max(0, document.getLineCount() - 1);
     if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
-      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+      editor.getCaretModel().moveToOffset(document.getTextLength());
     } else {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
     }
     ScrollingModel scrollingModel = editor.getScrollingModel();
-    if (verticalScrollOnly) {
+    if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
+      // don't move 'focus' to empty last line
       int scrollOffset;
       if (editor instanceof EditorEx) {
         JScrollBar verticalScrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();

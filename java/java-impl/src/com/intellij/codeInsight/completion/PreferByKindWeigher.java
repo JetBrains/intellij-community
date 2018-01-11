@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -115,14 +116,38 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return psiClass -> preferClassIf(InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE));
     }
 
-    if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
-      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
-      assert annotation != null;
-      final PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
-      return psiClass -> preferClassIf(psiClass.isAnnotationType() && AnnotationTargetUtil.findAnnotationTarget(psiClass, targets) != null);
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement) {
+      PsiElement refParent = parent.getParent();
+      if (refParent instanceof PsiAnnotation) {
+        PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(((PsiAnnotation)refParent).getOwner());
+        return psiClass -> preferClassIf(psiClass.isAnnotationType() && AnnotationTargetUtil.findAnnotationTarget(psiClass, targets) != null);
+      }
+      if (refParent instanceof PsiTypeElement) {
+        List<PsiClass> bounds = getTypeBounds((PsiTypeElement)refParent);
+        return psiClass -> preferClassIf(ContainerUtil.exists(bounds, bound -> InheritanceUtil.isInheritorOrSelf(psiClass, bound, true)));
+      }
     }
 
     return aClass -> MyResult.classNameOrGlobalStatic;
+  }
+
+  private static List<PsiClass> getTypeBounds(PsiTypeElement typeElement) {
+    PsiElement typeParent = typeElement.getParent();
+    if (typeParent instanceof PsiReferenceParameterList) {
+      int index = Arrays.asList(((PsiReferenceParameterList)typeParent).getTypeParameterElements()).indexOf(typeElement);
+      PsiElement listParent = typeParent.getParent();
+      if (index >= 0 && listParent instanceof PsiJavaCodeReferenceElement) {
+        PsiElement target = ((PsiJavaCodeReferenceElement)listParent).resolve();
+        if (target instanceof PsiClass) {
+          PsiTypeParameter[] typeParameters = ((PsiClass)target).getTypeParameters();
+          if (index < typeParameters.length) {
+            return ContainerUtil.mapNotNull(typeParameters[index].getExtendsListTypes(), PsiUtil::resolveClassInType);
+          }
+        }
+      }
+    }
+    return Collections.emptyList();
   }
 
   static boolean isExceptionPosition(PsiElement position) {

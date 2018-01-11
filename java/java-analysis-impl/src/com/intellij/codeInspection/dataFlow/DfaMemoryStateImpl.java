@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 
 public class DfaMemoryStateImpl implements DfaMemoryState {
@@ -269,7 +270,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private DfaValue handleFlush(DfaVariableValue flushed, DfaValue value) {
     if (value instanceof DfaVariableValue && (value == flushed || myFactory.getVarFactory().getAllQualifiedBy(flushed).contains(value))) {
-      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL : ((DfaVariableValue)value).getInherentNullability();
+      Nullness nullability = isNotNull(value) ? Nullness.NOT_NULL :
+                             isUnknownState(value) ? Nullness.UNKNOWN : ((DfaVariableValue)value).getInherentNullability();
       return myFactory.createTypeValue(((DfaVariableValue)value).getVariableType(), nullability);
     }
     return value;
@@ -629,6 +631,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public boolean isEmptyStack() {
     return myStack.isEmpty();
+  }
+
+  @Override
+  public void cleanUpTempVariables() {
+    Predicate<DfaVariableValue> sharesState = var ->
+      getConstantValue(var) == null &&
+      StreamEx.of(getEquivalentValues(var)).without(var).select(DfaVariableValue.class).findFirst().isPresent();
+    List<DfaVariableValue> values = StreamEx.ofKeys(myVariableStates)
+      .filter(var -> ControlFlowAnalyzer.isTempVariable(var.getPsiVariable()))
+      .remove(sharesState)
+      .toList();
+    values.forEach(this::flushVariable);
   }
 
   @Override
