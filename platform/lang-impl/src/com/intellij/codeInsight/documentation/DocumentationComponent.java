@@ -667,7 +667,15 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       gearActions.addAll(getActions());
       Presentation presentation = new Presentation();
       presentation.setIcon(AllIcons.General.GearPlain);
-      ActionButton corner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(22, 22));
+      ActionButton corner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(22, 22)) {
+        @Override
+        public void paintComponent(Graphics g) {
+          g.setColor(getBackground());
+          g.fillRect(0, 0, getSize().width, getSize().height);
+          paintButtonLook(g);
+        }
+      };
+      corner.setOpaque(true);
       corner.setNoIconsInPopup(true);
       myScrollPane.setCorner(ScrollPaneConstants.LOWER_RIGHT_CORNER, corner);
     }
