@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.ui;
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -35,6 +36,7 @@ import java.util.function.Function;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
+  private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
   private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
   private Function<Document, Document> myDocumentProcessor = Function.identity();
@@ -42,7 +44,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox<>(100);
+    myComboBox = new ComboBox<>(myModel, 100);
     myComboBox.setFocusCycleRoot(true);
     myComboBox.setFocusTraversalPolicyProvider(true);
     myComboBox.setFocusTraversalPolicy(new FocusTraversalPolicy() {
@@ -128,8 +130,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void fillComboBox() {
-    myComboBox.removeAllItems();
-    getRecentExpressions().forEach(myComboBox::addItem);
+    myModel.replaceAll(getRecentExpressions());
     if (myComboBox.getItemCount() > 0) {
       myComboBox.setSelectedIndex(0);
     }
