@@ -40,6 +40,11 @@ public class SaveTo implements SpellCheckerQuickFix {
     myWord = word;
   }
 
+  public SaveTo(String word, DictionaryLevel level) {
+    myWord = word;
+    myLevel = level;
+  }
+
   @NotNull
   public String getName() {
     String name = myWord != null ? SpellCheckerBundle.message("add.0.to", myWord) : SpellCheckerBundle.message("add.to");

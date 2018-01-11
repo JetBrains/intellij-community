@@ -30,7 +30,9 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.quickfixes.*;
+import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SpellcheckingStrategy {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
@@ -89,10 +91,22 @@ public class SpellcheckingStrategy {
                                                 @NotNull TextRange textRange,
                                                 boolean useRename,
                                                 String wordWithTypo) {
-    return getDefaultRegularFixes(useRename, wordWithTypo);
+    return getDefaultRegularFixes(useRename, wordWithTypo, element);
   }
 
+  /**
+   * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
+   */
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
+    return getDefaultRegularFixes(useRename, wordWithTypo, null);
+  }
+
+  public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo, @Nullable PsiElement element) {
+    final SpellCheckerSettings settings = element != null ? SpellCheckerSettings.getInstance(element.getProject()) : null;
+    if (settings != null && settings.isUseSingleDictionaryToSave()) {
+      return new SpellCheckerQuickFix[]{useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo),
+        new SaveTo(wordWithTypo, DictionaryLevel.getLevelByName(settings.getDictionaryToSave()))};
+    }
     return new SpellCheckerQuickFix[]{useRename ? new RenameTo(wordWithTypo) : new ChangeTo(wordWithTypo), new SaveTo(wordWithTypo)};
   }
 
