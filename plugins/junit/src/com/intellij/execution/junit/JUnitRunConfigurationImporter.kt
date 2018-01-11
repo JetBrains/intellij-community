@@ -43,25 +43,19 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
     }
 
     val data = runConfig.persistentData
-    when (testKind) {
-      "package"   -> { data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE; data.PACKAGE_NAME = testKindValue }
-      "directory" -> { data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY; data.dirName = testKindValue  }
-      "pattern"   -> { data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN; data.setPatterns(LinkedHashSet(testKindValue.split(delimiters = ','))) }
-      "class"     -> {
-        data.TEST_OBJECT = JUnitConfiguration.TEST_CLASS
-        data.MAIN_CLASS_NAME = testKindValue
-      }
-      "method"    -> {
-        data.TEST_OBJECT = JUnitConfiguration.TEST_METHOD
+    data.TEST_OBJECT =  when (testKind) {
+      "package"   -> JUnitConfiguration.TEST_PACKAGE.also   { data.PACKAGE_NAME = testKindValue }
+      "directory" -> JUnitConfiguration.TEST_DIRECTORY.also { data.dirName = testKindValue  }
+      "pattern"   -> JUnitConfiguration.TEST_PATTERN.also   { data.setPatterns(LinkedHashSet(testKindValue.split(delimiters = ','))) }
+      "class"     -> JUnitConfiguration.TEST_CLASS.also     { data.MAIN_CLASS_NAME = testKindValue }
+      "method"    -> JUnitConfiguration.TEST_METHOD.also    {
         val className = testKindValue.substringBefore('#')
         val methodName = testKindValue.substringAfter('#')
         data.MAIN_CLASS_NAME = className
         data.METHOD_NAME = methodName
       }
-      "category"  -> {
-        data.TEST_OBJECT = JUnitConfiguration.TEST_CATEGORY
-        data.setCategoryName(testKindValue)
-      }
+      "category"  -> JUnitConfiguration.TEST_CATEGORY.also  { data.setCategoryName(testKindValue) }
+      else        -> data.TEST_OBJECT
     }
 
     val repeatValue = cfg["repeat"]
@@ -69,7 +63,7 @@ class JUnitRunConfigurationImporter : RunConfigurationImporter {
       "untilStop"    -> RepeatCount.UNLIMITED
       "untilFailure" -> RepeatCount.UNTIL_FAILURE
       is Number      -> RepeatCount.N.also { runConfig.repeatCount = repeatValue.toInt() }
-      else           -> RepeatCount.ONCE
+      else           -> runConfig.repeatMode
     }
 
     (cfg["jvmArgs"] as? String)?.let { runConfig.vmParameters = it }
