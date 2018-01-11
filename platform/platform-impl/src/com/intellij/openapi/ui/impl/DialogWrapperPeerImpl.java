@@ -225,23 +225,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.addKeyListener(listener);
   }
 
-  private void createDialog(@Nullable Window owner, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
-    if (isHeadless()) {
-      myDialog = new HeadlessDialog(myWrapper);
-    }
-    else {
-      myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
-
-      myDialog.setModalityType(ideModalityType.toAwtModality());
-
-      myCanBeParent = canBeParent;
-    }
-  }
-
-  private void createDialog(@Nullable Window owner, boolean canBeParent) {
-    createDialog(owner, canBeParent, DialogWrapper.IdeModalityType.IDE);
-  }
-
   @Override
   public void toFront() {
     myDialog.toFront();
