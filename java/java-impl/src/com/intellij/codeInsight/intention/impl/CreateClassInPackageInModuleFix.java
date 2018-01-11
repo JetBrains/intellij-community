@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateServiceClassFixBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.actions.TemplateKindCombo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.panel.JBPanelFactory;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -41,8 +43,12 @@ import java.util.Objects;
  * @author Pavel.Dolgov
  */
 public class CreateClassInPackageInModuleFix implements IntentionAction {
-  private String myModuleName;
-  private String myPackageName;
+  public static final Key<Boolean> IS_INTERFACE = Key.create("CREATE_CLASS_IN_PACKAGE_IS_INTERFACE");
+  public static final Key<PsiDirectory> ROOT_DIR = Key.create("CREATE_CLASS_IN_PACKAGE_ROOT_DIR");
+  public static final Key<String> NAME = Key.create("CREATE_CLASS_IN_PACKAGE_NAME");
+
+  private final String myModuleName;
+  private final String myPackageName;
 
   public CreateClassInPackageInModuleFix(String moduleName, String packageName) {
     myModuleName = moduleName;
@@ -70,6 +76,15 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      Boolean isInterface = IS_INTERFACE.get(file);
+      PsiDirectory rootDir = ROOT_DIR.get(file);
+      String name = NAME.get(file);
+      if (isInterface != null && rootDir != null && name != null) {
+        WriteAction.run(() -> createClassInPackage(isInterface ? CreateClassKind.INTERFACE : CreateClassKind.CLASS, rootDir, name, file));
+      }
+      return;
+    }
     Module module = ModuleManager.getInstance(project).findModuleByName(myModuleName);
     if (module != null) {
       List<VirtualFile> roots = new ArrayList<>();
@@ -84,20 +99,28 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
       if (rootDirs.length != 0) {
         CreateClassInPackageDialog dialog = new CreateClassInPackageDialog(project, rootDirs);
         if (dialog.showAndGet()) {
-          PsiClass psiClass = WriteAction.compute(() -> {
-            PsiDirectory rootDir = dialog.getRootDir();
-            if (rootDir != null) {
-              PsiDirectory psiPackageDir = CreateServiceClassFixBase.getOrCreatePackageDirInRoot(myPackageName, rootDir);
-              if (psiPackageDir != null) {
-                return CreateFromUsageUtils.createClass(dialog.getKind(), psiPackageDir, dialog.getName(), psiManager, file, null, null);
-              }
-            }
-            return null;
-          });
-          CreateServiceClassFixBase.positionCursor(psiClass);
+          CreateClassKind kind = dialog.getKind();
+          PsiDirectory rootDir = dialog.getRootDir();
+          String name = dialog.getName();
+          if (rootDir != null) {
+            PsiClass psiClass = WriteAction.compute(() -> createClassInPackage(kind, rootDir, name, file));
+            CreateServiceClassFixBase.positionCursor(psiClass);
+          }
         }
       }
     }
+  }
+
+  @Nullable
+  private PsiClass createClassInPackage(@NotNull CreateClassKind kind,
+                                        @NotNull PsiDirectory rootDir,
+                                        @NotNull String name,
+                                        @NotNull PsiElement contextElement) {
+    PsiDirectory psiPackageDir = CreateServiceClassFixBase.getOrCreatePackageDirInRoot(myPackageName, rootDir);
+    if (psiPackageDir != null) {
+      return CreateFromUsageUtils.createClass(kind, psiPackageDir, name, contextElement.getManager(), contextElement, null, null);
+    }
+    return null;
   }
 
   @Override
