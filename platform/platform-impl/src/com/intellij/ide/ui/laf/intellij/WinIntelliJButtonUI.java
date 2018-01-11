@@ -17,7 +17,6 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
@@ -117,8 +116,6 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       int delta = JBUI.scale(6);
       rect.x += delta;
       rect.width -= delta;
-    } else if (b instanceof JBOptionButton) {
-      rect.x -= JBUI.scale(4);
     }
 
     rect.y -= JBUI.scale(1); // Move one pixel up

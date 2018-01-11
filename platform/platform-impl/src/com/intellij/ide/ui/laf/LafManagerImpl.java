@@ -26,6 +26,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.ui.popup.OurHeavyWeightPopup;
 import com.intellij.util.*;
@@ -434,6 +435,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     fixProgressBar(uiDefaults);
 
+    fixOptionButton(uiDefaults);
+
     for (Frame frame : Frame.getFrames()) {
       // OSX/Aqua fix: Some image caching components like ToolWindowHeader use
       // com.apple.laf.AquaNativeResources$CColorPaintUIResource
@@ -519,6 +522,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("ProgressBarUI", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI");
       uiDefaults.put("ProgressBar.border", "com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarBorder");
     }
+  }
+
+  /**
+   * NOTE: This code could be removed if {@link com.intellij.ui.components.JBOptionButton} is moved to [platform-impl]
+   * and default UI is created there directly.
+   */
+  private static void fixOptionButton(UIDefaults uiDefaults) {
+    uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
   }
 
   /**

@@ -15,19 +15,13 @@
  */
 package com.intellij.ui.components;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.DialogWrapperButtonLayout;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,13 +29,14 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.Set;
 
 public class JBOptionButton extends JButton implements Weighted {
-  private Rectangle myMoreRec;
-  private Rectangle myMoreRecMouse;
+
+  public static final String PROP_OPTIONS = "OptionActions";
+  public static final String PROP_OPTION_TOOLTIP = "OptionTooltip";
+
   private Action[] myOptions;
 
   private JPopupMenu myPopup;
@@ -54,14 +49,21 @@ public class JBOptionButton extends JButton implements Weighted {
 
   public JBOptionButton(Action action, Action[] options) {
     super(action);
-    myMoreRec = new Rectangle(0, 0, AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
 
-    myOptions = options;
+    setOptions(options);
     applyOptions();
 
     installShowPopupShortcut();
+  }
 
-    putClientProperty(DialogWrapperButtonLayout.EXTRA_WIDTH_KEY, myMoreRec.width);
+  @Override
+  public String getUIClassID() {
+    return "OptionButtonUI";
+  }
+
+  @Override
+  public OptionButtonUI getUI() {
+    return (OptionButtonUI)super.getUI();
   }
 
   @Override
@@ -69,37 +71,7 @@ public class JBOptionButton extends JButton implements Weighted {
     return 0.5;
   }
 
-  @Override
-  public void doLayout() {
-    super.doLayout();
-
-    Insets insets = getInsets();
-    myMoreRec.x = getSize().width - myMoreRec.width - insets.right + 8;
-    myMoreRec.y = (getHeight() / 2 - myMoreRec.height / 2);
-
-    myMoreRecMouse = new Rectangle(myMoreRec.x - 8, 0, getWidth() - myMoreRec.x, getHeight());
-  }
-
-  @Override
-  public String getToolTipText(MouseEvent event) {
-    return !isSimpleButton() ? myOptionTooltipText : super.getToolTipText(event);
-  }
-
-  @Override
-  protected void processMouseEvent(MouseEvent e) {
-    if (!isSimpleButton() && myMoreRecMouse.contains(e.getPoint())) {
-      if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-        if (!myPopupIsShowing) {
-          togglePopup();
-        }
-      }
-    }
-    else {
-      super.processMouseEvent(e);
-    }
-  }
-
-  private void togglePopup() {
+  public void togglePopup() {
     if (myPopupIsShowing) {
       closePopup();
     } else {
@@ -171,10 +143,20 @@ public class JBOptionButton extends JButton implements Weighted {
     myPopup.setVisible(false);
   }
 
+  @Nullable
+  public Action[] getOptions() {
+    return myOptions;
+  }
+
+  public void setOptions(@Nullable Action[] options) {
+    Action[] oldOptions = myOptions;
+    myOptions = options;
+    firePropertyChange(PROP_OPTIONS, oldOptions, myOptions);
+  }
+
   public void updateOptions(@Nullable Action[] options) {
     closePopup();
-
-    myOptions = options;
+    setOptions(options);
     applyOptions();
 
     repaint();
@@ -189,7 +171,7 @@ public class JBOptionButton extends JButton implements Weighted {
     myPopup = fillMenu();
   }
 
-  private boolean isSimpleButton() {
+  public boolean isSimpleButton() {
     return myOptions == null || myOptions.length == 0;
   }
 
@@ -289,47 +271,15 @@ public class JBOptionButton extends JButton implements Weighted {
     return myOptionInfos;
   }
 
-  @Override
-  protected void paintChildren(Graphics g) {
-    super.paintChildren(g);
-    if (isSimpleButton()) {
-      return;
-    }
-
-    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      Icon icon = AllIcons.Mac.YosemiteOptionButtonSelector;
-      int x = getWidth() - getInsets().right - icon.getIconWidth() - 6;
-      int y = (getHeight() - icon.getIconHeight()) / 2;
-      GraphicsConfig config = isEnabled() ? new GraphicsConfig(g) : GraphicsUtil.paintWithAlpha(g, 0.6f);
-      icon.paintIcon(this, g, x, y);
-      config.restore();
-      return;
-    }
-
-    boolean dark = UIUtil.isUnderDarcula();
-    int off = dark ? 6 : 0;
-    Icon icon = AllIcons.General.ArrowDown;
-    if (UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderWin10LookAndFeel()) {
-      icon = AllIcons.General.ArrowDown_white;
-    }
-    icon.paintIcon(this, g, myMoreRec.x - off, myMoreRec.y);
-
-    if (dark || UIUtil.isUnderWin10LookAndFeel()) return;
-
-    final Insets insets = getInsets();
-    int y1 = myMoreRec.y - 2;
-    int y2 = getHeight() - insets.bottom - 2;
-
-    if (y1 < getInsets().top) {
-      y1 = insets.top;
-    }
-
-    final int x = myMoreRec.x - 4;
-    UIUtil.drawDottedLine(((Graphics2D)g), x, y1, x, y2, null, Color.darkGray);
+  @Nullable
+  public String getOptionTooltipText() {
+    return myOptionTooltipText;
   }
 
-  public void setOptionTooltipText(String text) {
+  public void setOptionTooltipText(@Nullable String text) {
+    String oldValue = myOptionTooltipText;
     myOptionTooltipText = text;
+    firePropertyChange(PROP_OPTION_TOOLTIP, oldValue, myOptionTooltipText);
   }
 
   public void setOkToProcessDefaultMnemonics(boolean ok) {

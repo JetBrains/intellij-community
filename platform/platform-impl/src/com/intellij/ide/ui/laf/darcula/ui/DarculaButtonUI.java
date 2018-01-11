@@ -20,7 +20,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -251,8 +250,6 @@ public class DarculaButtonUI extends BasicButtonUI {
 
     if (isComboButton(b)) {
       rect.x += 6;
-    } else if (b instanceof JBOptionButton) {
-      rect.x -= 4;
     }
   }
 }
