@@ -10,13 +10,11 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter({ it.name != "module-info.java"})
 
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
