@@ -234,4 +234,18 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   public String toString() {
     return "psi:range=" + calcPsiRange() + ",type=" + myIdentikit;
   }
+
+  public static Segment calcActualRangeAfterDocumentEvents(@NotNull PsiFile containingFile, @NotNull Document document, @NotNull Segment segment, boolean isSegmentGreedy) {
+    Project project = containingFile.getProject();
+    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
+    if (!events.isEmpty()) {
+      SmartPointerManagerImpl pointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
+      SmartPointerTracker tracker = pointerManager.getTracker(containingFile.getViewProvider().getVirtualFile());
+      if (tracker != null) {
+        return tracker.getUpdatedRange(containingFile, segment, isSegmentGreedy, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);
+      }
+    }
+    return null;
+  }
 }
