@@ -358,7 +358,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         PyPsiUtils.assertValid(PyClassImpl.this);
         final StringBuilder result = new StringBuilder(notNullize(getName(), PyNames.UNNAMED_ELEMENT));
         final List<String> superClassesText = getSuperClassesText();
-        if (superClassesText.size() > 0) {
+        if (!superClassesText.isEmpty()) {
           result.append("(");
           result.append(join(superClassesText, expr -> notNullize(expr, PyNames.UNNAMED_ELEMENT), ", "));
           result.append(")");
@@ -370,8 +370,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private List<String> getSuperClassesText() {
     PyClassStub stub = getGreenStub();
-    if (stub == null || stub.getSuperClassesText() == null) {
-      return ContainerUtil.map(getSuperClassExpressions(), exp -> exp.getText());
+    if (stub == null) {
+      return ContainerUtil.map(getSuperClassExpressions(), PsiElement::getText);
     }
     else {
       return stub.getSuperClassesText();
