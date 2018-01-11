@@ -50,6 +50,7 @@ blog
 blogger
 blogging
 bool
+bootstrapper
 boxable
 breakpoint
 breakpoints
@@ -307,6 +308,7 @@ jsdoc
 jsessionid
 jshint
 json
+jsonb
 junit
 keepduplicates
 keychain
@@ -441,6 +443,7 @@ noninfingement
 nonnull
 nonschema
 nonstatic
+noop
 noorder
 noparallel
 norely
@@ -474,6 +477,7 @@ opensymphony
 optnone
 osgi
 outfile
+overrideable
 overrider
 overriders
 pageable
@@ -714,6 +718,7 @@ tablespace
 taglib
 teamcity
 templatemode
+templating
 temptable
 thiscall
 throwable
@@ -736,6 +741,7 @@ tooltips
 toplink
 trebuchet
 trie
+truststore
 tuple
 tuples
 twitter
@@ -796,11 +802,13 @@ vtlvariable
 wakeup
 watchlist
 wchar
+webapp
 webjar
 webjars
 webpack
 webservice
 webservices
+whitelabel
 whitespace
 whitespaces
 wifi
