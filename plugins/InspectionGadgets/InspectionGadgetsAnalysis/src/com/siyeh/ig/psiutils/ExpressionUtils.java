@@ -1113,7 +1113,7 @@ public class ExpressionUtils {
   }
 
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = refExpression.getQualifierExpression();
+    PsiExpression qualifier = PsiUtil.deparenthesizeExpression(refExpression.getQualifierExpression());
     if (qualifier == null) {
       return true;
     }
