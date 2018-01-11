@@ -552,7 +552,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   public void showStatusText(final String text) {
     myStatusUpdateAlarm.cancelAllRequests();
-    myStatusUpdateAlarm.addRequest(() -> StatusBarUtil.setStatusBarInfo(myProject, text), 50);
+    myStatusUpdateAlarm.addRequest(() -> {
+      if (!myProject.isDisposed()) {
+        StatusBarUtil.setStatusBarInfo(myProject, text);
+      }
+    }, 50);
   }
 
   @NotNull
