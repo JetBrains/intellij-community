@@ -52,7 +52,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -478,13 +477,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                            @Nullable final Runnable closeCallback) {
     final DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) : 
                                              myTestDocumentationComponent;
-    Processor<JBPopup> pinCallback = popup -> {
-      createToolWindow(element, originalElement);
-      myToolWindow.setAutoHide(false);
-      popup.cancel();
-      return false;
-    };
-
     ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -512,8 +504,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setFocusable(true)
       .setRequestFocus(requestFocus)
       .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
-      .setTitle(getTitle(element, false))
-      .setCouldPin(pinCallback)
       .setModalContext(false)
       .setCancelCallback(() -> {
         myCloseOnSneeze = false;
@@ -542,6 +532,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .createPopup();
 
     component.setHint(hint);
+    component.setToolwindowCallback(() -> {
+      createToolWindow(element, originalElement);
+      myToolWindow.setAutoHide(false);
+      hint.cancel();
+    });
 
     if (myEditor == null) {
       // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked, 

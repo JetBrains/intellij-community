@@ -129,6 +129,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       return Toolkit.getDefaultToolkit().createImage(url);
     }
   };
+  private Runnable myToolwindowCallback;
 
 
   public AnAction[] getActions() {
@@ -141,6 +142,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public void removeCornerMenu() {
     myScrollPane.resetCorners();
+  }
+
+  public void setToolwindowCallback(Runnable callback) {
+    myToolwindowCallback = callback;
   }
 
   private static class Context {
@@ -702,17 +707,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       removeCornerMenu();
     } else {
       myControlPanelVisible = false;
+      remove(myControlPanel);
+      if (myHint == null) return;
       final DefaultActionGroup gearActions = new MyGearActionGroup();
+      gearActions.add(new ShowAsToolwindowAction());
       gearActions.add(new MyShowSettingsAction());
       gearActions.add(new ShowToolbarAction());
       gearActions.addSeparator();
-      gearActions.add(new EditDocumentationSourceAction());
+      gearActions.addAll(getActions());
       Presentation presentation = new Presentation();
       presentation.setIcon(AllIcons.General.GearPlain);
-      ActionButton corner = new ActionButton(gearActions, presentation, ActionPlaces.JAVADOC_TOOLBAR, new Dimension(22, 22));
+      ActionButton corner = new ActionButton(gearActions, presentation, ActionPlaces.UNKNOWN, new Dimension(22, 22));
       corner.setNoIconsInPopup(true);
       myScrollPane.setCorner(ScrollPaneConstants.LOWER_RIGHT_CORNER, corner);
-      remove(myControlPanel);
     }
   }
 
@@ -1015,7 +1022,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class MyShowSettingsButton extends ActionButton {
 
     private MyShowSettingsButton() {
-      this(new MyGearActionGroup(new MyShowSettingsAction(), new ShowToolbarAction()), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      this(new MyGearActionGroup(new ShowAsToolwindowAction(), new MyShowSettingsAction(), new ShowToolbarAction()), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
@@ -1211,6 +1218,17 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       setQuickDocFontSize(newFontSize);
       applyFontProps();
       setFontSizeSliderSize(newFontSize);
+    }
+  }
+
+  private class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+    public ShowAsToolwindowAction() {
+      super("Open as Tool Window");
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      myToolwindowCallback.run();
     }
   }
 }
