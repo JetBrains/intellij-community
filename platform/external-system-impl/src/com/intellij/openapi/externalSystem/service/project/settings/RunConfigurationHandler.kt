@@ -25,7 +25,7 @@ class RunConfigurationHandler: ConfigurationHandler {
     val LOG = Logger.getInstance(RunConfigurationHandler::class.java)
   }
 
-  private fun Any?.isTrue(): Boolean = this != null && this is String && this.toBoolean()
+  private fun Any?.isTrue(): Boolean = this != null && this is Boolean && this
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration(RunManager.getInstance(module.project),
@@ -44,18 +44,15 @@ class RunConfigurationHandler: ConfigurationHandler {
   private fun ConfigurationData.eachRunConfiguration(runManager: RunManager, visit: (RunConfigurationImporter, RunConfiguration, Map<String, *>) -> Unit) {
     val runCfgMap = find("runConfigurations")
 
-    if (runCfgMap !is Map<*,*>) return
+    if (runCfgMap !is List<*>) return
 
-    runCfgMap.forEach { name, cfg ->
-      if (name !is String) {
-        LOG.warn("unexpected key type in runConfigurations map: ${name?.javaClass?.name}, skipping")
-        return@forEach
-      }
-
+    runCfgMap.forEach { cfg ->
       if (cfg !is Map<*, *>) {
         LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
         return@forEach
       }
+
+      val name = cfg["name"] as? String ?: ""
 
       val typeName = cfg["type"] as? String
       if (typeName == null) {
