@@ -16,28 +16,30 @@
 package com.jetbrains.python.console
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.CredentialsCase
-import com.jetbrains.python.remote.*
-import java.io.File
+import com.jetbrains.python.remote.PyRemotePathMapper
+import com.jetbrains.python.remote.PyRemoteProcessHandlerBase
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider
 
 interface PythonConsoleRemoteProcessCreator<T> {
   val credentialsType: CredentialsType<T>
 
   @Throws(ExecutionException::class)
-  fun createRemoteConsoleProcess(manager: PythonRemoteInterpreterManager,
-                                 command: Array<String>,
-                                 env: Map<String, String>,
-                                 workDirectory: File,
+  fun createRemoteConsoleProcess(commandLine: GeneralCommandLine,
                                  pathMapper: PyRemotePathMapper,
                                  project: Project,
                                  data: PyRemoteSdkAdditionalDataBase,
                                  runnerFileFromHelpers: String,
-                                 credentials: T): RemoteConsoleProcessData
+                                 credentials: T,
+                                 scriptPort: Int,
+                                 idePort: Int): RemoteConsoleProcessData
 
   companion object {
     val EP_NAME = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>("Pythonid.remoteConsoleProcessCreator")
@@ -58,14 +60,13 @@ data class RemoteConsoleProcessData(val remoteProcessHandlerBase: ProcessHandler
 }
 
 @Throws(ExecutionException::class)
-fun createRemoteConsoleProcess(manager: PythonRemoteInterpreterManager,
-                               command: Array<String>,
-                               env: Map<String, String>,
-                               workDirectory: File,
+fun createRemoteConsoleProcess(commandLine: GeneralCommandLine,
                                pathMapper: PyRemotePathMapper,
                                project: Project,
                                data: PyRemoteSdkAdditionalDataBase,
-                               runnerFileFromHelpers: String): RemoteConsoleProcessData {
+                               runnerFileFromHelpers: String,
+                               scriptPort: Int,
+                               idePort: Int): RemoteConsoleProcessData {
   val extensions = PythonConsoleRemoteProcessCreator.EP_NAME.extensions
   val result = Ref.create<RemoteConsoleProcessData>()
   val exception = Ref.create<ExecutionException>()
@@ -76,18 +77,17 @@ fun createRemoteConsoleProcess(manager: PythonRemoteInterpreterManager,
 
       override fun process(credentials: Any) {
         try {
-          val remoteConsoleProcess = it.createRemoteConsoleProcess(manager = manager,
-                                                                   command = command,
-                                                                   env = env,
-                                                                   workDirectory = workDirectory,
+          val remoteConsoleProcess = it.createRemoteConsoleProcess(commandLine = commandLine,
                                                                    pathMapper = pathMapper,
                                                                    project = project,
                                                                    data = data,
                                                                    runnerFileFromHelpers = runnerFileFromHelpers,
-                                                                   credentials = credentials)
+                                                                   credentials = credentials,
+                                                                   scriptPort = scriptPort,
+                                                                   idePort = idePort)
           result.set(remoteConsoleProcess)
         }
-        catch(e: ExecutionException) {
+        catch (e: ExecutionException) {
           exception.set(e)
         }
       }

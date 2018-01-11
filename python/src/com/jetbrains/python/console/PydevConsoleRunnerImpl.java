@@ -69,9 +69,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
-import com.intellij.remote.CredentialsType;
 import com.intellij.remote.RemoteProcess;
-import com.intellij.remote.Tunnelable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
@@ -95,11 +93,11 @@ import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.remote.PyRemotePathMapper;
-import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.run.*;
+import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.run.PythonRunParams;
+import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
 import icons.PythonIcons;
 import org.apache.xmlrpc.XmlRpcException;
@@ -130,7 +128,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
   private static final String CONSOLE_FEATURE = "python.console";
-  private static final String DOCKER_CONTAINER_PROJECT_PATH = "/opt/project";
   private final Project myProject;
   private final String myTitle;
   @Nullable private final String myWorkingDir;
@@ -413,21 +410,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         UsageTrigger.trigger(CONSOLE_FEATURE + ".remote");
 
         PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
-        CredentialsType connectionType = data.getRemoteConnectionType();
-
-        if (connectionType == CredentialsType.SSH_HOST ||
-            connectionType == CredentialsType.WEB_DEPLOYMENT ||
-            connectionType == CredentialsType.VAGRANT) {
-          return createRemoteConsoleProcess(manager, generalCommandLine);
-        }
 
         RemoteConsoleProcessData remoteConsoleProcessData =
-          PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(manager, generalCommandLine.getParametersList().getArray(),
-                                                                         generalCommandLine.getEnvironment(),
-                                                                         generalCommandLine.getWorkDirectory(),
-                                                                         PydevConsoleRunner
-                                                                           .getPathMapper(myProject, mySdk, myConsoleSettings),
-                                                                         myProject, data, getRunnerFileFromHelpers());
+          PythonConsoleRemoteProcessCreatorKt.createRemoteConsoleProcess(generalCommandLine,
+                                                                         PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings),
+                                                                         myProject, data, getRunnerFileFromHelpers(),
+                                                                         myPorts[0], myPorts[1]);
         myRemoteConsoleProcessData = remoteConsoleProcessData;
         myCommandLine = remoteConsoleProcessData.getCommandLine();
         myPydevConsoleCommunication = remoteConsoleProcessData.getPydevConsoleCommunication();
@@ -456,80 +444,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   protected String getRunnerFileFromHelpers() {
     return PYDEV_PYDEVCONSOLE_PY;
-  }
-
-  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager,
-                                                   @NotNull GeneralCommandLine commandLine)
-    throws ExecutionException {
-    PyRemoteSdkAdditionalDataBase data = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
-    assert data != null;
-
-    ParamsGroup scriptParams = commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    if (scriptParams != null) {
-      scriptParams.getParametersList().set(1, "0");
-      scriptParams.getParametersList().set(2, "0");
-    }
-
-    try {
-      PyRemotePathMapper pathMapper = PydevConsoleRunner.getPathMapper(myProject, mySdk, myConsoleSettings);
-
-      assert pathMapper != null;
-
-      commandLine.putUserData(PyRemoteProcessStarter.OPEN_FOR_INCOMING_CONNECTION, true);
-
-      // we do not have an option to setup Docker container settings now for Python console so we should bind at least project
-      // directory to some path inside the Docker container
-      commandLine.putUserData(PythonRemoteInterpreterManager.ADDITIONAL_MAPPINGS, buildDockerPathMappings());
-
-      PyRemoteProcessHandlerBase remoteProcessHandlerBase = PyRemoteProcessStarterManagerUtil
-        .getManager(data).startRemoteProcess(myProject, commandLine, manager, data,
-                                             pathMapper);
-
-      Process remoteProcess = myRemoteConsoleProcessData.getProcess();
-
-      Couple<Integer> remotePorts = getRemotePortsFromProcess(remoteProcess);
-
-      PydevRemoteConsoleCommunication remoteConsoleCommunication;
-
-      if (remoteProcess instanceof Tunnelable) {
-        Tunnelable tunnelableProcess = (Tunnelable)remoteProcess;
-        tunnelableProcess.addLocalTunnel(myPorts[0], remotePorts.first);
-        tunnelableProcess.addRemoteTunnel(remotePorts.second, "localhost", myPorts[1]);
-
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(String.format("Using tunneled communication for Python console: port %d (=> %d) on IDE side, " +
-                                  "port %d (=> %d) on pydevconsole.py side", myPorts[1], remotePorts.second, myPorts[0],
-                                  remotePorts.first));
-        }
-
-        remoteConsoleCommunication = new PydevRemoteConsoleCommunication(myProject, myPorts[0], remoteProcess, myPorts[1]);
-
-      }
-      else {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(String.format("Using direct communication for Python console: port %d on IDE side, port %d on pydevconsole.py side",
-                                  remotePorts.second, remotePorts.first));
-        }
-
-        remoteConsoleCommunication =
-          new PydevRemoteConsoleCommunication(myProject, remotePorts.first, remoteProcess, remotePorts.second);
-      }
-
-      myRemoteConsoleProcessData = new RemoteConsoleProcessData(remoteProcessHandlerBase, remoteConsoleCommunication);
-      myPydevConsoleCommunication = remoteConsoleCommunication;
-      myCommandLine = myRemoteConsoleProcessData.getCommandLine();
-
-      return remoteProcess;
-    }
-    catch (Exception e) {
-      throw new ExecutionException(e.getMessage(), e);
-    }
-  }
-
-  @NotNull
-  private PathMappingSettings buildDockerPathMappings() {
-    return new PathMappingSettings(Collections.singletonList(new PathMappingSettings.PathMapping(myProject.getBasePath(),
-                                                                                                 DOCKER_CONTAINER_PROJECT_PATH)));
   }
 
   public static Couple<Integer> getRemotePortsFromProcess(Process process) throws ExecutionException {
