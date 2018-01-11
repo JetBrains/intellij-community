@@ -53,6 +53,6 @@ enum E implements I {
 interface I2 {
   void <warning descr="Abstract method 'method()' is not implemented in every subclass">method</warning>();
 }
-enum E2 implements I2 {
-  <error descr="Class 'E2' must implement abstract method 'method()' in 'I2'">A</error>
+<error descr="Class 'E2' must either be declared abstract or implement abstract method 'method()' in 'I2'">enum E2 implements I2</error> {
+  A
 }
