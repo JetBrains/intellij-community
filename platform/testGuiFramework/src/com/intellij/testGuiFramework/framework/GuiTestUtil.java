@@ -60,8 +60,6 @@ import org.fest.swing.fixture.*;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -653,45 +651,6 @@ public final class GuiTestUtil {
       myNotified = true;
     }
   }
-
-  public static class PrefixMatcher extends BaseMatcher<String> {
-
-    private final String prefix;
-
-    public PrefixMatcher(String prefix) {
-      this.prefix = prefix;
-    }
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof String && ((String)item).startsWith(prefix);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("with prefix '" + prefix + "'");
-    }
-  }
-
-  public static class EqualsMatcher extends BaseMatcher<String> {
-
-    private final String wanted;
-
-    public EqualsMatcher(String wanted) {
-      this.wanted = wanted;
-    }
-
-    @Override
-    public boolean matches(Object item) {
-      return item instanceof String && ((String)item).equals(wanted);
-    }
-
-    @Override
-    public void describeTo(Description description) {
-      description.appendText("equals to '" + wanted + "'");
-    }
-  }
-
 
   public static String adduction(String s) {
     char ESCAPE_SYMBOL = '\u001B';
