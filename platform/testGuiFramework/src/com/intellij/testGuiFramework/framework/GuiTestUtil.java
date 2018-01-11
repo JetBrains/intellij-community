@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.framework;
 
 import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
+import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -529,6 +530,8 @@ public final class GuiTestUtil {
       PopupFactoryImpl.ActionItem
         item = (PopupFactoryImpl.ActionItem)elementAt;
       return item.getText();
+    } else if(elementAt instanceof ConfigurationTypeBase){
+      return ((ConfigurationTypeBase)elementAt).getDisplayName();
     }
     else { // For example package private class IntentionActionWithTextCaching used in quickfix popups
       return elementAt.toString();
