@@ -82,8 +82,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
       .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
-      .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
-                   isPropertiesFile(f) &&
+      .filter(f -> isPropertiesFile(f) &&
+                   Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
                    Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
       .map(PropertiesImplUtil::getPropertiesFile)
       .collect(Collectors.toList());
