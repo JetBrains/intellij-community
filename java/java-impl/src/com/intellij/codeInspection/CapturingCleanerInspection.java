@@ -70,7 +70,9 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
       }
 
 
-      private PsiElement getElementCapturingThis(PsiExpression runnableExpr, PsiClass trackedClass) {
+      @Nullable
+      private PsiElement getElementCapturingThis(@NotNull PsiExpression runnableExpr,
+                                                 @NotNull PsiClass trackedClass) {
         if (runnableExpr instanceof PsiMethodReferenceExpression) {
           PsiMethodReferenceExpression methodReference = (PsiMethodReferenceExpression)runnableExpr;
           if (PsiMethodReferenceUtil.isStaticallyReferenced(methodReference)) return null;
@@ -116,6 +118,9 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
       return PsiUtil.resolveClassInType(((PsiThisExpression)element).getType()) == containingClass;
     }
     else if (element instanceof PsiReferenceExpression) {
+      PsiReferenceExpression qualifierReference =
+        tryCast(((PsiReferenceExpression)element).getQualifierExpression(), PsiReferenceExpression.class);
+      if (qualifierReference != null) return false;
       PsiMember member = tryCast(((PsiReferenceExpression)element).resolve(), PsiMember.class);
       return memberBringsThisRef(containingClass, member);
     }

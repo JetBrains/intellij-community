@@ -172,3 +172,16 @@ class InnerAccesInstanceOuterMembers {
     }
   }
 }
+
+class LambdaUsingAnotherInstanceMember {
+  int fileDescriptor;
+
+  static Cleaner cleaner = Cleaner.create();
+
+  void register() {
+    LambdaUsingAnotherInstanceMember another = new LambdaUsingAnotherInstanceMember();
+    cleaner.register(this, () -> {
+      another.fileDescriptor = 12;
+    });
+  }
+}
