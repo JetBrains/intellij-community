@@ -46,7 +46,7 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
   override fun valueAt(tree: JTree, modelValue: Any?): String? {
     if (modelValue == null) return null
 
-    val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, false, 0, false)
+    val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, true, 0, false)
     return getValueWithCellRenderer(cellRendererComponent)
   }
 
