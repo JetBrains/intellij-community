@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.jsonSchema;
 
@@ -22,13 +22,15 @@ import java.util.TreeMap;
 
 @State(name = "JsonSchemaMappingsProjectConfiguration", storages = @Storage("jsonSchemas.xml"))
 public class JsonSchemaMappingsProjectConfiguration implements PersistentStateComponent<JsonSchemaMappingsProjectConfiguration.MyState> {
+  @NotNull private final Project myProject;
   public volatile MyState myState = new MyState();
 
   public static JsonSchemaMappingsProjectConfiguration getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, JsonSchemaMappingsProjectConfiguration.class);
   }
 
-  public JsonSchemaMappingsProjectConfiguration() {
+  public JsonSchemaMappingsProjectConfiguration(@NotNull Project project) {
+    myProject = project;
   }
 
   @Nullable
@@ -54,8 +56,9 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
   }
 
   @Override
-  public void loadState(MyState state) {
+  public void loadState(@NotNull MyState state) {
     myState = state;
+    JsonSchemaService.Impl.get(myProject).reset();
   }
 
   public void setState(@NotNull Map<String, UserDefinedJsonSchemaConfiguration> state) {
