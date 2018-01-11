@@ -20,6 +20,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -120,14 +122,44 @@ public class PyClassMROTest extends PyTestCase {
     assertOrderedEquals(classNames, Arrays.asList(mro));
   }
 
+  public void assertMetaClass(@NotNull PyClass cls, @NotNull String name) {
+    final TypeEvalContext context = TypeEvalContext.deepCodeInsight(cls.getProject());
+    final PyType metaClassType = cls.getType(context).getMetaClassType(context, true);
+    assertInstanceOf(metaClassType, PyClassType.class);
+    assertTrue(((PyClassType)metaClassType).isDefinition());
+    assertEquals(name, metaClassType.getName());
+  }
+
   // PY-20026
   public void testDuplicatedBaseClasses() {
     assertMRO(getClass("MyClass"), "Base", "object");
   }
 
+  // PY-27656
+  public void testDirectlyInstantiatedMetaclassAncestor() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyClass pyClass = getClass("MyClass");
+      assertMRO(pyClass, "object");
+      assertMetaClass(pyClass, "Meta");
+    });
+  }
+
+  // PY-27656
+  public void testMetaClassDeclaredThroughAncestor() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyClass pyClass = getClass("MyClass");
+      assertMRO(pyClass, "Base", "object");
+      assertMetaClass(pyClass, "Meta");
+    });
+  }
+
   // PY-20026
   public void testUnresolvedMetaClassAncestors() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> assertMRO(getClass("CompositeFieldMeta"), "type", "object"));
+    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+      final PyClass pyClass = getClass("CompositeFieldMeta");
+      assertMRO(pyClass, "object");
+      assertMetaClass(pyClass, "type");
+    });
   }
 
   @NotNull

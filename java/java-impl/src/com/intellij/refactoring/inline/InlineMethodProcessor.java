@@ -119,6 +119,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
@@ -178,6 +179,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return super.isPreviewUsages(usages);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
@@ -1625,6 +1627,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {

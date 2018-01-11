@@ -259,7 +259,12 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
 
   val defaultName = state.name
 
-  fun trimDefaultName() = defaultName.removeSuffix("Settings")
+  fun trimDefaultName(): String {
+    // Vcs.Log.App.Settings
+    return defaultName
+      .removeSuffix(".Settings")
+      .removeSuffix(".Settings")
+  }
 
   var resourceBundleName: String?
   if (pluginDescriptor is IdeaPluginDescriptor && "com.intellij" != pluginDescriptor.pluginId.idString) {

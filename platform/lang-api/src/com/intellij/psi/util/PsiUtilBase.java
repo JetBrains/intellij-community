@@ -46,7 +46,7 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = Comparator.comparing(Language::getID);
 
-  public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
+  public static boolean isUnderPsiRoot(@NotNull PsiFile root, @NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == root) return true;
     for (PsiFile psiRoot : root.getPsiRoots()) {

@@ -50,8 +50,9 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
-import java.io.File
 import java.io.IOException
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -139,7 +140,7 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
 
       storageManager.addMacro(PROJECT_FILE, filePath)
 
-      val workspacePath = composeWsPath(filePath)
+      val workspacePath = composeFileBasedProjectWorkSpacePath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
       if (refreshVfs) {
@@ -150,24 +151,19 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !File(filePath).exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
       }
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
-      // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
-      val isDir = !useOldWorkspaceContentIfExists || Paths.get(filePath).isDirectory()
-      val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
+      val configDir = "$filePath/${Project.DIRECTORY_STORE_FOLDER}"
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
 
-      if (!isDir) {
-        val workspace = File(workspaceFilePath)
-        if (!workspace.exists()) {
-          useOldWorkspaceContent(filePath, workspace)
-        }
+      if (useOldWorkspaceContentIfExists && !Paths.get(filePath).isDirectory()) {
+        useOldWorkspaceContent(filePath, Paths.get(workspaceFilePath))
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -410,16 +406,19 @@ private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
   }
 }
 
-private fun composeWsPath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
+private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
 
-private fun useOldWorkspaceContent(filePath: String, ws: File) {
-  val oldWs = File(composeWsPath(filePath))
-  if (!oldWs.exists()) {
+private fun useOldWorkspaceContent(filePath: String, newWorkspacePath: Path) {
+  if (newWorkspacePath.exists()) {
     return
   }
 
   try {
-    FileUtil.copyContent(oldWs, ws)
+    Paths.get(composeFileBasedProjectWorkSpacePath(filePath)).copy(newWorkspacePath)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  catch (ignored: FileAlreadyExistsException) {
   }
   catch (e: IOException) {
     LOG.error(e)

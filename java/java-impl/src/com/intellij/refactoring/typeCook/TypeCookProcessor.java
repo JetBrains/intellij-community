@@ -93,6 +93,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return usages;
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     myElements = elements;
   }
@@ -114,6 +115,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("type.cook.command");
   }

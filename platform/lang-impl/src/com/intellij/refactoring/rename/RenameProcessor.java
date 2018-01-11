@@ -427,6 +427,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return myCommandName;

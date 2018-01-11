@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.fileEditor.impl;
 
@@ -20,21 +8,22 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -179,8 +168,11 @@ final class HistoryEntry {
       }
       providerElement.setAttribute(EDITOR_TYPE_ID_ATTR, provider.getEditorTypeId());
       Element stateElement = new Element(STATE_ELEMENT);
-      providerElement.addContent(stateElement);
       provider.writeState(entry.getValue(), project, stateElement);
+
+      if (!JDOMUtil.isEmpty(stateElement)) {
+        providerElement.addContent(stateElement);
+      }
 
       e.addContent(providerElement);
     }
@@ -189,28 +181,28 @@ final class HistoryEntry {
   }
 
   @NotNull
-  private static EntryData parseEntry(@NotNull Project project, @NotNull Element e) throws InvalidDataException {
+  private static EntryData parseEntry(@NotNull Project project, @NotNull Element e) {
     if (!e.getName().equals(TAG)) {
       throw new IllegalArgumentException("unexpected tag: " + e);
     }
 
     String url = e.getAttributeValue(FILE_ATTR);
-    List<Pair<FileEditorProvider, FileEditorState>> providerStates = new ArrayList<>();
+    List<Pair<FileEditorProvider, FileEditorState>> providerStates = new SmartList<>();
     FileEditorProvider selectedProvider = null;
 
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
 
-    for (Element _e : e.getChildren(PROVIDER_ELEMENT)) {
-      String typeId = _e.getAttributeValue(EDITOR_TYPE_ID_ATTR);
+    for (Element providerElement : e.getChildren(PROVIDER_ELEMENT)) {
+      String typeId = providerElement.getAttributeValue(EDITOR_TYPE_ID_ATTR);
       FileEditorProvider provider = FileEditorProviderManager.getInstance().getProvider(typeId);
       if (provider == null) {
         continue;
       }
-      if (Boolean.valueOf(_e.getAttributeValue(SELECTED_ATTR_VALUE))) {
+      if (Boolean.valueOf(providerElement.getAttributeValue(SELECTED_ATTR_VALUE))) {
         selectedProvider = provider;
       }
 
-      Element stateElement = _e.getChild(STATE_ELEMENT);
+      Element stateElement = providerElement.getChild(STATE_ELEMENT);
       if (stateElement == null) {
         throw new InvalidDataException();
       }

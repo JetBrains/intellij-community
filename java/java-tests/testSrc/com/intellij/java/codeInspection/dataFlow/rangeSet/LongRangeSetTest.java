@@ -350,4 +350,50 @@ public class LongRangeSetTest {
     assertFalse(range(0, 10).union(range(13, 20)).contains(range(9, 15)));
     assertTrue(range(0, 10).union(range(13, 20)).contains(range(2, 8).union(range(15, 17))));
   }
+
+  @Test
+  public void testAdd() {
+    checkAdd(empty(), empty(), true, "{}");
+    checkAdd(empty(), point(0), true, "{}");
+    checkAdd(empty(), range(0, 10), true, "{}");
+    checkAdd(empty(), range(0, 10).union(range(15, 20)), true, "{}");
+
+    checkAdd(point(5), point(10), false, "{15}");
+    checkAdd(point(Integer.MAX_VALUE), point(Integer.MAX_VALUE), false, "{-2}");
+    checkAdd(point(Integer.MAX_VALUE), point(Integer.MAX_VALUE), true, "{" + 0xFFFF_FFFEL + "}");
+    checkAdd(range(0, 10), point(10), false, "{10..20}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(1), true, "{2147483638..2147483648}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(1), false, "{-2147483648, 2147483638..2147483647}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(10), false, "{-2147483648..-2147483639, 2147483647}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), point(11), false, "{-2147483648..-2147483638}");
+
+    checkAdd(range(0, 10), range(20, 30), true, "{20..40}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), true, "{2147483637..2147483657}");
+    checkAdd(range(Integer.MAX_VALUE - 10, Integer.MAX_VALUE), range(0, 10), false, "{-2147483648..-2147483639, 2147483637..2147483647}");
+
+    checkAdd(range(10, 20).union(range(40, 50)), range(0, 3).union(range(5, 7)), true, "{10..27, 40..57}");
+
+    LongRangeSet intDomain = range(Integer.MIN_VALUE, Integer.MAX_VALUE);
+    assertEquals(intDomain, intDomain.add(point(20), false));
+    assertEquals(intDomain.without(20), intDomain.without(0).add(point(20), false));
+    assertEquals(all().without(20), all().without(0).add(point(20), true));
+    assertEquals(intDomain, range(20, 30).union(range(40, 50)).add(intDomain, false));
+    assertEquals(intDomain, range(Integer.MIN_VALUE, 2).add(range(-2, Integer.MAX_VALUE), false));
+    assertEquals(all(), range(Long.MIN_VALUE, 2).add(range(-2, Long.MAX_VALUE), true));
+  }
+
+  void checkAdd(LongRangeSet addend1, LongRangeSet addend2, boolean isLong, String expected) {
+    LongRangeSet result = addend1.add(addend2, isLong);
+    assertEquals(result, addend2.add(addend1, isLong)); // commutative
+    assertEquals(expected, result.toString());
+    String errors = addend1.stream()
+      .mapToObj(a -> addend2.stream()
+        .filter(b -> !result.contains(isLong ? a + b : (int)(a + b)))
+        .mapToObj(divisor -> a + " + " + divisor + " = " + (a + divisor)))
+      .flatMap(Function.identity())
+      .collect(Collectors.joining("\n"));
+    if (!errors.isEmpty()) {
+      fail("Expected range " + expected + " is not satisfied:\n" + errors);
+    }
+  }
 }

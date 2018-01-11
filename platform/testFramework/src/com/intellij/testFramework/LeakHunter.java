@@ -65,6 +65,7 @@ public class LeakHunter {
                       backLink;
       System.out.println(message);
       System.out.println(";-----");
+      UsefulTestCase.printThreadDump();
 
       throw new AssertionError(message);
     });

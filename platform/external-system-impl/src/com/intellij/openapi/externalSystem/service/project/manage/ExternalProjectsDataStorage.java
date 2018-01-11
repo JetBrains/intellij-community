@@ -33,6 +33,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -53,7 +54,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.*;
 public class ExternalProjectsDataStorage implements SettingsSavingComponent, PersistentStateComponent<ExternalProjectsDataStorage.State> {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsDataStorage.class);
 
-  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".1";
+  private static final String STORAGE_VERSION = ExternalProjectsDataStorage.class.getSimpleName() + ".2";
 
   @NotNull
   private final Project myProject;
@@ -74,8 +75,15 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
   }
 
+  @TestOnly
+  public ExternalProjectsDataStorage(@NotNull Project project, @NotNull Alarm alarm) {
+    myProject = project;
+    myAlarm = alarm;
+  }
+
   public synchronized void load() {
     myExternalRootProjects.clear();
+    long startTs = System.currentTimeMillis();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
       if(projectInfos.isEmpty() && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
@@ -103,6 +111,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     }
 
     mergeLocalSettings();
+    long finishTs = System.currentTimeMillis();
+    LOG.info("Loaded external projects data in " + (finishTs - startTs) + " millis");
   }
 
   private void markDirtyAllExternalProjects() {

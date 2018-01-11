@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 /**
  * @author Tagir Valeev
@@ -148,23 +149,6 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                                new RemoveCallFix(methodName));
       }
     };
-  }
-
-  @Nullable
-  private static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
-                                                            Predicate<String> isWantedCall,
-                                                            Predicate<String> isAllowedIntermediateCall) {
-    for (PsiMethodCallExpression chainCall = ExpressionUtils.getCallForQualifier(call); chainCall != null;
-         chainCall = ExpressionUtils.getCallForQualifier(chainCall)) {
-      String name = chainCall.getMethodExpression().getReferenceName();
-      if (name == null) return null;
-      if (isWantedCall.test(name)) return chainCall;
-      if (!isAllowedIntermediateCall.test(name) ||
-          !InheritanceUtil.isInheritor(chainCall.getType(), CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM)) {
-        return null;
-      }
-    }
-    return null;
   }
 
   @NotNull

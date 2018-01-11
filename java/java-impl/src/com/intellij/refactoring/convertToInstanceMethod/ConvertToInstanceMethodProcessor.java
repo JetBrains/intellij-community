@@ -94,6 +94,7 @@ public class ConvertToInstanceMethodProcessor extends BaseRefactoringProcessor {
     return new MoveInstanceMethodViewDescriptor(myMethod, myTargetParameter, myTargetClass);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length > 1);
     myMethod = (PsiMethod)elements[0];

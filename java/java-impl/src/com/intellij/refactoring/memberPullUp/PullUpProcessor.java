@@ -155,6 +155,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }), MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("pullUp.command", DescriptiveNameUtil.getDescriptiveName(mySourceClass));

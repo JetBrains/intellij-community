@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 /**
  * @author anna
@@ -169,7 +170,14 @@ class Test88 {
 
   void testInheritorConstructorRef() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList'
+    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList', 'CopyOnWriteArrayList::new'
+
+    def constructorRef = myFixture.lookupElements[0]
+    def p = LookupElementPresentation.renderElement(constructorRef)
+    assert p.tailText == ' (java.util)'
+    assert p.tailFragments[0].grayed
+
+    assert (constructorRef.psiElement as PsiClass).qualifiedName == ArrayList.name
   }
 
   void "test constructor ref without start"() {
@@ -314,7 +322,7 @@ class Test88 {
 
   void testPreferLambdaToConstructorReference() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, '() -> ', 'AbstractMethodError::new'
+    myFixture.assertPreferredCompletionItems 0, '() -> ', 'Exception::new'
   }
 
   void testPreferLambdaToTooGenericLocalVariables() {

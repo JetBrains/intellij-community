@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.util.lang;
 
@@ -120,14 +120,36 @@ public final class JavaVersion {
    */
   public static @NotNull JavaVersion current() {
     if (current == null) {
-      JavaVersion fallback = parse(System.getProperty("java.version")), rt = null;
-      try {
-        rt = parse(System.getProperty("java.runtime.version"));
+      JavaVersion fallback = parse(System.getProperty("java.version"));
+      JavaVersion rt = rtVersion();
+      if (rt == null) {
+        try { rt = parse(System.getProperty("java.runtime.version")); }
+        catch (Throwable ignored) { }
       }
-      catch (Throwable ignored) { }
       current = rt != null && rt.feature == fallback.feature && rt.minor == fallback.minor ? rt : fallback;
     }
     return current;
+  }
+
+  /**
+   * Attempts to use Runtime.version() method available since Java 9.
+   */
+  @SuppressWarnings("JavaReflectionMemberAccess")
+  private static @Nullable JavaVersion rtVersion() {
+    try {
+      Object version = Runtime.class.getMethod("version").invoke(null);
+      int major = (Integer)version.getClass().getMethod("major").invoke(version);
+      int minor = (Integer)version.getClass().getMethod("minor").invoke(version);
+      int security = (Integer)version.getClass().getMethod("security").invoke(version);
+      Object buildOpt = version.getClass().getMethod("build").invoke(version);
+      int build = (Integer)buildOpt.getClass().getMethod("orElse", Object.class).invoke(buildOpt, Integer.valueOf(0));
+      Object preOpt = version.getClass().getMethod("pre").invoke(version);
+      boolean ea = (Boolean)preOpt.getClass().getMethod("isPresent").invoke(preOpt);
+      return new JavaVersion(major, minor, security, build, ea);
+    }
+    catch (Throwable ignored) {
+      return null;
+    }
   }
 
   private static final int MAX_ACCEPTED_VERSION = 25;  // sanity check

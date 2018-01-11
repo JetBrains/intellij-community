@@ -9,11 +9,14 @@ import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.uast.*
 
 /**
  * This is a very limited implementation of UastPlugin for Groovy,
- * provided only to make Groovy play with UAST-based [com.intellij.jam.JamReferenceContributor]
+ * provided only to make Groovy play with UAST-based reference contributors and spring class annotators
  */
 class GroovyDummyUastPlugin : UastLanguagePlugin {
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? =
@@ -29,6 +32,9 @@ class GroovyDummyUastPlugin : UastLanguagePlugin {
       is GrLiteral -> GrULiteral(element, parentProvider)
       is GrAnnotationNameValuePair -> GrUNamedExpression(element, parentProvider)
       is GrAnnotation -> GrUAnnotation(element, parentProvider)
+      is GrClassDefinition -> GrUClass(element, parentProvider)
+      is GrMethod -> GrUMethod(element, parentProvider)
+      is GrParameter -> GrUParameter(element, parentProvider)
       else -> null
     }?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true }
 
