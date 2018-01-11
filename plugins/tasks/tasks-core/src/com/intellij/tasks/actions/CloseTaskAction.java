@@ -21,9 +21,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.tasks.CustomTaskState;
-import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 
 /**
@@ -35,7 +35,7 @@ public class CloseTaskAction extends BaseTaskAction {
     Project project = e.getProject();
     assert project != null;
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
-    LocalTask task = taskManager.getActiveTask();
+    LocalTaskImpl task = (LocalTaskImpl) taskManager.getActiveTask();
     CloseTaskDialog dialog = new CloseTaskDialog(project, task);
     if (dialog.showAndGet()) {
       final CustomTaskState taskState = dialog.getCloseIssueState();
