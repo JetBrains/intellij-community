@@ -70,15 +70,9 @@ public class DeleteCatchSectionFix extends InspectionGadgetsFix {
     final PsiElement parent = tryStatement.getParent();
     boolean singleStatement = false;
     if (parent instanceof PsiStatement) {
-      if (tryBlock.getStatements().length == 1) {
+      final PsiStatement[] statements = tryBlock.getStatements();
+      if (statements.length == 1 && !(statements[0] instanceof PsiDeclarationStatement)) {
         singleStatement = true;
-        final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(tryStatement, PsiCodeBlock.class, true, PsiMember.class);
-        if (codeBlock == null) {
-          return;
-        }
-        if (DeclarationSearchUtils.containsConflictingDeclarations(tryBlock, codeBlock)) {
-          tryStatement = BlockUtils.expandSingleStatementToBlockStatement(tryStatement);
-        }
       }
       else {
         tryStatement = BlockUtils.expandSingleStatementToBlockStatement(tryStatement);

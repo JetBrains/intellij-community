@@ -21,7 +21,7 @@ public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testTryWithConflictingDeclaration() { doTest(); }
   public void testInLoop() { doTest(); }
   public void testInLoopSingleLine() { doTest(); }
-  public void testInLoopSingleLineConflictingDeclaration() { doTest(); }
+  public void testInLoopSingleLineDeclaration() { doTest(); }
 
   @Override
   protected String getIntentionName() {
