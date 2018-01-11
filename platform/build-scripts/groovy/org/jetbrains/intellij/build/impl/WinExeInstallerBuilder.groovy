@@ -38,13 +38,12 @@ class WinExeInstallerBuilder {
   }
 
   private void generateInstallationConfigFileForSilentMode() {
-    if (customizer.silentInstallationConfig == null) {
-      buildContext.messages.warning("Silent config file for Windows installer won't be generated because it is not defined.")
-      return
-    }
-    if (! new File(customizer.silentInstallationConfig).exists()) {
+    String silentConfig = customizer.silentInstallationConfig == null ?
+                          "$buildContext.paths.communityHome/build/conf/nsis/silent.config" :
+                          customizer.silentInstallationConfig
+    if (! new File(silentConfig).exists()) {
       buildContext.messages.error(
-        "Silent config file for Windows installer won't be generated. The template doesn't exist: '${customizer.silentInstallationConfig}'")
+        "Silent config file for Windows installer won't be generated. The template doesn't exist: '${silentConfig}'")
     }
     else {
       def extensionsList = customizer.fileAssociations
@@ -56,7 +55,7 @@ class WinExeInstallerBuilder {
         associations = "; There are no associations for the product.\n"
       }
       buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
-        fileset(file: customizer.silentInstallationConfig)
+        fileset(file: silentConfig)
         filterset(begintoken: "@@", endtoken: "@@") {
           filter(token: "List of associations", value: associations)
         }

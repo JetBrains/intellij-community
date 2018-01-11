@@ -136,8 +136,9 @@ abstract class VcsPlatformTest : PlatformTestCase() {
     return true
   }
 
-  protected open fun refresh() {
-    VfsUtil.markDirtyAndRefresh(false, true, false, testRootFile)
+  @JvmOverloads
+  protected open fun refresh(dir: VirtualFile = testRootFile) {
+    VfsUtil.markDirtyAndRefresh(false, true, false, dir)
   }
 
   protected fun updateChangeListManager() {

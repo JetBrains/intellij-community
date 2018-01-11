@@ -15,6 +15,7 @@
  */
 package git4idea.tests
 
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
@@ -219,11 +220,13 @@ class GitCommitTest : GitSingleRepoTest() {
   fun `test commit case rename & don't commit a file which is both staged and unstaged, should reset and restore`() {
     `assume version where git reset returns 0 exit code on success `()
 
-    tac("c.java")
+    tac("c.java", "initial")
     generateCaseRename("a.java", "A.java")
-    echo("c.java", "staged")
+    val STAGED_CONTENT = "staged"
+    overwrite("c.java", STAGED_CONTENT)
     git("add c.java")
-    overwrite("c.java", "unstaged")
+    val UNSTAGED_CONTENT = "unstaged"
+    overwrite("c.java", UNSTAGED_CONTENT)
 
     val changes = assertChanges {
       rename("a.java", "A.java")
@@ -241,11 +244,18 @@ class GitCommitTest : GitSingleRepoTest() {
     repo.assertStagedChanges {
       modified("c.java")
     }
-    // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
-    // so we are not doing it, at least until IDEA supports Git index
-    // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
-    assertEquals("unstaged", git("show :c.java"))
-    assertEquals("unstaged", FileUtil.loadFile(File(projectPath, "c.java")))
+
+    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive) {
+      STAGED_CONTENT
+    }
+    else {
+      // this is intentional data loss: it is a rare case, while restoring both staged and unstaged part is not so easy,
+      // so we are not doing it, at least until IDEA supports Git index
+      // (which will mean that users will be able to produce such situation intentionally with a help of IDE).
+      UNSTAGED_CONTENT
+    }
+    assertEquals(expectedIndexContent, git("show :c.java"))
+    assertEquals(UNSTAGED_CONTENT, FileUtil.loadFile(File(projectPath, "c.java")))
   }
 
   fun `test commit case rename with additional non-staged changes should commit everything`() {

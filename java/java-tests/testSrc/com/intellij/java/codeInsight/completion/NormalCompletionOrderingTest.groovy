@@ -845,4 +845,8 @@ class Foo {
     checkPreferredItems 0, 'IllegalArgumentException', 'IllegalAccessException', 'IllegalStateException'
   }
 
+  void testPreferExpectedTypeArguments() {
+    checkPreferredItems 0, 'BlaOperation'
+  }
+
 }

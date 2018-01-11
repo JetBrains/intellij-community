@@ -1775,6 +1775,7 @@ class Foo {
     myFixture.addClass("package foo.bar.goo; class Foo {}")
     myFixture.configureByText "a.java", "class Foo { { foo.b<caret> } }"
     def items = myFixture.completeBasic()
+    joinCompletion()
     if (items != null) { // completion took a bit longer, and the single item wasn't inserted automatically 
       assert myFixture.lookupElementStrings == ['bar']
       myFixture.type('\n')

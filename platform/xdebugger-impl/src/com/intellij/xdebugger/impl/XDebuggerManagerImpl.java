@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -251,8 +250,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @Override
   @NotNull
   public XDebugSession[] getDebugSessions() {
-    final Collection<XDebugSessionImpl> sessions = mySessions.values();
-    return sessions.toArray(new XDebugSessionImpl[sessions.size()]);
+    return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }
 
   @Override

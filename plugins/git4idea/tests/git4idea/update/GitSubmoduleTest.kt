@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtil.getRelativePath
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import git4idea.config.GitVersion
 import git4idea.config.UpdateMethod
@@ -164,6 +165,7 @@ class GitSubmoduleTest : GitPlatformTest() {
     addSubmodule(File(projectPath), submoduleUrl, relativePath)
     val rootPath = "${projectPath}/${relativePath ?: moduleName}"
     cd(rootPath)
+    refresh(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath)!!)
     setupDefaultUsername()
     return registerRepo(project, rootPath)
   }

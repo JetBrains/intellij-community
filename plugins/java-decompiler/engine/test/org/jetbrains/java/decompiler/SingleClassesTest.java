@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -45,6 +47,7 @@ public class SingleClassesTest {
   @Test public void testDeprecations() { doTest("pkg/TestDeprecations"); }
   @Test public void testExtendsList() { doTest("pkg/TestExtendsList"); }
   @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
+  @Test public void testMethodParametersAttr() { doTest("pkg/TestMethodParametersAttr"); }
   @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
   @Test public void testConstants() { doTest("pkg/TestConstants"); }
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
@@ -102,6 +105,7 @@ public class SingleClassesTest {
   @Test public void testPop2OneLongPop2() { doTest("pkg/TestPop2OneLongPop2"); }
   @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
   @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
+  @Test public void testSuperInner2() { doTest("pkg/TestSuperInner2", "pkg/TestSuperInner"); }
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }

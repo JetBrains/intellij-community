@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="de.ruedigermoeller:fst:2.56" type="repository">
+  <library name="de.ruedigermoeller:fst" type="repository">
     <properties maven-id="de.ruedigermoeller:fst:2.56" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/de/ruedigermoeller/fst/2.56/fst-2.56.jar!/" />
