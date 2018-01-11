@@ -342,6 +342,7 @@ login
 logoff
 logon
 logout
+lombok
 longblob
 longtext
 lookahead
