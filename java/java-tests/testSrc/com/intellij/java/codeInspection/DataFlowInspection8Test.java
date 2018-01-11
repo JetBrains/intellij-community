@@ -220,4 +220,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
   public void testMapUpdateInlining() { doTestWithCustomAnnotations(); }
+
+  public void testOptionalTooComplex() { doTest(); }
 }
