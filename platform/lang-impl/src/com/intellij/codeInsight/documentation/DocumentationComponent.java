@@ -136,7 +136,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public AnAction getFontSizeAction() {
-    return myShowSettingsButton.getAction();
+    return new MyShowSettingsAction();
+  }
+
+  public void removeCornerMenu() {
+    myScrollPane.resetCorners();
   }
 
   private static class Context {
@@ -155,7 +159,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private final JScrollPane myScrollPane;
+  private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JPanel myControlPanel;
@@ -271,37 +275,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     }
     myEditorPane.setEditorKit(editorKit);
-    myScrollPane = new JBScrollPane(myEditorPane) {
-      @Override
-      protected void processMouseWheelEvent(MouseWheelEvent e) {
-        if (!EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() || !EditorUtil.isChangeFontSize(e)) {
-          super.processMouseWheelEvent(e);
-          return;
-        }
-
-        int rotation = e.getWheelRotation();
-        if (rotation == 0) return;
-        int change = Math.abs(rotation);
-        boolean increase = rotation <= 0;
-        FontSize newFontSize = getQuickDocFontSize();
-        for (; change > 0; change--) {
-          if (increase) {
-            newFontSize = newFontSize.larger();
-          }
-          else {
-            newFontSize = newFontSize.smaller();
-          }
-        }
-
-        if (newFontSize == getQuickDocFontSize()) {
-          return;
-        }
-
-        setQuickDocFontSize(newFontSize);
-        applyFontProps();
-        setFontSizeSliderSize(newFontSize);
-      }
-    };
+    myScrollPane = new MyScrollPane();
     myScrollPane.setBorder(null);
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
@@ -415,19 +389,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     externalDoc.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     externalDoc.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-
-    if (!Registry.is("documentation.show.toolbar")) {
-      ActionPopupMenu menu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ActionPlaces.JAVADOC_TOOLBAR, actions,
-                                                                                                    new MenuItemPresentationFactory(true));
-      PopupHandler popupHandler = new PopupHandler() {
-        @Override
-        public void invokePopup(Component comp, int x, int y) {
-          menu.getComponent().show(comp, x, y);
-        }
-      };
-      myEditorPane.addMouseListener(popupHandler);
-      Disposer.register(this, () -> myEditorPane.removeMouseListener(popupHandler));
-    }
+    ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ActionPlaces.JAVADOC_TOOLBAR, actions,
+                                                                                                         new MenuItemPresentationFactory(true));
+    PopupHandler popupHandler = new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        contextMenu.getComponent().show(comp, x, y);
+      }
+    };
+    myEditorPane.addMouseListener(popupHandler);
+    Disposer.register(this, () -> myEditorPane.removeMouseListener(popupHandler));
 
     new NextLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this);
     new PreviousLinkAction().registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), this);
@@ -728,6 +699,27 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (Registry.is("documentation.show.toolbar")) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
+      removeCornerMenu();
+    } else {
+      myControlPanelVisible = false;
+      final DefaultActionGroup gearActions = new MyGearActionGroup();
+      gearActions.add(new MyShowSettingsAction());
+      gearActions.add(new ShowToolbarAction());
+      gearActions.addSeparator();
+      gearActions.add(new EditDocumentationSourceAction());
+      Presentation presentation = new Presentation();
+      presentation.setIcon(AllIcons.General.GearPlain);
+      ActionButton corner = new ActionButton(gearActions, presentation, ActionPlaces.JAVADOC_TOOLBAR, new Dimension(22, 22));
+      corner.setNoIconsInPopup(true);
+      myScrollPane.setCorner(ScrollPaneConstants.LOWER_RIGHT_CORNER, corner);
+      remove(myControlPanel);
+    }
+  }
+
+  private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
+    public MyGearActionGroup(@NotNull AnAction... actions) {
+      super(actions);
+      setPopup(true);
     }
   }
 
@@ -1023,7 +1015,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private class MyShowSettingsButton extends ActionButton {
 
     private MyShowSettingsButton() {
-      this(new MyShowSettingsAction(), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      this(new MyGearActionGroup(new MyShowSettingsAction(), new ShowToolbarAction()), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     private MyShowSettingsButton(AnAction action, Presentation presentation, String place, @NotNull Dimension minimumSize) {
@@ -1040,9 +1032,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyShowSettingsAction extends ToggleAction {
+  private class MyShowSettingsAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     public MyShowSettingsAction() {
-      super("Adjust font size");
+      super("Adjust font size...");
     }
 
     @Override
@@ -1139,6 +1131,86 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       catch (Exception e) {
         LOG.warn("Error painting link highlight", e);
       }
+    }
+  }
+
+  private class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+    public ShowToolbarAction() {
+      super("Show Toolbar");
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return Registry.get("documentation.show.toolbar").asBoolean();
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      Registry.get("documentation.show.toolbar").setValue(state);
+      updateControlState();
+      revalidate();
+      repaint();
+    }
+  }
+
+  private class MyScrollPane extends JBScrollPane {
+    public MyScrollPane() {
+      super(myEditorPane);
+      setLayout(new Layout() {
+        @Override
+        public void layoutContainer(Container parent) {
+          super.layoutContainer(parent);
+          if (!(lowerRight instanceof ActionButton)) return;
+          if (vsb != null) {
+            Rectangle bounds = vsb.getBounds();
+            vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - lowerRight.getPreferredSize().height - 6);
+          }
+          if (hsb != null) {
+            Rectangle bounds = hsb.getBounds();
+            int vsbOffset = vsb != null ? vsb.getBounds().width : 0;
+            hsb.setBounds(bounds.x, bounds.y, bounds.width - lowerRight.getPreferredSize().width - 6 + vsbOffset, bounds.height);
+          }
+          Rectangle bounds = lowerRight.getBounds();
+          lowerRight.setBounds(bounds.x - lowerRight.getPreferredSize().width - 6,
+                               bounds.y - lowerRight.getPreferredSize().height - 6,
+                               lowerRight.getPreferredSize().width,
+                               lowerRight.getPreferredSize().height);
+        }
+      });
+    }
+
+    public void resetCorners() {
+      setupCorners();
+    }
+
+    @Override
+    protected void processMouseWheelEvent(MouseWheelEvent e) {
+      if (!EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() || !EditorUtil.isChangeFontSize(e)) {
+        super.processMouseWheelEvent(e);
+        return;
+      }
+
+      int rotation = e.getWheelRotation();
+      if (rotation == 0) return;
+      int change = Math.abs(rotation);
+      boolean increase = rotation <= 0;
+      FontSize newFontSize = getQuickDocFontSize();
+      for (; change > 0; change--) {
+        if (increase) {
+          newFontSize = newFontSize.larger();
+        }
+        else {
+          newFontSize = newFontSize.smaller();
+        }
+      }
+
+      if (newFontSize == getQuickDocFontSize()) {
+        return;
+      }
+
+      setQuickDocFontSize(newFontSize);
+      applyFontProps();
+      setFontSizeSliderSize(newFontSize);
     }
   }
 }

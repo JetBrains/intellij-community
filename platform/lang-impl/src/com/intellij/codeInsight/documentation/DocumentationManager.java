@@ -174,6 +174,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     DefaultActionGroup group = new DefaultActionGroup(createActions());
     group.add(component.getFontSizeAction());
     ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
+    component.removeCornerMenu();
   }
 
   @Override
