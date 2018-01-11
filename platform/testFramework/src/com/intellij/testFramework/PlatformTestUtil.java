@@ -1131,6 +1131,8 @@ public class PlatformTestUtil {
 
       cleanupAllProjects();
 
+      UIUtil.dispatchAllInvocationEvents();
+
       ApplicationImpl application = (ApplicationImpl)getApplication();
       System.out.println(application.writeActionStatistics());
       System.out.println(ActionUtil.ActionPauses.STAT.statistics());
