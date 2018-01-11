@@ -557,4 +557,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testManyBooleans() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testNullableGetterInLoop() { doTest(); }
+  public void testNullabilityBasics() { doTest(); }
 }

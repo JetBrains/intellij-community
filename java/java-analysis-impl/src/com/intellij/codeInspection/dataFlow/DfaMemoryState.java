@@ -78,4 +78,6 @@ public interface DfaMemoryState {
   boolean isEphemeral();
 
   boolean isEmptyStack();
+
+  void cleanUpTempVariables();
 }
