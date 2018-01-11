@@ -147,8 +147,8 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     assertTrue(usageView.canPerformReRun());
 
-    usageView.doReRun();
-    Set<Usage> usages = usageView.getUsages();
+    UsageView newView = usageView.doReRun();
+    Set<Usage> usages = newView.getUsages();
     assertEquals(2, usages.size());
   }
 

@@ -19,6 +19,7 @@ import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -83,9 +84,14 @@ public abstract class Identikit {
     @Override
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
       Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
-      PsiElement anchor = file.getViewProvider().findElementAt(startOffset, actualLanguage);
-      if (anchor == null && startOffset == file.getTextLength()) {
-        PsiElement lastChild = file.getViewProvider().getPsi(actualLanguage).getLastChild();
+      PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
+      return findInside(actualLanguagePsi, startOffset, endOffset);
+    }
+
+    public PsiElement findInside(@NotNull PsiElement element, int startOffset, int endOffset) {
+      PsiElement anchor = AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
+      if (anchor == null && startOffset == element.getTextLength()) {
+        PsiElement lastChild = element.getLastChild();
         if (lastChild != null) {
           anchor = PsiTreeUtil.getDeepestLast(lastChild);
         }
