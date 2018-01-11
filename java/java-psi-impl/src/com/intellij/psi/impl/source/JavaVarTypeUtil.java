@@ -28,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class JavaVarTypeUtil {
-  
+  public static final RecursionGuard ourVarGuard = RecursionManager.createGuard("var.guard");
+
   public static PsiType getUpwardProjection(@NotNull PsiType t) {
     return t.accept(new UpwardProjectionTypeVisitor());
   }
