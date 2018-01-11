@@ -479,16 +479,14 @@ public final class GuiTestUtil {
     //    JPopupMenu menu = myRobot.findActivePopupMenu();
     // Instead, it uses a JList (technically a JBList), which is placed somewhere
     // under the root pane.
-
     Container root = getRootContainer(component);
-
-    // First find the JBList which holds the popup. There could be other JBLists in the hierarchy,
-    // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
     assertNotNull(root);
 
-    Ref<Pair<JListFixture, Integer>> fixtureAndClickableItemRef = new Ref<>();
 
-    waitUntilFound(robot, null,  new GenericTypeMatcher<JBList>(JBList.class) {
+    Ref<Pair<JListFixture, Integer>> fixtureAndClickableItemRef = new Ref<>();
+    // First find the JBList which holds the popup. There could be other JBLists in the hierarchy,
+    // so limit it to one that is actually used as a popup, as identified by its model being a ListPopupModel:
+    waitUntilFound(robot, root,  new GenericTypeMatcher<JBList>(JBList.class) {
       @Override
       protected boolean isMatching(@NotNull JBList list) {
         ListModel model = list.getModel();
@@ -512,11 +510,10 @@ public final class GuiTestUtil {
   @Nullable
   private static Pair<JListFixture, Integer> getJListFixtureAndClickableItem(@NotNull Matcher<String> labelMatcher, @NotNull Robot robot, JBList list) {
     ListPopupModel model = (ListPopupModel)list.getModel();
-    List<String> items = new ArrayList<>();
     for (int i = 0; i < model.getSize(); i++) {
       String popupItem = readPopupItem(model, i);
       if (labelMatcher.matches(popupItem)) {
-        return new Pair<JListFixture, Integer>(new JListFixture(robot, list), i);
+        return new Pair<>(new JListFixture(robot, list), i);
       }
     }
     return null;
@@ -527,9 +524,7 @@ public final class GuiTestUtil {
     assert itemNumber < model.getSize();
     Object elementAt = model.getElementAt(itemNumber);
     if (elementAt instanceof PopupFactoryImpl.ActionItem) {
-      PopupFactoryImpl.ActionItem
-        item = (PopupFactoryImpl.ActionItem)elementAt;
-      return item.getText();
+      return ((PopupFactoryImpl.ActionItem)elementAt).getText();
     } else if(elementAt instanceof ConfigurationTypeBase){
       return ((ConfigurationTypeBase)elementAt).getDisplayName();
     }
