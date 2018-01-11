@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,12 +46,10 @@ public class AnnotateLocalFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateLocalFileAction.class);
 
   private static boolean isEnabled(AnActionEvent e) {
-    VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
-
-    Project project = context.getProject();
+    Project project = e.getProject();
     if (project == null || project.isDisposed()) return false;
 
-    VirtualFile file = context.getSelectedFile();
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file == null || file.isDirectory() || file.getFileType().isBinary()) return false;
 
     final AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
@@ -73,29 +72,25 @@ public class AnnotateLocalFileAction {
   }
 
   private static boolean isAnnotated(AnActionEvent e) {
-    VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
-
-    Editor editor = context.getEditor();
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       return editor.getGutter().isAnnotationsShown();
     }
 
-    return ContainerUtil.exists(getEditors(context), editor1 -> editor1.getGutter().isAnnotationsShown());
+    return ContainerUtil.exists(getEditors(e.getDataContext()), editor1 -> editor1.getGutter().isAnnotationsShown());
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
-    final VcsContext context = VcsContextFactory.SERVICE.getInstance().createContextOn(e);
-
     if (!selected) {
-      for (Editor editor : getEditors(context)) {
+      for (Editor editor : getEditors(e.getDataContext())) {
         editor.getGutter().closeAllAnnotations();
       }
     }
     else {
-      Project project = assertNotNull(context.getProject());
-      VirtualFile selectedFile = assertNotNull(context.getSelectedFile());
+      Project project = assertNotNull(e.getProject());
+      VirtualFile selectedFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
 
-      Editor editor = context.getEditor();
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor == null) {
         FileEditor[] fileEditors = FileEditorManager.getInstance(project).openFile(selectedFile, false);
         for (FileEditor fileEditor : fileEditors) {
@@ -164,9 +159,11 @@ public class AnnotateLocalFileAction {
   }
 
   @NotNull
-  private static List<Editor> getEditors(@NotNull VcsContext context) {
-    Project project = assertNotNull(context.getProject());
-    VirtualFile file = assertNotNull(context.getSelectedFile());
+  private static List<Editor> getEditors(@NotNull DataContext context) {
+    Project project = context.getData(CommonDataKeys.PROJECT);
+    VirtualFile file = context.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (project == null || file == null) return Collections.emptyList();
+
     return VcsAnnotateUtil.getEditors(project, file);
   }
 
