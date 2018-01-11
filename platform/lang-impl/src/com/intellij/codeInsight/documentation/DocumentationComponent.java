@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
@@ -43,13 +44,16 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import java.util.HashMap;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.FontInfo;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
@@ -283,21 +287,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
-    final MouseListener mouseAdapter = new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myManager.requestFocus();
-        myShowSettingsButton.hideSettings();
-      }
-    };
-    myEditorPane.addMouseListener(mouseAdapter);
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myEditorPane.removeMouseListener(mouseAdapter);
-      }
-    });
-
     final FocusListener focusAdapter = new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -318,47 +307,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
 
     setLayout(new BorderLayout());
-    JLayeredPane layeredPane = new JBLayeredPane() {
-      @Override
-      public void doLayout() {
-        final Rectangle r = getBounds();
-        for (Component component : getComponents()) {
-          if (component instanceof JScrollPane) {
-            component.setBounds(0, 0, r.width, r.height);
-          }
-          else {
-            int insets = 2;
-            Dimension d = component.getPreferredSize();
-            component.setBounds(r.width - d.width - insets, insets, d.width, d.height);
-          }
-        }
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension editorPaneSize = myEditorPane.getPreferredScrollableViewportSize();
-        Dimension controlPanelSize = myControlPanel.getPreferredSize();
-        return getSize(editorPaneSize, controlPanelSize);
-      }
-
-      @Override
-      public Dimension getMinimumSize() {
-        Dimension editorPaneSize = new JBDimension(20, 20);
-        Dimension controlPanelSize = myControlPanel.getMinimumSize();
-        return getSize(editorPaneSize, controlPanelSize);
-      }
-
-      private Dimension getSize(Dimension editorPaneSize, Dimension controlPanelSize) {
-        return new Dimension(Math.max(editorPaneSize.width, controlPanelSize.width), editorPaneSize.height + controlPanelSize.height);
-      }
-    };
-    layeredPane.add(myScrollPane);
-    layeredPane.setLayer(myScrollPane, 0);
 
     mySettingsPanel = createSettingsPanel();
-    layeredPane.add(mySettingsPanel);
-    layeredPane.setLayer(mySettingsPanel, JLayeredPane.POPUP_LAYER);
-    add(layeredPane, BorderLayout.CENTER);
+    add(myScrollPane, BorderLayout.CENTER);
     setOpaque(true);
     myScrollPane.setViewportBorder(JBScrollPane.createIndentBorder());
 
@@ -1028,35 +979,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       super(action, presentation, place, minimumSize);
       myPresentation.setIcon(AllIcons.General.SecondaryGroup);
     }
-
-    private void hideSettings() {
-      if (!mySettingsPanel.isVisible()) {
-        return;
-      }
-      AnActionEvent event = AnActionEvent.createFromDataContext(myPlace, myPresentation, DataContext.EMPTY_CONTEXT);
-      myAction.actionPerformed(event);
-    }
   }
 
-  private class MyShowSettingsAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
+  private class MyShowSettingsAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     public MyShowSettingsAction() {
       super("Adjust font size...");
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
-      return mySettingsPanel.isVisible();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      if (!state) {
-        mySettingsPanel.setVisible(false);
-        return;
-      }
-
+    public void actionPerformed(AnActionEvent e) {
+      JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(mySettingsPanel, myFontSizeSlider).createPopup();
       setFontSizeSliderSize(getQuickDocFontSize());
       mySettingsPanel.setVisible(true);
+      Point location = MouseInfo.getPointerInfo().getLocation();
+      popup.show(new RelativePoint(new Point(location.x - mySettingsPanel.getPreferredSize().width / 2,
+                                             location.y - mySettingsPanel.getPreferredSize().height / 2)));
     }
   }
 
