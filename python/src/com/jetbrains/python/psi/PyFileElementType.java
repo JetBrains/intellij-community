@@ -62,12 +62,12 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 65;
+    return 67;
   }
 
   @Nullable
   @Override
-  public ASTNode parseContents(ASTNode node) {
+  public ASTNode parseContents(@NotNull ASTNode node) {
     final LanguageLevel languageLevel = getLanguageLevel(node.getPsi());
     if (PydevConsoleRunner.isPythonConsole(node)) {
       return parseConsoleCode(node, PydevConsoleRunner.getPythonConsoleData(node));

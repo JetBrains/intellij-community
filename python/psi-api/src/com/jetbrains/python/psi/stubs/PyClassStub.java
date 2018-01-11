@@ -44,7 +44,6 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @NotNull
   List<String> getSubscriptedSuperClasses();
 
-
   @Nullable
   QualifiedName getMetaClass();
 
