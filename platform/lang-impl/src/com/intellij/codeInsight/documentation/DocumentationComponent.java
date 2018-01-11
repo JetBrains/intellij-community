@@ -105,7 +105,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final JLabel myElementLabel;
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
-  private final MyShowSettingsButton myShowSettingsButton;
   private boolean myIgnoreFontSizeSliderChange;
   private String myEffectiveExternalUrl;
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
@@ -369,7 +368,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
     myControlPanel.add(myElementLabel, BorderLayout.CENTER);
-    myControlPanel.add(myShowSettingsButton = new MyShowSettingsButton(), BorderLayout.EAST);
+    myControlPanel.add(new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
     final HyperlinkListener hyperlinkListener = new HyperlinkListener() {
