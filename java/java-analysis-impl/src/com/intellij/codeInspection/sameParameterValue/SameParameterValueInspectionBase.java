@@ -9,7 +9,6 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
@@ -164,17 +163,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                           boolean isOnTheFly,
                                           @NotNull LocalInspectionToolSession session) {
       return new JavaElementVisitor() {
-        private final UnusedDeclarationInspectionBase myDeadCodeTool;
-
-        {
-          InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
-          UnusedDeclarationInspectionBase deadCodeTool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
-          myDeadCodeTool = deadCodeTool == null ? new UnusedDeclarationInspectionBase() : deadCodeTool;
-        }
+        private final UnusedDeclarationInspectionBase myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
 
         @Override
         public void visitMethod(PsiMethod method) {
           if (method.isConstructor() || VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), highestModifier) < 0) return;
+
+          if (method.hasModifierProperty(PsiModifier.NATIVE)) return;
+
           PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return;
 
