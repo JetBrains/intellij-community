@@ -23,10 +23,7 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.RefactoringListenerProvider
-import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
@@ -49,6 +46,7 @@ import com.intellij.util.ThreeState
 import com.jetbrains.extensions.asPsiElement
 import com.jetbrains.extensions.asVirtualFile
 import com.jetbrains.extensions.getQName
+import com.jetbrains.extensions.isWellFormed
 import com.jetbrains.extenstions.ModuleBasedContextAnchor
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
@@ -263,8 +261,8 @@ data class ConfigurationTarget(@ConfigField override var target: String,
     if (targetType != PyTargetType.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning("Target not provided")
     }
-    if (targetType == PyTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target)) {
-      throw RuntimeConfigurationWarning("Provide a qualified name of function, class or a module")
+    if (targetType == PyTargetType.PYTHON && !isWellFormed()) {
+      throw RuntimeConfigurationError("Provide a qualified name of function, class or a module")
     }
   }
 
