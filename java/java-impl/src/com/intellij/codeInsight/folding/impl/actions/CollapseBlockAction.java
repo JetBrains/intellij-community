@@ -18,7 +18,13 @@ package com.intellij.codeInsight.folding.impl.actions;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.folding.impl.CollapseBlockHandler;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaToken;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -27,6 +33,14 @@ public class CollapseBlockAction  extends BaseCodeInsightAction {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
-    return new CollapseBlockHandler ();
+    return new CollapseBlockHandler() {
+      protected PsiElement findParentBlock(@Nullable PsiElement element) {
+        return PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+      }
+
+      protected boolean isRBrace(@Nullable PsiElement element) {
+        return element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.RBRACE;
+      }
+    };
   }
 }

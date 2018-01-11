@@ -4,22 +4,20 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
-import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
-import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class CollapseBlockHandler implements CodeInsightActionHandler {
+public abstract class CollapseBlockHandler implements CodeInsightActionHandler {
   private static final String ourPlaceHolderText = "{...}";
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.CollapseBlockHandler");
 
@@ -30,11 +28,11 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
       final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
       FoldingModelEx model = (FoldingModelEx) editor.getFoldingModel();
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-      if (!(element instanceof PsiJavaToken) || ((PsiJavaToken) element).getTokenType() != JavaTokenType.RBRACE) {
+      if (!isRBrace(element)) {
         element = file.findElementAt(editor.getCaretModel().getOffset());
       }
       if (element == null) return;
-      PsiElement block = PsiTreeUtil.getParentOfType(element, PsiCodeBlock.class);
+      PsiElement block = findParentBlock(element);
       FoldRegion previous = null;
       FoldRegion myPrevious = null;
       while (block != null) {
@@ -49,7 +47,7 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
           }
           previous = existing;
           if (info.getPsiElement(existing) == null) myPrevious = existing;
-          block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class);
+          block = findParentBlock(block);
           continue;
         }
         if (!model.intersectsRegion(start, end)) {
@@ -75,6 +73,10 @@ public class CollapseBlockHandler implements CodeInsightActionHandler {
     });
     if (targetCaretOffset[0] >= 0) editor.getCaretModel().moveToOffset(targetCaretOffset[0]);
   }
+
+  protected abstract PsiElement findParentBlock(@Nullable PsiElement element);
+
+  protected abstract boolean isRBrace(@Nullable PsiElement element);
 
   @Nullable
   @Override
