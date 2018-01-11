@@ -27,10 +27,12 @@ import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.getL
 public class SaveTo implements SpellCheckerQuickFix {
   private static final SaveTo SAVE_TO_APP_FIX = new SaveTo(DictionaryLevel.APP);
   private static final SaveTo SAVE_TO_PROJECT_FIX = new SaveTo(DictionaryLevel.PROJECT);
+  private static final String DICTIONARY = " dictionary";
+  private static final String DOTS = "...";
   private DictionaryLevel myLevel = DictionaryLevel.NOT_SPECIFIED;
   private String myWord;
 
-  public static final String FIX_NAME = SpellCheckerBundle.message("add.to");
+  public static final String FIX_NAME = SpellCheckerBundle.message("save.0.to.1", "", DOTS);
 
   private SaveTo(DictionaryLevel level) {
     myLevel = level;
@@ -47,17 +49,15 @@ public class SaveTo implements SpellCheckerQuickFix {
 
   @NotNull
   public String getName() {
-    String name = myWord != null ? SpellCheckerBundle.message("add.0.to", myWord) : SpellCheckerBundle.message("add.to");
-    if (myLevel != DictionaryLevel.NOT_SPECIFIED) name += myLevel.getName();
-    return name;
+    final String dictionary = myLevel != DictionaryLevel.NOT_SPECIFIED ? myLevel.getName() + DICTIONARY : DOTS;
+    final String word = myWord != null ? SpellCheckerBundle.message("0.in.qoutes", myWord) : "";
+    return SpellCheckerBundle.message("save.0.to.1", word, dictionary);
   }
 
   @NotNull
   public String getFamilyName() {
-    if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
-      return SpellCheckerBundle.message("add.to");
-    }
-    return SpellCheckerBundle.message("save.to.0", myLevel.getName());
+    final String dictionary = myLevel != DictionaryLevel.NOT_SPECIFIED ? myLevel.getName() + DICTIONARY : DOTS;
+    return SpellCheckerBundle.message("save.0.to.1", "", dictionary);
   }
 
   @NotNull
