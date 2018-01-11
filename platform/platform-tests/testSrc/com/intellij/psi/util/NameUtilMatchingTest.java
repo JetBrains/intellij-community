@@ -342,6 +342,10 @@ public class NameUtilMatchingTest extends TestCase {
     assertTrue(firstLetterMatcher("*Bcomp").matches("BaseComponent"));
   }
 
+  public void testPreferCamelHumpsToAllUppers() {
+    assertPreference("ProVi", "PROVIDER", "ProjectView");
+  }
+
   private static Matcher firstLetterMatcher(String pattern) {
     return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
   }
@@ -548,6 +552,13 @@ public class NameUtilMatchingTest extends TestCase {
     assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("ob", "oci_bind_array_by_name", "obj");
     assertNoPreference("en", "ENABLED", "Enum", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  public void testHonorFirstLetterCaseInCompletion() {
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*pim", NameUtil.MatchingCaseSensitivity.NONE);
+    int iLess = matcher.matchingDegree("PImageDecoder", true);
+    int iMore = matcher.matchingDegree("posIdMap", true);
+    assertTrue(iLess < iMore);
   }
 
   public void testPreferWordBoundaryMatch() {
