@@ -1090,8 +1090,8 @@ public class EditorFixture {
   @NotNull
   public EditorFixture invokeIntentionAction(@NotNull String labelPrefix) {
     invokeAction(EditorFixture.EditorAction.SHOW_INTENTION_ACTIONS);
-    JBList popup = waitForPopup(robot);
-    clickPopupMenuItem(labelPrefix, popup, robot);
+    JBList popup = JBListPopupFixture.waitForPopup(robot);
+    JBListPopupFixture.clickPopupMenuItem(labelPrefix, popup, robot);
     return this;
   }
 

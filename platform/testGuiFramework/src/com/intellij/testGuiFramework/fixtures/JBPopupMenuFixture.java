@@ -35,18 +35,18 @@ import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound
 import static junit.framework.Assert.assertNotNull;
 import static org.fest.swing.timing.Pause.pause;
 
-public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMenu> {
+public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JBPopupMenu> {
   private JBPopupMenu myContextMenu;
   private Robot myRobot;
 
-  private JBPopupFixture(JBPopupMenu menu, Robot robot) {
-    super(JBPopupFixture.class, robot, menu);
+  private JBPopupMenuFixture(JBPopupMenu menu, Robot robot) {
+    super(JBPopupMenuFixture.class, robot, menu);
 
     myContextMenu = menu;
     myRobot = robot;
   }
 
-  public static JBPopupFixture findContextMenu(Robot robot) {
+  public static JBPopupMenuFixture findContextMenu(Robot robot) {
 
     try {
       pause(new Condition("Find context menu") {
@@ -63,7 +63,7 @@ public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMen
     final JBPopupMenu contextMenu = robot.finder().findByType(JBPopupMenu.class);
     assertNotNull(contextMenu);
 
-    return new JBPopupFixture(contextMenu, robot);
+    return new JBPopupMenuFixture(contextMenu, robot);
   }
 
   public void assertContainsAction(String actionName) {
@@ -95,7 +95,7 @@ public class JBPopupFixture extends JComponentFixture<JBPopupFixture, JBPopupMen
             robot().click(point, MouseButton.LEFT_BUTTON, 1);
             //invoke action for a new JBPopupMenu
             final String actionName = actionPath[1];
-            final JBPopupFixture fixture = new JBPopupFixture(waitUntilFoundMenu(actionName), myRobot);
+            final JBPopupMenuFixture fixture = new JBPopupMenuFixture(waitUntilFoundMenu(actionName), myRobot);
             fixture.invokeAction(ArrayUtil.remove(actionPath, 0));
             return;
           }
