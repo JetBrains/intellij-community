@@ -69,6 +69,7 @@ public class SaveTo implements SpellCheckerQuickFix {
     final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
     asyncResult.doWhenDone((Consumer<DataContext>)context -> {
       final SpellCheckerManager spellCheckerManager = SpellCheckerManager.getInstance(project);
+      final boolean notify = myWord != null; // no notification in batch mode
       final String wordToSave = myWord != null ? myWord : extractHighlightedText(descriptor, descriptor.getPsiElement());
       if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
         final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
@@ -77,12 +78,12 @@ public class SaveTo implements SpellCheckerQuickFix {
           .createListPopupBuilder(dictList)
           .setTitle(SpellCheckerBundle.message("select.dictionary.title"))
           .setItemChoosenCallback(
-            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, project, getLevelByName(dictList.getSelectedValue()), true))
+            () -> spellCheckerManager.acceptWordAsCorrect(wordToSave, project, getLevelByName(dictList.getSelectedValue()), notify))
           .createPopup()
           .showInBestPositionFor(context);
       }
       else {
-        spellCheckerManager.acceptWordAsCorrect(wordToSave, project, myLevel, false);
+        spellCheckerManager.acceptWordAsCorrect(wordToSave, project, myLevel, notify);
       }
     });
   }
