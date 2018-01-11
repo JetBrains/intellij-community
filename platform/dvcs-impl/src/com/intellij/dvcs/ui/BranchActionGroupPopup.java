@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WindowStateService;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -424,6 +425,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
     @Override
     protected void paintLine(Graphics g, int x, int y, int width) {
+      if (StringUtil.isEmptyOrSpaces(getCaption())) {
+        super.paintLine(g, x, y, width);
+      }
     }
   }
 
