@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -258,7 +259,7 @@ public class DfaUtil {
         if (!(e instanceof PsiMethodCallExpression)) return false;
         PsiMethodCallExpression call = (PsiMethodCallExpression)e;
         return call.getMethodExpression().isReferenceTo(referrer) &&
-               (isStatic || ExpressionUtils.isEffectivelyUnqualified(call.getMethodExpression()));
+               (isStatic || ExpressionUtil.isEffectivelyUnqualified(call.getMethodExpression()));
       };
       if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
         // current method is definitely called from some field initialization

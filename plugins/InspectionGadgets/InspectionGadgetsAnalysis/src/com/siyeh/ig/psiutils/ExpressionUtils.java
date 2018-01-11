@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
@@ -1112,18 +1113,12 @@ public class ExpressionUtils {
     return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
   }
 
+  /**
+   * Use {@link ExpressionUtil#isEffectivelyUnqualified} instead
+   */
+  @Deprecated
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = PsiUtil.deparenthesizeExpression(refExpression.getQualifierExpression());
-    if (qualifier == null) {
-      return true;
-    }
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
-      if (thisQualifier == null) return true;
-      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      return innerMostClass == thisQualifier.resolve();
-    }
-    return false;
+    return ExpressionUtil.isEffectivelyUnqualified(refExpression);
   }
 
   /**
