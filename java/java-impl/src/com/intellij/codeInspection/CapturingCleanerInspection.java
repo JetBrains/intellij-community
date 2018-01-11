@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -141,12 +142,7 @@ public class CapturingCleanerInspection extends AbstractBaseJavaLocalInspectionT
 
   @Contract("_, null -> false")
   private static boolean isInnerClassOf(@Nullable PsiClass inner, @Nullable PsiClass outer) {
-    if (outer == null) return false;
-    PsiClass current = inner;
-    while (current != null) {
-      if (current == outer) return true;
-      current = current.getContainingClass();
-    }
-    return false;
+    if (inner == null || inner.hasModifierProperty(PsiModifier.STATIC)) return false;
+    return PsiTreeUtil.isAncestor(outer, inner, false);
   }
 }
