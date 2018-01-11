@@ -24,14 +24,14 @@ import com.jetbrains.python.psi.stubs.PyClassStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 /**
  * @author max
  */
-public class
-PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
+public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
 
   @Nullable
   private final String myName;
@@ -49,7 +49,7 @@ PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   @Nullable
   private final String myDocString;
 
-  @Nullable
+  @NotNull
   private final List<String> mySuperClassesText;
 
   public PyClassStubImpl(@Nullable String name,
@@ -60,14 +60,14 @@ PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
                          @Nullable List<String> slots,
                          @Nullable String docString,
                          @NotNull IStubElementType stubElementType) {
-    this(name, parentStub, superClasses, subscriptedSuperClassesText, null, metaClass, slots, docString, stubElementType);
+    this(name, parentStub, superClasses, subscriptedSuperClassesText, Collections.emptyList(), metaClass, slots, docString, stubElementType);
   }
 
   public PyClassStubImpl(@Nullable String name,
                          @Nullable StubElement parentStub,
                          @NotNull Map<QualifiedName, QualifiedName> superClasses,
                          @NotNull List<String> subscriptedSuperClassesText,
-                         @Nullable List<String> superClassesText,
+                         @NotNull List<String> superClassesText,
                          @Nullable QualifiedName metaClass,
                          @Nullable List<String> slots,
                          @Nullable String docString,

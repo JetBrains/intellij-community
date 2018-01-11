@@ -109,7 +109,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
                                             PySubscriptionExpression.class));
   }
 
-
   @Nullable
   private static QualifiedName resolveOriginalSuperClassQName(@NotNull PyExpression superClassExpression) {
     if (superClassExpression instanceof PyReferenceExpression) {
@@ -148,7 +147,6 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
     final List<String> subscriptedBaseClassesText = pyClassStub.getSubscriptedSuperClasses();
     final List<String> baseClassesText = pyClassStub.getSuperClassesText();
-    assert baseClassesText != null;
 
     dataStream.writeByte(baseClassesText.size());
     for (String text : baseClassesText) {
