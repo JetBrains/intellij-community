@@ -105,7 +105,7 @@ public class SingleClassesTest {
   @Test public void testPop2OneLongPop2() { doTest("pkg/TestPop2OneLongPop2"); }
   @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
   @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
-  @Test public void testSuperInner2() { doTest("pkg/TestSuperInner2", "pkg/TestSuperInner"); }
+  @Test public void testSuperInner() { doTest("pkg/TestSuperInner", "pkg/TestSuperInnerBase"); }
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }

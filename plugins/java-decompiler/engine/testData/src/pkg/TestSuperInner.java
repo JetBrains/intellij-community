@@ -1,6 +1,5 @@
-public class TestSuperInner {
-  protected abstract class Inner {
-    protected Inner() {
-    }
-  }
+package pkg;
+
+class TestSuperInner extends TestSuperInnerBase {
+  protected abstract class Inner2 extends Inner { }
 }
