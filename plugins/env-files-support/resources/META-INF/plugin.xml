@@ -1,47 +1,27 @@
 <idea-plugin>
   <id>ru.adelf.idea.dotenv</id>
   <name>.env files support</name>
-  <version>0.5</version>
+  <version>0.6</version>
   <vendor email="adel.faiz@gmail.com" url="http://adelf.ru">Adel Fayzrakhmanov</vendor>
 
   <description><![CDATA[
-      <h1>.env files support</h1><br>
-
       <a href="https://plugins.jetbrains.com/plugin/9525--env-files-support">Homepage</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/">Github</a> | <a href="https://github.com/adelf/idea-php-dotenv-plugin/issues">Issues</a>.<br />
       <br/>
-      <h4>Features</h4>
+      Features
       <ul>
-        <li>PHP: getenv() and env() parameters completion</li>
-        <li>Ruby: ENV[] parameters completion</li>
-        <li>Python: os.environ[] and os.environ.get() parameters completion</li>
-        <li>Dockerfile and docker-compose.yml files support. Requires Docker integration and YAML support plugins</li>
+        <li>Environment variables completion for PHP, JavaScript, Python and Ruby languages</li>
+        <li>Dockerfile and docker-compose.yml files support.</li>
         <li>Go to declaration(in .env file) and usages(in code), by Ctrl(Cmd)+click or hot key(Ctrl(Cmd)-B, etc.)</li>
         <li>.env file commenter</li>
       </ul>
     ]]></description>
 
   <change-notes><![CDATA[
-      <h4>0.5</h4>
+      0.6
       <ul>
-        <li>Commenting .env files by Ctrl(Cmd) - /</li>
-        <li>PyCharm support</li>
-      </ul>
-
-      <h4>0.4</h4>
-      <ul>
-        <li>RubyMine support</li>
-        <li>Fixed bug with new Docker API in IDEA 2017.2</li>
-      </ul>
-
-      <h4>0.3</h4>
-      <ul>
-        <li>Dockerfile and docker-compose.yml files support. Requires Docker integration and YAML support plugins</li>
-      </ul>
-
-      <h4>0.2</h4>
-      <ul>
-        <li>Values hinting in completion choice window(example: DB_HOST = 127.0.0.1)</li>
-        <li>Go to declaration(in .env file) and usages(in php files), by Ctrl+click or hot key(Ctrl-B, etc.)</li>
+        <li>JavaScript support</li>
+        <li>Duplicate keys inspection</li>
+        <li>Small fixes</li>
       </ul>
   ]]></change-notes>
 
