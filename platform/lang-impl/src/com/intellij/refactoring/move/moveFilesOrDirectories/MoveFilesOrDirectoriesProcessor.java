@@ -194,14 +194,15 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
 
       retargetUsages(usages, oldToNewMap);
 
-      if (MoveFilesOrDirectoriesDialog.isOpenInEditor()) {
-        EditorHelper.openFilesInEditor(movedFiles.toArray(new PsiFile[movedFiles.size()]));
-      }
-
       // Perform CVS "add", "remove" commands on moved files.
 
       if (myMoveCallback != null) {
         myMoveCallback.refactoringCompleted();
+      }
+      if (MoveFilesOrDirectoriesDialog.isOpenInEditor()) {
+        ApplicationManager.getApplication().invokeLater(() ->
+          EditorHelper.openFilesInEditor(movedFiles.stream().filter(PsiElement::isValid).toArray(PsiFile[]::new))
+        );
       }
 
     }
