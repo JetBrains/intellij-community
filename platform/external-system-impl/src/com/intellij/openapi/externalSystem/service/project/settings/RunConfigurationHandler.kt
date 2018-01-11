@@ -103,8 +103,9 @@ class ApplicationRunConfigurationImporter : RunConfigurationImporter {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
 
-    runConfiguration.mainClassName = cfg["mainClass"] as? String
-    runConfiguration.vmParameters = cfg["jvmArgs"] as? String
+    (cfg["mainClass"] as? String)?.let { runConfiguration.mainClassName = it }
+    (cfg["jvmArgs"]   as? String)?.let { runConfiguration.vmParameters = it  }
+
     runConfiguration.setModule(module)
   }
 
