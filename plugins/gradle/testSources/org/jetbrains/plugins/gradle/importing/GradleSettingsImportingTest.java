@@ -214,7 +214,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         "  module.settings {\n" +
         "    runConfigurations {\n" +
         "       defaults(Application) {\n" +
-        "           jvmArgs =   '-DmyKey=myVal'\n" +
+        "           jvmArgs = '-DmyKey=myVal'\n" +
         "       }\n" +
         "    }\n" +
         "  }\n" +
@@ -227,6 +227,45 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
 
     assertNotNull(parameters);
     assertTrue(parameters.contains("-DmyKey=myVal"));
+  }
+
+  @Test
+  public void testDefaultsAreUsedDuringImport() throws Exception {
+    RunConfigurationImporter appcConfigImporter = new ApplicationRunConfigurationImporter();
+    ExtensionPoint<RunConfigurationImporter> ep = Extensions.getRootArea().getExtensionPoint(RunConfigurationImporter.EP_NAME);
+    ep.reset();
+    ep.registerExtension(appcConfigImporter);
+
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
+        "idea {\n" +
+        "  module.settings {\n" +
+        "    runConfigurations {\n" +
+        "       defaults(Application) {\n" +
+        "           jvmArgs = '-DmyKey=myVal'\n" +
+        "       }\n" +
+        "       'My Run'(Application) {\n" +
+        "           mainClass = 'my.app.Class'\n" +
+        "       }\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final RunManager runManager = RunManager.getInstance(myProject);
+    final RunnerAndConfigurationSettings template = runManager.getConfigurationTemplate(appcConfigImporter.getConfigurationFactory());
+    final String parameters = ((ApplicationConfiguration)template.getConfiguration()).getVMParameters();
+
+    assertNotNull(parameters);
+    assertTrue(parameters.contains("-DmyKey=myVal"));
+
+    final ApplicationConfiguration myRun = (ApplicationConfiguration)runManager.findConfigurationByName("My Run").getConfiguration();
+    assertNotNull(myRun);
+    final String actualParams = myRun.getVMParameters();
+    assertNotNull(actualParams);
+    assertTrue(actualParams.contains("-DmyKey=myVal"));
+    assertEquals("my.app.Class", myRun.getMainClassName());
   }
 
 
