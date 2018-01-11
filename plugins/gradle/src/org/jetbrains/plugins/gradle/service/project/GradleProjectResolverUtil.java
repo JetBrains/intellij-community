@@ -50,10 +50,11 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Queue;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Stream;
 
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
@@ -348,35 +349,39 @@ public class GradleProjectResolverUtil {
     }
 
     for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
-      final File file = new File(path);
-      if (!file.isFile()) continue;
-      if (!FileUtil.isAncestor(gradleUserHomeDir, file, true)) continue;
-      File binaryFileParent = file.getParentFile();
-      if (binaryFileParent == null) continue;
-      File grandParentFile = binaryFileParent.getParentFile();
-      if (grandParentFile == null) continue;
-      File[] sourceParentCandidates = grandParentFile.listFiles();
-      if (sourceParentCandidates == null || sourceParentCandidates.length < 2) continue;
+      final Path file = Paths.get(path);
+      if (!FileUtil.isAncestor(gradleUserHomeDir.getPath(), path, true)) continue;
+      Path binaryFileParent = file.getParent();
+      Path grandParentFile = binaryFileParent.getParent();
 
-      boolean sourceFound = false;
-      boolean docFound = false;
-      for (File sourceParentCandidate : sourceParentCandidates) {
-        if (!sourceParentCandidate.isDirectory() || FileUtil.filesEqual(binaryFileParent, sourceParentCandidate)) continue;
-        File[] sourceCandidates = sourceParentCandidate.listFiles();
-        if (sourceCandidates != null && sourceCandidates.length == 1) {
-          File sourceCandidate = sourceCandidates[0];
-          if (sourceCandidate.isFile()) {
-            if (StringUtil.endsWith(sourceCandidate.getName(), "-sources.jar")) {
-              libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.getAbsolutePath());
-              sourceFound = true;
+      try (Stream<Path> sourceParentCandidates = Files.list(grandParentFile)) {
+        boolean sourceFound = false;
+        boolean docFound = false;
+        for (Iterator<Path> parentIterator = sourceParentCandidates.iterator(); parentIterator.hasNext(); ) {
+          Path sourceParentCandidate = parentIterator.next();
+          if (!Files.isDirectory(sourceParentCandidate) || binaryFileParent.equals(sourceParentCandidate)) continue;
+
+          try (Stream<Path> sourceCandidates = Files.list(sourceParentCandidate)) {
+            Path sourceCandidate = sourceCandidates.findFirst().orElse(null);
+            if (sourceCandidate != null && Files.isRegularFile(sourceCandidate)) {
+              if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
+                libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.toFile().getAbsolutePath());
+                sourceFound = true;
+              }
+              else if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
+                libraryData.addPath(LibraryPathType.DOC, sourceCandidate.toFile().getAbsolutePath());
+                docFound = true;
+              }
             }
-            else if (StringUtil.endsWith(sourceCandidate.getName(), "-javadoc.jar")) {
-              libraryData.addPath(LibraryPathType.DOC, sourceCandidate.getAbsolutePath());
-              docFound = true;
-            }
-            if (sourceFound && docFound) break;
           }
+          catch (IOException e) {
+            LOG.debug(e);
+          }
+          if (sourceFound && docFound) break;
         }
+      }
+      catch (IOException e) {
+        LOG.debug(e);
       }
     }
   }
