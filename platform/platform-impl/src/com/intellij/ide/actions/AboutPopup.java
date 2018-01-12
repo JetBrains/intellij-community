@@ -363,8 +363,11 @@ public class AboutPopup {
 
     @NotNull
     protected String getCopyrightText() {
+      /* Android Studio: https://b.corp.google.com/issues/37079872 - Remove misleading copyright notice
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       return "\u00A9 2000\u2013" + Calendar.getInstance(Locale.US).get(Calendar.YEAR) + " " + appInfo.getCompanyName() + ". All rights reserved.";
+      */
+      return " ";
     }
 
     @NotNull
