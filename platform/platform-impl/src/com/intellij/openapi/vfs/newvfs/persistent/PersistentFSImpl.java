@@ -1096,7 +1096,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public VirtualFile[] getRoots() {
     Collection<VirtualFileSystemEntry> roots = myRoots.values();
-    return VfsUtilCore.toVirtualFileArray(roots);
+    return ArrayUtil.stripTrailingNulls(VfsUtilCore.toVirtualFileArray(roots));
   }
 
   @Override

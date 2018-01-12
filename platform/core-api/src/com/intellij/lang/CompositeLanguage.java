@@ -5,6 +5,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,6 @@ public class CompositeLanguage extends Language {
 
   @NotNull
   public LanguageFilter[] getLanguageExtensions() {
-    return myFilters.toArray(new LanguageFilter[0]);
+    return ArrayUtil.stripTrailingNulls(myFilters.toArray(new LanguageFilter[0]));
   }
 }

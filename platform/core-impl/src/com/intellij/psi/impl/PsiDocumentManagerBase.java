@@ -751,7 +751,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @NotNull
   public Document[] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
+    Document[] documents = myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
+    return ArrayUtil.stripTrailingNulls(documents);
   }
 
   boolean isInUncommittedSet(@NotNull Document document) {
