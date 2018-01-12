@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection {
   private enum BooleanExpressionKind {
@@ -78,9 +79,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final String replacement = (String)infos[1];
-    if (replacement.isEmpty()) {
-      final PsiAssignmentExpression expression = (PsiAssignmentExpression)infos[0];
-      return InspectionGadgetsBundle.message("boolean.expression.does.not.modify.problem.descriptor", expression);
+    final PsiExpression expression = (PsiExpression)infos[0];
+    if (replacement.isEmpty() && expression instanceof PsiAssignmentExpression) {
+      return InspectionGadgetsBundle.message("boolean.expression.does.not.modify.problem.descriptor", expression.getText());
     }
     return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor", replacement);
   }
@@ -305,7 +306,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     final String replacement = (String)infos[1];
-    if (replacement.isEmpty()) {
+    if (replacement.isEmpty() && infos[0] instanceof PsiAssignmentExpression) {
       return new RemovePointlessBooleanExpressionFix();
     }
     boolean hasSideEffect = (boolean)infos[2];
@@ -323,7 +324,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      new CommentTracker().deleteAndRestoreComments(descriptor.getPsiElement().getParent());
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      final List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(assignmentExpression.getLExpression());
+      assert sideEffects.size() < 2;
+      if (!sideEffects.isEmpty()) {
+        CommentTracker.replaceWithSubexpressionAndRestoreComments(assignmentExpression, sideEffects.get(0));
+      }
+      else {
+        new CommentTracker().deleteAndRestoreComments(element.getParent());
+      }
     }
   }
 
@@ -430,11 +443,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         return;
       }
 
-      String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
-
-      if (parent instanceof PsiLambdaExpression &&
-          !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent,
-                                                  () -> JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(replacement, expression))) {
+      final String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
+      final Supplier<PsiElement> newBodySupplier =
+        () -> JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(replacement, expression);
+      if (parent instanceof PsiLambdaExpression && !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, newBodySupplier)) {
         return;
       }
 

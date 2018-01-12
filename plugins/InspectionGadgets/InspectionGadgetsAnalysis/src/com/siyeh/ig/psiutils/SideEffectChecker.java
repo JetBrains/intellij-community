@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.SmartList;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +80,7 @@ public class SideEffectChecker {
   }
 
   public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
-    List<PsiElement> list = new ArrayList<>();
+    List<PsiElement> list = new SmartList<>();
     element.accept(new SideEffectsVisitor(list, element));
     return StreamEx.of(list).select(PsiExpression.class).toList();
   }
