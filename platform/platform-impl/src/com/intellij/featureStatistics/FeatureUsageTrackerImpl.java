@@ -2,6 +2,7 @@
 package com.intellij.featureStatistics;
 
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.eventLog.FeatureUsageEventLogger;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -176,6 +177,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
+      FeatureUsageEventLogger.INSTANCE.log(descriptor.getGroupId(), descriptor.getId());
       descriptor.triggerUsed();
     }
   }
