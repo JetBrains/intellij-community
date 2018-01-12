@@ -30,7 +30,7 @@ class CircletConnectionComponent(private val project: Project) :
 
     private val loginDataComponent = component<CircletLoginComponent>()
 
-    private val loginModel = LoginModel(
+    val loginModel = LoginModel(
         IdeaPersistence, endpoint, ApiScheme(emptyArray()) /*TODO*/, EmptyLoggedStateWatcher,
         { authCheckFailedNotification() }, NotificationSettingKind.Ide
     ) {
@@ -38,7 +38,7 @@ class CircletConnectionComponent(private val project: Project) :
     }
 
     init {
-        KCircletClient.connectionStatus.view(componentLifetime) { stateLt, state ->
+        loginModel.client.connectionStatus.view(componentLifetime) { stateLt, state ->
             when (state) {
                 ConnectionStatus.CONNECTED -> {
                     notifyConnected()
