@@ -346,7 +346,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     next();
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/><caret>\"b\") } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/>\"b\"<caret>) } }");
   }
 
   public void testVararg() throws Exception {
