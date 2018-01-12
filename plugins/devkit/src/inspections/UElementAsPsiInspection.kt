@@ -61,8 +61,13 @@ class UElementAsPsiInspection : DevKitUastInspectionBase() {
      */
     private fun guessCorrespondingParameter(callExpression: UCallExpression, arg: UExpression): PsiParameter? {
       val psiMethod = callExpression.resolve() ?: return null
-      val indexInArguments = callExpression.valueArguments.indexOf(arg)
       val parameters = psiMethod.parameterList.parameters
+
+      if (callExpression is UCallExpressionEx)
+        return parameters.withIndex().find { (i, _) -> callExpression.getArgumentForParameter(i) == arg }?.value
+
+      // not everyone implements UCallExpressionEx, lets try to guess
+      val indexInArguments = callExpression.valueArguments.indexOf(arg)
       if (parameters.size == callExpression.valueArguments.count()) {
         return parameters.getOrNull(indexInArguments)
       }
