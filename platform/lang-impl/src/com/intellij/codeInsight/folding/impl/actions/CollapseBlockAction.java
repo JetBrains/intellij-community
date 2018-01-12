@@ -11,16 +11,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class CollapseBlockAction  extends BaseCodeInsightAction {
   @NotNull
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
-        CollapseBlockHandler.EP_NAME
-          .allForLanguage(file.getLanguage())
-          .forEach(handler->handler.invoke(project, editor, file));
+        getHandlersForFile(file).forEach(handler->handler.invoke(project, editor, file));
       }
     };
+  }
+
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return !getHandlersForFile(file).isEmpty();
+  }
+
+  @NotNull
+  private static List<CollapseBlockHandler> getHandlersForFile(@NotNull PsiFile file) {
+    return CollapseBlockHandler.EP_NAME.allForLanguage(file.getLanguage());
   }
 }
