@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -400,10 +402,8 @@ public class VfsUtilCore {
 
   @NotNull
   public static VirtualFile[] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
-    int size = files.size();
-    if (size == 0) return VirtualFile.EMPTY_ARRAY;
-    //noinspection SSBasedInspection
-    return files.toArray(new VirtualFile[size]);
+    if (files.size() == 0) return VirtualFile.EMPTY_ARRAY;
+    return files.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @NotNull

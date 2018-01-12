@@ -24,7 +24,7 @@ import com.intellij.psi.PsiFile;
  * @see LanguageCodeStyleSettingsProvider
  */
 @Deprecated
-public class LegacyCodeStyleSettings {
+public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
   /**
    * @deprecated Use {@link CommonCodeStyleSettings#DO_NOT_WRAP}
    */
@@ -279,4 +279,8 @@ public class LegacyCodeStyleSettings {
    * @deprecated See {@link LegacyCodeStyleSettings}
    */
   @Deprecated public int CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
+
+  public LegacyCodeStyleSettings() {
+    super(null);
+  }
 }

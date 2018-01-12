@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -220,21 +222,18 @@ public class JavaI18nUtil extends I18nUtil {
   @Nullable
   private static ResourceBundle resolveResourceBundleByKey(@NotNull final String key, @NotNull final Project project) {
     final Ref<ResourceBundle> bundleRef = Ref.create();
-    final boolean r = PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles(new PropertiesFileProcessor() {
-      @Override
-      public boolean process(String baseName, PropertiesFile propertiesFile) {
-        if (propertiesFile.findPropertyByKey(key) != null) {
-          if (bundleRef.get() == null) {
-            bundleRef.set(propertiesFile.getResourceBundle());
-          }
-          else {
-            if (!bundleRef.get().equals(propertiesFile.getResourceBundle())) {
-              return false;
-            }
+    final boolean r = PropertiesReferenceManager.getInstance(project).processAllPropertiesFiles((baseName, propertiesFile) -> {
+      if (propertiesFile.findPropertyByKey(key) != null) {
+        if (bundleRef.get() == null) {
+          bundleRef.set(propertiesFile.getResourceBundle());
+        }
+        else {
+          if (!bundleRef.get().equals(propertiesFile.getResourceBundle())) {
+            return false;
           }
         }
-        return true;
       }
+      return true;
     });
     return r ? bundleRef.get() : null;
   }

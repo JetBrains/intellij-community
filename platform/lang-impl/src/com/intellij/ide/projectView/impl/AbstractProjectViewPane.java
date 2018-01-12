@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.ide.projectView.impl;
@@ -453,6 +453,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   public AbstractTreeBuilder getTreeBuilder() {
     return myTreeBuilder;
+  }
+
+  public AbstractTreeStructure getTreeStructure() {
+    return myTreeStructure;
   }
 
   public void readExternal(@NotNull Element element)  {
