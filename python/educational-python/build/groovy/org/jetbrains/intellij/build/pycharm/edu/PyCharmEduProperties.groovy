@@ -107,7 +107,7 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
+        dmgImagePath = "$pythonCommunityPath/educational-python/build/dmg_background.tiff"
       }
 
       @Override

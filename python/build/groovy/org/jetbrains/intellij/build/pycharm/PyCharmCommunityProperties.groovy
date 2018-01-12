@@ -97,7 +97,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        dmgImagePath = "$projectHome/python/build/DMG_background.png"
+        dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
       }
 
       @Override

@@ -110,7 +110,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         associateIpr = true
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
-        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/communitydmg.png"
+        dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"
         icnsPathForEAP = "$projectHome/build/conf/ideaCE/mac/images/communityEAP.icns"
       }
 
