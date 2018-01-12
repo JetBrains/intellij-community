@@ -474,7 +474,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
    * overwrite this one. Call {@link #isWrapOnTyping(Language)} method instead.</b>
    *
-   * @see #WRAP_ON_TYPING
+   * @see CommonCodeStyleSettings#WRAP_ON_TYPING
    */
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
