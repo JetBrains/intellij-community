@@ -158,8 +158,38 @@ public abstract class LongRangeSet {
   @NotNull
   public abstract LongRangeSet abs(boolean isLong);
 
+  /**
+   * Returns a range which represents all the possible values after applying unary minus
+   * to the values from this set
+   *
+   * @param isLong whether result should be truncated to {@code int}
+   * @return a new range
+   */
   @NotNull
-  public abstract LongRangeSet add(LongRangeSet other, boolean isLong);
+  public abstract LongRangeSet negate(boolean isLong);
+
+  /**
+   * Returns a range which represents all the possible values after performing an addition between any value from this range
+   * and any value from other range. The resulting range may contain some more values which cannot be produced by addition.
+   * Guaranteed to be commutative.
+   *
+   * @param isLong whether result should be truncated to {@code int}
+   * @return a new range
+   */
+  @NotNull
+  public abstract LongRangeSet plus(LongRangeSet other, boolean isLong);
+
+  /**
+   * Returns a range which represents all the possible values after performing an addition between any value from this range
+   * and any value from other range. The resulting range may contain some more values which cannot be produced by addition.
+   *
+   * @param isLong whether result should be truncated to {@code int}
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet minus(LongRangeSet other, boolean isLong) {
+    return plus(other.negate(isLong), isLong);
+  }
 
   /**
    * Returns a range which represents all the possible values after applying {@code x & y} operation for
@@ -491,7 +521,13 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet add(LongRangeSet other, boolean isLong) {
+    public LongRangeSet negate(boolean isLong) {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
       return this;
     }
 
@@ -577,13 +613,19 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet add(LongRangeSet other, boolean isLong) {
+    public LongRangeSet negate(boolean isLong) {
+      return myValue == minValue(isLong) ? this : point(-myValue);
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
       if (other.isEmpty()) return other;
       if (other instanceof Point) {
         long res = myValue + ((Point)other).myValue;
         return point(isLong ? res : (int)res);
       }
-      return other.add(this, isLong);
+      return other.plus(this, isLong);
     }
 
     @NotNull
@@ -784,22 +826,35 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet add(LongRangeSet other, boolean isLong) {
+    public LongRangeSet negate(boolean isLong) {
+      long minValue = minValue(isLong);
+      if (myFrom <= minValue) {
+        if (myTo >= maxValue(isLong)) {
+          return isLong ? LONG_RANGE : INT_RANGE;
+        }
+        return new RangeSet(new long[]{minValue, minValue, -myTo, -(minValue + 1)});
+      }
+      return new Range(-myTo, -myFrom);
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
       if (other.isEmpty()) return other;
       if (isLong && equals(LONG_RANGE) || !isLong && equals(INT_RANGE)) return this;
       if (other instanceof Point || other instanceof Range || (other instanceof RangeSet && ((RangeSet)other).myRanges.length > 6)) {
-        return add(myFrom, myTo, other.min(), other.max(), isLong);
+        return plus(myFrom, myTo, other.min(), other.max(), isLong);
       }
       long[] ranges = other.asRanges();
       LongRangeSet result = empty();
       for (int i = 0; i < ranges.length; i += 2) {
-        result = result.union(add(myFrom, myTo, ranges[i], ranges[i + 1], isLong));
+        result = result.union(plus(myFrom, myTo, ranges[i], ranges[i + 1], isLong));
       }
       return result;
     }
 
     @NotNull
-    private static LongRangeSet add(long from1, long to1, long from2, long to2, boolean isLong) {
+    private static LongRangeSet plus(long from1, long to1, long from2, long to2, boolean isLong) {
       long len1 = to1 - from1; // may overflow
       long len2 = to2 - from2; // may overflow
       if ((len1 < 0 || len2 < 0) && len1 + len2 + 1 >= 0) { // total length more than 2^32
@@ -991,10 +1046,20 @@ public abstract class LongRangeSet {
 
     @NotNull
     @Override
-    public LongRangeSet add(LongRangeSet other, boolean isLong) {
+    public LongRangeSet negate(boolean isLong) {
+      LongRangeSet result = all();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.subtract(range(myRanges[i], myRanges[i + 1]).negate(isLong));
+      }
+      return all().subtract(result);
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
       LongRangeSet result = empty();
       for (int i = 0; i < myRanges.length; i += 2) {
-        result = result.union(range(myRanges[i], myRanges[i + 1]).add(other, isLong));
+        result = result.union(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));
       }
       return result;
     }
