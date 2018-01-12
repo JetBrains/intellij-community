@@ -19,7 +19,7 @@ import org.jetbrains.uast.*
  * This is a very limited implementation of UastPlugin for Groovy,
  * provided only to make Groovy play with UAST-based reference contributors and spring class annotators
  */
-class GroovyDummyUastPlugin : UastLanguagePlugin {
+class GroovyUastPlugin : UastLanguagePlugin {
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? =
     convertElementWithParent(element, { parent }, requiredType)
 
