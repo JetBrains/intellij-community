@@ -50,11 +50,9 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 
@@ -355,31 +353,36 @@ public class GradleProjectResolverUtil {
       Path binaryFileParent = file.getParent();
       Path grandParentFile = binaryFileParent.getParent();
 
-      try (Stream<Path> sourceParentCandidates = Files.list(grandParentFile)) {
-        boolean sourceFound = false;
-        boolean docFound = false;
-        for (Iterator<Path> parentIterator = sourceParentCandidates.iterator(); parentIterator.hasNext(); ) {
-          Path sourceParentCandidate = parentIterator.next();
-          if (!Files.isDirectory(sourceParentCandidate) || binaryFileParent.equals(sourceParentCandidate)) continue;
+      try {
+        final boolean[] sourceFound = {false};
+        final boolean[] docFound = {false};
+        Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
+          @Override
+          public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            if (binaryFileParent.equals(dir)) {
+              return FileVisitResult.SKIP_SUBTREE;
+            }
+            return super.preVisitDirectory(dir, attrs);
+          }
 
-          try (Stream<Path> sourceCandidates = Files.list(sourceParentCandidate)) {
-            Path sourceCandidate = sourceCandidates.findFirst().orElse(null);
-            if (sourceCandidate != null && Files.isRegularFile(sourceCandidate)) {
+          @Override
+          public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
+            if (sourceCandidate != null && attrs.isRegularFile() && sourceCandidate.getParent().getParent().equals(grandParentFile)) {
               if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
                 libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.toFile().getAbsolutePath());
-                sourceFound = true;
+                sourceFound[0] = true;
               }
               else if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-javadoc.jar")) {
                 libraryData.addPath(LibraryPathType.DOC, sourceCandidate.toFile().getAbsolutePath());
-                docFound = true;
+                docFound[0] = true;
               }
             }
+            if (sourceFound[0] && docFound[0]) {
+              return FileVisitResult.TERMINATE;
+            }
+            return super.visitFile(file, attrs);
           }
-          catch (IOException e) {
-            LOG.debug(e);
-          }
-          if (sourceFound && docFound) break;
-        }
+        });
       }
       catch (IOException e) {
         LOG.debug(e);
