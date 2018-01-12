@@ -379,8 +379,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     catch (Throwable e) {
-      forceReload(virtualFile, viewProvider);
-      LOG.error(e);
+      try {
+        forceReload(virtualFile, viewProvider);
+      }
+      finally {
+        LOG.error(e);
+      }
     }
     finally {
       if (success) {
