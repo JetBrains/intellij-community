@@ -14,7 +14,6 @@ import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.XDebugSession;
@@ -132,63 +131,44 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       return "";
     }
     ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
-    final StringBuilder label = StringBuilderSpinAllocator.alloc();
-    try {
-      Method method = myMethodOccurrence.getMethod();
-      if (method != null) {
-        myName = method.name();
-        label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
+    StringBuilder label = new StringBuilder();
+    Method method = myMethodOccurrence.getMethod();
+    if (method != null) {
+      myName = method.name();
+      label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
+    }
+    if (settings.SHOW_LINE_NUMBER) {
+      label.append(':').append(Integer.toString(DebuggerUtilsEx.getLineNumber(myLocation, false)));
+    }
+    if (settings.SHOW_CLASS_NAME) {
+      String name;
+      try {
+        ReferenceType refType = myLocation.declaringType();
+        name = refType != null ? refType.name() : null;
       }
-      if (settings.SHOW_LINE_NUMBER) {
-        String lineNumber;
-        try {
-          lineNumber = Integer.toString(DebuggerUtilsEx.getLineNumber(myLocation, false));
-        }
-        catch (InternalError e) {
-          lineNumber = e.toString();
-        }
-        if (lineNumber != null) {
-          label.append(':');
-          label.append(lineNumber);
-        }
+      catch (InternalError e) {
+        name = e.toString();
       }
-      if (settings.SHOW_CLASS_NAME) {
-        String name;
-        try {
-          ReferenceType refType = myLocation.declaringType();
-          name = refType != null ? refType.name() : null;
+      if (name != null) {
+        label.append(", ");
+        int dotIndex = name.lastIndexOf('.');
+        if (dotIndex < 0) {
+          label.append(name);
         }
-        catch (InternalError e) {
-          name = e.toString();
-        }
-        if (name != null) {
-          label.append(", ");
-          int dotIndex = name.lastIndexOf('.');
-          if (dotIndex < 0) {
-            label.append(name);
-          }
-          else {
-            label.append(name.substring(dotIndex + 1));
-            if (settings.SHOW_PACKAGE_NAME) {
-              label.append(" {");
-              label.append(name.substring(0, dotIndex));
-              label.append("}");
-            }
+        else {
+          label.append(name.substring(dotIndex + 1));
+          if (settings.SHOW_PACKAGE_NAME) {
+            label.append(" {");
+            label.append(name.substring(0, dotIndex));
+            label.append("}");
           }
         }
       }
-      if (settings.SHOW_SOURCE_NAME) {
-        label.append(", ").append(DebuggerUtilsEx.getSourceName(myLocation, e -> "Unknown Source"));
-      }
-      return label.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(label);
+    if (settings.SHOW_SOURCE_NAME) {
+      label.append(", ").append(DebuggerUtilsEx.getSourceName(myLocation, e -> "Unknown Source"));
     }
-  }
-
-  public final boolean stackFramesEqual(StackFrameDescriptorImpl d) {
-    return getFrameProxy().equals(d.getFrameProxy());
+    return label.toString();
   }
 
   @Override
