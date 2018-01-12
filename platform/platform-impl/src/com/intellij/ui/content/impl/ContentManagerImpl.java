@@ -594,7 +594,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (toSelect == null) return ActionCallback.REJECTED;
     assert myContents.contains(toSelect);
     JComponent preferredFocusableComponent = toSelect.getPreferredFocusableComponent();
-    return preferredFocusableComponent != null ? getFocusManager().requestFocus(preferredFocusableComponent, forced) : ActionCallback.REJECTED;
+    return preferredFocusableComponent != null ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject) : ActionCallback.REJECTED;
   }
 
   private IdeFocusManager getFocusManager() {

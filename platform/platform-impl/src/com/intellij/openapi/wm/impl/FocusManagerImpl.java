@@ -29,12 +29,14 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
@@ -136,7 +138,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    c.requestFocus();
+    if (ApplicationManagerEx.getApplicationEx().isActive() || !Registry.is("suppress.focus.stealing")) {
+      c.requestFocus();
+    } else {
+      c.requestFocusInWindow();
+    }
     return ActionCallback.DONE;
   }
 
@@ -480,7 +486,11 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
     } 
     
     if (toFocus != null) {
-      toFocus.requestFocus();
+      if (ApplicationManagerEx.getApplicationEx().isActive() || !Registry.is("suppress.focus.stealing")) {
+        toFocus.requestFocus();
+      } else {
+        toFocus.requestFocusInWindow();
+      }
       return ActionCallback.DONE;
     }
     

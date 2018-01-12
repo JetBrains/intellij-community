@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
@@ -93,6 +94,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     size.height= Math.min(1000, size.height - 40);
     setSize(size);
     setLocationRelativeTo(null);
+
+    if (Registry.is("suppress.focus.stealing")) {
+      setAutoRequestFocus(false);
+    }
 
     //LayoutFocusTraversalPolicyExt layoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt() {

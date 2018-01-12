@@ -189,7 +189,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       ActionCallback focused = new ActionCallback("DialogFocusedCallback");
       ActionCallback typeAheadDone = new ActionCallback("DialogTypeAheadDone");
       MyDialog dialog = new MyDialog(owner, wrapper, project, focused, typeAheadDone, typeAhead);
-      UIUtil.suppressFocusStealing(dialog.getWindow());
       dialog.setModalityType(ideModalityType.toAwtModality());
       return dialog;
     }
