@@ -22,6 +22,7 @@ class CommunityIdeFirstStart : FirstStart(ideType = CommunityIde()) {
   override fun completeFirstStart() {
     completeInstallation()
     acceptAgreement()
+    acceptDataSharing()
     customizeIde()
     waitWelcomeFrameAndClose()
   }
