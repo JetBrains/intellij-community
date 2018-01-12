@@ -266,7 +266,10 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public List<Integer> getSoftMargins() {
     if (mySoftMargins != null) return mySoftMargins;
-    return CodeStyleSettingsManager.getSettings(myEditor == null ? null : myEditor.getProject()).getSoftMargins(myLanguage);
+    return
+      myEditor == null ?
+      CodeStyle.getDefaultSettings().getSoftMargins(myLanguage) :
+      CodeStyle.getSettings(myEditor).getSoftMargins(myLanguage);
   }
 
   @Override

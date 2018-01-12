@@ -418,98 +418,94 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   protected abstract class RangeMarkerAction extends DumbAwareAction {
     @NotNull private final Range myRange;
+    @NotNull private final Editor myEditor;
 
-    public RangeMarkerAction(@NotNull Range range, @NotNull String actionId) {
+    public RangeMarkerAction(@NotNull Editor editor, @NotNull Range range, @NotNull String actionId) {
       myRange = range;
+      myEditor = editor;
       ActionUtil.copyFrom(this, actionId);
     }
 
     @Override
     public void update(AnActionEvent e) {
       Range newRange = myTracker.findRange(myRange);
-      e.getPresentation().setEnabled(newRange != null && isEnabled(newRange));
+      e.getPresentation().setEnabled(newRange != null && !myEditor.isDisposed() && isEnabled(myEditor, newRange));
     }
 
     @Override
     public void actionPerformed(AnActionEvent e) {
       Range newRange = myTracker.findRange(myRange);
-      if (newRange != null) actionPerformed(newRange);
+      if (newRange != null) actionPerformed(myEditor, newRange);
     }
 
-    protected abstract boolean isEnabled(@NotNull Range range);
+    protected abstract boolean isEnabled(@NotNull Editor editor, @NotNull Range range);
 
-    protected abstract void actionPerformed(@NotNull Range range);
+    protected abstract void actionPerformed(@NotNull Editor editor, @NotNull Range range);
   }
 
   public class ShowNextChangeMarkerAction extends RangeMarkerAction {
-    @NotNull private final Editor myEditor;
-
     public ShowNextChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
-      super(range, "VcsShowNextChangeMarker");
-      myEditor = editor;
+      super(editor, range, "VcsShowNextChangeMarker");
     }
 
     @Override
-    protected boolean isEnabled(@NotNull Range range) {
+    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
       return myTracker.getNextRange(range.getLine1()) != null;
     }
 
     @Override
-    protected void actionPerformed(@NotNull Range range) {
+    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
       Range targetRange = myTracker.getNextRange(range.getLine1());
-      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, targetRange);
+      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(editor, targetRange);
     }
   }
 
   public class ShowPrevChangeMarkerAction extends RangeMarkerAction {
-    @NotNull private final Editor myEditor;
-
     public ShowPrevChangeMarkerAction(@NotNull Editor editor, @NotNull Range range) {
-      super(range, "VcsShowPrevChangeMarker");
-      myEditor = editor;
+      super(editor, range, "VcsShowPrevChangeMarker");
     }
 
     @Override
-    protected boolean isEnabled(@NotNull Range range) {
+    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
       return myTracker.getPrevRange(range.getLine1()) != null;
     }
 
     @Override
-    protected void actionPerformed(@NotNull Range range) {
+    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
       Range targetRange = myTracker.getPrevRange(range.getLine1());
-      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(myEditor, targetRange);
+      if (targetRange != null) LineStatusMarkerPopupRenderer.this.scrollAndShow(editor, targetRange);
     }
   }
 
   public class CopyLineStatusRangeAction extends RangeMarkerAction {
-    public CopyLineStatusRangeAction(@NotNull Range range) {
-      super(range, IdeActions.ACTION_COPY);
+    public CopyLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
+      super(editor, range, IdeActions.ACTION_COPY);
     }
 
     @Override
-    protected boolean isEnabled(@NotNull Range range) {
+    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
       return Range.DELETED == range.getType() || Range.MODIFIED == range.getType();
     }
 
     @Override
-    protected void actionPerformed(@NotNull Range range) {
+    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
       final String content = getVcsContent(range) + "\n";
       CopyPasteManager.getInstance().setContents(new StringSelection(content));
     }
   }
 
   public class ShowLineStatusRangeDiffAction extends RangeMarkerAction {
-    public ShowLineStatusRangeDiffAction(@NotNull Range range) {
-      super(range, IdeActions.ACTION_SHOW_DIFF_COMMON);
+    public ShowLineStatusRangeDiffAction(@NotNull Editor editor, @NotNull Range range) {
+      super(editor, range, IdeActions.ACTION_SHOW_DIFF_COMMON);
     }
 
     @Override
-    protected boolean isEnabled(@NotNull Range range) {
+    protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
       return true;
     }
 
     @Override
-    protected void actionPerformed(@NotNull Range range) {
+    protected void actionPerformed(@NotNull Editor editor, @NotNull Range range) {
       Range ourRange = expand(range, myTracker.getDocument(), myTracker.getVcsDocument());
 
       DiffContent vcsContent = createDiffContent(myTracker.getVcsDocument(),

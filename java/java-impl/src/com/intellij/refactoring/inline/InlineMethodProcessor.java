@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -119,6 +120,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.method.command", myDescriptiveName);
   }
@@ -178,6 +180,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return super.isPreviewUsages(usages);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiMethod;
     LOG.assertTrue(condition);
@@ -286,7 +289,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                    PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
                 targetContainingClasses.add(targetContainingClass);
               }
-              else if (element instanceof PsiReferenceExpression && !ControlFlowUtil.isUnqualified((PsiReferenceExpression)element)) {
+              else if (element instanceof PsiReferenceExpression && !ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)) {
                 qualifiedCall = ((PsiReferenceExpression)element).getQualifierExpression();
               }
             }
@@ -1625,6 +1628,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull
   protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
     if (myInlineThisOnly) {

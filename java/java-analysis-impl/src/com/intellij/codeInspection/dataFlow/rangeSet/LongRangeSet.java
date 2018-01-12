@@ -155,7 +155,41 @@ public abstract class LongRangeSet {
    * @param isLong whether {@link Math#abs(long)} is applied
    * @return a new range
    */
+  @NotNull
   public abstract LongRangeSet abs(boolean isLong);
+
+  /**
+   * Returns a range which represents all the possible values after applying unary minus
+   * to the values from this set
+   *
+   * @param isLong whether result should be truncated to {@code int}
+   * @return a new range
+   */
+  @NotNull
+  public abstract LongRangeSet negate(boolean isLong);
+
+  /**
+   * Returns a range which represents all the possible values after performing an addition between any value from this range
+   * and any value from other range. The resulting range may contain some more values which cannot be produced by addition.
+   * Guaranteed to be commutative.
+   *
+   * @param isLong whether result should be truncated to {@code int}
+   * @return a new range
+   */
+  @NotNull
+  public abstract LongRangeSet plus(LongRangeSet other, boolean isLong);
+
+  /**
+   * Returns a range which represents all the possible values after performing an addition between any value from this range
+   * and any value from other range. The resulting range may contain some more values which cannot be produced by addition.
+   *
+   * @param isLong whether result should be truncated to {@code int}
+   * @return a new range
+   */
+  @NotNull
+  public LongRangeSet minus(LongRangeSet other, boolean isLong) {
+    return plus(other.negate(isLong), isLong);
+  }
 
   /**
    * Returns a range which represents all the possible values after applying {@code x & y} operation for
@@ -165,6 +199,7 @@ public abstract class LongRangeSet {
    * @param other other set to perform bitwise-and with
    * @return a new range
    */
+  @NotNull
   public LongRangeSet bitwiseAnd(LongRangeSet other) {
     if (this.isEmpty() || other.isEmpty()) return empty();
     long[] left = splitAtZero(asRanges());
@@ -185,6 +220,7 @@ public abstract class LongRangeSet {
     return all().subtract(result);
   }
 
+  @NotNull
   abstract public LongRangeSet mod(LongRangeSet other);
 
   private static long[] splitAtZero(long[] ranges) {
@@ -364,6 +400,10 @@ public abstract class LongRangeSet {
     return isLong ? Long.MIN_VALUE : Integer.MIN_VALUE;
   }
 
+  static long maxValue(boolean isLong) {
+    return isLong ? Long.MAX_VALUE : Integer.MAX_VALUE;
+  }
+
   /**
    * @return LongRangeSet describing possible array or string indices (from 0 to Integer.MAX_VALUE)
    */
@@ -473,11 +513,25 @@ public abstract class LongRangeSet {
       return other.isEmpty();
     }
 
+    @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
       return this;
     }
 
+    @NotNull
+    @Override
+    public LongRangeSet negate(boolean isLong) {
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      return this;
+    }
+
+    @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
       return empty();
@@ -551,11 +605,30 @@ public abstract class LongRangeSet {
       return other.isEmpty() || equals(other);
     }
 
+    @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
       return myValue >= 0 || myValue == minValue(isLong) ? this : point(-myValue);
     }
 
+    @NotNull
+    @Override
+    public LongRangeSet negate(boolean isLong) {
+      return myValue == minValue(isLong) ? this : point(-myValue);
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      if (other.isEmpty()) return other;
+      if (other instanceof Point) {
+        long res = myValue + ((Point)other).myValue;
+        return point(isLong ? res : (int)res);
+      }
+      return other.plus(this, isLong);
+    }
+
+    @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
       if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
@@ -726,6 +799,7 @@ public abstract class LongRangeSet {
       return other.isEmpty() || other.min() >= myFrom && other.max() <= myTo;
     }
 
+    @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
       if (myFrom >= 0) return this;
@@ -750,6 +824,60 @@ public abstract class LongRangeSet {
       }
     }
 
+    @NotNull
+    @Override
+    public LongRangeSet negate(boolean isLong) {
+      long minValue = minValue(isLong);
+      if (myFrom <= minValue) {
+        if (myTo >= maxValue(isLong)) {
+          return isLong ? LONG_RANGE : INT_RANGE;
+        }
+        return new RangeSet(new long[]{minValue, minValue, -myTo, -(minValue + 1)});
+      }
+      return new Range(-myTo, -myFrom);
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      if (other.isEmpty()) return other;
+      if (isLong && equals(LONG_RANGE) || !isLong && equals(INT_RANGE)) return this;
+      if (other instanceof Point || other instanceof Range || (other instanceof RangeSet && ((RangeSet)other).myRanges.length > 6)) {
+        return plus(myFrom, myTo, other.min(), other.max(), isLong);
+      }
+      long[] ranges = other.asRanges();
+      LongRangeSet result = empty();
+      for (int i = 0; i < ranges.length; i += 2) {
+        result = result.union(plus(myFrom, myTo, ranges[i], ranges[i + 1], isLong));
+      }
+      return result;
+    }
+
+    @NotNull
+    private static LongRangeSet plus(long from1, long to1, long from2, long to2, boolean isLong) {
+      long len1 = to1 - from1; // may overflow
+      long len2 = to2 - from2; // may overflow
+      if ((len1 < 0 || len2 < 0) && len1 + len2 + 1 >= 0) { // total length more than 2^32
+        return isLong ? LONG_RANGE : INT_RANGE;
+      }
+      long from = from1 + from2;
+      long to = to1 + to2;
+      if (!isLong) {
+        if (to - from + 1 >= 0x1_0000_0000L) {
+          return INT_RANGE;
+        }
+        from = (int)from;
+        to = (int)to;
+      }
+      if (to < from) {
+        return new RangeSet(new long[]{minValue(isLong), to, from, maxValue(isLong)});
+      }
+      else {
+        return range(from, to);
+      }
+    }
+
+    @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
       if (divisor.isEmpty() || divisor.equals(point(0))) return empty();
@@ -906,6 +1034,7 @@ public abstract class LongRangeSet {
       return false;
     }
 
+    @NotNull
     @Override
     public LongRangeSet abs(boolean isLong) {
       LongRangeSet result = all();
@@ -915,6 +1044,27 @@ public abstract class LongRangeSet {
       return all().subtract(result);
     }
 
+    @NotNull
+    @Override
+    public LongRangeSet negate(boolean isLong) {
+      LongRangeSet result = all();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.subtract(range(myRanges[i], myRanges[i + 1]).negate(isLong));
+      }
+      return all().subtract(result);
+    }
+
+    @NotNull
+    @Override
+    public LongRangeSet plus(LongRangeSet other, boolean isLong) {
+      LongRangeSet result = empty();
+      for (int i = 0; i < myRanges.length; i += 2) {
+        result = result.union(range(myRanges[i], myRanges[i + 1]).plus(other, isLong));
+      }
+      return result;
+    }
+
+    @NotNull
     @Override
     public LongRangeSet mod(LongRangeSet divisor) {
       if(divisor.isEmpty()) return empty();

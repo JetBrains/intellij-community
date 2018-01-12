@@ -43,7 +43,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestDataProvider;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import jetCheck.Generator;
+import org.jetbrains.jetCheck.Generator;
 
 import java.io.File;
 import java.util.ArrayList;

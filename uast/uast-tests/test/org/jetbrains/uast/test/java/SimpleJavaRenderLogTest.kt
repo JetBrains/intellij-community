@@ -56,4 +56,7 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testStrings() = doTest("Simple/Strings.java")
+
+  @Test
+  fun testAnnotation() = doTest("Simple/Annotation.java")
 }

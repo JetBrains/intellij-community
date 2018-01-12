@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.patterns.XmlPatterns;
+import com.intellij.patterns.uast.UastPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
@@ -51,12 +52,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastLiteralUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -254,89 +256,71 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
-    UastReferenceRegistrar.registerUastReferenceProvider(registrar, new Function2<UElement, ProcessingContext, Boolean>() {
-      @Override
-      public Boolean invoke(UElement element, ProcessingContext context) {
-        if (!UastLiteralUtils.isStringLiteral(element)) return false;
+    UastReferenceRegistrar.registerUastReferenceProvider(
+      registrar,
+      UastPatterns.stringLiteralExpression()
+        .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
+        .annotationParam(Presentation.class.getName(), "icon"),
+      UastReferenceRegistrar.uastLiteralReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{
+        new IconPsiReferenceBase(referencePsiElement) {
 
-        final UNamedExpression namedExpression = UastUtils.getParentOfType(element, UNamedExpression.class);
-        if (namedExpression == null || !"icon".equals(namedExpression.getName())) return false;
+          private UElement getUElement() {
+            return UastContextKt.toUElement(getElement());
+          }
 
-        final UAnnotation annotation = UastUtils.getParentOfType(namedExpression, UAnnotation.class);
-        return annotation != null && Presentation.class.getName().equals(annotation.getQualifiedName());
-      }
-    }, new UastReferenceProvider() {
-      @NotNull
-      @Override
-      public PsiReference[] getReferencesByElement(@NotNull final UElement uElement, @NotNull ProcessingContext context) {
-        final PsiElement psi = uElement.getPsi();
-        if (psi == null || !PsiUtil.isPluginProject(psi.getProject())) return PsiReference.EMPTY_ARRAY;
+          @Override
+          public PsiElement resolve() {
+            final UElement uElement = getUElement();
+            if (uElement == null) return null;
 
-        PsiElement referencePsiElement = UastLiteralUtils.getPsiLanguageInjectionHost((ULiteralExpression)uElement);
-        if (referencePsiElement == null) return PsiReference.EMPTY_ARRAY;
+            String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
+            return resolveIconPath(value, getElement());
+          }
 
-        return new PsiReference[]{
-          new IconPsiReferenceBase(referencePsiElement) {
-
-            private UElement getUElement() {
-              return UastContextKt.toUElement(getElement());
+          @Override
+          public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            PsiElement field = resolve();
+            PsiElement result = handleElement(field, newElementName);
+            if (result != null) {
+              return result;
             }
+            return super.handleElementRename(newElementName);
+          }
 
-            @Override
-            public PsiElement resolve() {
-              final UElement uElement = getUElement();
-              if (uElement == null) return null;
-
-              String value = UastLiteralUtils.getValueIfStringLiteral(uElement);
-              return resolveIconPath(value, getElement());
-            }
-
-            @Override
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-              PsiElement field = resolve();
-              PsiElement result = handleElement(field, newElementName);
-              if (result != null) {
-                return result;
-              }
-              return super.handleElementRename(newElementName);
-            }
-
-            @Nullable
-            private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
-              if (element instanceof PsiField) {
-                PsiClass containingClass = ((PsiField)element).getContainingClass();
-                if (containingClass != null) {
-                  String classQualifiedName = containingClass.getQualifiedName();
-                  if (classQualifiedName != null) {
-                    if (newElementName == null) {
-                      newElementName = ((PsiField)element).getName();
-                    }
-                    if (classQualifiedName.startsWith("com.intellij.icons.")) {
-                      return replace(newElementName, classQualifiedName, "com.intellij.icons.");
-                    }
-                    if (classQualifiedName.startsWith("icons.")) {
-                      return replace(newElementName, classQualifiedName, "icons.");
-                    }
+          @Nullable
+          private PsiElement handleElement(PsiElement element, @Nullable String newElementName) {
+            if (element instanceof PsiField) {
+              PsiClass containingClass = ((PsiField)element).getContainingClass();
+              if (containingClass != null) {
+                String classQualifiedName = containingClass.getQualifiedName();
+                if (classQualifiedName != null) {
+                  if (newElementName == null) {
+                    newElementName = ((PsiField)element).getName();
+                  }
+                  if (classQualifiedName.startsWith("com.intellij.icons.")) {
+                    return replace(newElementName, classQualifiedName, "com.intellij.icons.");
+                  }
+                  if (classQualifiedName.startsWith("icons.")) {
+                    return replace(newElementName, classQualifiedName, "icons.");
                   }
                 }
               }
-              return null;
             }
-
-            private PsiElement replace(String newElementName, String fqn, String packageName) {
-              String newValue = fqn.substring(packageName.length()) + "." + newElementName;
-              return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
-            }
-
-            @NotNull
-            @Override
-            public Object[] getVariants() {
-              return EMPTY_ARRAY;
-            }
+            return null;
           }
-        };
-      }
-    }, PsiReferenceRegistrar.HIGHER_PRIORITY);
+
+          private PsiElement replace(String newElementName, String fqn, String packageName) {
+            String newValue = fqn.substring(packageName.length()) + "." + newElementName;
+            return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), newValue);
+          }
+
+          @NotNull
+          @Override
+          public Object[] getVariants() {
+            return EMPTY_ARRAY;
+          }
+        }
+      }), PsiReferenceRegistrar.HIGHER_PRIORITY);
   }
 
 

@@ -24,8 +24,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import javax.swing.*;
 import java.awt.*;
@@ -131,7 +131,7 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
         pi.setText("Connecting to " + url);
       }
       try {
-        SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), SVNRevision.HEAD);
+        SvnVcs.getInstance(myProject).getInfo(SvnUtil.createUrl(url), Revision.HEAD);
       }
       catch (SvnBindException e) {
         excRef.set(e);

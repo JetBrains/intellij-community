@@ -84,6 +84,13 @@ public interface ViewSettings extends NodeOptions {
   boolean isShowModules();
 
   /**
+   * @return {@code true} if modules should be shown in a flat list without grouping accordingly to qualified names
+   */
+  default boolean isFlattenModules() {
+    return false;
+  }
+
+  /**
    * Checks if the project view displays URL for projects, modules and libraries.
    *
    * @return {@code true} if URL is displayed, {@code false} otherwise.

@@ -346,10 +346,17 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return root.getSource()
       .map(testSource -> getLocationHintValue(testSource))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
-      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'")
+      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'" + getMetainfo(root))
       .orElse(NO_LOCATION_HINT);
   }
 
+  private static String getMetainfo(TestIdentifier root) {
+    return root.getSource()
+      .filter(testSource -> testSource instanceof MethodSource)
+      .map(testSource -> " metainfo=\'" + ((MethodSource)testSource).getMethodParameterTypes() + "\'")
+      .orElse(NO_LOCATION_HINT);
+  }
+  
   static String getLocationHintValue(TestSource testSource) {
 
     if (testSource instanceof CompositeTestSource) {

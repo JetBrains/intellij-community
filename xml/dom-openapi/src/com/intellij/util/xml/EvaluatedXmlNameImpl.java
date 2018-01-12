@@ -77,7 +77,7 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
   @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || !(o instanceof EvaluatedXmlNameImpl)) return false;
+    if (!(o instanceof EvaluatedXmlNameImpl)) return false;
 
     final EvaluatedXmlNameImpl that = (EvaluatedXmlNameImpl)o;
 

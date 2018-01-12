@@ -31,7 +31,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.ArrayUtil;
@@ -51,6 +50,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   @NonNls public static final String TEST_CATEGORY = "category";
   @NonNls public static final String TEST_METHOD = "method";
   @NonNls public static final String TEST_UNIQUE_ID = "uniqueId";
+  @NonNls public static final String TEST_TAGS = "tags";
   @NonNls public static final String BY_SOURCE_POSITION = "source location";
   @NonNls public static final String BY_SOURCE_CHANGES = "changes";
 
@@ -537,6 +537,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     private String[] UNIQUE_ID;
+    private String[] TAGS;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
@@ -567,6 +568,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
              Comparing.equal(DIR_NAME, second.DIR_NAME) &&
              Comparing.equal(CATEGORY_NAME, second.CATEGORY_NAME) &&
              Comparing.equal(UNIQUE_ID, second.UNIQUE_ID) &&
+             Comparing.equal(TAGS, second.TAGS) &&
              Comparing.equal(REPEAT_MODE, second.REPEAT_MODE) &&
              REPEAT_COUNT == second.REPEAT_COUNT;
     }
@@ -584,6 +586,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
              Comparing.hashcode(DIR_NAME) ^
              Comparing.hashcode(CATEGORY_NAME) ^
              Comparing.hashcode(UNIQUE_ID) ^
+             Comparing.hashcode(TAGS) ^
              Comparing.hashcode(REPEAT_MODE) ^
              Comparing.hashcode(REPEAT_COUNT);
     }
@@ -649,46 +652,21 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
+    public String[] getTags() {
+      return TAGS;
+    }
+
+    public void setTags(String[] tags) {
+      TAGS = tags;
+    }
+
     public static String getMethodPresentation(PsiMethod method) {
       if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(),
-                                                        param -> {
-                                                          PsiType type = TypeConversionUtil.erasure(param.getType());
-                                                          return type != null ? type.accept(createSignatureVisitor()) : "";
-                                                        },
-                                                        ",") + ")";
+        return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
         return method.getName();
       }
-    }
-
-    private static PsiTypeVisitor<String> createSignatureVisitor() {
-      return new PsiTypeVisitor<String>() {
-        @Override
-        public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
-          return primitiveType.getCanonicalText();
-        }
-
-        @Override
-        public String visitClassType(PsiClassType classType) {
-          PsiClass aClass = classType.resolve();
-          if (aClass == null) {
-            return "";
-          }
-          return ClassUtil.getJVMClassName(aClass);
-        }
-
-        @Override
-        public String visitArrayType(PsiArrayType arrayType) {
-          PsiType componentType = arrayType.getComponentType();
-          String typePresentation = componentType.accept(this);
-          if (componentType instanceof PsiClassType) {
-            typePresentation = "L" + typePresentation + ";";
-          }
-          return "[" + typePresentation;
-        }
-      };
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
@@ -723,6 +701,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       }
       if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
         return UNIQUE_ID != null ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+      }
+      if (TEST_TAGS.equals(TEST_OBJECT)) {
+        return TAGS != null ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {

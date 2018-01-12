@@ -59,6 +59,7 @@ import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -117,26 +118,32 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public void replaceInProject(@NotNull DataContext dataContext) {
-    final boolean isOpenInNewTabEnabled;
-    final boolean toOpenInNewTab;
-    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
-    if (selectedContent != null && selectedContent.isPinned()) {
-      toOpenInNewTab = true;
-      isOpenInNewTabEnabled = false;
-    }
-    else {
-      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
-    }
+  public void replaceInProject(@NotNull DataContext dataContext, @Nullable FindModel predefinedModel) {
     final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = findManager.getFindInProjectModel().clone();
-    findModel.setReplaceState(true);
-    findModel.setOpenInNewTabVisible(true);
-    findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
-    findModel.setOpenInNewTab(toOpenInNewTab);
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
-    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+    final FindModel findModel;
+    if (predefinedModel == null) {
+      final boolean isOpenInNewTabEnabled;
+      final boolean toOpenInNewTab;
+      final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      if (selectedContent != null && selectedContent.isPinned()) {
+        toOpenInNewTab = true;
+        isOpenInNewTabEnabled = false;
+      }
+      else {
+        toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+        isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      }
+
+      findModel = findManager.getFindInProjectModel().clone();
+      findModel.setReplaceState(true);
+      findModel.setOpenInNewTabVisible(true);
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
+      findModel.setOpenInNewTab(toOpenInNewTab);
+      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+    } else {
+      findModel = predefinedModel;
+    }
 
     findManager.showFindDialog(findModel, () -> {
       if (!findModel.isProjectScope() &&
@@ -193,7 +200,7 @@ public class ReplaceInProjectManager {
       Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       ReplaceInProjectManager findInProjectManager = getInstance(myProject);
-      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
   }
 
@@ -424,11 +431,10 @@ public class ReplaceInProjectManager {
     int[] replacedCount = {0};
     final boolean[] success = {true};
 
-    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
+    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
       FindBundle.message("find.replace.all.confirmation.title"),
       myProject, 
       null,
-      "Stop",
       indicator -> {
         int processed = 0;
         VirtualFile lastFile = null;
@@ -524,7 +530,7 @@ public class ReplaceInProjectManager {
     if (textOffset < 0 || textOffset >= document.getTextLength()) {
       return false;
     }
-    if (textEndOffset < 0 || textOffset > document.getTextLength()) {
+    if (textEndOffset < 0 || textEndOffset > document.getTextLength()) {
       return false;
     }
     FindManager findManager = FindManager.getInstance(myProject);

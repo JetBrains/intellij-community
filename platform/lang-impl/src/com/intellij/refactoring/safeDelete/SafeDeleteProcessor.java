@@ -417,6 +417,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private String myCachedCommandName = null;
+  @NotNull
   @Override
   protected String getCommandName() {
     if (myCachedCommandName == null) {

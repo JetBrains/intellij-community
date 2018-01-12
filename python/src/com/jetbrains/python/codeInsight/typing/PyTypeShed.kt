@@ -57,11 +57,7 @@ object PyTypeShed {
       return false
     }
     if (isInStandardLibrary(root)) {
-      if (ApplicationManager.getApplication().isUnitTestMode ||
-          topLevelPackage != TYPING ||
-          PythonSdkType.getLanguageLevelForSdk(sdk).isAtLeast(LanguageLevel.PYTHON35)) {
         return true
-      }
     }
     if (isInThirdPartyLibraries(root)) {
       if (ApplicationManager.getApplication().isUnitTestMode) {

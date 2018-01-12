@@ -201,7 +201,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
 
     final Object result = GroovyConstantExpressionEvaluator.evaluate(expression);
-    if (result == null || !(result instanceof String)) {
+    if (!(result instanceof String)) {
       registerError(
         elementToHighlight,
         ProblemHighlightType.WEAK_WARNING,

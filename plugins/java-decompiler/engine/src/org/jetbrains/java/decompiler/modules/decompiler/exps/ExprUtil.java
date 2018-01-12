@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -24,7 +27,7 @@ public class ExprUtil {
       // own class
       mask = wrapper.getMethodWrapper(CodeConstants.INIT_NAME, descriptor).synthParameters;
     }
-    else if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && node.classStruct.hasModifier(CodeConstants.ACC_STATIC)) {
+    else if (parameters > 0 && node.type == ClassNode.CLASS_MEMBER && (node.access & CodeConstants.ACC_STATIC) == 0) {
       // non-static member class
       mask = new ArrayList<>(Collections.nCopies(parameters, null));
       mask.set(0, new VarVersionPair(-1, 0));

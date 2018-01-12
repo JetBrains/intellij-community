@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
 
-  public UrlMappingRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+  public UrlMappingRepositoryProvider(@NotNull SvnVcs vcs, @NotNull Target target) {
     super(vcs, target);
   }
 
@@ -38,7 +34,7 @@ public class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
     if (!myVcs.getProject().isDefault()) {
       rootInfo = myTarget.isFile()
                  ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
-                 : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL());
+                 : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getUrl());
     }
 
     return rootInfo != null ? new Repository(rootInfo.getRepositoryUrl()) : null;

@@ -1,46 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.NodeKind;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
 
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-
 /**
  * TODO: Could also inherit BaseNodeDescription when myKind becomes final.
- *
- * @author Konstantin Kolosovsky.
  */
 public class Status {
-  private SVNURL myURL;
+  private Url myURL;
   private File myFile;
   private @NotNull NodeKind myKind;
-  @NotNull private SVNRevision myRevision;
-  @NotNull private SVNRevision myCommittedRevision;
+  @NotNull private Revision myRevision;
+  @NotNull private Revision myCommittedRevision;
   private StatusType myContentsStatus;
   private StatusType myPropertiesStatus;
   private StatusType myRemoteContentsStatus;
@@ -49,45 +29,22 @@ public class Status {
   private boolean myIsLocked;
   private boolean myIsCopied;
   private boolean myIsSwitched;
-  private SVNURL myCopyFromURL;
+  private Url myCopyFromURL;
   @Nullable private Lock myRemoteLock;
   @Nullable private Lock myLocalLock;
-  private SVNRevision myRemoteRevision;
+  private Revision myRemoteRevision;
   private String myChangelistName;
   @Nullable private TreeConflictDescription myTreeConflict;
   private boolean myIsConflicted;
 
   private StatusType myNodeStatus;
-  private SVNURL myRepositoryRootURL;
+  private Url myRepositoryRootURL;
 
-  @Nullable
-  public static Status create(@Nullable SVNStatus status) throws SvnBindException {
-    Status result = null;
-
-    if (status != null) {
-      result =
-        new Status(status.getURL(), status.getFile(), NodeKind.from(status.getKind()), status.getRevision(), status.getCommittedRevision(),
-                   StatusType.from(status.getContentsStatus()), StatusType.from(status.getPropertiesStatus()),
-                   StatusType.from(status.getRemoteContentsStatus()), StatusType.from(status.getRemotePropertiesStatus()),
-                   status.isLocked(), status.isCopied(), status.isSwitched(),
-                   status.getCopyFromURL() != null ? createUrl(status.getCopyFromURL()) : null, Lock.create(status.getRemoteLock()),
-                   Lock.create(status.getLocalLock()), status.getChangelistName(),
-                   TreeConflictDescription.create(status.getTreeConflict()));
-      result.setIsConflicted(status.isConflicted());
-      result.setNodeStatus(StatusType.from(status.getNodeStatus()));
-      result.setRemoteNodeStatus(StatusType.from(status.getRemoteNodeStatus()));
-      result.setRemoteRevision(status.getRemoteRevision());
-      result.setRepositoryRootURL(status.getRepositoryRootURL());
-    }
-
-    return result;
-  }
-
-  public Status(SVNURL url,
+  public Status(Url url,
                 File file,
                 @NotNull NodeKind kind,
-                @Nullable SVNRevision revision,
-                @Nullable SVNRevision committedRevision,
+                @Nullable Revision revision,
+                @Nullable Revision committedRevision,
                 StatusType contentsStatus,
                 StatusType propertiesStatus,
                 StatusType remoteContentsStatus,
@@ -95,7 +52,7 @@ public class Status {
                 boolean isLocked,
                 boolean isCopied,
                 boolean isSwitched,
-                SVNURL copyFromURL,
+                Url copyFromURL,
                 @Nullable Lock remoteLock,
                 @Nullable Lock localLock,
                 String changelistName,
@@ -103,8 +60,8 @@ public class Status {
     myURL = url;
     myFile = file;
     myKind = kind;
-    myRevision = revision == null ? SVNRevision.UNDEFINED : revision;
-    myCommittedRevision = committedRevision == null ? SVNRevision.UNDEFINED : committedRevision;
+    myRevision = revision == null ? Revision.UNDEFINED : revision;
+    myCommittedRevision = committedRevision == null ? Revision.UNDEFINED : committedRevision;
     myContentsStatus = contentsStatus == null ? StatusType.STATUS_NONE : contentsStatus;
     myPropertiesStatus = propertiesStatus == null ? StatusType.STATUS_NONE : propertiesStatus;
     myRemoteContentsStatus = remoteContentsStatus == null ? StatusType.STATUS_NONE : remoteContentsStatus;
@@ -118,15 +75,15 @@ public class Status {
     myLocalLock = localLock;
     myChangelistName = changelistName;
     myTreeConflict = treeConflict;
-    myRemoteRevision = SVNRevision.UNDEFINED;
+    myRemoteRevision = Revision.UNDEFINED;
   }
 
   public Status() {
-    setRevision(SVNRevision.UNDEFINED);
-    myRemoteRevision = SVNRevision.UNDEFINED;
+    setRevision(Revision.UNDEFINED);
+    myRemoteRevision = Revision.UNDEFINED;
   }
 
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 
@@ -140,12 +97,12 @@ public class Status {
   }
 
   @NotNull
-  public SVNRevision getRevision() {
+  public Revision getRevision() {
     return myRevision;
   }
 
   @NotNull
-  public SVNRevision getCommittedRevision() {
+  public Revision getCommittedRevision() {
     return myCommittedRevision;
   }
 
@@ -194,7 +151,7 @@ public class Status {
   }
 
   @Nullable
-  public SVNURL getCopyFromURL() {
+  public Url getCopyFromURL() {
     return myCopyFromURL;
   }
 
@@ -208,7 +165,7 @@ public class Status {
     return myLocalLock;
   }
 
-  public SVNRevision getRemoteRevision() {
+  public Revision getRemoteRevision() {
     return myRemoteRevision;
   }
 
@@ -236,11 +193,11 @@ public class Status {
     return myNodeStatus;
   }
 
-  public SVNURL getRepositoryRootURL() {
+  public Url getRepositoryRootURL() {
     return myRepositoryRootURL;
   }
 
-  public void setURL(SVNURL uRL) {
+  public void setURL(Url uRL) {
     myURL = uRL;
   }
 
@@ -252,11 +209,11 @@ public class Status {
     myKind = kind;
   }
 
-  public void setRevision(@NotNull SVNRevision revision) {
+  public void setRevision(@NotNull Revision revision) {
     myRevision = revision;
   }
 
-  public void setCommittedRevision(@NotNull SVNRevision committedRevision) {
+  public void setCommittedRevision(@NotNull Revision committedRevision) {
     myCommittedRevision = committedRevision;
   }
 
@@ -312,11 +269,11 @@ public class Status {
     myNodeStatus = nodeStatus;
   }
 
-  public void setRepositoryRootURL(SVNURL repositoryRootURL) {
+  public void setRepositoryRootURL(Url repositoryRootURL) {
     myRepositoryRootURL = repositoryRootURL;
   }
 
-  public void setRemoteRevision(SVNRevision remoteRevision) {
+  public void setRemoteRevision(Revision remoteRevision) {
     myRemoteRevision = remoteRevision;
   }
 }

@@ -76,7 +76,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       Map<EKey, Equations> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
       allEquations = solvePartially(allEquations);
-      allEquations.forEach((methodKey, equations) -> map.put(methodKey.method.hashed(md), hash(equations, md)));
+      allEquations.forEach((methodKey, equations) -> map.merge(methodKey.method.hashed(md), hash(equations, md), BytecodeAnalysisIndex.MERGER));
     }
     catch (ProcessCanceledException e) {
       throw e;

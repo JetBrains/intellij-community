@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,16 +100,21 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
                                RefElement refFrom,
                                boolean referencedFromClassInitializer,
                                boolean forReading,
-                               boolean forWriting) {
+                               boolean forWriting,
+                               PsiElement referenceElement) {
     if (!(refWhat instanceof RefField)) return;
     if (!(refFrom instanceof RefMethod) ||
         !((RefMethod)refFrom).isConstructor() ||
         ((PsiField)refWhat.getElement()).hasInitializer() ||
         ((RefMethod)refFrom).getOwnerClass() != ((RefField)refWhat).getOwnerClass() ||
         ((RefField)refWhat).isStatic()) {
-      if (!referencedFromClassInitializer  && forWriting) {
+      if (forWriting &&
+          !(referencedFromClassInitializer && PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) == null)) {
         ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
       }
+    }
+    else if (forWriting && PsiTreeUtil.getParentOfType(referenceElement, PsiLambdaExpression.class, true) != null) {
+      ((RefFieldImpl)refWhat).setFlag(false, CAN_BE_FINAL_MASK);
     }
   }
 

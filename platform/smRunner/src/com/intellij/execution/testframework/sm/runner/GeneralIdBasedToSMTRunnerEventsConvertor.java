@@ -156,14 +156,14 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   @Override
-  protected SMTestProxy createSuite(String suiteName, String locationHint, String id, String parentNodeId) {
-    Node node = createNode(new TestSuiteStartedEvent(suiteName, id, parentNodeId, locationHint, null, null, null, false), true);
+  protected SMTestProxy createSuite(String suiteName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    Node node = createNode(new TestSuiteStartedEvent(suiteName, id, parentNodeId, locationHint, metaInfo, null, null, false), true);
     return node.getProxy();
   }
 
   @Override
-  protected SMTestProxy createProxy(String testName, String locationHint, String id, String parentNodeId) {
-    Node node = createNode(new TestStartedEvent(testName, id, parentNodeId, locationHint, null, null, null, false), false);
+  protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
+    Node node = createNode(new TestStartedEvent(testName, id, parentNodeId, locationHint, metaInfo, null, null, false), false);
     return node.getProxy();
   }
 

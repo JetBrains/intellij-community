@@ -16,16 +16,11 @@
 package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseNodeDescription;
 import org.jetbrains.idea.svn.api.NodeKind;
-import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class TreeConflictDescription extends BaseNodeDescription {
 
   private final File myPath;
@@ -35,23 +30,6 @@ public class TreeConflictDescription extends BaseNodeDescription {
   private final ConflictOperation myOperation;
   private final ConflictVersion mySourceLeftVersion;
   private final ConflictVersion mySourceRightVersion;
-
-  @Nullable
-  public static TreeConflictDescription create(@Nullable SVNTreeConflictDescription conflict) {
-    TreeConflictDescription result = null;
-
-    if (conflict != null) {
-      result =
-        new TreeConflictDescription(conflict.getPath(), NodeKind.from(conflict.getNodeKind()),
-                                    ConflictAction.from(conflict.getConflictAction().getName()),
-                                    ConflictReason.from(conflict.getConflictReason().getName()),
-                                    ConflictOperation.from(conflict.getOperation().getName()),
-                                    ConflictVersion.create(conflict.getSourceLeftVersion()),
-                                    ConflictVersion.create(conflict.getSourceRightVersion()));
-    }
-
-    return result;
-  }
 
   public TreeConflictDescription(File path,
                                  @NotNull NodeKind nodeKind,

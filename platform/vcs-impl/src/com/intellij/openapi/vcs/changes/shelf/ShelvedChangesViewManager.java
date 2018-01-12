@@ -157,7 +157,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       @Override
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
+        if (node instanceof ShelvedListNode && e.getSource() instanceof TreeCellEditor) {
           String editorValue = ((TreeCellEditor)e.getSource()).getCellEditorValue().toString();
           ShelvedChangeList shelvedChangeList = ((ShelvedListNode)node).getList();
           ShelveChangesManager.getInstance(project).renameChangeList(shelvedChangeList, editorValue);

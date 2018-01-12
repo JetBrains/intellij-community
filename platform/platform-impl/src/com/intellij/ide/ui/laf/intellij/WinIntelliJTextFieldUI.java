@@ -62,8 +62,7 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   @Override
   protected void paintBackground(Graphics g) {
     JTextComponent c = getComponent();
-    if (UIUtil.getParentOfType(JComboBox.class, c) != null ||
-        UIUtil.getParentOfType(JSpinner.class, c) != null) return;
+    if (UIUtil.getParentOfType(JComboBox.class, c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
@@ -76,7 +75,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
         g2.fillRect(0, 0, c.getWidth(), c.getHeight());
       }
 
-      paintTextFieldBackground(c, g2);
+      if (c.getBorder() instanceof WinIntelliJTextBorder) {
+        paintTextFieldBackground(c, g2);
+      } else if (c.isOpaque()) {
+        super.paintBackground(g);
+      }
     } finally {
       g2.dispose();
     }
@@ -108,7 +111,10 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
 
   @Override
   protected int getMinimumHeight() {
-    return JBUI.scale(DarculaEditorTextFieldBorder.isComboBoxEditor(getComponent()) ? 18 : 24);
+    JComponent c = getComponent();
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
+           UIUtil.getParentOfType(JSpinner.class, c) != null ?
+           JBUI.scale(18) : JBUI.scale(24);
   }
 
   @Override

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -25,6 +27,7 @@ public interface IFernflowerPreferences {
   String SYNTHETIC_NOT_SET = "nns";
   String UNDEFINED_PARAM_TYPE_OBJECT = "uto";
   String USE_DEBUG_VAR_NAMES = "udv";
+  String USE_METHOD_PARAMETERS = "ump";
   String REMOVE_EMPTY_RANGES = "rer";
   String FINALLY_DEINLINE = "fdi";
   String IDEA_NOT_NULL_ANNOTATION = "inn";
@@ -67,6 +70,7 @@ public interface IFernflowerPreferences {
     defaults.put(SYNTHETIC_NOT_SET, "0");
     defaults.put(UNDEFINED_PARAM_TYPE_OBJECT, "1");
     defaults.put(USE_DEBUG_VAR_NAMES, "1");
+    defaults.put(USE_METHOD_PARAMETERS, "1");
     defaults.put(REMOVE_EMPTY_RANGES, "1");
     defaults.put(FINALLY_DEINLINE, "1");
     defaults.put(IDEA_NOT_NULL_ANNOTATION, "1");

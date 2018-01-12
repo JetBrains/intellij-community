@@ -186,12 +186,11 @@ public abstract class DebuggerUtils {
   }
 
   public static boolean isInteger(Value value) {
-    return value != null &&
-           (value instanceof ByteValue ||
+    return (value instanceof ByteValue ||
             value instanceof ShortValue ||
             value instanceof LongValue ||
             value instanceof IntegerValue
-           );
+    );
   }
 
   public static String translateStringValue(final String str) {

@@ -136,12 +136,6 @@ public class PersistentMapTest extends PersistentMapTestBase {
   }
 
   public void testPersistentMapWithoutChunks() throws IOException {
-    String keyWithChunks = "keyWithChunks";
-    myMap.appendData(keyWithChunks, out -> out.writeUTF("BAR"));
-    myMap.force();
-    myMap.appendData(keyWithChunks, out -> out.writeUTF("BAR2"));
-    
-    myMap.close();
     PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
     try {
       myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
@@ -151,11 +145,6 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     String writeKey = "key";
     String writeKey2 = "key2";
-    
-    failIfSucceededWithoutAssertion(
-      () -> myMap.get(keyWithChunks), 
-      "Assertion on reading chunks"
-    );
 
     failIfSucceededWithoutAssertion(
       () -> {
@@ -189,8 +178,26 @@ public class PersistentMapTest extends PersistentMapTestBase {
     catch (AssertionError ignored) {}
   }
 
-  public void testForwardCompact() throws IOException {
+  public void testCreationTimeOptionsAffectPersistentMapVersion() throws IOException {
+    String keyWithChunks = "keyWithChunks";
+    myMap.appendData(keyWithChunks, out -> out.writeUTF("BAR"));
+    myMap.force();
+    myMap.appendData(keyWithChunks, out -> out.writeUTF("BAR2"));
+
     myMap.close();
+
+    PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+    try {
+      myMap = new PersistentHashMap<>(myFile, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
+      fail();
+    } catch (PersistentEnumeratorBase.VersionUpdatedException ignore) {}
+    finally {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+    }
+  }
+
+  public void testForwardCompact() throws IOException {
+    clearMap(myFile, myMap);
 
     Random random = new Random(1);
     PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);

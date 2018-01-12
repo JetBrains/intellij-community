@@ -16,16 +16,15 @@
 package com.intellij.openapi.externalSystem.model;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.*;
 
 /**
@@ -45,6 +44,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   private static final long serialVersionUID = 1L;
   private static final Logger LOG = Logger.getInstance(DataNode.class);
+  private static final boolean AT_LEAST_JAVA_9 = SystemInfo.isJavaVersionAtLeast("9");
 
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
   @NotNull private transient List<DataNode<?>> myChildrenView = Collections.unmodifiableList(myChildren);
@@ -117,84 +117,16 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     if (myData != null) {
       return;
     }
-    ObjectInputStream oIn = null;
+
     try {
-      oIn = new ObjectInputStream(new ByteArrayInputStream(myRawData)) {
-        @Override
-        protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-          String name = desc.getName();
-          for (ClassLoader loader : loaders) {
-            try {
-              return Class.forName(name, false, loader);
-            }
-            catch (ClassNotFoundException e) {
-              // Ignore
-            }
-          }
-          return super.resolveClass(desc);
-        }
-
-        @Override
-        protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
-          for (ClassLoader loader : loaders) {
-            try {
-              return doResolveProxyClass(interfaces, loader);
-            }
-            catch (ClassNotFoundException e) {
-              // Ignore
-            }
-          }
-          return super.resolveProxyClass(interfaces);
-        }
-        
-        private Class<?> doResolveProxyClass(@NotNull String[] interfaces, @NotNull ClassLoader loader) throws ClassNotFoundException {
-          ClassLoader nonPublicLoader = null;
-          boolean hasNonPublicInterface = false;
-
-          // define proxy in class loader of non-public interface(s), if any
-          Class[] classObjs = new Class[interfaces.length];
-          for (int i = 0; i < interfaces.length; i++) {
-            Class cl = Class.forName(interfaces[i], false, loader);
-            if ((cl.getModifiers() & Modifier.PUBLIC) == 0) {
-              if (hasNonPublicInterface) {
-                if (nonPublicLoader != cl.getClassLoader()) {
-                  throw new IllegalAccessError(
-                    "conflicting non-public interface class loaders");
-                }
-              } else {
-                nonPublicLoader = cl.getClassLoader();
-                hasNonPublicInterface = true;
-              }
-            }
-            classObjs[i] = cl;
-          }
-          try {
-            return Proxy.getProxyClass(hasNonPublicInterface ? nonPublicLoader : loader, classObjs);
-          }
-          catch (IllegalArgumentException e) {
-            throw new ClassNotFoundException(null, e);
-          }
-        }
-      };
-      myData = (T)oIn.readObject();
-      myRawData = null;
-
+      myData = getSerializer().readData(myRawData, loaders);
       assert myData != null;
-    }
-    catch (IOException e) {
+      myRawData = null;
+    } catch (IOException|ClassNotFoundException e) {
       throw new IllegalStateException(
-        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
-        e
-      );
-    }
-    catch (ClassNotFoundException e) {
-      throw new IllegalStateException(
-        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
-        e
-      );
-    }
-    finally {
-      StreamUtil.closeStream(oIn);
+            String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
+            e
+          );
     }
   }
 
@@ -288,16 +220,7 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
 
   public byte[] getDataBytes() throws IOException {
     if (myRawData != null) return myRawData;
-
-    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
-    ObjectOutputStream oOut = new ObjectOutputStream(bOut);
-    try {
-      oOut.writeObject(myData);
-      return bOut.toByteArray();
-    }
-    finally {
-      oOut.close();
-    }
+    return getSerializer().getBytes(myData);
   }
 
   @Override
@@ -347,6 +270,22 @@ public class DataNode<T> implements Serializable, UserDataHolderEx {
     myParent = null;
     myRawData = null;
     myChildren.clear();
+  }
+
+  private DataNodeSerializer<T> getSerializer() {
+    switch (Registry.stringValue("ext.project.data.serializer")) {
+      case "auto":
+        if (AT_LEAST_JAVA_9) {
+          return JDKSerializer.getInstance();
+        } else {
+          return FSTSerializer.getInstance();
+        }
+      case "jdk":
+        return JDKSerializer.getInstance();
+      case "fst":
+        return FSTSerializer.getInstance();
+    }
+    return JDKSerializer.getInstance();
   }
 
   @NotNull

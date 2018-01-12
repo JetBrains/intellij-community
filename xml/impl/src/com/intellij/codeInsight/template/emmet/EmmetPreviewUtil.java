@@ -47,7 +47,7 @@ public class EmmetPreviewUtil {
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
     ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(callback, false);
-    if (generator != null && generator instanceof XmlZenCodingGenerator) {
+    if (generator instanceof XmlZenCodingGenerator) {
       final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
       if (templatePrefix != null) {
         try {

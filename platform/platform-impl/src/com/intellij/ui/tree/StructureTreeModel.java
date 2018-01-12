@@ -87,7 +87,7 @@ public class StructureTreeModel extends AbstractTreeModel implements Disposable,
 
   private boolean isValidThread() {
     if (invoker.isValidThread()) return true;
-    LOG.warn("StructureTreeModel is used from unexpected thread");
+    LOG.warn(new IllegalStateException("StructureTreeModel is used from unexpected thread"));
     return false;
   }
 

@@ -148,7 +148,7 @@ abstract class FirstStart(val ideType: IdeType) {
   protected fun acceptAgreement() {
     if (!needToShowAgreement()) return
     with(myRobot) {
-      val policyAgreementTitle = "Licence Agreement"
+      val policyAgreementTitle = "License Agreement"
       try {
         LOG.info("Waiting for '$policyAgreementTitle' dialog")
         with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {

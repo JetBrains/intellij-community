@@ -297,6 +297,7 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("move.title");

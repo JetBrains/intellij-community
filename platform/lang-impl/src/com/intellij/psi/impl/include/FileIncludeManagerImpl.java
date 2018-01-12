@@ -76,8 +76,8 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   public void processIncludes(PsiFile file, Processor<FileIncludeInfo> processor) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
-    List<FileIncludeInfoImpl> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), scope);
-    for (FileIncludeInfoImpl info : infoList) {
+    List<FileIncludeInfo> infoList = FileIncludeIndex.getIncludes(file.getVirtualFile(), scope);
+    for (FileIncludeInfo info : infoList) {
       if (!processor.process(info)) {
         return;
       }
@@ -101,19 +101,39 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
     context = context.getOriginalFile();
     VirtualFile contextFile = context.getVirtualFile();
     if (contextFile == null) return;
-    MultiMap<VirtualFile,FileIncludeInfoImpl> infoList = FileIncludeIndex.getIncludingFileCandidates(context.getName(), GlobalSearchScope.allScope(myProject));
-    for (VirtualFile candidate : infoList.keySet()) {
-      PsiFile psiFile = myPsiManager.findFile(candidate);
-      if (psiFile == null || context.equals(psiFile)) continue;
-      for (FileIncludeInfo info : infoList.get(candidate)) {
-        PsiFileSystemItem item = resolveFileInclude(info, psiFile);
-        if (item != null && contextFile.equals(item.getVirtualFile())) {
-          if (!processor.process(Pair.create(candidate, info))) {
-            return;
+    
+    String originalName = context.getName();
+    Collection<String> names = getPossibleIncludeNames(context, originalName);
+
+    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    for (String name : names) {
+      MultiMap<VirtualFile,FileIncludeInfoImpl> infoList = FileIncludeIndex.getIncludingFileCandidates(name, scope);
+      for (VirtualFile candidate : infoList.keySet()) {
+        PsiFile psiFile = myPsiManager.findFile(candidate);
+        if (psiFile == null || context.equals(psiFile)) continue;
+        for (FileIncludeInfo info : infoList.get(candidate)) {
+          PsiFileSystemItem item = resolveFileInclude(info, psiFile);
+          if (item != null && contextFile.equals(item.getVirtualFile())) {
+            if (!processor.process(Pair.create(candidate, info))) {
+              return;
+            }
           }
         }
       }
     }
+  }
+
+  @NotNull
+  private static Collection<String> getPossibleIncludeNames(@NotNull PsiFile context, @NotNull String originalName) {
+    Collection<String> names = ContainerUtil.newTroveSet();
+    names.add(originalName);
+    for (FileIncludeProvider provider : FileIncludeProvider.EP_NAME.getExtensions()) {
+      String newName = provider.getIncludeName(context, originalName);
+      if (newName != originalName) {
+        names.add(newName);
+      }
+    }
+    return names;
   }
 
   public FileIncludeManagerImpl(Project project, PsiManager psiManager, PsiFileFactory psiFileFactory,

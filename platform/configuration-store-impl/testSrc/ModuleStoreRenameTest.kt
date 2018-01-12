@@ -11,12 +11,14 @@ import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modifyModules
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.ModuleRootManagerComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.Function
 import com.intellij.util.SmartList
+import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
 import org.junit.ClassRule
 import org.junit.Rule
@@ -38,6 +40,7 @@ internal class ModuleStoreRenameTest {
   }
 
   var module: Module by Delegates.notNull()
+  var dependentModule: Module by Delegates.notNull()
 
   // we test fireModuleRenamedByVfsEvent
   private val oldModuleNames = SmartList<String>()
@@ -51,7 +54,11 @@ internal class ModuleStoreRenameTest {
     object : ExternalResource() {
       override fun before() {
         runInEdtAndWait {
-          module = projectRule.createModule(tempDirManager.newPath(refreshVfs = true).resolve("m.iml"))
+          val moduleFileParent = tempDirManager.newPath(refreshVfs = true)
+          module = projectRule.createModule(moduleFileParent.resolve("m.iml"))
+
+          dependentModule = projectRule.createModule(moduleFileParent.resolve("dependent-module.iml"))
+          ModuleRootModificationUtil.addDependency(dependentModule, module)
         }
 
         module.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
@@ -78,7 +85,8 @@ internal class ModuleStoreRenameTest {
 
   // project structure
   @Test fun `rename module using model`() {
-    runInEdtAndWait { module.saveStore() }
+    saveModules()
+
     val storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isRegularFile
@@ -96,7 +104,7 @@ internal class ModuleStoreRenameTest {
   }
 
   private fun testRenameModule() {
-    runInEdtAndWait { module.saveStore() }
+    saveModules()
     val storage = module.storage
     val oldFile = storage.file
     assertThat(oldFile).isRegularFile
@@ -120,10 +128,15 @@ internal class ModuleStoreRenameTest {
 
     // ensure that macro value updated
     assertThat(module.stateStore.stateStorageManager.expandMacros(StoragePathMacros.MODULE_FILE)).isEqualTo(newFile.systemIndependentPath)
+
+    runInEdtAndWait {
+      dependentModule.saveStore()
+    }
+    assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="$newName" />""")
   }
 
   @Test fun `rename module parent virtual dir`() {
-    runInEdtAndWait { module.saveStore() }
+    saveModules()
     val storage = module.storage
     val oldFile = storage.file
     val parentVirtualDir = storage.virtualFile!!.parent
@@ -145,7 +158,7 @@ internal class ModuleStoreRenameTest {
   @Test
   @RunsInEdt
   fun `rename module source root`() {
-    runInEdtAndWait { module.saveStore() }
+    saveModules()
     val storage = module.storage
     val parentVirtualDir = storage.virtualFile!!.parent
     val src = VfsTestUtil.createDir(parentVirtualDir, "foo")
@@ -158,5 +171,12 @@ internal class ModuleStoreRenameTest {
     runWriteAction { src.rename(null, "bar.dot") }
 
     assertThat(stateModificationCount).isLessThan(rootManager.stateModificationCount)
+  }
+
+  private fun saveModules() {
+    runInEdtAndWait {
+      module.saveStore()
+      dependentModule.saveStore()
+    }
   }
 }

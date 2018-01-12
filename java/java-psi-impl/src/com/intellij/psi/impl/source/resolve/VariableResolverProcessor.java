@@ -53,16 +53,27 @@ public class VariableResolverProcessor extends ConflictFilterProcessor implement
   }
 
   @Override
-  public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
-    // Special handling when VisibilityChecker is present
-    if (myPlaceFile instanceof JavaCodeFragment && ((JavaCodeFragment)myPlaceFile).getVisibilityChecker() != null) {
-      if (event == JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT && myName != null) {
-        getResult();
+  protected boolean stopAtFoundResult(JavaResolveResult cachedResult) {
+    if (super.stopAtFoundResult(cachedResult)) {
+      if (myPlaceFile instanceof JavaCodeFragment) {
+        JavaCodeFragment.VisibilityChecker visibilityChecker = ((JavaCodeFragment)myPlaceFile).getVisibilityChecker();
+        if (visibilityChecker != null) {
+          PsiElement element = cachedResult.getElement();
+          if (element instanceof PsiMember) {
+            PsiMember member = (PsiMember)element;
+            return JavaResolveUtil.isAccessible(member, member.getContainingClass(), member.getModifierList(), myPlace, myAccessClass,
+                                                cachedResult.getCurrentFileResolveScope(), null);
+          }
+        }
       }
+      return true;
     }
-    else {
-      super.handleEvent(event, associated);
-    }
+    return false;
+  }
+
+  @Override
+  public final void handleEvent(@NotNull PsiScopeProcessor.Event event, Object associated) {
+    super.handleEvent(event, associated);
     if(event == JavaScopeProcessorEvent.START_STATIC){
       myStaticScopeFlag = true;
     }

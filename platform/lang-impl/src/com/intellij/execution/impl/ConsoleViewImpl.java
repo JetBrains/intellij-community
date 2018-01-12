@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.execution.impl;
@@ -162,7 +162,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   public void scrollToEnd() {
     if (myEditor == null) return;
-    EditorUtil.scrollToTheEnd(myEditor);
+    EditorUtil.scrollToTheEnd(myEditor, true);
     myCancelStickToEnd = false;
   }
 
@@ -1179,13 +1179,19 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     String textToUse = StringUtil.convertLineSeparators(text);
+    int typeOffset;
     if (selectionModel.hasSelection()) {
-      replaceUserText(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), textToUse);
+      Document document = editor.getDocument();
+      int start = selectionModel.getSelectionStart();
+      int end = selectionModel.getSelectionEnd();
+      document.deleteString(start, end);
+      selectionModel.removeSelection();
+      typeOffset = end;
     }
     else {
-      int typeOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
-      insertUserText(typeOffset, textToUse);
+      typeOffset = selectionModel.hasSelection() ? selectionModel.getSelectionStart() : editor.getCaretModel().getOffset();
     }
+    insertUserText(typeOffset, textToUse);
   }
 
   private abstract static class ConsoleAction extends AnAction implements DumbAware {
@@ -1443,9 +1449,29 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void insertUserText(int offset, @NotNull String text) {
+    List<Pair<String, ConsoleViewContentType>> result = myInputMessageFilter.applyFilter(text, ConsoleViewContentType.USER_INPUT);
+    if (result == null) {
+      doInsertUserInput(offset, text);
+    }
+    else {
+      for (Pair<String, ConsoleViewContentType> pair : result) {
+        String chunkText = pair.getFirst();
+        ConsoleViewContentType chunkType = pair.getSecond();
+        if (chunkType.equals(ConsoleViewContentType.USER_INPUT)) {
+          type(getEditor(), chunkText);
+        }
+        else {
+          print(chunkText, chunkType);
+        }
+      }
+    }
+  }
+
+  private void doInsertUserInput(int offset, @NotNull String text) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Editor editor = myEditor;
     final Document document = editor.getDocument();
+
     int oldDocLength = document.getTextLength();
     document.insertString(offset, text);
     int newStartOffset = Math.max(0,document.getTextLength() - oldDocLength + offset - text.length()); // take care of trim document
@@ -1456,18 +1482,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
 
     moveScrollRemoveSelection(editor, newEndOffset);
-    sendUserInput(text);
-  }
-
-  private void replaceUserText(int start, int end, @NotNull String text) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    final Editor editor = myEditor;
-    final Document document = editor.getDocument();
-
-    document.replaceString(start, end, text);
-
-    int offset = start + text.length();
-    moveScrollRemoveSelection(editor, offset);
     sendUserInput(text);
   }
 

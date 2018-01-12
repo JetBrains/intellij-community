@@ -383,11 +383,8 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
       if (result.length == 0 && (kind == CLASS_OR_PACKAGE_NAME_KIND || kind == CLASS_NAME_KIND)) {
         String qualifiedName = referenceElement.getClassNameText();
-        PsiClass aClass = qualifiedName != null && !StringUtil.isEmptyOrSpaces(StringUtil.getPackageName(qualifiedName))
-                          ? JavaPsiFacade.getInstance(referenceElement.getProject()).findClass(qualifiedName, referenceElement.getResolveScope())
-                          : null;
-        if (aClass != null) {
-          result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, referenceElement, false)};
+        if (qualifiedName != null) {
+          result = tryClassResult(qualifiedName, referenceElement, result);
         }
       }
 
@@ -395,6 +392,23 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
       return result;
     }
+  }
+
+  public static JavaResolveResult[] tryClassResult(String qualifiedName, PsiElement referenceElement, JavaResolveResult[] result) {
+    String packageName = StringUtil.getPackageName(qualifiedName);
+    Project project = referenceElement.getProject();
+    if (!StringUtil.isEmptyOrSpaces(packageName)) {
+      PsiClass referencedClass = PsiResolveHelper.SERVICE.getInstance(project).resolveReferencedClass(packageName, referenceElement);
+      //class is always preferred to package => when such a class exists, the qualified name can point to inner class only and that check must already have been failed
+      if (referencedClass != null) {
+        return result;
+      }
+      PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(qualifiedName, referenceElement.getResolveScope());
+      if (aClass != null) {
+        result = new JavaResolveResult[] {new CandidateInfo(aClass, PsiSubstitutor.EMPTY, referenceElement, false)};
+      }
+    }
+    return result;
   }
 
   @Override
@@ -613,6 +627,11 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
     else if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification) {
       return this;
+    }
+    else if (facade.getResolveHelper().resolveReferencedClass(qName, this) == null &&
+             facade.getResolveHelper().resolveReferencedClass(StringUtil.getPackageName(qName), this) != null) {
+      qName = aClass.getName();
+      assert qName != null : aClass;
     }
 
     String text = qName;

@@ -663,6 +663,277 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  // PY-4813
+  public void testParameterTypeInferenceInSubclassFromDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self, param):\n" +
+                   "        \"\"\"\n" +
+                   "        :param param:\n" +
+                   "        :type param: int\n" +
+                   "        \"\"\"\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "class Subclass(Base):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInSubclassFromAnnotation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self, param: int) -> int: pass\n" +
+                   "\n" +
+                   "class Subclass(Base):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInSubclassHierarchyFromAnnotation1() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self, param: int) -> int: pass\n" +
+                   "\n" +
+                   "class Base1(Base):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "class Subclass(Base1):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInSubclassHierarchyFromAnnotation2() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base1:\n" +
+                   "    def test(self, param: int) -> int: pass\n" +
+                   "\n" +
+                   "class Base2:\n" +
+                   "    def test(self, param: str) -> str: pass\n" +
+                   "\n" +
+                   "class Subclass(Base1, Base2):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInSubclassHierarchyFromAnnotation3() {
+      runWithLanguageLevel(
+        LanguageLevel.PYTHON35,
+        () -> doTest("int",
+                     "class Base1:\n" +
+                     "    def test(self, param: int) -> int: pass\n" +
+                     "\n" +
+                     "class Base2:\n" +
+                     "    def test(self, param: str) -> str: pass\n" +
+                     "\n" +
+                     "class Base3(Base1):\n" +
+                     "    pass\n" +
+                     "\n" +
+                     "class Subclass(Base3, Base2):\n" +
+                     "    def test(self, param):\n" +
+                     "        expr = param")
+      );
+    }
+
+  public void testParameterTypeInferenceInSubclassHierarchyFromAnnotation4() {
+    /*
+      This behavior mimics C3 MRO used by *new style* classes for Python 2.3 and below
+      For details see: https://www.python.org/download/releases/2.3/mro/
+      Since annotations are supported in Python 3.5 and above, *classic classes*
+      should not be tested here, but it's NOT the case for docstrings
+    */
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base1:\n" +
+                   "    def test(self, param: str) -> str: pass\n" +
+                   "\n" +
+                   "class Base2(Base1):\n" +
+                   "    def test(self, param: int) -> int: pass\n" +
+                   "\n" +
+                   "class Base3(Base1):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "class Subclass(Base3, Base2):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInSubclassHierarchyFromAnnotation5() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base1:\n" +
+                   "    def test(self, param: int) -> int: pass\n" +
+                   "\n" +
+                   "class Base2(Base1):\n" +
+                   "    def test(self, param): pass\n" +
+                   "\n" +
+                   "class Subclass(Base2):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInOverloadedMethods() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Any",
+                   "from typing import overload\n" +
+                   "\n" +
+                   "class Base:\n" +
+                   "    @overload\n" +
+                   "    def test(self, param: int) -> int: pass\n" +
+                   "\n" +
+                   "    @overload\n" +
+                   "    def test(self, param: str) -> str: pass\n" +
+                   "\n" +
+                   "class Subclass(Base):\n" +
+                   "    def test(self, param):\n" +
+                   "        expr = param")
+    );
+  }
+
+  public void testParameterTypeInferenceInSubclassHierarchyInStaticMethods() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    @staticmethod\n" +
+                   "    def test(param: int, param1: int) -> int: pass\n" +
+                   "\n" +
+                   "class Subclass(Base):\n" +
+                   "    @staticmethod\n" +
+                   "    def test(param, param1):\n" +
+                   "        expr = param\n" +
+                   "\n")
+    );
+  }
+
+  public void testReturnTypeInferenceInSubclassFromAnnotation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self) -> int: pass\n" +
+                   "\n" +
+                   "class Subclass(Base):\n" +
+                   "    def test(self): pass\n" +
+                   "\n" +
+                   "expr = Subclass().test()")
+    );
+  }
+
+  public void testReturnTypeInferenceInSubclassHierarchyFromAnnotation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self) -> int: pass\n" +
+                   "\n" +
+                   "class Base1(Base):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "class Subclass(Base1):\n" +
+                   "    def test(self): pass\n" +
+                   "\n" +
+                   "expr = Subclass().test()")
+    );
+  }
+
+  /**
+   * TODO: activate when return type information from :rtype: will be available in subclasses.
+   *
+   * See {@code {@link com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider#getReturnTypeFromSupertype}} javadoc.
+   */
+  public void ignoreTestReturnTypeInferenceInSubclassFromDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self):" +
+                   "        \"\"\"\n" +
+                   "        :rtype: int\n" +
+                   "        \"\"\"\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "class Subclass(Base):\n" +
+                   "    def test(self): pass\n" +
+                   "\n" +
+                   "expr = Subclass().test()")
+    );
+  }
+
+  /**
+   * TODO: activate when return type information from :rtype: will be available in subclasses.
+   *
+   * See {@code {@link com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider#getReturnTypeFromSupertype}} javadoc.
+   */
+  public void ignoreTestReturnTypeInferenceInSubclassHierarchyFromDocstring() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "class Base:\n" +
+                   "    def test(self):" +
+                   "        \"\"\"\n" +
+                   "        :rtype: int\n" +
+                   "        \"\"\"\n" +
+                   "        pass\n" +
+                   "\n" +
+                   "class Base1(Base):\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "class Subclass(Base1):\n" +
+                   "    def test(self): pass\n" +
+                   "\n" +
+                   "expr = Subclass().test()")
+    );
+  }
+
+  // PY-27398
+  public void testDataclassPostInitParameter() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("int",
+                            "from dataclasses import dataclass, InitVar\n" +
+                            "@dataclass\n" +
+                            "class Foo:\n" +
+                            "    i: int\n" +
+                            "    j: int\n" +
+                            "    d: InitVar[int]\n" +
+                            "    def __post_init__(self, d):\n" +
+                            "        expr = d")
+    );
+  }
+
+  // PY-27398
+  public void testDataclassPostInitParameterNoInit() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> doMultiFileTest("Any",
+                            "from dataclasses import dataclass, InitVar\n" +
+                            "@dataclass(init=False)\n" +
+                            "class Foo:\n" +
+                            "    i: int\n" +
+                            "    j: int\n" +
+                            "    d: InitVar[int]\n" +
+                            "    def __post_init__(self, d):\n" +
+                            "        expr = d")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

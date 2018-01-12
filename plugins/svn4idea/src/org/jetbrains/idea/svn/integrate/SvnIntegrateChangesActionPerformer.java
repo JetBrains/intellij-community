@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -22,19 +8,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
+
+import static org.jetbrains.idea.svn.SvnUtil.append;
 
 public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.BranchSelectedCallback {
   private final SvnVcs myVcs;
   @NotNull private final MergerFactory myMergerFactory;
 
-  private final SVNURL myCurrentBranch;
+  private final Url myCurrentBranch;
 
-  public SvnIntegrateChangesActionPerformer(final Project project, final SVNURL currentBranchUrl, @NotNull MergerFactory mergerFactory) {
+  public SvnIntegrateChangesActionPerformer(final Project project, final Url currentBranchUrl, @NotNull MergerFactory mergerFactory) {
     myVcs = SvnVcs.getInstance(project);
     myCurrentBranch = currentBranchUrl;
     myMergerFactory = mergerFactory;
@@ -49,7 +36,7 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
       showSameSourceAndTargetMessage();
     }
     else {
-      Pair<WorkingCopyInfo, SVNURL> pair = selectWorkingCopy(url, selectedLocalBranchPath, dialogTitle);
+      Pair<WorkingCopyInfo, Url> pair = selectWorkingCopy(url, selectedLocalBranchPath, dialogTitle);
 
       if (pair != null) {
         runIntegrate(url, pair.first, pair.second);
@@ -58,40 +45,36 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
   }
 
   @Nullable
-  private Pair<WorkingCopyInfo, SVNURL> selectWorkingCopy(String url,
-                                                          @Nullable String selectedLocalBranchPath,
-                                                          @Nullable String dialogTitle) {
+  private Pair<WorkingCopyInfo, Url> selectWorkingCopy(String url,
+                                                       @Nullable String selectedLocalBranchPath,
+                                                       @Nullable String dialogTitle) {
     return IntegratedSelectedOptionsDialog
       .selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url, true, selectedLocalBranchPath, dialogTitle);
   }
 
-  private void runIntegrate(@NotNull String url, @NotNull WorkingCopyInfo workingCopy, @NotNull SVNURL workingCopyUrl) {
-    SVNURL sourceUrl = correctSourceUrl(url, workingCopyUrl.toString());
+  private void runIntegrate(@NotNull String url, @NotNull WorkingCopyInfo workingCopy, @NotNull Url workingCopyUrl) {
+    Url sourceUrl = correctSourceUrl(url, workingCopyUrl.toString());
 
     if (sourceUrl != null) {
-      SvnIntegrateChangesTask integrateTask =
-        new SvnIntegrateChangesTask(myVcs, workingCopy, myMergerFactory, sourceUrl, SvnBundle.message(
-          "action.Subversion.integrate.changes.messages.title"), myVcs.getSvnConfiguration().isMergeDryRun(),
-                                    SVNPathUtil.tail(myCurrentBranch.toString()));
-
+      SvnIntegrateChangesTask integrateTask = new SvnIntegrateChangesTask(myVcs, workingCopy, myMergerFactory, sourceUrl, SvnBundle.message(
+        "action.Subversion.integrate.changes.messages.title"), myVcs.getSvnConfiguration().isMergeDryRun(), myCurrentBranch.getTail());
       integrateTask.queue();
     }
   }
 
   @Nullable
-  private SVNURL correctSourceUrl(@NotNull String targetUrl, @NotNull String realTargetUrl) {
+  private Url correctSourceUrl(@NotNull String targetUrl, @NotNull String realTargetUrl) {
     try {
       if (realTargetUrl.length() > targetUrl.length()) {
         if (realTargetUrl.startsWith(targetUrl)) {
-          return myCurrentBranch.appendPath(realTargetUrl.substring(targetUrl.length()), true);
+          return append(myCurrentBranch, realTargetUrl.substring(targetUrl.length()), true);
         }
       }
       else if (realTargetUrl.equals(targetUrl)) {
         return myCurrentBranch;
       }
     }
-    catch (SVNException e) {
-      // tracked by return value
+    catch (SvnBindException ignored) {
     }
     return null;
   }

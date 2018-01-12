@@ -5,7 +5,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import jetCheck.Generator;
+import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;

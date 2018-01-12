@@ -153,6 +153,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     return fileName;
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return GroovyRefactoringBundle.message("converting.files.to.java");

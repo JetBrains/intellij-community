@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -306,6 +306,10 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         error = e;
         clearCaches();
       }
+      catch (InconsistentDebugInfoException ignored) {
+        clearCaches();
+        throw EvaluateExceptionUtil.INCONSISTEND_DEBUG_INFO;
+      }
       catch (InternalException e) {
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
           throw new EvaluateException(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()), e);
@@ -351,10 +355,6 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
       try {
         StackFrame stackFrame = getStackFrame();
         myAllValues = new THashMap<>(stackFrame.getValues(stackFrame.visibleVariables()));
-      }
-      catch (InconsistentDebugInfoException ignored) {
-        clearCaches();
-        throw EvaluateExceptionUtil.INCONSISTEND_DEBUG_INFO;
       }
       catch (AbsentInformationException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);

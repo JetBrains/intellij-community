@@ -43,6 +43,9 @@
       <element id="archive" name="aether-dependency-resolver.jar">
         <element id="module-output" name="aether-dependency-resolver" />
       </element>
+      <element id="archive" name="testFramework.core.jar">
+        <element id="module-output" name="testFramework.core" />
+      </element>
     </root>
   </artifact>
 </component>

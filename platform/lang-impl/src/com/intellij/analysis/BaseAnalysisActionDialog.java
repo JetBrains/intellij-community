@@ -1,65 +1,69 @@
 /*
  * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-
 package com.intellij.analysis;
 
+import com.intellij.analysis.dialog.*;
 import com.intellij.find.FindSettings;
-import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 
 public class BaseAnalysisActionDialog extends DialogWrapper {
-  private JPanel myPanel;
-  private final String myFileName;
-  private final String myModuleName;
-  private JRadioButton myProjectButton;
-  private JRadioButton myModuleButton;
-  private JRadioButton myUncommittedFilesButton;
-  private JRadioButton myCustomScopeButton;
-  private JRadioButton myFileButton;
-  private ScopeChooserCombo myScopeCombo;
-  private JCheckBox myInspectTestSource;
-  private JComboBox<String> myChangeLists;
-  private TitledSeparator myTitledSeparator;
-  private final Project myProject;
+  private final static Logger LOG = Logger.getInstance(BaseAnalysisActionDialog.class);
+
+  @NotNull private final AnalysisUIOptions myOptions;
   private final boolean myRememberScope;
+  private final boolean myShowInspectTestSource;
   private final String myAnalysisNoon;
-  private ButtonGroup myGroup;
+  private final Project myProject;
+  private final ButtonGroup myGroup = new ButtonGroup();
+  private final JCheckBox myInspectTestSource = new JCheckBox();
+  private final List<ModelScopeItemView> myViewItems;
 
-  private static final String ALL = AnalysisScopeBundle.message("scope.option.uncommitted.files.all.changelists.choice");
-  private final AnalysisUIOptions myAnalysisOptions;
-  @Nullable private final PsiElement myContext;
+  /**
+   * @deprecated Use {@link BaseAnalysisActionDialog#BaseAnalysisActionDialog(String, String, Project, List, AnalysisUIOptions, boolean, boolean)} instead.
+   */
+  @Deprecated
+  public BaseAnalysisActionDialog(@NotNull String title,
+                                   @NotNull String analysisNoon,
+                                   @NotNull Project project,
+                                   @NotNull final AnalysisScope scope,
+                                   final String moduleName,
+                                   final boolean rememberScope,
+                                   @NotNull AnalysisUIOptions analysisUIOptions,
+                                   @Nullable PsiElement context) {
+    this(title, analysisNoon, project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, rememberScope, analysisUIOptions, context);
+  }
 
+  /**
+   * @deprecated Use {@link BaseAnalysisActionDialog#BaseAnalysisActionDialog(String, String, Project, List, AnalysisUIOptions, boolean, boolean)} instead.
+   */
+  @Deprecated
   public BaseAnalysisActionDialog(@NotNull String title,
                                   @NotNull String analysisNoon,
                                   @NotNull Project project,
@@ -68,181 +72,143 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                   final boolean rememberScope,
                                   @NotNull AnalysisUIOptions analysisUIOptions,
                                   @Nullable PsiElement context) {
-    //noinspection deprecation
-    this(title, analysisNoon, project, scope, module == null ? null : module.getName(), rememberScope, analysisUIOptions, context);
+    this(title, analysisNoon, project, Stream.of(new ProjectScopeItem(project),
+                                                 new CustomScopeItem(project, context),
+                                                 VcsScopeItem.createIfHasVCS(project),
+                                                 ModuleScopeItem.tryCreate(module),
+                                                 OtherScopeItem.tryCreate(scope)).filter(x -> x != null).collect(Collectors.toList()),
+         analysisUIOptions, rememberScope, ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
   }
 
-  @Deprecated
   public BaseAnalysisActionDialog(@NotNull String title,
-                                  @NotNull String analysisNoon,
-                                  @NotNull Project project,
-                                  @NotNull final AnalysisScope scope,
-                                  final String moduleName,
-                                  final boolean rememberScope,
-                                  @NotNull AnalysisUIOptions analysisUIOptions,
-                                  @Nullable PsiElement context) {
+                                   @NotNull String analysisNoon,
+                                   @NotNull Project project,
+                                   @NotNull List<ModelScopeItem> items,
+                                   @NotNull AnalysisUIOptions options,
+                                   final boolean rememberScope,
+                                   final boolean showInspectTestSource) {
     super(true);
-    //noinspection BoundFieldAssignment
-    myGroup = new ButtonGroup();
-    myGroup.add(myProjectButton);
-    myGroup.add(myModuleButton);
-    myGroup.add(myUncommittedFilesButton);
-    myGroup.add(myFileButton);
-    myGroup.add(myCustomScopeButton);
-
-    Disposer.register(myDisposable, myScopeCombo);
-    myAnalysisOptions = analysisUIOptions;
-    myContext = context;
-    if (!analysisUIOptions.ANALYZE_TEST_SOURCES) {
-      myAnalysisOptions.ANALYZE_TEST_SOURCES = scope.isAnalyzeTestsByDefault();
-    }
-    myProject = project;
-    myFileName = scope.getScopeType() == AnalysisScope.PROJECT ? null : scope.getShortenName();
-    myModuleName = moduleName;
-    myRememberScope = rememberScope;
     myAnalysisNoon = analysisNoon;
+    myProject = project;
+
+    myViewItems = ModelScopeItemPresenter.createOrderedViews(items);
+    myOptions = options;
+    myRememberScope = rememberScope;
+    myShowInspectTestSource = showInspectTestSource;
+
     init();
     setTitle(title);
-    onScopeRadioButtonPressed();
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    myTitledSeparator.setText(myAnalysisNoon);
+    BorderLayoutPanel panel = new BorderLayoutPanel();
+    TitledSeparator titledSeparator = new TitledSeparator();
+    titledSeparator.setText(myAnalysisNoon);
+    panel.addToTop(titledSeparator);
 
-    //include test option
-    myInspectTestSource.setSelected(myAnalysisOptions.ANALYZE_TEST_SOURCES);
-    myInspectTestSource.setVisible(ModuleUtil.isSupportedRootType(myProject, JavaSourceRootType.TEST_SOURCE));
+    JPanel scopesPanel = new JPanel(new GridBagLayout());
+    panel.addToCenter(scopesPanel);
 
-    //module scope if applicable
-    myModuleButton.setText(AnalysisScopeBundle.message("scope.option.module.with.mnemonic", myModuleName));
-    myModuleButton.setVisible(myModuleName != null && ModuleManager.getInstance(myProject).getModules().length > 1);
+    int maxColumns = myViewItems.stream()
+                       .mapToInt(x -> x.additionalComponents.size())
+                       .max().orElse(0) + 1;
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
-    myUncommittedFilesButton.setVisible(hasVCS);
+    int gridY = 0;
+    JRadioButton[] buttons = new JRadioButton[myViewItems.size()];
+    GridBagConstraints gbc = new GridBagConstraints();
+    for (ModelScopeItemView x: myViewItems) {
+      JRadioButton button = x.button;
+      List<JComponent> components = x.additionalComponents;
 
-    DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
-    model.addElement(ALL);
-    final List<? extends ChangeList> changeLists = changeListManager.getChangeListsCopy();
-    for (ChangeList changeList : changeLists) {
-      model.addElement(changeList.getName());
-    }
-    myChangeLists.setRenderer(new ListCellRendererWrapper<String>() {
-      @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        int availableWidth = myPanel.getWidth() - myUncommittedFilesButton.getWidth() - JBUI.scale(10);
-        if (availableWidth <= 0) {
-          availableWidth = JBUI.scale(200);
+      int gridX = 0;
+      buttons[gridY] = button;
+      myGroup.add(button);
+      int countExtraColumns = components.size();
+
+      gbc.gridy = gridY;
+      gbc.gridx = gridX;
+      gbc.gridwidth = countExtraColumns == 0 ? maxColumns : 1;
+      gbc.weightx = 0.0D;
+      gbc.fill = 0;
+      gbc.anchor = GridBagConstraints.WEST;
+      gbc.insets = JBUI.insetsLeft(10);
+      scopesPanel.add(button, gbc);
+      gridX++;
+
+      for (JComponent c : components) {
+        if (c instanceof Disposable) {
+          Disposer.register(myDisposable, (Disposable)c);
         }
-        if (list.getFontMetrics(list.getFont()).stringWidth(value) < availableWidth) {
-          setText(value);
-        }
-        else {
-          setText(StringUtil.trimLog(value, 50));
-        }
+        gbc.gridy = gridY;
+        gbc.gridx = gridX;
+        gbc.gridwidth = 1;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.insets = JBUI.insetsLeft(5);
+        scopesPanel.add(c, gbc);
+        gridX++;
       }
-    });
-
-    myChangeLists.setModel(model);
-    myChangeLists.setEnabled(myUncommittedFilesButton.isSelected());
-    myChangeLists.setVisible(hasVCS);
-
-    //file/package/directory/module scope
-    if (myFileName != null) {
-      myFileButton.setText(myFileName);
-      myFileButton.setMnemonic(myFileName.charAt(getSelectedScopeMnemonic()));
-    } else {
-      myFileButton.setVisible(false);
+      gridY++;
     }
 
-    VirtualFile file = PsiUtilCore.getVirtualFile(myContext);
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    boolean searchInLib = file != null && (fileIndex.isInLibraryClasses(file) || fileIndex.isInLibrarySource(file));
+    myInspectTestSource.setText(AnalysisScopeBundle.message("scope.option.include.test.sources"));
+    myInspectTestSource.setSelected(myOptions.ANALYZE_TEST_SOURCES);
+    myInspectTestSource.setVisible(myShowInspectTestSource);
+    gbc.gridy = gridY;
+    gbc.gridx = 0;
+    gbc.gridwidth = maxColumns;
+    gbc.weightx = 1.0;
+    gbc.fill = 0;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.insets = JBUI.insetsLeft(10);
+    scopesPanel.add(myInspectTestSource, gbc);
 
-    String preselect = StringUtil.isEmptyOrSpaces(myAnalysisOptions.CUSTOM_SCOPE_NAME)
-                       ? FindSettings.getInstance().getDefaultScopeName()
-                       : myAnalysisOptions.CUSTOM_SCOPE_NAME;
-    if (searchInLib && GlobalSearchScope.projectScope(myProject).getDisplayName().equals(preselect)) {
-      preselect = GlobalSearchScope.allScope(myProject).getDisplayName();
-    }
-    if (GlobalSearchScope.allScope(myProject).getDisplayName().equals(preselect) && myAnalysisOptions.SCOPE_TYPE == AnalysisScope.CUSTOM) {
-      myAnalysisOptions.CUSTOM_SCOPE_NAME = preselect;
-      searchInLib = true;
-    }
+    preselectButton();
 
-    boolean someButtonEnabled = false;
-    if (myRememberScope) {
-      switch (myAnalysisOptions.SCOPE_TYPE) {
-        case AnalysisScope.PROJECT:
-          someButtonEnabled = select(myProjectButton);
-          break;
-        case AnalysisScope.MODULE:
-          someButtonEnabled = select(myModuleButton);
-          break;
-        case AnalysisScope.FILE:
-          someButtonEnabled = select(myFileButton);
-          break;
-        case AnalysisScope.UNCOMMITTED_FILES:
-          someButtonEnabled = select(myUncommittedFilesButton);
-          break;
-        case AnalysisScope.CUSTOM:
-          someButtonEnabled = select(myCustomScopeButton);
-          break;
-      }
-    } else {
-      if (!(someButtonEnabled = select(myFileButton))) {
-        select(myModuleButton);
-      }
-    }
-    if (!someButtonEnabled) {
-      select(myProjectButton);
-    }
-
-    myScopeCombo.init(myProject, searchInLib, true, preselect);
-    myScopeCombo.setCurrentSelection(false);
-    myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
-
-    final ActionListener radioButtonPressed = new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        onScopeRadioButtonPressed();
-      }
-    };
-    final Enumeration<AbstractButton> enumeration = myGroup.getElements();
-    while (enumeration.hasMoreElements()) {
-      enumeration.nextElement().addActionListener(radioButtonPressed);
-    }
-
-    //additional panel - inspection profile chooser
-    JPanel wholePanel = new JPanel(new BorderLayout());
-    wholePanel.add(myPanel, BorderLayout.NORTH);
+    BorderLayoutPanel wholePanel = new BorderLayoutPanel();
+    wholePanel.addToTop(panel);
     final JComponent additionalPanel = getAdditionalActionSettings(myProject);
-    if (additionalPanel!= null){
-      wholePanel.add(additionalPanel, BorderLayout.CENTER);
+    if (additionalPanel != null) {
+      wholePanel.addToCenter(additionalPanel);
     }
-    new RadioUpDownListener(myProjectButton, myModuleButton, myUncommittedFilesButton, myFileButton, myCustomScopeButton);
+    new RadioUpDownListener(buttons);
+
     return wholePanel;
   }
 
-  private int getSelectedScopeMnemonic() {
+  private void preselectButton() {
+    if (myRememberScope) {
+      int type = myOptions.SCOPE_TYPE;
+      List<ModelScopeItemView> preselectedScopes = myViewItems.stream()
+        .filter(x -> x.scopeId == type).collect(Collectors.toList());
 
-    final int fileIdx = StringUtil.indexOfIgnoreCase(myFileName, "file", 0);
-    if (fileIdx > -1) {
-      return fileIdx;
+      if (preselectedScopes.size() >= 1) {
+        LOG.assertTrue(preselectedScopes.size() == 1, "preselectedScopes.size() == 1");
+        preselectedScopes.get(0).button.setSelected(true);
+        return;
+      }
     }
 
-    final int dirIdx = StringUtil.indexOfIgnoreCase(myFileName, "directory", 0);
-    if (dirIdx > -1) {
-      return dirIdx;
+    List<ModelScopeItemView> candidates = new ArrayList<>();
+    for (ModelScopeItemView view : myViewItems) {
+      candidates.add(view);
+      if (view.scopeId == AnalysisScope.FILE) {
+        break;
+      }
     }
 
-    return 0;
-  }
-
-  private void onScopeRadioButtonPressed() {
-    myScopeCombo.setEnabled(myCustomScopeButton.isSelected());
-    myChangeLists.setEnabled(myUncommittedFilesButton.isSelected());
+    Collections.reverse(candidates);
+    for (ModelScopeItemView x : candidates) {
+      int scopeType = x.scopeId;
+      // skip predefined scopes
+      if (scopeType == AnalysisScope.CUSTOM || scopeType == AnalysisScope.UNCOMMITTED_FILES) {
+        continue;
+      }
+      x.button.setSelected(true);
+      break;
+    }
   }
 
   @Override
@@ -254,90 +220,80 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
         return button;
       }
     }
-    return myPanel;
+    return super.getPreferredFocusedComponent();
   }
 
-  @Nullable
-  protected JComponent getAdditionalActionSettings(final Project project) {
-    return null;
+  /**
+   * @deprecated Use {@link BaseAnalysisActionDialog#getScope(AnalysisScope)} instead.
+   */
+  @Deprecated
+  public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
+    return getScope(defaultScope);
   }
 
   public boolean isProjectScopeSelected() {
-    return myProjectButton.isSelected();
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.PROJECT)
+      .findFirst().map(x -> x.button.isSelected()).orElse(false);
   }
 
   public boolean isModuleScopeSelected() {
-    return myModuleButton != null && myModuleButton.isSelected();
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.MODULE)
+      .findFirst().map(x -> x.button.isSelected()).orElse(false);
   }
 
   public boolean isUncommittedFilesSelected(){
-    return myUncommittedFilesButton != null && myUncommittedFilesButton.isSelected();
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.UNCOMMITTED_FILES)
+      .findFirst().map(x -> x.button.isSelected()).orElse(false);
   }
 
   @Nullable
   public SearchScope getCustomScope(){
-    if (myCustomScopeButton.isSelected()){
-      return myScopeCombo.getSelectedScope();
-    }
-    return null;
+    return myViewItems.stream()
+      .filter(x -> x.scopeId == AnalysisScope.CUSTOM && x.button.isSelected())
+      .findFirst().map(x -> x.model.getScope().toSearchScope()).orElse(null);
   }
 
-  public boolean isInspectTestSources(){
+  public boolean isInspectTestSources() {
     return myInspectTestSource.isSelected();
   }
 
-  @NotNull
-  public AnalysisScope getScope(@NotNull AnalysisUIOptions uiOptions, @NotNull AnalysisScope defaultScope, @NotNull Project project, Module module) {
-    AnalysisScope scope;
-    if (isProjectScopeSelected()) {
-      scope = new AnalysisScope(project);
-      uiOptions.SCOPE_TYPE = AnalysisScope.PROJECT;
-    }
-    else {
-      final SearchScope customScope = getCustomScope();
-      if (customScope != null) {
-        scope = new AnalysisScope(customScope, project);
-        uiOptions.SCOPE_TYPE = AnalysisScope.CUSTOM;
-        uiOptions.CUSTOM_SCOPE_NAME = customScope.getDisplayName();
-      }
-      else if (isModuleScopeSelected()) {
-        scope = new AnalysisScope(module);
-        uiOptions.SCOPE_TYPE = AnalysisScope.MODULE;
-      }
-      else if (isUncommittedFilesSelected()) {
-        final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-        List<VirtualFile> files;
-        if (myChangeLists.getSelectedItem() == ALL) {
-          files = changeListManager.getAffectedFiles();
+  public AnalysisScope getScope(@NotNull AnalysisScope defaultScope) {
+    AnalysisScope scope = null;
+    for (ModelScopeItemView x : myViewItems) {
+      if (x.button.isSelected()) {
+        int type = x.scopeId;
+        scope = x.model.getScope();
+        if (myRememberScope) {
+          myOptions.SCOPE_TYPE = type;
+          if (type == AnalysisScope.CUSTOM) {
+            myOptions.CUSTOM_SCOPE_NAME = scope.toSearchScope().getDisplayName();
+          }
         }
-        else {
-          files = changeListManager
-            .getChangeListsCopy()
-            .stream()
-            .filter(l -> Comparing.strEqual(l.getName(), (String)myChangeLists.getSelectedItem()))
-            .flatMap(l -> ChangesUtil.getAfterRevisionsFiles(l.getChanges().stream()))
-            .collect(Collectors.toList());
-        }
-        scope = new AnalysisScope(project, new HashSet<>(files));
-        uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITTED_FILES;
-      }
-      else {
-        scope = defaultScope;
-        uiOptions.SCOPE_TYPE = defaultScope.getScopeType();//just not project scope
       }
     }
-    uiOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
-    scope.setIncludeTestSource(isInspectTestSources());
+    if (scope == null) {
+      scope = defaultScope;
+      if (myRememberScope) {
+        myOptions.SCOPE_TYPE = scope.getScopeType();
+      }
+    }
+
+    if (myInspectTestSource.isVisible()) {
+      if (myRememberScope) {
+        myOptions.ANALYZE_TEST_SOURCES = isInspectTestSources();
+      }
+      scope.setIncludeTestSource(isInspectTestSources());
+    }
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
   }
 
-  private static boolean select(JRadioButton button) {
-    if (button.isVisible()) {
-      button.setSelected(true);
-      return true;
-    }
-    return false;
+  @Nullable
+  protected JComponent getAdditionalActionSettings(final Project project) {
+    return null;
   }
 }

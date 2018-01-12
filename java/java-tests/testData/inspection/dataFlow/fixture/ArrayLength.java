@@ -68,4 +68,14 @@ public final class ArrayLength {
     Arrays.fill(x, -1);
     Arrays.<warning descr="The call to 'fill' always fails as index is out of bounds">fill</warning>(x, -1, -1, -1);
   }
+
+  static final String[] ARR1 = {};
+  static final String[] ARR2 = new String[10];
+  static final String[] ARR3 = new String[] {"foo", "bar", "baz"};
+
+  void testFieldInitializers() {
+    if(<warning descr="Condition 'ARR1.length == 0' is always 'true'">ARR1.length == 0</warning>) System.out.println("yes");
+    if(<warning descr="Condition 'ARR2.length == 10' is always 'true'">ARR2.length == 10</warning>) System.out.println("yes");
+    if(<warning descr="Condition 'ARR3.length == 3' is always 'true'">ARR3.length == 3</warning>) System.out.println("yes");
+  }
 }

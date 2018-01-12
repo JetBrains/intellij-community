@@ -74,17 +74,17 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
-  public static final DfaFactType<Boolean> MUTABLE = new DfaFactType<Boolean>("Mutable") {
+  public static final DfaFactType<Mutability> MUTABILITY = new DfaFactType<Mutability>("Mutable") {
     @Override
-    String toString(@NotNull Boolean fact) {
-      return fact ? "Mutable" : "ReadOnly";
+    boolean isUnknown(@NotNull Mutability fact) {
+      return fact == Mutability.UNKNOWN;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
+    Mutability calcFromVariable(@NotNull DfaVariableValue value) {
       PsiModifierListOwner variable = value.getPsiVariable();
-      return MutationSignature.getMutabilityFact(variable);
+      return Mutability.getMutability(variable);
     }
   };
 
@@ -94,10 +94,6 @@ public abstract class DfaFactType<T> extends Key<T> {
    * When its value is false, then optional is known to be empty (absent).
    */
   public static final DfaFactType<Boolean> OPTIONAL_PRESENCE = new DfaFactType<Boolean>("Optional presense") {
-    @Override
-    public boolean isDistinct(@NotNull Boolean fact, @NotNull Boolean otherFact) {
-      return fact != otherFact;
-    }
 
     @Override
     String toString(@NotNull Boolean fact) {
@@ -217,10 +213,6 @@ public abstract class DfaFactType<T> extends Key<T> {
 
   boolean isSuper(@Nullable T superFact, @Nullable T subFact) {
     return Objects.equals(superFact, subFact);
-  }
-
-  boolean isDistinct(@NotNull T fact, @NotNull T otherFact) {
-    return false;
   }
 
   boolean isUnknown(@NotNull T fact) {

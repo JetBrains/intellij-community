@@ -23,7 +23,6 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -35,6 +34,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,16 +125,26 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
       return null;
     }
 
-    final FileBasedIndexImpl index = (FileBasedIndexImpl)i;
-    if (index.getChangedFileCount() < ourMinFilesToStartDumMode) {
-      if (index.getChangedFilesSize() < ourMinFilesSizeToStartDumMode) return null;
+    FileBasedIndexImpl index = (FileBasedIndexImpl)i;
+    
+    if (index.processChangedFiles(project, new Processor<VirtualFile>() {
+      int filesInProjectToBeIndexed;
+      int sizeOfFilesToBeIndexed;
+      @Override
+      public boolean process(VirtualFile file) {
+        ++filesInProjectToBeIndexed;
+        if (file.isValid() && !file.isDirectory()) sizeOfFilesToBeIndexed += file.getLength();
+        return filesInProjectToBeIndexed < ourMinFilesToStartDumMode && sizeOfFilesToBeIndexed < ourMinFilesSizeToStartDumMode;
+      }
+    })) {
+      return null;
     }
 
     return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         long start = System.currentTimeMillis();
-        Collection<VirtualFile> files = ReadAction.compute(() -> index.getFilesToUpdate(project));
+        Collection<VirtualFile> files = index.getFilesToUpdate(project);
         long calcDuration = System.currentTimeMillis() - start;
 
         indicator.setIndeterminate(false);
@@ -146,11 +156,6 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
           reindexRefreshedFiles(indicator, files, project, index);
           snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
         }
-      }
-
-      @Override
-      public String toString() {
-        return getClass().getName() + "[" + index.dumpSomeChangedFiles() + "]";
       }
     };
   }

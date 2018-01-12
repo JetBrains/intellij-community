@@ -98,6 +98,22 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer.highlighted;
   }
 
+  public void setCurrent(@NotNull Inlay hint, boolean current) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    boolean oldValue = renderer.current;
+    if (current != oldValue) {
+      renderer.current = current;
+      hint.repaint();
+    }
+  }
+
+  public boolean isCurrent(@NotNull Inlay hint) {
+    if (!isParameterHint(hint)) throw new IllegalArgumentException("Not a parameter hint");
+    MyRenderer renderer = (MyRenderer)hint.getRenderer();
+    return renderer.current;
+  }
+
   private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
     renderer.update(editor, newText, true);
@@ -186,6 +202,7 @@ public class ParameterHintsPresentationManager implements Disposable {
     private int steps;
     private int step;
     private boolean highlighted;
+    private boolean current;
 
     private MyRenderer(Editor editor, String text, boolean animated) {
       updateState(editor, text, animated);
@@ -241,12 +258,12 @@ public class ParameterHintsPresentationManager implements Disposable {
                                                              : DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
         if (attributes != null) {
           MyFontMetrics fontMetrics = getFontMetrics(editor);
+          int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
           Color backgroundColor = attributes.getBackgroundColor();
           if (backgroundColor != null) {
             GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
             GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
             g.setColor(backgroundColor);
-            int gap = r.height < (fontMetrics.lineHeight + 2) ? 1 : 2;
             g.fillRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
             config.restore();
           }
@@ -264,6 +281,13 @@ public class ParameterHintsPresentationManager implements Disposable {
             
             g.setClip(savedClip);
             g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, savedHint);
+
+            if (current) {
+              savedHint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+              g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+              g.drawRoundRect(r.x + 2, r.y + gap, r.width - 4, r.height - gap * 2, 8, 8);
+              g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, savedHint);
+            }
           }
         }
       }

@@ -927,7 +927,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               PyExpression assignedValue = ((PyAssignmentStatement)statement).getAssignedValue();
               if (assignedValue instanceof PyCallExpression) {
                 PyType type = myTypeEvalContext.getType(assignedValue);
-                if (type != null && type instanceof PyClassTypeImpl) {
+                if (type instanceof PyClassTypeImpl) {
                   if (((PyCallExpression)assignedValue).isCalleeText(PyNames.PROPERTY)) {
                     actions.add(new UnresolvedReferenceAddSelfQuickFix(expr, qualifier));
                   }

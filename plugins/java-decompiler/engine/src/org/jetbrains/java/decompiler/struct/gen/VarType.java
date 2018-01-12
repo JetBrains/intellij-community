@@ -265,7 +265,7 @@ public class VarType {  // TODO: optimize switch
       return true;
     }
 
-    if (o == null || !(o instanceof VarType)) {
+    if (!(o instanceof VarType)) {
       return false;
     }
 

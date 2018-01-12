@@ -23,8 +23,8 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
-import jetCheck.Generator;
-import jetCheck.PropertyChecker;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;

@@ -1,63 +1,25 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNEvent;
 
 import java.io.File;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class ProgressEvent {
 
   private final File myFile;
 
   private final long myRevision;
-  private final SVNURL myURL;
+  private final Url myURL;
 
   @NotNull private final StatusType myContentsStatus;
   @NotNull private final StatusType myPropertiesStatus;
-  private final SVNErrorMessage myErrorMessage;
+  @Nullable private final String myErrorMessage;
   private final EventAction myAction;
 
-  @Nullable
-  public static ProgressEvent create(@Nullable SVNEvent event) {
-    ProgressEvent result = null;
-
-    if (event != null) {
-      if (event.getFile() == null && event.getURL() == null) {
-        result = new ProgressEvent(event.getErrorMessage());
-      }
-      else {
-        result =
-          new ProgressEvent(event.getFile(), event.getRevision(), StatusType.from(event.getContentsStatus()), StatusType.from(event.getPropertiesStatus()),
-                            EventAction.from(event.getAction()), event.getErrorMessage(), event.getURL());
-      }
-    }
-
-    return result;
-  }
-
-  public ProgressEvent(SVNErrorMessage errorMessage) {
+  public ProgressEvent(@Nullable String errorMessage) {
     this(null, 0, null, null, EventAction.SKIP, errorMessage, null);
   }
 
@@ -66,14 +28,14 @@ public class ProgressEvent {
                        @Nullable StatusType contentStatus,
                        @Nullable StatusType propertiesStatus,
                        EventAction action,
-                       SVNErrorMessage error,
-                       SVNURL url) {
+                       @Nullable String errorMessage,
+                       Url url) {
     myFile = file != null ? file.getAbsoluteFile() : null;
     myRevision = revision;
     myContentsStatus = contentStatus == null ? StatusType.INAPPLICABLE : contentStatus;
     myPropertiesStatus = propertiesStatus == null ? StatusType.INAPPLICABLE : propertiesStatus;
     myAction = action;
-    myErrorMessage = error;
+    myErrorMessage = errorMessage;
     myURL = url;
   }
 
@@ -90,7 +52,8 @@ public class ProgressEvent {
     return myContentsStatus;
   }
 
-  public SVNErrorMessage getErrorMessage() {
+  @Nullable
+  public String getErrorMessage() {
     return myErrorMessage;
   }
 
@@ -103,7 +66,7 @@ public class ProgressEvent {
     return myRevision;
   }
 
-  public SVNURL getURL() {
+  public Url getURL() {
     return myURL;
   }
 

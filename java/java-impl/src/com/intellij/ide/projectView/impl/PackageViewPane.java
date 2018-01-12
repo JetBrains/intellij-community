@@ -207,6 +207,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
         return PackageViewPane.this.getId();
       }
     }).setAsSecondary(true);
+    actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
   }
 

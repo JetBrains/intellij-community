@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
@@ -25,7 +26,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -940,7 +940,7 @@ public class ExpressionUtils {
     PsiExpression qualifier = ref.getQualifierExpression();
     if (qualifier != null) return qualifier;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
-    PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+    PsiMember member = tryCast(ref.resolve(), PsiMember.class);
     if (member != null) {
       PsiClass memberClass = member.getContainingClass();
       if (memberClass != null) {
@@ -978,7 +978,7 @@ public class ExpressionUtils {
     if(newName.equals(nameElement.getText())) return;
     PsiClass aClass = null;
     if(ref.getQualifierExpression() == null) {
-      PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+      PsiMember member = tryCast(ref.resolve(), PsiMember.class);
       if (member != null && ImportUtils.isStaticallyImported(member, ref)) {
         aClass = member.getContainingClass();
       }
@@ -987,7 +987,7 @@ public class ExpressionUtils {
     PsiIdentifier identifier = factory.createIdentifier(newName);
     nameElement.replace(identifier);
     if(aClass != null) {
-      PsiMember member = ObjectUtils.tryCast(ref.resolve(), PsiMember.class);
+      PsiMember member = tryCast(ref.resolve(), PsiMember.class);
       if (member == null || member.getContainingClass() != aClass) {
         ref.setQualifierExpression(factory.createReferenceExpression(aClass));
       }
@@ -1019,7 +1019,7 @@ public class ExpressionUtils {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression reference = (PsiReferenceExpression)expression;
-      PsiLocalVariable variable = ObjectUtils.tryCast(reference.resolve(), PsiLocalVariable.class);
+      PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
       if (variable != null) {
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null && ReferencesSearch.search(variable).forEach(ref -> ref == reference)) {
@@ -1033,9 +1033,9 @@ public class ExpressionUtils {
   @Contract(value = "null -> null")
   @Nullable
   public static PsiLocalVariable resolveLocalVariable(@Nullable PsiExpression expression) {
-    PsiReferenceExpression referenceExpression = ObjectUtils.tryCast(expression, PsiReferenceExpression.class);
+    PsiReferenceExpression referenceExpression = tryCast(expression, PsiReferenceExpression.class);
     if(referenceExpression == null) return null;
-    return ObjectUtils.tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
+    return tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
   }
 
   public static boolean isOctalLiteral(PsiLiteralExpression literal) {
@@ -1113,18 +1113,12 @@ public class ExpressionUtils {
     return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
   }
 
+  /**
+   * Use {@link ExpressionUtil#isEffectivelyUnqualified} instead
+   */
+  @Deprecated
   public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    PsiExpression qualifier = refExpression.getQualifierExpression();
-    if (qualifier == null) {
-      return true;
-    }
-    if (qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement thisQualifier = ((PsiQualifiedExpression)qualifier).getQualifier();
-      if (thisQualifier == null) return true;
-      final PsiClass innerMostClass = PsiTreeUtil.getParentOfType(refExpression, PsiClass.class);
-      return innerMostClass == thisQualifier.resolve();
-    }
-    return false;
+    return ExpressionUtil.isEffectivelyUnqualified(refExpression);
   }
 
   /**
@@ -1153,5 +1147,50 @@ public class ExpressionUtils {
     Integer diffConstant = tryCast(computeConstantExpression(diff), Integer.class);
     if (diffConstant == null) return false;
     return diffConstant == toConstant - fromConstant;
+  }
+
+  /**
+   * Returns an expression which represents an array element with given index if array is known to be never modified
+   * after initialization.
+   *
+   * @param array an array variable
+   * @param index an element index
+   * @return an expression or null if index is out of bounds or array could be modified after initialization
+   */
+  @Nullable
+  public static PsiExpression getConstantArrayElement(PsiVariable array, int index) {
+    if (index < 0) return null;
+    PsiExpression initializer = array.getInitializer();
+    if (initializer instanceof PsiNewExpression) initializer = ((PsiNewExpression)initializer).getArrayInitializer();
+    if (!(initializer instanceof PsiArrayInitializerExpression)) return null;
+    PsiExpression[] initializers = ((PsiArrayInitializerExpression)initializer).getInitializers();
+    if (index >= initializers.length) return null;
+    if (array instanceof PsiField && !(array.hasModifierProperty(PsiModifier.PRIVATE) && array.hasModifierProperty(PsiModifier.STATIC))) {
+      return null;
+    }
+    Boolean isConstantArray = CachedValuesManager.<Boolean>getCachedValue(array, () -> CachedValueProvider.Result
+      .create(isConstantArray(array), PsiModificationTracker.MODIFICATION_COUNT));
+    return Boolean.TRUE.equals(isConstantArray) ? initializers[index] : null;
+  }
+
+  private static boolean isConstantArray(PsiVariable array) {
+    PsiElement scope = PsiTreeUtil.getParentOfType(array, array instanceof PsiField ? PsiClass.class : PsiCodeBlock.class);
+    if (scope == null) return false;
+    return PsiTreeUtil.processElements(scope, e -> {
+      if (!(e instanceof PsiReferenceExpression)) return true;
+      PsiReferenceExpression ref = (PsiReferenceExpression)e;
+      if (!ref.isReferenceTo(array)) return true;
+      PsiExpression parent = tryCast(PsiUtil.skipParenthesizedExprUp(ref.getParent()), PsiExpression.class);
+      if (parent == null) return false;
+      if (parent instanceof PsiReferenceExpression) {
+        if (isReferenceTo(getArrayFromLengthExpression(parent), array)) return true;
+        if (parent.getParent() instanceof PsiMethodCallExpression &&
+            MethodCallUtils.isCallToMethod((PsiMethodCallExpression)parent.getParent(), CommonClassNames.JAVA_LANG_OBJECT,
+                                           null, "clone", PsiType.EMPTY_ARRAY)) {
+          return true;
+        }
+      }
+      return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(parent);
+    });
   }
 }

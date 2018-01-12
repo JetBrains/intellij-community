@@ -4,10 +4,10 @@
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.List;
 
@@ -88,7 +88,7 @@ public class AnnotationExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof AnnotationExprent)) return false;
+    if (!(o instanceof AnnotationExprent)) return false;
 
     AnnotationExprent ann = (AnnotationExprent)o;
     return className.equals(ann.className) &&

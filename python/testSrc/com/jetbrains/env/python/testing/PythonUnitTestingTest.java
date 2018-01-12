@@ -169,22 +169,25 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() {
+  public void testValidation() throws Throwable {
 
-    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration> task =
-      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration>() {
-        @NotNull
-        @Override
-        protected PyUnitTestFactory createFactory() {
-          return PyUnitTestFactory.INSTANCE;
-        }
-      };
-    runPythonTest(task);
-    final PyUnitTestConfiguration configuration = task.getConfiguration();
-    configuration.setPattern("foo");
-    configuration.getTarget().setTargetType(TestTargetType.PATH);
-    configuration.getTarget().setTarget("foo.py");
-    configuration.checkConfiguration();
+
+    new CreateConfigurationTestTask.PyConfigurationValidationTask<PyUnitTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyUnitTestFactory createFactory() {
+        return PyUnitTestFactory.INSTANCE;
+      }
+
+      @Override
+      protected void validateConfiguration() {
+        final PyUnitTestConfiguration configuration = getConfiguration();
+        configuration.setPattern("foo");
+        configuration.getTarget().setTargetType(TestTargetType.PATH);
+        configuration.getTarget().setTarget("foo.py");
+        configuration.checkConfiguration();
+      }
+    }.fetchException(this::runPythonTest);
   }
 
   /**

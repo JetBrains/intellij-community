@@ -267,7 +267,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
       throws IncorrectOperationException {
       PsiComment newComment;
       PsiElement comment = method.getFirstChild();
-      if (comment != null && comment instanceof PsiComment) {
+      if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < commentLines.length; i++) {

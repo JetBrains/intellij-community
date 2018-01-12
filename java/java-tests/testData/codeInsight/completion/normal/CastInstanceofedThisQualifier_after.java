@@ -9,7 +9,7 @@ public abstract class Super {
 
 }
 
-class Sub extends Zzza {
+interface Sub extends Zzza {
   void subMethod() {}
 
 }

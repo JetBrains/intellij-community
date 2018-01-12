@@ -655,7 +655,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
 
     PsiField field = GroovyPropertyUtils.findFieldForAccessor(method, false);
-    if (field == null || !(field instanceof GrField)) return;
+    if (!(field instanceof GrField)) return;
 
     GrModifierList fieldModifierList = ((GrField)field).getModifierList();
     if (fieldModifierList == null) return;

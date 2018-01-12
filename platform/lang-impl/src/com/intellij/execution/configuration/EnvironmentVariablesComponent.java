@@ -65,18 +65,19 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
   public static void readExternal(Element element, Map<String, String> envs) {
     final Element envsElement = element.getChild(ENVS);
     if (envsElement != null) {
-      for (Object o : envsElement.getChildren(ENV)) {
-        Element envElement = (Element)o;
+      for (Element envElement : envsElement.getChildren(ENV)) {
         final String envName = envElement.getAttributeValue(NAME);
         final String envValue = envElement.getAttributeValue(VALUE);
         if (envName != null && envValue != null) {
           envs.put(envName, envValue);
         }
       }
-    } else { //compatibility with prev version
-      for (Object o : element.getChildren(OPTION)) {
-        if (Comparing.strEqual(((Element)o).getAttributeValue(NAME), ENV_VARIABLES)) {
-          splitVars(envs, ((Element)o).getAttributeValue(VALUE));
+    }
+    else {
+      //compatibility with prev version
+      for (Element o : element.getChildren(OPTION)) {
+        if (Comparing.strEqual(o.getAttributeValue(NAME), ENV_VARIABLES)) {
+          splitVars(envs, o.getAttributeValue(VALUE));
           break;
         }
       }

@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.invertBoolean;
 
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.daemon.impl.RecursiveCallLineMarkerProvider;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.lang.java.JavaLanguage;
@@ -33,6 +32,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Query;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -172,11 +172,15 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
     if (expression instanceof PsiMethodReferenceExpression) {
       final PsiExpression callExpression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)expression);
       if (callExpression instanceof PsiCallExpression) {
-        callExpression.replace(CodeInsightServicesUtil.invertCondition(callExpression));
+        PsiExpression negatedExpression = JavaPsiFacade.getElementFactory(callExpression.getProject())
+          .createExpressionFromText(BoolUtils.getNegatedExpressionText(callExpression), callExpression);
+        callExpression.replace(negatedExpression);
       }
     }
     else if (!(expression.getParent() instanceof PsiExpressionStatement)) {
-      expression.replace(CodeInsightServicesUtil.invertCondition((PsiExpression)expression));
+      PsiExpression negatedExpression = JavaPsiFacade.getElementFactory(expression.getProject())
+          .createExpressionFromText(BoolUtils.getNegatedExpressionText((PsiExpression)expression), expression);
+      expression.replace(negatedExpression);
     }
   }
 

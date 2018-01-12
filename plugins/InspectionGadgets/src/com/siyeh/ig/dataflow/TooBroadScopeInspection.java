@@ -27,7 +27,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +67,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
       final PsiVariable variable = (PsiVariable)variableIdentifier.getParent();
       assert variable != null;
-      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class);
+      final PsiElement variableScope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
       final List<PsiReferenceExpression> references = VariableAccessUtils.findReferences(variable, variableScope);
       PsiElement commonParent = ScopeUtils.getCommonParent(references);
       assert commonParent != null;
@@ -81,13 +80,19 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
         }
       }
       final PsiElement referenceElement = references.get(0);
-      final PsiElement firstReferenceScope = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class);
+      final PsiElement firstReferenceScope = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
       if (firstReferenceScope == null) {
         return;
       }
-      PsiDeclarationStatement newDeclaration;
+      PsiElement newDeclaration;
       CommentTracker tracker = new CommentTracker();
-      if (commonParent instanceof PsiForStatement) {
+      if (commonParent instanceof PsiTryStatement) {
+        PsiElement resourceReference = referenceElement.getParent();
+        PsiResourceVariable resourceVariable = createResourceVariable(project, (PsiLocalVariable)variable, initializer != null ? tracker.markUnchanged(initializer) : null);
+        newDeclaration = resourceReference.getParent().addBefore(resourceVariable, resourceReference);
+        resourceReference.delete();
+      }
+      else if (commonParent instanceof PsiForStatement) {
         final PsiForStatement forStatement = (PsiForStatement)commonParent;
         final PsiStatement initialization = forStatement.getInitialization();
         if (initialization == null) {
@@ -106,7 +111,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
         else {
           newDeclaration = createNewDeclaration(variable, initializer, tracker);
         }
-        newDeclaration = (PsiDeclarationStatement)initialization.replace(newDeclaration);
+        newDeclaration = initialization.replace(newDeclaration);
       } else if (firstReferenceScope.equals(commonParent)) {
         newDeclaration = moveDeclarationToLocation(variable, referenceElement, tracker);
       }
@@ -117,15 +122,32 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
         }
         final PsiElement location = commonParentChild.getPrevSibling();
         newDeclaration = createNewDeclaration(variable, initializer, tracker);
-        newDeclaration = (PsiDeclarationStatement)commonParent.addAfter(newDeclaration, location);
+        newDeclaration = commonParent.addAfter(newDeclaration, location);
       }
       final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-      newDeclaration = (PsiDeclarationStatement)codeStyleManager.reformat(newDeclaration);
+      newDeclaration = codeStyleManager.reformat(newDeclaration);
       removeOldVariable(variable, tracker);
       tracker.insertCommentsBefore(newDeclaration);
       if (isOnTheFly()) {
         HighlightUtils.highlightElement(newDeclaration);
       }
+    }
+
+    private PsiResourceVariable createResourceVariable(@NotNull Project project, PsiLocalVariable variable, PsiExpression initializer) {
+      PsiTryStatement tryStatement = (PsiTryStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("try (X x = null){}", variable);
+      PsiResourceList resourceList = tryStatement.getResourceList();
+      assert resourceList != null;
+      PsiResourceVariable resourceVariable = (PsiResourceVariable)resourceList.iterator().next();
+      resourceVariable.getTypeElement().replace(variable.getTypeElement());
+      PsiIdentifier nameIdentifier = resourceVariable.getNameIdentifier();
+      assert nameIdentifier != null;
+      PsiIdentifier oldIdentifier = variable.getNameIdentifier();
+      assert oldIdentifier != null;
+      nameIdentifier.replace(oldIdentifier);
+      if (initializer != null) {
+        resourceVariable.setInitializer(initializer);
+      }
+      return resourceVariable;
     }
 
     private void removeOldVariable(@NotNull PsiVariable variable, CommentTracker tracker) {
@@ -154,16 +176,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
 
       final PsiType type = variable.getType();
-      @NonNls final String statementText;
-      final String typeText = type.getCanonicalText();
-      if (initializer == null) {
-        statementText = typeText + ' ' + name + ';';
-      }
-      else {
-        final String initializerText = tracker.markUnchanged(initializer).getText();
-        statementText = typeText + ' ' + name + '=' + initializerText + ';';
-      }
-      final PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)factory.createStatementFromText(statementText, variable);
+      final PsiDeclarationStatement newDeclaration = factory.createVariableDeclarationStatement(name, type, initializer != null ? tracker.markUnchanged(initializer) : null, variable);
       final PsiLocalVariable newVariable = (PsiLocalVariable)newDeclaration.getDeclaredElements()[0];
       final PsiModifierList newModifierList = newVariable.getModifierList();
       final PsiModifierList modifierList = variable.getModifierList();

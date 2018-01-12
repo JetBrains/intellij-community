@@ -5,7 +5,7 @@ public class Main {
         StringBuilder res = null;
         for (String s : strings) {
             if(res == null) {
-                res = s == null ? null : new StringBuilder(s);
+                res = new StringBuilder(s);
             } else {
                 res.append(s);
             }

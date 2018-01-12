@@ -60,31 +60,40 @@ class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQu
   }
 }
 
-class SaveModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog) : AbstractAction() {
+class SaveModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog, private val onSaved: () -> Unit) : AbstractAction() {
   init {
     UIUtil.setActionNameAndMnemonic(ProjectBundle.message("module.renaming.scheme.save.button.text"), this)
   }
 
   override fun actionPerformed(e: ActionEvent?) {
-    val project = dialog.project
-    val descriptor = FileSaverDescriptor(ProjectBundle.message("module.renaming.scheme.save.chooser.title"),
-                                         ProjectBundle.message("module.renaming.scheme.save.chooser.description"), "xml")
-    val baseDir = getDefaultRenamingSchemeFile(project)?.parent ?: project.baseDir
-    val fileWrapper = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, project).save(baseDir, "module-renaming-scheme.xml")
-    if (fileWrapper != null) {
-      saveDefaultRenamingSchemeFilePath(project, FileUtil.toSystemIndependentName(fileWrapper.file.absolutePath))
-
-      val state = ModuleRenamingHistoryState()
-      state.oldToNewName.putAll(dialog.getRenamingScheme())
-      try {
-        XmlSerializer.serialize(state).write(fileWrapper.file.toPath())
-      }
-      catch (e: Exception) {
-        LOG.info(e)
-        Messages.showErrorDialog(project, CommonBundle.getErrorTitle(), ProjectBundle.message("module.renaming.scheme.cannot.save.error", e.message ?: ""))
-      }
+    if (saveModuleRenamingScheme(dialog)) {
+      onSaved()
     }
   }
+}
+
+internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedNamesDialog): Boolean {
+  val project = dialog.project
+  val descriptor = FileSaverDescriptor(ProjectBundle.message("module.renaming.scheme.save.chooser.title"),
+                                       ProjectBundle.message("module.renaming.scheme.save.chooser.description"), "xml")
+  val baseDir = getDefaultRenamingSchemeFile(project)?.parent ?: project.baseDir
+  val fileWrapper = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, project).save(baseDir, "module-renaming-scheme.xml")
+  if (fileWrapper != null) {
+    saveDefaultRenamingSchemeFilePath(project, FileUtil.toSystemIndependentName(fileWrapper.file.absolutePath))
+
+    val state = ModuleRenamingHistoryState()
+    state.oldToNewName.putAll(dialog.getRenamingScheme())
+    try {
+      XmlSerializer.serialize(state).write(fileWrapper.file.toPath())
+      return true
+    }
+    catch (e: Exception) {
+      LOG.info(e)
+      Messages.showErrorDialog(project, CommonBundle.getErrorTitle(),
+                               ProjectBundle.message("module.renaming.scheme.cannot.save.error", e.message ?: ""))
+    }
+  }
+  return false
 }
 
 private val EXPORTED_PATH_PROPERTY = "module.renaming.scheme.file"

@@ -107,7 +107,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragments = new ArrayList<>(3);
     myLayouts = new ArrayList<>(3);
     myAttributes = new ArrayList<>(3);
-    myIpad = JBUI.insets(0, 2);
+    myIpad = JBUI.insets(1, 2);
     myIconTextGap = JBUI.scale(2);
     myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     myFragmentPadding = new TIntIntHashMap(10);

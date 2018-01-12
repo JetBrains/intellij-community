@@ -26,7 +26,7 @@ import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.vcs.AbstractVcsTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.test.VcsPlatformTest
 import com.intellij.vcs.test.overrideService
 import git4idea.DialogManager

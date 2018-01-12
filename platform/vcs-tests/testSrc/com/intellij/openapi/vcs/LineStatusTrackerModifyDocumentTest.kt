@@ -613,6 +613,14 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
+  fun testWhitespaceChanges() {
+    test("AAAAA_ _BBBBB_CCCCC_DDDDD_EEEEE_") {
+      " _BBBBB_CCCCC_DDDDD_EEEEE".replace("  BBBBB_  CCCCC_  DDDDD_  EEEEE_ ")
+
+      assertRanges(Range(1, 6, 1, 6))
+    }
+  }
+
   fun testWhitespaceBlockMerging1() {
     test("A_B_C_D_E_") {
       "A".replace("C_D_E")
@@ -648,4 +656,99 @@ class LineStatusTrackerModifyDocumentTest : BaseLineStatusTrackerTestCase() {
       assertRanges(Range(0, 3, 0, 1), Range(8, 8, 6, 9))
     }
   }
+
+  fun testFreeze1() {
+    test("X_X_X") {
+      (2 th "X_").insertAfter("X_")
+
+      tracker.doFrozen(Runnable {
+        assertNull(tracker.getRanges())
+
+        runCommand {
+          document.setText("")
+          document.setText("Y")
+        }
+
+        runCommand {
+          document.setText("X\nX\nX\nX")
+        }
+
+        assertNull(tracker.getRanges())
+      })
+
+      assertRanges(Range(2, 3, 2, 2))
+    }
+  }
+
+  fun testFreeze2() {
+    test("X_X_X") {
+      (2 th "X_").insertAfter("X_")
+
+      tracker.doFrozen(Runnable {
+        assertNull(tracker.getRanges())
+
+        runCommand {
+          document.setText("")
+          document.setText("Y")
+        }
+
+        runCommand {
+          document.setText(parseInput("Y_X_X_X_X"))
+        }
+
+        assertNull(tracker.getRanges())
+      })
+
+      assertRanges(Range(0, 1, 0, 0), Range(3, 4, 2, 2))
+    }
+  }
+
+  fun testFreeze3() {
+    test("X_X_X") {
+      (2 th "X_").insertAfter("X_")
+
+      tracker.doFrozen(Runnable {
+        assertNull(tracker.getRanges())
+
+        tracker.doFrozen(Runnable {
+          runCommand {
+            document.setText("")
+            document.setText("Y")
+          }
+
+          assertNull(tracker.getRanges())
+        })
+        assertNull(tracker.getRanges())
+
+        runCommand {
+          document.setText("X\nX\nX\nX")
+        }
+
+        assertNull(tracker.getRanges())
+      })
+
+      assertRanges(Range(2, 3, 2, 2))
+    }
+  }
+
+  fun testFreeze4() {
+    test("X_X_X") {
+      (2 th "X_").insertAfter("X_")
+
+      tracker.doFrozen(Runnable {
+        assertNull(tracker.getRanges())
+
+        tracker.setBaseRevision(parseInput("X_X_X_Z_Z"))
+
+        runCommand {
+          document.setText(parseInput("Y_X_X_X_X_Z_Z"))
+        }
+
+        assertNull(tracker.getRanges())
+      })
+
+      assertRanges(Range(0, 1, 0, 0), Range(3, 4, 2, 2))
+    }
+  }
+
 }

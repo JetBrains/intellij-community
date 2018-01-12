@@ -313,7 +313,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> createConcurrentSet() {
-    return new MultiMap<K, V>() {
+    return new ConcurrentMultiMap<K, V>() {
       @NotNull
       @Override
       protected Collection<V> createCollection() {
@@ -324,12 +324,6 @@ public class MultiMap<K, V> implements Serializable {
       @Override
       protected Collection<V> createEmptyCollection() {
         return Collections.emptySet();
-      }
-
-      @NotNull
-      @Override
-      protected Map<K, Collection<V>> createMap() {
-        return ContainerUtil.newConcurrentMap();
       }
     };
   }

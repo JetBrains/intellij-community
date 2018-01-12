@@ -62,9 +62,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.awt.event.MouseEvent.MOUSE_MOVED;
-import static java.awt.event.MouseEvent.MOUSE_PRESSED;
-
 /**
  * @author Vladimir Kondratyev
  * @author Anton Katilin
@@ -641,11 +638,11 @@ public class IdeEventQueue extends EventQueue {
     }
     else if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
-      if (me.getID() == MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0 ) {
+      if (me.getID() == MouseEvent.MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0 ) {
         // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
         // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
         // So we have to reset this WeakReference with synthetic event just before processing of actual event
-        super.dispatchEvent(new MouseEvent(me.getComponent(), MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+        super.dispatchEvent(new MouseEvent(me.getComponent(), MouseEvent.MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
       }
       if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
         final MouseEvent toDispatch =
@@ -1256,7 +1253,9 @@ public class IdeEventQueue extends EventQueue {
     myPostEventListeners.addListener(listener, parentDisposable);
   }
 
-  private static Ref<Method> unsafeNonBlockingExecuteRef;
+  private static class Holder {
+    private static final Method unsafeNonBlockingExecuteRef = ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class);
+  }
 
   /**
    * Must be called on the Event Dispatching thread.
@@ -1267,13 +1266,10 @@ public class IdeEventQueue extends EventQueue {
    */
   public static void unsafeNonblockingExecute(Runnable r) {
     assert EventQueue.isDispatchThread();
-    if (unsafeNonBlockingExecuteRef == null) {
-      // The method is available in JBSDK.
-      unsafeNonBlockingExecuteRef = Ref.create(ReflectionUtil.getDeclaredMethod(SunToolkit.class, "unsafeNonblockingExecute", Runnable.class));
-    }
-    if (unsafeNonBlockingExecuteRef.get() != null) {
+    // The method is available in JBSDK.
+    if (Holder.unsafeNonBlockingExecuteRef != null) {
       try {
-        unsafeNonBlockingExecuteRef.get().invoke(Toolkit.getDefaultToolkit(), r);
+        Holder.unsafeNonBlockingExecuteRef.invoke(Toolkit.getDefaultToolkit(), r);
         return;
       }
       catch (Exception ignore) {

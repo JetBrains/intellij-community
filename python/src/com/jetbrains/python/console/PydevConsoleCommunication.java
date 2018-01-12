@@ -108,7 +108,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   private PythonDebugConsoleCommunication myDebugCommunication;
   private boolean myNeedsMore = false;
 
-  private PythonConsoleView myConsoleView;
+  private @Nullable PythonConsoleView myConsoleView;
   private List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   /**
@@ -234,7 +234,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return execNotifyAboutMagic(params);
     }
     else if ("ShowConsole".equals(method)) {
-      myConsoleView.setConsoleEnabled(true);
+      if (myConsoleView != null) {
+        myConsoleView.setConsoleEnabled(true);
+      }
       return "";
     }
     else {
@@ -401,7 +403,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return; //TODO: handle text input and other cases
     }
     nextResponse = null;
-    if (waitingForInput && myConsoleView.isInitialized()) {
+    if (waitingForInput && myConsoleView != null && myConsoleView.isInitialized()) {
       inputReceived = command.getText();
       waitingForInput = false;
       //the thread that we started in the last exec is still alive if we were waiting for an input.
@@ -791,7 +793,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
   }
 
-  public void setConsoleView(PythonConsoleView consoleView) {
+  public void setConsoleView(@Nullable PythonConsoleView consoleView) {
     myConsoleView = consoleView;
   }
 

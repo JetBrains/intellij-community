@@ -19,6 +19,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -54,6 +55,7 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.collections.HashSet
 
 class PartialLocalLineStatusTracker(project: Project,
                                     document: Document,
@@ -332,6 +334,13 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
+  fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String {
+    return runReadAction {
+      val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
+      documentTracker.getContentWithPartiallyAppliedBlocks(side) { markers.contains(it.marker) }
+    }
+  }
+
   @CalledInAwt
   fun handlePartialCommit(side: Side, changelistId: String): PartialCommitHelper {
     val marker = ChangeListMarker(changelistId)
@@ -417,11 +426,11 @@ class PartialLocalLineStatusTracker(project: Project,
       return actions
     }
 
-    private inner class SetChangeListAction(val editor: Editor, range: Range, val mousePosition: Point?)
-      : RangeMarkerAction(range, IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST) {
-      override fun isEnabled(range: Range): Boolean = range is LocalRange
+    private inner class SetChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
+      : RangeMarkerAction(editor, range, IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST) {
+      override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
 
-      override fun actionPerformed(range: Range) {
+      override fun actionPerformed(editor: Editor, range: Range) {
         MoveChangesLineStatusAction.moveToAnotherChangelist(tracker, range as LocalRange)
 
         val newRange = tracker.findRange(range)

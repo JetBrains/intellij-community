@@ -160,6 +160,11 @@ class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  String getOldModuleName(String newName) {
+    return compilationContext.getOldModuleName(newName)
+  }
+
+  @Override
   String getModuleOutputPath(JpsModule module) {
     return compilationContext.getModuleOutputPath(module)
   }

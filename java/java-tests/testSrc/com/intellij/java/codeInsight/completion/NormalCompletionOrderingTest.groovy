@@ -828,4 +828,25 @@ class Foo {
     checkPreferredItems 0, 'String', 'public String getZoo', 'public String toString'
   }
 
+  void testPreferExceptionsInCatch() {
+    myFixture.configureByText 'a.java', 'class Foo { { Enu<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('m\n') // select 'Enum'
+    myFixture.type('; try {} catch(E')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'Exception', 'Error' 
+  }
+
+  void testPreferExceptionsInThrowsList() {
+    checkPreferredItems 0, 'IllegalStateException', 'IllegalAccessException', 'IllegalArgumentException'
+  }
+
+  void testPreferExceptionsInJavadocThrows() {
+    checkPreferredItems 0, 'IllegalArgumentException', 'IllegalAccessException', 'IllegalStateException'
+  }
+
+  void testPreferExpectedTypeArguments() {
+    checkPreferredItems 0, 'BlaOperation'
+  }
+
 }

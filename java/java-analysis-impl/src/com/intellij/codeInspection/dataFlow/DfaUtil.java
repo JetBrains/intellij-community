@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -258,7 +259,7 @@ public class DfaUtil {
         if (!(e instanceof PsiMethodCallExpression)) return false;
         PsiMethodCallExpression call = (PsiMethodCallExpression)e;
         return call.getMethodExpression().isReferenceTo(referrer) &&
-               (isStatic || ExpressionUtils.isEffectivelyUnqualified(call.getMethodExpression()));
+               (isStatic || ExpressionUtil.isEffectivelyUnqualified(call.getMethodExpression()));
       };
       if (ExpressionUtils.isMatchingChildAlwaysExecuted(initializer, callToMethod)) {
         // current method is definitely called from some field initialization
@@ -271,6 +272,17 @@ public class DfaUtil {
   public static boolean hasInitializationHacks(@NotNull PsiField field) {
     PsiClass containingClass = field.getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());
+  }
+
+  public static boolean ignoreInitializer(PsiVariable variable) {
+    // Skip boolean constant fields as they usually used as control knobs to modify program logic
+    // it's better to analyze both true and false values even if it's predefined
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(variable.getInitializer());
+    return initializer != null &&
+           variable instanceof PsiField &&
+           variable.hasModifierProperty(PsiModifier.FINAL) &&
+           variable.getType().equals(PsiType.BOOLEAN) &&
+           (ExpressionUtils.isLiteral(initializer, Boolean.TRUE) || ExpressionUtils.isLiteral(initializer, Boolean.FALSE));
   }
 
   static boolean isInsideConstructorOrInitializer(PsiElement element) {

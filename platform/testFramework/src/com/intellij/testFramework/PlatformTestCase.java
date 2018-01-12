@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -382,7 +383,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     myFilesToDelete.add(moduleFile);
     return new WriteAction<Module>() {
       @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
+      protected void run(@NotNull Result<Module> result) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
         assertNotNull(virtualFile);
         Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
@@ -471,17 +472,21 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @Override
   protected void tearDown() throws Exception {
     Project project = myProject;
-
+    if (project != null && !project.isDisposed()) {
+      AutoPopupController.getInstance(project).cancelAllRequests(); // clear "show param info" delayed requests leaking project
+    }
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
-      .append(this::disposeRootDisposable)
+      .append(() -> disposeRootDisposable())
       .append(() -> {
         if (project != null) {
           LightPlatformTestCase.doTearDown(project, ourApplication);
         }
       })
-      .append(this::disposeProject)
+      .append(() -> disposeProject())
       .append(() -> UIUtil.dispatchAllInvocationEvents())
-      .append(this::checkForSettingsDamage)
+      .append(() -> checkForSettingsDamage())
       .append(() -> {
         if (project != null) {
           InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
@@ -513,7 +518,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           myThreadTracker.checkLeak();
         }
       })
-      .append(LightPlatformTestCase::checkEditorsReleased)
+      .append(() -> LightPlatformTestCase.checkEditorsReleased())
       .append(() -> myOldSdks.checkForJdkTableLeaks())
       .append(() -> myVirtualFilePointerTracker.assertPointersAreDisposed())
       .append(() -> {

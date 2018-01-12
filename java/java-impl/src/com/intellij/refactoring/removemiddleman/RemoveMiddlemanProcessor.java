@@ -123,6 +123,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     super.performRefactoring(usageInfos);
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactorJBundle.message("exposed.delegation.command.name", containingClass.getName(), '.', field.getName());
   }

@@ -363,18 +363,18 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   public Dimension getMinimumSize(JComponent c) {
     Dimension size = super.getMinimumSize(c);
-    if (size != null) updatePreferredSize(size);
+    if (size != null) updatePreferredSize(c, size);
     return size;
   }
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    if (size != null) updatePreferredSize(size);
+    if (size != null) updatePreferredSize(c, size);
     return size;
   }
 
-  protected void updatePreferredSize(Dimension size) {
+  protected void updatePreferredSize(JComponent c, Dimension size) {
     size.height = Math.max(size.height, getMinimumHeight());
     JBInsets.addTo(size, insets);
   }

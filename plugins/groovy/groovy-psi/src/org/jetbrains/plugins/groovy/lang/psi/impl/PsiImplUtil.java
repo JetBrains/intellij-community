@@ -317,8 +317,7 @@ public class PsiImplUtil {
 
   @Nullable
   public static PsiElement realPrevious(PsiElement previousLeaf) {
-    while (previousLeaf != null &&
-        (previousLeaf instanceof PsiWhiteSpace ||
+    while ((previousLeaf instanceof PsiWhiteSpace ||
             previousLeaf instanceof PsiComment ||
             previousLeaf instanceof PsiErrorElement)) {
       previousLeaf = previousLeaf.getPrevSibling();

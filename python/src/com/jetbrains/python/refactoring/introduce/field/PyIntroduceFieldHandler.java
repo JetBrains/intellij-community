@@ -173,7 +173,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     final ScopeOwner current = ScopeUtil.getScopeOwner(expression);
-    if (clazz != null && current != null && current instanceof PyFunction) {
+    if (clazz != null && current instanceof PyFunction) {
       PyFunction init = clazz.findMethodByName(PyNames.INIT, false, null);
       if (current == init) {
         return true;
