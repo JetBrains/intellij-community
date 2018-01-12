@@ -54,8 +54,6 @@ public class ImageLoader implements Serializable {
   public static final int CACHED_IMAGE_MAX_SIZE = (int)Math.round(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
-  private static final boolean SVG_ENABLED = Registry.is("ide.svg.icon");
-
   @SuppressWarnings({"UnusedDeclaration"}) // set from com.intellij.internal.IconsLoadTime
   private static LoadFunction measureLoad;
 
@@ -79,7 +77,7 @@ public class ImageLoader implements Serializable {
               return SVGLoader.load(url, is, scale);
             }
           };
-          if (measureLoad != null && SVG_ENABLED) {
+          if (measureLoad != null && Registry.is("ide.svg.icon")) {
             return measureLoad.load(f);
           }
           return f.load(null);
@@ -95,7 +93,7 @@ public class ImageLoader implements Serializable {
             return ImageLoader.load(is, scale);
           }
         };
-        if (measureLoad != null && !SVG_ENABLED) {
+        if (measureLoad != null && !Registry.is("ide.svg.icon")) {
           return measureLoad.load(f);
         }
         return f.load(null);
@@ -200,21 +198,23 @@ public class ImageLoader implements Serializable {
     {
       ImageDescList vars = new ImageDescList();
 
+      boolean ideSvgIconSupport = Registry.is("ide.svg.icon");
+
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than upscaling non-retina images.
       boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
 
-      if (retina || dark || SVG_ENABLED) {
+      if (retina || dark || ideSvgIconSupport) {
         final String name = FileUtil.getNameWithoutExtension(file);
         final String ext = FileUtilRt.getExtension(file);
 
         double scale = adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE));
 
-        if (SVG_ENABLED && dark) {
+        if (ideSvgIconSupport && dark) {
           vars.add(new ImageDesc(name + "_dark.svg", cls, scale, ImageDesc.Type.SVG));
         }
 
-        if (SVG_ENABLED) {
+        if (ideSvgIconSupport) {
           vars.add(new ImageDesc(name + ".svg", cls, scale, ImageDesc.Type.SVG));
         }
 
