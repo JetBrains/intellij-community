@@ -3,11 +3,13 @@ package com.intellij.spellchecker.settings;
 
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.spellchecker.SpellCheckerManager;
+import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.util.containers.ContainerUtil.concat;
@@ -210,7 +213,19 @@ public class CustomDictionariesPanel extends JPanel {
           public String valueOf(final String info) {
             return info;
           }
-        }};
+        },
+        new ColumnInfo<String, String>("Type") {
+          @Override
+          public String valueOf(final String info) {
+            final CustomDictionaryProvider provider = Stream.of(Extensions.getExtensions(CustomDictionaryProvider.EP_NAME))
+              .filter(dictionaryProvider -> dictionaryProvider.isApplicable(info))
+              .findAny()
+              .orElse(null);
+            
+            return provider !=null ? provider.getDictionaryType(): "";
+          }
+        }
+      };
     }
   }
 }
