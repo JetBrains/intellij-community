@@ -35,8 +35,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
-
 /**
  * <p>
  * A container for global, language and custom code style settings and indent options. Global options are default options for multiple
