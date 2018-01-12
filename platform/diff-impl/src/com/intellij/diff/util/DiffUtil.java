@@ -259,16 +259,32 @@ public class DiffUtil {
 
   public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
     assert foldingSupport.getCount() == 1;
-    installLineConvertor(editor, foldingSupport, 0);
+    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
+    editor.getGutterComponentEx().setLineNumberConvertor(foldingLineConvertor);
   }
 
-  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
-    TIntFunction lineConvertor = foldingSupport.getLineConvertor(editorIndex);
-    editor.getGutterComponentEx().setLineNumberConvertor(lineConvertor);
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
+    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    editor.getGutterComponentEx().setLineNumberConvertor(contentLineConvertor);
   }
 
-  @NotNull
-  public static TIntFunction mergeLineConverters(@NotNull TIntFunction convertor1, @NotNull TIntFunction convertor2) {
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
+                                          @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
+    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
+    editor.getGutterComponentEx().setLineNumberConvertor(mergeLineConverters(contentLineConvertor, foldingLineConvertor));
+  }
+
+  @Nullable
+  public static TIntFunction getContentLineConvertor(@NotNull DocumentContent content) {
+    return content.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
+  }
+
+  @Nullable
+  public static TIntFunction mergeLineConverters(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
+    if (convertor1 == null && convertor2 == null) return null;
+    if (convertor1 == null) return convertor2;
+    if (convertor2 == null) return convertor1;
     return value -> convertor1.execute(convertor2.execute(value));
   }
 
