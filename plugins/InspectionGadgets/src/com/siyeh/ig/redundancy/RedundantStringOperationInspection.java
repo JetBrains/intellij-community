@@ -143,7 +143,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.string.replace.with.qualifier.fix.family.name");
+      return InspectionGadgetsBundle.message("inspection.redundant.string.fix.family.name");
     }
 
     @Override
