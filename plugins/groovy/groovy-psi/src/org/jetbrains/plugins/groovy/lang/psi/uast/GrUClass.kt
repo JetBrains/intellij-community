@@ -6,11 +6,11 @@ package org.jetbrains.plugins.groovy.lang.psi.uast
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.uast.*
 
-class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?) : UClass, JvmDeclarationUElement, PsiClass by grElement {
+class GrUClass(val grElement: GrTypeDefinition, parentProvider: () -> UElement?) : UClass, JvmDeclarationUElement, PsiClass by grElement {
 
   override val sourcePsi = grElement
 
@@ -46,9 +46,7 @@ class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?
 
   override fun getMethods(): Array<UMethod> = grElement.codeMethods.map { GrUMethod(it, { this }) }.toTypedArray()
 
-  override fun getInnerClasses(): Array<UClass> = grElement.codeInnerClasses.mapNotNull {
-    (it as? GrClassDefinition)?.let { GrUClass(it, { this }) }
-  }.toTypedArray()
+  override fun getInnerClasses(): Array<UClass> = grElement.codeInnerClasses.map { GrUClass(it, { this }) }.toTypedArray()
 
   override fun getOriginalElement(): PsiElement = grElement.originalElement
 }

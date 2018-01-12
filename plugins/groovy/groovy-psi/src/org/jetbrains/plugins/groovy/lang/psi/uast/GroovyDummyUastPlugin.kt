@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.uast.*
 
@@ -34,7 +34,7 @@ class GroovyDummyUastPlugin : UastLanguagePlugin {
       is GrLiteral -> GrULiteral(element, parentProvider)
       is GrAnnotationNameValuePair -> GrUNamedExpression(element, parentProvider)
       is GrAnnotation -> GrUAnnotation(element, parentProvider)
-      is GrClassDefinition -> GrUClass(element, parentProvider)
+      is GrTypeDefinition -> GrUClass(element, parentProvider)
       is GrMethod -> GrUMethod(element, parentProvider)
       is GrParameter -> GrUParameter(element, parentProvider)
       else -> null

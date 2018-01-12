@@ -6,7 +6,7 @@ package org.jetbrains.plugins.groovy.lang.psi.uast
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.uast.*
 import java.util.*
 
@@ -19,7 +19,7 @@ class GrUFile(override val psi: GroovyFile, override val languagePlugin: UastLan
   override val annotations: List<UAnnotation>
     get() = psi.packageDefinition?.annotationList?.annotations?.map { GrUAnnotation(it, { this }) } ?: emptyList()
 
-  override val classes by lazy { psi.classes.mapNotNull { (it as? GrClassDefinition)?.let { GrUClass(it, { this }) } } }
+  override val classes by lazy { psi.classes.mapNotNull { (it as? GrTypeDefinition)?.let { GrUClass(it, { this }) } } }
 
   override val allCommentsInFile by lazy {
     val comments = ArrayList<UComment>(0)

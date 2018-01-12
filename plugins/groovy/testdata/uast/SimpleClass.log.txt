@@ -1,4 +1,5 @@
 UFile (package = )
+    UClass (name = SimpleAnnotation)
     UClass (name = SimpleClass)
         UAnnotation (fqName = SimpleAnnotation)
         UMethod (name = foo)
