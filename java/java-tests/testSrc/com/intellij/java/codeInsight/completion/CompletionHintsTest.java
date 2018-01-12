@@ -837,6 +837,18 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkHintContents("<html><b>String</b></html>");
   }
 
+  public void testBrokenPsiCall() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
+    type(';');
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(;<caret>, ) } }");
+    backspace();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
+  }
+
   private void enableConstructorVariantsCompletion() {
     Registry.get("java.completion.show.constructors").setValue(true);
     Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
