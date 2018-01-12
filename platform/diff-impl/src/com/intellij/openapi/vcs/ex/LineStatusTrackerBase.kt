@@ -61,6 +61,7 @@ abstract class LineStatusTrackerBase<R : Range> {
 
     vcsDocument = DocumentImpl(this.document.immutableCharSequence)
     vcsDocument.putUserData(UndoConstants.DONT_RECORD_UNDO, true)
+    vcsDocument.setReadOnly(true)
 
     documentTracker = DocumentTracker(vcsDocument, this.document)
     documentTracker.addListener(MyLineTrackerListener())
@@ -123,7 +124,14 @@ abstract class LineStatusTrackerBase<R : Range> {
   @CalledInAwt
   protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
     val doc = side[vcsDocument, document]
-    return DiffUtil.executeWriteCommand(doc, project, commandName, { task(doc) })
+
+    if (side.isLeft) doc.setReadOnly(false)
+    try {
+      return DiffUtil.executeWriteCommand(doc, project, commandName, { task(doc) })
+    }
+    finally {
+      if (side.isLeft) doc.setReadOnly(true)
+    }
   }
 
   @CalledInAwt
