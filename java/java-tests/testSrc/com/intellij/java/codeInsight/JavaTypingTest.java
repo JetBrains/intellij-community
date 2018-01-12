@@ -16,23 +16,15 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,9 +138,9 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private void doMultiTypeTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");
-    List<Integer> whereToType = findWhereToType(myFixture.getFile().getVirtualFile());
+    List<Integer> whereToType = findWhereToType(myFixture.getEditor().getDocument().getImmutableCharSequence());
     assertNotNull("Test file must have at least one place where to type!", whereToType);
-    assertNotEmpty(whereToType);
+    assertFalse("Test file must have at least one place where to type!", whereToType.isEmpty());
     for (Integer offset : whereToType) {
       myFixture.getEditor().getCaretModel().moveToOffset(offset);
       myFixture.type(c);
@@ -161,13 +153,9 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/java/java-tests/testData/codeInsight/typing";
   }
 
-  private static List<Integer> findWhereToType(@NotNull VirtualFile file) {
-    if (file.isDirectory() || file.getFileType().isBinary() || !file.getExtension().contentEquals("java")) {
-      return Collections.emptyList();
-    }
-    CharSequence text = LoadTextUtil.loadText(file); //hide CRLF/LF conversion problem
+  private static List<Integer> findWhereToType(@NotNull CharSequence content) {
     List<Integer> offsets = new ArrayList<>();
-    Matcher m = Pattern.compile("/\\*typehere\\*/").matcher(text);
+    Matcher m = Pattern.compile("/\\*typehere\\*/").matcher(content);
     while (m.find()) {
       offsets.add(m.end());
     }
