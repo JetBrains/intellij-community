@@ -1,9 +1,6 @@
 /*
  * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.*
@@ -36,13 +33,16 @@ class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?
 
   override fun getSuperClass(): UClass? = super.getSuperClass()
 
-  override fun getFields(): Array<UField> = super.getFields()
+  override fun getFields(): Array<UField> = emptyArray() //not implemented
 
-  override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
+  override fun getInitializers(): Array<UClassInitializer> = emptyArray() //not implemented
 
   override fun getMethods(): Array<UMethod> = grElement.codeMethods.map { GrUMethod(it, { this }) }.toTypedArray()
 
-  override fun getInnerClasses(): Array<UClass> = super.getInnerClasses()
+  override fun getInnerClasses(): Array<UClass> = grElement.codeInnerClasses.mapNotNull {
+    (it as? GrClassDefinition)?.let { GrUClass(it, { this }) }
+  }.toTypedArray()
+
   override fun getOriginalElement(): PsiElement = grElement.originalElement
 }
 
