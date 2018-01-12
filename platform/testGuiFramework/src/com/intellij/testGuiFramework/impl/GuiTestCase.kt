@@ -601,6 +601,11 @@ open class GuiTestCase {
   fun IdeFrameFixture.popup(vararg path: String)
     = this.invokeMenuPath(*path)
 
+
+  fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
+    func(this.editor())
+  }
+
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
   /**
    * Type text by symbol with a constant delay. Generate system key events, so entered text will aply to a focused component.

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
@@ -55,7 +54,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
+import static com.intellij.testGuiFramework.framework.GuiTestUtil.THIRTY_SEC_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.edt.GuiActionRunner.execute;
@@ -82,6 +82,8 @@ public class EditorFixture {
   public final Robot robot;
   private final IdeFrameFixture myFrame;
   private final EditorTabsFixture tabs;
+  private final Editor myEditor;
+  private final FileEditorManager myManager;
 
   /**
    * Constructs a new editor fixture, tied to the given project
@@ -90,6 +92,19 @@ public class EditorFixture {
     this.robot = robot;
     myFrame = frame;
     tabs = new EditorTabsFixture(robot, frame);
+    myEditor = null;
+    myManager = FileEditorManager.getInstance(myFrame.getProject());
+  }
+
+  /**
+   * Constructs a new editor fixture, tied to the given project
+   */
+  public EditorFixture(Robot robot, Editor editor) {
+    this.robot = robot;
+    myEditor = editor;
+    myFrame = null;
+    tabs = null;
+    myManager = FileEditorManager.getInstance(editor.getProject());
   }
 
   /**
@@ -100,17 +115,16 @@ public class EditorFixture {
    */
   @Nullable
   public VirtualFile getCurrentFile() {
-    FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-    VirtualFile[] selectedFiles = manager.getSelectedFiles();
+    VirtualFile[] selectedFiles = myManager.getSelectedFiles();
     if (selectedFiles.length > 0) {
 
       // we should be sure that EditorComponent is already showing
       VirtualFile selectedFile = selectedFiles[0];
-      if (manager.getEditors(selectedFile).length == 0) {
+      if (myManager.getEditors(selectedFile).length == 0) {
         return null;
       }
       else {
-        FileEditor editor = manager.getEditors(selectedFile)[0];
+        FileEditor editor = myManager.getEditors(selectedFile)[0];
         return editor.getComponent().isShowing() ? selectedFile : null;
       }
     }
@@ -141,8 +155,7 @@ public class EditorFixture {
       @Override
       @Nullable
       protected Integer executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -198,8 +211,7 @@ public class EditorFixture {
       @Override
       @Nullable
       protected String executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -253,6 +265,11 @@ public class EditorFixture {
     });
   }
 
+  private Editor getEditor() {
+    if(myEditor != null) return myEditor;
+    else return myManager.getSelectedTextEditor();
+  }
+
   /**
    * Returns the contents of the current file, or null if there is no
    * file open. The caret position is indicated by {@code ^}, and
@@ -288,8 +305,7 @@ public class EditorFixture {
       @Override
       @Nullable
       protected String executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -337,8 +353,7 @@ public class EditorFixture {
       @Override
       @Nullable
       protected String executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           Document document = editor.getDocument();
           return document.getText(new TextRange(startOffset, endOffset));
@@ -446,15 +461,7 @@ public class EditorFixture {
    */
   @Nullable
   private JComponent getFocusedEditor() {
-    Editor editor = execute(new GuiQuery<Editor>() {
-      @Override
-      @Nullable
-      protected Editor executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        return manager.getSelectedTextEditor(); // Must be called from the EDT
-      }
-    });
-
+    Editor editor = getEditor();
     //wait when TextEditor ContentComponent will showing
     pause(new Condition("Waiting for showing focused textEditor") {
       @Override
@@ -511,8 +518,7 @@ public class EditorFixture {
     execute(new GuiTask() {
       @Override
       protected void executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         assert editor != null;
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
         Point point = editor.visualPositionToXY(visualPosition);
@@ -548,8 +554,7 @@ public class EditorFixture {
       @Override
       protected void executeInEDT() {
         // TODO: Do this via mouse drags!
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           editor.getCaretModel().getPrimaryCaret().setSelection(firstOffset, secondOffset);
           editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -570,8 +575,7 @@ public class EditorFixture {
     return execute(new GuiQuery<List<Pair<Integer, Integer>>>() {
       @Override
       protected List<Pair<Integer, Integer>> executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           int[] starts = editor.getSelectionModel().getBlockSelectionStarts();
           int[] ends = editor.getSelectionModel().getBlockSelectionEnds();
@@ -611,8 +615,7 @@ public class EditorFixture {
       @Override
       @Nullable
       protected Integer executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           CaretModel caretModel = editor.getCaretModel();
           Caret primaryCaret = caretModel.getPrimaryCaret();
@@ -640,8 +643,7 @@ public class EditorFixture {
     return execute(new GuiQuery<Integer>() {
       @Override
       protected Integer executeInEDT() {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           String contents = editor.getDocument().getCharsSequence().toString();
           Matcher matcher = Pattern.compile(regex).matcher(contents);
@@ -682,23 +684,6 @@ public class EditorFixture {
     }
     assertTrue("The text segment should have more text than just the caret position", prefix != null || suffix != null);
     return findOffset(prefix, suffix, true);
-  }
-
-  /**
-   * Closes the current editor
-   */
-  public EditorFixture close() {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() {
-        VirtualFile currentFile = getCurrentFile();
-        if (currentFile != null) {
-          FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-          manager.closeFile(currentFile);
-        }
-      }
-    });
-    return this;
   }
 
   /**
@@ -757,8 +742,7 @@ public class EditorFixture {
       protected void executeInEDT() {
         VirtualFile currentFile = getCurrentFile();
         assertNotNull("Can't switch to tab " + tabName + " when no file is open in the editor", currentFile);
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        FileEditor[] editors = manager.getAllEditors(currentFile);
+        FileEditor[] editors = myManager.getAllEditors(currentFile);
         FileEditor target = null;
         for (FileEditor editor : editors) {
           if (tabName == null || tabName.equals(editor.getName())) {
@@ -769,7 +753,7 @@ public class EditorFixture {
         if (target != null) {
           // Have to use reflection
           //FileEditorManagerImpl#setSelectedEditor(final FileEditor editor)
-          method("setSelectedEditor").withParameterTypes(FileEditor.class).in(manager).invoke(target);
+          method("setSelectedEditor").withParameterTypes(FileEditor.class).in(myManager).invoke(target);
           return;
         }
         List<String> tabNames = new ArrayList<>();
@@ -795,12 +779,11 @@ public class EditorFixture {
       protected void executeInEDT() {
         // TODO: Use UI to navigate to the file instead
         Project project = myFrame.getProject();
-        FileEditorManager manager = FileEditorManager.getInstance(project);
         if (tab == Tab.EDITOR) {
-          manager.openTextEditor(new OpenFileDescriptor(project, file), true);
+          myManager.openTextEditor(new OpenFileDescriptor(project, file), true);
         }
         else {
-          manager.openFile(file, true);
+          myManager.openFile(file, true);
         }
       }
     });
