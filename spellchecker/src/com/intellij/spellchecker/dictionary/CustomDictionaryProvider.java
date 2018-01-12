@@ -13,6 +13,7 @@ public interface CustomDictionaryProvider {
 
   boolean isApplicable(@NotNull String path);
   
+  @NotNull
   default String getDictionaryType() {
     return "";
   }
