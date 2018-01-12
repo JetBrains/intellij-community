@@ -28,7 +28,7 @@ import java.util.*
  * date: 11.09.2017.
  */
 class JUnitRunConfigurationImporter : RunConfigurationImporter {
-  override fun canHandle(typeName: String): Boolean = "junit" == typeName
+  override fun canImport(typeName: String): Boolean = "junit" == typeName
 
   override fun process(module: Module, runConfig: RunConfiguration, cfg: MutableMap<String, *>) {
     if (runConfig !is JUnitConfiguration) {

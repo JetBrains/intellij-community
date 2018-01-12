@@ -29,15 +29,15 @@ class RunConfigurationHandler: ConfigurationHandler {
 
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration(RunManager.getInstance(module.project),
-                                       { handler, runConfiguration, externalCfg ->
-                                         handler.process(module, runConfiguration, externalCfg)
+                                       { importer, runConfiguration, externalCfg ->
+                                         importer.process(module, runConfiguration, externalCfg)
                                        })
   }
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration(RunManager.getInstance(project),
-                                       { handler, runConfiguration, externalCfg ->
-                                         handler.process(project, runConfiguration, externalCfg)
+                                       { importer, runConfiguration, externalCfg ->
+                                         importer.process(project, runConfiguration, externalCfg)
                                        })
   }
 
@@ -60,8 +60,8 @@ class RunConfigurationHandler: ConfigurationHandler {
         return@forEach
       }
 
-      val handler = RunConfigHandlerExtensionManager.handlerForType(typeName)
-      if (handler == null) {
+      val importer = RunConfigImporterExtensionManager.handlerForType(typeName)
+      if (importer == null) {
         LOG.warn("No importers for run configuration '${name}' with type '$typeName', skipping")
         return@forEach
       }
@@ -69,14 +69,14 @@ class RunConfigurationHandler: ConfigurationHandler {
       val isDefaults = cfg["defaults"].isTrue()
 
       val runnerAndConfigurationSettings = if (isDefaults) {
-        runManager.getConfigurationTemplate(handler.configurationFactory)
+        runManager.getConfigurationTemplate(importer.configurationFactory)
       }
       else {
-        runManager.createConfiguration(name, handler.configurationFactory)
+        runManager.createConfiguration(name, importer.configurationFactory)
       }
 
       try {
-        visit(handler, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>)
+        visit(importer, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>)
 
         if (!isDefaults) {
           runManager.addConfiguration(runnerAndConfigurationSettings)
@@ -89,11 +89,11 @@ class RunConfigurationHandler: ConfigurationHandler {
 }
 
 
-class RunConfigHandlerExtensionManager {
+class RunConfigImporterExtensionManager {
   companion object {
     fun handlerForType(typeName: String): RunConfigurationImporter? =
       Extensions.getExtensions(
-        RunConfigurationImporter.EP_NAME).firstOrNull { it.canHandle(typeName) }
+        RunConfigurationImporter.EP_NAME).firstOrNull { it.canImport(typeName) }
   }
 }
 
@@ -111,7 +111,7 @@ class ApplicationRunConfigurationImporter : RunConfigurationImporter {
 
   override fun process(project: Project, runConfiguration: RunConfiguration, cfg: Map<String, *>) {}
 
-  override fun canHandle(typeName: String): Boolean = typeName == "application"
+  override fun canImport(typeName: String): Boolean = typeName == "application"
 
   override fun getConfigurationFactory(): ConfigurationFactory =
     ConfigurationTypeUtil

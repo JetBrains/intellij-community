@@ -352,7 +352,7 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   }
 
   @Override
-  public boolean canHandle(@NotNull String typeName) {
+  public boolean canImport(@NotNull String typeName) {
     return myTypeName.equals(typeName);
   }
 

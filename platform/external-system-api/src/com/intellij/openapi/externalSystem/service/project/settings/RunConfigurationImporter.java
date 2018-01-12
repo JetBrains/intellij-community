@@ -31,7 +31,7 @@ public interface RunConfigurationImporter {
 
   default void process(@NotNull Project project, @NotNull RunConfiguration runConfiguration, @NotNull Map<String, Object> cfg) {}
   default void process(@NotNull Module module, @NotNull RunConfiguration runConfiguration, @NotNull Map<String, Object> cfg) {}
-  default boolean canHandle(@NotNull String typeName) {
+  default boolean canImport(@NotNull String typeName) {
     return false;
   }
   @NotNull ConfigurationFactory getConfigurationFactory();
