@@ -366,7 +366,10 @@ public class GradleProjectResolverUtil {
 
           @Override
           public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
-            if (sourceCandidate != null && attrs.isRegularFile() && sourceCandidate.getParent().getParent().equals(grandParentFile)) {
+            if(!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
+              return FileVisitResult.SKIP_SIBLINGS;
+            }
+            if (attrs.isRegularFile()) {
               if (StringUtil.endsWith(sourceCandidate.getFileName().toString(), "-sources.jar")) {
                 libraryData.addPath(LibraryPathType.SOURCE, sourceCandidate.toFile().getAbsolutePath());
                 sourceFound[0] = true;
