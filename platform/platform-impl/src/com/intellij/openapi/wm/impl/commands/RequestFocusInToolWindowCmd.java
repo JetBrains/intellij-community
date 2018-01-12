@@ -149,8 +149,8 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
           if (owner == null || owner != c) {
             Component defaultComponent = myToolWindow.getComponent().getFocusTraversalPolicy().getDefaultComponent(myToolWindow.getComponent());
             if (defaultComponent != null) {
-              myManager.getFocusManager().requestFocus(
-                defaultComponent, true);
+              myManager.getFocusManager().requestFocusInProject(
+                defaultComponent, myProject);
               result.setDone();
             } else {
               result.setRejected();
