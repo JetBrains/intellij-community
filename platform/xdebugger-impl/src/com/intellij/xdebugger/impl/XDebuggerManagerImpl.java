@@ -47,9 +47,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -64,7 +65,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
-  private final Map<ProcessHandler, XDebugSessionImpl> mySessions = new ConcurrentHashMap<>();
+  private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   private XDebuggerState myState = new XDebuggerState();
@@ -251,18 +252,20 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @Override
   @NotNull
   public XDebugSession[] getDebugSessions() {
-    return ArrayUtil.stripTrailingNulls(mySessions.values().toArray(new XDebugSessionImpl[0]));
+    return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }
 
   @Override
   @Nullable
   public XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
-    for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
-      XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
-      if (sessionTab != null) {
-        RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
-        if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
-          return debuggerSession;
+    synchronized (mySessions) {
+      for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
+        XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
+        if (sessionTab != null) {
+          RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
+          if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
+            return debuggerSession;
+          }
         }
       }
     }
@@ -272,7 +275,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @NotNull
   @Override
   public <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
-    return StreamEx.of(mySessions.values()).map(XDebugSessionImpl::getDebugProcess).select(processClass).toList();
+    synchronized (mySessions) {
+      return StreamEx.of(mySessions.values()).map(XDebugSessionImpl::getDebugProcess).select(processClass).toList();
+    }
   }
 
   @Override
