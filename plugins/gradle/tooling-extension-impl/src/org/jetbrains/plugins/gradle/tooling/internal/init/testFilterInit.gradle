@@ -43,7 +43,7 @@ gradle.taskGraph.beforeTask { Task task ->
     try {
       try {
         def urls = task.classpath.files.findAll{
-          it.name.equals('idea_rt.jar') || it.name.startsWith('junit')
+          it.name == 'idea_rt.jar' || it.name.startsWith('junit')
         }.collect { it.toURI().toURL()}
         def classLoader = Class.forName("org.gradle.launcher.daemon.bootstrap.DaemonMain").getClassLoader()
         if(classLoader instanceof URLClassLoader) {
