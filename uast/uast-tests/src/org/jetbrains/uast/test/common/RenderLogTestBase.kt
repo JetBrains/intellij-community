@@ -15,13 +15,11 @@
  */
 package org.jetbrains.uast.test.common
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiRecursiveElementVisitor
-import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.uast.*
-import org.jetbrains.uast.java.JavaUastLanguagePlugin
 import org.jetbrains.uast.test.env.assertEqualsToFile
 import org.jetbrains.uast.visitor.UastVisitor
 import org.junit.Assert
@@ -52,7 +50,7 @@ interface RenderLogTestBase {
     file.checkContainingFileForAllElements()
   }
 
-  private fun checkParentConsistency(file: UFile) {
+  fun checkParentConsistency(file: UFile) {
     val parentMap = mutableMapOf<PsiElement, String>()
 
     file.accept(object : UastVisitor {
@@ -87,7 +85,8 @@ interface RenderLogTestBase {
 
     file.psi.accept(object : PsiRecursiveElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val uElement = JavaUastLanguagePlugin().convertElementWithParent(element, null)
+        val uElement = ServiceManager.getService(element.project, UastContext::class.java)
+          .convertElementWithParent(element, null)
         val expectedParents = parentMap[element]
         if (expectedParents != null) {
           TestCase.assertNotNull("Expected to be able to convert PSI element $element", uElement)
@@ -102,12 +101,10 @@ interface RenderLogTestBase {
     })
   }
 
-  private fun UFile.checkContainingFileForAllElements() {
+  fun UFile.checkContainingFileForAllElements() {
     accept(object : UastVisitor {
       override fun visitElement(node: UElement): Boolean {
         if (node is PsiElement) {
-          UsefulTestCase.assertInstanceOf(node.containingFile, PsiJavaFile::class.java)
-
           val uElement = node.psi.toUElement()!!
           TestCase.assertEquals("getContainingUFile should be equal to source for ${uElement.javaClass}",
                                 this@checkContainingFileForAllElements,
@@ -116,7 +113,7 @@ interface RenderLogTestBase {
 
         val anchorPsi = (node as? UDeclaration)?.uastAnchor?.psi
         if (anchorPsi != null) {
-          UsefulTestCase.assertInstanceOf(anchorPsi.containingFile, PsiJavaFile::class.java)
+          TestCase.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
         }
 
         return false
