@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.projectRoots.impl;
 
@@ -108,11 +108,17 @@ public class JavaSdkImpl extends JavaSdk {
   @Nullable
   public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
-    if (version == JavaSdkVersion.JDK_1_5) return "http://docs.oracle.com/javase/1.5.0/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_6) return "http://docs.oracle.com/javase/6/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_7) return "http://docs.oracle.com/javase/7/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_8) return "http://docs.oracle.com/javase/8/docs/api/";
-    if (version == JavaSdkVersion.JDK_1_9) return "http://docs.oracle.com/javase/9/docs/api/";
+    if (version != null) {
+      if (version == JavaSdkVersion.JDK_1_5) {
+        return "https://docs.oracle.com/javase/1.5.0/docs/api/";
+      }
+      if (version == JavaSdkVersion.JDK_10) {
+        return "https://download.java.net/java/jdk10/docs/api/";
+      }
+      if (version.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+        return "https://docs.oracle.com/javase/" + version.ordinal() + "/docs/api/";
+      }
+    }
     return null;
   }
 
