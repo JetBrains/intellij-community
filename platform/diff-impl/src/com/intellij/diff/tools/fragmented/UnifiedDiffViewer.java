@@ -378,9 +378,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
         myPanel.addNotification(DiffNotifications.createEqualContents(equalCharsets, equalSeparators));
       }
 
-      TIntFunction separatorLines = myFoldingModel.getLineNumberConvertor();
-      myEditor.getGutterComponentEx().setLineNumberConvertor(mergeConverters(data.getLineConvertor1(), separatorLines),
-                                                             mergeConverters(data.getLineConvertor2(), separatorLines));
+      TIntFunction separatorLineConvertor = myFoldingModel.getLineNumberConvertor();
+      myEditor.getGutterComponentEx().setLineNumberConvertor(DiffUtil.mergeLineConverters(data.getLineConvertor1(), separatorLineConvertor),
+                                                             DiffUtil.mergeLineConverters(data.getLineConvertor2(), separatorLineConvertor));
 
       ApplicationManager.getApplication().runWriteAction(() -> {
         myDuringOnesideDocumentModification = true;
@@ -440,11 +440,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     block.setGreedyToLeft(true);
     block.setGreedyToRight(true);
     return block;
-  }
-
-  @Contract("!null, _ -> !null")
-  private static TIntFunction mergeConverters(@NotNull final TIntFunction convertor, @NotNull final TIntFunction separatorLines) {
-    return value -> convertor.execute(separatorLines.execute(value));
   }
 
   /*

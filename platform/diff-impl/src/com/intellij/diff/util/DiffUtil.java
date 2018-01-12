@@ -32,6 +32,7 @@ import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -98,6 +99,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
+import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -252,6 +254,22 @@ public class DiffUtil {
     if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
+  }
+
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
+    assert foldingSupport.getCount() == 1;
+    installLineConvertor(editor, foldingSupport, 0);
+  }
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
+    TIntFunction lineConvertor = foldingSupport.getLineConvertor(editorIndex);
+    editor.getGutterComponentEx().setLineNumberConvertor(lineConvertor);
+  }
+
+  @NotNull
+  public static TIntFunction mergeLineConverters(@NotNull TIntFunction convertor1, @NotNull TIntFunction convertor2) {
+    return value -> convertor1.execute(convertor2.execute(value));
   }
 
   //
