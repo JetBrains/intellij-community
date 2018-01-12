@@ -32,7 +32,7 @@ class GrUClass(val grElement: GrTypeDefinition, parentProvider: () -> UElement?)
   }
 
   override val uastAnchor: UElement?
-    get() = UIdentifier(psi.nameIdentifier, this)
+    get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val uastParent by lazy(parentProvider)
 
@@ -67,7 +67,7 @@ class GrUMethod(val grElement: GrMethod, parentProvider: () -> UElement?) : UMet
   override val isOverride: Boolean by lazy { psi.modifierList.findAnnotation("java.lang.Override") != null }
 
   override val uastAnchor: UElement?
-    get() = UIdentifier((psi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi.nameIdentifier, this)
+    get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
@@ -87,14 +87,14 @@ class GrUParameter(val grElement: GrParameter,
   override val psi = javaPsi
 
   override val uastInitializer by lazy {
-    val initializer = psi.initializer ?: return@lazy null
+    val initializer = grElement.initializerGroovy ?: return@lazy null
     getLanguagePlugin().convertElement(initializer, this) as? UExpression
   }
 
   override val typeReference: UTypeReferenceExpression? = null //not implemented
 
   override val uastAnchor: UElement
-    get() = UIdentifier(psi.nameIdentifier, this)
+    get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 

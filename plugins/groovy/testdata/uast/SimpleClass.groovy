@@ -8,5 +8,5 @@ class SimpleClass {
   @java.lang.Deprecated
   def foo() { return field }
 
-  String bar() { return "abc$field" }
+  String bar(int param) { return "abc$field$param" }
 }
