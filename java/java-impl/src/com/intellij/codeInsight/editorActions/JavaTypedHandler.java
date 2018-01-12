@@ -110,7 +110,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (c == ';') {
-      if (handleSemicolon(editor, file, fileType)) return Result.STOP;
+      if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
     if (fileType == StdFileTypes.JAVA && c == '{') {
       int offset = editor.getCaretModel().getOffset();
@@ -247,12 +247,12 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return false;
   }
 
-  private static boolean handleSemicolon(@NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
+  private static boolean handleSemicolon(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (fileType != StdFileTypes.JAVA) return false;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) return false;
 
-    if (moveSemicolonAtRParen(editor, file, offset)) return true;
+    if (moveSemicolonAtRParen(project, editor, file, offset)) return true;
 
     char charAt = editor.getDocument().getCharsSequence().charAt(offset);
     if (charAt != ';') return false;
@@ -264,26 +264,17 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return true;
   }
 
-  private static boolean moveSemicolonAtRParen(@NotNull Editor editor, @NotNull PsiFile file, int caretOffset) {
+  private static boolean moveSemicolonAtRParen(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, int caretOffset) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    // Disable feature if code model is not synchronized with the document.
-    // Note: this feature can be implemented using only lexer because there
-    // are not so many statements which allow semicolon inside them before
-    // closing paren. Therefore, in other cases, if user types semicolon
-    // before rparen, that usually means that he wants to end the statement.
-    if (PsiDocumentManager.getInstance(file.getProject()).isUncommited(editor.getDocument())) {
-      // But enable in unit tests to avoid commiting document after each typing
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        return false;
-      }
-    }
+    // Note, this feature may be rewritten using only lexer if needed.
+    // In that case accuracy will not be 100%, but good enough.
 
     HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
     int afterLastParenOffset = -1;
 
     try {
-      do {
+      while (!it.atEnd()) {
         if (isAtLineEnd(it)) {
           break;
         }
@@ -299,7 +290,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         }
         it.advance();
       }
-      while (!it.atEnd());
     }
     catch (IndexOutOfBoundsException ex) {
       // May be thrown when checking character at the current offset.
@@ -307,6 +297,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     if (!it.atEnd() && afterLastParenOffset >= 0 && afterLastParenOffset >= caretOffset) {
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       PsiElement curElement = file.findElementAt(caretOffset);
       PsiStatement curStmt = PsiTreeUtil.getParentOfType(curElement, PsiStatement.class);
       if (curStmt != null) {
