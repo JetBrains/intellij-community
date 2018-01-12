@@ -27,6 +27,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -291,7 +292,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws ExecutionException {
     final List<String> args = new ArrayList<>();
     final Sdk sdk = getSdk();
-    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+    final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
     final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
     if (usePyVenv) {
       args.add("pyvenv");
@@ -333,6 +334,19 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
     }
     return path;
+  }
+
+  @NotNull
+  private static LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
+    if (sdk instanceof PyDetectedSdk) {
+      final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+      if (flavor != null && sdk.getHomePath() != null) {
+        return flavor.getLanguageLevel(sdk.getHomePath());
+      }
+      throw new ExecutionException("Cannot retrieve the version of the detected SDK: " + sdk.getHomePath());
+    }
+    // Use the cached version for an already configured SDK
+    return PythonSdkType.getLanguageLevelForSdk(sdk);
   }
 
   @Override
