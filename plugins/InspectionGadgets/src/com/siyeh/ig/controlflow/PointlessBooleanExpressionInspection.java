@@ -275,16 +275,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
   private void buildSimplifiedAssignmentExpression(PsiAssignmentExpression expression, StringBuilder out, CommentTracker tracker) {
     final IElementType tokenType = expression.getOperationTokenType();
+    final PsiExpression lhs = expression.getLExpression();
+
     if (tokenType == JavaTokenType.ANDEQ) {
       if (evaluate(expression.getRExpression()) == Boolean.TRUE) {
         if (expression.getParent() instanceof PsiExpressionStatement) {
           return;
         }
-        out.append(expression.getLExpression().getText());
+        out.append(lhs.getText());
       }
       else {
-        out.append(expression.getLExpression().getText()).append("=false");
+        out.append(lhs.getText()).append("=false");
       }
+      tracker.markUnchanged(lhs);
       return;
     }
     else if (tokenType == JavaTokenType.OREQ) {
@@ -292,14 +295,16 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         if (expression.getParent() instanceof PsiExpressionStatement) {
           return;
         }
-        out.append(expression.getLExpression().getText());
+        out.append(lhs.getText());
       }
       else {
-        out.append(expression.getLExpression().getText()).append("=true");
+        out.append(lhs.getText()).append("=true");
       }
+      tracker.markUnchanged(lhs);
       return;
     }
-    out.append(expression.getLExpression().getText()).append(expression.getOperationSign().getText());
+    tracker.markUnchanged(lhs);
+    out.append(lhs.getText()).append(expression.getOperationSign().getText());
     buildSimplifiedExpression(expression.getRExpression(), out, tracker);
   }
 

@@ -26,4 +26,5 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
   public void testCompoundAssignment2() { doTest(); }
   public void testCompoundAssignment3() { doTest(); }
   public void testCompoundAssignmentSideEffect() { doTest(InspectionGadgetsBundle.message("boolean.expression.remove.compound.assignment.quickfix")); }
+  public void testCompoundAssignmentSideEffect2() { doTest(); }
 }
