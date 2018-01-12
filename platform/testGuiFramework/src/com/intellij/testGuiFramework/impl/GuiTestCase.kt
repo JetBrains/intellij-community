@@ -564,7 +564,7 @@ open class GuiTestCase {
    * Context function for IdeFrame: get current editor and create EditorFixture instance as a receiver object. Code block after
    * it call methods on the receiver object (EditorFixture instance).
    */
-  fun IdeFrameFixture.editor(func: EditorFixture.() -> Unit) {
+  fun IdeFrameFixture.editor(func: FileEditorFixture.() -> Unit) {
     func(this.editor)
   }
 

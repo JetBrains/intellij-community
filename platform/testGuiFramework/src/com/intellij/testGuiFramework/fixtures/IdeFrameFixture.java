@@ -84,7 +84,7 @@ import static org.junit.Assert.assertNull;
 public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
-  private EditorFixture myEditor;
+  private FileEditorFixture myEditor;
   private MainToolbarFixture myToolbar;
   private NavigationBarFixture myNavBar;
 
@@ -217,9 +217,9 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   @NotNull
-  public EditorFixture getEditor() {
+  public FileEditorFixture getEditor() {
     if (myEditor == null) {
-      myEditor = new EditorFixture(robot(), this);
+      myEditor = new FileEditorFixture(robot(), this);
     }
 
     return myEditor;
