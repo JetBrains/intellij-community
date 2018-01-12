@@ -81,11 +81,14 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
 
 }
 
-class GrUAnnotation(val grElement: GrAnnotation, val parentProvider: () -> UElement?) : UAnnotation, JvmDeclarationUElement {
+class GrUAnnotation(val grElement: GrAnnotation, val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement {
   override val qualifiedName: String?
     get() = grElement.qualifiedName
 
   override fun resolve(): PsiClass? = grElement.nameReferenceElement?.resolve() as PsiClass?
+
+  override val uastAnchor: UElement?
+    get() = grElement.classReference.referenceNameElement?.let { UIdentifier(it, this) }
 
   override val attributeValues: List<UNamedExpression> by lazy {
     grElement.parameterList.attributes.map {
