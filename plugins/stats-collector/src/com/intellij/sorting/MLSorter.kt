@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.FeatureManagerImpl
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -123,7 +124,8 @@ class MLSorter : CompletionFinalSorter() {
         val userFactors = lookup.getUserData(UserFactorsManager.USER_FACTORS_KEY) ?: emptyMap()
         return items
                 .mapIndexed { index, lookupElement ->
-                    val relevance = relevanceObjects[lookupElement] ?: emptyList()
+                    val relevance = relevanceObjects[lookupElement]?.map { it.first to it.second }
+                            ?: emptyList()
                     val rank: Double = calculateElementRank(lookupElement, index, relevance, userFactors, prefixLength) ?: return null
                     lookupElement to rank
                 }
@@ -141,7 +143,7 @@ class MLSorter : CompletionFinalSorter() {
 
     private fun calculateElementRank(element: LookupElement,
                                      position: Int,
-                                     relevance: List<Pair<String, Any?>>,
+                                     relevance: List<kotlin.Pair<String, Any?>>,
                                      userFactors: Map<String, Any?>,
                                      prefixLength: Int): Double? {
         val cachedWeight = getCachedRankInfo(element, prefixLength, position)
@@ -151,14 +153,10 @@ class MLSorter : CompletionFinalSorter() {
 
         val elementLength = element.lookupString.length
 
-        val relevanceMap = mutableMapOf<String, Any?>()
-        relevance.forEach { p -> relevanceMap.put(p.first, p.second) }
+        val relevanceMap = FeatureUtils.prepareRevelanceMap(relevance, position, prefixLength, elementLength)
 
-        relevanceMap.put("position", position)
-        relevanceMap.put("query_length", prefixLength)
-        relevanceMap.put("result_length", elementLength)
-
-        val mlRank: Double? = ranker.rank(relevanceMap, userFactors)
+        val unknownFactors = FeatureManagerImpl.getInstance().completionFactors.unknownFactors(relevanceMap.keys)
+        val mlRank: Double? = if (unknownFactors.isEmpty()) ranker.rank(relevanceMap, userFactors) else null
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
 
