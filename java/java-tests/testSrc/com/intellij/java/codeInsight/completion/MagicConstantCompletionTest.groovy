@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.intellij.lang.annotations.Language
 
 /**
  * @author peter
@@ -126,5 +127,30 @@ public @interface MagicConstant {
   Class flagsFromClass() default void.class;
 }
 """
+  }
+
+  void testVariableAssignedFromMagicMethodEqEq() {
+    addMagicConstant()
+
+    @Language("JAVA")
+    def s = """
+class Bar {
+  static void foo() {
+    int flags = getConstant();
+    if (flags == <caret>) {}
+  }
+
+  @org.intellij.lang.annotations.MagicConstant(valuesFromClass = Foo.class)
+  public native int getConstant();
+}
+
+interface Foo {
+    int FOO = 1;
+    int BAR = 2;
+}
+"""
+    myFixture.configureByText "a.java", s
+    myFixture.complete(CompletionType.SMART)
+    myFixture.assertPreferredCompletionItems 0, 'BAR', 'FOO'
   }
 }
