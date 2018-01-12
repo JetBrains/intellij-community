@@ -77,8 +77,10 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       private void checkUnnecessaryEmptyStringArgument(PsiCall call) {
         PsiExpression argument = getSingleEmptyStringArgument(call);
         if (argument != null) {
+          LocalQuickFix fix =
+            new DeleteElementFix(argument, InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
           holder.registerProblem(argument, InspectionGadgetsBundle.message("inspection.redundant.string.argument.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(argument));
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
         }
       }
 
