@@ -247,13 +247,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     for (int i = 0; i < candidates.length; i++) {
       CandidateInfo candidate = (CandidateInfo)candidates[i];
       PsiMethod method = (PsiMethod)candidate.getElement();
-      if (!method.isValid() || !candidate.getSubstitutor().isValid()) {
-        // this may sometimes happen e,g, when editing method call in field initializer candidates in the same file get invalidated
+      if (!method.isValid()) continue;
+      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(o, candidate, method == realResolve);
+      assert substitutor != null;
+
+      if (!method.isValid() || !substitutor.isValid()) {
+          // this may sometimes happen e,g, when editing method call in field initializer candidates in the same file get invalidated
         context.setUIComponentEnabled(i, false);
         continue;
       }
-      PsiSubstitutor substitutor = getCandidateInfoSubstitutor(o, candidate, method == realResolve);
-      assert substitutor != null;
 
       PsiParameter[] parms = method.getParameterList().getParameters();
       boolean enabled = true;
@@ -726,7 +728,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
       PsiMethod method = (PsiMethod)info.getElement();
-      if (!method.isValid() || !info.getSubstitutor().isValid()) {
+      if (!method.isValid()) {
         context.setUIComponentEnabled(false);
         return;
       }
