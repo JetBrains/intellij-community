@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.GroovyLanguage
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -29,6 +30,7 @@ class GroovyDummyUastPlugin : UastLanguagePlugin {
                                        parentProvider: () -> UElement?,
                                        requiredType: Class<out UElement>?): UElement? =
     when (element) {
+      is GroovyFile -> GrUFile(element, this)
       is GrLiteral -> GrULiteral(element, parentProvider)
       is GrAnnotationNameValuePair -> GrUNamedExpression(element, parentProvider)
       is GrAnnotation -> GrUAnnotation(element, parentProvider)

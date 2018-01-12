@@ -22,7 +22,14 @@ class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?
 
   override val uastSuperTypes: List<UTypeReferenceExpression> = emptyList() //not implemented
 
-  override val uastDeclarations: List<UDeclaration> = emptyList() //not implemented
+  override val uastDeclarations by lazy {
+    mutableListOf<UDeclaration>().apply {
+      addAll(fields)
+      addAll(initializers)
+      addAll(methods)
+      addAll(innerClasses)
+    }
+  }
 
   override val uastAnchor: UElement?
     get() = UIdentifier(psi.nameIdentifier, this)
