@@ -3,7 +3,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
-import com.intellij.codeInsight.CodeInsightActionHandler;
+import com.intellij.codeInsight.folding.CollapseBlockHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -11,24 +11,20 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author ven
- */
-public abstract class CollapseBlockHandler implements CodeInsightActionHandler {
-  private static final String ourPlaceHolderText = "{...}";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.CollapseBlockHandler");
+public abstract class CollapseBlockHandlerImpl implements CollapseBlockHandler {
+  Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.CollapseBlockHandler");
 
-  @Override
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     int[] targetCaretOffset = {-1};
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
       FoldingModelEx model = (FoldingModelEx) editor.getFoldingModel();
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
-      if (!isRBrace(element)) {
+      if (!isEndBlockToken(element)) {
         element = file.findElementAt(editor.getCaretModel().getOffset());
       }
       if (element == null) return;
@@ -51,7 +47,7 @@ public abstract class CollapseBlockHandler implements CodeInsightActionHandler {
           continue;
         }
         if (!model.intersectsRegion(start, end)) {
-          FoldRegion region = model.addFoldRegion(start, end, ourPlaceHolderText);
+          FoldRegion region = model.addFoldRegion(start, end, getPlaceholderText());
           LOG.assertTrue(region != null);
           region.setExpanded(false);
           if (myPrevious != null && info.getPsiElement(region) == null) {
@@ -74,18 +70,11 @@ public abstract class CollapseBlockHandler implements CodeInsightActionHandler {
     if (targetCaretOffset[0] >= 0) editor.getCaretModel().moveToOffset(targetCaretOffset[0]);
   }
 
+  @Nullable
   protected abstract PsiElement findParentBlock(@Nullable PsiElement element);
 
-  protected abstract boolean isRBrace(@Nullable PsiElement element);
+  protected abstract boolean isEndBlockToken(@Nullable PsiElement element);
 
-  @Nullable
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return null;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
+  @NotNull
+  protected String getPlaceholderText() { return "{...}"; }
 }
