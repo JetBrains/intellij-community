@@ -311,7 +311,10 @@ class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {
 
           "N".replace("N2")
           "M".replace("M2")
+
+          vcsDocument.setReadOnly(false)
           vcsDocument.replaceString(0, 10, "XXXXX_IGNORED")
+          vcsDocument.setReadOnly(true)
 
           helper.applyChanges()
 
