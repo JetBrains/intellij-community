@@ -73,7 +73,7 @@ public class EditorFixture {
   public final Robot robot;
   private final IdeFrameFixture myFrame;
   private final EditorTabsFixture tabs;
-  private final Editor myEditor;
+  private Editor myEditor;
 
   /**
    * Constructs a new editor fixture, tied to the given project
@@ -209,6 +209,11 @@ public class EditorFixture {
   private Editor getEditor() {
     return myEditor;
   }
+
+  public void setEditor(Editor editor) {
+    myEditor = editor;
+  }
+
 
   /**
    * Returns the contents of the current file, or null if there is no

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.fest.swing.core.Robot;
+import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.timing.Condition;
@@ -38,8 +39,14 @@ public class FileEditorFixture extends EditorFixture {
   private final IdeFrameFixture myFrame;
 
   public FileEditorFixture(Robot robot, IdeFrameFixture frame) {
-    super(robot, FileEditorManager.getInstance(frame.getProject()).getSelectedTextEditor());
+    super(robot, null);
     myManager = FileEditorManager.getInstance(frame.getProject());
+    execute(new GuiTask() {
+      @Override
+      protected void executeInEDT() {
+        FileEditorFixture.this.setEditor(myManager.getSelectedTextEditor());
+      }
+    });
     myFrame = frame;
   }
 
