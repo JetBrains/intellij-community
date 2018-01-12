@@ -60,7 +60,8 @@ public class SpellCheckerManager implements Disposable {
   private final VirtualFileListener myCustomDictFileListener;
   private final String myProjectDictinaryPath;
   private final String myAppDictionaryPath;
-  public static final String PROJECT_DICTIONARY_PATH = "dictionaries" + File.separator + System.getProperty("user.name") + ".xml";
+  public static final String PROJECT_DICTIONARY_PATH =
+    "dictionaries" + File.separator + System.getProperty("user.name").replace('.', '_') + ".xml";
   public static final String CACHED_DICTIONARY_FILE = "cachedDictionary.xml";
 
   public static SpellCheckerManager getInstance(Project project) {
