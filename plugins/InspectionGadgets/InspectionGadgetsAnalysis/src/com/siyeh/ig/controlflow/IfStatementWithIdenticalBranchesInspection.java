@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,8 +187,7 @@ public class IfStatementWithIdenticalBranchesInspection extends BaseJavaBatchLoc
       if (ifStatement == null) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (!(ifStatement.getParent() instanceof PsiCodeBlock)) {
-        PsiBlockStatement block = BlockUtils.expandSingleStatementToBlockStatement(ifStatement);
-        ifStatement = (PsiIfStatement)block.getCodeBlock().getStatements()[0];
+        ifStatement = BlockUtils.expandSingleStatementToBlockStatement(ifStatement);
       }
       PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
       PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());

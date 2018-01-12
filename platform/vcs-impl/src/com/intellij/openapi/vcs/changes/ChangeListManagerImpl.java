@@ -750,18 +750,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
   }
 
-  @NotNull
-  @Override
-  public List<LocalChangeList> getChangeListsCopy() {
-    synchronized (myDataLock) {
-      return myWorker.getChangeLists();
-    }
-  }
-
   @Override
   @NotNull
   public List<LocalChangeList> getChangeLists() {
-    return getChangeListsCopy();
+    synchronized (myDataLock) {
+      return myWorker.getChangeLists();
+    }
   }
 
   @NotNull

@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class LongRangeAdd {
+public class LongRangePlusMinus {
   void test(int x, int y) {
     if (x > 0 && x < 10) {
       if (<warning descr="Condition 'y > x + 10 && y < 0' is always 'false'">y > x + 10 &&
@@ -35,6 +35,36 @@ public class LongRangeAdd {
         }
         if (<warning descr="Condition 'i + j == 20' is always 'false'">i + j == 20</warning>) {
           System.out.println("never");
+        }
+      }
+    }
+  }
+
+  void testMinus(int offset) {
+    if(offset <= 0) return;
+    if(<warning descr="Condition 'offset - 1 >= 0' is always 'true'">offset - 1 >= 0</warning>) {
+      System.out.println("always");
+    }
+  }
+
+  void testMinusInLoop() {
+    for(int i=0; i<10; i++) {
+      for(int j=11; j<20; j++) {
+        if(<warning descr="Condition 'j - i < 0' is always 'false'">j - i < 0</warning>) {
+          System.out.println("Impossible");
+        }
+      }
+    }
+  }
+
+  void testNegateInLoop(int[] arr) {
+    int x = 1;
+    for(int val : arr) {
+      x = -x;
+      if (val == x) {
+        System.out.println("ok");
+        if (<warning descr="Condition 'val > 3' is always 'false'">val > 3</warning>) {
+          System.out.println("Impossible");
         }
       }
     }

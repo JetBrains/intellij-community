@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -68,7 +69,7 @@ class CheckInitialized implements ElementFilter {
     }
 
     PsiElement parent = element.getParent();
-    if (parent instanceof PsiReferenceExpression && !ExpressionUtils.isEffectivelyUnqualified((PsiReferenceExpression)parent)) {
+    if (parent instanceof PsiReferenceExpression && !ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)parent)) {
       return Collections.emptySet();
     }
 
@@ -103,7 +104,7 @@ class CheckInitialized implements ElementFilter {
       @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         PsiExpression lExpression = expression.getLExpression();
-        if (lExpression instanceof PsiReferenceExpression && ExpressionUtils.isEffectivelyUnqualified((PsiReferenceExpression)lExpression)) {
+        if (lExpression instanceof PsiReferenceExpression && ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)lExpression)) {
           PsiElement target = ((PsiReferenceExpression)lExpression).resolve();
           if (target instanceof PsiField) {
             if (expression.getTextRange().getStartOffset() < statement.getTextRange().getStartOffset()) {

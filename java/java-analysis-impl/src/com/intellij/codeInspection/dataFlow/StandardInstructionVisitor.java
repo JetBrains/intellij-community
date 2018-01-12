@@ -617,12 +617,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
         LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
         if(left != null && right != null) {
-          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.add(right, PsiType.LONG.equals(type)));
-        } else {
-          result = DfaUnknownValue.getInstance();
+          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.plus(right, PsiType.LONG.equals(type)));
         }
       } else {
         result = instruction.getNonNullStringValue(runner.getFactory());
+      }
+    }
+    else if (JavaTokenType.MINUS == opSign) {
+      PsiElement expr = instruction.getPsiAnchor();
+      PsiType type = expr instanceof PsiExpression ? ((PsiExpression)expr).getType() : null;
+      if (PsiType.INT.equals(type) || PsiType.LONG.equals(type)) {
+        LongRangeSet left = memState.getValueFact(dfaLeft, DfaFactType.RANGE);
+        LongRangeSet right = memState.getValueFact(dfaRight, DfaFactType.RANGE);
+        if (left != null && right != null) {
+          result = runner.getFactory().getFactValue(DfaFactType.RANGE, left.minus(right, PsiType.LONG.equals(type)));
+        }
       }
     }
     else {

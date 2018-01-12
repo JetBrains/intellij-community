@@ -45,7 +45,7 @@
     <keyboard-shortcut first-keystroke="alt shift meta K"/>
   </action>
   <action id="CloseProject">
-    <keyboard-shortcut first-keystroke="meta alt W"/>
+    <keyboard-shortcut first-keystroke="shift control meta W"/>
   </action>
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="control SPACE"/>
@@ -80,7 +80,10 @@
     <keyboard-shortcut first-keystroke="BACK_SPACE"/>
     <keyboard-shortcut first-keystroke="meta BACK_SPACE"/>
   </action>
-
+  <action id="PasteMultiple">
+    <keyboard-shortcut first-keystroke="shift meta V"/>
+    <keyboard-shortcut first-keystroke="alt meta V"/>
+  </action>
   <action id="EditorDelete">
     <keyboard-shortcut first-keystroke="DELETE"/>
   </action>
@@ -264,6 +267,7 @@
     <mouse-shortcut keystroke="ctrl shift button1"/>
   </action>
   <action id="CallHierarchy">
+    <keyboard-shortcut first-keystroke="ctrl alt H" />
     <keyboard-shortcut first-keystroke="shift ctrl meta H" />
   </action>
   <action id="FindInPath">

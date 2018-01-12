@@ -28,15 +28,13 @@ import com.intellij.psi.impl.light.LightVariableBuilder;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.siyeh.ig.numeric.UnnecessaryExplicitNumericCastInspection;
-import com.siyeh.ig.psiutils.CountingLoop;
-import com.siyeh.ig.psiutils.ExpectedTypeUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -1192,17 +1190,16 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Nullable
   private static IElementType substituteBinaryOperation(PsiPolyadicExpression expression, IElementType op) {
     if (JavaTokenType.PLUS == op) {
-      PsiType type = expression.getType();
-      if (type == null) return null;
-      if (type.equalsToText(JAVA_LANG_STRING)) return op;
-      if ((PsiType.INT.equals(type) || PsiType.LONG.equals(type)) && isAcceptableContextForMathOperation(expression)) return op;
+      if (TypeUtils.isJavaLangString(expression.getType()) || isAcceptableContextForMathOperation(expression)) return op;
       return null;
     }
+    if (JavaTokenType.MINUS == op && !isAcceptableContextForMathOperation(expression)) return null;
     return op;
   }
 
-  private static boolean isAcceptableContextForMathOperation(PsiExpression context) {
-    PsiElement parent = context.getParent();
+  private static boolean isAcceptableContextForMathOperation(PsiExpression expression) {
+    PsiType type = expression.getType();
+    PsiElement parent = expression.getParent();
     while (parent != null && !(parent instanceof PsiAssignmentExpression) && !(parent instanceof PsiStatement) && !(parent instanceof PsiLambdaExpression)) {
       if (parent instanceof PsiExpressionList) return true;
       if (parent instanceof PsiBinaryExpression && DfaRelationValue.RelationType.fromElementType(((PsiBinaryExpression)parent).getOperationTokenType()) != null) {
@@ -1720,6 +1717,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         generateBoxingUnboxingInstructionFor(operand, unboxed == null ? type : unboxed);
         if (expression.getOperationTokenType() == JavaTokenType.EXCL) {
           addInstruction(new NotInstruction());
+        }
+        else if (expression.getOperationTokenType() == JavaTokenType.MINUS && (PsiType.INT.equals(type) || PsiType.LONG.equals(type))) {
+          addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(PsiTypesUtil.getDefaultValue(type), type, null), null));
+          addInstruction(new SwapInstruction());
+          addInstruction(new BinopInstruction(expression.getOperationTokenType(), expression, myProject));
         }
         else {
           addInstruction(new PopInstruction());

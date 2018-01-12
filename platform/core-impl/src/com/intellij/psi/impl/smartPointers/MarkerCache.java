@@ -15,19 +15,25 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.ManualRangeMarker;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -158,6 +164,47 @@ class MarkerCache {
     return updated == null ? null : new UnfairTextRange(updated.getStartOffset(), updated.getEndOffset());
   }
 
+  @Nullable
+  static Segment getUpdatedRange(@NotNull PsiFile containingFile,
+                                 @NotNull Segment segment,
+                                 boolean isSegmentGreedy,
+                                 @NotNull FrozenDocument frozen,
+                                 @NotNull List<DocumentEvent> events) {
+    SelfElementInfo info = new SelfElementInfo(containingFile.getProject(), ProperTextRange.create(segment), new Identikit() {
+      @Nullable
+      @Override
+      public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public Language getFileLanguage() {
+        return null;
+      }
+
+      @Override
+      public boolean isForPsiFile() {
+        return false;
+      }
+    }, containingFile, isSegmentGreedy);
+    List<SelfElementInfo> infos = Collections.singletonList(info);
+
+    boolean greedy = info.isGreedy();
+    int start = info.getPsiStartOffset();
+    int end = info.getPsiEndOffset();
+    boolean surviveOnExternalChange = events.stream().anyMatch(event->((DocumentEventImpl)event).getInitialStartOffset() == 0 && ((DocumentEventImpl)event).getInitialOldLength() == frozen.getTextLength());
+    ManualRangeMarker marker = new ManualRangeMarker(start, end, greedy, greedy, surviveOnExternalChange, null);
+
+    UpdatedRanges ranges = new UpdatedRanges(0, frozen, infos, new ManualRangeMarker[]{marker});
+    // NB: convert events from completion to whole doc change event to more precise translation
+    List<DocumentEvent> newEvents =
+    events.stream().map(event -> ((DocumentEventImpl)event).getInitialStartOffset() == 0 && ((DocumentEventImpl)event).getInitialOldLength() == frozen.getTextLength() ? new DocumentEventImpl(event.getDocument(), event.getOffset(), event.getOldFragment(), event.getNewFragment(), event.getOldTimeStamp(), true, ((DocumentEventImpl)event).getInitialStartOffset(), ((DocumentEventImpl)event).getInitialOldLength()) : event)
+      .collect(Collectors.toList());
+    UpdatedRanges updated = applyEvents(newEvents, ranges);
+    return updated.myMarkers[0];
+  }
+
   void rangeChanged() {
     myUpdatedRanges = null;
   }
@@ -168,9 +215,10 @@ class MarkerCache {
     private final List<SelfElementInfo> mySortedInfos;
     private final ManualRangeMarker[] myMarkers;
 
-    public UpdatedRanges(int eventCount,
-                         FrozenDocument resultDocument,
-                         List<SelfElementInfo> sortedInfos, ManualRangeMarker[] markers) {
+    UpdatedRanges(int eventCount,
+                  @NotNull FrozenDocument resultDocument,
+                  @NotNull List<SelfElementInfo> sortedInfos,
+                  @NotNull ManualRangeMarker[] markers) {
       myEventCount = eventCount;
       myResultDocument = resultDocument;
       mySortedInfos = sortedInfos;

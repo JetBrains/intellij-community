@@ -102,7 +102,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
           PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
           Boolean isClass = file.getUserData(SERVICE_IS_CLASS);
           if (rootDir != null && isClass != null) {
-            WriteAction.run(() -> createClassInRoot(myInterfaceName, isClass, rootDir, null));
+            WriteAction.run(() -> createClassInRoot(myInterfaceName, isClass, rootDir, file, null));
           }
           return;
         }
@@ -111,7 +111,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
           PsiDirectory rootDir = dialog.getRootDir();
           boolean isClass = dialog.isClass();
           if (rootDir != null) {
-            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, isClass, rootDir, null));
+            PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(myInterfaceName, isClass, rootDir, file, null));
             positionCursor(psiClass);
           }
         }
@@ -140,7 +140,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     positionCursor(psiClass);
   }
 
-  private static class CreateServiceInterfaceDialog extends DialogWrapper {
+  private class CreateServiceInterfaceDialog extends DialogWrapper {
     private final ComboBoxWithWidePopup<Module> myModuleCombo = new ComboBoxWithWidePopup<>();
     private final ComboBoxWithWidePopup<PsiDirectory> myRootDirCombo = new ComboBoxWithWidePopup<>();
     private final TemplateKindCombo myKindCombo = new TemplateKindCombo();
@@ -156,12 +156,7 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
         }
       });
 
-      myRootDirCombo.setRenderer(new ListCellRendererWrapper<PsiDirectory>() {
-        @Override
-        public void customize(JList list, PsiDirectory psiDir, int index, boolean selected, boolean hasFocus) {
-          setText(psiDir != null ? psiDir.getVirtualFile().getPresentableUrl() : "");
-        }
-      });
+      myRootDirCombo.setRenderer(new PsiDirectoryListCellRenderer());
       myModuleCombo.addActionListener(e -> updateRootDirsCombo(psiRootDirs));
       Module[] modules = psiRootDirs.keySet().toArray(Module.EMPTY_ARRAY);
       Arrays.sort(modules, Comparator.comparing(Module::getName));
@@ -197,7 +192,10 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
+      JTextField nameTextField = new JTextField(myInterfaceName);
+      nameTextField.setEditable(false);
       return JBPanelFactory.grid()
+        .add(JBPanelFactory.panel(nameTextField).withLabel("Name:"))
         .add(JBPanelFactory.panel(myModuleCombo).withLabel("Module:"))
         .add(JBPanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
         .add(JBPanelFactory.panel(myKindCombo).withLabel("Kind:"))

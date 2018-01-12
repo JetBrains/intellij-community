@@ -31,9 +31,9 @@ DIRNAME=`which dirname`
 MKTEMP=`which mktemp`
 RM=`which rm`
 CAT=`which cat`
-TR=`which tr`
+SED=`which sed`
 
-if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$TR" ]; then
+if [ -z "$UNAME" -o -z "$GREP" -o -z "$CUT" -o -z "$MKTEMP" -o -z "$RM" -o -z "$CAT" -o -z "$SED" ]; then
   message "Required tools are missing - check beginning of \"$0\" file for details."
   exit 1
 fi
@@ -174,17 +174,15 @@ fi
 VM_OPTIONS=""
 if [ -r "$VM_OPTIONS_FILE" ]; then
   VM_OPTIONS=`"$CAT" "$VM_OPTIONS_FILE" | "$GREP" -v "^#.*"`
+  if { echo "$VM_OPTIONS" | "$GREP" -q "agentlib:yjpagent" - ; } then
+    if [ "$OS_TYPE" = "Linux" ]; then
+      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent\([^=]*\)|-agentpath:$IDE_BIN_HOME/libyjpagent-linux\1.so|"`
+    else
+      VM_OPTIONS=`echo "$VM_OPTIONS" | "$SED" -e "s|-agentlib:yjpagent[^ ]\+||"`
+    fi
+  fi
 else
   message "Cannot find VM options file"
-fi
-
-IS_EAP="@@isEap@@"
-if [ "$IS_EAP" = "true" ]; then
-  OS_NAME=`echo "$OS_TYPE" | "$TR" '[:upper:]' '[:lower:]'`
-  AGENT_PATH="$IDE_BIN_HOME/libyjpagent-$OS_NAME$BITS.so"
-  if [ -r "$AGENT_PATH" ]; then
-    AGENT="-agentpath:$AGENT_PATH=disablealloc,delay=10000,probe_disable=*,sessionname=@@system_selector@@"
-  fi
 fi
 
 @@class_path@@
@@ -197,7 +195,6 @@ fi
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
 "$JAVA_BIN" \
-  ${AGENT} \
   "-Xbootclasspath/a:$IDE_HOME/lib/boot.jar" \
   -classpath "$CLASSPATH" \
   ${VM_OPTIONS} \

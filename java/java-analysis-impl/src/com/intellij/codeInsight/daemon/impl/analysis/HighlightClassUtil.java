@@ -113,7 +113,7 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkClassMustBeAbstract(final PsiClass aClass, final TextRange textRange) {
-    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isEnum() && hasEnumConstants(aClass)) {
+    if (aClass.hasModifierProperty(PsiModifier.ABSTRACT) || aClass.getRBrace() == null || aClass.isEnum() && hasEnumConstantsWithInitializer(aClass)) {
       return null;
     }
     return checkClassWithAbstractMethods(aClass, textRange);
@@ -140,12 +140,17 @@ public class HighlightClassUtil {
     return errorResult;
   }
 
-  private static boolean hasEnumConstants(PsiClass aClass) {
-    PsiField[] fields = aClass.getFields();
-    for (PsiField field : fields) {
-      if (field instanceof PsiEnumConstant) return true;
-    }
-    return false;
+  public static boolean hasEnumConstantsWithInitializer(@NotNull PsiClass aClass) {
+    return CachedValuesManager.getCachedValue(aClass, () -> {
+      PsiField[] fields = aClass.getFields();
+      for (PsiField field : fields) {
+        if (field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) {
+          return new CachedValueProvider.Result<>(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+      }
+      return new CachedValueProvider.Result<>(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+    });
+
   }
 
   @Nullable

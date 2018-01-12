@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -114,7 +113,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
         PsiDirectory rootDir = file.getUserData(SERVICE_ROOT_DIR);
         Boolean isSubclass = file.getUserData(SERVICE_IS_SUBCLASS);
         if (rootDir != null && isSubclass != null) {
-          WriteAction.run(() -> createClassInRoot(rootDir, isSubclass));
+          WriteAction.run(() -> createClassInRoot(rootDir, isSubclass, file));
         }
         return;
       }
@@ -125,17 +124,17 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
         PsiDirectory psiRootDir = dialog.getRootDir();
         if (psiRootDir != null) {
           boolean isSubclass = dialog.isSubclass();
-          PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(psiRootDir, isSubclass));
+          PsiClass psiClass = WriteAction.compute(() -> createClassInRoot(psiRootDir, isSubclass, file));
           positionCursor(psiClass);
         }
       }
     }
   }
 
-  private PsiClass createClassInRoot(@NotNull PsiDirectory psiRootDir, boolean isSubclass) {
+  private PsiClass createClassInRoot(@NotNull PsiDirectory psiRootDir, boolean isSubclass, @NotNull PsiElement contextElement) {
     Project project = psiRootDir.getProject();
     PsiClass psiImplClass = createClassInRoot(myImplementationClassName, true,
-                                              psiRootDir, isSubclass ? mySuperClassName : null);
+                                              psiRootDir, contextElement, isSubclass ? mySuperClassName : null);
     if (psiImplClass != null && !isSubclass) {
       String text = "public static " + mySuperClassName + " provider() { return null;}";
       PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, psiImplClass.getLBrace());
@@ -177,12 +176,7 @@ public class CreateServiceImplementationClassFix extends CreateServiceClassFixBa
       group.add(mySubclassButton);
       group.add(myProviderButton);
 
-      myRootDirCombo.setRenderer(new ListCellRendererWrapper<PsiDirectory>() {
-        @Override
-        public void customize(JList list, PsiDirectory psiDir, int index, boolean selected, boolean hasFocus) {
-          setText(psiDir != null ? psiDir.getVirtualFile().getPresentableUrl() : "");
-        }
-      });
+      myRootDirCombo.setRenderer(new PsiDirectoryListCellRenderer());
       myRootDirCombo.setModel(new DefaultComboBoxModel<>(psiRootDirs));
 
       init();

@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -90,7 +91,8 @@ public class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          removeBreakpoints(myBreakpoints.getKeysByValue(event.getFile().getUrl()));
+          List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(event.getFile().getUrl());
+          removeBreakpoints(breakpoints != null ? new ArrayList<>(breakpoints) : null); // safe copy
         }
       }, project);
     }

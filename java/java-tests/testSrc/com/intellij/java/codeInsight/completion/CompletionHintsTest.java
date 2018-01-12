@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.codeInsight.completion;
 
@@ -827,6 +827,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { C(int a, int b) {} void m() { new C(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2) } <caret>}");
+  }
+
+  public void testEnumValueOf() throws Exception {
+    configureJava("class C { void m() { Thread.State.<caret> } }");
+    complete("valueOf(String name)");
+    checkResultWithInlays("class C { void m() { Thread.State.valueOf(<HINT text=\"name:\"/><caret>) } }");
+    waitForAllAsyncStuff();
+    checkHintContents("<html><b>String</b></html>");
   }
 
   private void enableConstructorVariantsCompletion() {

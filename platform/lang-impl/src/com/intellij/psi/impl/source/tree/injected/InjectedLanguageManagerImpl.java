@@ -420,7 +420,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     DocumentEx delegate = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getLastCommittedDocument(document.getDelegate());
     Place place = new Place();
     place.addAll(ContainerUtil.map(shreds, shred -> ((ShredImpl)shred).withPsiRange()));
-    return new DocumentWindowImpl(delegate, document.isOneLine(), place);
+    return new DocumentWindowImpl(delegate, place);
   }
 
   private static int appendRange(@NotNull List<TextRange> result, int start, int length) {

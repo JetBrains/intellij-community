@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
@@ -288,7 +289,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
                    PsiUtil.getEnclosingStaticElement(element, targetContainingClass) != null)) {
                 targetContainingClasses.add(targetContainingClass);
               }
-              else if (element instanceof PsiReferenceExpression && !ControlFlowUtil.isUnqualified((PsiReferenceExpression)element)) {
+              else if (element instanceof PsiReferenceExpression && !ExpressionUtil.isEffectivelyUnqualified((PsiReferenceExpression)element)) {
                 qualifiedCall = ((PsiReferenceExpression)element).getQualifierExpression();
               }
             }
