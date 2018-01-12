@@ -110,14 +110,20 @@ public class JavaInvertBooleanDelegate extends InvertBooleanDelegate {
 
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      PsiElement refElement = getElementToInvert(namedElement, element);
-      if (refElement == null) {
-        refElement = getForeignElementToInvert(namedElement, element, JavaLanguage.INSTANCE);
-      }
-      if (refElement != null) {
-        elementsToInvert.add(refElement);
+      if (!collectElementsToInvert(namedElement, element, elementsToInvert)) {
+        collectForeignElementsToInvert(namedElement, element, JavaLanguage.INSTANCE, elementsToInvert);
       }
     }
+  }
+
+  @Override
+  public boolean collectElementsToInvert(PsiElement namedElement, PsiElement expression, Collection<PsiElement> elementsToInvert) {
+    boolean toInvert = super.collectElementsToInvert(namedElement, expression, elementsToInvert);
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiAssignmentExpression && !(parent.getParent() instanceof PsiExpressionStatement)) {
+      elementsToInvert.add(parent);
+    }
+    return toInvert;
   }
 
   public PsiElement getElementToInvert(PsiElement namedElement, PsiElement element) {
