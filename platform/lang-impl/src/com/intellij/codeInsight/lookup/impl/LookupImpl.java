@@ -1091,7 +1091,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @Override
   public void dispose() {
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert myHidden;
     if (myDisposed) {
       LOG.error(disposeTrace);

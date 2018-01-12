@@ -719,7 +719,7 @@ public class AbstractPopup implements JBPopup {
       throw new IllegalStateException("Popup was already disposed. Recreate a new instance to show again");
     }
 
-    assert ApplicationManager.getApplication().isDispatchThread();
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert myState == State.INIT : "Popup was already shown. Recreate a new instance to show again.";
 
     debugState("show popup", State.INIT);

@@ -313,12 +313,13 @@ class SearchForUsagesRunnable implements Runnable {
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
-        } else {
-          UsageViewImpl[] tmp = new UsageViewImpl[]{usageView};
+        }
+        else {
+          UsageViewImpl finalView = usageView;
           SwingUtilities.invokeLater(() -> {
             if (myProject.isDisposed()) return;
             if (myListener != null) {
-              myListener.usageViewCreated(tmp[0]);
+              myListener.usageViewCreated(finalView);
             }
           });
         }
@@ -424,34 +425,31 @@ class SearchForUsagesRunnable implements Runnable {
     assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (myProcessPresentation.isCanceled()) {
-              notifyByFindBalloon(null, MessageType.WARNING, Collections.singletonList("Usage search was canceled"));
-              findStartedBalloonShown.set(false);
-              return;
-            }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProcessPresentation.isCanceled()) {
+          notifyByFindBalloon(null, MessageType.WARNING, Collections.singletonList("Usage search was canceled"));
+          findStartedBalloonShown.set(false);
+          return;
+        }
 
-            final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                           StringUtil.decapitalize(myPresentation.getUsagesString()),
-                                                           myPresentation.getScopeText(),
-                                                           myPresentation.getContextText()
-                                                           );
+        final String message = UsageViewBundle.message("dialog.no.usages.found.in",
+                                                       StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                       myPresentation.getScopeText(),
+                                                       myPresentation.getContextText()
+                                                       );
 
-            List<String> lines = new ArrayList<>();
-            lines.add(StringUtil.escapeXml(message));
-            if (myOutOfScopeUsages.get() != 0) {
-              lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
-            }
-            if (myProcessPresentation.isShowFindOptionsPrompt()) {
-              lines.add(createOptionsHtml(mySearchFor));
-            }
-            MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
-            notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
-            findStartedBalloonShown.set(false);
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+        List<String> lines = new ArrayList<>();
+        lines.add(StringUtil.escapeXml(message));
+        if (myOutOfScopeUsages.get() != 0) {
+          lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
+        }
+        if (myProcessPresentation.isShowFindOptionsPrompt()) {
+          lines.add(createOptionsHtml(mySearchFor));
+        }
+        MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
+        notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
+        findStartedBalloonShown.set(false);
+      }, ModalityState.NON_MODAL, myProject.getDisposed());
     }
     else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
       ApplicationManager.getApplication().invokeLater(() -> {
