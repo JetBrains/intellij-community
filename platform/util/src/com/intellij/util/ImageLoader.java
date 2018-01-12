@@ -54,21 +54,51 @@ public class ImageLoader implements Serializable {
   public static final int CACHED_IMAGE_MAX_SIZE = (int)Math.round(Registry.doubleValue("ide.cached.image.max.size") * 1024 * 1024);
   private static final ConcurrentMap<String, Image> ourCache = ContainerUtil.createConcurrentSoftValueMap();
 
+  private static final boolean SVG_ENABLED = Registry.is("ide.svg.icon");
+
+  @SuppressWarnings({"UnusedDeclaration"}) // set from com.intellij.internal.IconsLoadTime
+  private static LoadFunction measureLoad;
+
+  /**
+   * For internal usage.
+   */
+  public interface LoadFunction {
+    Image load(@Nullable LoadFunction delegate) throws IOException;
+  }
+
   private static class ImageDesc {
     public enum Type {
       PNG,
 
       SVG {
         @Override
-        public Image load(URL url, InputStream is, double scale) throws IOException {
-          return SVGLoader.load(url, is, scale);
+        public Image load(final URL url, final InputStream is, final double scale) throws IOException {
+          LoadFunction f = new LoadFunction() {
+            @Override
+            public Image load(LoadFunction delegate) throws IOException {
+              return SVGLoader.load(url, is, scale);
+            }
+          };
+          if (measureLoad != null && SVG_ENABLED) {
+            return measureLoad.load(f);
+          }
+          return f.load(null);
         }
       },
 
       UNDEFINED;
 
-      public Image load(URL url, InputStream stream, double scale) throws IOException {
-        return ImageLoader.load(stream, scale);
+      public Image load(final URL url, final InputStream is, final double scale) throws IOException {
+        LoadFunction f = new LoadFunction() {
+          @Override
+          public Image load(LoadFunction delegate) {
+            return ImageLoader.load(is, scale);
+          }
+        };
+        if (measureLoad != null && !SVG_ENABLED) {
+          return measureLoad.load(f);
+        }
+        return f.load(null);
       }
     }
 
@@ -170,23 +200,21 @@ public class ImageLoader implements Serializable {
     {
       ImageDescList vars = new ImageDescList();
 
-      boolean ideSvgIconSupport = Registry.is("ide.svg.icon");
-
       // Prefer retina images for HiDPI scale, because downscaling
       // retina images provides a better result than upscaling non-retina images.
       boolean retina = JBUI.isHiDPI(ctx.getScale(PIX_SCALE));
 
-      if (retina || dark || ideSvgIconSupport) {
+      if (retina || dark || SVG_ENABLED) {
         final String name = FileUtil.getNameWithoutExtension(file);
         final String ext = FileUtilRt.getExtension(file);
 
         double scale = adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE));
 
-        if (ideSvgIconSupport && dark) {
+        if (SVG_ENABLED && dark) {
           vars.add(new ImageDesc(name + "_dark.svg", cls, scale, ImageDesc.Type.SVG));
         }
 
-        if (ideSvgIconSupport) {
+        if (SVG_ENABLED) {
           vars.add(new ImageDesc(name + ".svg", cls, scale, ImageDesc.Type.SVG));
         }
 
