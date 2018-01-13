@@ -40,6 +40,10 @@ public class FieldModifierTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testSetPackagePrivate() {
+    doTest();
+  }
+
   public void testSetStatic() {
     doTest();
   }
