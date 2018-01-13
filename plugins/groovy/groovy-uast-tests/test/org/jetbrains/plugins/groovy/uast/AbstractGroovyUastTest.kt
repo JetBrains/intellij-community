@@ -12,7 +12,7 @@ import java.io.File
 
 abstract class AbstractGroovyUastTest : AbstractUastFixtureTest() {
   protected companion object {
-    val TEST_GROOVY_MODEL_DIR = File(PathManagerEx.getCommunityHomePath(), "plugins/groovy/testdata/uast")
+    val TEST_GROOVY_MODEL_DIR = File(PathManagerEx.getCommunityHomePath(), "plugins/groovy/groovy-uast-tests/testData")
   }
 
   override fun getVirtualFile(testName: String): VirtualFile {
