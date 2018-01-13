@@ -244,6 +244,7 @@ public class AboutPopup {
             myAlarm.addRequest(new Runnable() {
               @Override
               public void run() {
+                // Android Studio: modified by Change I40bfccb3 / commit 49af472
                 if (myShowCopyAlpha >= fadeStep) {
                   myShowCopyAlpha -= fadeStep;
                   repaint();
