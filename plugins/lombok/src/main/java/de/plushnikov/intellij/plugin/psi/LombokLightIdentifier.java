@@ -9,7 +9,7 @@ import com.intellij.psi.impl.light.LightIdentifier;
  * Date: 12.10.13 Time: 23:27
  */
 public class LombokLightIdentifier extends LightIdentifier {
-  protected String myText;
+  private String myText;
 
   public LombokLightIdentifier(PsiManager manager, String text) {
     super(manager, text);
