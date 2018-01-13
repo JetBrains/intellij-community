@@ -283,12 +283,17 @@ public class BuildContentManagerImpl implements BuildContentManager {
     runWhenInitialized(() -> {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
       pair.second.incrementAndGet();
+      /* Android Studio: Don't show a live indicator in the Toolwindow header, since there's
+         no icon there (so you get a weird-looking dot in the bottom right corner of an empty
+         icon to the left of the Build label, which indents 16 pixels. Reevaluate this
+         after the next merge when more visual changes are coming in for the new Build window.
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
       content.setIcon(ExecutionUtil.getLiveIndicator(pair.first));
       JComponent component = content.getComponent();
       if (component != null) {
         component.invalidate();
       }
+      */
       myToolWindow.setIcon(ExecutionUtil.getLiveIndicator(AllIcons.Toolwindows.ToolWindowBuild));
     });
   }
