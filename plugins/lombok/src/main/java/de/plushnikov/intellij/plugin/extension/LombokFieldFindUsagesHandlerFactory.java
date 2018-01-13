@@ -1,11 +1,8 @@
 package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.JavaFindUsagesHandler;
-import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
-import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.find.findUsages.FindUsagesHandlerFactory;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -20,19 +17,33 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class LombokFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFactory {
-  public LombokFieldFindUsagesHandlerFactory(Project project) {
-    super(project);
+/**
+ * It should find calls to getters/setters of some filed changed by lombok accessors
+ */
+public class LombokFieldFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
+
+  public LombokFieldFindUsagesHandlerFactory() {
   }
 
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
-    return element instanceof PsiField && !DumbService.isDumb(element.getProject());
+    if (element instanceof PsiField && !DumbService.isDumb(element.getProject())) {
+      final PsiField psiField = (PsiField) element;
+      final PsiClass containingClass = psiField.getContainingClass();
+      if (containingClass != null) {
+        final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+        final String psiFieldName = psiField.getName();
+
+        final String fieldName = accessorsInfo.removePrefix(psiFieldName);
+        return !fieldName.equals(psiFieldName);
+      }
+    }
+    return false;
   }
 
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    return new JavaFindUsagesHandler(element, this) {
+    return new FindUsagesHandler(element) {
       @NotNull
       @Override
       public PsiElement[] getSecondaryElements() {
@@ -53,16 +64,12 @@ public class LombokFieldFindUsagesHandlerFactory extends JavaFindUsagesHandlerFa
             final PsiMethod[] psiSetterMethods = containingClass.findMethodsByName(setterName, false);
 
             final Set<PsiElement> elements = new THashSet<PsiElement>(psiGetterMethods.length + psiSetterMethods.length);
-            for (PsiMethod accessor : psiGetterMethods) {
-              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
-            }
-            for (PsiMethod accessor : psiSetterMethods) {
-              ContainerUtil.addAll(elements, SuperMethodWarningUtil.checkSuperMethods(accessor, ACTION_STRING));
-            }
+            ContainerUtil.addAll(elements, psiGetterMethods);
+            ContainerUtil.addAll(elements, psiSetterMethods);
             return PsiUtilCore.toPsiElementArray(elements);
           }
         }
-        return super.getSecondaryElements();
+        return PsiElement.EMPTY_ARRAY;
       }
     };
   }
