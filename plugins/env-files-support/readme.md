@@ -16,9 +16,11 @@ Plugin url: https://plugins.jetbrains.com/plugin/9525
 
 PHP dotenv package: https://github.com/vlucas/phpdotenv
 
-Ruby dotenv gem: https://github.com/bkeepers/dotenv
+JavaScript dotenv package: https://github.com/motdotla/dotenv
 
 Python dotenv package: https://github.com/theskumar/python-dotenv
+
+Ruby dotenv gem: https://github.com/bkeepers/dotenv
 
 ## Screenshots
 
