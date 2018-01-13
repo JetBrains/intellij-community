@@ -1255,9 +1255,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
     if (settings == null) {
       settings = myCommonSettingsManager.getDefaults();
-      if (lang != null) {
-        LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
-      }
+      //if (lang != null) {
+      //  LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
+      //}
     }
     return settings;
   }
