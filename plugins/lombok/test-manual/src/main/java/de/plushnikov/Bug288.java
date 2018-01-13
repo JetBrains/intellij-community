@@ -19,11 +19,10 @@ public class Bug288 {
     public String apply(HasCode e) {
       return e.getCode();
     }
-
   }
 
   public Set<String> getRegionCodeList(Set<HasCode> regions) {
-    return regions.stream().transform(GetCode.FUNC::apply).toSet();
+    return FluentIterable.from(regions).transform(GetCode.FUNC).toSet();
   }
 
   public static void main(String[] args) {
