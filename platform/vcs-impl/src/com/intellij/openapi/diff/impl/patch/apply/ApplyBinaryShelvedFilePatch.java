@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,13 +51,7 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
     }
     catch (VcsException e) {
       LOG.error("Couldn't apply shelved binary patch", e);
-      return new Result(ApplyPatchStatus.FAILURE) {
-
-        @Override
-        public ApplyPatchForBaseRevisionTexts getMergeData() {
-          return null;
-        }
-      };
+      return new Result(ApplyPatchStatus.FAILURE);
     }
     return SUCCESS;
   }
