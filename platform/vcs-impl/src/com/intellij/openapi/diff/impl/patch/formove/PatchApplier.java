@@ -162,7 +162,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
       }
       else if (status == ApplyPatchStatus.ABORT) {
-        rollbackUnderProgress(myProject, myProject.getBaseDir(), beforeLabel);
+        rollbackUnderProgress(myProject, beforeLabel);
       }
       if (myShowNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
         showApplyStatus(myProject, status);
@@ -272,7 +272,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       suggestRollback(project, group, beforeLabel);
     }
     else if (result == ApplyPatchStatus.ABORT) {
-      rollbackUnderProgress(project, project.getBaseDir(), beforeLabel);
+      rollbackUnderProgress(project, beforeLabel);
     }
     showApplyStatus(project, result);
     return result;
@@ -287,23 +287,21 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
     final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
     if (undoApplyPatchDialog.showAndGet()) {
-      rollbackUnderProgress(project, project.getBaseDir(), beforeLabel);
+      rollbackUnderProgress(project, beforeLabel);
     }
   }
 
   private static void rollbackUnderProgress(@NotNull final Project project,
-                                            @NotNull final VirtualFile virtualFile,
                                             @NotNull final Label labelToRevert) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
-        labelToRevert.revert(project, virtualFile);
+        labelToRevert.revert(project, project.getBaseDir());
         VcsNotifier.getInstance(project)
           .notifyImportantWarning("Apply Patch Aborted", "All files changed during apply patch action were rolled back");
       }
       catch (LocalHistoryException e) {
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning("Rollback Failed", String.format("Try using local history dialog for %s and perform revert manually.",
-                                                                   virtualFile.getName()));
+          .notifyImportantWarning("Rollback Failed", "Try using 'Local History' dialog to perform revert manually.");
       }
     }, "Rollback Applied Changes...", true, project);
   }
