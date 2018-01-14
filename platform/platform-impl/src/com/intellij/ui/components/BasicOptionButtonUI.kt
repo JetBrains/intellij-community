@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.intellij.ui.components
@@ -11,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapperButtonLayout.Companion.EXTRA_WIDTH_KEY
+import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.ListPopup
@@ -276,12 +275,14 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   protected open fun createActionGroup(): ActionGroup = DefaultActionGroup().apply {
     optionButton.options
-      ?.map(this@BasicOptionButtonUI::ActionDelegate)
+      ?.map(this@BasicOptionButtonUI::createAnAction)
       ?.forEachIndexed { index, it ->
         if (index > 0) addSeparator()
         add(it)
       }
   }
+
+  protected open fun createAnAction(action: Action) = action.getValue(OptionAction.AN_ACTION) as? AnAction ?: ActionDelegate(action)
 
   private fun updateExtraWidth() {
     optionButton.putClientProperty(EXTRA_WIDTH_KEY, if (!isSimpleButton) arrowButton.preferredSize.width else null)

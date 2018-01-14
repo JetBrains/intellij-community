@@ -116,6 +116,9 @@
             description="Change commit message" />
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
             description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
+    <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
+      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+    </action>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
