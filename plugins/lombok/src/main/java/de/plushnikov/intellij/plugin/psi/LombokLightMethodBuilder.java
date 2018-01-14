@@ -29,6 +29,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * @author Plushnikov Michail
  */
@@ -36,6 +38,8 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   private PsiMethod myMethod;
   private ASTNode myASTNode;
   private PsiCodeBlock myBodyCodeBlock;
+  // used to simplify comparing of returnType in equal method
+  private String myReturnTypeCanonicalText;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
@@ -68,6 +72,12 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     return this;
   }
 
+  @Override
+  public LightMethodBuilder setMethodReturnType(PsiType returnType) {
+    myReturnTypeCanonicalText = returnType.getCanonicalText();
+    return super.setMethodReturnType(returnType);
+  }
+
   public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
     return withParameter(new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE));
   }
@@ -79,11 +89,6 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
 
   public LombokLightMethodBuilder withException(@NotNull PsiClassType type) {
     addException(type);
-    return this;
-  }
-
-  public LombokLightMethodBuilder withException(@NotNull String fqName) {
-    addException(fqName);
     return this;
   }
 
@@ -263,13 +268,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     if (!getParameterList().equals(that.getParameterList())) {
       return false;
     }
-    final PsiType returnType = getReturnType();
-    final PsiType thatReturnType = that.getReturnType();
-    if (returnType != null ? !returnType.equals(thatReturnType) : thatReturnType != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(myReturnTypeCanonicalText, that.myReturnTypeCanonicalText);
   }
 
   @Override
