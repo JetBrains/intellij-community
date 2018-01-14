@@ -143,8 +143,6 @@ public class PatchApplier<Unused> {
   private class ApplyPatchTask {
     private final boolean myShowNotification;
     private final boolean mySystemOperation;
-    private VcsShowConfirmationOption.Value myAddconfirmationvalue;
-    private VcsShowConfirmationOption.Value myDeleteconfirmationvalue;
 
     public ApplyPatchTask(final boolean showNotification, boolean systemOperation) {
       myShowNotification = showNotification;
@@ -183,44 +181,44 @@ public class PatchApplier<Unused> {
     private ApplyPatchStatus getApplyPatchStatus(@NotNull final TriggerAdditionOrDeletion trigger) {
       final Ref<ApplyPatchStatus> refStatus = Ref.create(null);
       try {
-        setConfirmationToDefault();
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          //consider pre-check status only if not successful, otherwise we could not detect already applied status
-          refStatus.set(createFiles());
+        runWithDefaultConfirmations(myProject, mySystemOperation, () -> {
+          CommandProcessor.getInstance().executeCommand(myProject, () -> {
+            //consider pre-check status only if not successful, otherwise we could not detect already applied status
+            refStatus.set(createFiles());
 
-          addSkippedItems(trigger);
-          trigger.prepare();
-          refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
-        }, VcsBundle.message("patch.apply.command"), null);
+            addSkippedItems(trigger);
+            trigger.prepare();
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
+          }, VcsBundle.message("patch.apply.command"), null);
+        });
       }
       finally {
-        returnConfirmationBack();
         VcsFileListenerContextHelper.getInstance(myProject).clearContext();
       }
       final ApplyPatchStatus status = refStatus.get();
       return status == null ? ApplyPatchStatus.ALREADY_APPLIED : status;
     }
+  }
 
-    private void returnConfirmationBack() {
-      if (mySystemOperation) {
-        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-        final VcsShowConfirmationOption addConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, null);
-        addConfirmation.setValue(myAddconfirmationvalue);
-        final VcsShowConfirmationOption deleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, null);
-        deleteConfirmation.setValue(myDeleteconfirmationvalue);
-      }
+  private static void runWithDefaultConfirmations(@NotNull Project project, boolean resetConfirmations, @NotNull Runnable task) {
+    if (!resetConfirmations) {
+      task.run();
     }
+    else {
+      ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+      VcsShowConfirmationOption addConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, null);
+      VcsShowConfirmationOption deleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, null);
 
-    private void setConfirmationToDefault() {
-      if (mySystemOperation) {
-        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
-        final VcsShowConfirmationOption addConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, null);
-        myAddconfirmationvalue = addConfirmation.getValue();
-        addConfirmation.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
-
-        final VcsShowConfirmationOption deleteConfirmation = vcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, null);
-        myDeleteconfirmationvalue = deleteConfirmation.getValue();
-        deleteConfirmation.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+      VcsShowConfirmationOption.Value addConfirmationValue = addConfirmation.getValue();
+      VcsShowConfirmationOption.Value deleteConfirmationValue = deleteConfirmation.getValue();
+      addConfirmation.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+      deleteConfirmation.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+      try {
+        task.run();
+      }
+      finally {
+        addConfirmation.setValue(addConfirmationValue);
+        deleteConfirmation.setValue(deleteConfirmationValue);
       }
     }
   }
