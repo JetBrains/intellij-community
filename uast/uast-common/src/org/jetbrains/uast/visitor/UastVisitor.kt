@@ -30,7 +30,7 @@ interface UastVisitor {
   fun visitParameter(node: UParameter): Boolean = visitVariable(node)
   fun visitField(node: UField): Boolean = visitVariable(node)
   fun visitLocalVariable(node: ULocalVariable): Boolean = visitVariable(node)
-  fun visitEnumConstant(node: UEnumConstant): Boolean = visitExpression(node)
+  fun visitEnumConstant(node: UEnumConstant): Boolean = visitField(node)
 
   fun visitAnnotation(node: UAnnotation): Boolean = visitElement(node)
 
@@ -119,7 +119,7 @@ interface UastVisitor {
   }
 
   fun afterVisitEnumConstant(node: UEnumConstant) {
-    afterVisitExpression(node)
+    afterVisitField(node)
   }
 
   fun afterVisitAnnotation(node: UAnnotation) {
