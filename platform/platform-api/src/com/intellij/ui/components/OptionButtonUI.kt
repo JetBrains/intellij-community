@@ -3,6 +3,11 @@
  */
 package com.intellij.ui.components
 
+import javax.swing.Action
 import javax.swing.plaf.ButtonUI
 
-abstract class OptionButtonUI : ButtonUI()
+abstract class OptionButtonUI : ButtonUI() {
+  abstract fun showPopup(toSelect: Action? = null, ensureSelection: Boolean = true)
+  abstract fun closePopup()
+  abstract fun togglePopup()
+}

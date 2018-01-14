@@ -6,23 +6,30 @@
 package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapperButtonLayout.Companion.EXTRA_WIDTH_KEY
+import com.intellij.openapi.ui.popup.JBPopupAdapter
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.ui.ScreenUtil
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton.PROP_OPTIONS
 import com.intellij.ui.components.JBOptionButton.PROP_OPTION_TOOLTIP
+import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
-import java.awt.Container
-import java.awt.Dimension
-import java.awt.LayoutManager
-import java.awt.Rectangle
+import com.intellij.util.ui.JBUI.scale
+import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
+import javax.swing.*
 import javax.swing.AbstractButton.MNEMONIC_CHANGED_PROPERTY
 import javax.swing.AbstractButton.TEXT_CHANGED_PROPERTY
-import javax.swing.JButton
-import javax.swing.JComponent
 import javax.swing.JComponent.TOOL_TIP_TEXT_KEY
-import javax.swing.SwingUtilities
 import javax.swing.SwingUtilities.replaceUIActionMap
 import javax.swing.SwingUtilities.replaceUIInputMap
 import javax.swing.event.ChangeListener
@@ -35,6 +42,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected val mainButton: JButton get() = _mainButton!!
   protected val arrowButton: JButton get() = _arrowButton!!
 
+  protected var popup: ListPopup? = null
+  protected var showPopupAction: AnAction? = null
+  protected var isPopupShowing = false
+
   protected var propertyChangeListener: PropertyChangeListener? = null
   protected var changeListener: ChangeListener? = null
   protected var focusListener: FocusListener? = null
@@ -46,6 +57,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   override fun installUI(c: JComponent) {
     _optionButton = c as JBOptionButton
 
+    installPopup()
     installButtons()
     installListeners()
     installKeyboardActions()
@@ -55,12 +67,26 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     uninstallKeyboardActions()
     uninstallListeners()
     uninstallButtons()
+    uninstallPopup()
 
     _optionButton = null
   }
 
   override fun getPreferredSize(c: JComponent) = Dimension(mainButton.preferredSize.width + arrowButton.preferredSize.width,
                                                            maxOf(mainButton.preferredSize.height, arrowButton.preferredSize.height))
+
+  protected open fun installPopup() {
+    showPopupAction = DumbAwareAction.create { _ -> showPopup() }
+    showPopupAction?.registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0)), optionButton)
+  }
+
+  protected open fun uninstallPopup() {
+    showPopupAction?.unregisterCustomShortcutSet(optionButton)
+    showPopupAction = null
+
+    popup?.let(Disposable::dispose)
+    popup = null
+  }
 
   protected open fun installButtons() {
     _mainButton = createMainButton()
@@ -147,6 +173,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       MNEMONIC_CHANGED_PROPERTY -> mainButton.mnemonic = optionButton.mnemonic
       TOOL_TIP_TEXT_KEY, PROP_OPTION_TOOLTIP -> updateTooltip()
       PROP_OPTIONS -> {
+        closePopup()
         updateExtraWidth()
         updateTooltip()
         arrowButton.isVisible = !isSimpleButton
@@ -173,7 +200,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
-  protected open fun createArrowButtonActionListener(): ActionListener? = ActionListener { optionButton.togglePopup() }
+  protected open fun createArrowButtonActionListener(): ActionListener? = ActionListener { togglePopup() }
 
   protected open fun createArrowButtonMouseListener(): MouseListener? = object : MouseAdapter() {
     override fun mousePressed(e: MouseEvent) {
@@ -192,6 +219,68 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected open fun uninstallKeyboardActions() {
     replaceUIActionMap(optionButton, null)
     replaceUIInputMap(optionButton, JComponent.WHEN_FOCUSED, null)
+  }
+
+  override fun showPopup(toSelect: Action?, ensureSelection: Boolean) {
+    if (!isSimpleButton) {
+      isPopupShowing = true
+      popup = createPopup(createActionGroup(), toSelect, ensureSelection).apply {
+        setFinalRunnable { isPopupShowing = false }
+        addListener(object : JBPopupAdapter() {
+          override fun beforeShown(event: LightweightWindowEvent) {
+            val popup = event.asPopup()
+            val screen = ScreenUtil.getScreenRectangle(optionButton.locationOnScreen)
+            val above = screen.height < popup.size.height + showPopupBelowLocation.screenPoint.y
+
+            if (above) {
+              val point = Point(showPopupAboveLocation.screenPoint)
+              point.translate(0, -popup.size.height)
+              popup.setLocation(point)
+            }
+          }
+
+          override fun onClosed(event: LightweightWindowEvent) {
+            // final runnable is not called when some action is invoked - so we handle this case here separately
+            if (event.isOk) {
+              isPopupShowing = false
+            }
+          }
+        })
+        show(showPopupBelowLocation)
+      }
+    }
+  }
+
+  override fun closePopup() {
+    popup?.cancel()
+  }
+
+  override fun togglePopup() {
+    if (isPopupShowing) {
+      closePopup()
+    }
+    else {
+      showPopup()
+    }
+  }
+
+  protected open val showPopupXOffset get() = 0
+  protected open val showPopupBelowLocation get() = RelativePoint(optionButton, Point(showPopupXOffset, optionButton.height + scale(6)))
+  protected open val showPopupAboveLocation get() = RelativePoint(optionButton, Point(showPopupXOffset, -scale(6)))
+
+  // TODO ensureSelection, toSelect
+  protected open fun createPopup(actions: ActionGroup, toSelect: Action?, ensureSelection: Boolean): ListPopup =
+    OptionButtonPopup(actions, createActionDataContext())
+
+  protected open fun createActionDataContext(): DataContext = DataManager.getInstance().getDataContext(optionButton)
+
+  protected open fun createActionGroup(): ActionGroup = DefaultActionGroup().apply {
+    optionButton.options
+      ?.map(this@BasicOptionButtonUI::ActionDelegate)
+      ?.forEachIndexed { index, it ->
+        if (index > 0) addSeparator()
+        add(it)
+      }
   }
 
   private fun updateExtraWidth() {
@@ -224,6 +313,38 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
     override fun preferredLayoutSize(parent: Container) = parent.preferredSize
     override fun minimumLayoutSize(parent: Container) = parent.minimumSize
+  }
+
+  open inner class OptionButtonPopup(actions: ActionGroup, dataContext: DataContext)
+    : PopupFactoryImpl.ActionGroupPopup(null, actions, dataContext, false, false, true, true, null, -1, null, ActionPlaces.UNKNOWN) {
+    init {
+      list.background = background
+    }
+
+    protected val background get() = mainButton.background
+
+    override fun createContent() = super.createContent().also { list.border = JBUI.Borders.empty(2, 0) }
+
+    override fun getListElementRenderer() = object : PopupListElementRenderer<Any>(this) {
+      override fun getBackground() = this@OptionButtonPopup.background
+      override fun createSeparator() = super.createSeparator().apply { border = JBUI.Borders.empty(2, 6) }
+      override fun getDefaultItemComponentBorder() = JBUI.Borders.empty(6, 8)
+    }
+  }
+
+  open inner class ActionDelegate(val action: Action) : DumbAwareAction() {
+    init {
+      isEnabledInModalContext = true
+      templatePresentation.text = (action.getValue(Action.NAME) as? String).orEmpty()
+    }
+
+    override fun update(event: AnActionEvent) {
+      event.presentation.isEnabled = action.isEnabled
+    }
+
+    override fun actionPerformed(event: AnActionEvent) {
+      action.actionPerformed(ActionEvent(optionButton, ActionEvent.ACTION_PERFORMED, null))
+    }
   }
 
   companion object {
