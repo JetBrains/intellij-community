@@ -743,23 +743,6 @@ public abstract class DialogWrapper {
     optionButton.setOptionTooltipText(tooltip);
     optionButton.setOkToProcessDefaultMnemonics(false);
 
-    final Set<JBOptionButton.OptionInfo> infos = optionButton.getOptionInfos();
-    for (final JBOptionButton.OptionInfo eachInfo : infos) {
-      if (eachInfo.getMnemonic() >= 0) {
-        final char mnemonic = (char)eachInfo.getMnemonic();
-        JRootPane rootPane = getPeer().getRootPane();
-        if (rootPane != null) {
-          new DumbAwareAction("Show JBOptionButton popup") {
-            @Override
-            public void actionPerformed(AnActionEvent e) {
-              final JBOptionButton buttonToActivate = eachInfo.getButton();
-              buttonToActivate.showPopup(eachInfo.getAction(), true);
-            }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
-        }
-      }
-    }
-
     return optionButton;
   }
 
