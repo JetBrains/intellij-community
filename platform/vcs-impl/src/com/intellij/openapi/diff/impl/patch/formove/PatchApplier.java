@@ -200,9 +200,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
         setConfirmationToDefault();
         CommandProcessor.getInstance().executeCommand(myProject, () -> {
           //consider pre-check status only if not successful, otherwise we could not detect already applied status
-          if (createFiles() != ApplyPatchStatus.SUCCESS) {
-            refStatus.set(createFiles());
-          }
+          refStatus.set(createFiles());
+
           addSkippedItems(trigger);
           trigger.prepare();
           refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
