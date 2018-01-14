@@ -23,7 +23,7 @@ import java.util.function.Predicate;
  * @author Tagir Valeev
  */
 public class CommentTracker {
-  private Set<PsiElement> ignoredParents = new HashSet<>();
+  private final Set<PsiElement> ignoredParents = new HashSet<>();
   private List<PsiComment> comments = new ArrayList<>();
 
   /**
@@ -174,6 +174,26 @@ public class CommentTracker {
     return result;
   }
 
+  public static @NotNull PsiElement replaceWithSubexpressionAndRestoreComments(@NotNull PsiExpression expression,
+                                                                               @NotNull PsiExpression replacement) {
+    if (!PsiTreeUtil.isAncestor(expression, replacement, true)) throw new IllegalArgumentException("replacement is not a subexpression");
+    final CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(replacement);
+    tracker.grabComments(expression);
+    final PsiElement parent = expression.getParent();
+    final int limit = replacement.getTextOffset();
+    PsiElement anchor = expression;
+    for (PsiComment comment : tracker.comments) {
+      if (comment.getTextOffset() < limit) {
+        parent.addBefore(comment, anchor);
+      }
+      else {
+        anchor = parent.addAfter(comment, anchor);
+      }
+    }
+    return expression.replace(replacement);
+  }
+
   /**
    * Creates a replacement element from the text and replaces given element,
    * collecting all the comments inside it and restores comments putting them
@@ -198,26 +218,24 @@ public class CommentTracker {
 
   private static @NotNull PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    PsiElement replacement;
     if (element instanceof PsiExpression) {
-      replacement = factory.createExpressionFromText(text, element);
+      return factory.createExpressionFromText(text, element);
     }
     else if (element instanceof PsiStatement) {
-      replacement = factory.createStatementFromText(text, element);
+      return factory.createStatementFromText(text, element);
     }
     else if (element instanceof PsiTypeElement) {
-      replacement = factory.createTypeElementFromText(text, element);
+      return factory.createTypeElementFromText(text, element);
     }
     else if (element instanceof PsiIdentifier) {
-      replacement = factory.createIdentifier(text);
+      return factory.createIdentifier(text);
     }
     else if (element instanceof PsiComment) {
-      replacement = factory.createCommentFromText(text, element);
+      return factory.createCommentFromText(text, element);
     }
     else {
       throw new IllegalArgumentException("Unsupported element type: " + element);
     }
-    return replacement;
   }
 
   /**

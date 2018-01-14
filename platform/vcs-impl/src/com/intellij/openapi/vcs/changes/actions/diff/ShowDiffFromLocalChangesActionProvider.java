@@ -181,9 +181,9 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
                                         @NotNull List<Change> changes,
                                         @NotNull List<VirtualFile> unversioned) {
     List<ChangeDiffRequestChain.Producer> changeRequests =
-      ContainerUtil.map(changes, change -> ChangeDiffRequestProducer.create(project, change));
+      ContainerUtil.mapNotNull(changes, change -> ChangeDiffRequestProducer.create(project, change));
     List<ChangeDiffRequestChain.Producer> unversionedRequests =
-      ContainerUtil.map(unversioned, file -> UnversionedDiffRequestProducer.create(project, file));
+      ContainerUtil.mapNotNull(unversioned, file -> UnversionedDiffRequestProducer.create(project, file));
 
     showDiff(project, ContainerUtil.concat(changeRequests, unversionedRequests), 0);
   }

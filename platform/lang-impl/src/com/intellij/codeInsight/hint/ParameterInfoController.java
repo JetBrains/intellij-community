@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInsight.hint;
 
@@ -63,6 +65,7 @@ import java.util.concurrent.locks.LockSupport;
 
 public class ParameterInfoController implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ParameterInfoController");
+  private static final String WHITESPACE = " \t";
   private final Project myProject;
   @NotNull private final Editor myEditor;
 
@@ -299,7 +302,7 @@ public class ParameterInfoController implements Disposable {
                           ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
     int caretOffset = myEditor.getCaretModel().getOffset();
     final int offset = noDelimiter ? caretOffset :
-                       CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
+                       CharArrayUtil.shiftBackward(chars, caretOffset - 1, WHITESPACE) + 1;
 
     final UpdateParameterInfoContext context = new MyUpdateParameterInfoContext(offset, file);
     final Object elementForUpdating = myHandler.findElementForUpdatingParameterInfo(context);
@@ -382,9 +385,8 @@ public class ParameterInfoController implements Disposable {
 
   private int adjustOffsetToInlay(int offset) {
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-    String whitespaceChars = " \t";
-    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, whitespaceChars) + 1;
-    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, whitespaceChars);
+    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
+    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
     List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(whitespaceStart, whitespaceEnd);
     for (Inlay inlay : inlays) {
       if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) return inlay.getOffset();
@@ -398,7 +400,8 @@ public class ParameterInfoController implements Disposable {
 
     boolean noDelimiter = handler.getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
     int caretOffset = myEditor.getCaretModel().getOffset();
-    int offset = noDelimiter ? caretOffset : CharArrayUtil.shiftBackward(myEditor.getDocument().getCharsSequence(), caretOffset - 1, " \t") + 1;
+    CharSequence text = myEditor.getDocument().getImmutableCharSequence();
+    int offset = noDelimiter ? caretOffset : CharArrayUtil.shiftBackward(text, caretOffset - 1, WHITESPACE) + 1;
     int lbraceOffset = myLbraceMarker.getStartOffset();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argList = lbraceOffset < offset ? findArgumentList(file, offset, lbraceOffset) : null;
@@ -417,8 +420,7 @@ public class ParameterInfoController implements Disposable {
         return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
       }
       else {
-        int startOffset = parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
-        return CharArrayUtil.shiftForward(myEditor.getDocument().getImmutableCharSequence(), startOffset, " \t");
+        return getParameterNavigationOffset(parameters[prevOrNextParameterIndex], text);
       }
     }
     else {
@@ -426,6 +428,13 @@ public class ParameterInfoController implements Disposable {
                                      !isNext && currentParameterIndex > 0 ? currentParameterIndex - 1 : -1;
       return prevOrNextParameterIndex != -1 ? parameters[prevOrNextParameterIndex].getTextRange().getStartOffset() : -1;
     }
+  }
+
+  private static int getParameterNavigationOffset(@NotNull PsiElement parameter, @NotNull CharSequence text) {
+    int rangeStart = parameter.getTextRange().getStartOffset();
+    int rangeEnd = parameter.getTextRange().getEndOffset();
+    int offset = CharArrayUtil.shiftBackward(text, rangeEnd - 1, WHITESPACE) + 1;
+    return offset > rangeStart ? offset : CharArrayUtil.shiftForward(text, rangeEnd, WHITESPACE);
   }
 
   @Nullable

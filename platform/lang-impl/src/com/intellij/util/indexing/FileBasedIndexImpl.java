@@ -296,7 +296,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     Set<VirtualFile> changed = new THashSet<>();
     
     Stream<VirtualFile> stream = Stream.concat(
-      myChangedFilesCollector.myVfsEventsMerger.getChangedFiles(), // process events first
+      myChangedFilesCollector.myVfsEventsMerger.getChangedFiles(), // avoid missing files when events are processed concurrently
       myChangedFilesCollector.myFilesToUpdate.values().stream()
     ).filter(filesToBeIndexedForProjectCondition(project)).filter(changed::add);
 

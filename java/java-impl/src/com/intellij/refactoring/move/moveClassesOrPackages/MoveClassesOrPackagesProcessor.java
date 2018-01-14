@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -533,7 +534,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       if (myOpenInEditor) {
-        EditorHelper.openFilesInEditor(myElementsToMove);
+        ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(Arrays.stream(myElementsToMove).filter(PsiElement::isValid).toArray(PsiElement[]::new)));
       }
     }
     catch (IncorrectOperationException e) {

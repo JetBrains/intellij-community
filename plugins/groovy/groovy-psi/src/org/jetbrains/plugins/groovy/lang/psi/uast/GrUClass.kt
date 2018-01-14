@@ -1,19 +1,16 @@
 /*
  * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.uast.*
 
-class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?) : UClass, JvmDeclarationUElement, PsiClass by grElement {
+class GrUClass(val grElement: GrTypeDefinition, parentProvider: () -> UElement?) : UClass, JvmDeclarationUElement, PsiClass by grElement {
 
   override val sourcePsi = grElement
 
@@ -25,10 +22,17 @@ class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?
 
   override val uastSuperTypes: List<UTypeReferenceExpression> = emptyList() //not implemented
 
-  override val uastDeclarations: List<UDeclaration> = emptyList() //not implemented
+  override val uastDeclarations by lazy {
+    mutableListOf<UDeclaration>().apply {
+      addAll(fields)
+      addAll(initializers)
+      addAll(methods)
+      addAll(innerClasses)
+    }
+  }
 
   override val uastAnchor: UElement?
-    get() = UIdentifier(psi.nameIdentifier, this)
+    get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val uastParent by lazy(parentProvider)
 
@@ -36,13 +40,14 @@ class GrUClass(val grElement: GrClassDefinition, parentProvider: () -> UElement?
 
   override fun getSuperClass(): UClass? = super.getSuperClass()
 
-  override fun getFields(): Array<UField> = super.getFields()
+  override fun getFields(): Array<UField> = emptyArray() //not implemented
 
-  override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
+  override fun getInitializers(): Array<UClassInitializer> = emptyArray() //not implemented
 
   override fun getMethods(): Array<UMethod> = grElement.codeMethods.map { GrUMethod(it, { this }) }.toTypedArray()
 
-  override fun getInnerClasses(): Array<UClass> = super.getInnerClasses()
+  override fun getInnerClasses(): Array<UClass> = grElement.codeInnerClasses.map { GrUClass(it, { this }) }.toTypedArray()
+
   override fun getOriginalElement(): PsiElement = grElement.originalElement
 }
 
@@ -62,7 +67,7 @@ class GrUMethod(val grElement: GrMethod, parentProvider: () -> UElement?) : UMet
   override val isOverride: Boolean by lazy { psi.modifierList.findAnnotation("java.lang.Override") != null }
 
   override val uastAnchor: UElement?
-    get() = UIdentifier((psi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi.nameIdentifier, this)
+    get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
@@ -82,14 +87,14 @@ class GrUParameter(val grElement: GrParameter,
   override val psi = javaPsi
 
   override val uastInitializer by lazy {
-    val initializer = psi.initializer ?: return@lazy null
+    val initializer = grElement.initializerGroovy ?: return@lazy null
     getLanguagePlugin().convertElement(initializer, this) as? UExpression
   }
 
   override val typeReference: UTypeReferenceExpression? = null //not implemented
 
   override val uastAnchor: UElement
-    get() = UIdentifier(psi.nameIdentifier, this)
+    get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 

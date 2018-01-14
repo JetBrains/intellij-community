@@ -408,6 +408,20 @@ public class PsiTypesUtil {
     return false;
   }
 
+  public static boolean allTypeParametersResolved(PsiElement context, PsiType targetType) {
+    TypeParameterSearcher searcher = new TypeParameterSearcher();
+    targetType.accept(searcher);
+    Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
+    return parameters.stream().allMatch(parameter -> isAccessibleAt(parameter, context));
+  }
+
+  public static PsiType createArrayType(PsiType newType, int arrayDim) {
+    for(int i = 0; i < arrayDim; i++){
+      newType = newType.createArrayType();
+    }
+    return newType;
+  }
+
   public static class TypeParameterSearcher extends PsiTypeVisitor<Boolean> {
     private final Set<PsiTypeParameter> myTypeParams = new HashSet<>();
 

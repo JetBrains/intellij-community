@@ -346,7 +346,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     next();
     prev();
     waitForAllAsyncStuff();
-    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/><caret>\"b\") } }");
+    checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>\"a\", <HINT text=\"def:\"/>\"b\"<caret>) } }");
   }
 
   public void testVararg() throws Exception {
@@ -835,6 +835,18 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     checkResultWithInlays("class C { void m() { Thread.State.valueOf(<HINT text=\"name:\"/><caret>) } }");
     waitForAllAsyncStuff();
     checkHintContents("<html><b>String</b></html>");
+  }
+
+  public void testBrokenPsiCall() throws Exception {
+    configureJava("class C { void m() { System.setPro<caret> } }");
+    complete("setProperty");
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
+    type(';');
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(;<caret>, ) } }");
+    backspace();
+    waitForAllAsyncStuff();
+    checkResultWithInlays("class C { void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) } }");
   }
 
   private void enableConstructorVariantsCompletion() {

@@ -198,7 +198,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   @Override
   public DocumentContent createFragment(@Nullable Project project, @NotNull Document document, @NotNull TextRange range) {
     DocumentContent content = create(project, document);
-    return new DocumentFragmentContent(project, content, range);
+    return createFragment(project, content, range);
   }
 
   @NotNull

@@ -20,9 +20,11 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
   public void testNegation() { doTest(); }
   public void testPolyadic() { doTest(); }
   public void testBoxed() { doTest(); }
-  public void testSideEffects() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect"));}
-  public void testSideEffectsField() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect"));}
+  public void testSideEffects() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
+  public void testSideEffectsField() { doTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix.sideEffect")); }
   public void testCompoundAssignment1() { doTest(InspectionGadgetsBundle.message("boolean.expression.remove.compound.assignment.quickfix")); }
   public void testCompoundAssignment2() { doTest(); }
   public void testCompoundAssignment3() { doTest(); }
+  public void testCompoundAssignmentSideEffect() { doTest(InspectionGadgetsBundle.message("boolean.expression.remove.compound.assignment.quickfix")); }
+  public void testCompoundAssignmentSideEffect2() { doTest(); }
 }

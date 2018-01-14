@@ -85,6 +85,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
     myTextDiffProvider = DiffUtil.createTextDiffProvider(getProject(), getRequest(), getTextSettings(), this::rediff, this);
 
+    for (Side side : Side.values()) {
+      DiffUtil.installLineConvertor(getEditor(side), getContent(side), myFoldingModel, side.getIndex());
+    }
+
     DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.LEFT, true), myPanel);
     DiffUtil.registerAction(new AppendSelectedChangesAction(Side.LEFT, true), myPanel);
     DiffUtil.registerAction(new ReplaceSelectedChangesAction(Side.RIGHT, true), myPanel);

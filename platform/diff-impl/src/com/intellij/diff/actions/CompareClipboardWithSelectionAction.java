@@ -28,6 +28,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -82,7 +83,8 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     FileType editorFileType = getEditorFileType(e);
     assert editor != null;
 
-    DocumentContent content2 = createContent(project, editor, editorFileType);
+    DiffContent selectedContent = e.getData(DiffDataKeys.CURRENT_CONTENT);
+    DocumentContent content2 = createContent(project, editor, editorFileType, selectedContent);
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
@@ -99,8 +101,22 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   }
 
   @NotNull
-  private static DocumentContent createContent(@Nullable Project project, @NotNull Editor editor, @Nullable FileType type) {
-    DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
+  private static DocumentContent createContent(@Nullable Project project,
+                                               @NotNull Editor editor,
+                                               @Nullable FileType type,
+                                               @Nullable DiffContent selectedContent) {
+    DocumentContent content = null;
+    if (selectedContent instanceof DocumentContent) {
+      Document contentDocument = ((DocumentContent)selectedContent).getDocument();
+      Document editorDocument = editor.getDocument();
+      if (contentDocument.equals(editorDocument)) {
+        content = (DocumentContent)selectedContent;
+      }
+    }
+
+    if (content == null) {
+      content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
+    }
 
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {

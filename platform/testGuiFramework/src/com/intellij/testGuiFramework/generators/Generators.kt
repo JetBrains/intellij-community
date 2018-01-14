@@ -428,7 +428,7 @@ class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
 
 class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
 
-  override fun priority() = 1
+  override fun priority() = 0
 
   private fun Component.containsLocationOnScreen(locationOnScreen: Point): Boolean {
     val rectangle = this.bounds
@@ -551,6 +551,7 @@ class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
 }
 
 class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
+  override fun priority() = 3
 
   override fun acceptor(): (Component) -> Boolean = { component -> component is EditorComponentImpl }
   override fun generate(cmp: EditorComponentImpl) = "editor {"

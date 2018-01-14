@@ -30,6 +30,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -156,6 +157,29 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
           reindexRefreshedFiles(indicator, files, project, index);
           snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
         }
+      }
+
+      @Override
+      public String toString() {
+        StringBuilder sampleOfChangedFilePathsToBeIndexed = new StringBuilder();
+        
+        index.processChangedFiles(project, new Processor<VirtualFile>() {
+          int filesInProjectToBeIndexed;
+          String projectBasePath = project.getBasePath();
+          
+          @Override
+          public boolean process(VirtualFile file) {
+            if (filesInProjectToBeIndexed != 0) sampleOfChangedFilePathsToBeIndexed.append(", ");
+            
+            String filePath = file.getPath();
+            sampleOfChangedFilePathsToBeIndexed.append(
+              projectBasePath != null ? FileUtil.getRelativePath(projectBasePath, filePath, '/') : filePath
+            );
+            
+            return ++filesInProjectToBeIndexed < ourMinFilesToStartDumMode;
+          }
+        });
+        return super.toString() + " [" + project + ", " + sampleOfChangedFilePathsToBeIndexed + "]";
       }
     };
   }

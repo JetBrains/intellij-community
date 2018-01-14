@@ -6,11 +6,12 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.plugins.groovy.GroovyLanguage
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrClassDefinition
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.uast.*
 
@@ -18,7 +19,7 @@ import org.jetbrains.uast.*
  * This is a very limited implementation of UastPlugin for Groovy,
  * provided only to make Groovy play with UAST-based reference contributors and spring class annotators
  */
-class GroovyDummyUastPlugin : UastLanguagePlugin {
+class GroovyUastPlugin : UastLanguagePlugin {
   override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? =
     convertElementWithParent(element, { parent }, requiredType)
 
@@ -29,10 +30,11 @@ class GroovyDummyUastPlugin : UastLanguagePlugin {
                                        parentProvider: () -> UElement?,
                                        requiredType: Class<out UElement>?): UElement? =
     when (element) {
+      is GroovyFile -> GrUFile(element, this)
       is GrLiteral -> GrULiteral(element, parentProvider)
       is GrAnnotationNameValuePair -> GrUNamedExpression(element, parentProvider)
       is GrAnnotation -> GrUAnnotation(element, parentProvider)
-      is GrClassDefinition -> GrUClass(element, parentProvider)
+      is GrTypeDefinition -> GrUClass(element, parentProvider)
       is GrMethod -> GrUMethod(element, parentProvider)
       is GrParameter -> GrUParameter(element, parentProvider)
       else -> null
