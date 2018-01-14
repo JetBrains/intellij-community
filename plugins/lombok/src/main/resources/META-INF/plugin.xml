@@ -265,6 +265,7 @@
             <li>Fixed #365: [Feature request]IDEA .var suffix feature replacement</li>
             <li>Fixed #379: StackOverflowException occurs sporadically when plugin enabled</li>
             <li>Fixed #419: Stackoverflow in Intellij because of recursive delegation in @Delegate</li>
+            <li>Fixed #426: PSI equals shouldn't perform resolve</li>
             <li>Fixed #427: Exception thrown when using *Find Usages* with ideavim</li>
 				</ol>
 			</li>
