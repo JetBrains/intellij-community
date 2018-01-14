@@ -203,7 +203,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {
-    if (file.isDirectory()) return true;
+    if (file.isDirectory()) {
+      PatchApplier
+        .showError(myProject, "Cannot apply content for " + file.getPresentableName() + " file from patch because it is directory.");
+      return false;
+    }
     FileType fileType = file.getFileType();
     if (fileType == FileTypes.UNKNOWN) {
       fileType = FileTypeChooser.associateFileType(file.getName());
