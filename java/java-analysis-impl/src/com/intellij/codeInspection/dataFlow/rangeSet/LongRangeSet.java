@@ -4,10 +4,11 @@ package com.intellij.codeInspection.dataFlow.rangeSet;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.util.ThreeState;
-import com.siyeh.ig.callMatcher.CallMapper;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,16 +25,6 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
  * @author Tagir Valeev
  */
 public abstract class LongRangeSet {
-  // TODO: create an external annotation and use it
-  private static final CallMapper<LongRangeSet> KNOWN_METHOD_RANGES = new CallMapper<LongRangeSet>()
-    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getHour"), range(0, 23))
-    .register(CallMatcher.instanceCall("java.time.LocalDateTime", "getMinute", "getSecond"), range(0, 59))
-    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
-              range(0, Long.SIZE))
-    .register(CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "numberOfLeadingZeros", "numberOfTrailingZeros", "bitCount"),
-              range(0, Integer.SIZE))
-    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_ENUM, "ordinal").parameterCount(0), indexRange());
-
   LongRangeSet() {}
 
   /**
@@ -446,10 +437,12 @@ public abstract class LongRangeSet {
   @NotNull
   public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
     if (owner == null) return all();
-    if (owner instanceof PsiMethod) {
-      LongRangeSet rangeSet = KNOWN_METHOD_RANGES.mapFirst((PsiMethod)owner);
-      if (rangeSet != null) {
-        return rangeSet;
+    PsiAnnotation rangeAnnotation = AnnotationUtil.findAnnotation(owner, "org.jetbrains.annotations.Range");
+    if(rangeAnnotation != null) {
+      Long from = AnnotationUtil.getLongAttributeValue(rangeAnnotation, "from");
+      Long to = AnnotationUtil.getLongAttributeValue(rangeAnnotation, "to");
+      if(from != null && to != null && to >= from) {
+        return range(from, to);
       }
     }
     if (AnnotationUtil.isAnnotated(owner, "javax.annotation.Nonnegative", CHECK_TYPE)) {
