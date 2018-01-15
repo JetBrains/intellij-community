@@ -196,6 +196,9 @@ public class InferenceSession {
     if (parent instanceof PsiCall) {
       return MethodCandidateInfo.getCurrentMethod(((PsiCall)parent).getArgumentList());
     }
+    if (parent instanceof PsiAnonymousClass) {
+      return getCurrentProperties(parent.getParent());
+    }
     return null;
   }
 
