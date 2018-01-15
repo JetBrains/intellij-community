@@ -32,7 +32,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   public JDOMExternalizableStringList() {
   }
 
-  public JDOMExternalizableStringList(@NotNull Collection<? extends String> c) {
+  public JDOMExternalizableStringList(@NotNull Collection<String> c) {
     super(c);
   }
 
@@ -78,7 +78,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
     writeList(this, element);
   }
 
-  public static void writeList(@NotNull List<String> strings, @NotNull Element element) {
+  private static void writeList(@NotNull List<String> strings, @NotNull Element element) {
     int listSize = strings.size();
     Element listElement = new Element(ATTR_LIST);
     listElement.setAttribute(ATTR_LISTSIZE, Integer.toString(listSize));
