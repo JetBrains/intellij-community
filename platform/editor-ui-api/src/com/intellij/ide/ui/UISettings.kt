@@ -370,7 +370,16 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
         if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
       }
       else {
-        if (readScale != defFontScale) size = Math.round((readSize / readScale) * defFontScale)
+        var oldDefFontScale = defFontScale
+        if (SystemInfo.isLinux) {
+          val fdata = UIUtil.getSystemFontData()
+          if (fdata != null) {
+            // [tav] todo: temp workaround for transitioning IDEA 173 to 181
+            // not converting fonts stored with scale equal to the old calculation
+            oldDefFontScale = fdata.second / 12f
+          }
+        }
+        if (readScale != defFontScale && readScale != oldDefFontScale) size = Math.round((readSize / readScale) * defFontScale)
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size

@@ -407,7 +407,7 @@ public class JBUI {
     setUserScaleFactorProperty(scale);
   }
 
-  private static float discreteScale(float scale) {
+  static float discreteScale(float scale) {
     return Math.round(scale / DISCRETE_SCALE_RESOLUTION) * DISCRETE_SCALE_RESOLUTION;
   }
 
