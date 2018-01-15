@@ -168,7 +168,10 @@ public class VcsLogUtil {
   }
 
   @Nullable
-  public static String getSingleFilteredBranch(@NotNull VcsLogBranchFilter filter, @NotNull VcsLogRefs refs) {
+  public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
+    VcsLogBranchFilter filter = filters.getBranchFilter();
+    if (filter == null) return null;
+    
     String branchName = null;
     Set<VirtualFile> checkedRoots = ContainerUtil.newHashSet();
     for (VcsRef branch : refs.getBranches()) {
