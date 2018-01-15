@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,12 +60,7 @@ public class ConstantConditionalExpressionInspection
     final PsiExpression condition = exp.getCondition();
     assert thenExpression != null;
     assert elseExpression != null;
-    if (BoolUtils.isTrue(condition)) {
-      return commentTracker.markUnchanged(thenExpression).getText();
-    }
-    else {
-      return commentTracker.markUnchanged(elseExpression).getText();
-    }
+    return BoolUtils.isTrue(condition) ? commentTracker.text(thenExpression) : commentTracker.text(elseExpression);
   }
 
   @Override

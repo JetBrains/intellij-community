@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
         newExpressionText.append("java.util.Arrays.hashCode(");
       }
       CommentTracker commentTracker = new CommentTracker();
-      newExpressionText.append(commentTracker.markUnchanged(qualifier).getText());
+      newExpressionText.append(commentTracker.text(qualifier));
       newExpressionText.append(')');
       PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, newExpressionText.toString(), commentTracker);
     }
@@ -125,8 +125,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
     public void visitMethodCallExpression(
       PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.HASH_CODE.equals(methodName)) {
         return;
@@ -136,8 +135,7 @@ public class ArrayHashCodeInspection extends BaseInspection {
       if (arguments.length != 0) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }

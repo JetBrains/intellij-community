@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       }
       final PsiExpression expression = (PsiExpression)element;
       CommentTracker commentTracker = new CommentTracker();
-      final String expressionText = commentTracker.markUnchanged(expression).getText();
+      final String expressionText = commentTracker.text(expression);
       PsiReplacementUtil.replaceExpression(expression, '(' + typeText + ')' + expressionText, commentTracker);
     }
   }

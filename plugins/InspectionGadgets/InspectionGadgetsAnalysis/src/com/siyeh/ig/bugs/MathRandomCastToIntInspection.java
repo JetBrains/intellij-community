@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -106,10 +106,10 @@ public class MathRandomCastToIntInspection extends BaseInspection {
           newExpression.append(token.getText());
         }
         if (typeCastExpression.equals(expression)) {
-          newExpression.append(commentTracker.markUnchanged(operand).getText());
+          newExpression.append(commentTracker.text(operand));
         }
         else {
-          newExpression.append(commentTracker.markUnchanged(expression).getText());
+          newExpression.append(commentTracker.text(expression));
         }
       }
       newExpression.append(')');

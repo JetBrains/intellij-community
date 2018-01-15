@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,23 +72,23 @@ public class TryStatementWithMultipleResourcesInspection extends BaseInspection 
         newTryStatementText.append("{\n");
       }
       ++count;
-      newTryStatementText.append("try (").append(tracker.markUnchanged(resource).getText()).append(")");
+      newTryStatementText.append("try (").append(tracker.text(resource)).append(")");
     }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     if (tryBlock == null) {
       return;
     }
-    newTryStatementText.append(tracker.markUnchanged(tryBlock).getText());
+    newTryStatementText.append(tracker.text(tryBlock));
     for (int i = 1; i < count; i++) {
       newTryStatementText.append("\n}");
     }
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     for (PsiCatchSection catchSection : catchSections) {
-      newTryStatementText.append(tracker.markUnchanged(catchSection).getText());
+      newTryStatementText.append(tracker.text(catchSection));
     }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      newTryStatementText.append("finally").append(tracker.markUnchanged(finallyBlock).getText());
+      newTryStatementText.append("finally").append(tracker.text(finallyBlock));
     }
     PsiReplacementUtil.replaceStatement(tryStatement, newTryStatementText.toString(), tracker);
   }

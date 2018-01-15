@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,13 +96,7 @@ public class ReuseOfLocalVariableInspection extends ReuseOfLocalVariableInspecti
       }
       CommentTracker commentTracker = new CommentTracker();
       final PsiExpression rhs = assignment.getRExpression();
-      final String rhsText;
-      if (rhs == null) {
-        rhsText = "";
-      }
-      else {
-        rhsText = commentTracker.markUnchanged(rhs).getText();
-      }
+      final String rhsText = rhs == null ? "" : commentTracker.text(rhs);
       @NonNls final String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
 
       final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)commentTracker.replaceAndRestoreComments(assignmentStatement, newStatementText);

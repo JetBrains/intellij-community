@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       final StringBuilder newStatement = new StringBuilder();
       newStatement.append("if(");
       if (condition != null) {
-        newStatement.append(tracker.markUnchanged(condition).getText());
+        newStatement.append(tracker.text(condition));
       }
       newStatement.append(')');
       if (variable != null) {
@@ -220,7 +220,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       final PsiElement[] children = element.getChildren();
       if (children.length == 0) {
         if (!(element instanceof PsiComment)) {
-          out.append(tracker.markUnchanged(element).getText());
+          out.append(tracker.text(element));
         }
       }
       for (PsiElement child : children) {

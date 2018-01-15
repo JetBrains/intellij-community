@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     }
     CommentTracker commentTracker = new CommentTracker();
     final String expString =
-      commentTracker.markUnchanged(lhs).getText() + assignString + ShiftUtils.getExpBase2(rhs);
+      commentTracker.text(lhs) + assignString + ShiftUtils.getExpBase2(rhs);
     PsiReplacementUtil.replaceExpression(exp, expString, commentTracker);
   }
 

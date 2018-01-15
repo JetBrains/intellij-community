@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2015 Bas Leijdekkers
+ * Copyright 2010-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
       final StringBuilder out = new StringBuilder("@");
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       assert nameReferenceElement != null;
-      out.append(tracker.markUnchanged(nameReferenceElement).getText());
+      out.append(tracker.text(nameReferenceElement));
       final PsiAnnotationParameterList parameterList = annotation.getParameterList();
       final PsiNameValuePair[] attributes = parameterList.getAttributes();
       if (attributes.length == 0) {
@@ -126,7 +126,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
         final PsiArrayInitializerMemberValue arrayValue = (PsiArrayInitializerMemberValue)value;
         final PsiAnnotationMemberValue[] initializers = arrayValue.getInitializers();
         if (initializers.length == 1) {
-          out.append(tracker.markUnchanged(initializers[0]).getText());
+          out.append(tracker.text(initializers[0]));
           return;
         }
       }
@@ -134,7 +134,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
         out.append(buildAnnotationText((PsiAnnotation)value, tracker));
         return;
       }
-      out.append(tracker.markUnchanged(value).getText());
+      out.append(tracker.text(value));
     }
   }
 

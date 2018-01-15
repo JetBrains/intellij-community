@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,12 +79,12 @@ public class DemorgansIntention extends MutablyNamedIntention {
       }
       if (tokenTypeAndAnd) {
         if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.OR_PRECEDENCE) {
-          return '(' + tracker.markUnchanged(negatedExpression).getText() + ')';
+          return '(' + tracker.text(negatedExpression) + ')';
         }
       } else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
-        return '(' + tracker.markUnchanged(negatedExpression).getText() + ')';
+        return '(' + tracker.text(negatedExpression) + ')';
       }
-      return tracker.markUnchanged(negatedExpression).getText();
+      return tracker.text(negatedExpression);
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -92,13 +92,13 @@ public class DemorgansIntention extends MutablyNamedIntention {
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       assert rhs != null;
-      return tracker.markUnchanged(lhs).getText() + negatedComparison + tracker.markUnchanged(rhs).getText();
+      return tracker.text(lhs) + negatedComparison + tracker.text(rhs);
     }
     else if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      return "!(" + tracker.markUnchanged(expression).getText() + ')';
+      return "!(" + tracker.text(expression) + ')';
     }
     else {
-      return '!' + tracker.markUnchanged(expression).getText();
+      return '!' + tracker.text(expression);
     }
   }
 }

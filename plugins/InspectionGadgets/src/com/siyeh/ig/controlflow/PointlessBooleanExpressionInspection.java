@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       out.append(')');
     }
     else if (expression != null) {
-      out.append(tracker.markUnchanged(expression).getText());
+      out.append(tracker.text(expression));
     }
     return out;
   }
@@ -195,7 +195,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       buildSimplifiedExpression(expressions, "==", negate, out, tracker);
     }
     else {
-      out.append(tracker.markUnchanged(expression).getText());
+      out.append(tracker.text(expression));
     }
   }
 
@@ -207,7 +207,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     if (expressions.size() == 1) {
       final PsiExpression expression = expressions.get(0);
       if (!negate) {
-        out.append(tracker.markUnchanged(expression).getText());
+        out.append(tracker.text(expression));
         return;
       }
       if (ComparisonUtils.isComparison(expression)) {
@@ -216,14 +216,14 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         assert rhs != null;
-        out.append(tracker.markUnchanged(lhs).getText()).append(negatedComparison).append(tracker.markUnchanged(rhs).getText());
+        out.append(tracker.text(lhs)).append(negatedComparison).append(tracker.text(rhs));
       }
       else {
         if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-          out.append("!(").append(tracker.markUnchanged(expression).getText()).append(')');
+          out.append("!(").append(tracker.text(expression)).append(')');
         }
         else {
-          out.append('!').append(tracker.markUnchanged(expression).getText());
+          out.append('!').append(tracker.text(expression));
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 Bas Leijdekkers
+ * Copyright 2011-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
     }
     final PsiExpression thisQualifier = ExpressionUtils.getQualifierOrThis(expression);
     CommentTracker commentTracker = new CommentTracker();
-    @NonNls final String newExpression = commentTracker.markUnchanged(thisQualifier).getText() + "." + commentTracker.markUnchanged(expression).getText();
+    @NonNls final String newExpression = commentTracker.text(thisQualifier) + "." + commentTracker.text(expression);
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression, commentTracker);
   }
 }

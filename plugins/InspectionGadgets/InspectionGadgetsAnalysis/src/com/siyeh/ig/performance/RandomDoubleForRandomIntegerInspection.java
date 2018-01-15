@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,7 @@ public class RandomDoubleForRandomIntegerInspection
     return new RandomDoubleForRandomIntegerFix();
   }
 
-  private static class RandomDoubleForRandomIntegerFix
-    extends InspectionGadgetsFix {
+  private static class RandomDoubleForRandomIntegerFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -84,9 +83,7 @@ public class RandomDoubleForRandomIntegerInspection
       if (qualifier == null) {
         return;
       }
-      final String qualifierText = qualifier.getText();
-      final PsiBinaryExpression multiplication =
-        (PsiBinaryExpression)getContainingExpression(call);
+      final PsiBinaryExpression multiplication = (PsiBinaryExpression)getContainingExpression(call);
       if (multiplication == null) {
         return;
       }
@@ -94,23 +91,13 @@ public class RandomDoubleForRandomIntegerInspection
       if (cast == null) {
         return;
       }
-      CommentTracker commentTracker = new CommentTracker();
-      final PsiExpression multiplierExpression;
       final PsiExpression lhs = multiplication.getLOperand();
-      final PsiExpression strippedLhs =
-        ParenthesesUtils.stripParentheses(lhs);
-      if (call.equals(strippedLhs)) {
-        multiplierExpression = multiplication.getROperand();
-      }
-      else {
-        multiplierExpression = lhs;
-      }
+      final PsiExpression strippedLhs = ParenthesesUtils.stripParentheses(lhs);
+      final PsiExpression multiplierExpression = call.equals(strippedLhs) ? multiplication.getROperand() : lhs;
       assert multiplierExpression != null;
-      final String multiplierText = commentTracker.markUnchanged(multiplierExpression).getText();
-      @NonNls final String nextInt = ".nextInt((int) ";
-      commentTracker.markUnchanged(qualifier);
-      PsiReplacementUtil.replaceExpression(cast, qualifierText + nextInt + multiplierText +
-                                                 ')', commentTracker);
+      CommentTracker commentTracker = new CommentTracker();
+      final String multiplierText = commentTracker.text(multiplierExpression);
+      PsiReplacementUtil.replaceExpression(cast, commentTracker.text(qualifier) + ".nextInt((int) " + multiplierText + ')', commentTracker);
     }
   }
 

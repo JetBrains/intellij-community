@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
       }
       assert operand != null;
       CommentTracker commentTracker = new CommentTracker();
-      final String operandText = commentTracker.markUnchanged(operand).getText();
+      final String operandText = commentTracker.text(operand);
       final IElementType tokenType = comparison.getOperationTokenType();
       final String negationText;
       if (tokenType.equals(JavaTokenType.EQEQ)) {

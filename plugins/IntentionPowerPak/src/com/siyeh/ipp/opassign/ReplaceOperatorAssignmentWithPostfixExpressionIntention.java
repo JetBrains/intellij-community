@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class ReplaceOperatorAssignmentWithPostfixExpressionIntention
       (PsiAssignmentExpression)element;
     final PsiExpression expression = assignment.getLExpression();
     CommentTracker commentTracker = new CommentTracker();
-    final String expressionText = commentTracker.markUnchanged(expression).getText();
+    final String expressionText = commentTracker.text(expression);
     final IElementType tokenType = assignment.getOperationTokenType();
     final String newExpressionText;
     if (JavaTokenType.PLUSEQ.equals(tokenType)) {

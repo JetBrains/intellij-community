@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
       }
       else {
         if (buffer.isEmpty()) {
-          newExpression.append(tracker.markUnchanged(child).getText());
+          newExpression.append(tracker.text(child));
         }
         else {
           buffer.add(child);
@@ -87,7 +87,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
       }
     }
     for (PsiElement bufferedElement : buffer) {
-      newExpression.append(tracker.markUnchanged(bufferedElement).getText());
+      newExpression.append(tracker.text(bufferedElement));
     }
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpression.toString(), tracker);
   }

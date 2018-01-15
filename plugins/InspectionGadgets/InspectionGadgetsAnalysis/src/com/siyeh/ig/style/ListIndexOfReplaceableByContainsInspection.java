@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,12 +119,11 @@ public class ListIndexOfReplaceableByContainsInspection
       qualifierText = "";
     }
     else {
-      qualifierText = tracker.markUnchanged(qualifierExpression).getText();
+      qualifierText = tracker.text(qualifierExpression);
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression expression = argumentList.getExpressions()[0];
-    @NonNls final String newExpressionText =
-      qualifierText + ".contains(" + tracker.markUnchanged(expression).getText() + ')';
+    @NonNls final String newExpressionText = qualifierText + ".contains(" + tracker.text(expression) + ')';
     if (tokenType.equals(JavaTokenType.EQEQ)) {
       return '!' + newExpressionText;
     }

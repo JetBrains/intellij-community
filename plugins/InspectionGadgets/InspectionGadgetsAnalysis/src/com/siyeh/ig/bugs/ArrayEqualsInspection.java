@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,11 +97,11 @@ public class ArrayEqualsInspection extends BaseInspection {
       final PsiExpression qualifier = expression.getQualifierExpression();
       assert qualifier != null;
       CommentTracker commentTracker = new CommentTracker();
-      final String qualifierText = commentTracker.markUnchanged(qualifier).getText();
+      final String qualifierText = commentTracker.text(qualifier);
       assert call != null;
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final String argumentText = commentTracker.markUnchanged(arguments[0]).getText();
+      final String argumentText = commentTracker.text(arguments[0]);
       @NonNls final StringBuilder newExpressionText = new StringBuilder();
       if (deepEquals) {
         newExpressionText.append("java.util.Arrays.deepEquals(");

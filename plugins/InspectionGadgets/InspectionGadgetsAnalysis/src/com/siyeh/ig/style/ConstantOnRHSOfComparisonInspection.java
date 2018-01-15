@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,8 +82,8 @@ public class ConstantOnRHSOfComparisonInspection extends BaseInspection {
       }
       final PsiExpression lhs = expression.getLOperand();
       CommentTracker commentTracker = new CommentTracker();
-      final String rhsText = commentTracker.markUnchanged(rhs).getText();
-      final String lhsText = commentTracker.markUnchanged(lhs).getText();
+      final String rhsText = commentTracker.text(rhs);
+      final String lhsText = commentTracker.text(lhs);
       PsiReplacementUtil.replaceExpression(expression, rhsText + ' ' + flippedComparison + ' ' + lhsText, commentTracker);
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (unboxedType == null) {
         return null;
       }
-      final String text = commentTracker.markUnchanged(unboxedExpression).getText();
+      final String text = commentTracker.text(unboxedExpression);
       if (expressionType.equals(unboxedType)) {
         final PsiElement parent = boxedExpression.getParent();
         if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression) parent, false)) {

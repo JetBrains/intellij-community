@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
         if (newExpression.length() != 0) {
           newExpression.append(operandText);
         }
-        newExpression.append(commentTracker.markUnchanged(operand).getText());
+        newExpression.append(commentTracker.text(operand));
       }
       PsiReplacementUtil.replaceExpression(expression, newExpression.toString(), commentTracker);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,8 +98,7 @@ public class NegatedConditionalInspection extends BaseInspection {
       final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
       assert elseBranch != null;
       assert thenBranch != null;
-      final String newStatement = negatedCondition + '?' + tracker.markUnchanged(elseBranch).getText() +
-                                  ':' + tracker.markUnchanged(thenBranch).getText();
+      final String newStatement = negatedCondition + '?' + tracker.text(elseBranch) + ':' + tracker.text(thenBranch);
       PsiReplacementUtil.replaceExpression(conditionalExpression, newStatement);
     }
   }

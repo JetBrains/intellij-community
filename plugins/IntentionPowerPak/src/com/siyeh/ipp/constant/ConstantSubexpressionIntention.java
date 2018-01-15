@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
           newExpressionText.append(prevToken.getText());
         }
         if (prevOperand != null) {
-          newExpressionText.append(commentTracker.markUnchanged(prevOperand).getText());
+          newExpressionText.append(commentTracker.text(prevOperand));
         }
         prevOperand = operand;
         prevToken = currentToken;
@@ -145,7 +145,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
       newExpressionText.append(prevToken.getText());
     }
     if (prevOperand != null) {
-      newExpressionText.append(commentTracker.markUnchanged(prevOperand).getText());
+      newExpressionText.append(commentTracker.text(prevOperand));
     }
 
     PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString(), commentTracker);

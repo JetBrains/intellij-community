@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,7 @@ public class ForeachStatementInspection extends BaseInspection {
         final PsiElement[] children = block.getChildren();
         for (int i = 1; i < children.length - 1; i++) {
           //skip the braces
-          newStatement.append(tracker.markUnchanged(children[i]).getText());
+          newStatement.append(tracker.text(children[i]));
         }
       }
       else {
@@ -128,7 +128,7 @@ public class ForeachStatementInspection extends BaseInspection {
           bodyText = "";
         }
         else {
-          bodyText = tracker.markUnchanged(body).getText();
+          bodyText = tracker.text(body);
         }
         newStatement.append(bodyText);
       }

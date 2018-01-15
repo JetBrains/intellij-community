@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,9 +66,9 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     final IElementType tokenType = expression.getOperationTokenType();
     assert rhs != null;
     CommentTracker commentTracker = new CommentTracker();
-    final String expString = commentTracker.markUnchanged(rhs).getText() +
+    final String expString = commentTracker.text(rhs) +
                              ComparisonUtils.getFlippedComparison(tokenType) +
-                             commentTracker.markUnchanged(lhs).getText();
+                             commentTracker.text(lhs);
     PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 }

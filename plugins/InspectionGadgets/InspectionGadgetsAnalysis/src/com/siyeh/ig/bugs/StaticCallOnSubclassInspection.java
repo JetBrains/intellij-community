@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,9 @@ public class StaticCallOnSubclassInspection extends BaseInspection implements Cl
       }
       final String containingClassName = containingClass.getQualifiedName();
       CommentTracker commentTracker = new CommentTracker();
-      final String argText = commentTracker.markUnchanged(argumentList).getText();
-      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + commentTracker.markUnchanged(call.getTypeArgumentList()).getText() + methodName + argText, commentTracker);
+      final String argText = commentTracker.text(argumentList);
+      final String typeArgText = commentTracker.text(call.getTypeArgumentList());
+      PsiReplacementUtil.replaceExpressionAndShorten(call, containingClassName + '.' + typeArgText + methodName + argText, commentTracker);
     }
   }
 

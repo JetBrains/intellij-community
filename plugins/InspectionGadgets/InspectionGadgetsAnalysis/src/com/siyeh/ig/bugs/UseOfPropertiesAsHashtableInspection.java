@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       @NonNls final StringBuilder newExpression = new StringBuilder();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        newExpression.append(commentTracker.markUnchanged(qualifierExpression).getText());
+        newExpression.append(commentTracker.text(qualifierExpression));
         newExpression.append('.');
       }
       if (put) {
@@ -125,7 +125,7 @@ public class UseOfPropertiesAsHashtableInspection extends BaseInspection {
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      newExpression.append(StringUtil.join(arguments, arg -> commentTracker.markUnchanged(arg).getText(), ","));
+      newExpression.append(StringUtil.join(arguments, arg -> commentTracker.text(arg), ","));
       newExpression.append(')');
 
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);

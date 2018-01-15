@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
     final PsiExpression[] arguments = argumentList.getExpressions();
     CommentTracker commentTracker = new CommentTracker();
     if (arguments.length > 1) {
-      newExpression.append(commentTracker.markUnchanged(arguments[0]).getText()).append(", ");
+      newExpression.append(commentTracker.text(arguments[0])).append(", ");
     }
     final PsiExpression lastArgument = arguments[arguments.length - 1];
     if (lastArgument instanceof PsiBinaryExpression) {
@@ -100,18 +100,18 @@ public class ReplaceAssertLiteralWithAssertEqualsIntention extends MutablyNamedI
       if (("assertTrue".equals(methodName) && JavaTokenType.EQEQ.equals(tokenType)) ||
           ("assertFalse".equals(methodName) && JavaTokenType.NE.equals(tokenType))) {
         final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(commentTracker.markUnchanged(lhs).getText()).append(", ");
+        newExpression.append(commentTracker.text(lhs)).append(", ");
         final PsiExpression rhs = binaryExpression.getROperand();
         if (rhs != null) {
-          newExpression.append(commentTracker.markUnchanged(rhs).getText());
+          newExpression.append(commentTracker.text(rhs));
         }
       }
       else {
-        newExpression.append(literal).append(", ").append(commentTracker.markUnchanged(lastArgument).getText());
+        newExpression.append(literal).append(", ").append(commentTracker.text(lastArgument));
       }
     }
     else {
-      newExpression.append(literal).append(", ").append(commentTracker.markUnchanged(lastArgument).getText());
+      newExpression.append(literal).append(", ").append(commentTracker.text(lastArgument));
     }
     newExpression.append(')');
 

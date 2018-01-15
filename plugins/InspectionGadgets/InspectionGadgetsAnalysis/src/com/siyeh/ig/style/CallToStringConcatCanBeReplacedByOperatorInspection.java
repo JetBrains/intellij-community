@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,10 +77,8 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
       if (!(parent instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)parent;
-      final PsiExpression qualifier =
-        referenceExpression.getQualifierExpression();
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+      final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
@@ -88,19 +86,15 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
       final PsiExpression argument = arguments[0];
       CommentTracker tracker = new CommentTracker();
-      @NonNls
-      final String newExpression =
-        tracker.markUnchanged(qualifier).getText() + '+' + tracker.markUnchanged(argument).getText();
+      @NonNls final String newExpression = tracker.text(qualifier) + '+' + tracker.text(argument);
       PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, tracker);
     }
   }

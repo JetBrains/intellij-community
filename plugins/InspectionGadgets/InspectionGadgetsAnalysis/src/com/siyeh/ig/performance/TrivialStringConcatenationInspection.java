@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
         }
         text.append(buildReplacement(operandToReplace, seenString, commentTracker));
         text.append(" + ");
-        text.append(commentTracker.markUnchanged(operand).getText());
+        text.append(commentTracker.text(operand));
         replaced = true;
         continue;
       }
@@ -107,7 +107,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
       if (text.length() > 0) {
         text.append(" + ");
       }
-      text.append(commentTracker.markUnchanged(operand).getText());
+      text.append(commentTracker.text(operand));
     }
     if (!replaced && operandToReplace != null) {
       text.append(" + ");
@@ -131,7 +131,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     if (seenString || ExpressionUtils.hasStringType(operandToReplace)) {
       return operandToReplace.getText();
     }
-    return "String.valueOf(" + commentTracker.markUnchanged(operandToReplace).getText() + ')';
+    return "String.valueOf(" + commentTracker.text(operandToReplace) + ')';
   }
 
   @Override
@@ -143,7 +143,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
 
     private final String m_name;
 
-    private UnnecessaryTemporaryObjectFix(PsiLiteralExpression expression) {
+    UnnecessaryTemporaryObjectFix(PsiLiteralExpression expression) {
       m_name = InspectionGadgetsBundle.message("string.replace.quickfix", calculateReplacementExpression(expression, new CommentTracker()));
     }
 
