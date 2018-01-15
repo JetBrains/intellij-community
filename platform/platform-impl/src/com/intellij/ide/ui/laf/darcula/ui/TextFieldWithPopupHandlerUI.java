@@ -52,12 +52,12 @@ import static com.intellij.util.ui.JBUI.scale;
 public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI implements Condition {
   private static final String DOCUMENT = "document";
   private static final String MONOSPACED = "monospaced";
-  protected static final String VARIANT = "JTextField.variant";
+  private static final String VARIANT = "JTextField.variant";
   private static final String POPUP = "JTextField.Search.FindPopup";
   private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   private static final String ON_CLEAR = "JTextField.Search.CancelAction";
   @SuppressWarnings("UseDPIAwareInsets")
-  protected final Insets insets = new Insets(0, 0, 0, 0);
+  private final Insets insets = new Insets(0, 0, 0, 0);
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
   private boolean monospaced;
@@ -495,7 +495,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
-  private void addExtension(Extension extension) {
+  protected void addExtension(Extension extension) {
     icons.put(extension.toString(), new IconHolder(extension));
     if (extension.isIconBeforeText()) {
       insets.left += extension.getPreferredSpace();
