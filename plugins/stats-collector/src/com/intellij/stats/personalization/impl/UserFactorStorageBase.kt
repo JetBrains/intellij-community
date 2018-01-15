@@ -20,10 +20,18 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.stats.personalization.*
 import com.intellij.util.attribute
 import org.jdom.Element
+import java.text.DecimalFormat
 import java.util.*
 
 abstract class UserFactorStorageBase
     : UserFactorStorage, PersistentStateComponent<Element> {
+
+    private companion object {
+        val DOUBLE_VALUE_FORMATTER = DecimalFormat().apply {
+            maximumFractionDigits = 6
+            minimumFractionDigits = 1
+        }
+    }
 
     private val state = CollectorState()
 
@@ -165,7 +173,7 @@ abstract class UserFactorStorageBase
             for ((key, value) in data.asSequence().sortedBy { it.key }) {
                 val observation = Element("observation")
                 observation.attribute("name", key)
-                observation.attribute("value", value.toString())
+                observation.attribute("value", DOUBLE_VALUE_FORMATTER.format(value))
                 element.addContent(observation)
             }
         }
