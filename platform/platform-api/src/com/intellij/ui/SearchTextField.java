@@ -29,10 +29,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -116,23 +118,8 @@ public class SearchTextField extends JPanel {
 
       @Override
       public void setUI(TextUI ui) {
-        if (SystemInfo.isMac) {
-          try {
-            Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI")
-                                                           : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
-            Method method = ReflectionUtil.getMethod(uiClass, "createUI", JComponent.class);
-            if (method != null) {
-              super.setUI((TextUI)method.invoke(uiClass, this));
-              Class<?> borderClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder")
-                                                                 : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder");
-              setBorder((Border)ReflectionUtil.newInstance(borderClass));
-              setOpaque(false);
-            }
-            return;
-          }
-          catch (Exception ignored) {
-          }
-        }
+        if (customSetupUIAndTextField(this, textUI -> super.setUI(textUI))) return;
+
         super.setUI(ui);
       }
     };
@@ -299,6 +286,27 @@ public class SearchTextField extends JPanel {
 
   protected boolean hasIconsOutsideOfTextField() {
     return UIUtil.isUnderGTKLookAndFeel();
+  }
+
+  protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
+    if (SystemInfo.isMac) {
+      try {
+        Class<?> uiClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextFieldUI")
+                                                       : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI");
+        Method method = ReflectionUtil.getMethod(uiClass, "createUI", JComponent.class);
+        if (method != null) {
+          uiConsumer.consume((TextUI)method.invoke(uiClass, textField));
+          Class<?> borderClass = UIUtil.isUnderIntelliJLaF() ? Class.forName("com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder")
+                                                             : Class.forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder");
+          textField.setBorder((Border)ReflectionUtil.newInstance(borderClass));
+          textField.setOpaque(false);
+        }
+        return true;
+      }
+      catch (Exception ignored) {
+      }
+    }
+    return false;
   }
 
   public void addDocumentListener(DocumentListener listener) {
