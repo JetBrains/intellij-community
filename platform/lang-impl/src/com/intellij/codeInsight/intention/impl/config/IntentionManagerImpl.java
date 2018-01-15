@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -264,7 +263,7 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
   @Override
   @NotNull
   public IntentionAction[] getIntentionActions() {
-    return ArrayUtil.stripTrailingNulls(myActions.toArray(IntentionAction.EMPTY_ARRAY));
+    return myActions.toArray(IntentionAction.EMPTY_ARRAY);
   }
 
   @NotNull

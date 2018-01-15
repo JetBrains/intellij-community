@@ -28,7 +28,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.*;
@@ -252,6 +251,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @Override
   @NotNull
   public XDebugSession[] getDebugSessions() {
+    // ConcurrentHashMap.values().toArray(new T[0]) guaranteed to return array with no nulls
     return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }
 

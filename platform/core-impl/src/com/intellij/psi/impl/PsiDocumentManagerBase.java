@@ -756,7 +756,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   public Document[] getUncommittedDocuments() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     Document[] documents = myUncommittedDocuments.toArray(Document.EMPTY_ARRAY);
-    return ArrayUtil.stripTrailingNulls(documents);
+    return documents; // java.util.ConcurrentHashMap.keySet().toArray() guaranteed to return array with no nulls
   }
 
   boolean isInUncommittedSet(@NotNull Document document) {
