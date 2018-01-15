@@ -123,6 +123,30 @@ class Foo {
 """
   }
 
+  void "test paste overloaded signature to code"() {
+    myFixture.configureByText "a.java", """
+class Foo {
+  void foo<caret>(int a) {}
+  void foo(int a, int b) {}
+  {
+    //paste before comment
+  }
+}
+"""
+    performCopy()
+    myFixture.editor.caretModel.moveToOffset(myFixture.editor.document.text.indexOf('//') - 2)
+    performPaste()
+    myFixture.checkResult """
+class Foo {
+  void foo(int a) {}
+  void foo(int a, int b) {}
+  {
+      Foo.foo()  //paste before comment
+  }
+}
+"""
+  }
+
   void testFqnInImport() {
     myFixture.addClass("package foo; public class Foo {}")
     myFixture.configureByText "a.java", "import foo.F<caret>oo;"
