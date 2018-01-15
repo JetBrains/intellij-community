@@ -27,17 +27,12 @@ class RunConfigurationHandler: ConfigurationHandler {
 
   private fun Any?.isTrue(): Boolean = this != null && this is Boolean && this
 
-  override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    configuration.eachRunConfiguration(RunManager.getInstance(module.project),
-                                       { importer, runConfiguration, externalCfg ->
-                                         importer.process(module, runConfiguration, externalCfg)
-                                       })
-  }
+  override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) { }
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.eachRunConfiguration(RunManager.getInstance(project),
                                        { importer, runConfiguration, externalCfg ->
-                                         importer.process(project, runConfiguration, externalCfg)
+                                         importer.process(project, runConfiguration, externalCfg, modelsProvider)
                                        })
   }
 
@@ -98,18 +93,26 @@ class RunConfigImporterExtensionManager {
 }
 
 class ApplicationRunConfigurationImporter : RunConfigurationImporter {
-  override fun process(module: Module, runConfiguration: RunConfiguration, cfg: Map<String, *>) {
+  override fun process(project: Project, runConfiguration: RunConfiguration, cfg: Map<String, *>, modelsProvider: IdeModifiableModelsProvider) {
     if (runConfiguration !is ApplicationConfiguration) {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfiguration::class.java}")
     }
 
+    val isDefaults = (cfg["defaults"] as? Boolean) ?: false
+
+    val module = (cfg["moduleName"] as? String)?.let { modelsProvider.modifiableModuleModel.findModuleByName(it) }
+    if (module == null && !isDefaults) {
+      throw IllegalArgumentException("Module with name ${cfg["moduleName"]} can not be found")
+    }
+
+
     (cfg["mainClass"] as? String)?.let { runConfiguration.mainClassName = it }
     (cfg["jvmArgs"]   as? String)?.let { runConfiguration.vmParameters = it  }
 
-    runConfiguration.setModule(module)
+    if (!isDefaults) {
+      runConfiguration.setModule(module)
+    }
   }
-
-  override fun process(project: Project, runConfiguration: RunConfiguration, cfg: Map<String, *>) {}
 
   override fun canImport(typeName: String): Boolean = typeName == "application"
 

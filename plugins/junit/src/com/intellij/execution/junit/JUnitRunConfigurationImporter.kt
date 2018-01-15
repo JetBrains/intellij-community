@@ -18,8 +18,9 @@ package com.intellij.execution.junit
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.rt.execution.junit.RepeatCount
 import java.util.*
 
@@ -30,7 +31,7 @@ import java.util.*
 class JUnitRunConfigurationImporter : RunConfigurationImporter {
   override fun canImport(typeName: String): Boolean = "junit" == typeName
 
-  override fun process(module: Module, runConfig: RunConfiguration, cfg: MutableMap<String, *>) {
+  override fun process(project: Project, runConfig: RunConfiguration, cfg: MutableMap<String, *>, modelsProvider: IdeModifiableModelsProvider) {
     if (runConfig !is JUnitConfiguration) {
       throw IllegalArgumentException("Unexpected type of run configuration: ${runConfig::class.java}")
     }

@@ -29,6 +29,7 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.settings.ApplicationRunConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
@@ -163,18 +164,21 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     ep.reset();
     ep.registerExtension(testExtension);
 
+    createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
       "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
       "idea {\n" +
-      "  module.settings {\n" +
+      "  project.settings {\n" +
       "    runConfigurations {\n" +
       "       app1(Application) {\n" +
       "           mainClass = 'my.app.Class'\n" +
       "           jvmArgs =   '-Xmx1g'\n" +
+      "           moduleName = 'moduleName'\n" +
       "       }\n" +
       "       app2(Application) {\n" +
       "           mainClass = 'my.app.Class2'\n" +
+      "           moduleName = 'moduleName'\n" +
       "       }\n" +
       "    }\n" +
       "  }\n" +
@@ -205,7 +209,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       withGradleIdeaExtPlugin(
         "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
         "idea {\n" +
-        "  module.settings {\n" +
+        "  project.settings {\n" +
         "    runConfigurations {\n" +
         "       defaults(Application) {\n" +
         "           jvmArgs = '-DmyKey=myVal'\n" +
@@ -230,17 +234,19 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     ep.reset();
     ep.registerExtension(appcConfigImporter);
 
+    createSettingsFile("rootProject.name = 'moduleName'");
     importProject(
       withGradleIdeaExtPlugin(
         "import org.jetbrains.gradle.ext.runConfigurations.*\n" +
         "idea {\n" +
-        "  module.settings {\n" +
+        "  project.settings {\n" +
         "    runConfigurations {\n" +
         "       defaults(Application) {\n" +
         "           jvmArgs = '-DmyKey=myVal'\n" +
         "       }\n" +
         "       'My Run'(Application) {\n" +
         "           mainClass = 'my.app.Class'\n" +
+        "           moduleName = 'moduleName'\n" +
         "       }\n" +
         "    }\n" +
         "  }\n" +
@@ -342,12 +348,8 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   }
 
   @Override
-  public void process(@NotNull Project project, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg) {
-    myConfigs.put(runConfig.getName(), cfg);
-  }
-
-  @Override
-  public void process(@NotNull Module module, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg) {
+  public void process(@NotNull Project project, @NotNull RunConfiguration runConfig, @NotNull Map<String, Object> cfg,
+                      @NotNull IdeModifiableModelsProvider modelsProvider) {
     myConfigs.put(runConfig.getName(), cfg);
   }
 
