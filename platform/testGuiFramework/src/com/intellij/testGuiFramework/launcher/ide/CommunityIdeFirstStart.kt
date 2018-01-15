@@ -17,13 +17,4 @@ package com.intellij.testGuiFramework.launcher.ide
 
 import com.intellij.testGuiFramework.impl.FirstStart
 
-class CommunityIdeFirstStart : FirstStart(ideType = CommunityIde()) {
-
-  override fun completeFirstStart() {
-    completeInstallation()
-    acceptAgreement()
-    acceptDataSharing()
-    customizeIde()
-    waitWelcomeFrameAndClose()
-  }
-}
+class CommunityIdeFirstStart : FirstStart(ideType = CommunityIde())
