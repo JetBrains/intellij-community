@@ -53,7 +53,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   private static final ID<HMethod, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int VERSION = 7; // change when inference algorithm changes
+  private static final int VERSION = 8; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
