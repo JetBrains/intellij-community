@@ -23,7 +23,7 @@ import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 class JavaUAnnotation(
   override val psi: PsiAnnotation,
   givenParent: UElement?
-) : JavaAbstractUElement(givenParent), UAnnotation {
+) : JavaAbstractUElement(givenParent), UAnnotationEx {
   override val qualifiedName: String?
     get() = psi.qualifiedName
 
@@ -32,6 +32,9 @@ class JavaUAnnotation(
 
     attributes.map { attribute -> JavaUNamedExpression(attribute, this) }
   }
+
+  override val uastAnchor: UElement?
+    get() = psi.nameReferenceElement?.referenceNameElement?.let { UIdentifier(it, this) }
 
   override fun resolve(): PsiClass? = psi.nameReferenceElement?.resolve() as? PsiClass
 

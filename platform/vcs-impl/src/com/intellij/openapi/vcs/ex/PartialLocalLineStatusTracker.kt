@@ -19,6 +19,7 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
@@ -54,6 +55,7 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import kotlin.collections.HashSet
 
 class PartialLocalLineStatusTracker(project: Project,
                                     document: Document,
@@ -331,6 +333,13 @@ class PartialLocalLineStatusTracker(project: Project,
     }
   }
 
+
+  fun getPartiallyAppliedContent(side: Side, changelistIds: List<String>): String {
+    return runReadAction {
+      val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
+      documentTracker.getContentWithPartiallyAppliedBlocks(side) { markers.contains(it.marker) }
+    }
+  }
 
   @CalledInAwt
   fun handlePartialCommit(side: Side, changelistId: String): PartialCommitHelper {

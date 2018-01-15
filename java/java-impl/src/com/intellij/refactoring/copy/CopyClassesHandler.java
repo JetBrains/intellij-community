@@ -284,7 +284,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
             for (PsiFile file : files) {
               CopyHandler.updateSelectionInActiveProjectView(file, project, selectInActivePanel);
             }
-            EditorHelper.openFilesInEditor(files.toArray(new PsiFile[files.size()]));
+            EditorHelper.openFilesInEditor(files.toArray(PsiFile.EMPTY_ARRAY));
           }
         }
       }

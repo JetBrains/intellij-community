@@ -141,6 +141,8 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myFoldingModel = new MyFoldingModel(myResultEditor, this);
 
 
+    DiffUtil.installLineConvertor(myResultEditor, myFoldingModel);
+
     new MyFocusOppositePaneAction().install(myPanel);
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(editors);
 

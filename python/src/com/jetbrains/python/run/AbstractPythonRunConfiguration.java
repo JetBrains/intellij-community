@@ -39,6 +39,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author Leonid Shalupov
@@ -266,7 +267,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
 
   protected void writeEnvs(Element element) {
     JDOMExternalizerUtil.writeField(element, "PARENT_ENVS", Boolean.toString(isPassParentEnvs()));
-    EnvironmentVariablesComponent.writeExternal(element, getEnvs());
+    EnvironmentVariablesComponent.writeExternal(element, new TreeMap<>(getEnvs()));
   }
 
   public String getInterpreterOptions() {

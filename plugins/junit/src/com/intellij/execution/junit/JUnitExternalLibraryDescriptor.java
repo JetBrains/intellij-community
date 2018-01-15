@@ -54,7 +54,7 @@ public abstract class JUnitExternalLibraryDescriptor extends ExternalLibraryDesc
   }
 
   private JUnitExternalLibraryDescriptor(final String groupId, final String artifactId, final String version) {
-    super(groupId, artifactId, version + ".0", version + ".+");
+    super(groupId, artifactId, version + ".0", version + ".999");
     myVersion = version;
   }
 

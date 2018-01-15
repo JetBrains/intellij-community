@@ -77,8 +77,10 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       private void checkUnnecessaryEmptyStringArgument(PsiCall call) {
         PsiExpression argument = getSingleEmptyStringArgument(call);
         if (argument != null) {
+          LocalQuickFix fix =
+            new DeleteElementFix(argument, InspectionGadgetsBundle.message("inspection.redundant.string.remove.argument.fix.name"));
           holder.registerProblem(argument, InspectionGadgetsBundle.message("inspection.redundant.string.argument.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(argument));
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, fix);
         }
       }
 
@@ -143,7 +145,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("inspection.redundant.string.replace.with.qualifier.fix.family.name");
+      return InspectionGadgetsBundle.message("inspection.redundant.string.fix.family.name");
     }
 
     @Override

@@ -19,7 +19,7 @@ import java.util.List;
  * @see #parse(String) for examples of supported version strings
  * @since 2018.1
  */
-public final class JavaVersion {
+public final class JavaVersion implements Comparable<JavaVersion> {
   /**
    * The major version.
    * Corresponds to the first number of a Java 9+ version string and to the second number of Java 1.0 to 1.8 strings.
@@ -56,6 +56,23 @@ public final class JavaVersion {
     this.update = update;
     this.build = build;
     this.ea = ea;
+  }
+
+  @Override
+  public int compareTo(@NotNull JavaVersion o) {
+    int diff = feature - o.feature;
+    if (diff != 0) return diff;
+    diff = minor - o.minor;
+    if (diff != 0) return diff;
+    diff = update - o.update;
+    if (diff != 0) return diff;
+    diff = build - o.build;
+    if (diff != 0) return diff;
+    return (ea ? 0 : 1) - (o.ea ? 0 : 1);
+  }
+
+  public boolean isAtLeast(int feature) {
+    return this.feature >= feature;
   }
 
   @Override

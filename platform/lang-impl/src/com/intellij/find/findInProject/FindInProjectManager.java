@@ -46,7 +46,11 @@ public class FindInProjectManager {
     myProject = project;
   }
 
-  public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel predefinedModel) {
+  /**
+   *
+   * @param model would be used for search if not null, otherwise shared (project-level) model would be used
+   */
+  public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
     Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
@@ -61,9 +65,10 @@ public class FindInProjectManager {
 
     final FindManager findManager = FindManager.getInstance(myProject);
     final FindModel findModel;
-    if (predefinedModel != null) {
-      findModel = predefinedModel.clone();
-    } else {
+    if (model != null) {
+      findModel = model.clone();
+    }
+    else {
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(false);
       findModel.setOpenInNewTabVisible(true);
@@ -106,15 +111,17 @@ public class FindInProjectManager {
     final FindManager findManager = FindManager.getInstance(myProject);
     findManager.getFindInProjectModel().copyFrom(findModel);
     final FindModel findModelCopy = findModel.clone();
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModelCopy);
+    final UsageViewPresentation presentation =
+      FindInProjectUtil.setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModelCopy);
     final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
-    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+    final FindUsagesProcessPresentation processPresentation =
+      FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
     ConfigurableUsageTarget usageTarget = new FindInProjectUtil.StringUsageTarget(myProject, findModel);
 
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);
 
-    manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
+    manager.searchAndShowUsages(new UsageTarget[]{usageTarget},
                                 () -> processor -> {
                                   myIsFindInProgress = true;
 
@@ -130,9 +137,9 @@ public class FindInProjectManager {
                                     myIsFindInProgress = false;
                                   }
                                 },
-      processPresentation,
-      presentation,
-      null
+                                processPresentation,
+                                presentation,
+                                null
     );
   }
 
@@ -140,7 +147,7 @@ public class FindInProjectManager {
     return myIsFindInProgress;
   }
 
-  public boolean isEnabled () {
+  public boolean isEnabled() {
     return !myIsFindInProgress && !ReplaceInProjectManager.getInstance(myProject).isWorkInProgress();
   }
 }

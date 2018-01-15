@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   // DiffContent
   //
 
+  Key<TIntFunction> LINE_NUMBER_CONVERTOR = Key.create("Diff.LineNumberConvertor"); // Document line -> line number in Editor gutter
   Key<Pair<FilePath, VcsRevisionNumber>> REVISION_INFO = Key.create("Diff.RevisionInfo");
   Key<String> FILE_NAME = Key.create("Diff.FileName");
 

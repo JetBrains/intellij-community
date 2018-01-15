@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -348,13 +348,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   private static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
-    String locationFileName;
-    try {
-      locationFileName = location.sourceName();
-    }
-    catch (AbsentInformationException e) {
-      locationFileName = defaultFileName;
-    }
+    String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
     return DebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
                                   method.declaringType().name() + "." + method.name() + "()",

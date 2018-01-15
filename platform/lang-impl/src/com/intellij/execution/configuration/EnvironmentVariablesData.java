@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Holds environment variables configuration:
@@ -111,7 +112,8 @@ public class EnvironmentVariablesData {
       // com.intellij.execution.configuration.EnvironmentVariablesComponent.writeExternal
       envsElement.setAttribute(PASS_PARENT_ENVS, Boolean.FALSE.toString());
     }
-    for (Map.Entry<String, String> entry : myEnvs.entrySet()) {
+
+    for (Map.Entry<String, String> entry : new TreeMap<>(myEnvs).entrySet()) {
       Element envElement = new Element(ENV);
       envElement.setAttribute(NAME, entry.getKey());
       envElement.setAttribute(VALUE, entry.getValue());

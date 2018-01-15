@@ -31,10 +31,6 @@
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </group>
 
-    <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">
-      <add-to-group group-id="FoldingGroup" anchor="after" relative-to-action="CollapseSelection"/>
-    </action>
-
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>

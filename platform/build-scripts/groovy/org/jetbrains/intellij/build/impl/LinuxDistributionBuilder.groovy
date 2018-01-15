@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.intellij.build.impl
 
@@ -99,7 +87,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
@@ -121,9 +108,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateVMOptions(String unixDistPath) {
     JvmArchitecture.values().each {
+      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
-      //todo[nik] why we don't add yourkit agent on unix?
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, null) +
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName) +
                       " -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine"
       new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }

@@ -286,6 +286,8 @@
 
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
 
+    <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
                              instance="com.intellij.ide.GeneralSettingsConfigurable"/>

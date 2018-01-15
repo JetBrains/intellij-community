@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -312,7 +313,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
             PsiReferenceExpression ref = (PsiReferenceExpression)expr;
             PsiElement target = ref.resolve();
             if (target instanceof PsiField &&
-                (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) || ExpressionUtils.isEffectivelyUnqualified(ref)) &&
+                (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) || ExpressionUtil.isEffectivelyUnqualified(ref)) &&
                 ((PsiField)target).getContainingClass() == ((PsiClassInitializer)context).getContainingClass()) {
               return;
             }

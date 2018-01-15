@@ -66,6 +66,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.concurrent.atomic.AtomicIntegerArray AtomicIntegerArray(int[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.concurrent.atomic.AtomicIntegerArray AtomicIntegerArray(int[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -175,6 +180,11 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongArray AtomicLongArray(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.atomic.AtomicLongArray AtomicLongArray(long[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

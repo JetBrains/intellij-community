@@ -138,27 +138,27 @@ public class MinusculeMatcher implements Matcher {
 
     final TextRange first = fragments.getHead();
     boolean startMatch = first.getStartOffset() == 0;
+    boolean valuedStartMatch = startMatch && valueStartCaseMatch;
 
     int matchingCase = 0;
     int p = -1;
 
-    int integral = 0; // -sum of matching-char-count * hump-index over all matched humps; favors longer fragments matching earlier words
-    int humpIndex = 1;
+    int skippedHumps = 0;
     int nextHumpStart = 0;
     boolean humpStartMatchedUpperCase = false;
     for (TextRange range : fragments) {
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
+        boolean afterGap = i == range.getStartOffset() && first != range;
         boolean isHumpStart = false;
         while (nextHumpStart <= i) {
           if (nextHumpStart == i) {
             isHumpStart = true;
           }
-          nextHumpStart = nextWord(name, nextHumpStart);
-          if (first != range) {
-            humpIndex++;
+          else if (afterGap) {
+            skippedHumps++;
           }
+          nextHumpStart = nextWord(name, nextHumpStart);
         }
-        integral -= humpIndex;
 
         char c = name.charAt(i);
         p = StringUtil.indexOf(myPattern, c, p + 1, myPattern.length, false);
@@ -170,7 +170,7 @@ public class MinusculeMatcher implements Matcher {
           humpStartMatchedUpperCase = c == myPattern[p] && isUpperCase[p];
         }
 
-        matchingCase += evaluateCaseMatching(startMatch, p, humpStartMatchedUpperCase, i, isHumpStart, c);
+        matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c);
       }
     }
 
@@ -180,22 +180,26 @@ public class MinusculeMatcher implements Matcher {
     boolean finalMatch = fragments.get(fragments.size() - 1).getEndOffset() == name.length();
 
     return (wordStart ? 1000 : 0) +
-           integral * 10 +
-           matchingCase * (startMatch && valueStartCaseMatch ? 10 : 1) +
+           matchingCase +
+           (- fragments.size() - skippedHumps * 10) +
            (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
   }
 
-  private int evaluateCaseMatching(boolean startMatch,
+  private int evaluateCaseMatching(boolean valuedStartMatch,
                                    int patternIndex,
                                    boolean humpStartMatchedUpperCase,
                                    int nameIndex,
+                                   boolean afterGap,
                                    boolean isHumpStart,
                                    char nameChar) {
+    if (afterGap && isHumpStart && isLowerCase[patternIndex]) {
+      return -10; // disprefer when there's a hump but nothing in the pattern indicates the user meant it to be hump
+    }
     if (nameChar == myPattern[patternIndex]) {
       if (isUpperCase[patternIndex]) return 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
-      if (nameIndex == 0 && startMatch) return 15; // the very first letter case distinguishes classes in Java etc
+      if (nameIndex == 0 && valuedStartMatch) return 150; // the very first letter case distinguishes classes in Java etc
       if (isHumpStart) return 1; // if a lowercase matches lowercase hump start, that also means something
     } else if (isHumpStart) {
       // disfavor hump starts where pattern letter case doesn't match name case

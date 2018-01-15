@@ -257,13 +257,26 @@ public class HighlightFixUtil {
   public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();
     List<IntentionAction> result = new ArrayList<>();
-    if (itemType != null) {
+    if (itemType != null && PsiTypesUtil.allTypeParametersResolved(variable, itemType)) {
       for (ChangeVariableTypeQuickFixProvider fixProvider : Extensions.getExtensions(ChangeVariableTypeQuickFixProvider.EP_NAME)) {
         Collections.addAll(result, fixProvider.getFixes(variable, itemType));
       }
+      IntentionAction changeFix = getChangeParameterClassFix(variable.getType(), itemType);
+      if (changeFix != null) result.add(changeFix);
     }
-    IntentionAction changeFix = getChangeParameterClassFix(variable.getType(), itemType);
-    if (changeFix != null) result.add(changeFix);
+    else if (itemType instanceof PsiArrayType) {
+      PsiType type = variable.getType();
+      if (type instanceof PsiArrayType && type.getArrayDimensions() == itemType.getArrayDimensions()) {
+        PsiType componentType = type.getDeepComponentType();
+        if (componentType instanceof PsiPrimitiveType) {
+          PsiClassType boxedType = ((PsiPrimitiveType)componentType).getBoxedType(variable);
+          if (boxedType != null) {
+            return getChangeVariableTypeFixes(variable, PsiTypesUtil.createArrayType(boxedType, type.getArrayDimensions()));
+          }
+        }
+      }
+    }
+
     return result;
   }
 

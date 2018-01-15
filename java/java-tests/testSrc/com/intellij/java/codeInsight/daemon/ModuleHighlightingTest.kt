@@ -10,13 +10,11 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
-    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter({ it.name != "module-info.java"})
 
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
@@ -213,7 +211,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { requires <caret>M.missing; }", arrayOf())
     fixes("module M { requires <caret>M3; }", arrayOf("AddModuleDependencyFix"))
     fixes("module M { exports pkg.main.impl to <caret>M3; }", arrayOf())
-    fixes("module M { exports <caret>pkg.missing; }", arrayOf())
+    fixes("module M { exports <caret>pkg.missing; }", arrayOf("CreateClassInPackageInModuleFix"))
     fixes("module M { exports <caret>pkg.m3; }", arrayOf())
     fixes("module M { uses pkg.m3.<caret>C3; }", arrayOf("AddModuleDependencyFix"))
     fixes("pkg/main/C.java", "package pkg.main;\nimport <caret>pkg.m2.C2;", arrayOf("AddRequiresDirectiveFix"))

@@ -18,7 +18,6 @@ package com.intellij.java.codeInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.M2
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.siyeh.ig.visibility.ClassEscapesItsScopeInspection
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.NonNls
@@ -31,7 +30,6 @@ class Java9NonAccessibleTypeExposedTest : LightJava9ModulesCodeInsightFixtureTes
   override fun setUp() {
     super.setUp()
     myFixture.enableInspections(ClassEscapesItsScopeInspection())
-    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter({ it.name != "module-info.java"})
 
     addFile("module-info.java", "module MAIN { exports apiPkg; exports otherPkg; requires M2; }", MAIN)
     addFile("module-info.java", "module M2 { exports m2Pkg; }", M2)

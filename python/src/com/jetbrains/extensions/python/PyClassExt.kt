@@ -15,13 +15,19 @@
  */
 package com.jetbrains.extensions.python
 
+import com.jetbrains.extensions.isNameMatches
+import com.jetbrains.python.nameResolver.FQNamesProvider
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * @author Ilya.Kazakevich
  */
 fun PyClass.inherits(evalContext: TypeEvalContext, parentNames: Set<String>) =
-  this.getAncestorTypes(evalContext).filterNotNull().map { it.classQName }.filterNotNull().any { parentNames.contains(it) }
+  this.getAncestorTypes(evalContext).filterNotNull().mapNotNull(PyClassLikeType::getClassQName).any(parentNames::contains)
 
-fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String)= this.inherits(evalContext, parentNames.toHashSet())
+fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String) = this.inherits(evalContext, parentNames.toHashSet())
+
+fun PyClass.inherits(evalContext: TypeEvalContext?, parentNames: FQNamesProvider) =
+  this.getAncestorClasses(evalContext).any(parentNames::isNameMatches)

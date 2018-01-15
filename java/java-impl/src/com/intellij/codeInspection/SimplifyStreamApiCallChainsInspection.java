@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
@@ -664,13 +665,13 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     }
 
     static boolean isParentNegated(PsiMethodCallExpression methodCall) {
-      if (ExpressionUtils.isEffectivelyUnqualified(methodCall.getMethodExpression())) return false;
+      if (ExpressionUtil.isEffectivelyUnqualified(methodCall.getMethodExpression())) return false;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
       return parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent);
     }
 
     static boolean isArgumentLambdaNegated(PsiMethodCallExpression methodCall) {
-      if (ExpressionUtils.isEffectivelyUnqualified(methodCall.getMethodExpression())) return false;
+      if (ExpressionUtil.isEffectivelyUnqualified(methodCall.getMethodExpression())) return false;
       PsiExpression[] expressions = methodCall.getArgumentList().getExpressions();
       if(expressions.length != 1) return false;
       PsiExpression arg = expressions[0];
@@ -1650,7 +1651,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)arg;
         if (COLLECTION_CONTAINS.methodReferenceMatches(methodRef) &&
             !PsiMethodReferenceUtil.isStaticallyReferenced(methodRef) &&
-            !ExpressionUtils.isEffectivelyUnqualified(methodRef)) {
+            !ExpressionUtil.isEffectivelyUnqualified(methodRef)) {
           return methodRef.getQualifierExpression();
         }
       }
@@ -1663,7 +1664,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
           PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
           if (COLLECTION_CONTAINS.test(call) &&
               ExpressionUtils.isReferenceTo(call.getArgumentList().getExpressions()[0], parameter) &&
-              !ExpressionUtils.isEffectivelyUnqualified(call.getMethodExpression())) {
+              !ExpressionUtil.isEffectivelyUnqualified(call.getMethodExpression())) {
             return call.getMethodExpression().getQualifierExpression();
           }
         }
@@ -1674,7 +1675,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
     @Nullable
     private static PsiExpression extractLeft(PsiMethodCallExpression call) {
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
-      if (!COLLECTION_STREAM.test(qualifierCall) || ExpressionUtils.isEffectivelyUnqualified(qualifierCall.getMethodExpression())) {
+      if (!COLLECTION_STREAM.test(qualifierCall) || ExpressionUtil.isEffectivelyUnqualified(qualifierCall.getMethodExpression())) {
         return null;
       }
       return PsiUtil.skipParenthesizedExprDown(qualifierCall.getMethodExpression().getQualifierExpression());

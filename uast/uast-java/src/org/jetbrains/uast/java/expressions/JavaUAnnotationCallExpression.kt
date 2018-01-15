@@ -15,7 +15,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 class JavaUAnnotationCallExpression(
   override val psi: PsiAnnotation,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpression {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
 
   val uAnnotation by lz {
     JavaUAnnotation(psi, this)
@@ -50,6 +50,8 @@ class JavaUAnnotationCallExpression(
   override val valueArguments by lz {
     uAnnotation.attributeValues
   }
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override fun accept(visitor: UastVisitor) {
     visitor.visitCallExpression(this)

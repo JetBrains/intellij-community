@@ -308,7 +308,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
       context.setUIComponentEnabled(i, enabled);
       if (candidates.length > 1 && enabled) {
-        if (method.isEquivalentTo(chosenMethod)) {
+        if (PsiManager.getInstance(context.getProject()).areElementsEquivalent(chosenMethod, method)) {
           chosenInfo = candidate;
         }
 

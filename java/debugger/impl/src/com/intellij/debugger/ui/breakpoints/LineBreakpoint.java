@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /*
@@ -397,13 +397,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   @Override
   public String getEventMessage(LocatableEvent event) {
     final Location location = event.location();
-    String sourceName;
-    try {
-      sourceName = location.sourceName();
-    }
-    catch (AbsentInformationException e) {
-      sourceName = getFileName();
-    }
+    String sourceName = DebuggerUtilsEx.getSourceName(location, e -> getFileName());
 
     return DebuggerBundle.message(
       "status.line.breakpoint.reached",

@@ -175,6 +175,15 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
     final Map<EKey, Equations> equations = new HashMap<>();
 
+    if ((classReader.getAccess() & Opcodes.ACC_ENUM) != 0) {
+      // ordinal() method is final in java.lang.Enum, but for some reason referred on call sites using specific enum class
+      // it's used on every enum switch statement, so forcing its purity is important
+      EKey ordinalKey = new EKey(new Method(classReader.getClassName(), "ordinal", "()I"), Out, true);
+      equations.put(ordinalKey, new Equations(
+        Collections.singletonList(new DirectionResultPair(Pure.asInt(), new Effects(DataValue.LocalDataValue, Collections.emptySet()))),
+        true));
+    }
+
     classReader.accept(new KeyedMethodVisitor() {
 
       protected MethodVisitor visitMethod(final MethodNode node, Method method, final EKey key) {

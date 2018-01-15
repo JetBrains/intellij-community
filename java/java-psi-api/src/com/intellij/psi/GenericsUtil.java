@@ -398,9 +398,7 @@ public class GenericsUtil {
     PsiType componentType = transformed != null ? transformed.getDeepComponentType() : null;
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
-      int dims = transformed.getArrayDimensions();
-      for (int i = 0; i < dims; i++) componentType = componentType.createArrayType();
-      return componentType;
+      return PsiTypesUtil.createArrayType(componentType, transformed.getArrayDimensions());
     }
 
     return transformed;

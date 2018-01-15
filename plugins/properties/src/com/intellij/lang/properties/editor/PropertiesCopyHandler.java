@@ -228,12 +228,9 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       PropertiesReferenceManager
         .getInstance(myProject)
         .processPropertiesFiles(searchScope,
-                                new PropertiesFileProcessor() {
-                                  @Override
-                                  public boolean process(String baseName, PropertiesFile propertiesFile) {
-                                    propertiesFiles.add(propertiesFile);
-                                    return true;
-                                  }
+                                (baseName, propertiesFile) -> {
+                                  propertiesFiles.add(propertiesFile);
+                                  return true;
                                 }, BundleNameEvaluator.BASE_NAME);
 
       final List<PsiFileSystemItem> resourceBundlesAsFileSystemItems = propertiesFiles

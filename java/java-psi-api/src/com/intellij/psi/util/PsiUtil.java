@@ -460,12 +460,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static PsiType convertAnonymousToBaseType(@NotNull PsiType type) {
     PsiClass psiClass = resolveClassInType(type);
     if (psiClass instanceof PsiAnonymousClass) {
-      int dims = type.getArrayDimensions();
-      type = ((PsiAnonymousClass) psiClass).getBaseClassType();
-      while (dims != 0) {
-        type = type.createArrayType();
-        dims--;
-      }
+      type = PsiTypesUtil.createArrayType(((PsiAnonymousClass) psiClass).getBaseClassType(), type.getArrayDimensions());
     }
     return type;
   }
