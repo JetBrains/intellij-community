@@ -257,6 +257,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       CandidateInfo candidate = (CandidateInfo)candidates[i];
       PsiMethod method = (PsiMethod)candidate.getElement();
       if (!method.isValid()) continue;
+      if (candidate instanceof MethodCandidateInfo && !((MethodCandidateInfo)candidate).getSiteSubstitutor().isValid()) continue;
       PsiSubstitutor substitutor = getCandidateInfoSubstitutor(o, candidate, method == realResolve);
       assert substitutor != null;
 
@@ -737,7 +738,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (p instanceof CandidateInfo) {
       CandidateInfo info = (CandidateInfo)p;
       PsiMethod method = (PsiMethod)info.getElement();
-      if (!method.isValid()) {
+      if (!method.isValid() || info instanceof MethodCandidateInfo && !((MethodCandidateInfo)info).getSiteSubstitutor().isValid()) {
         context.setUIComponentEnabled(false);
         return;
       }

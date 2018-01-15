@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.idea.Bombed;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -26,8 +25,6 @@ import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Calendar;
 
 public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -342,7 +339,6 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     assertEquals(itemsToShow[lineIndex], updateParameterInfo(handler, list, itemsToShow).getHighlightedParameter());
   }
 
-  @Bombed(month = Calendar.JANUARY, day = 22, user = "anna")
   public void testTypeInvalidationByCompletion() {
     myFixture.configureByFile(getTestName(false) + ".java");
 
