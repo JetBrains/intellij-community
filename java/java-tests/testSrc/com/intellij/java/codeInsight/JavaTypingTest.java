@@ -124,6 +124,10 @@ public class JavaTypingTest extends LightPlatformCodeInsightFixtureTestCase {
     doMultiTypeTest(';');
   }
 
+  public void testSemicolonBeforeRightParenInLiterals() {
+    doMultiTypeTest(';');
+  }
+
   public void testCommaAfterDefaultAnnotationArgumentWhenArrayIsExpected() {
     doTest(',');
   }
