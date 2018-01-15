@@ -334,14 +334,18 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         return;
       }
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      final PsiElement parent = assignmentExpression.getParent();
+      assert parent instanceof PsiStatement;
       final List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(assignmentExpression.getLExpression());
-      assert sideEffects.size() < 2;
-      if (!sideEffects.isEmpty()) {
-        CommentTracker.replaceWithSubexpressionAndRestoreComments(assignmentExpression, sideEffects.get(0));
+      final CommentTracker commentTracker = new CommentTracker();
+      for (PsiExpression sideEffect : sideEffects) {
+        commentTracker.markUnchanged(sideEffect);
       }
-      else {
-        new CommentTracker().deleteAndRestoreComments(element.getParent());
+      final PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, assignmentExpression);
+      if (statements.length > 0) {
+        BlockUtils.addBefore((PsiStatement)parent, statements);
       }
+      commentTracker.deleteAndRestoreComments(parent);
     }
   }
 

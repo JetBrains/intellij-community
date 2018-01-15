@@ -174,26 +174,6 @@ public class CommentTracker {
     return result;
   }
 
-  public static @NotNull PsiElement replaceWithSubexpressionAndRestoreComments(@NotNull PsiExpression expression,
-                                                                               @NotNull PsiExpression replacement) {
-    if (!PsiTreeUtil.isAncestor(expression, replacement, true)) throw new IllegalArgumentException("replacement is not a subexpression");
-    final CommentTracker tracker = new CommentTracker();
-    tracker.markUnchanged(replacement);
-    tracker.grabComments(expression);
-    final PsiElement parent = expression.getParent();
-    final int limit = replacement.getTextOffset();
-    PsiElement anchor = expression;
-    for (PsiComment comment : tracker.comments) {
-      if (comment.getTextOffset() < limit) {
-        parent.addBefore(comment, anchor);
-      }
-      else {
-        anchor = parent.addAfter(comment, anchor);
-      }
-    }
-    return expression.replace(replacement);
-  }
-
   /**
    * Creates a replacement element from the text and replaces given element,
    * collecting all the comments inside it and restores comments putting them
