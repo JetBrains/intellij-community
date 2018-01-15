@@ -217,6 +217,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
         Arrays.stream(Window.getOwnerlessWindows()).
           filter(window -> window != null && window instanceof RootPaneContainer).
           map(window -> (RootPaneContainer)window).
+          filter(f -> f.getRootPane() != null).
           filter(window -> window.getRootPane() != null).
           map(window -> (window).getGlassPane()).
           map(jGlassPane -> jGlassPane.getGraphics()).
@@ -237,6 +238,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
         filter(window -> window != null && window instanceof RootPaneContainer).
         map(window -> (RootPaneContainer)window).
         filter(w -> w instanceof JFrame).
+        filter(f -> f.getRootPane() != null).
         filter(f -> f.getGlassPane() != null).
         filter(window -> window.getRootPane() != null).
         map(window -> (window).getGlassPane()).
