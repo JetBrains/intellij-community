@@ -497,10 +497,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
-    else if (false) {
-      uiDefaults.put("Menu.opaque", true);
-      uiDefaults.put("MenuItem.opaque", true);
-    }
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       uiDefaults.put("Menu.arrowIcon", new Win10MenuArrowIcon());
