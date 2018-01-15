@@ -13,7 +13,6 @@ import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
-import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
@@ -47,7 +46,9 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Maxim.Mossienko
@@ -116,7 +117,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @Override
   public PsiExpressionList findElementForUpdatingParameterInfo(@NotNull final UpdateParameterInfoContext context) {
     if (context.isPreservedOnHintHidden() && isOutsideOfCompletedInvocation(context)) {
-      ParameterHintsPassFactory.forceHintsUpdateOnNextPass(context.getEditor());
       context.setPreservedOnHintHidden(false);
       return null;
     }
@@ -178,7 +178,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static boolean isOutsideOfCompletedInvocation(UpdateParameterInfoContext context) {
     PsiElement owner = context.getParameterOwner();
     if (owner != null && owner.isValid()) {
-      TextRange ownerTextRange = getRelatedRange(owner, context.getEditor().getDocument());
+      TextRange ownerTextRange = getRelatedRange(owner, context.getEditor());
       int caretOffset = context.getOffset();
       if (ownerTextRange != null) {
         if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
@@ -205,9 +205,17 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     return true;
   }
 
-  private static TextRange getRelatedRange(PsiElement owner, Document document) {
+  private static TextRange getRelatedRange(PsiElement owner, Editor editor) {
     TextRange range = owner.getTextRange();
-    if (range == null || !Registry.is("editor.keep.completion.hints.longer")) return range;
+    if (range == null) return null;
+    Document document = editor.getDocument();
+    if (Registry.is("editor.keep.completion.hints.even.longer")) {
+      int startY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getStartOffset())).y;
+      int endY = editor.visualPositionToXY(editor.offsetToVisualPosition(range.getEndOffset())).y;
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      return startY > visibleArea.getMaxY() || endY < visibleArea.getMinY() ? null : new TextRange(0, document.getTextLength()); 
+    }
+    if (!Registry.is("editor.keep.completion.hints.longer")) return range;
     return new TextRange(DocumentUtil.getLineStartOffset(range.getStartOffset(), document), 
                          DocumentUtil.getLineEndOffset(range.getEndOffset(), document));
   }
@@ -431,6 +439,11 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   @Override
   public void dispose(@NotNull DeleteParameterInfoContext context) {
     resetHints(context.getCustomContext());
+    PsiElement parameterOwner = context.getParameterOwner();
+    Editor editor = context.getEditor();
+    if (!editor.isDisposed() && parameterOwner != null && parameterOwner.isValid()) {
+      ParameterHintsPass.syncUpdate(parameterOwner.getParent(), editor);
+    }
   }
 
   private static PsiSubstitutor getCandidateInfoSubstitutor(PsiElement argList, CandidateInfo candidate, boolean resolveResult) {

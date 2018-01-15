@@ -17,10 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -57,7 +54,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
-public class ParameterInfoController extends UserDataHolderBase implements Disposable {
+public class ParameterInfoController extends UserDataHolderBase implements VisibleAreaListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ParameterInfoController");
   private static final String WHITESPACE = " \t";
   private final Project myProject;
@@ -152,6 +149,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
+    myEditor.getScrollingModel().addVisibleAreaListener(this);
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -204,6 +202,12 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
+    myEditor.getScrollingModel().removeVisibleAreaListener(this);
+  }
+
+  @Override
+  public void visibleAreaChanged(VisibleAreaEvent e) {
+    if (Registry.is("editor.keep.completion.hints.even.longer")) rescheduleUpdate();
   }
 
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
@@ -743,6 +747,16 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
   }
 
   private class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
+    @Override
+    public PsiElement getParameterOwner() {
+      return myComponent.getParameterOwner();
+    }
+
+    @Override
+    public Editor getEditor() {
+      return myEditor;
+    }
+
     @Override
     public UserDataHolderEx getCustomContext() {
       return ParameterInfoController.this;

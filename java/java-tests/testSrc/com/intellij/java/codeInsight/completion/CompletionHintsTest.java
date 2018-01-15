@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.EditorHintFixture;
 import com.intellij.util.ui.UIUtil;
 
@@ -881,6 +882,43 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     }
   }
 
+  public void testKeepHintsEvenLonger() throws Exception {
+    RegistryValue setting = Registry.get("editor.keep.completion.hints.even.longer");
+    boolean oldValue = setting.asBoolean();
+    try {
+      setting.setValue(true);
+      configureJava("class C {\n\n\n\n\n\n" +
+                    "  void m() { System.setPro<caret> }\n" +
+                    "}");
+      EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 3);
+      complete("setProperty");
+      checkResultWithInlays("class C {\n\n\n\n\n\n" +
+                            "  void m() { System.setProperty(<HINT text=\"key:\"/><caret>, <Hint text=\"value:\"/>) }\n" +
+                            "}");
+      type("\"a");
+      next();
+      type("\"b");
+      home();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C {\n\n\n\n\n\n" +
+                            "  <caret>void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
+                            "}");
+      up();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("class C {\n\n\n\n\n<caret>\n" +
+                            "  void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") }\n" +
+                            "}");
+      textStart();
+      waitForAllAsyncStuff();
+      checkResultWithInlays("<caret>class C {\n\n\n\n\n\n" +
+                            "  void m() { System.setProperty(\"a\", \"b\") }\n" +
+                            "}");
+    }
+    finally {
+      setting.setValue(oldValue);
+    }
+  }
+
   private void enableConstructorVariantsCompletion() {
     Registry.get("java.completion.show.constructors").setValue(true);
     Disposer.register(myFixture.getTestRootDisposable(), () -> Registry.get("java.completion.show.constructors").setValue(false));
@@ -912,6 +950,10 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
   private void right() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+  }
+
+  private void up() {
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
   }
 
   private void methodOverloadDown() {

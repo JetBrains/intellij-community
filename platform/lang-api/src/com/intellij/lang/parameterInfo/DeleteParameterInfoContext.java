@@ -3,8 +3,12 @@
  */
 package com.intellij.lang.parameterInfo;
 
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.psi.PsiElement;
 
 public interface DeleteParameterInfoContext {
+  PsiElement getParameterOwner();
+  Editor getEditor();
   UserDataHolderEx getCustomContext();
 }
