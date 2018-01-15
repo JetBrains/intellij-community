@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -37,6 +38,7 @@ import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -176,7 +178,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static boolean isOutsideOfCompletedInvocation(UpdateParameterInfoContext context) {
     PsiElement owner = context.getParameterOwner();
     if (owner != null && owner.isValid()) {
-      TextRange ownerTextRange = owner.getTextRange();
+      TextRange ownerTextRange = getRelatedRange(owner, context.getEditor().getDocument());
       int caretOffset = context.getOffset();
       if (ownerTextRange != null) {
         if (caretOffset >= ownerTextRange.getStartOffset() && caretOffset <= ownerTextRange.getEndOffset()) {
@@ -201,6 +203,13 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
     return true;
+  }
+
+  private static TextRange getRelatedRange(PsiElement owner, Document document) {
+    TextRange range = owner.getTextRange();
+    if (range == null || !Registry.is("editor.keep.completion.hints.longer")) return range;
+    return new TextRange(DocumentUtil.getLineStartOffset(range.getStartOffset(), document), 
+                         DocumentUtil.getLineEndOffset(range.getEndOffset(), document));
   }
 
   private static boolean overloadWithNoParametersExists(PsiMethod method, Object[] candidates) {
