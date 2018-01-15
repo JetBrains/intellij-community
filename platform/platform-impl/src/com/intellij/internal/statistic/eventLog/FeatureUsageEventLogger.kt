@@ -17,8 +17,8 @@ import java.io.IOException
 import java.util.*
 
 object FeatureUsageEventLogger {
-  private val userId = PermanentInstallationID.get()
-  private val sessionId = UUID.randomUUID().toString()
+  private val userId = PermanentInstallationID.get().shortedUUID()
+  private val sessionId = UUID.randomUUID().toString().shortedUUID()
   private val eventLogger = if (ApplicationManager.getApplication().isInternal) createLogger() else null
 
   private var lastEvent: LogEvent? = null
@@ -32,6 +32,14 @@ object FeatureUsageEventLogger {
         }
       }
     })
+  }
+
+  private fun String.shortedUUID(): String {
+    val start = this.lastIndexOf('-')
+    if (start > 0 && start + 1 < this.length) {
+      return this.substring(start + 1)
+    }
+    return this
   }
 
   fun log(recorderId: String, action: String) {
