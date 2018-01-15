@@ -10,10 +10,7 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -56,7 +53,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
       final RefManager refManager = globalContext.getRefManager();
       for (final OrderEntry entry : declaredDependencies) {
-        if (entry instanceof ModuleOrderEntry) {
+        if (entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
           final Module dependency = ((ModuleOrderEntry)entry).getModule();
           if (dependency != null) {
             if (modules == null || !modules.contains(dependency)) {
