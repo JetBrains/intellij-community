@@ -8,6 +8,7 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parents
 import com.intellij.util.withPrevious
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
@@ -32,6 +33,14 @@ fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = Re
 fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGet(processor: GrResolverProcessor<T>): List<T> {
   treeWalkUp(processor, ResolveState.initial(), this)
   return processor.results
+}
+
+fun <T : GroovyResolveResult> PsiElement.treeWalkUpAndGetSingleResult(processor: GrResolverProcessor<T>): T? {
+  return treeWalkUpAndGet(processor).singleOrNull()
+}
+
+fun <T : PsiElement> PsiElement.treeWalkUpAndGetSingleElement(processor: GrResolverProcessor<ElementGroovyResult<T>>): T? {
+  return treeWalkUpAndGetSingleResult(processor)?.element
 }
 
 inline fun <reified T : PsiElement> PsiElement.skipParentsOfType() = skipParentsOfType(true, T::class.java)

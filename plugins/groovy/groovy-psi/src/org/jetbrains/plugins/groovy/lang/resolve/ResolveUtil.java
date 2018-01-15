@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -29,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -56,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -71,6 +66,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.count;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.hasAnnotation;
+import static org.jetbrains.plugins.groovy.lang.psi.util.PsiTreeUtilKt.treeWalkUpAndGetSingleElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.getDefaultConstructor;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialState;
 
@@ -896,14 +892,14 @@ public class ResolveUtil {
       return duplicates.size() > 0 ? duplicates.get(0) : null;
     }
     else {
-      PsiNamedElement duplicate = resolveExistingElement(variable, new DuplicateVariablesProcessor(variable), GrVariable.class);
+      PsiNamedElement duplicate = treeWalkUpAndGetSingleElement(variable, new DuplicateVariableProcessor(variable));
       final PsiElement context1 = variable.getContext();
       if (duplicate == null && variable instanceof GrParameter && context1 != null) {
         final PsiElement context = context1.getContext();
         if (context instanceof GrClosableBlock ||
             context instanceof GrMethod && !(context.getParent() instanceof GroovyFile) ||
             context instanceof GrTryCatchStatement) {
-          duplicate = resolveExistingElement(context.getParent(), new DuplicateVariablesProcessor(variable), GrVariable.class);
+          duplicate = treeWalkUpAndGetSingleElement(context.getParent(), new DuplicateVariableProcessor(variable));
         }
       }
       if (duplicate instanceof GrLightParameter && "args".equals(duplicate.getName())) {
@@ -1049,42 +1045,6 @@ public class ResolveUtil {
     if (params.length != 1) return null;
 
     return params[0];
-  }
-
-  private static class DuplicateVariablesProcessor extends PropertyResolverProcessor {
-    private boolean myBorderPassed;
-    private final boolean myHasVisibilityModifier;
-
-    public DuplicateVariablesProcessor(GrVariable variable) {
-      super(variable.getName(), variable);
-      myBorderPassed = false;
-      myHasVisibilityModifier = hasExplicitVisibilityModifiers(variable);
-    }
-
-    private static boolean hasExplicitVisibilityModifiers(GrVariable variable) {
-      final GrModifierList modifierList = variable.getModifierList();
-      return modifierList != null && modifierList.hasExplicitVisibilityModifiers();
-    }
-
-    @Override
-    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (myBorderPassed) {
-        return false;
-      }
-      if (element instanceof GrVariable && hasExplicitVisibilityModifiers((GrVariable)element) != myHasVisibilityModifier) {
-        return true;
-      }
-      if (element instanceof GrBindingVariable) return true;
-      return super.execute(element, state);
-    }
-
-    @Override
-    public void handleEvent(@NotNull Event event, Object associated) {
-      if (event == DECLARATION_SCOPE_PASSED) {
-        myBorderPassed = true;
-      }
-      super.handleEvent(event, associated);
-    }
   }
 
   public static boolean isAccessible(@NotNull PsiElement place, @NotNull PsiNamedElement namedElement) {
