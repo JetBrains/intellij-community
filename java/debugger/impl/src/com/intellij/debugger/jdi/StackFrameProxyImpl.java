@@ -363,7 +363,7 @@ public class StackFrameProxyImpl extends JdiProxy implements StackFrameProxy {
         // extra logging for IDEA-141270
         if (e.errorCode() == JvmtiError.INVALID_SLOT || e.errorCode() == JvmtiError.ABSENT_INFORMATION) {
           LOG.info(e);
-          myAllValues = Collections.emptyMap();
+          myAllValues = new THashMap<>();
         }
         else throw e;
       }
