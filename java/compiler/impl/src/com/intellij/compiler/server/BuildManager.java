@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.compiler.server;
 
 import com.intellij.ProjectTopics;
@@ -61,6 +63,7 @@ import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.NettyKt;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
@@ -83,7 +86,6 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
 import javax.tools.*;
@@ -103,6 +105,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.io.NettyKt.MultiThreadEventLoopGroup;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -907,15 +910,15 @@ public class BuildManager implements Disposable {
 
   @NotNull
   public static Pair<Sdk, JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {
-    return getRuntimeSdk(project, JavaSdkVersion.JDK_1_8);
+    return getRuntimeSdk(project, 8);
   }
 
   @NotNull
   public static Pair<Sdk, JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
-    return getRuntimeSdk(project, JavaSdkVersion.JDK_1_6);
+    return getRuntimeSdk(project, 6);
   }
 
-  private static Pair<Sdk, JavaSdkVersion> getRuntimeSdk(@NotNull Project project, final JavaSdkVersion oldestPossibleVersion) {
+  private static Pair<Sdk, JavaSdkVersion> getRuntimeSdk(Project project, int oldestPossibleVersion) {
     final Set<Sdk> candidates = new LinkedHashSet<>();
     final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
@@ -931,52 +934,15 @@ public class BuildManager implements Disposable {
 
     // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
     final JavaSdk javaSdkType = JavaSdk.getInstance();
-    Sdk projectJdk = null;
-    int sdkMinorVersion = 0;
-    JavaSdkVersion sdkVersion = null;
-    for (Sdk candidate : candidates) {
-      final String vs = candidate.getVersionString();
-      if (vs != null) {
-        final JavaSdkVersion candidateVersion = getSdkVersion(javaSdkType, vs);
-        if (candidateVersion != null) {
-          final int candidateMinorVersion = getMinorVersion(vs);
-          if (projectJdk == null) {
-            sdkVersion = candidateVersion;
-            sdkMinorVersion = candidateMinorVersion;
-            projectJdk = candidate;
-          }
-          else {
-            final int result = candidateVersion.compareTo(sdkVersion);
-            if (result > 0 || result == 0 && candidateMinorVersion > sdkMinorVersion) {
-              sdkVersion = candidateVersion;
-              sdkMinorVersion = candidateMinorVersion;
-              projectJdk = candidate;
-            }
-          }
-        }
-      }
-    }
-
-    if (projectJdk == null || !sdkVersion.isAtLeast(oldestPossibleVersion)) {
-      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-      projectJdk = internalJdk;
-      sdkVersion = javaSdkType.getVersion(internalJdk);
-    }
-    return Pair.create(projectJdk, sdkVersion);
-  }
-
-  @Nullable
-  private static JavaSdkVersion getSdkVersion(final JavaSdk javaSdkType, final String vs) {
-    JavaSdkVersion version = javaSdkType.getVersion(vs);
-    if (version == null) {
-      // Unexpected version string: e.g. early access or experimental JDK build
-      // trying to find the 'known' sdk version that would best describe the passed version string
-      final int parsed = JpsJavaSdkType.parseVersion(vs);
-      if (parsed > 0) {
-        version = javaSdkType.getVersion(parsed + ".0");
-      }
-    }
-    return version;
+    return candidates.stream()
+      .map(sdk -> pair(sdk, JavaVersion.tryParse(sdk.getVersionString())))
+      .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
+      .max(Comparator.comparing(p -> p.second))
+      .map(p -> pair(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+      .orElseGet(() -> {
+        Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+        return pair(internalJdk, javaSdkType.getVersion(internalJdk));
+      });
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) throws Exception {
@@ -1341,30 +1307,6 @@ public class BuildManager implements Disposable {
       LOG.info(e);
     }
     return null;
-  }
-
-  private static int getMinorVersion(String vs) {
-    final int dashIndex = vs.lastIndexOf('_');
-    if (dashIndex >= 0) {
-      StringBuilder builder = new StringBuilder();
-      for (int idx = dashIndex + 1; idx < vs.length(); idx++) {
-        final char ch = vs.charAt(idx);
-        if (Character.isDigit(ch)) {
-          builder.append(ch);
-        }
-        else {
-          break;
-        }
-      }
-      if (builder.length() > 0) {
-        try {
-          return Integer.parseInt(builder.toString());
-        }
-        catch (NumberFormatException ignored) {
-        }
-      }
-    }
-    return 0;
   }
 
   private void stopListening() {
