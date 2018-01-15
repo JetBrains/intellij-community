@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 /**
  * This class receives focus requests, manages the, and delegates to the awt focus subsystem. All focus requests
@@ -200,6 +198,21 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public static IdeFocusManager findInstance() {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
+  }
+
+  @Deprecated
+  @NotNull
+  public FocusRequestor getFurtherRequestor() {
+    return new FocusRequestor() {
+      @NotNull
+      @Override
+      public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+        return ActionCallback.REJECTED;
+      }
+
+      @Override
+      public void dispose() {}
+    };
   }
 
   @NotNull
