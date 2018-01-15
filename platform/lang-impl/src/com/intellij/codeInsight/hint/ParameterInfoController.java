@@ -11,10 +11,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport;
-import com.intellij.lang.parameterInfo.ParameterInfoUtils;
-import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -29,10 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon.Position;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -63,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
-public class ParameterInfoController implements Disposable {
+public class ParameterInfoController extends UserDataHolderBase implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ParameterInfoController");
   private static final String WHITESPACE = " \t";
   private final Project myProject;
@@ -206,7 +200,7 @@ public class ParameterInfoController implements Disposable {
     if (myDisposed) return;
     myDisposed = true;
     myHint.hide();
-    myHandler.dispose();
+    myHandler.dispose(new MyDeleteParameterInfoContext());
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
@@ -668,6 +662,11 @@ public class ParameterInfoController implements Disposable {
       }
       return true;
     }
+
+    @Override
+    public UserDataHolderEx getCustomContext() {
+      return ParameterInfoController.this;
+    }
   }
 
   private static class MyBestLocationPointProvider  {
@@ -740,6 +739,13 @@ public class ParameterInfoController implements Disposable {
     @Override
     public String toString() {
       return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
+    }
+  }
+
+  private class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
+    @Override
+    public UserDataHolderEx getCustomContext() {
+      return ParameterInfoController.this;
     }
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -915,6 +916,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     public boolean isInnermostContext() {
       return false;
+    }
+
+    @Override
+    public UserDataHolderEx getCustomContext() {
+      throw new UnsupportedOperationException();
     }
 
     @Override
