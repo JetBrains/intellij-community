@@ -25,11 +25,8 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.isDirectoryBased
-import com.intellij.util.IconUtil
-import com.intellij.util.SmartList
+import com.intellij.util.*
 import com.intellij.util.containers.*
-import com.intellij.util.getAttributeBooleanValue
-import com.intellij.util.isEmpty
 import com.intellij.util.text.UniqueNameGenerator
 import gnu.trove.THashMap
 import org.jdom.Element
@@ -42,19 +39,17 @@ import javax.swing.Icon
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-private val SELECTED_ATTR = "selected"
-internal val METHOD = "method"
-private val OPTION = "option"
-private val RECENT = "recent_temporary"
+private const val SELECTED_ATTR = "selected"
+internal const val METHOD = "method"
+private const val OPTION = "option"
+private const val RECENT = "recent_temporary"
 
 // open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
 open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
-    @JvmField
-    val CONFIGURATION = "configuration"
-    @JvmField
-    val NAME_ATTR = "name"
+    const val CONFIGURATION = "configuration"
+    const val NAME_ATTR = "name"
 
     internal val LOG = logger<RunManagerImpl>()
 
@@ -445,8 +440,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       if (!recentList.isEmpty()) {
         val recent = Element(RECENT)
         element.addContent(recent)
-        @Suppress("DEPRECATION")
-        com.intellij.openapi.util.JDOMExternalizableStringList.writeList(recentList, recent)
+
+        val listElement = recent.element("list")
+        for (id in recentList) {
+          listElement.addContent(Element("item").setAttribute("itemvalue", id))
+        }
       }
     }
     return element
