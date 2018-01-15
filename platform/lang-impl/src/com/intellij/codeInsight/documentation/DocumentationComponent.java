@@ -650,6 +650,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private void updateControlState() {
     ElementLocationUtil.customizeElementLabel(myElement != null ? myElement.getElement() : null, myElementLabel);
+    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     if (Registry.is("documentation.show.toolbar")) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
@@ -1105,7 +1106,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class MyScrollPane extends JBScrollPane {
     public MyScrollPane() {
-      super(myEditorPane);
+      super(myEditorPane, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_ALWAYS);
       setLayout(new Layout() {
         @Override
         public void layoutContainer(Container parent) {
