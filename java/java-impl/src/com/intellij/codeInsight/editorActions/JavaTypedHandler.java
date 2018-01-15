@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -266,6 +267,10 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean moveSemicolonAtRParen(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, int caretOffset) {
+    if (!Registry.is("editor.move.semicolon.before.rparen")) {
+      return false;
+    }
+
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     // Note, this feature may be rewritten using only lexer if needed.
