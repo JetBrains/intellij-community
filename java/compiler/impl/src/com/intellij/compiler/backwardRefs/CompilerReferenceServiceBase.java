@@ -141,7 +141,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
           File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-          boolean indexExist = CompilerReferenceIndexUtil.existsWithLatestVersion(buildDir, myReaderFactory.getReaderIndexDescriptor());
+          boolean indexExist = CompilerReferenceIndexUtil.existsWithLatestVersion(buildDir, myReaderFactory.getIndexDescriptor());
           if (indexExist) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
@@ -470,7 +470,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   protected enum ElementPlace {
     SRC, LIB;
 
-    private static ElementPlace get(VirtualFile file, ProjectFileIndex index) {
+    static ElementPlace get(VirtualFile file, ProjectFileIndex index) {
       if (file == null) return null;
       return index.isInSourceContent(file) ? SRC : ((index.isInLibrarySource(file) || index.isInLibraryClasses(file)) ? LIB : null);
     }
