@@ -198,6 +198,7 @@ public abstract class LineStatusMarkerRenderer {
       g.fillRect(x1, y1, x2 - x1, y2 - y1);
     }
     if (borderColor != null) {
+      ((Graphics2D)g).setStroke(new BasicStroke(JBUI.scale(1)));
       g.setColor(borderColor);
       UIUtil.drawLine(g, x1, y1, x2 - 1, y1);
       UIUtil.drawLine(g, x1, y1, x1, y2 - 1);
@@ -216,6 +217,7 @@ public abstract class LineStatusMarkerRenderer {
       g.fillPolygon(xPoints, yPoints, xPoints.length);
     }
     if (borderColor != null) {
+      ((Graphics2D)g).setStroke(new BasicStroke(JBUI.scale(1)));
       g.setColor(borderColor);
       g.drawPolygon(xPoints, yPoints, xPoints.length);
     }
