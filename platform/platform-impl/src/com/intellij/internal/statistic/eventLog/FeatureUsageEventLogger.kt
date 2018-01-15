@@ -51,6 +51,7 @@ object FeatureUsageEventLogger {
   }
 
   private fun dispose(logger: Logger) {
+    log(logger, LogEvent("feature-usage-stats", userId, sessionId, "ideaapp.closed"))
     logLastEvent(logger)
   }
 
