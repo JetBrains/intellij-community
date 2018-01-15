@@ -97,7 +97,7 @@ public class DarculaButtonPainter implements Border, UIResource {
     }
   }
 
-  protected Color getBorderColor() {
+  public Color getBorderColor() {
     return Gray._100.withAlpha(180);
   }
 

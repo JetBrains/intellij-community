@@ -529,7 +529,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
    * and default UI is created there directly.
    */
   private static void fixOptionButton(UIDefaults uiDefaults) {
-    uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
+    if (!UIUtil.isUnderIntelliJLaF() && !UIUtil.isUnderDarcula()) {
+      uiDefaults.put("OptionButtonUI", BasicOptionButtonUI.class.getCanonicalName());
+    }
   }
 
   /**

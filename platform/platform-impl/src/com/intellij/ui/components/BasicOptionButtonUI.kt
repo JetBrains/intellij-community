@@ -177,7 +177,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
         closePopup()
         updateExtraWidth()
         updateTooltip()
-        arrowButton.isVisible = !isSimpleButton
+        updateOptions()
       }
     }
   }
@@ -305,9 +305,19 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     arrowButton.toolTipText = toolTip
   }
 
+  protected open fun updateOptions() {
+    arrowButton.isVisible = !isSimpleButton
+  }
+
   open inner class BaseButton : JButton() {
     override fun hasFocus() = optionButton.hasFocus()
     override fun isDefaultButton() = optionButton.isDefaultButton
+
+    override fun paint(g: Graphics) = if (isSimpleButton) super.paint(g) else cloneAndPaint(g) { paintNotSimple(it) }
+    open fun paintNotSimple(g: Graphics2D) = super.paint(g)
+
+    override fun paintBorder(g: Graphics) = if (isSimpleButton) super.paintBorder(g) else cloneAndPaint(g) { paintBorderNotSimple(it) }
+    open fun paintBorderNotSimple(g: Graphics2D) = super.paintBorder(g)
   }
 
   open inner class MainButton : BaseButton()
@@ -377,5 +387,20 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
     fun createUI(c: JComponent) = BasicOptionButtonUI()
+
+    fun paintBackground(g: Graphics, c: JComponent) {
+      g.color = c.background
+      g.fillRect(0, 0, c.width, c.height)
+    }
+
+    fun cloneAndPaint(g: Graphics, block: (Graphics2D) -> Unit) {
+      val g2 = g.create() as Graphics2D
+      try {
+        block(g2)
+      }
+      finally {
+        g2.dispose()
+      }
+    }
   }
 }

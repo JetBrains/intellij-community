@@ -126,25 +126,10 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           g2.fill(new Rectangle2D.Float(0, bw + lw, lw(g2), getHeight() - (bw + lw) * 2));
 
           g2.setColor(new JBColor(Gray._255, comboBox.isEnabled() ? getForeground() : getOutlineColor(comboBox.isEnabled())));
-          g2.fill(getArrowShape());
+          g2.fill(getArrowShape(getWidth(), getHeight()));
         } finally {
           g2.dispose();
         }
-      }
-
-      private Shape getArrowShape() {
-        int tW = JBUI.scale(8);
-        int tH = JBUI.scale(6);
-        int xU = (getWidth() - tW) / 2 - JBUI.scale(1);
-        int yU = (getHeight() - tH) / 2 + JBUI.scale(1);
-
-        Path2D path = new Path2D.Float();
-        path.moveTo(xU, yU);
-        path.lineTo(xU + tW, yU);
-        path.lineTo(xU + tW/2, yU + tH);
-        path.lineTo(xU, yU);
-        path.closePath();
-        return path;
       }
 
       @Override
@@ -165,6 +150,22 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @Override
   protected Insets getInsets() {
     return JBUI.insets(3, 8, 3, 3).asUIResource();
+  }
+
+  @NotNull
+  public static Shape getArrowShape(int width, int height) {
+    int tW = JBUI.scale(8);
+    int tH = JBUI.scale(6);
+    int xU = (width - tW) / 2 - JBUI.scale(1);
+    int yU = (height - tH) / 2 + JBUI.scale(1);
+
+    Path2D path = new Path2D.Float();
+    path.moveTo(xU, yU);
+    path.lineTo(xU + tW, yU);
+    path.lineTo(xU + tW / 2, yU + tH);
+    path.lineTo(xU, yU);
+    path.closePath();
+    return path;
   }
 
   @Override
