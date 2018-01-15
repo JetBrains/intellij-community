@@ -19,8 +19,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -29,6 +31,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
+import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Arrays.asList;
 
@@ -155,12 +158,14 @@ public class CustomDictionariesPanel extends JPanel {
 
     @NotNull private final List<String> myDefaultDictionaries;
     @NotNull private List<String> myDisabled;
+    final TableCellRenderer myTypeRenderer;
 
     private CustomDictionariesTableView(@NotNull List<String> dictionaries,
                                         @NotNull List<String> defaultDictionaries,
                                         @NotNull List<String> disabled) {
       myDefaultDictionaries = defaultDictionaries;
       myDisabled = disabled;
+      myTypeRenderer = createTypeRenderer(myDefaultDictionaries);
       setModelAndUpdateColumns(new ListTableModel<>(createDictionaryColumnInfos(), concat(defaultDictionaries, dictionaries), 1));
       setAutoResizeMode(AUTO_RESIZE_LAST_COLUMN);
       getColumnModel().getColumn(0).setResizable(false);
@@ -178,6 +183,38 @@ public class CustomDictionariesPanel extends JPanel {
 
     public void setDisabled(@NotNull List<String> disabled) {
       myDisabled = disabled;
+    }
+
+    private static TableCellRenderer createTypeRenderer(List<String> defaultDictionaries) {
+      return new TableCellRenderer() {
+        final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+
+        public Component getTableCellRendererComponent(final JTable table,
+                                                       final Object value,
+                                                       final boolean isSelected,
+                                                       final boolean hasFocus,
+                                                       final int row,
+                                                       final int column) {
+
+          myLabel.clear();
+          myLabel.append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+          final String type;
+          if (defaultDictionaries.contains(value)) {
+            type = SpellCheckerBundle.message("built.in.dictionary");
+          }
+          else {
+            final CustomDictionaryProvider provider = Stream.of(Extensions.getExtensions(CustomDictionaryProvider.EP_NAME))
+              .filter(dictionaryProvider -> dictionaryProvider.isApplicable((String)value))
+              .findAny()
+              .orElse(null);
+            type = provider != null ? provider.getDictionaryType() : SpellCheckerBundle.message("words.list.dictionary");
+          }
+          myLabel.append(" [" + type + "]", GRAY_ATTRIBUTES);
+          myLabel.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
+          myLabel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
+          return myLabel;
+        }
+      };
     }
 
     private ColumnInfo[] createDictionaryColumnInfos() {
@@ -213,16 +250,11 @@ public class CustomDictionariesPanel extends JPanel {
           public String valueOf(final String info) {
             return info;
           }
-        },
-        new ColumnInfo<String, String>("Type") {
+
+          @Nullable
           @Override
-          public String valueOf(final String info) {
-            final CustomDictionaryProvider provider = Stream.of(Extensions.getExtensions(CustomDictionaryProvider.EP_NAME))
-              .filter(dictionaryProvider -> dictionaryProvider.isApplicable(info))
-              .findAny()
-              .orElse(null);
-            
-            return provider !=null ? provider.getDictionaryType(): "";
+          public TableCellRenderer getRenderer(String s) {
+            return myTypeRenderer;
           }
         }
       };
