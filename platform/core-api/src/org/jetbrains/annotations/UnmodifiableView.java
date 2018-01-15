@@ -19,7 +19,7 @@ import java.lang.annotation.*;
  */
 @Documented
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
+@Target({ElementType.TYPE_USE})
 @ApiStatus.Experimental
 public @interface UnmodifiableView {
 }
