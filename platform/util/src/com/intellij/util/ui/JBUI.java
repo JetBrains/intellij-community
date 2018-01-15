@@ -397,7 +397,8 @@ public class JBUI {
 
     scale = discreteScale(scale);
 
-    if (SystemInfo.isLinux && scale == 1.25f) {
+    // Ignore the correction when UIUtil.DEF_SYSTEM_FONT_SIZE is overridden, see UIUtil.initSystemFontData.
+    if (SystemInfo.isLinux && scale == 1.25f && UIUtil.DEF_SYSTEM_FONT_SIZE == 12) {
       //Default UI font size for Unity and Gnome is 15. Scaling factor 1.25f works badly on Linux
       scale = 1f;
     }
