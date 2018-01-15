@@ -40,10 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
@@ -62,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
@@ -282,6 +280,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
       editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
     }
+    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UI.getColor("link.foreground")) + "; text-decoration: none;}");
+    editorKit.getStyleSheet().addRule("table.sections td { padding-top: 6px; }");
+    editorKit.getStyleSheet().addRule(".definition { padding: 7px 9px 5px 7px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(UI.getColor("panel.separator.color")) + "}");
+    editorKit.getStyleSheet().addRule(".content { padding: 7px 9px 0 7px; line-height: 18px; }");
+    editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 7px 6px; line-height: 18px; }");
+    editorKit.getStyleSheet().addRule(".section { color: #909090; }");
     myEditorPane.setEditorKit(editorKit);
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
@@ -1138,6 +1142,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     protected void setupCorners() {
       super.setupCorners();
       setBorder(JBUI.Borders.empty());
+    }
+
+    @Override
+    public Border getViewportBorder() {
+      return null;
     }
 
     @Override

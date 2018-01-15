@@ -755,7 +755,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           String message = ex[0] instanceof IndexNotReadyException
-                         ? "Documentation is not available until indices are built."
+                         ? "<div class='content'>Documentation is not available until indices are built.</div>"
                          : CodeInsightBundle.message("javadoc.external.fetch.error.message");
           component.setText(message, null, true);
           callback.setDone();
