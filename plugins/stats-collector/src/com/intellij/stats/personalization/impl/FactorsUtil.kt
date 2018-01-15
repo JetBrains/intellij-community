@@ -51,7 +51,7 @@ object FactorsUtil {
             }
         }
 
-        return if (present) average else average
+        return if (present) average else null
     }
 
 
