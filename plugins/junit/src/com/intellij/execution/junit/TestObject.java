@@ -250,7 +250,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final PathsList classPath = javaParameters.getClassPath();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
-    String launcherVersion = ObjectUtils.notNull(getVersion(classFromCommon), "1.0.0");
+
+    String launcherVersion = getVersion(classFromCommon);
+    if (launcherVersion == null) {
+      LOG.info("Failed to detect junit 5 launcher version, please configure explicit dependency");
+      return;
+    }
+
     if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
       downloadDependenciesWhenRequired(project, classPath,
                                        new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
