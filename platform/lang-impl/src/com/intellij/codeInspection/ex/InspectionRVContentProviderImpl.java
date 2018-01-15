@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ex;
@@ -110,7 +110,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final RefEntity refElement = container.getRefEntity();
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     final CommonProblemDescriptor[] problems = ((RefEntityContainer<CommonProblemDescriptor>)container).getDescriptors();
-    if (problems != null) {
+    if (problems != null && problems.length != 0) {
         final RefElementNode elemNode = addNodeToParent(container, presentation, pNode);
         for (CommonProblemDescriptor problem : problems) {
           assert problem != null;

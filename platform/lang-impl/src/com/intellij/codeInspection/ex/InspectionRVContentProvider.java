@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInspection.ex;
@@ -13,7 +13,6 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -22,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -189,8 +189,20 @@ public abstract class InspectionRVContentProvider {
     InspectionToolWrapper wrapper = toolNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(wrapper);
     Map<String, Set<RefEntity>> content = presentation.getContent();
-    SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problems = presentation.getProblemElements();
-    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, problems::get);
+    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, entity -> {
+      if (context.getUIOptions().FILTER_RESOLVED_ITEMS) {
+        return presentation.isExcluded(entity) ? null : presentation.getProblemElements().get(entity);
+      } else {
+        CommonProblemDescriptor[] problems = ObjectUtils.notNull(presentation.getProblemElements().get(entity), CommonProblemDescriptor.EMPTY_ARRAY);
+        CommonProblemDescriptor[] suppressedProblems = presentation.getSuppressedProblems(entity);
+        CommonProblemDescriptor[] resolvedProblems = presentation.getResolvedProblems(entity);
+        CommonProblemDescriptor[] result = new CommonProblemDescriptor[problems.length + suppressedProblems.length + resolvedProblems.length];
+        System.arraycopy(problems, 0, result, 0, problems.length);
+        System.arraycopy(suppressedProblems, 0, result, problems.length, suppressedProblems.length);
+        System.arraycopy(resolvedProblems, 0, result, problems.length + suppressedProblems.length, resolvedProblems.length);
+        return result;
+      }
+    });
   }
 
   public abstract InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
