@@ -239,7 +239,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     if (myIsPinned.get()) return false;
     if (!ApplicationManager.getApplication().isActive()) return false;
     if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
-    List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
+    List<JBPopup> popups = ContainerUtil.filter(JBPopupFactory.getInstance().getChildPopups(this), popup -> !popup.isDisposed());
     if (!popups.isEmpty()) {
       for (JBPopup popup : popups) {
         popup.cancel();
