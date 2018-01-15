@@ -136,7 +136,7 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.time.Month int length()'>
+    <item name='java.time.Month int length(boolean)'>
         <annotation name='org.jetbrains.annotations.Range'>
             <val name="from" val="28"/>
             <val name="to" val="31"/>
