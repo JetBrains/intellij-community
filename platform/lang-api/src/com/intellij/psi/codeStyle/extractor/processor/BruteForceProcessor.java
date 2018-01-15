@@ -26,14 +26,11 @@ import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResultImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Random;
 
-/**
- * @author Roman.Shein
- * @since 04.08.2015.
- */
 public class BruteForceProcessor extends CodeStyleDeriveProcessor {
 
   public BruteForceProcessor(LangCodeStyleExtractor langExtractor) {
@@ -47,6 +44,11 @@ public class BruteForceProcessor extends CodeStyleDeriveProcessor {
     ValuesExtractionResult container = new ValuesExtractionResultImpl(values);
     Utils.adjustValuesMin(container, differ, indicator);
     return container;
+  }
+
+  @NotNull
+  public String getHTMLReport() {
+    return "";
   }
 
   public void randomizeSettings(CodeStyleSettings settings, Language language) {
