@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ChangeListener;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
   @NonNls private static final String ENVS = "envs";
@@ -104,8 +103,6 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     if (envs.isEmpty()) {
       return;
     }
-
-    envs = new TreeMap<>(envs);
 
     final Element envsElement = new Element(ENVS);
     for (String envName : envs.keySet()) {
