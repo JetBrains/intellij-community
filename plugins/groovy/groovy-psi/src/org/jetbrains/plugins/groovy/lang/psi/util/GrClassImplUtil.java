@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,10 +36,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrTypeDefinitionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyClassImplUtilKt.processPhase;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.isAnnotationResolve;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessTypeParameters;
 
@@ -198,6 +199,10 @@ public class GrClassImplUtil {
                                             @Nullable PsiElement lastParent,
                                             @NotNull PsiElement place) {
     if (isAnnotationResolve(processor)) return true; //don't process class members while resolving annotation
+
+    if (processor.getHint(CompilationPhaseHint.HINT_KEY) != null) {
+      return processPhase(grType, processor, state);
+    }
 
     if (shouldProcessTypeParameters(processor)) {
       for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
