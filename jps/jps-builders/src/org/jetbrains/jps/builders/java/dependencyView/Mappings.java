@@ -1619,38 +1619,35 @@ public class Mappings {
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr ff = p.first;
           final ClassRepr cc = p.second;
-
-          if (!ff.isPrivate()) {
+          if (ff.isPrivate()) {
+            continue;
+          }
+          final boolean sameKind = f.myType.equals(ff.myType) && f.isStatic() == ff.isStatic() && f.isSynthetic() == ff.isSynthetic() && f.isFinal() == ff.isFinal();
+          if (!sameKind || Difference.weakerAccess(f.access, ff.access)) {
             final TIntHashSet propagated = myPresent.propagateFieldAccess(ff.name, cc.name);
-            final Set<UsageRepr.Usage> localUsages = new HashSet<>();
 
+            final Set<UsageRepr.Usage> affectedUsages = new HashSet<>();
             debug("Affecting usages of overridden field in class ", cc.name);
-            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), localUsages, state.myDependants);
+            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), affectedUsages, state.myDependants);
 
-            if (f.isPrivate() || (f.isPublic() && (ff.isPublic() || ff.isPackageLocal())) || (f.isProtected() && ff.isProtected()) || (f.isPackageLocal() && ff.isPackageLocal())) {
-              // nothing
-            }
-            else {
-              UsageConstraint constraint;
-
-              if ((ff.isProtected() && f.isPublic()) || (f.isProtected() && ff.isPublic()) || (ff.isPackageLocal() && f.isProtected())) {
-                constraint = myFuture.new InheritanceConstraint(cc).negate();
+            if (sameKind) {
+              // check if we can reduce the number of usages going to be recompiled
+              UsageConstraint constraint = null;
+              if (f.isProtected()) {
+                // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
+                constraint = myFuture.new InheritanceConstraint(cc);
               }
-              else if (ff.isPublic() && ff.isPackageLocal()) {
-                constraint = myFuture.new PackageConstraint(cc.getPackageName()).negate();
+              else if (f.isPackageLocal()) {
+                // no need to recompile usages in field class' package, since newly added field is accessible in this scope
+                constraint = myFuture.new PackageConstraint(cc.getPackageName());
               }
-              else {
-                final Util.InheritanceConstraint inherit = myFuture.new InheritanceConstraint(cc);
-                final Util.PackageConstraint matchPackage = myFuture.new PackageConstraint(cc.getPackageName());
-                constraint = inherit.negate().and(matchPackage.negate());
-              }
-
-              for (final UsageRepr.Usage usage : localUsages) {
-                state.myUsageConstraints.put(usage, constraint);
+              if (constraint != null) {
+                for (final UsageRepr.Usage usage : affectedUsages) {
+                  state.myUsageConstraints.put(usage, constraint);
+                }
               }
             }
-
-            state.myAffectedUsages.addAll(localUsages);
+            state.myAffectedUsages.addAll(affectedUsages);
           }
         }
       }

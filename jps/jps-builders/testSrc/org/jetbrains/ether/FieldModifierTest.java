@@ -55,4 +55,40 @@ public class FieldModifierTest extends IncrementalTestCase {
   public void testUnsetStaticFinal() {
     doTest();
   }
+
+  public void testHidePackagePrivateWithPackagePrivate() {
+    doTest();
+  }
+
+  public void testHidePackagePrivateWithProtected() {
+    doTest();
+  }
+
+  public void testHidePackagePrivateWithPublic() {
+    doTest();
+  }
+
+  public void testHideProtectedWithPackagePrivate() {
+    doTest();
+  }
+
+  public void testHideProtectedWithProtected() {
+    doTest();
+  }
+
+  public void testHideProtectedWithPublic() {
+    doTest();
+  }
+
+  public void testHidePublicWithPackagePrivate() {
+    doTest();
+  }
+
+  public void testHidePublicWithProtected() {
+    doTest();
+  }
+
+  public void testHidePublicWithPublic() {
+    doTest();
+  }
 }
