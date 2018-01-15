@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.ui.breakpoints;
 
@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -148,13 +147,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (Registry.is("debugger.capture.points")) {
-      StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
-      if (isAgentEnabled()) {
-        points = points.append(CaptureSettingsProvider.getIdeInsertPoints());
-      }
-      points.forEach(c -> track(debugProcess, c));
+    StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
+    if (isAgentEnabled()) {
+      points = points.append(CaptureSettingsProvider.getIdeInsertPoints());
     }
+    points.forEach(c -> track(debugProcess, c));
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
@@ -459,6 +456,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   public static boolean isAgentEnabled() {
-    return Registry.is("debugger.capture.points.agent") && DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+    return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 }

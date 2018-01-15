@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -15,7 +17,6 @@ import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -195,7 +196,7 @@ public class JavaExecutionStack extends XExecutionStack {
         }
 
         // replace the rest with the related stack (if available)
-        if (Registry.is("debugger.capture.points") && frame instanceof JavaStackFrame
+        if (frame instanceof JavaStackFrame
             && AsyncStacksToggleAction.isAsyncStacksEnabled((XDebugSessionImpl)myDebugProcess.getXdebugProcess().getSession())) {
           List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frameProxy, suspendContext, true);
           if (!ContainerUtil.isEmpty(relatedStack)) {

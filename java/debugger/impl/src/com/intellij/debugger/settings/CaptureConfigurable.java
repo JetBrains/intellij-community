@@ -249,14 +249,10 @@ public class CaptureConfigurable implements SearchableConfigurable {
 
     BorderLayoutPanel panel = JBUI.Panels.simplePanel();
     myDebuggerAgent = new JCheckBox(DebuggerBundle.message("label.capture.configurable.debugger.agent"));
-    if (Registry.is("debugger.capture.points.agent")) {
-      panel.addToTop(myDebuggerAgent);
-    }
+    panel.addToTop(myDebuggerAgent);
 
     BorderLayoutPanel debuggerPanel = JBUI.Panels.simplePanel();
-    if (Registry.is("debugger.capture.points.agent")) {
-      debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
-    }
+    debuggerPanel.setBorder(IdeBorderFactory.createTitledBorder("Breakpoints based", false));
     debuggerPanel.addToCenter(decorator.createPanel());
 
     myCaptureVariables = new JCheckBox(DebuggerBundle.message("label.capture.configurable.capture.variables"));
