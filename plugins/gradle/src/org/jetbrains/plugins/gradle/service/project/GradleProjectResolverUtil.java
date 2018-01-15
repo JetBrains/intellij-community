@@ -348,12 +348,12 @@ public class GradleProjectResolverUtil {
     }
 
     for (String path : libraryData.getPaths(LibraryPathType.BINARY)) {
-      final Path file = Paths.get(path);
-      if (!FileUtil.isAncestor(gradleUserHomeDir.getPath(), path, true)) continue;
-      Path binaryFileParent = file.getParent();
-      Path grandParentFile = binaryFileParent.getParent();
-
       try {
+        final Path file = Paths.get(path);
+        if (!FileUtil.isAncestor(gradleUserHomeDir.getPath(), path, true)) continue;
+        Path binaryFileParent = file.getParent();
+        Path grandParentFile = binaryFileParent.getParent();
+
         final boolean[] sourceFound = {false};
         final boolean[] docFound = {false};
         Files.walkFileTree(grandParentFile, EnumSet.noneOf(FileVisitOption.class), 2, new SimpleFileVisitor<Path>() {
@@ -367,7 +367,7 @@ public class GradleProjectResolverUtil {
 
           @Override
           public FileVisitResult visitFile(Path sourceCandidate, BasicFileAttributes attrs) throws IOException {
-            if(!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
+            if (!sourceCandidate.getParent().getParent().equals(grandParentFile)) {
               return FileVisitResult.SKIP_SIBLINGS;
             }
             if (attrs.isRegularFile()) {
@@ -387,7 +387,7 @@ public class GradleProjectResolverUtil {
           }
         });
       }
-      catch (IOException e) {
+      catch (IOException | InvalidPathException e) {
         LOG.debug(e);
       }
     }
