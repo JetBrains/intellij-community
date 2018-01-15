@@ -31,9 +31,13 @@ import com.jetbrains.completion.ranker.features.impl.FeatureUtils
 class LookupCompletedTracker : LookupAdapter() {
     override fun lookupCanceled(event: LookupEvent?) {
         val lookup = event?.lookup as? LookupImpl ?: return
-        val element = lookup.currentItem ?: return
-        if (isSelectedByTyping(lookup, element)) {
+        val element = lookup.currentItem
+        if (element != null && isSelectedByTyping(lookup, element)) {
             processTypedSelect(lookup, element)
+        } else {
+            UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_FINISH_TYPE) { updater ->
+                updater.fireLookupCancelled()
+            }
         }
     }
 
