@@ -35,7 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -113,7 +113,13 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
 
     Component findChildToFocus (Component component) {
-
+      final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
+      if (ancestor != null) {
+        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
+        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
+          return mostRecentFocusOwner;
+        }
+      }
       if (component instanceof JPanel) {
         JPanel container = (JPanel)component;
         final FocusTraversalPolicy policy = container.getFocusTraversalPolicy();
@@ -162,7 +168,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     }
     setFocusCycleRoot(true);
     setFocusTraversalPolicy(new MyFocusTraversalPolicy());
-    setFocusable(false);
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);

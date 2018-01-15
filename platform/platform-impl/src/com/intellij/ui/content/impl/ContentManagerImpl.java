@@ -25,7 +25,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -99,8 +98,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
       NonOpaquePanel contentComponent = new NonOpaquePanel();
       contentComponent.setContent(myUI.getComponent());
-      // If screen reader is active, allow TAB/Shift-TAB navigate outside the contents panel.
-      contentComponent.setFocusCycleRoot(!ScreenReader.isActive());
 
       myComponent.add(contentComponent, BorderLayout.CENTER);
     }
@@ -484,9 +481,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
         addSelectedContent(content);
 
-        if (requestFocus) {
-          return requestFocus(content, forcedFocus);
-        }
+        content.getComponent().transferFocus();
         return ActionCallback.DONE;
       }
     };
@@ -598,15 +593,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     final Content toSelect = content == null ? getSelectedContent() : content;
     if (toSelect == null) return ActionCallback.REJECTED;
     assert myContents.contains(toSelect);
-
-
-    return getFocusManager().requestFocus(new FocusCommand(content, toSelect.getPreferredFocusableComponent()) {
-      @NotNull
-      @Override
-      public ActionCallback run() {
-        return doRequestFocus(toSelect);
-      }
-    }, forced);
+    JComponent preferredFocusableComponent = toSelect.getPreferredFocusableComponent();
+    return preferredFocusableComponent != null ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject) : ActionCallback.REJECTED;
   }
 
   private IdeFocusManager getFocusManager() {

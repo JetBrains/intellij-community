@@ -71,7 +71,7 @@ public class GitLogUtil {
       return Collections.emptyList();
     }
 
-    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = createGitHandler(project, root);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
                                            AUTHOR_EMAIL, COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
     h.setSilent(true);
@@ -108,7 +108,7 @@ public class GitLogUtil {
       return;
     }
 
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLineHandler handler = createGitHandler(project, root);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
                                            AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
     handler.setStdoutSuppressed(true);
@@ -279,7 +279,7 @@ public class GitLogUtil {
                                   @NotNull DiffRenameLimit renameLimit,
                                   @NotNull Consumer<GitLogRecord> converter,
                                   String... parameters) throws VcsException {
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(withChanges, renameLimit));
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(withChanges, renameLimit));
     readRecordsFromHandler(project, root, withRefs, withChanges, converter, handler, parameters);
   }
 
@@ -349,7 +349,7 @@ public class GitLogUtil {
         commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
       }
     };
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, createConfigParameters(true, renameLimit));
+    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, renameLimit));
     sendHashesToStdin(vcs, hashes, handler);
 
     readRecordsFromHandler(project, root, false, true, recordCollector, handler, getNoWalkParameter(vcs), STDIN);
@@ -387,6 +387,16 @@ public class GitLogUtil {
   @NotNull
   public static String getNoWalkParameter(@NotNull GitVcs vcs) {
     return GitVersionSpecialty.NO_WALK_UNSORTED.existsIn(vcs.getVersion()) ? "--no-walk=unsorted" : "--no-walk";
+  }
+
+  @NotNull
+  private static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
+    return createGitHandler(project, root, Collections.emptyList());
+  }
+
+  @NotNull
+  private static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> configParameters) {
+    return new GitLineHandler(project, root, GitCommand.LOG, configParameters, false);
   }
 
   @NotNull

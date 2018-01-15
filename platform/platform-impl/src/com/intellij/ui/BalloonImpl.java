@@ -489,7 +489,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         public void run() {
           IdeEventQueue.getInstance().disableInputMethods(BalloonImpl.this);
           originalFocusOwner.set(myFocusManager.getFocusOwner());
-          focusRequestor.set(myFocusManager.getFurtherRequestor());
         }
       });
     }

@@ -1458,10 +1458,11 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         String chunkText = pair.getFirst();
         ConsoleViewContentType chunkType = pair.getSecond();
         if (chunkType.equals(ConsoleViewContentType.USER_INPUT)) {
-          type(getEditor(), chunkText);
+          doInsertUserInput(offset, chunkText);
+          offset += chunkText.length();
         }
         else {
-          print(chunkText, chunkType);
+          print(chunkText, chunkType, null);
         }
       }
     }

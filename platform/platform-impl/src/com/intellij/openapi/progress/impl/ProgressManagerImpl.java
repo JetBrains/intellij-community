@@ -15,7 +15,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -172,7 +171,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   protected CheckCanceledHook createCheckCanceledHook() {
     if (myHooks.isEmpty()) return null;
 
-    CheckCanceledHook[] activeHooks = ArrayUtil.stripTrailingNulls(myHooks.toArray(new CheckCanceledHook[0]));
+    CheckCanceledHook[] activeHooks = myHooks.toArray(new CheckCanceledHook[0]);
     return activeHooks.length == 1 ? activeHooks[0] : indicator -> {
       boolean result = false;
       for (CheckCanceledHook hook : activeHooks) {

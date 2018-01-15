@@ -262,6 +262,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     else {
       Rectangle bounds = new Rectangle(location, myTipComponent.getPreferredSize());
       myPopup.setBounds(bounds);
+      myPopup.onAncestorFocusLost(() -> onFocusLost());
       myPopup.setVisible(noIntersections(bounds));
       repaintKeyItem();
     }

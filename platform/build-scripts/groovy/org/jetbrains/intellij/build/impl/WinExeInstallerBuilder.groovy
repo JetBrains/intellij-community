@@ -39,7 +39,7 @@ class WinExeInstallerBuilder {
 
   private void generateInstallationConfigFileForSilentMode() {
     File silentConfigFile = new File (customizer.silentInstallationConfig == null ?
-                          "$buildContext.paths.communityHome/build/conf/nsis/silent.config" :
+                          "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config" :
                           customizer.silentInstallationConfig)
     if (! silentConfigFile.exists()) {
       buildContext.messages.error(

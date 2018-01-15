@@ -39,14 +39,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 class ActionTracker {
   private boolean myActionsHappened;
   private final Editor myEditor;
-  private final Expirable myFocusStamp;
   private final Project myProject;
   private boolean myIgnoreDocumentChanges;
 
   ActionTracker(Editor editor, Disposable parentDisposable) {
     myEditor = editor;
     myProject = editor.getProject();
-    myFocusStamp = IdeFocusManager.getInstance(myProject).getTimestamp(true);
     ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
@@ -78,7 +76,7 @@ class ActionTracker {
   }
 
   boolean hasAnythingHappened() {
-    return myActionsHappened || myFocusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() ||
+    return myActionsHappened || DumbService.getInstance(myProject).isDumb() ||
            myEditor.isDisposed() ||
            (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid());
   }

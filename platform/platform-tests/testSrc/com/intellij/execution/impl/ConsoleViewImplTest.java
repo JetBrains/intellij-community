@@ -430,6 +430,14 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
       myConsole.print(chunk, ConsoleViewContentType.USER_INPUT);
       expectedText.append("+!" + i + "-!");
       expectedRegisteredTokens.add(Pair.create(chunk, ConsoleViewContentType.USER_INPUT));
+
+      for (int j = 0; j < chunk.length(); j++) {
+        typeIn(myConsole.getEditor(), chunk.charAt(j));
+      }
+      chunk.chars().forEach(c->{
+        expectedText.append("+!" + (char)c + "-!");
+        expectedRegisteredTokens.add(Pair.create(String.valueOf((char)c), ConsoleViewContentType.USER_INPUT));
+      });
     }
     myConsole.flushDeferredText();
     myConsole.waitAllRequests();

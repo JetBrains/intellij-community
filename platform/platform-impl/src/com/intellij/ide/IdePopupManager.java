@@ -52,8 +52,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     LOG.assertTrue(isPopupActive());
 
     if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        if (!isPopupActive()) return;
+        if (!isPopupActive()) return false;
 
         boolean shouldCloseAllPopup = false;
 
@@ -83,14 +82,13 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
           else if (focused instanceof Dialog && ((Dialog)focused).isModal()) {
             // close all popups except one that is opening a modal dialog
             closeAllPopups(true, focused.getOwner());
-            return;
+            return false;
           }
         }
 
         if (shouldCloseAllPopup) {
           closeAllPopups();
         }
-      });
     }
 
     if (e instanceof KeyEvent || e instanceof MouseEvent) {

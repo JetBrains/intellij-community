@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ui;
 
@@ -34,6 +34,7 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class DefaultInspectionToolPresentation implements InspectionToolPresentation {
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolPresentation.class);
@@ -87,6 +89,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
     return myResolvedElements.keys();
   }
 
+  @NotNull
+  @Override
+  public CommonProblemDescriptor[] getResolvedProblems(@NotNull RefEntity entity) {
+    return myResolvedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
+  }
+
   public void suppressProblem(@NotNull CommonProblemDescriptor descriptor) {
     mySuppressedElements.put(myProblemElements.removeValue(descriptor), descriptor);
   }
@@ -107,6 +115,12 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   @Override
   public boolean isSuppressed(CommonProblemDescriptor descriptor) {
     return mySuppressedElements.containsValue(descriptor);
+  }
+
+  @NotNull
+  @Override
+  public CommonProblemDescriptor[] getSuppressedProblems(@NotNull RefEntity entity) {
+    return mySuppressedElements.getOrDefault(entity, CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -407,9 +421,21 @@ public class DefaultInspectionToolPresentation implements InspectionToolPresenta
   }
 
   protected void updateProblemElements() {
-    final Collection<RefEntity> elements = getProblemElements().keys();
+    final Set<RefEntity> elements;
+    if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
+      // only non-excluded actual problems
+      elements = getProblemElements().keys().stream().filter(entity -> !isExcluded(entity)).collect(Collectors.toSet());
+    }
+    else {
+      // add actual problems
+      elements = new THashSet<>(getProblemElements().keys());
+      // add quick-fixed elements
+      elements.addAll(getResolvedElements());
+      // add suppressed elements
+      elements.addAll(mySuppressedElements.keys());
+    }
+
     for (RefEntity element : elements) {
-      if (getContext().getUIOptions().FILTER_RESOLVED_ITEMS && (isProblemResolved(element) || isSuppressed(element) || isExcluded(element))) continue;
       String groupName = element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName() ;
       registerContentEntry(element, groupName);
     }

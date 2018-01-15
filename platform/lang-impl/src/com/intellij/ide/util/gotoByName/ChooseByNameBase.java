@@ -523,6 +523,11 @@ public abstract class ChooseByNameBase {
                 return; // Allow toolwindows to gain focus (used by QuickDoc shown in a toolwindow)
               }
 
+              if (UIUtil.haveCommonOwner(oppositeComponent, e.getComponent()))
+              {
+                return;
+              }
+
               hideHint();
             }
           }, 5);
