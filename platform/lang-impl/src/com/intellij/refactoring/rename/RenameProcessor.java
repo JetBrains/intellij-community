@@ -370,6 +370,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
     for (final PsiElement element : myAllRenames.keySet()) {
+      LOG.assertTrue(element.isValid());
       String newName = myAllRenames.get(element);
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);
