@@ -267,7 +267,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean moveSemicolonAtRParen(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, int caretOffset) {
-    if (!Registry.is("editor.move.semicolon.before.rparen")) {
+    if (!Registry.is("editor.move.semicolon.after.paren")) {
       return false;
     }
 
