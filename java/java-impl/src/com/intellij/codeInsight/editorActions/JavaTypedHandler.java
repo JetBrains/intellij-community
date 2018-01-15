@@ -40,6 +40,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PsiErrorElementUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -273,27 +274,21 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(caretOffset);
     int afterLastParenOffset = -1;
 
-    try {
-      while (!it.atEnd()) {
-        if (isAtLineEnd(it)) {
-          break;
-        }
-        else if (it.getTokenType() == JavaTokenType.RBRACE) {
-          break;
-        }
-        else if (it.getTokenType() == JavaTokenType.RPARENTH) {
-          afterLastParenOffset = it.getEnd();
-        }
-        else if (it.getTokenType() != TokenType.WHITE_SPACE) {
-          // Other tokens are not permitted
-          return false;
-        }
-        it.advance();
+    while (!it.atEnd()) {
+      if (isAtLineEnd(it)) {
+        break;
       }
-    }
-    catch (IndexOutOfBoundsException ex) {
-      // May be thrown when checking character at the current offset.
-      return false;
+      else if (it.getTokenType() == JavaTokenType.RBRACE) {
+        break;
+      }
+      else if (it.getTokenType() == JavaTokenType.RPARENTH) {
+        afterLastParenOffset = it.getEnd();
+      }
+      else if (it.getTokenType() != TokenType.WHITE_SPACE) {
+        // Other tokens are not permitted
+        return false;
+      }
+      it.advance();
     }
 
     if (!it.atEnd() && afterLastParenOffset >= 0 && afterLastParenOffset >= caretOffset) {
@@ -314,7 +309,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
           int stmtEndOffset = curStmt.getTextRange().getEndOffset();
           if (stmtEndOffset == afterLastParenOffset || stmtEndOffset == it.getStart()) {
             editor.getDocument().insertString(stmtEndOffset, ";");
-            EditorModificationUtil.moveCaretRelatively(editor, stmtEndOffset - caretOffset + 1);
+            editor.getCaretModel().moveToOffset(stmtEndOffset + 1);
             return true;
           }
         }
@@ -326,12 +321,8 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
   private static boolean isAtLineEnd(HighlighterIterator it) {
     if (it.getTokenType() == TokenType.WHITE_SPACE) {
-      for (int offset = it.getStart(); offset < it.getEnd(); ++offset) {
-        char chr = it.getDocument().getCharsSequence().charAt(offset);
-        if (chr == '\n') {
-          return true;
-        }
-      }
+      CharSequence tokenText = it.getDocument().getImmutableCharSequence().subSequence(it.getStart(), it.getEnd());
+      return CharArrayUtil.containLineBreaks(tokenText);
     }
     return false;
   }
