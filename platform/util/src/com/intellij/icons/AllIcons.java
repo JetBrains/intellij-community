@@ -675,6 +675,7 @@ public class AllIcons {
     public static final Icon Error = IconLoader.getIcon("/ide/error.png"); // 16x16
     public static final Icon Error_notifications = IconLoader.getIcon("/ide/error_notifications.png"); // 16x16
     public static final Icon ErrorPoint = IconLoader.getIcon("/ide/errorPoint.png"); // 6x6
+    public static final Icon External_link_arrow = IconLoader.getIcon("/ide/external_link_arrow.png"); // 14x14
     public static final Icon FatalError_read = IconLoader.getIcon("/ide/fatalError-read.png"); // 16x16
     public static final Icon FatalError = IconLoader.getIcon("/ide/fatalError.png"); // 16x16
     public static final Icon HectorNo = IconLoader.getIcon("/ide/hectorNo.png"); // 16x16

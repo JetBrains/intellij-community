@@ -30,6 +30,7 @@ import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -274,7 +275,51 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myEditorPane.getCaret().setVisible(true);
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    HTMLEditorKit editorKit = UIUtil.getHTMLEditorKit(false);
+    HTMLEditorKit editorKit = new UIUtil.JBHtmlEditorKit(true) {
+      @Override
+      public ViewFactory getViewFactory() {
+        return new HTMLFactory() {
+          @Override
+          public View create(Element elem) {
+            if ("icon".equals(elem.getName())) {
+              final Object src = elem.getAttributes().getAttribute(HTML.Attribute.SRC);
+              final Icon icon = src != null ? IconLoader.getIcon((String)src) : null;
+              if (icon != null) {
+                return new View(elem) {
+                  @Override
+                  public float getPreferredSpan(int axis) {
+                    switch (axis) {
+                      case View.X_AXIS:
+                        return icon.getIconWidth();
+                      case View.Y_AXIS:
+                        return icon.getIconHeight();
+                      default:
+                        throw new IllegalArgumentException("Invalid axis: " + axis);
+                    }
+                  }
+
+                  @Override
+                  public void paint(Graphics g, Shape allocation) {
+                    icon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
+                  }
+
+                  @Override
+                  public Shape modelToView(int pos, Shape a, Position.Bias b) {
+                    return null;
+                  }
+
+                  @Override
+                  public int viewToModel(float x, float y, Shape a, Position.Bias[] biasReturn) {
+                    return 0;
+                  }
+                };
+              }
+            }
+            return super.create(elem);
+          }
+        };
+      }
+    };
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
     if (isMonospacedFont(editorFontName)) {
       editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
@@ -584,7 +629,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     
     highlightLink(-1);
 
-    myEditorPane.setText(text);
+    myEditorPane.setText(decorate(text));
     applyFontProps();
 
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -610,6 +655,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       } else if (ScreenReader.isActive()) {
         myEditorPane.setCaretPosition(0);
       }});
+  }
+
+  private static String decorate(String text) {
+    text = addExternalLinksIcon(text);
+    return text;
+  }
+
+  private static String addExternalLinksIcon(String text) {
+    return text.replaceAll("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)",
+                           "$1$2<icon src='AllIcons.Ide.External_link_arrow'>$3");
   }
 
   private void applyFontProps() {
