@@ -24,6 +24,9 @@ class JavaUAnnotation(
   override val psi: PsiAnnotation,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UAnnotationEx {
+
+  override val javaPsi: PsiAnnotation = psi
+
   override val qualifiedName: String?
     get() = psi.qualifiedName
 
