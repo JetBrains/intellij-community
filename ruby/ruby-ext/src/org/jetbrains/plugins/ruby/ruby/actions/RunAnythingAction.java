@@ -105,9 +105,16 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider, RightAlignedToolbarAction {
+public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
   public static final String RUN_ANYTHING_HISTORY_KEY = "RunAnythingHistoryKey";
   public static final int SEARCH_FIELD_COLUMNS = 25;
+  public static final String UNKNOWN_CONFIGURATION = "UNKNOWN_CONFIGURATION";
+  public static final String RUN_ICON_TEXT = "RUN_ICON_TEXT";
+  public static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
+  public static final AtomicBoolean ourAltIsPressed = new AtomicBoolean(false);
+  public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
+  public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
+
   private static final int MAX_RAKE = 5;
   private static final int MAX_RUN_CONFIGURATION = 6;
   private static final int MAX_BUNDLER_ACTIONS = 2;
@@ -115,48 +122,32 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final int MAX_RUN_ANYTHING_HISTORY = 50;
   private static final int MAX_GENERATORS = 3;
   private static final int DEFAULT_MORE_STEP_COUNT = 5;
-  static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
+  private static final Logger LOG = Logger.getInstance(RunAnythingAction.class);
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
-
-
-  public static final String UNKNOWN_CONFIGURATION = "UNKNOWN_CONFIGURATION";
-  public static final String SEARCH_ICON_TEXT = "search";
-  public static final String RUN_ICON_TEXT = "RUN_ICON_TEXT";
-
   private static final String SHIFT_SHORTCUT_TEXT = KeymapUtil.getShortcutText(KeyboardShortcut.fromString(("SHIFT")));
   private static final String AD_ACTION_TEXT = String.format("Press %s to run with default settings", SHIFT_SHORTCUT_TEXT);
   private static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
-
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in context of the current file", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-
-
   private AnAction[] myRakeActions = AnAction.EMPTY_ARRAY;
   private AnAction[] myGeneratorsActions = AnAction.EMPTY_ARRAY;
-
   private RunAnythingAction.MyListRenderer myRenderer;
-  MySearchTextField myPopupField;
+  private MySearchTextField myPopupField;
   private Component myFocusComponent;
   private JBPopup myPopup;
-
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
   private JBList myList;
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  public static final AtomicBoolean ourShiftIsPressed = new AtomicBoolean(false);
-  public static final AtomicBoolean ourAltIsPressed = new AtomicBoolean(false);
-  //public static final AtomicBoolean ourModuleWorkingDirectoryIsPressed = new AtomicBoolean(false);
   private volatile ActionCallback myCurrentWorker = ActionCallback.DONE;
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private int myHistoryIndex = 0;
-  boolean mySkipFocusGain = false;
-
+  private boolean mySkipFocusGain = false;
   private volatile JBPopup myBalloon;
   private int myPopupActualWidth;
   private Component myFocusOwner;
-
   private Editor myEditor;
   @Nullable
   private FileEditor myFileEditor;
@@ -164,10 +155,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private AnAction[] myBundlerActions;
   private JLabel myAdComponent;
   private DataContext myDataContext;
-
-  public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
-  static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
-  public static final String RUN_ANYTHING_ACTION_ID = "RunAnything";
+  private static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
