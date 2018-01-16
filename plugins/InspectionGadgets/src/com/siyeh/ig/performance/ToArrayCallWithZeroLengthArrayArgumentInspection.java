@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -40,6 +39,8 @@ import javax.swing.*;
 public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspection {
   private static final CallMatcher COLLECTION_SIZE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0);
+  private static final CallMatcher COLLECTION_TO_ARRAY =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(1);
   private static final String PREFER_EMPTY_ARRAY_SETTING = "PreferEmptyArray";
 
   public enum PreferEmptyArray {
@@ -130,29 +131,19 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   public BaseInspectionVisitor buildVisitor() {
     return new BaseInspectionVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        super.visitMethodCallExpression(expression);
-        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-        @NonNls final String methodName = methodExpression.getReferenceName();
-        if (!"toArray".equals(methodName)) return;
-        final PsiExpressionList argumentList = expression.getArgumentList();
-        final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length != 1) return;
-        final PsiExpression argument = arguments[0];
+      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        if (!COLLECTION_TO_ARRAY.test(call)) return;
+        final PsiExpression argument = call.getArgumentList().getExpressions()[0];
         final PsiType type = argument.getType();
         if (!(type instanceof PsiArrayType)) return;
-        final PsiMethod method = expression.resolveMethod();
-        if (method == null) return;
-        final PsiClass containingClass = method.getContainingClass();
-        if (!InheritanceUtil.isInheritor(containingClass, CommonClassNames.JAVA_UTIL_COLLECTION)) return;
         if (type.getArrayDimensions() != 1) return;
 
         boolean wrongArray =
           myMode.isEmptyPreferred(argument)
-          ? isPresizedArray(argument, methodExpression.getQualifierExpression())
+          ? isPresizedArray(argument, call.getMethodExpression().getQualifierExpression())
           : isEmptyArray(argument);
         if (wrongArray) {
-          registerMethodCallError(expression, expression, argument);
+          registerMethodCallError(call, call, argument);
         }
       }
     };
