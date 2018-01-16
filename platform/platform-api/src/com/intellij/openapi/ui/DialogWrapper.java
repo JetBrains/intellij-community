@@ -1345,7 +1345,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  void startTrackingValidation() {
+  protected void startTrackingValidation() {
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;
