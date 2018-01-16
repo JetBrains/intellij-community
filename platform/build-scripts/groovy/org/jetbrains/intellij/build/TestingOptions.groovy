@@ -31,9 +31,16 @@ class TestingOptions {
   String testGroups = System.getProperty("intellij.build.test.groups", OLD_TEST_GROUP)
 
   /**
-   * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported.
+   * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,
+   * {@link #testGroups} will be ignored.
    */
   String testPatterns = System.getProperty("intellij.build.test.patterns", OLD_TEST_PATTERNS)
+
+  /**
+   * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
+   * {@link #testGroups} and {@link #testPatterns} will be ignored.
+   */
+  String testConfigurations = System.getProperty("intellij.build.test.configurations")
 
   /**
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
@@ -70,7 +77,8 @@ class TestingOptions {
    */
   String customJrePath = System.getProperty("intellij.build.test.jre")
 
-  private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", "ALL_EXCLUDE_DEFINED")
+  public static final String ALL_EXCLUDE_DEFINED_GROUP = "ALL_EXCLUDE_DEFINED"
+  private static final String OLD_TEST_GROUP = System.getProperty("idea.test.group", ALL_EXCLUDE_DEFINED_GROUP)
   private static final String OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
   private static final String OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
   private static final int OLD_DEBUG_PORT = SystemProperties.getIntProperty("debug.port", -1)
