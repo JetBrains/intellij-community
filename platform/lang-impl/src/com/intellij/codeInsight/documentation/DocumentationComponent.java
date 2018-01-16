@@ -655,7 +655,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private String decorate(String text) {
-    final String location = getLocation(text);
+    final String location = getLocationText();
     if (location != null) {
       text = text + "<div class='bottom'>" + location;
     }
@@ -668,13 +668,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                            "$1$2<icon src='AllIcons.Ide.External_link_arrow'>$3");
   }
 
-  private String getLocation(String text) {
+  private String getLocationText() {
     final PsiElement element = getElement();
     if (element != null) {
       PsiFile file = element.getContainingFile();
       VirtualFile vfile = file == null ? null : file.getVirtualFile();
 
-      if (vfile == null) return text;
+      if (vfile == null) return null;
 
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
       final Module module = fileIndex.getModuleForFile(vfile);
@@ -692,7 +692,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     }
 
-    return text;
+    return null;
   }
 
   private void applyFontProps() {
