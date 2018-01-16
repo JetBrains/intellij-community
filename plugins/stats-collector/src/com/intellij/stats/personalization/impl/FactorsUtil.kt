@@ -47,8 +47,8 @@ object FactorsUtil {
     }
 
     fun updateAverageValue(map: MutableMap<String, Double>, valueToAdd: Double) {
-        val count = map["count"]?.toInt()
-        val avg = map["average"]
+        val count = map[COUNT]?.toInt()
+        val avg = map[AVERAGE]
         if (count != null && avg != null) {
             val newAverage = mergeAverage(1, valueToAdd, count, avg)
             updateAverage(map, 1 + count, newAverage)
@@ -65,9 +65,9 @@ object FactorsUtil {
         }
 
         updateAverageValue(map, valueToAdd)
-        val count = map["count"]
-        val average = map["average"]
-        val variance = map["variance"]
+        val count = map[COUNT]
+        val average = map[AVERAGE]
+        val variance = map[VARIANCE]
         if (count != null && average != null && variance != null) {
             update(count.toInt() + 1,
                     mergeAverage(1, valueToAdd, count.toInt(), average),
@@ -82,8 +82,8 @@ object FactorsUtil {
         var average = 0.0
         var present = false
         for (onDate in factor.availableDays().mapNotNull { factor.onDate(it) }) {
-            val avg = onDate["average"]
-            val count = onDate["count"]?.toInt()
+            val avg = onDate[AVERAGE]
+            val count = onDate[COUNT]?.toInt()
             if (avg != null && count != null && count > 0) {
                 present = true
                 average = FactorsUtil.mergeAverage(totalCount, average, count, avg)
@@ -115,7 +115,7 @@ object FactorsUtil {
     }
 
     private fun updateAverage(map: MutableMap<String, Double>, count: Int, avg: Double) {
-        map["count"] = count.toDouble()
-        map["average"] = avg
+        map[COUNT] = count.toDouble()
+        map[AVERAGE] = avg
     }
 }
