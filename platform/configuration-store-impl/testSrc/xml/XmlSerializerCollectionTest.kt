@@ -8,6 +8,7 @@ import com.intellij.openapi.util.JDOMExternalizableStringList
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.SmartList
+import com.intellij.util.element
 import com.intellij.util.loadElement
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
@@ -25,10 +26,33 @@ internal class XmlSerializerCollectionTest {
     bean.list.add("\u0001one")
     bean.list.add("two")
     bean.list.add("three")
-    testSerializer("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
+    testSerializer(
+      """
+      <b>
+      <list>
+        <item value="one" />
+        <item value="two" />
+        <item value="three" />
+      </list>
+      </b>""",
+      bean, SkipDefaultsSerializationFilter())
   }
 
-  @Test fun CollectionBean() {
+  @Test
+  fun jdomExternalizableStringListWithoutClassAttribute() {
+    val testList = arrayOf("foo", "bar")
+    val element = Element("test")
+    val listElement = element.element("list")
+    for (id in testList) {
+      listElement.addContent(Element("item").setAttribute("itemvalue", id))
+    }
+
+    val result = SmartList<String>()
+    JDOMExternalizableStringList.readList(result, element)
+    assertThat(result).isEqualTo(testList.toList())
+  }
+
+  @Test fun collectionBean() {
     val bean = Bean4()
     bean.list.add("one")
     bean.list.add("two")
@@ -36,7 +60,7 @@ internal class XmlSerializerCollectionTest {
     testSerializer("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
   }
 
-  @Test fun CollectionBeanReadJDOMExternalizableStringList() {
+  @Test fun collectionBeanReadJDOMExternalizableStringList() {
     @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
     val list = JDOMExternalizableStringList()
     list.add("one")
