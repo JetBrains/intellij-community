@@ -67,7 +67,7 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
 
     JavaPsiFacadeEx javaFacade = myFixture.getJavaFacade();
     PsiClass inspectionClass = javaFacade.findClass(inspectionName);
-    assertNotNull(inspectionClass);
+    assertNotNull(inspectionName, inspectionClass);
 
     RenameProcessor processor = new RenameProcessor(getProject(), inspectionClass, "New" + inspectionName, true, true);
     for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
@@ -79,6 +79,6 @@ public class InspectionRenameTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.checkResultByFile(testDataSubPath + name + ".xml", testDataSubPath + name + "_after.xml", false);
     VirtualFile descriptionFile = myFixture.findFileInTempDir("inspectionDescriptions/" + expectedDescriptionFileName);
-    assertNotNull(descriptionFile);
+    assertNotNull(expectedDescriptionFileName, descriptionFile);
   }
 }
