@@ -47,12 +47,14 @@ class DoNotSaveDefaultsTest {
   private fun doTest(componentManager: ComponentManagerImpl) {
     val useModCountOldValue = System.getProperty("store.save.use.modificationCount")
 
-    // wake up
-    val appPicoContainer = componentManager.picoContainer
-    ServiceManagerImpl.processAllImplementationClasses(componentManager, { clazz, _ ->
-      appPicoContainer.getComponentInstance(clazz.name)
-      true
-    })
+    // wake up (edt, some configurables want read action)
+    runInEdtAndWait {
+      val appPicoContainer = componentManager.picoContainer
+      ServiceManagerImpl.processAllImplementationClasses(componentManager, { clazz, _ ->
+        appPicoContainer.getComponentInstance(clazz.name)
+        true
+      })
+    }
 
     // <property name="file.gist.reindex.count" value="54" />
     val propertyComponent = PropertiesComponent.getInstance()
