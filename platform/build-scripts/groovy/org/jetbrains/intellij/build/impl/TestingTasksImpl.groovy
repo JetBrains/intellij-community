@@ -131,12 +131,12 @@ class TestingTasksImpl extends TestingTasks {
         [context.getModuleOutputPath(it), context.getModuleTestsOutputPath(it)]
       }
       File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
+      FileUtilRt.createParentDirs(excludedRootsFile)
       excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
       additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
 
-    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, false
-    )
+    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, false)
   }
 
   private void debugTests(String remoteDebugJvmOptions, List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
