@@ -43,6 +43,8 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(1);
   private static final String PREFER_EMPTY_ARRAY_SETTING = "PreferEmptyArray";
 
+  private static final PreferEmptyArray DEFAULT_MODE = PreferEmptyArray.ALWAYS;
+
   public enum PreferEmptyArray {
     ALWAYS("Always"), BY_LEVEL("According to language level"), NEVER("Never (prefer pre-sized array)");
 
@@ -65,12 +67,12 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
 
     @NotNull
     static PreferEmptyArray from(String name) {
-      return StreamEx.of(values()).filterBy(PreferEmptyArray::name, name).findFirst().orElse(ALWAYS);
+      return StreamEx.of(values()).filterBy(PreferEmptyArray::name, name).findFirst().orElse(DEFAULT_MODE);
     }
   }
 
   @NotNull
-  public PreferEmptyArray myMode = PreferEmptyArray.ALWAYS;
+  public PreferEmptyArray myMode = DEFAULT_MODE;
 
   @Nullable
   @Override
@@ -113,9 +115,11 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
 
   @Override
   public void writeSettings(@NotNull Element node) {
-    Element element = new Element(PREFER_EMPTY_ARRAY_SETTING);
-    element.setAttribute("value", myMode.toString());
-    node.addContent(element);
+    if (myMode != DEFAULT_MODE) {
+      Element element = new Element(PREFER_EMPTY_ARRAY_SETTING);
+      element.setAttribute("value", myMode.toString());
+      node.addContent(element);
+    }
   }
 
   @Override
