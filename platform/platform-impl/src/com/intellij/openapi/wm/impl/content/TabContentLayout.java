@@ -28,12 +28,10 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.JBUI;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 
@@ -44,8 +42,6 @@ class TabContentLayout extends ContentLayout {
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
-
-  private final Map<String, BufferedImage> myCached = new HashMap<>();
 
   private final MoreIcon myMoreIcon = new MoreIcon() {
     protected Rectangle getIconRec() {
@@ -112,7 +108,7 @@ class TabContentLayout extends ContentLayout {
     ContentManager manager = myUi.myManager;
     LayoutData data = new LayoutData(myUi);
 
-    data.eachX = 2;
+    data.eachX = 8;
     data.eachY = 0;
 
     if (isIdVisible()) {
@@ -272,98 +268,18 @@ class TabContentLayout extends ContentLayout {
   public void paintComponent(Graphics g) {
     if (!isToDrawTabs()) return;
 
-    boolean prevSelected = false;
-    for (int i = 0; i < myTabs.size(); i++) {
-      boolean last = (i == myTabs.size() - 1) || ((i + 1 < myTabs.size() && myTabs.get(i + 1).getBounds().width == 0));
-      ContentTabLabel each = myTabs.get(i);
-      Rectangle r = each.getBounds();
+    for (ContentTabLabel each : myTabs) {
+      if (each.isSelected() || each.isHovered()) {
+        Rectangle r = each.getBounds();
+        Graphics2D g2d = (Graphics2D)g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-      StringBuilder key = new StringBuilder().append(i);
-      if (each.isSelected()) key.append('s');
-      if (prevSelected) key.append('p');
-      if (last) key.append('l');
-      if (myUi.myWindow.isActive()) key.append('a');
+        g2d.setColor(JBUI.CurrentTheme.ToolWindow.tabSelectedBackground(true));
 
-      BufferedImage image = myCached.get(key.toString());
-      if (image == null || image.getWidth() != r.width || image.getHeight() != r.height) {
-        image = drawToBuffer(r, each.isSelected(), last, prevSelected, myUi.myWindow.isActive());
-        myCached.put(key.toString(), image);
-      }
-      
-      if (image != null) {
-        UIUtil.drawImage(g, image, isIdVisible() ? r.x : r.x - 2, r.y, null);
-      }
-      
-      prevSelected = each.isSelected();
-    }
-  }
-  
-  @Nullable
-  private static BufferedImage drawToBuffer(Rectangle r, boolean selected, boolean last, boolean prevSelected, boolean active) {
-    if (r.width <= 0 || r.height <= 0) return null;
-    BufferedImage image = UIUtil.createImage(r.width, r.height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g2d = image.createGraphics();
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-    if (selected) {
-      if (!UIUtil.isUnderDarcula()) {
-      g2d.setColor(active ? new Color(0, 0, 0, 70) : new Color(0, 0, 0, 90));
-      g2d.fillRect(0, 0, r.width, r.height);
-
-      g2d.setColor(new Color(0, 0, 0, 140));
-      g2d.drawLine(0, 0, r.width - 1, 0);
-      g2d.drawLine(0, 1, 0, r.height - 1);
-
-      g2d.setColor(new Color(0, 0, 0, 20));
-      g2d.drawLine(1, 1, r.width - 1, 1);
-      g2d.drawLine(1, 2, 1, r.height - 2);
-      g2d.drawLine(1, r.height - 1, r.width - 1, r.height - 1);
-
-      g2d.setColor(new Color(0, 0, 0, 60));
-      g2d.drawLine(r.width - 1, 1, r.width - 1, r.height - 2);
-      }
-
-      if (active) {
-        g2d.setColor(new Color(100, 150, 230, 50));
-        g2d.fill(new Rectangle(0, 0, r.width, r.height));
+        g2d.fillRect(isIdVisible() ? r.x : r.x - 2, r.y, r.width, r.height);
+        g2d.dispose();
       }
     }
-    else {
-      g2d.setPaint(UIUtil.getGradientPaint(0, 0, new Color(0, 0, 0, 10), 0, r.height, new Color(0, 0, 0, 30)));
-      g2d.fillRect(0, 0, r.width, r.height);
-
-      final Color c = new Color(255, 255, 255, UIUtil.isUnderDarcula() ? 10 : 80);
-      if (last) {
-        if (prevSelected) {
-          g2d.setColor(c);
-          g2d.drawRect(0, 0, r.width - 2, r.height - 1);
-        } else {
-          g2d.setColor(c);
-          g2d.drawRect(1, 0, r.width - 3, r.height - 1);
-
-          g2d.setColor(new Color(0, 0, 0, 60));
-          g2d.drawLine(0, 0, 0, r.height);
-        }
-
-        g2d.setColor(new Color(0, 0, 0, 60));
-        g2d.drawLine(r.width - 1, 0, r.width - 1, r.height);
-      } else {
-        if (prevSelected) {
-          g2d.setColor(c);
-          g2d.drawRect(0, 0, r.width - 1, r.height - 1);
-        }
-        else {
-          g2d.setColor(c);
-          g2d.drawRect(1, 0, r.width - 2, r.height - 1);
-
-          g2d.setColor(new Color(0, 0, 0, 60));
-          g2d.drawLine(0, 0, 0, r.height);
-        }
-      }
-    }
-
-    g2d.dispose();
-    return image;
   }
 
   @Override
@@ -395,8 +311,6 @@ class TabContentLayout extends ContentLayout {
       myUi.add(each);
       ToolWindowContentUi.initMouseListeners(each, myUi, false);
     }
-    
-    myCached.clear();
   }
 
   @Override
@@ -418,8 +332,6 @@ class TabContentLayout extends ContentLayout {
         .setCleanUpOnLeaveCallback(() -> target.cleanUpOnLeave())
         .install();
     }
-    
-    myCached.clear();
   }
 
   @Override
@@ -429,8 +341,6 @@ class TabContentLayout extends ContentLayout {
       myTabs.remove(tab);
       myContent2Tabs.remove(event.getContent());
     }
-    
-    myCached.clear();
   }
 
   @Override

@@ -30,6 +30,7 @@ import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NonNls;
@@ -422,13 +423,13 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   @Override
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight());
+    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
   }
 
   @Override
   public Dimension getMinimumSize() {
     Dimension size = super.getMinimumSize();
-    return new Dimension(size.width, TabsUtil.getTabsHeight());
+    return new Dimension(size.width, TabsUtil.getTabsHeight(JBUI.CurrentTheme.ToolWindow.tabVerticalPadding()));
   }
 
   private class ActionButton extends Wrapper implements ActionListener, AltStateManager.AltListener {

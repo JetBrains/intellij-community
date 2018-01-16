@@ -32,6 +32,7 @@ import java.lang.ref.WeakReference;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentTabLabel extends ContentTabLabel {
+
   private final ComboIcon myComboIcon = new ComboIcon() {
     @Override
     public Rectangle getIconRec() {

@@ -16,47 +16,11 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.ui.popup.ActiveIcon;
 
-import java.awt.*;
+public abstract class ComboIcon extends AdditionalIcon {
 
-public abstract class ComboIcon {
-
-  private final ActiveIcon myIcon = new ActiveIcon(AllIcons.General.Combo2);
-
-  public void paintIcon(final Component c, final Graphics g) {
-    myIcon.setActive(isActive());
-
-    final Rectangle moreRect = getIconRec();
-
-    if (moreRect == null) return;
-
-    int iconY = getIconY(moreRect);
-    int iconX = getIconX(moreRect);
-
-
-    myIcon.paintIcon(c, g, iconX, iconY);
+  public ComboIcon() {
+    super(AllIcons.General.Combo2);
   }
-
-  protected int getIconX(final Rectangle iconRec) {
-    return iconRec.x + iconRec.width / 2 - getIconWidth() / 2;
-  }
-
-  public int getIconWidth() {
-    return myIcon.getIconWidth();
-  }
-
-  protected int getIconY(final Rectangle iconRec) {
-    return iconRec.y + iconRec.height / 2 - getIconHeight() / 2 + 1;
-  }
-
-  public int getIconHeight() {
-    return myIcon.getIconHeight();
-  }
-
-
-  public abstract Rectangle getIconRec();
-
-  public abstract boolean isActive();
 
 }

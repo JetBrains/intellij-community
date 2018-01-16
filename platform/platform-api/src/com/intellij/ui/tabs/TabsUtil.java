@@ -30,7 +30,10 @@ public class TabsUtil {
   }
 
   public static int getTabsHeight() {
-    return new JLabel("XXX").getPreferredSize().height + 2 + TAB_VERTICAL_PADDING * 2 + TABS_BORDER * 2; 
+    return getTabsHeight(TAB_VERTICAL_PADDING);
   }
-  
+
+  public static int getTabsHeight(int verticalPadding) {
+    return new JLabel("XXX").getPreferredSize().height + 2 + verticalPadding * 2 + TABS_BORDER * 2;
+  }
 }

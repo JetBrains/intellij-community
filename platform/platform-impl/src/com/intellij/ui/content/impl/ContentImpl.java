@@ -250,7 +250,11 @@ public class ContentImpl extends UserDataHolderBase implements Content {
 
   @Override
   public void setCloseable(final boolean closeable) {
+    if(closeable == myCloseable) return;
+
+    boolean old = myCloseable;
     myCloseable = closeable;
+    myChangeSupport.firePropertyChange(IS_CLOSABLE, old, closeable);
   }
 
   @Override

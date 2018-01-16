@@ -22,6 +22,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WatermarkIcon;
 
@@ -63,13 +64,12 @@ public class BaseLabel extends JLabel {
 
   @Override
   public Font getFont() {
-    Font f = UIUtil.getLabelFont();
-    f = f.deriveFont(f.getStyle(), Math.max(11, f.getSize() - 2));
+    Font font = JBUI.CurrentTheme.ToolWindow.headerFont();
     if (myBold) {
-      f = f.deriveFont(Font.BOLD);
+      font = font.deriveFont(Font.BOLD);
     }
 
-    return f;
+    return font;
   }
 
   public static Font getLabelFont() {
