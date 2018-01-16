@@ -104,9 +104,6 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
 
-/**
- * @author Konstantin Bulenkov
- */
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider, RightAlignedToolbarAction {
   public static final String RUN_ANYTHING_HISTORY_KEY = "RunAnythingHistoryKey";
@@ -1201,9 +1198,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     private SearchResult getActions(final String pattern, final int max, AnAction[] actions, String prefix) {
       final SearchResult result = new SearchResult();
-      if ((!Registry.is("run.anything.rake.tasks"))) {
-        return result;
-      }
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
 
       for (AnAction action : actions) {
@@ -1255,7 +1249,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private synchronized void buildPermanentConfigurations(@NotNull String pattern) {
-      SearchResult permanentRunConfigurations = getConfigurations(pattern, MAX_RUN_CONFIGURATION, it -> !isTemporary(it));
+      SearchResult permanentRunConfigurations = getPermanentConfigurations(pattern, MAX_RUN_CONFIGURATION);
 
       if (permanentRunConfigurations.size() > 0) {
         SwingUtilities.invokeLater(() -> {
@@ -1270,7 +1264,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     private synchronized void buildTemporaryConfigurations(@NotNull String pattern) {
-      SearchResult runConfigurations = getConfigurations(pattern, MAX_RUN_CONFIGURATION, it -> isTemporary(it));
+      SearchResult runConfigurations = getTemporaryRunConfigurations(pattern, MAX_RUN_CONFIGURATION);
 
       if (runConfigurations.size() > 0) {
         SwingUtilities.invokeLater(() -> {
