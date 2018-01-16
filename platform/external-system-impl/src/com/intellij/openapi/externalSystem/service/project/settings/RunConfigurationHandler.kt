@@ -3,7 +3,9 @@
  */
 package com.intellij.openapi.externalSystem.service.project.settings
 
+import com.intellij.compiler.options.CompileStepBeforeRun
 import com.intellij.execution.RunManager
+import com.intellij.execution.RunManagerEx
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -108,6 +110,22 @@ class ApplicationRunConfigurationImporter : RunConfigurationImporter {
 
     (cfg["mainClass"] as? String)?.let { runConfiguration.mainClassName = it }
     (cfg["jvmArgs"]   as? String)?.let { runConfiguration.vmParameters = it  }
+    (cfg["programParameters"] as? String)?.let { runConfiguration.programParameters = it }
+    (cfg["envs"] as? Map<*,*>)?.let { runConfiguration.envs = it as MutableMap<String, String> }
+
+    val runManager = RunManager.getInstance(project) as RunManagerEx
+    (cfg["beforeRun"] as? List<*>)?.let {
+      // TODO add extension point
+      it.filterIsInstance(Map::class.java)
+        .firstOrNull { it["id"] == "Make" }
+        ?.let { cfg ->
+          val enabled =(cfg["enabled"] as? Boolean) ?: true
+          runManager.getBeforeRunTasks(runConfiguration, CompileStepBeforeRun.ID).firstOrNull()?.let { beforeRunTask ->
+            beforeRunTask.isEnabled = enabled
+          }
+        }
+
+    }
 
     if (!isDefaults) {
       runConfiguration.setModule(module)
