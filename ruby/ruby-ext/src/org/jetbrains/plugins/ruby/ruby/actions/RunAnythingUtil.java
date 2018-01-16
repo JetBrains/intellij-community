@@ -40,8 +40,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.execution.actions.RunConfigurationsComboBoxAction.EMPTY_ICON;
 import static com.intellij.ide.actions.GotoActionAction.performAction;
@@ -366,7 +366,9 @@ public class RunAnythingUtil {
       }
     }
 
-    RunAnythingCache.getInstance(project).getState().undefinedCommands.add(pattern);
+    Collection<String> commands = RunAnythingCache.getInstance(project).getState().undefinedCommands;
+    if (commands.contains(pattern)) commands.remove(pattern);
+    commands.add(pattern);
 
     RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, pattern);
     undefinedRunAnythingItem.run(getExecutor(), workDirectory);

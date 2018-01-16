@@ -6,7 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.List;
 
 @State(name = "RunAnythingCache", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class RunAnythingCache implements PersistentStateComponent<RunAnythingCache.State> {
@@ -29,6 +29,6 @@ public class RunAnythingCache implements PersistentStateComponent<RunAnythingCac
 
   public static class State {
     @NotNull
-    public Collection<String> undefinedCommands = ContainerUtil.newHashSet();
+    public List<String> undefinedCommands = ContainerUtil.newArrayList();
   }
 }

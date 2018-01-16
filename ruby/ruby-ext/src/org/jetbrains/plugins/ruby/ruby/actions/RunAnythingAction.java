@@ -1549,15 +1549,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       check();
-      for (String command : RunAnythingCache.getInstance(myProject).getState().undefinedCommands) {
-        RunAnythingUndefinedItem RunAnythingUndefinedItem = new RunAnythingUndefinedItem(myProject, myModule, command);
+      for (String command : ContainerUtil.iterateBackward(RunAnythingCache.getInstance(myProject).getState().undefinedCommands)) {
+        RunAnythingUndefinedItem undefinedItem = new RunAnythingUndefinedItem(myProject, myModule, command);
 
-        if (matcher.matches(command) && !myListModel.contains(RunAnythingUndefinedItem)) {
+        if (matcher.matches(command) && !myListModel.contains(undefinedItem)) {
           if (result.size() == max) {
             result.needMore = true;
             break;
           }
-          result.add(RunAnythingUndefinedItem);
+          result.add(undefinedItem);
         }
         check();
       }
