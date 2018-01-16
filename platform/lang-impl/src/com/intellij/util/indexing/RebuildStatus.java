@@ -38,7 +38,8 @@ enum RebuildStatus {
   }
 
   static boolean isOk(ID<?, ?> indexId) {
-    return ourRebuildStatus.get(indexId).get() == OK;
+    AtomicReference<RebuildStatus> rebuildStatus = ourRebuildStatus.get(indexId);
+    return rebuildStatus != null ? rebuildStatus.get() == OK : false;
   }
 
   static boolean requestRebuild(ID<?, ?> indexId) {
