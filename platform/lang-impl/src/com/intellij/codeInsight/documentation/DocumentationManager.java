@@ -66,6 +66,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.codeInsight.documentation.DocumentationComponent.BORDER_COLOR;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
@@ -495,6 +496,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setProject(element.getProject())
+      .setBorderColor(BORDER_COLOR)
       .addListener(updateProcessor)
       .addUserData(updateProcessor)
       .setKeyboardActions(actions)

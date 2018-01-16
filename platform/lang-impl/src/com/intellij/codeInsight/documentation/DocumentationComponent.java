@@ -83,7 +83,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private static final Logger LOG = Logger.getInstance(DocumentationComponent.class);
 
-  private static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf6f6f6), new Color(0x4d4f51));
+  private static final Color DOCUMENTATION_COLOR = new JBColor(new Color(0xf7f7f7), new Color(0x46484a));
+  static final JBColor BORDER_COLOR = new JBColor(new Color(0xadadad), new Color(0x616366));
   public static final ColorKey COLOR_KEY = ColorKey.createColorKey("DOCUMENTATION_COLOR", DOCUMENTATION_COLOR);
 
   private static final Highlighter.HighlightPainter LINK_HIGHLIGHTER = new LinkHighlighter();
@@ -334,7 +335,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UI.getColor("link.foreground")) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule("table.sections td { padding-top: 6px; }");
-    editorKit.getStyleSheet().addRule(".definition { padding: 7px 9px 5px 7px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(UI.getColor("panel.separator.color")) + "}");
+    editorKit.getStyleSheet().addRule(".definition { padding: 7px 9px 5px 7px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "}");
     editorKit.getStyleSheet().addRule(".content { padding: 7px 9px 0 7px; line-height: 18px; }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 0 9px 0 7px; line-height: 18px; }");
     editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 7px 6px; line-height: 18px; }");
