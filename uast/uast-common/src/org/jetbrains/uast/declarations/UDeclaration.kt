@@ -34,7 +34,7 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   /**
    * Returns the declaration name identifier, or null if the declaration is anonymous.
    */
-  val uastAnchor: UElement?
+  val uastAnchor: UIdentifier?
 
   /**
    * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.

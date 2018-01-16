@@ -37,7 +37,7 @@ abstract class AbstractJavaUVariable(givenParent: UElement?) : JavaAbstractUElem
   override val annotations by lz { psi.annotations.map { JavaUAnnotation(it, this) } }
   override val typeReference by lz { getLanguagePlugin().convertOpt<UTypeReferenceExpression>(psi.typeElement, this) }
 
-  override val uastAnchor: UElement
+  override val uastAnchor: UIdentifier
     get() = UIdentifier(psi.nameIdentifier, this)
 
   override fun equals(other: Any?) = other is AbstractJavaUVariable && psi == other.psi

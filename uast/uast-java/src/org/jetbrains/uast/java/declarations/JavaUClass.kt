@@ -49,7 +49,7 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
              psi.implementsList?.referenceElements?.map(::createJavaUTypeReferenceExpression).orEmpty()
     }
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
     get() = UIdentifier(psi.nameIdentifier, this)
 
   override val annotations: List<UAnnotation>

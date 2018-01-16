@@ -29,7 +29,7 @@ class JavaUClassInitializer(
 
   override val javaPsi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
     get() = null
 
   override val uastBody by lz {

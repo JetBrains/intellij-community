@@ -45,7 +45,7 @@ open class JavaUMethod(
   override val isOverride: Boolean
     get() = psi.modifierList.findAnnotation("java.lang.Override") != null
 
-  override val uastAnchor: UElement
+  override val uastAnchor: UIdentifier
     get() = UIdentifier((psi.originalElement as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi.nameIdentifier, this)
 
   override fun equals(other: Any?) = other is JavaUMethod && psi == other.psi
