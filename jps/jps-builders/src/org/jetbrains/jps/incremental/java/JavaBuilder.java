@@ -824,7 +824,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                                             List<String> options,
                                             CompileContext context, ModuleChunk chunk,
                                             @Nullable ProcessorConfigProfile profile) {
-    if (!isEncodingSet(options)) {
+    if (!options.contains("-encoding")) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
       if (config.getAllModuleChunkEncodings(chunk).size() > 1) {
@@ -988,15 +988,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return JpsJavaSdkType.getJavaVersion(sdk);
     }
     return 0;
-  }
-
-  private static boolean isEncodingSet(List<String> options) {
-    for (String option : options) {
-      if ("-encoding".equals(option)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static int getChunkSdkVersion(ModuleChunk chunk) {
