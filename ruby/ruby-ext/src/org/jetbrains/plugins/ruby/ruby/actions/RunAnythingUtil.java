@@ -96,7 +96,7 @@ public class RunAnythingUtil {
     return PropertiesComponent.getInstance().getInt("run.anything.max.popup.width", JBUI.scale(600));
   }
 
-  static void initTooltip(JLabel label) {
+  static void initTooltip(JComponent label) {
     label.setToolTipText("<html><body>Press <b>" + getShortcut() + "</b> to execute any command</body></html>");
   }
 

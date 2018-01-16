@@ -166,6 +166,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private RunAnythingHistoryItem myHistoryItem;
   private AnAction[] myBundlerActions;
   private JLabel myAdComponent;
+  private DataContext myDataContext;
 
   public static final Key<JBPopup> RUN_ANYTHING_POPUP = new Key<>("RunAnythingPopup");
   static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
@@ -203,8 +204,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }, null);
   }
 
-  private DataContext myDataContext;
-
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
     JPanel panel = new BorderLayoutPanel() {
@@ -215,7 +214,12 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     };
     panel.setOpaque(false);
 
-    final JLabel label = new JBLabel(RubyIcons.RunAnything.Run_anything);
+    final JLabel label = new JBLabel(RubyIcons.RunAnything.Run_anything) {
+      {
+        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
+        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
+      }
+    };
     panel.add(label, BorderLayout.CENTER);
     RunAnythingUtil.initTooltip(label);
     label.addMouseListener(new MouseAdapter() {
@@ -232,6 +236,20 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           ToolbarClicksCollector.record(RunAnythingAction.this, toolbar.getPlace());
         }
         actionPerformed(null, e);
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        if (myBalloon == null || myBalloon.isDisposed()) {
+          label.setIcon(AllIcons.Nodes.Desktop);
+        }
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        if (myBalloon == null || myBalloon.isDisposed()) {
+          label.setIcon(RubyIcons.RunAnything.Run_anything);
+        }
       }
     });
 
@@ -893,7 +911,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
     }).registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), editor, balloon);
 
-    DumbAwareAction.create(e -> executeCommand()).registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER", "alt ENTER", "meta ENTER"), editor, balloon);
+    DumbAwareAction.create(e -> executeCommand())
+      .registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER", "shift ENTER", "alt ENTER", "meta ENTER"), editor, balloon);
 
     DumbAwareAction.create(e -> {
       //todo
@@ -1229,7 +1248,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         generators,
         () -> myListModel.titleIndex.generators = myListModel.size(),
         () -> myListModel.moreIndex.generators = generators.size() >= MAX_GENERATORS ? myListModel.size() - 1 : -1);
-      }
+    }
 
     private synchronized void buildPermanentConfigurations(@NotNull String pattern) {
       SearchResult permanentRunConfigurations = getConfigurations(pattern, MAX_RUN_CONFIGURATION, it -> !isTemporary(it));
@@ -1563,7 +1582,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
 
       return result;
-      }
+    }
 
 
     private SearchResult getRakeTasks(String pattern, int count) {
@@ -1681,7 +1700,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         editor.setForeground(Gray._240);
       }
     }
-  
+
     @Override
     protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
       if (UIUtil.isUnderDarcula()) {
@@ -1700,21 +1719,21 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
       return true;
     }
-  
+
     @Override
     protected boolean isSearchControlUISupported() {
       return true;
     }
-  
+
     @Override
     protected boolean hasIconsOutsideOfTextField() {
       return false;
     }
-  
+
     @Override
     protected void showPopup() {
     }
-  
+
     @Nullable
     @Override
     public Object getData(@NonNls String dataId) {
@@ -1723,7 +1742,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       }
       return null;
     }
-  
+
     @Override
     public void dispose() {
     }
