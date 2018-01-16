@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast
 
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
@@ -25,6 +26,8 @@ import org.jetbrains.uast.visitor.UastVisitor
  * An annotation wrapper to be used in [UastVisitor].
  */
 interface UAnnotation : UElement, UResolvable {
+
+  override val javaPsi: PsiAnnotation?
   /**
    * Returns the annotation qualified name.
    */
