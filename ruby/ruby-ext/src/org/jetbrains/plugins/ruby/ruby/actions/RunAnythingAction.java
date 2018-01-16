@@ -819,12 +819,15 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     if (myModule != null && RailsFacetUtil.hasRailsSupport(myModule)) {
       RakeTask rakeTasks = RakeTaskModuleCache.getInstance(myModule).getRakeTasks();
       if (rakeTasks != null) {
-        myRakeActions = RakeTaskModuleCache.getInstance(myModule).getRakeActions();
-        Arrays.stream(myRakeActions).forEach(rakeAction -> {
-          if (rakeAction instanceof RakeAction) {
-            ((RakeAction)rakeAction).updateAction(myDataContext, rakeAction.getTemplatePresentation());
-          }
-        });
+        myRakeActions = Arrays.stream(RakeTaskModuleCache.getInstance(myModule).getRakeActions())
+          .filter(RakeAction.class::isInstance)
+          .map(RakeAction.class::cast)
+          .filter(action -> {
+            RakeTask task = action.getTask(myModule);
+            return task != null && task.isDescriptionProvided();
+          })
+          .peek(rakeAction -> rakeAction.updateAction(myDataContext, rakeAction.getTemplatePresentation()))
+          .toArray(AnAction[]::new);
       }
 
       myGeneratorsActions = GeneratorsActionGroup.collectGeneratorsActions(myModule, false).toArray(AnAction.EMPTY_ARRAY);
@@ -934,7 +937,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myListModel.titleIndex.shift(index, shift);
       moreIndex.shift(index, shift);
 
-      ScrollingUtil.selectItem(myList, index < myListModel.size() ? index : index - 1);
+      //todo
+      //ScrollingUtil.selectItem(myList, index < myListModel.size() ? index : index - 1);
 
       updatePopupBounds();
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("shift BACK_SPACE"), editor, balloon);
