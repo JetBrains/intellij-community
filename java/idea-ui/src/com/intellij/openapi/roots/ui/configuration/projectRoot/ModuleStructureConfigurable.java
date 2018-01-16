@@ -326,11 +326,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           myContext.getDaemonAnalyzer().removeElement(new LibraryProjectStructureElement(myContext, library));
         }
       }
-
-      @Override
-      public void itemsExternallyChanged() {
-        //do nothing
-      }
     });
   }
 
@@ -397,16 +392,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   public JComponent createComponent() {
     return new MyDataProviderWrapper(super.createComponent());
-  }
-
-  @Override
-  protected void processRemovedItems() {
-    // do nothing
-  }
-
-  @Override
-  protected boolean wasObjectStored(Object editableObject) {
-    return false;
   }
 
   @Override

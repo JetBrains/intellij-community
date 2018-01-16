@@ -254,7 +254,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   protected DefaultActionGroup createToolbarActionGroup() {
-    final ArrayList<AnAction> actions = createActions(false);
+    final List<AnAction> actions = createActions(false);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
@@ -430,10 +430,9 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   }
 
   @Nullable
-  protected ArrayList<AnAction> createActions(final boolean fromPopup) {
+  protected List<AnAction> createActions(boolean fromPopup) {
     return null;
   }
-
 
   protected void initTree() {
     ((DefaultTreeModel)myTree.getModel()).setRoot(myRoot);
@@ -465,7 +464,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         }
       }
     });
-    ArrayList<AnAction> actions = createActions(true);
+    List<AnAction> actions = createActions(true);
     if (actions != null) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (AnAction action : actions) {
@@ -908,7 +907,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected interface ItemsChangeListener {
     void itemChanged(@Nullable Object deletedItem);
 
-    void itemsExternallyChanged();
+    default void itemsExternallyChanged() {
+    }
   }
 
   public interface ActionGroupWithPreselection {

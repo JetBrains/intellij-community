@@ -63,15 +63,6 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   public abstract LibraryTablePresentation getLibraryTablePresentation();
 
   @Override
-  protected void processRemovedItems() {
-  }
-
-  @Override
-  protected boolean wasObjectStored(final Object editableObject) {
-    return false;
-  }
-
-  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
