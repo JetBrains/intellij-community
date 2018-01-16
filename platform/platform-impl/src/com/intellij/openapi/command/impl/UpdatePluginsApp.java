@@ -36,7 +36,7 @@ public class UpdatePluginsApp extends ApplicationStarterEx {
 
   @Override
   public void premain(String[] args) {
-
+    System.setProperty("idea.skip.indices.initialization", "true");
   }
 
   @Override
