@@ -410,7 +410,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return storages.sortByDeprecated()
   }
 
-  override final fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
+  final override fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
 
   private fun isNotReloadable(name: String): Boolean {
     val component = components.get(name)?.component ?: return false

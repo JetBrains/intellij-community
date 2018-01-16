@@ -109,8 +109,7 @@
     <projectService serviceInterface="com.intellij.codeInsight.documentation.DocumentationManager"
                     serviceImplementation="com.jetbrains.python.PyDocumentationManager" overrides="true"/>
 
-    <applicationService serviceInterface="com.jetbrains.python.sdk.PySdkSettings"
-                        serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
+    <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageService"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyCondaPackageService"
