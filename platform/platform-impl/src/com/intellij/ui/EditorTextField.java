@@ -660,9 +660,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myEditor != null) {
       size.height = myEditor.getLineHeight();
 
-      if (UIUtil.isUnderDefaultMacTheme()) {
-        size.height = Math.max(size.height, JBUI.scale(18));
-      } else if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+      if (UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
         size.height = Math.max(size.height, JBUI.scale(16));
       }
 
