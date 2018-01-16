@@ -118,11 +118,6 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     return resolver.cancelTask(getId());
   }
 
-  @Nullable
-  public DataNode<ProjectData> getExternalProject() {
-    return myExternalProject.get();
-  }
-
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
@@ -134,7 +129,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     super.setState(state);
     if (state.isStopped()) {
       InternalExternalProjectInfo projectInfo =
-        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), getExternalProject());
+        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), myExternalProject.getAndSet(null));
       final long currentTimeMillis = System.currentTimeMillis();
       projectInfo.setLastImportTimestamp(currentTimeMillis);
       projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);

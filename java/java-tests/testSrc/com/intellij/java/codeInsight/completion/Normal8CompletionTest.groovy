@@ -311,6 +311,11 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, '() -> ', 'AbstractMethodError::new'
   }
 
+  void testPreferLambdaToTooGenericLocalVariables() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
+  }
+
   private checkResultByFileName() {
     checkResultByFile(getTestName(false) + "_after.java")
   }

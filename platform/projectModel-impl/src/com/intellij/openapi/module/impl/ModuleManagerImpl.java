@@ -425,6 +425,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   public void removeFailedModulePath(@NotNull ModulePath modulePath) {
     myFailedModulePaths.remove(modulePath);
+    incModificationCount();
   }
 
   @Override

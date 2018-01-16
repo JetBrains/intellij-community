@@ -607,8 +607,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       // Init console view
       myConsoleView = createConsoleView();
       if (myConsoleView != null) {
-        ((JComponent)myConsoleView).setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
+        myConsoleView.setBorder(new SideBorder(JBColor.border(), SideBorder.LEFT));
       }
+      myPydevConsoleCommunication.setConsoleView(myConsoleView);
       myProcessHandler = createProcessHandler(process);
 
       myConsoleExecuteActionHandler = createExecuteActionHandler();

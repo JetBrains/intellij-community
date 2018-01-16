@@ -19,7 +19,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 /**
  * @author Konstantin Bulenkov
  */
-public class ExperimentalFeature {
+public abstract class ExperimentalFeature {
   @Attribute("id")
   public String id;
 
@@ -35,19 +35,5 @@ public class ExperimentalFeature {
   @Attribute("requireRestart")
   public boolean requireRestart = false;
 
-
-  public boolean isEnabled() {
-    Application app = ApplicationManager.getApplication();
-    if (app == null) return false;
-    if (!app.isEAP()) return false;
-    if (internalFeature && !app.isInternal()) return false;
-
-    if (percentOfUsers <= 0) return false;
-    if (percentOfUsers >= 100) return true;
-    if (app.isUnitTestMode()) return false;
-
-    int hash = PermanentInstallationID.get().hashCode();
-    int salt = id.hashCode();
-    return Math.floorMod(hash + salt, 100) <= percentOfUsers;
-  }
+  public abstract boolean isEnabled();
 }

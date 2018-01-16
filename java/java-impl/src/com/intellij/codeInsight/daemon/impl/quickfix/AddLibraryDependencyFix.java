@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,8 @@ class AddLibraryDependencyFix extends OrderEntryFix {
 
   @Override
   public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
-    JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, myScope, myExported);
+    WriteAction.run(
+      () -> JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, myLibrary, myScope, myExported));
 
     if (myQualifiedClassName != null && editor != null) {
       importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);

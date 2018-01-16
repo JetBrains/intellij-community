@@ -2448,4 +2448,24 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assert orderEntries[3] instanceof ModuleSourceOrderEntry;
   }
 
+  public void testBundleDependencyType() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>com.google.guava</groupId>" +
+                  "    <artifactId>guava</artifactId>" +
+                  "    <version>15.0</version>" +
+                  "    <type>bundle</type>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertProjectLibraries("Maven: com.google.guava:guava:15.0");
+    assertModuleLibDep("project", "Maven: com.google.guava:guava:15.0",
+                       "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0.jar!/",
+                       "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/com/google/guava/guava/15.0/guava-15.0-javadoc.jar!/");
+  }
 }

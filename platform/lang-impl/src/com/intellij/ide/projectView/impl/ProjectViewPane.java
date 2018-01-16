@@ -24,8 +24,7 @@ import com.intellij.ide.projectView.BaseProjectTreeBuilder;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
@@ -48,7 +47,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import java.awt.*;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
@@ -139,8 +140,39 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
+    //if there is a single content root in the project containing all other content roots (it's a rather common case) there will be no
+    // special module nodes so it's better to hide 'Flatten Modules' action to avoid confusion
+    actionGroup.addAction(createFlattenModulesAction(this::hasSeveralTopLevelModuleNodes)).setAsSecondary(true);
+
     actionGroup.addAction(new ShowExcludedFilesAction()).setAsSecondary(true);
     actionGroup.addAction(new ConfigureFilesNestingAction()).setAsSecondary(true);
+  }
+
+  /**
+   * @return {@code true} if 'Project View' have more than one top-level module node or have top-level module group nodes
+   */
+  private boolean hasSeveralTopLevelModuleNodes() {
+    TreeModel treeModel = myTree.getModel();
+    Object root = treeModel.getRoot();
+    int count = treeModel.getChildCount(root);
+    if (count <= 1) return false;
+    int moduleNodes = 0;
+    for (int i = 0; i < count; i++) {
+      Object child = treeModel.getChild(root, i);
+      if (child instanceof DefaultMutableTreeNode) {
+        Object node = ((DefaultMutableTreeNode)child).getUserObject();
+        if (node instanceof ProjectViewModuleNode || node instanceof PsiDirectoryNode) {
+          moduleNodes++;
+          if (moduleNodes > 1) {
+            return true;
+          }
+        }
+        else if (node instanceof ModuleGroupNode) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public boolean isUseFileNestingRules() {

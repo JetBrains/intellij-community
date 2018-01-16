@@ -1064,8 +1064,8 @@ java_library(
     name = "jediterm-pty",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/idea/lib:jediterm-pty-2.5"],
-    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.5"],
+    exports = ["//tools/idea/lib:jediterm-pty-2.6"],
+    runtime_deps = ["//tools/idea/lib:jediterm-pty-2.6"],
 )
 
 java_library(

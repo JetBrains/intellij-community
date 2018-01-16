@@ -468,7 +468,7 @@ object UpdateChecker {
 
   private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
-    addUpdateRequestParameter("uid", PermanentInstallationIDImpl.INSTALLATION_ID)
+    addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
@@ -479,11 +479,14 @@ object UpdateChecker {
     }
   }
 
-  //@Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
+  /* Android Studio: replaced by custom implementation below
+  @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
   @JvmStatic
-  //@Suppress("unused", "UNUSED_PARAMETER")
+  @Suppress("unused", "UNUSED_PARAMETER")
+  fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
+  */
+  @JvmStatic
   // TODO: Replace this custom Studio code with an upgraded PermanentInstallationID!
-  //fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationIDImpl.INSTALLATION_ID
   fun getInstallationUID(propertiesComponent: PropertiesComponent): String {
     // Android Studio: we'd like a single user id across various versions of Studio.
     // The existing IntelliJ implementation (see getIntelliJInstallationUID below) used a single location on Windows, but on Mac and Linux,

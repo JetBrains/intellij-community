@@ -132,6 +132,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourSortByTypeDefaults = false;
   private final Map<String, Boolean> myShowModules = new THashMap<>();
   private static final boolean ourShowModulesDefaults = true;
+  private final Map<String, Boolean> myFlattenModules = new THashMap<>();
+  private static final boolean ourFlattenModulesDefaults = false;
   private final Map<String, Boolean> myShowLibraryContents = new THashMap<>();
   private static final boolean ourShowLibraryContentsDefaults = true;
   private final Map<String, Boolean> myHideEmptyPackages = new THashMap<>();
@@ -141,7 +143,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, Boolean> myAutoscrollToSource = new THashMap<>();
   private final Map<String, Boolean> myAutoscrollFromSource = new THashMap<>();
   private static final boolean ourAutoscrollFromSourceDefaults = false;
-  
+
   private boolean myFoldersAlwaysOnTop = true;
 
   private String myCurrentViewId;
@@ -1289,7 +1291,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  /** Project view has the same node for module and its single content root 
+  /** Project view has the same node for module and its single content root
    *   => MODULE_CONTEXT data key should return the module when its content root is selected
    *  When there are multiple content roots, they have different nodes under the module node
    *   => MODULE_CONTEXT should be only available for the module node
@@ -1420,7 +1422,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
       Element foldersElement = navigatorElement.getChild(ELEMENT_FOLDERS_ALWAYS_ON_TOP);
       if (foldersElement != null) myFoldersAlwaysOnTop = Boolean.valueOf(foldersElement.getAttributeValue("value"));
-      
+
       try {
         splitterProportions.readExternal(navigatorElement);
       }
@@ -1477,7 +1479,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     writeOption(navigatorElement, myAutoscrollFromSource, ELEMENT_AUTOSCROLL_FROM_SOURCE);
     writeOption(navigatorElement, mySortByType, ELEMENT_SORT_BY_TYPE);
     writeOption(navigatorElement, myManualOrder, ELEMENT_MANUAL_ORDER);
-    
+
     Element foldersElement = new Element(ELEMENT_FOLDERS_ALWAYS_ON_TOP);
     foldersElement.setAttribute("value", Boolean.toString(myFoldersAlwaysOnTop));
     navigatorElement.addContent(foldersElement);
@@ -1664,6 +1666,23 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getGlobalOptions().setShowModules(showModules);
     }
     setPaneOption(myShowModules, showModules, paneId, true);
+  }
+
+  @Override
+  public boolean isFlattenModules(String paneId) {
+    if (isGlobalOptions()) {
+      return getGlobalOptions().getFlattenModules();
+    }
+
+    return getPaneOptionValue(myFlattenModules, paneId, ourFlattenModulesDefaults);
+  }
+
+  @Override
+  public void setFlattenModules(boolean flattenModules, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setFlattenModules(flattenModules);
+    }
+    setPaneOption(myFlattenModules, flattenModules, paneId, true);
   }
 
   @Override
@@ -1989,7 +2008,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       presentation.setEnabledAndVisible(pane != null && pane.supportsManualOrder());
     }
   }
-  
+
   private class SortByTypeAction extends ToggleAction implements DumbAware {
     private SortByTypeAction() {
       super(IdeBundle.message("action.sort.by.type"), IdeBundle.message("action.sort.by.type"), AllIcons.ObjectBrowser.SortByType);

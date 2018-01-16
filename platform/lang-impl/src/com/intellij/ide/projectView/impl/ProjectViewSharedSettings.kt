@@ -32,6 +32,7 @@ class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSett
   var showMembers = false
   var sortByType = false
   var showModules = true
+  var flattenModules = false
   var showLibraryContents = true
   var hideEmptyPackages = true
   var abbreviatePackages = false

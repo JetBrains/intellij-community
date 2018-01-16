@@ -16,8 +16,10 @@
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause
@@ -27,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
 /**
  * @param owner modifier list owner
@@ -53,4 +56,8 @@ fun modifierListMayBeEmpty(owner: PsiElement?): Boolean = when (owner) {
 fun GrExpression?.isSuperExpression(): Boolean {
   val referenceExpression = this as? GrReferenceExpression
   return referenceExpression?.referenceNameElement?.node?.elementType == GroovyTokenTypes.kSUPER
+}
+
+fun PsiElement.isAnnotationReference(): Boolean {
+  return this is GrCodeReferenceElement && PsiTreeUtil.skipParentsOfType(this, GrCodeReferenceElement::class.java) is GrAnnotation
 }

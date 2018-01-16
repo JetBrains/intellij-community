@@ -30,14 +30,11 @@ import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.*
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.containers.stream
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
-import javax.swing.BorderFactory
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
@@ -87,11 +84,6 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
 
     val listPanel = JPanel(BorderLayout())
     listPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER)
-    val descriptionLabel = JBLabel(ExecutionBundle.message("run.dashboard.configurable.types.panel.description")).apply {
-      border = BorderFactory.createEmptyBorder(TitledSeparator.TOP_INSET, 20, 0, 0)
-      componentStyle = UIUtil.ComponentStyle.SMALL
-    }
-    listPanel.add(descriptionLabel, BorderLayout.SOUTH)
 
     val hideableDecorator = object : HideableDecorator(this,
                                                        ExecutionBundle.message("run.dashboard.configurable.types.panel.title"),

@@ -93,6 +93,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private static final Key<Long> CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT =
     Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT");
   private static final int DOCUMENT_SAVE_DELAY = 1000;
+  private static final int REFRESH_MERGING_TIME_SPAN = 2000;
 
   private final Project myProject;
   private final Set<Document> myChangedDocuments = new THashSet<>();
@@ -111,7 +112,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                                                      DOCUMENT_SAVE_DELAY, false, ANY_COMPONENT, myProject);
 
     myRefreshRequestsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Refresh requests queue",
-                                                    0, false, ANY_COMPONENT, myProject, null, false);
+                                                    REFRESH_MERGING_TIME_SPAN, false, ANY_COMPONENT, myProject, null, false);
 
     myImportAwareManagers = ContainerUtil.newArrayList();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {

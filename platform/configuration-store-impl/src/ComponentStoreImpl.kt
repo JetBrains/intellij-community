@@ -352,6 +352,7 @@ abstract class ComponentStoreImpl : IComponentStore {
            name != "AntConfiguration" &&
            name != "ProjectModuleManager" &&
            name != "FacetManager" &&
+           name != "ProjectRunConfigurationManager" && /* ProjectRunConfigurationManager is used only for IPR, avoid relatively cost call getState */
            name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
            name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
            SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)

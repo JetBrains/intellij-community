@@ -183,7 +183,7 @@ if [ "$IS_EAP" = "true" ]; then
   OS_NAME=`echo "$OS_TYPE" | "$TR" '[:upper:]' '[:lower:]'`
   AGENT_PATH="$IDE_BIN_HOME/libyjpagent-$OS_NAME$BITS.so"
   if [ -r "$AGENT_PATH" ]; then
-    AGENT="-agentpath:$AGENT_PATH=disablealloc,delay=10000,probe_disable=*,sessionname=@@system_selector@@"
+    AGENT="-agentpath:$AGENT_PATH=probe_disable=*,disablealloc,disabletracing,onlylocal,disableexceptiontelemetry,delay=10000,sessionname=@@system_selector@@"
   fi
 fi
 

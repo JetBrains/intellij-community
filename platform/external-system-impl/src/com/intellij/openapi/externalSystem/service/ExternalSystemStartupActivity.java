@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
 import com.intellij.openapi.externalSystem.service.vcs.ExternalSystemVcsRegistrar;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 5/2/13 9:23 PM
  */
-public class ExternalSystemStartupActivity implements StartupActivity {
+public class ExternalSystemStartupActivity implements StartupActivity, DumbAware {
 
   @Override
   public void runActivity(@NotNull final Project project) {

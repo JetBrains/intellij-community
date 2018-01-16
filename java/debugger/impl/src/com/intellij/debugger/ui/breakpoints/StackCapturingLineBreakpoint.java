@@ -328,7 +328,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
           String methodName = getStringRefValue((StringReference)values1.get(2));
           int line = Integer.parseInt(((StringReference)values1.get(3)).value());
           Location location = findLocation(process, ContainerUtil.getFirstItem(classesByName.get(className)), methodName, line);
-          res.add(new ProcessStackFrameItem(location, className, methodName, line));
+          res.add(new ProcessStackFrameItem(location, className, methodName));
         }
       }
       return res;
@@ -343,24 +343,17 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static class ProcessStackFrameItem extends StackFrameItem {
     final String myClass;
     final String myMethod;
-    final int myLine;
 
-    public ProcessStackFrameItem(Location location, String aClass, String method, int line) {
+    public ProcessStackFrameItem(Location location, String aClass, String method) {
       super(location, null);
       myClass = aClass;
       myMethod = method;
-      myLine = line;
     }
 
     @NotNull
     @Override
     public String path() {
       return myClass;
-    }
-
-    @Override
-    public int line() {
-      return myLine;
     }
 
     @NotNull
@@ -371,15 +364,16 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     @Override
     public String toString() {
-      return myClass + "." + myMethod + ":" + myLine;
+      return myClass + "." + myMethod + ":" + line();
     }
   }
 
   private static Location findLocation(DebugProcessImpl debugProcess, ReferenceType type, String methodName, int line) {
     if (type != null && line >= 0) {
       try {
-        Location location =
-          type.locationsOfLine(line).stream().filter(l -> l.method().name().equals(methodName)).findFirst().orElse(null);
+        Location location = type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line).stream()
+          .filter(l -> l.method().name().equals(methodName))
+          .findFirst().orElse(null);
         if (location != null) {
           return location;
         }

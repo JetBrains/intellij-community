@@ -1,8 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -383,68 +381,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
   @Nullable
   @Override
-  public PyClassLikeType getMetaClassType(@NotNull final TypeEvalContext context, boolean inherited) {
-    if (!inherited) {
-      return as(myClass.getMetaClassType(context), PyClassLikeType.class);
-    }
-    final List<PyClassLikeType> metaClassTypes = getAllExplicitMetaClassTypes(context);
-    final PyClassLikeType mostDerivedMeta = getMostDerivedClassType(metaClassTypes, context);
-    return mostDerivedMeta != null ? mostDerivedMeta : PyBuiltinCache.getInstance(myClass).getObjectType("type");
-  }
-
-  @Nullable
-  private static PyClassLikeType getMostDerivedClassType(@NotNull List<PyClassLikeType> classTypes,
-                                                         @NotNull final TypeEvalContext context) {
-    if (classTypes.isEmpty()) {
-      return null;
-    }
-    try {
-      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
-
-      return classTypes
-        .stream()
-        .filter(t -> !abcMeta.equals(t.getClassQName()))
-        .max(
-          (t1, t2) -> {
-            if (Objects.equals(t1, t2)) {
-              return 0;
-            }
-            else if (t2 == null || t1 != null && Sets.newHashSet(t1.getAncestorTypes(context)).contains(t2)) {
-              return 1;
-            }
-            else if (t1 == null || Sets.newHashSet(t2.getAncestorTypes(context)).contains(t1)) {
-              return -1;
-            }
-            else {
-              throw new NotDerivedClassTypeException();
-            }
-          }
-        )
-        .orElse(null);
-    }
-    catch (NotDerivedClassTypeException ignored) {
-      return null;
-    }
-  }
-
-  private static final class NotDerivedClassTypeException extends RuntimeException {
-  }
-
-  private List<PyClassLikeType> getAllExplicitMetaClassTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassLikeType> results = Lists.newArrayList();
-    final PyClassLikeType ownMeta = getMetaClassType(context, false);
-    if (ownMeta != null) {
-      results.add(ownMeta);
-    }
-    for (PyClassLikeType ancestor : myClass.getAncestorTypes(context)) {
-      if (ancestor != null) {
-        final PyClassLikeType ancestorMeta = ancestor.getMetaClassType(context, false);
-        if (ancestorMeta != null) {
-          results.add(ancestorMeta);
-        }
-      }
-    }
-    return results;
+  public PyClassLikeType getMetaClassType(@NotNull TypeEvalContext context, boolean inherited) {
+    return myClass.getMetaClassType(inherited, context);
   }
 
   @Override
@@ -465,19 +403,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    if (isDefinition()) {
-      List<PyCallableParameter> params = getParametersOfMethod(PyNames.INIT, context);
-      if (params == null) {
-        // TODO better way to resolve the constructor method here
-        params = getParametersOfMethod(PyNames.NEW, context);
-      }
-      if (params != null) {
-        // Skip "self" for __init__ and "cls" for __new__
-        return params.subList(1, params.size());
-      }
-      return null;
-    }
-    return getParametersOfMethod(PyNames.CALL, context);
+    final List<String> methodNames = isDefinition() ? Arrays.asList(PyNames.INIT, PyNames.NEW) : Collections.singletonList(PyNames.CALL);
+
+    return StreamEx
+      .of(methodNames)
+      .map(name -> getParametersOfMethod(name, context))
+      .findFirst(Objects::nonNull)
+      // Skip "self" for __init__/__call__ and "cls" for __new__
+      .map(parameters -> ContainerUtil.subList(parameters, 1))
+      .orElse(null);
   }
 
   @Nullable

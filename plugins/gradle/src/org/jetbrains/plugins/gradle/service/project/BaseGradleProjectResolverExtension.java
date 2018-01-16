@@ -35,7 +35,10 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
-import com.intellij.openapi.module.*;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;

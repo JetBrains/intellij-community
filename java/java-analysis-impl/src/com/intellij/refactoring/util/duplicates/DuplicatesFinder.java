@@ -498,7 +498,7 @@ public class DuplicatesFinder {
                 if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
                   contextClass = thisCandidate;
                 }
-                return contextClass != null && match.putParameter(parameter, RefactoringChangeUtil
+                return contextClass != null && !(contextClass instanceof PsiAnonymousClass) && match.putParameter(parameter, RefactoringChangeUtil
                   .createThisExpression(patternQualifier.getManager(), contextClass));
               } else if (patternQualifier instanceof PsiReferenceExpression) {
                 final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();

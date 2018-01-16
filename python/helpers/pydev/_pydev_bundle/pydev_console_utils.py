@@ -181,12 +181,22 @@ class BaseInterpreterInterface:
         self.buffer = None
         self.banner_shown = False
         self.connect_status_queue = connect_status_queue
+        self.mpl_modules_for_patching = {}
+        self.init_mpl_modules_for_patching()
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
 
     def get_greeting_msg(self):
         return 'PyDev console: starting.\n'
+
+    def init_mpl_modules_for_patching(self):
+        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+        self.mpl_modules_for_patching = {
+            "matplotlib": lambda: activate_matplotlib(self.enableGui),
+            "matplotlib.pyplot": activate_pyplot,
+            "pylab": activate_pylab
+        }
 
     def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations

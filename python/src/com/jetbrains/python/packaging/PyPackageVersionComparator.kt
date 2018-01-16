@@ -7,6 +7,7 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersion
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionNormalizer
 import one.util.streamex.EntryStream
 import one.util.streamex.StreamEx
+import java.math.BigInteger
 import java.util.stream.Stream
 
 /**
@@ -133,7 +134,7 @@ object PyPackageVersionComparator : Comparator<PyPackageVersion> {
    */
   private fun compareLocals(o1: PyPackageVersion, o2: PyPackageVersion) = (o1.local ?: "").compareTo(o2.local ?: "")
 
-  private fun compareAsInts(o1: String, o2: String) = o1.toInt().compareTo(o2.toInt())
+  private fun compareAsInts(o1: String, o2: String) = BigInteger(o1).compareTo(BigInteger(o2))
 
   private fun <E> zipLongest(c1: Collection<E>, c2: Collection<E>, fillValue: E): EntryStream<E, E> {
     val maxSize = maxOf(c1.size, c2.size).toLong()

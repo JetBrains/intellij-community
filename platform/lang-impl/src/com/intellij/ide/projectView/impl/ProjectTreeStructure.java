@@ -60,4 +60,9 @@ public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure 
   public boolean isShowModules() {
     return ProjectView.getInstance(myProject).isShowModules(myId);
   }
+
+  @Override
+  public boolean isFlattenModules() {
+    return ProjectView.getInstance(myProject).isFlattenModules(myId);
+  }
 }

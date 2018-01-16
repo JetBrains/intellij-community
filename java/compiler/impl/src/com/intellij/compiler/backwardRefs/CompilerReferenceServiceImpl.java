@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.compiler.backwardRefs;
 
@@ -19,9 +7,9 @@ import com.intellij.compiler.CompilerDirectHierarchyInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.MethodCall;
-import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
 import com.intellij.compiler.chainsSearch.TypeCast;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.server.BuildManager;
@@ -50,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -187,19 +176,17 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Nullable
   @Override
   public CompilerDirectHierarchyInfo getDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                         @NotNull GlobalSearchScope useScope,
                                                          @NotNull GlobalSearchScope searchScope,
                                                          @NotNull FileType searchFileType) {
-    return getHierarchyInfo(aClass, useScope, searchScope, searchFileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
+    return getHierarchyInfo(aClass, searchScope, searchFileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
   }
 
   @Nullable
   @Override
   public CompilerDirectHierarchyInfo getFunExpressions(@NotNull PsiNamedElement functionalInterface,
-                                                       @NotNull GlobalSearchScope useScope,
                                                        @NotNull GlobalSearchScope searchScope,
                                                        @NotNull FileType searchFileType) {
-    return getHierarchyInfo(functionalInterface, useScope, searchScope, searchFileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
+    return getHierarchyInfo(functionalInterface, searchScope, searchFileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
   }
 
   @Nullable
@@ -466,7 +453,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Nullable
   private CompilerHierarchyInfoImpl getHierarchyInfo(@NotNull PsiNamedElement aClass,
-                                                     @NotNull GlobalSearchScope useScope,
                                                      @NotNull GlobalSearchScope searchScope,
                                                      @NotNull FileType searchFileType,
                                                      @NotNull CompilerHierarchySearchType searchType) {
@@ -477,7 +463,6 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         if (myProject.isDisposed()) throw new ProcessCanceledException();
         return CachedValuesManager.getCachedValue(aClass, () -> CachedValueProvider.Result.create(
           ConcurrentFactoryMap.createMap((HierarchySearchKey key) -> calculateDirectInheritors(aClass,
-                                                                                               useScope,
                                                                                                key.mySearchFileType,
                                                                                                key.mySearchType)),
           PsiModificationTracker.MODIFICATION_COUNT, this)).get(new HierarchySearchKey(searchType, searchFileType));
@@ -510,9 +495,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   }
 
   private Map<VirtualFile, SearchId[]> calculateDirectInheritors(@NotNull PsiNamedElement aClass,
-                                                               @NotNull GlobalSearchScope useScope,
                                                                @NotNull FileType searchFileType,
                                                                @NotNull CompilerHierarchySearchType searchType) {
+    SearchScope scope = aClass.getUseScope();
+    if (!(scope instanceof GlobalSearchScope)) return null;
     final CompilerElementInfo searchElementInfo = asCompilerElements(aClass, false, true);
     if (searchElementInfo == null) return null;
     LightRef searchElement = searchElementInfo.searchElements[0];
@@ -521,7 +507,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     try {
       if (myReader == null) return null;
       try {
-        return myReader.getDirectInheritors(searchElement, useScope, myDirtyScopeHolder.getDirtyScope(), searchFileType, searchType);
+        return myReader.getDirectInheritors(searchElement, ((GlobalSearchScope)scope), myDirtyScopeHolder.getDirtyScope(), searchFileType, searchType);
       }
       catch (StorageException e) {
         throw new RuntimeException(e);
@@ -804,7 +790,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   public CompilerReferenceHierarchyTestInfo getTestHierarchy(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
     myReadDataLock.lock();
     try {
-      final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, scope, fileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
+      final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.DIRECT_INHERITOR);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
       return new CompilerReferenceHierarchyTestInfo(hierarchyInfo, dirtyScopeInfo);
     } finally {
@@ -816,7 +802,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   public CompilerReferenceHierarchyTestInfo getTestFunExpressions(@NotNull PsiNamedElement element, @NotNull GlobalSearchScope scope, @NotNull FileType fileType) {
     myReadDataLock.lock();
     try {
-      final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, scope, fileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
+      final CompilerHierarchyInfoImpl hierarchyInfo = getHierarchyInfo(element, scope, fileType, CompilerHierarchySearchType.FUNCTIONAL_EXPRESSION);
       final DirtyScopeTestInfo dirtyScopeInfo = myDirtyScopeHolder.getState();
       return new CompilerReferenceHierarchyTestInfo(hierarchyInfo, dirtyScopeInfo);
     } finally {

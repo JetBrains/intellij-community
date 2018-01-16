@@ -19,23 +19,21 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.tree.AbstractTreeNodeVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreePath;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
+import static com.intellij.psi.SmartPointerManager.createPointer;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
 class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   private final VirtualFile file;
 
   public ProjectViewNodeVisitor(@NotNull PsiElement element, VirtualFile file, Predicate<TreePath> predicate) {
-    super(create(element), predicate);
+    super(createPointer(element)::getElement, predicate);
     this.file = file;
   }
 
@@ -61,11 +59,5 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
   @Override
   protected boolean isAncestor(@NotNull PsiElement content, @NotNull PsiElement element) {
     return PsiTreeUtil.isAncestor(content, element, true);
-  }
-
-  private static Supplier<PsiElement> create(@NotNull PsiElement element) {
-    SmartPointerManager manager = SmartPointerManager.getInstance(element.getProject());
-    SmartPsiElementPointer<PsiElement> pointer = manager.createSmartPsiElementPointer(element);
-    return pointer::getElement;
   }
 }

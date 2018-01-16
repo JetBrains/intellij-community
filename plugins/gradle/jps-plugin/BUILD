@@ -31,5 +31,6 @@ iml_module(
         "//tools/idea/.idea/libraries:Gradle",
         "//tools/idea/.idea/libraries:Ant",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/plugins/groovy/jps-plugin:groovy-jps-plugin[module]",
     ],
 )
