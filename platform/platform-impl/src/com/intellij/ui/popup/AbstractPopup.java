@@ -22,7 +22,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -44,7 +46,6 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -999,7 +1000,7 @@ public class AbstractPopup implements JBPopup {
       }
 
       window.setAutoRequestFocus(true);
-
+      SwingUtilities.invokeLater(afterShow);
       delayKeyEventsUntilFocusSettlesDown();
     } else {
       //noinspection SSBasedInspection
