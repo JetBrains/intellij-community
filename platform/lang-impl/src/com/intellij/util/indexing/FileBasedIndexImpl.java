@@ -331,7 +331,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     long started = System.nanoTime();
     FileBasedIndexExtension[] extensions = IndexInfrastructure.hasIndices() ? 
                                            Extensions.getExtensions(FileBasedIndexExtension.EXTENSION_POINT_NAME) : new FileBasedIndexExtension[0];
-    LOG.info("Index exts enumerated:" + (System.nanoTime() - started) / 1000000);
+    LOG.info("Index exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.length);
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new FileIndexDataInitialization(extensions));

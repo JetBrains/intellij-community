@@ -466,7 +466,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   public void initComponent() {
     long started = System.nanoTime();
     StubIndexExtension<?, ?>[] extensions = IndexInfrastructure.hasIndices() ? initExtensions() : new StubIndexExtension[0];
-    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000);
+    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.length);
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensions));

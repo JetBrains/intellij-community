@@ -122,7 +122,7 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(final Project project) {
     final FileBasedIndex i = FileBasedIndex.getInstance();
-    if (!(i instanceof FileBasedIndexImpl)) {
+    if (!(i instanceof FileBasedIndexImpl) || !IndexInfrastructure.hasIndices()) {
       return null;
     }
 
