@@ -10,7 +10,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.uast.*
 
-class GrUClass(val grElement: GrTypeDefinition, parentProvider: () -> UElement?) : UClass, JvmDeclarationUElement, PsiClass by grElement {
+class GrUClass(val grElement: GrTypeDefinition,
+               parentProvider: () -> UElement?) : UClassTypeSpecific, JvmDeclarationUElement, PsiClass by grElement {
 
   override val sourcePsi = grElement
 
@@ -52,7 +53,8 @@ class GrUClass(val grElement: GrTypeDefinition, parentProvider: () -> UElement?)
 }
 
 
-class GrUMethod(val grElement: GrMethod, parentProvider: () -> UElement?) : UMethod, JvmDeclarationUElement, PsiMethod by grElement {
+class GrUMethod(val grElement: GrMethod,
+                parentProvider: () -> UElement?) : UMethodTypeSpecific, JvmDeclarationUElement, PsiMethod by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 
   override val sourcePsi: PsiElement = grElement

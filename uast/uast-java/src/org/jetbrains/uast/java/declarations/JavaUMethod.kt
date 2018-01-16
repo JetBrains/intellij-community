@@ -25,7 +25,7 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 open class JavaUMethod(
   psi: PsiMethod,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UMethod, JavaUElementWithComments, PsiMethod by psi {
+) : JavaAbstractUElement(uastParent), UMethodTypeSpecific, JavaUElementWithComments, PsiMethod by psi {
   override val psi
     get() = javaPsi
 
