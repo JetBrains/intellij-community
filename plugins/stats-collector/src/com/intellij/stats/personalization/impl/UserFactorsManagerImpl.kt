@@ -77,6 +77,7 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         register(MinDoubleFeatureValue(feature))
         register(AverageDoubleFeatureValue(feature))
         register(UndefinedDoubleFeatureValueRatio(feature))
+        register(VarianceDoubleFeatureValue(feature))
     }
 
     private fun registerCategorialFeatureDerivedFactors(feature: CatergorialFeature) {
