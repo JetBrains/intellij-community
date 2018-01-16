@@ -273,7 +273,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
   }
   
-  public boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+  private boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPointName);
     return ContainerUtil.containsIdentity(listeners, listener);
   }

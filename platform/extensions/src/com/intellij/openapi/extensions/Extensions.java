@@ -77,12 +77,9 @@ public class Extensions {
     final ExtensionsAreaImpl newArea = createRootArea();
     ourRootArea = newArea;
     oldRootArea.notifyAreaReplaced(newArea);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        ourRootArea = oldRootArea;
-        newArea.notifyAreaReplaced(oldRootArea);
-      }
+    Disposer.register(parentDisposable, () -> {
+      ourRootArea = oldRootArea;
+      newArea.notifyAreaReplaced(oldRootArea);
     });
   }
 
@@ -186,7 +183,7 @@ public class Extensions {
   }
 
   private static boolean equals(@Nullable Object object1, @Nullable Object object2) {
-    return object1 == object2 || object1 != null && object2 != null && object1.equals(object2);
+    return object1 == object2 || object1 != null && object1.equals(object2);
   }
 
   public static void setLogProvider(@NotNull LogProvider logProvider) {

@@ -447,7 +447,7 @@ public class ContainerUtilRt {
   }
 
   /**
-   * This is a replacement for {@link Collection#toArray(Object[])}. For small collections it is faster to stay at java level and refrain
+   * This is a replacement for {@link Collection#toArray(T[])}. For small collections it is faster to stay at java level and refrain
    * from calling JNI {@link System#arraycopy(Object, int, Object, int, int)}
    */
   @NotNull
