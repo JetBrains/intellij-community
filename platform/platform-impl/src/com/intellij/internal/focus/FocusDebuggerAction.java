@@ -177,6 +177,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           }
         }
         drawOnGraphics(g -> {
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
           g.setColor(JBColor.black);
