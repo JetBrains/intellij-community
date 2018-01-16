@@ -162,12 +162,12 @@ public class IdeEventQueue extends EventQueue {
       }
       else {
         FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run right away : " + no.getClass().getName());
-        no.run();
+        UIUtil.invokeLaterIfNeeded(no);
       }
     }
     else {
       FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
-      no.run();
+      UIUtil.invokeLaterIfNeeded(no);
     }
   }
 
