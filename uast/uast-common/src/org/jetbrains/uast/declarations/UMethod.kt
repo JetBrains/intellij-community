@@ -29,6 +29,7 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UMethod : UDeclaration, PsiMethod {
   override val psi: PsiMethod
 
+  override val javaPsi: PsiMethod
   /**
    * Returns the body expression (which can be also a [UBlockExpression]).
    */

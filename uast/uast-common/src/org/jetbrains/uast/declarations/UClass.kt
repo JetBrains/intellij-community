@@ -28,6 +28,8 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UClass : UDeclaration, PsiClass {
   override val psi: PsiClass
 
+  override val javaPsi: PsiClass
+
   override fun getQualifiedName(): String?
 
   /**

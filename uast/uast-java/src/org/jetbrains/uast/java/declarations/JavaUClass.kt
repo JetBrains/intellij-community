@@ -25,6 +25,8 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(givenParent), UClass, JavaUElementWithComments {
 
+  abstract override val javaPsi: PsiClass
+
   @Suppress("unused") // Used in Kotlin, to be removed in 2018.1
   @Deprecated("use AbstractJavaUClass(givenParent)", ReplaceWith("AbstractJavaUClass(givenParent)"))
   constructor() : this(null)
