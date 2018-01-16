@@ -21,7 +21,7 @@ import org.junit.Test
 import java.util.*
 
 internal class XmlSerializerCollectionTest {
-  @Test fun testJDOMExternalizableStringList() {
+  @Test fun jdomExternalizableStringList() {
     val bean = Bean3()
     bean.list.add("\u0001one")
     bean.list.add("two")
@@ -29,11 +29,11 @@ internal class XmlSerializerCollectionTest {
     testSerializer(
       """
       <b>
-      <list>
-        <item value="one" />
-        <item value="two" />
-        <item value="three" />
-      </list>
+        <list>
+          <item value="one" />
+          <item value="two" />
+          <item value="three" />
+        </list>
       </b>""",
       bean, SkipDefaultsSerializationFilter())
   }
