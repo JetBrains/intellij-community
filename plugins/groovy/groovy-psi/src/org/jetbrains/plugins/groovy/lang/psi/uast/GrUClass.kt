@@ -71,7 +71,7 @@ class GrUMethod(val grElement: GrMethod, parentProvider: () -> UElement?) : UMet
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
 
-  override fun getBody(): PsiCodeBlock? = grElement.body
+  override fun getBody(): PsiCodeBlock? = null
 
   override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 
