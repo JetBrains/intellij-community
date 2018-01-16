@@ -30,6 +30,7 @@ abstract class UserFactorStorageBase
         val DOUBLE_VALUE_FORMATTER = DecimalFormat().apply {
             maximumFractionDigits = 6
             minimumFractionDigits = 1
+            isGroupingUsed = false
         }
     }
 
