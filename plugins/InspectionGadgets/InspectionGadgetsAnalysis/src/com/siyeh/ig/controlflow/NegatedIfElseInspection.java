@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,7 +84,7 @@ public class NegatedIfElseInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement ifToken = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)ifToken.getParent();
       assert ifStatement != null;

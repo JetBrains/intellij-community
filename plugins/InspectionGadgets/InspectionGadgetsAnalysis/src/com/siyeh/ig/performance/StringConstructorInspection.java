@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -112,10 +111,8 @@ public class StringConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiNewExpression expression =
-        (PsiNewExpression)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
       final PsiExpressionList argList = expression.getArgumentList();
       assert argList != null;
       final PsiExpression[] args = argList.getExpressions();

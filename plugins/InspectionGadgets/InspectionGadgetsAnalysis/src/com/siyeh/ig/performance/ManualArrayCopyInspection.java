@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,7 +76,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement forElement = descriptor.getPsiElement();
       final PsiForStatement forStatement = (PsiForStatement)forElement.getParent();
       CommentTracker commentTracker = new CommentTracker();
@@ -89,7 +88,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
     }
 
     @Nullable
-    private String buildSystemArrayCopyText(PsiForStatement forStatement, CommentTracker commentTracker) throws IncorrectOperationException {
+    private String buildSystemArrayCopyText(PsiForStatement forStatement, CommentTracker commentTracker) {
       final PsiExpression condition = forStatement.getCondition();
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)ParenthesesUtils.stripParentheses(condition);
       if (binaryExpression == null) {
@@ -162,28 +161,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
       final String toOffsetText = buildOffsetText(strippedLhsIndexExpression, variable,
                                                   limitExpression, decrement && (JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType)),
                                                   commentTracker);
-      @NonNls final StringBuilder buffer = new StringBuilder(60);
-      buffer.append("System.arraycopy(");
-      buffer.append(fromArrayText);
-      buffer.append(", ");
-      buffer.append(fromOffsetText);
-      buffer.append(", ");
-      buffer.append(toArrayText);
-      buffer.append(", ");
-      buffer.append(toOffsetText);
-      buffer.append(", ");
-      buffer.append(lengthText);
-      buffer.append(");");
-      return buffer.toString();
+      return "System.arraycopy(" + fromArrayText + ", " + fromOffsetText + ", " + toArrayText + ", " + toOffsetText + ", " + lengthText + ");";
     }
 
     @Nullable
-    private static PsiArrayAccessExpression getLhsArrayAccessExpression(
-      PsiForStatement forStatement) {
+    private static PsiArrayAccessExpression getLhsArrayAccessExpression(PsiForStatement forStatement) {
       PsiStatement body = forStatement.getBody();
       while (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement =
-          (PsiBlockStatement)body;
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 2) {
@@ -382,8 +367,8 @@ public class ManualArrayCopyInspection extends BaseInspection {
     private static String buildOffsetText(PsiExpression expression,
                                           PsiLocalVariable variable,
                                           PsiExpression limitExpression,
-                                          boolean plusOne, CommentTracker commentTracker)
-      throws IncorrectOperationException {
+                                          boolean plusOne,
+                                          CommentTracker commentTracker) {
       if (expression == null) {
         return null;
       }
@@ -428,9 +413,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       return collapseConstant(commentTracker.text(expression), variable);
     }
 
-    private static String collapseConstant(@NonNls String expressionText,
-                                           PsiElement context)
-      throws IncorrectOperationException {
+    private static String collapseConstant(@NonNls String expressionText, PsiElement context) {
       final Project project = context.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,7 +87,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiLiteralExpression)) {
         return;
@@ -124,7 +123,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiExpression)) {
         return;

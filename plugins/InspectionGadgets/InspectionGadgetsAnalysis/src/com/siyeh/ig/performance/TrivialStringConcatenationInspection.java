@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -160,7 +159,7 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiLiteralExpression expression = (PsiLiteralExpression)descriptor.getPsiElement();
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
       if (!(parent instanceof PsiExpression)) {

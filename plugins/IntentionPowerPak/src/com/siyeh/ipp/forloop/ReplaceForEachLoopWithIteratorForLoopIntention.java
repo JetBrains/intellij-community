@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -39,7 +38,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;

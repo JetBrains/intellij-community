@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 Bas Leijdekkers
+ * Copyright 2010-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -129,7 +128,7 @@ public class TooBroadThrowsInspectionBase extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceList)) {

@@ -19,7 +19,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -43,11 +42,13 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
-    } else {
+    }
+    else {
       final PsiElement prevSibling = element.getPrevSibling();
       if (prevSibling instanceof PsiJavaToken) {
         token = (PsiJavaToken)prevSibling;
-      } else {
+      }
+      else {
         throw new AssertionError();
       }
     }
@@ -58,15 +59,17 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
-    } else {
+    }
+    else {
       final PsiElement prevSibling = element.getPrevSibling();
       if (prevSibling instanceof PsiJavaToken) {
         token = (PsiJavaToken)prevSibling;
-      } else {
+      }
+      else {
         throw new AssertionError();
       }
     }
@@ -92,7 +95,8 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
         }
         if (value instanceof Long) {
           newExpressionText.append(value).append('L');
-        } else if (value instanceof Double) {
+        }
+        else if (value instanceof Double) {
           final double v = ((Double)value).doubleValue();
           if (Double.isNaN(v)) {
             newExpressionText.append("java.lang.Double.NaN");
@@ -125,12 +129,14 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
           else {
             newExpressionText.append(Float.toString(v)).append('f');
           }
-        } else {
+        }
+        else {
           newExpressionText.append(value);
         }
         prevOperand = null;
         prevToken = null;
-      } else {
+      }
+      else {
         if (prevToken != null) {
           newExpressionText.append(prevToken.getText());
         }

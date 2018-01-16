@@ -22,7 +22,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -66,7 +65,7 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
       final IElementType tokenType = expression.getOperationTokenType();
       final String operandText = getShortCircuitOperand(tokenType);

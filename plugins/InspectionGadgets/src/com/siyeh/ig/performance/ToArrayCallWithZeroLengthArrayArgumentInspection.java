@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -201,7 +200,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
@@ -238,7 +237,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
       PsiDeclarationStatement declarationStatement = factory.createVariableDeclarationStatement("var", qualifierType, qualifier);
       PsiElement statementParent = statement.getParent();
       while (statementParent instanceof PsiLoopStatement || statementParent instanceof PsiIfStatement) {
-        statement = (PsiStatement) statementParent;
+        statement = (PsiStatement)statementParent;
         statementParent = statement.getParent();
       }
       final String toArrayText = "var.toArray(new " + typeText + "[var.size()])";

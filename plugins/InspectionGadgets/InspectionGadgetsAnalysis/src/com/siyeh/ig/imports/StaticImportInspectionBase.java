@@ -10,7 +10,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -69,7 +68,7 @@ public class StaticImportInspectionBase extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiImportStaticStatement importStatement = (PsiImportStaticStatement)descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {
@@ -80,8 +79,7 @@ public class StaticImportInspectionBase extends BaseInspection {
         return;
       }
       final boolean onDemand = importStatement.isOnDemand();
-      final StaticImportFix.StaticImportReferenceCollector
-        referenceCollector = new StaticImportFix.StaticImportReferenceCollector(importTargets, onDemand);
+      final StaticImportReferenceCollector referenceCollector = new StaticImportReferenceCollector(importTargets, onDemand);
       final PsiJavaFile file = (PsiJavaFile)importStatement.getContainingFile();
       file.accept(referenceCollector);
       final List<PsiJavaCodeReferenceElement> references = referenceCollector.getReferences();

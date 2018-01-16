@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -86,8 +85,7 @@ public class NegatedConditionalInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element.getParent();
       assert conditionalExpression != null;

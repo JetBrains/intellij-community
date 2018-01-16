@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -78,8 +77,7 @@ public class ConstantConditionalExpressionInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker);

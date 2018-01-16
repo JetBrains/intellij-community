@@ -23,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -372,7 +371,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiExpression)) {
         return;

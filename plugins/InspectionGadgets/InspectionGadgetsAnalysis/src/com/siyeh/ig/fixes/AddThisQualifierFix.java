@@ -23,7 +23,6 @@ import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -71,7 +70,7 @@ public class AddThisQualifierFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiReferenceExpression expression = (PsiReferenceExpression)descriptor.getPsiElement();
     if (expression.getQualifierExpression() != null) {
       return;

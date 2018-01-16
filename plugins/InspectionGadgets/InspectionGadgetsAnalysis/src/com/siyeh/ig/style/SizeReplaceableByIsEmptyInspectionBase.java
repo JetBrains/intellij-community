@@ -10,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
@@ -58,7 +57,7 @@ public class SizeReplaceableByIsEmptyInspectionBase extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)descriptor.getPsiElement();
       PsiExpression operand = binaryExpression.getLOperand();
       if (!(operand instanceof PsiMethodCallExpression)) {

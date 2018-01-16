@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -17,7 +16,7 @@ abstract class AbstractReplaceWithAnotherMethodCallFix extends InspectionGadgets
   protected abstract String getMethodName();
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+  public void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement methodNameElement = descriptor.getPsiElement();
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)methodNameElement.getParent();
     assert methodExpression != null;

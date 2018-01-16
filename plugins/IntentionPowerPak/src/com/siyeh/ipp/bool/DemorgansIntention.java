@@ -17,7 +17,6 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -48,7 +47,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
     CommentTracker tracker = new CommentTracker();
     final String newExpression = convertConjunctionExpression(polyadicExpression, tracker);
@@ -81,7 +80,8 @@ public class DemorgansIntention extends MutablyNamedIntention {
         if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.OR_PRECEDENCE) {
           return '(' + tracker.text(negatedExpression) + ')';
         }
-      } else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
+      }
+      else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
         return '(' + tracker.text(negatedExpression) + ')';
       }
       return tracker.text(negatedExpression);

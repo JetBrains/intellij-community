@@ -17,7 +17,6 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -67,8 +66,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     return new MultiplyByPowerOfTwoPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
     }
@@ -78,9 +76,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     }
   }
 
-  private static void replaceMultiplyOrDivideAssignWithShiftAssign(
-    PsiAssignmentExpression expression)
-    throws IncorrectOperationException {
+  private static void replaceMultiplyOrDivideAssignWithShiftAssign(PsiAssignmentExpression expression) {
     final PsiExpression lhs = expression.getLExpression();
     final PsiExpression rhs = expression.getRExpression();
     final IElementType tokenType = expression.getOperationTokenType();
@@ -96,9 +92,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 
-  private static void replaceMultiplyOrDivideWithShift(
-    PsiBinaryExpression expression)
-    throws IncorrectOperationException {
+  private static void replaceMultiplyOrDivideWithShift(PsiBinaryExpression expression) {
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = expression.getROperand();
     final IElementType tokenType = expression.getOperationTokenType();

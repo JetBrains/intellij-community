@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -69,10 +68,8 @@ public class RandomDoubleForRandomIntegerInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiIdentifier name =
-        (PsiIdentifier)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)name.getParent();
       if (expression == null) {

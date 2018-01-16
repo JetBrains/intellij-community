@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -128,8 +127,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiReferenceExpression expression =
         (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiMember member = (PsiMember)expression.resolve();

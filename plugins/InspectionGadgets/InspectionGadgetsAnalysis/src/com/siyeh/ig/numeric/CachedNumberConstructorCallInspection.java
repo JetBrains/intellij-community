@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -116,8 +115,7 @@ public class CachedNumberConstructorCallInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiNewExpression expression = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiNewExpression.class, false);
       assert expression != null;
       final PsiExpressionList argList = expression.getArgumentList();

@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -73,7 +72,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
       if (annotation == null) {

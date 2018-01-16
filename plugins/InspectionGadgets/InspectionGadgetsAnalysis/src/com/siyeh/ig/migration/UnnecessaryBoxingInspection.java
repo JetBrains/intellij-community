@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -79,7 +78,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiCallExpression expression = (PsiCallExpression)descriptor.getPsiElement();
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
@@ -128,7 +127,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       final String text = commentTracker.text(unboxedExpression);
       if (expressionType.equals(unboxedType)) {
         final PsiElement parent = boxedExpression.getParent();
-        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression) parent, false)) {
+        if (parent instanceof PsiExpression && ParenthesesUtils.areParenthesesNeeded(unboxedExpression, (PsiExpression)parent, false)) {
           return '(' + text + ')';
         }
         else {

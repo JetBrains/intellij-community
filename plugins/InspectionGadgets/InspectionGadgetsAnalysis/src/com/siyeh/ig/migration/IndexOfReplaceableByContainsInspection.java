@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -83,8 +82,7 @@ public class IndexOfReplaceableByContainsInspection
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiBinaryExpression)) {
         return;

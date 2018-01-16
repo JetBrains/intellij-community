@@ -6,7 +6,6 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -79,7 +78,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement().getParent().getParent();
       if (!(element instanceof PsiMethodCallExpression)) {
         return;

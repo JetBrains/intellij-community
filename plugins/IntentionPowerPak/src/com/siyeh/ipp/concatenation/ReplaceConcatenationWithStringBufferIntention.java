@@ -17,7 +17,6 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -49,7 +48,7 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     PsiPolyadicExpression expression = (PsiPolyadicExpression)element;
     PsiElement parent = expression.getParent();
     while (ExpressionUtils.isConcatenation(parent)) {
@@ -139,7 +138,8 @@ public class ReplaceConcatenationWithStringBufferIntention extends MutablyNamedI
             string = true;
           }
           newExpressionText.append('+').append(commentTracker.text(operand));
-        } else {
+        }
+        else {
           turnExpressionIntoChainedAppends(operand, result, commentTracker);
         }
       }

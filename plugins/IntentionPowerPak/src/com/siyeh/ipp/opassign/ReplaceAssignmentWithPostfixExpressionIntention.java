@@ -17,7 +17,6 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -62,8 +61,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = assignmentExpression.getLExpression();

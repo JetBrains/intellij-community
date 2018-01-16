@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -78,8 +77,7 @@ public class ListIndexOfReplaceableByContainsInspection
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiBinaryExpression expression =
         (PsiBinaryExpression)descriptor.getPsiElement();
       final PsiExpression lhs = expression.getLOperand();

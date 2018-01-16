@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Bas Leijdekkers
+ * Copyright 2003-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -48,11 +47,9 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor)
-    throws IncorrectOperationException {
+  protected void doFix(Project project, ProblemDescriptor descriptor) {
     final PsiElement keywordElement = descriptor.getPsiElement();
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(keywordElement,
-                                                               PsiStatement.class);
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(keywordElement, PsiStatement.class);
     if (statement == null) {
       return;
     }

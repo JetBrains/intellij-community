@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -57,8 +56,7 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
     return new ComparisonPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiBinaryExpression expression =
       (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();

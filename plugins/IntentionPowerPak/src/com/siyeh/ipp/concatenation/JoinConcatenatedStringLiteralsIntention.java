@@ -17,7 +17,6 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -36,7 +35,7 @@ public class JoinConcatenatedStringLiteralsIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     if (element instanceof PsiWhiteSpace) {
       element = element.getPrevSibling();
     }

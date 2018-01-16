@@ -24,7 +24,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -56,7 +55,7 @@ public class ReuseOfLocalVariableInspection extends ReuseOfLocalVariableInspecti
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiLocalVariable variable = (PsiLocalVariable)referenceExpression.resolve();
       final PsiAssignmentExpression assignment = (PsiAssignmentExpression)referenceExpression.getParent();
@@ -99,7 +98,8 @@ public class ReuseOfLocalVariableInspection extends ReuseOfLocalVariableInspecti
       final String rhsText = rhs == null ? "" : commentTracker.text(rhs);
       @NonNls final String newStatementText = type.getCanonicalText() + ' ' + newVariableName + " =  " + rhsText + ';';
 
-      final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)commentTracker.replaceAndRestoreComments(assignmentStatement, newStatementText);
+      final PsiDeclarationStatement declarationStatement =
+        (PsiDeclarationStatement)commentTracker.replaceAndRestoreComments(assignmentStatement, newStatementText);
       final PsiElement[] elements = declarationStatement.getDeclaredElements();
       final PsiLocalVariable newVariable = (PsiLocalVariable)elements[0];
       final PsiElement context = declarationStatement.getParent();
