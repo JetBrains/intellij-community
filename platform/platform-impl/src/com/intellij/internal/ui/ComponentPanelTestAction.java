@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.tabs.TabInfo;
@@ -20,6 +21,7 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,7 +62,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       tabs.addTab(new TabInfo(createComponentPanel()).setText("Component"));
       tabs.addTab(new TabInfo(createComponentGridPanel()).setText("Component Grid"));
 
-      TabInfo progressTab = new TabInfo(createProgressPanel()).setText("Progress");
+      TabInfo progressTab = new TabInfo(createProgressGridPanel()).setText("Progress Grid");
       tabs.addTab(progressTab);
 
       tabs.addListener(new TabsListener.Adapter(){
@@ -75,8 +77,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           }
         }
       });
-
-      tabs.addTab(new TabInfo(createProgressGridPanel()).setText("Progress Grid"));
 
       return tabs;
     }
@@ -128,6 +128,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       JBScrollPane pane = new JBScrollPane(table);
       pane.setPreferredSize(JBUI.size(200, 100));
+      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+
       panel.add(JBPanelFactory.panel(pane).
         withLabel("Table label:").moveLabelOnTop().withComment("Table comment").createPanel());
 
@@ -139,34 +141,37 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       ComponentWithBrowseButton cbb = new ComboboxWithBrowseButton(new JComboBox<>(new String[]{"One", "Two", "Three", "Four"}));
       cbb.addActionListener((e) -> System.out.println("Browse for combobox"));
 
+      JBScrollPane pane = new JBScrollPane(new JTextArea(3, 40));
+      pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
+
       JPanel p1 = JBPanelFactory.grid().
-        add(JBPanelFactory.panel(new JTextField()).
-          withLabel("&Port:").withComment("Port comment")).
+      add(JBPanelFactory.panel(new JTextField()).
+        withLabel("&Port:").withComment("Port comment")).
 
-        add(JBPanelFactory.panel(new JTextField()).
-          withLabel("&Host:").withComment("Host comment")).
+      add(JBPanelFactory.panel(new JTextField()).
+        withLabel("&Host:").withComment("Host comment")).
 
-        add(JBPanelFactory.panel(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
-          withLabel("P&rotocol:").withComment("Protocol comment").withTooltip("Protocol selection").
-          withTooltipLink("Check here for more info", ()-> System.out.println("More info"))).
+      add(JBPanelFactory.panel(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
+        withLabel("P&rotocol:").withComment("Protocol comment").withTooltip("Protocol selection").
+        withTooltipLink("Check here for more info", ()-> System.out.println("More info"))).
 
-        add(JBPanelFactory.panel(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
-          withLabel("&Text field:").withComment("Text field comment")).
+      add(JBPanelFactory.panel(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
+        withLabel("&Text field:").withComment("Text field comment")).
 
-        add(JBPanelFactory.panel(cbb).
-          withLabel("&Combobox selection:")).
+      add(JBPanelFactory.panel(cbb).
+        withLabel("&Combobox selection:")).
 
-        add(JBPanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
+      add(JBPanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
 
-        add(JBPanelFactory.panel(new JTextArea(3, 40)).
-          withLabel("Text area:").withComment("Text area comment").moveLabelOnTop()).
+      add(JBPanelFactory.panel(pane).
+        withLabel("Text area:").withComment("Text area comment").moveLabelOnTop()).
 
-        createPanel();
+      createPanel();
 
       ButtonGroup bg = new ButtonGroup();
       JRadioButton rb1 = new JRadioButton("RadioButton 1");
-      JRadioButton rb2 = new JRadioButton("RadioButton 1");
-      JRadioButton rb3 = new JRadioButton("RadioButton 1");
+      JRadioButton rb2 = new JRadioButton("RadioButton 2");
+      JRadioButton rb3 = new JRadioButton("RadioButton 3");
       bg.add(rb1);
       bg.add(rb2);
       bg.add(rb3);
@@ -221,28 +226,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       }
     }
 
-    private JComponent createProgressPanel() {
-      JProgressBar progressBar = new JProgressBar(0, 100);
-
-      JPanel innerPanel = JBPanelFactory.panel(progressBar).
-        withLabel("Process").withCancel(() -> myAlarm.cancelRequest(timerRequest)).
-        createPanel();
-
-      timerRequest = new ProgressTimerRequest(progressBar);
-
-      myAlarm.addRequest(timerRequest, 200, ModalityState.any());
-
-      ProgressPanel progressPanel = ProgressPanel.forComponent(progressBar);
-      if (progressPanel != null) {
-        progressPanel.setCommentText(Integer.toString(0));
-      }
-
-      JPanel panel = new JPanel(new BorderLayout());
-      panel.setBorder(JBUI.Borders.emptyTop(5));
-      panel.add(innerPanel, BorderLayout.NORTH);
-      return panel;
-    }
-
     private JComponent createProgressGridPanel() {
       JPanel panel = new JPanel();
       panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -250,14 +233,25 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JProgressBar pb1 = new JProgressBar(0, 100);
       JProgressBar pb2 = new JProgressBar(0, 100);
 
+      timerRequest = new ProgressTimerRequest(pb1);
+
+      myAlarm.addRequest(timerRequest, 200, ModalityState.any());
+
+      ProgressPanel progressPanel = ProgressPanel.forComponent(pb1);
+      if (progressPanel != null) {
+        progressPanel.setCommentText(Integer.toString(0));
+      }
+
       panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(pb1).
-          withLabel("Label 1.1").
-          withCancel(()-> System.out.println("Cancel action #1"))).
+          withLabel("Label ygp 1.1").
+          withCancel(()-> myAlarm.cancelRequest(timerRequest))).
         add(JBPanelFactory.panel(pb2).
-          withLabel("Label 1.2").
+          withTopSeparator().
+          withLabel("Label ygp 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
+        expandVertically().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb1)).setCommentText("Long long long long long long long text");
@@ -271,49 +265,15 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withLabel("Label 2.1").moveLabelLeft().
           withCancel(()-> System.out.println("Cancel action #3"))).
         add(JBPanelFactory.panel(pb4).
+          withTopSeparator().
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
           withResume(()-> System.out.println("Resume action #4"))).
+        expandVertically().
         createPanel());
 
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb3)).setCommentText("Long long long long long long text");
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb4)).setCommentText("Short text");
-
-      JProgressBar pb5 = new JProgressBar(0, 100);
-      JProgressBar pb6 = new JProgressBar(0, 100);
-      panel.add(JBPanelFactory.grid().
-        add(JBPanelFactory.panel(pb5).
-          withTopSeparator().withLabel("Label 3.1").
-          withCancel(()-> System.out.println("Cancel action #5")).
-          andSmallIcons()).
-        add(JBPanelFactory.panel(pb6).
-          withLabel("Label 3.2").
-          withPause(()-> System.out.println("Pause action #6")).
-          withResume(()-> System.out.println("Resume action #6")).
-          andSmallIcons()).createPanel());
-
-      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb5)).setCommentText("Long long long long long long text");
-      ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb6)).setCommentText("Short text");
-
-      panel.add(JBPanelFactory.grid().
-        add(JBPanelFactory.panel(new JProgressBar(0, 100)).
-          withTopSeparator().withLabel("Label 4.1").withoutComment().
-          withCancel(()-> System.out.println("Cancel action #7")).
-          andSmallIcons()).
-        add(JBPanelFactory.panel(new JProgressBar(0, 100)).
-          withLabel("Label 4.2").withoutComment().
-          withPause(()-> System.out.println("Pause action #8")).
-          withResume(()-> System.out.println("Resume action #8")).
-          andSmallIcons()).
-        createPanel());
-
-
-      panel.add(JBPanelFactory.grid().
-        add(JBPanelFactory.panel(new JProgressBar(0, 100)).
-          withTopSeparator().withoutComment().
-          withCancel(()-> System.out.println("Cancel action #9")).
-          andSmallIcons()).
-        createPanel());
 
       panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(new JProgressBar(0, 100)).
@@ -322,8 +282,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
           withCancel(()-> System.out.println("Cancel action #11"))).
         createPanel());
 
-      panel.add(Box.createVerticalBox());
-      return panel;
+      return JBUI.Panels.simplePanel().addToTop(panel);
     }
   }
 }

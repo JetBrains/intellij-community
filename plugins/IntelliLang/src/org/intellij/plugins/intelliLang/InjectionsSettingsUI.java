@@ -486,7 +486,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       setShowGrid(false);
       setShowVerticalLines(false);
       setGridColor(getForeground());
-      TableUtil.setupCheckboxColumn(getColumnModel().getColumn(0));
+      TableUtil.setupCheckboxColumn(this, 0);
 
       new DoubleClickListener() {
         @Override

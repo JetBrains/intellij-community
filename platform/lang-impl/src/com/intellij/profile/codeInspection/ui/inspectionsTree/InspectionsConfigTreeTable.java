@@ -89,7 +89,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     severitiesColumn.setMaxWidth(JBUI.scale(20));
 
     TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
+    isEnabledColumn.setMaxWidth(JBUI.scale(22 + getAdditionalPadding()));
     ThreeStateCheckBoxRenderer boxRenderer = new ThreeStateCheckBoxRenderer();
     boxRenderer.setOpaque(true);
     isEnabledColumn.setCellRenderer(boxRenderer);

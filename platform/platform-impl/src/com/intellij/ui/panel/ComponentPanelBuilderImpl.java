@@ -11,6 +11,7 @@ import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -146,7 +147,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
       componentPanel.add(lbl);
     }
     else if (comment != null && !myCommentBelow) {
-      componentPanel.add(Box.createRigidArea(JBUI.size(14, 0)));
+      componentPanel.add(Box.createRigidArea(JBUI.size(getCommentOffset(), 0)));
       componentPanel.add(comment);
     }
 
@@ -164,19 +165,42 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
     gc.gridy++;
   }
 
-  private Insets getCommentInsets() {
+  private int getCommentOffset() {
+    boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
+
     if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
-      return JBUI.insets(0, 24, 0, 0);
+      return isMacDefault ? 8 : 13;
     }
     else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
              myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
-      return JBUI.insets(2, 6, 0, 0);
+      return isMacDefault ? 13 : 14;
+    } else {
+      return 14;
+    }
+  }
+
+  private Insets getCommentInsets() {
+    boolean isMacDefault = UIUtil.isUnderDefaultMacTheme();
+    boolean isWin10 = UIUtil.isUnderWin10LookAndFeel();
+    int top = 8, left = 2, bottom = 0;
+
+    if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
+      top = 0;
+      left = isMacDefault ? 27 : 22;
+      bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
+    }
+    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
+             myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
+      top = isWin10 ? 3 : 4;
+      left = isWin10 ? 1 : isMacDefault ? 5 : 2;
+      bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
     }
     else if (myComponent instanceof JButton) {
-      return JBUI.insets(0, 8, 0, 0);
+      top = isWin10 ? 2 : 4;
+      left = isWin10 ? 1 : isMacDefault ? 5 : 4;
+      bottom = 0;
     }
-    else {
-      return JBUI.insetsTop(9);
-    }
+
+    return JBUI.insets(top, left, bottom, 0);
   }
 }
