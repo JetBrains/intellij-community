@@ -1750,13 +1750,13 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   }
 
   @Override
-  public void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor) {
+  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
     setLineNumberConvertor(lineNumberConvertor, null);
   }
 
   @Override
-  public void setLineNumberConvertor(@NotNull TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2) {
-    myLineNumberConvertor = lineNumberConvertor1;
+  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor1, @Nullable TIntFunction lineNumberConvertor2) {
+    myLineNumberConvertor = lineNumberConvertor1 != null ? lineNumberConvertor1 : value -> value;
     myAdditionalLineNumberConvertor = lineNumberConvertor2;
   }
 

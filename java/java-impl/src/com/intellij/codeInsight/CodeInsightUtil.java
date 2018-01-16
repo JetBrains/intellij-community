@@ -392,20 +392,13 @@ public class CodeInsightUtil {
       PsiClassType inheritorType = typeArgs == null || typeArgs.contains(null)
                                    ? factory.createType(inheritor, factory.createRawSubstitutor(inheritor))
                                    : factory.createType(inheritor, typeArgs.toArray(PsiType.EMPTY_ARRAY));
-      PsiType toAdd = addArrayDimensions(arrayDim, inheritorType);
+      PsiType toAdd = PsiTypesUtil.createArrayType(inheritorType, arrayDim);
       if (baseType.isAssignableFrom(toAdd)) {
         result.consume(toAdd);
       }
 
       return true;
     };
-  }
-
-  private static PsiType addArrayDimensions(int arrayDim, PsiType newType) {
-    for(int i = 0; i < arrayDim; i++){
-      newType = newType.createArrayType();
-    }
-    return newType;
   }
 
   @NotNull

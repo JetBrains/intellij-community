@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="compiler-openapi" />
     <orderEntry type="module" module-name="external-system-rt" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
   </component>
 </module>

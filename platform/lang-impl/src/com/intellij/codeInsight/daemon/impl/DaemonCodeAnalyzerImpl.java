@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.codeInsight.daemon.impl;
@@ -85,6 +73,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -109,7 +98,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final ScheduledExecutorService myAlarm = EdtExecutorService.getScheduledExecutorInstance();
   @NotNull
   private volatile Future<?> myUpdateRunnableFuture = CompletableFuture.completedFuture(null);
-  private boolean myUpdateByTimerEnabled = true;
+  private boolean myUpdateByTimerEnabled = true; // guarded by this
   private final Collection<VirtualFile> myDisabledHintsFiles = new THashSet<>();
   private final Collection<VirtualFile> myDisabledHighlightingFiles = new THashSet<>();
 
@@ -477,28 +466,27 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @Override
-  public void setUpdateByTimerEnabled(boolean value) {
+  public synchronized void setUpdateByTimerEnabled(boolean value) {
     myUpdateByTimerEnabled = value;
     stopProcess(value, "Update by timer change");
   }
 
-  private int myDisableCount;
+  private final AtomicInteger myDisableCount = new AtomicInteger();
 
   @Override
   public void disableUpdateByTimer(@NotNull Disposable parentDisposable) {
     setUpdateByTimerEnabled(false);
-    myDisableCount++;
+    myDisableCount.incrementAndGet();
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Disposer.register(parentDisposable, () -> {
-      myDisableCount--;
-      if (myDisableCount == 0) {
+      if (myDisableCount.decrementAndGet() == 0) {
         setUpdateByTimerEnabled(true);
       }
     });
   }
 
-  boolean isUpdateByTimerEnabled() {
+  synchronized boolean isUpdateByTimerEnabled() {
     return myUpdateByTimerEnabled;
   }
 
@@ -786,7 +774,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myDisabledHintsFiles.clear();
 
     Element element = state.getChild(DISABLE_HINTS_TAG);
@@ -806,11 +794,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   private final Runnable submitPassesRunnable = new Runnable() {
     @Override
     public void run() {
+      boolean updateByTimerEnabled = isUpdateByTimerEnabled();
       PassExecutorService.log(getUpdateProgress(), null, "Update Runnable. myUpdateByTimerEnabled:",
-                              myUpdateByTimerEnabled, " something disposed:",
+                              updateByTimerEnabled, " something disposed:",
                               PowerSaveMode.isEnabled() || myDisposed || !myProject.isInitialized(), " activeEditors:",
                               myProject.isDisposed() ? null : getSelectedEditors());
-      if (!myUpdateByTimerEnabled) return;
+      if (!updateByTimerEnabled) return;
       if (myDisposed) return;
       ApplicationManager.getApplication().assertIsDispatchThread();
 

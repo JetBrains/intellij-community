@@ -189,7 +189,8 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
     else if (elementAtCaret == null ||
              PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiLiteralExpression.class, PsiComment.class) != null ||
-             PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiJavaFile.class) == null) {
+             PsiTreeUtil.getNonStrictParentOfType(elementAtCaret, PsiJavaFile.class) == null ||
+             isEndOfLineComment(elementAtCaret)) {
       toInsert = fqn;
     }
     else {
@@ -197,9 +198,12 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
 
       toInsert = targetElement.getName();
       if (targetElement instanceof PsiMethod) {
-        if (!fqn.contains("(")) {
-          suffix = "()";
+        suffix = "()";
+        int parenthIdx = fqn.indexOf('(');
+        if (parenthIdx >= 0) {
+          fqn = fqn.substring(0, parenthIdx);
         }
+
         if (((PsiMethod)targetElement).isConstructor()) {
           targetElement = targetElement.getContainingClass();
           fqn = StringUtil.getPackageName(fqn);
@@ -270,6 +274,11 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
       caretOffset --;
     }
     editor.getCaretModel().moveToOffset(caretOffset);
+  }
+
+  private static boolean isEndOfLineComment(PsiElement elementAtCaret) {
+    PsiElement prevElement = PsiTreeUtil.prevLeaf(elementAtCaret);
+    return prevElement instanceof PsiComment && JavaTokenType.END_OF_LINE_COMMENT.equals(((PsiComment)prevElement).getTokenType());
   }
 
   private static String getParameterString(PsiMethod method, final boolean erasure) {

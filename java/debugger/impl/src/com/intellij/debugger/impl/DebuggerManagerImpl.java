@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.impl;
 
@@ -596,16 +596,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       properties.setProperty("debug", "true");
     }
     int idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getCapturePoints()) {
-      properties.setProperty("capture" + idx++, point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                                point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                                point.myKey.asString());
-    }
-    idx = 0;
-    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getInsertPoints()) {
-      properties.setProperty("insert" + idx++, point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                               point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
-                                               point.myKey.asString());
+    for (CaptureSettingsProvider.AgentPoint point : CaptureSettingsProvider.getPoints()) {
+      properties.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
+                             point.myClassName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myMethodName + CaptureSettingsProvider.AgentPoint.SEPARATOR +
+                             point.myKey.asString());
     }
     try {
       File file = FileUtil.createTempFile("capture", ".props");

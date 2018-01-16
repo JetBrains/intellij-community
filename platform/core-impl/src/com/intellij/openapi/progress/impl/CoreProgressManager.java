@@ -19,8 +19,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,13 +44,15 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private ScheduledFuture<?> myCheckCancelledFuture; // guarded by threadsUnderIndicator
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
-  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new THashMap<>();
+  // THashMap is avoided here because of tombstones overhead
+  static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>();
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> threadTopLevelIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // threads which are running under canceled indicator
-  static final Set<Thread> threadsUnderCanceledIndicator = new THashSet<>(); // guarded by threadsUnderIndicator
+  // THashSet is avoided here because of possible tombstones overhead
+  static final Set<Thread> threadsUnderCanceledIndicator = new HashSet<>(); // guarded by threadsUnderIndicator
   private static volatile boolean shouldCheckCanceled;
 
   /** active (i.e. which have {@link #executeProcessUnderProgress(Runnable, ProgressIndicator)} method running) indicators

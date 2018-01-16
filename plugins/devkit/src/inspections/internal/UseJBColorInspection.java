@@ -57,7 +57,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
           return;
         }
         final PsiElement colorField = expression.resolve();
-        if (colorField != null && colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
+        if (colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass colorClass = ((PsiField)colorField).getContainingClass();
           if (colorClass != null && Color.class.getName().equals(colorClass.getQualifiedName())) {
             String text = expression.getText();

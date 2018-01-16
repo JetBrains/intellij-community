@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -438,11 +439,13 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
     System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
 
+  @Override
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (UsageViewUtil.reportNonRegularUsages(usages, myProject)) {
       return true;
@@ -531,7 +534,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       if (myOpenInEditor) {
-        EditorHelper.openFilesInEditor(myElementsToMove);
+        ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(Arrays.stream(myElementsToMove).filter(PsiElement::isValid).toArray(PsiElement[]::new)));
       }
     }
     catch (IncorrectOperationException e) {
@@ -540,6 +543,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+    @Override
     protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
@@ -550,6 +554,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
     String target = myTargetPackage.getQualifiedName();

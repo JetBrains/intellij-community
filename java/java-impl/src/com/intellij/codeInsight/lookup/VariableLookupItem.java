@@ -189,7 +189,7 @@ public class VariableLookupItem extends LookupItem<PsiVariable> implements Typed
           ref.bindToElementViaStaticImport(((PsiField)variable).getContainingClass());
           PostprocessReformattingAspect.getInstance(ref.getProject()).doPostponedFormatting();
         }
-        if (toDelete.isValid()) {
+        if (toDelete != null && toDelete.isValid()) {
           document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
         }
         context.commitDocument();

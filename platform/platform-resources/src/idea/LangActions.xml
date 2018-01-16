@@ -273,6 +273,7 @@
         </group>
         <separator/>
         <action id="CollapseSelection" class="com.intellij.codeInsight.folding.impl.actions.CollapseSelectionAction"/>
+        <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction"/>
       </group>
 
       <separator/>
@@ -408,12 +409,7 @@
     </action>
 
     <group id="ToolbarFindGroup">
-      <separator/>
-
-      <reference ref="Find"/>
-      <reference ref="Replace"/>
-
-      <add-to-group group-id="MainToolBar" relative-to-action="$Paste" anchor="after"/>
+      <add-to-group group-id="MainToolBar" relative-to-action="Back" anchor="before"/>
     </group>
 
     <group id="ToolbarRunGroup">

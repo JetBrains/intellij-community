@@ -57,9 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
@@ -116,9 +114,14 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                                                               @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
     int offset = editor.getCaretModel().getOffset();
-    PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiLanguageInjectionHost.class, false);
-    if (host == null) return null;
-    return host.isValidHost()? host : null;
+    FileViewProvider vp = file.getViewProvider();
+    for (Language language : vp.getLanguages()) {
+      PsiLanguageInjectionHost host = PsiTreeUtil.getParentOfType(vp.findElementAt(offset, language), PsiLanguageInjectionHost.class, false);
+      if (host != null && host.isValidHost()) {
+        return host;
+      }
+    }
+    return null;
   }
 
   public void invoke(@NotNull Project project,

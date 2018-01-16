@@ -9,6 +9,7 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.ObjectPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.StandardPatterns
+import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
 
 fun literalExpression() = ULiteralExpressionPattern()
+
+fun stringLiteralExpression() = literalExpression().filter(ULiteralExpression::isStringLiteral)
 
 fun callExpression() = UCallExpressionPattern()
 
@@ -51,6 +54,8 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
 
   fun withReceiver(classPattern: ElementPattern<PsiClass>) =
     filter { (it.receiverType as? PsiClassType)?.resolve()?.let { classPattern.accepts(it) } ?: false }
+
+  fun withMethodName(methodName : String) = withMethodName(string().equalTo(methodName))
 
   fun withMethodName(namePattern: ElementPattern<String>) = filter { it.methodName?.let { namePattern.accepts(it) } ?: false }
 

@@ -48,7 +48,7 @@ class TreeStructureActionsOwner implements TreeActionsOwner {
     for(TreeAction action: myActions) {
       if (action.getName().equals(name)) return true;
     }
-    return Sorter.ALPHA_SORTER_ID.equals(name);
+    return false;
   }
 
   public void setActionIncluded(final TreeAction filter, final boolean selected) {

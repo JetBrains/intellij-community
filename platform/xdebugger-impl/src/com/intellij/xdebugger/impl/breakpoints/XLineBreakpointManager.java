@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.breakpoints;
 
@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -64,7 +65,7 @@ public class XLineBreakpointManager {
   private final Project myProject;
   private final XDependentBreakpointManager myDependentBreakpointManager;
 
-  public XLineBreakpointManager(@NotNull Project project, final XDependentBreakpointManager dependentBreakpointManager, final StartupManager startupManager) {
+  public XLineBreakpointManager(@NotNull Project project, final XDependentBreakpointManager dependentBreakpointManager) {
     myProject = project;
     myDependentBreakpointManager = dependentBreakpointManager;
 
@@ -90,7 +91,8 @@ public class XLineBreakpointManager {
 
         @Override
         public void fileDeleted(@NotNull VirtualFileEvent event) {
-          removeBreakpoints(myBreakpoints.getKeysByValue(event.getFile().getUrl()));
+          List<XLineBreakpointImpl> breakpoints = myBreakpoints.getKeysByValue(event.getFile().getUrl());
+          removeBreakpoints(breakpoints != null ? new ArrayList<>(breakpoints) : null); // safe copy
         }
       }, project);
     }

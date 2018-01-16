@@ -229,6 +229,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));

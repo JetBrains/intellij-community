@@ -759,7 +759,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane != null && viewPane instanceof AbstractProjectViewPSIPane) {
+    if (viewPane instanceof AbstractProjectViewPSIPane) {
       return ((AbstractProjectViewPSIPane)viewPane).selectCB(element, file, requestFocus);
     }
     select(element, file, requestFocus);
@@ -1325,6 +1325,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
           FileEditor editor = EditorHelper.openInEditor(element, false);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
+            JComponent component = editor.getPreferredFocusedComponent();
+            if (component != null) {
+              component.requestFocus();
+            }
             requestFocus = false;
           }
         }

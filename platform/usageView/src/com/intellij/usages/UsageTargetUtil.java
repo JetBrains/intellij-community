@@ -33,7 +33,7 @@ import java.util.List;
 public class UsageTargetUtil {
   private static final ExtensionPointName<UsageTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageTargetProvider");
 
-  public static UsageTarget[] findUsageTargets(DataProvider dataProvider) {
+  public static UsageTarget[] findUsageTargets(@NotNull DataProvider dataProvider) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataProvider);
 
@@ -51,7 +51,7 @@ public class UsageTargetUtil {
     return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);
   }
 
-  public static UsageTarget[] findUsageTargets(Editor editor, PsiFile file) {
+  public static UsageTarget[] findUsageTargets(@NotNull Editor editor, @NotNull PsiFile file) {
     List<UsageTarget> result = new ArrayList<>();
     for (UsageTargetProvider provider : getProviders(file.getProject())) {
       UsageTarget[] targets = provider.getTargets(editor, file);
@@ -60,7 +60,7 @@ public class UsageTargetUtil {
     return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);
   }
 
-  public static UsageTarget[] findUsageTargets(PsiElement psiElement) {
+  public static UsageTarget[] findUsageTargets(@NotNull PsiElement psiElement) {
     List<UsageTarget> result = new ArrayList<>();
     for (UsageTargetProvider provider : getProviders(psiElement.getProject())) {
       UsageTarget[] targets = provider.getTargets(psiElement);
@@ -70,7 +70,7 @@ public class UsageTargetUtil {
   }
 
   @NotNull
-  private static List<UsageTargetProvider> getProviders(Project project) {
+  private static List<UsageTargetProvider> getProviders(@NotNull Project project) {
     return DumbService.getInstance(project).filterByDumbAwareness(Extensions.getExtensions(EP_NAME));
   }
 }

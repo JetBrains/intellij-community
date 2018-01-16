@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class PointlessBooleanExpressionInspection extends BaseInspection {
   private enum BooleanExpressionKind {
@@ -78,9 +78,9 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final String replacement = (String)infos[1];
-    if (replacement.isEmpty()) {
-      final PsiAssignmentExpression expression = (PsiAssignmentExpression)infos[0];
-      return InspectionGadgetsBundle.message("boolean.expression.does.not.modify.problem.descriptor", expression);
+    final PsiExpression expression = (PsiExpression)infos[0];
+    if (replacement.isEmpty() && expression instanceof PsiAssignmentExpression) {
+      return InspectionGadgetsBundle.message("boolean.expression.does.not.modify.problem.descriptor", expression.getText());
     }
     return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor", replacement);
   }
@@ -103,7 +103,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       out.append(')');
     }
     else if (expression != null) {
-      out.append(tracker.markUnchanged(expression).getText());
+      out.append(tracker.text(expression));
     }
     return out;
   }
@@ -194,7 +194,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       buildSimplifiedExpression(expressions, "==", negate, out, tracker);
     }
     else {
-      out.append(tracker.markUnchanged(expression).getText());
+      out.append(tracker.text(expression));
     }
   }
 
@@ -206,7 +206,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     if (expressions.size() == 1) {
       final PsiExpression expression = expressions.get(0);
       if (!negate) {
-        out.append(tracker.markUnchanged(expression).getText());
+        out.append(tracker.text(expression));
         return;
       }
       if (ComparisonUtils.isComparison(expression)) {
@@ -215,14 +215,14 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         assert rhs != null;
-        out.append(tracker.markUnchanged(lhs).getText()).append(negatedComparison).append(tracker.markUnchanged(rhs).getText());
+        out.append(tracker.text(lhs)).append(negatedComparison).append(tracker.text(rhs));
       }
       else {
         if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-          out.append("!(").append(tracker.markUnchanged(expression).getText()).append(')');
+          out.append("!(").append(tracker.text(expression)).append(')');
         }
         else {
-          out.append('!').append(tracker.markUnchanged(expression).getText());
+          out.append('!').append(tracker.text(expression));
         }
       }
     }
@@ -274,16 +274,19 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
   private void buildSimplifiedAssignmentExpression(PsiAssignmentExpression expression, StringBuilder out, CommentTracker tracker) {
     final IElementType tokenType = expression.getOperationTokenType();
+    final PsiExpression lhs = expression.getLExpression();
+
     if (tokenType == JavaTokenType.ANDEQ) {
       if (evaluate(expression.getRExpression()) == Boolean.TRUE) {
         if (expression.getParent() instanceof PsiExpressionStatement) {
           return;
         }
-        out.append(expression.getLExpression().getText());
+        out.append(lhs.getText());
       }
       else {
-        out.append(expression.getLExpression().getText()).append("=false");
+        out.append(lhs.getText()).append("=false");
       }
+      tracker.markUnchanged(lhs);
       return;
     }
     else if (tokenType == JavaTokenType.OREQ) {
@@ -291,21 +294,23 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         if (expression.getParent() instanceof PsiExpressionStatement) {
           return;
         }
-        out.append(expression.getLExpression().getText());
+        out.append(lhs.getText());
       }
       else {
-        out.append(expression.getLExpression().getText()).append("=true");
+        out.append(lhs.getText()).append("=true");
       }
+      tracker.markUnchanged(lhs);
       return;
     }
-    out.append(expression.getLExpression().getText()).append(expression.getOperationSign().getText());
+    tracker.markUnchanged(lhs);
+    out.append(lhs.getText()).append(expression.getOperationSign().getText());
     buildSimplifiedExpression(expression.getRExpression(), out, tracker);
   }
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
     final String replacement = (String)infos[1];
-    if (replacement.isEmpty()) {
+    if (replacement.isEmpty() && infos[0] instanceof PsiAssignmentExpression) {
       return new RemovePointlessBooleanExpressionFix();
     }
     boolean hasSideEffect = (boolean)infos[2];
@@ -323,7 +328,23 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      new CommentTracker().deleteAndRestoreComments(descriptor.getPsiElement().getParent());
+      final PsiElement element = descriptor.getPsiElement();
+      if (!(element instanceof PsiAssignmentExpression)) {
+        return;
+      }
+      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
+      final PsiElement parent = assignmentExpression.getParent();
+      assert parent instanceof PsiStatement;
+      final List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(assignmentExpression.getLExpression());
+      final CommentTracker commentTracker = new CommentTracker();
+      for (PsiExpression sideEffect : sideEffects) {
+        commentTracker.markUnchanged(sideEffect);
+      }
+      final PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, assignmentExpression);
+      if (statements.length > 0) {
+        BlockUtils.addBefore((PsiStatement)parent, statements);
+      }
+      commentTracker.deleteAndRestoreComments(parent);
     }
   }
 
@@ -350,7 +371,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiExpression)) {
         return;
@@ -430,11 +451,10 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         return;
       }
 
-      String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
-
-      if (parent instanceof PsiLambdaExpression &&
-          !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent,
-                                                  () -> JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(replacement, expression))) {
+      final String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
+      final Supplier<PsiElement> newBodySupplier =
+        () -> JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(replacement, expression);
+      if (parent instanceof PsiLambdaExpression && !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, newBodySupplier)) {
         return;
       }
 

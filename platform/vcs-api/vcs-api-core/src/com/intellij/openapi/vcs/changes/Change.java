@@ -143,7 +143,7 @@ public class Change {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || (! (o instanceof Change))) return false;
+    if ((!(o instanceof Change))) return false;
     final Change otherChange = ((Change)o);
 
     final ContentRevision br1 = getBeforeRevision();

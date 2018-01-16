@@ -17,14 +17,12 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UObjectLiteralExpression
-import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.*
 
 class JavaUObjectLiteralExpression(
   override val psi: PsiNewExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression {
+) : JavaAbstractUExpression(givenParent), UObjectLiteralExpression, UCallExpressionEx {
   override val declaration by lz { JavaUClass.create(psi.anonymousClass!!, this) }
 
   override val classReference by lz {
@@ -39,6 +37,8 @@ class JavaUObjectLiteralExpression(
   override val valueArguments by lz {
     psi.argumentList?.expressions?.map { JavaConverter.convertOrEmpty(it, this) } ?: emptyList()
   }
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override val typeArgumentCount by lz { psi.classReference?.typeParameters?.size ?: 0 }
 

@@ -294,4 +294,11 @@ public class Test01 {
     }
     return false;
   }
+
+  @ExpectContract(pure = true)
+  String[] replaceFirstWithNull(@ExpectNotNull String[] arr) {
+    String[] res = arr.clone();
+    res[0] = null;
+    return res;
+  }
 }

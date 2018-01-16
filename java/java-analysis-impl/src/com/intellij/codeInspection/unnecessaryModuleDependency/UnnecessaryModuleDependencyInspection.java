@@ -10,10 +10,7 @@ import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -21,6 +18,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,7 +53,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
 
       final RefManager refManager = globalContext.getRefManager();
       for (final OrderEntry entry : declaredDependencies) {
-        if (entry instanceof ModuleOrderEntry) {
+        if (entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
           final Module dependency = ((ModuleOrderEntry)entry).getModule();
           if (dependency != null) {
             if (modules == null || !modules.contains(dependency)) {
@@ -99,28 +97,15 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
           }
         }
       }
-      return descriptors.isEmpty() ? null : descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+      return descriptors.isEmpty() ? null : descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
     }
     return null;
   }
 
-  private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
-                                                          InspectionManager manager,
-                                                          Module module,
-                                                          Module dependency, 
-                                                          List<String> exportedDependencies) {
-    if (exportedDependencies != null) {
-      final String exported = StringUtil.join(exportedDependencies, ", ");
-      return manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.exported.problem.descriptor", module.getName(), dependency.getName(), exported));
-    }
-
-    if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
-      final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName());
-      return manager.createProblemDescriptor(allContainsMessage, new RemoveModuleDependencyFix(module, dependency));
-    } else {
-      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName());
-      return manager.createProblemDescriptor(message);
-    }
+  @Nullable
+  @Override
+  public QuickFix getQuickFix(String hint) {
+    return new RemoveModuleDependencyFix(hint);
   }
 
   @Override
@@ -142,12 +127,39 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     return "UnnecessaryModuleDependencyInspection";
   }
 
-  public static class RemoveModuleDependencyFix implements QuickFix {
-    private final Module myModule;
-    private final Module myDependency;
+  @Nullable
+  @Override
+  public String getHint(@NotNull QuickFix fix) {
+    return fix instanceof RemoveModuleDependencyFix ? ((RemoveModuleDependencyFix)fix).myDependency : null;
+  }
 
-    public RemoveModuleDependencyFix(Module module, Module dependency) {
-      myModule = module;
+  private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
+                                                          InspectionManager manager,
+                                                          Module module,
+                                                          Module dependency,
+                                                          List<String> exportedDependencies) {
+    String dependencyName = dependency.getName();
+    String moduleName = module.getName();
+    if (exportedDependencies != null) {
+      final String exported = StringUtil.join(exportedDependencies, ", ");
+      return manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.exported.problem.descriptor", moduleName, dependencyName, exported), module);
+    }
+
+    if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
+      final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", moduleName, dependencyName);
+      return manager.createProblemDescriptor(allContainsMessage, module, new RemoveModuleDependencyFix(dependencyName));
+    }
+    else {
+      String message = InspectionsBundle.message("suspected.module.dependency.problem.descriptor", moduleName, dependencyName, scope.getDisplayName());
+      return manager.createProblemDescriptor(message, module);
+    }
+  }
+
+  public static class RemoveModuleDependencyFix implements QuickFix<ModuleProblemDescriptor> {
+
+    private final String myDependency;
+
+    public RemoveModuleDependencyFix(String dependency) {
       myDependency = dependency;
     }
 
@@ -158,11 +170,11 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
-      final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+    public void applyFix(@NotNull Project project, @NotNull ModuleProblemDescriptor descriptor) {
+      final ModifiableRootModel model = ModuleRootManager.getInstance(descriptor.getModule()).getModifiableModel();
       for (OrderEntry entry : model.getOrderEntries()) {
         if (entry instanceof ModuleOrderEntry) {
-          final Module mDependency = ((ModuleOrderEntry)entry).getModule();
+          final String mDependency = ((ModuleOrderEntry)entry).getModuleName();
           if (Comparing.equal(mDependency, myDependency)) {
             model.removeOrderEntry(entry);
             break;

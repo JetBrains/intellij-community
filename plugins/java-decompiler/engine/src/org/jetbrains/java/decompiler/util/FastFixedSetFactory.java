@@ -1,7 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 public class FastFixedSetFactory<E> {
 
@@ -145,7 +148,7 @@ public class FastFixedSetFactory<E> {
 
     public boolean equals(Object o) {
       if (o == this) return true;
-      if (o == null || !(o instanceof FastFixedSet)) return false;
+      if (!(o instanceof FastFixedSet)) return false;
 
       int[] extdata = ((FastFixedSet)o).getData();
       int[] intdata = data;

@@ -18,7 +18,12 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.psi.PsiArrayAccessExpression;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,8 +35,30 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
-    memState.push(memState.pop());
+    DfaValue dest = memState.pop();
+    memState.push(dest);
+    flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dest, memState);
     return nextInstruction(instruction, runner, memState);
+  }
+
+  protected void flushArrayOnUnknownAssignment(AssignInstruction instruction,
+                                               DfaValueFactory factory,
+                                               DfaValue dest,
+                                               DfaMemoryState memState) {
+    if (dest instanceof DfaVariableValue) return;
+    PsiArrayAccessExpression arrayAccess =
+      ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(instruction.getLExpression()), PsiArrayAccessExpression.class);
+    if (arrayAccess != null) {
+      PsiExpression array = arrayAccess.getArrayExpression();
+      DfaValue value = factory.createValue(array);
+      if (value instanceof DfaVariableValue) {
+        for (DfaVariableValue qualified : factory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
+          if (qualified.isFlushableByCalls()) {
+            memState.flushVariable(qualified);
+          }
+        }
+      }
+    }
   }
 
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -137,16 +164,7 @@ public abstract class InstructionVisitor {
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaVariableValue variable = instruction.getVariable();
     if (variable != null) {
-      if (instruction.isDependentsOnly()) {
-        for (DfaVariableValue qualified : runner.getFactory().getVarFactory().getAllQualifiedBy(variable)) {
-          if (qualified.isFlushableByCalls()) {
-            memState.flushVariable(qualified);
-          }
-        }
-      }
-      else {
-        memState.flushVariable(variable);
-      }
+      memState.flushVariable(variable);
     } else {
       memState.flushFields();
     }

@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.util.Collections;
@@ -50,6 +51,9 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
   LiveTemplateTree(final CheckboxTreeCellRenderer renderer, final CheckedTreeNode root, TemplateListPanel configurable) {
     super(renderer, root);
     myConfigurable = configurable;
+    if (!GraphicsEnvironment.isHeadless()) {
+      setDragEnabled(true);
+    }
   }
 
   @Override

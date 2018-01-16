@@ -197,7 +197,7 @@ public class TestStateStorage implements Disposable {
         IOUtil.deleteAllFilesStartingWith(myFile);
       }
       myMap = initializeMap();
-      LOG.error(message, e);
+      LOG.warn(message, e);
     }
     catch (IOException e1) {
       LOG.error("Cannot repair", e1);

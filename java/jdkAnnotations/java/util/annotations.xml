@@ -1646,7 +1646,6 @@
       <val name="source" val="&quot;this.values&quot;"/>
       <val name="sourceIsContainer" val="true" />
     </annotation>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name='java.util.Map V replace(K, V)'>
     <annotation name='org.jetbrains.annotations.Contract'>

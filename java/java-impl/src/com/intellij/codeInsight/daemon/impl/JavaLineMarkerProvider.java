@@ -185,7 +185,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     List<Computable<List<LineMarkerInfo>>> tasks = new ArrayList<>();
 
-    MultiMap<PsiClass, PsiMethod> byClass = MultiMap.create();
+    MultiMap<PsiClass, PsiMethod> canbeOverridden = MultiMap.create();
+    MultiMap<PsiClass, PsiMethod> canHaveSiblings = MultiMap.create();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
@@ -194,9 +195,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)parent;
-        PsiClass psiClass = method.getContainingClass();
-        if (PsiUtil.canBeOverridden(method) && psiClass != null) {
-          byClass.putValue(psiClass, method);
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null && PsiUtil.canBeOverridden(method)) {
+          canbeOverridden.putValue(containingClass, method);
+        }
+        if (FindSuperElementsHelper.canHaveSiblingSuper(method, containingClass)) {
+          canHaveSiblings.putValue(containingClass, method);
         }
         if (isServiceProviderMethod(method)) {
           tasks.add(() -> collectServiceProviderMethod(method));
@@ -213,10 +217,13 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
     }
-    for (PsiClass psiClass : byClass.keySet()) {
-      Collection<PsiMethod> methods = byClass.get(psiClass);
-      tasks.add(() -> collectSiblingInheritedMethods(methods));
+    for (PsiClass psiClass : canbeOverridden.keySet()) {
+      Collection<PsiMethod> methods = canbeOverridden.get(psiClass);
       tasks.add(() -> collectOverridingMethods(methods, psiClass));
+    }
+    for (PsiClass psiClass : canHaveSiblings.keySet()) {
+      Collection<PsiMethod> methods = canHaveSiblings.get(psiClass);
+      tasks.add(() -> collectSiblingInheritedMethods(methods));
     }
 
     Object lock = new Object();
@@ -484,10 +491,10 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
 
-  public static abstract class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
-    protected final String myInterfaceClassName;
+  public abstract static class ServiceNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
+    final String myInterfaceClassName;
 
-    protected ServiceNavigationHandler(@NotNull String interfaceClassName) {myInterfaceClassName = interfaceClassName;}
+    ServiceNavigationHandler(@NotNull String interfaceClassName) {myInterfaceClassName = interfaceClassName;}
 
     @Override
     public void navigate(MouseEvent e, PsiElement element) {
@@ -505,16 +512,17 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       return myInterfaceClassName;
     }
 
-    protected boolean isTargetReference(PsiJavaCodeReferenceElement reference) {
+    boolean isTargetReference(PsiJavaCodeReferenceElement reference) {
       return reference != null && getTargetFQN().equals(reference.getQualifiedName());
     }
   }
 
   private static class ServiceUsesNavigationHandler extends ServiceNavigationHandler {
-    public ServiceUsesNavigationHandler(String interfaceClassName) {
+    ServiceUsesNavigationHandler(String interfaceClassName) {
       super(interfaceClassName);
     }
 
+    @Override
     public PsiJavaCodeReferenceElement findTargetReference(@NotNull PsiJavaModule module) {
       return StreamEx.of(module.getUses().iterator())
         .map(PsiUsesStatement::getClassReference)
@@ -526,11 +534,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   private static class ServiceProvidesNavigationHandler extends ServiceNavigationHandler {
     private final String myImplementerClassName;
 
-    public ServiceProvidesNavigationHandler(@NotNull String interfaceClassName, @NotNull String implementerClassName) {
+    ServiceProvidesNavigationHandler(@NotNull String interfaceClassName, @NotNull String implementerClassName) {
       super(interfaceClassName);
       myImplementerClassName = implementerClassName;
     }
 
+    @Override
     public PsiJavaCodeReferenceElement findTargetReference(@NotNull PsiJavaModule module) {
       PsiJavaCodeReferenceElement[] references =
         StreamEx.of(module.getProvides().iterator())
@@ -542,6 +551,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       return ContainerUtil.find(references, this::isTargetReference);
     }
 
+    @Override
     @NotNull
     protected String getTargetFQN() {
       return myImplementerClassName;

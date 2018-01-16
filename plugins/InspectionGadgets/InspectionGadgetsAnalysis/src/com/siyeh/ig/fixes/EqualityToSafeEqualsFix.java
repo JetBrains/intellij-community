@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,8 +84,8 @@ public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    final String lhsText = tracker.markUnchanged(lhs).getText();
-    final String rhsText = tracker.markUnchanged(rhs).getText();
+    final String lhsText = tracker.text(lhs);
+    final String rhsText = tracker.text(rhs);
     @NonNls final StringBuilder newExpression = new StringBuilder();
     if (PsiUtil.isLanguageLevel7OrHigher(expression) && ClassUtils.findClass("java.util.Objects", expression) != null) {
       if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {

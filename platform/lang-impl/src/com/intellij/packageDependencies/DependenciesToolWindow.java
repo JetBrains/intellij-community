@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.packageDependencies;
 
 import com.intellij.icons.AllIcons;
@@ -13,23 +15,27 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class DependenciesToolWindow {
-  public static DependenciesToolWindow getInstance(Project project) {
-    return ServiceManager.getService(project, DependenciesToolWindow.class);
-  }
-
   private final Project myProject;
   private ContentManager myContentManager;
 
-  public DependenciesToolWindow(final Project project) {
+  public static DependenciesToolWindow getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, DependenciesToolWindow.class);
+  }
+
+  public DependenciesToolWindow(@NotNull Project project) {
     myProject = project;
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      if (toolWindowManager == null) return;
+      if (toolWindowManager == null) {
+        return;
+      }
+
       ToolWindow toolWindow = toolWindowManager.registerToolWindow(ToolWindowId.DEPENDENCIES,
                                                                    true,
                                                                    ToolWindowAnchor.BOTTOM,
@@ -43,13 +49,12 @@ public class DependenciesToolWindow {
     });
   }
 
-  public void addContent(final Content content) {
-    final Runnable runnable = () -> {
+  public void addContent(@NotNull Content content) {
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> {
       myContentManager.addContent(content);
       myContentManager.setSelectedContent(content);
       ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEPENDENCIES).activate(null);
-    };
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(runnable);
+    });
   }
 
   public void closeContent(Content content) {

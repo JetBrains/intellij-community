@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ui;
 
@@ -60,6 +60,9 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   @NotNull
   Collection<RefEntity> getResolvedElements();
 
+  @NotNull
+  CommonProblemDescriptor[] getResolvedProblems(@NotNull RefEntity entity);
+
   void suppressProblem(@NotNull CommonProblemDescriptor descriptor);
 
   void suppressProblem(@NotNull RefEntity entity);
@@ -67,6 +70,9 @@ public interface InspectionToolPresentation extends ProblemDescriptionsProcessor
   boolean isSuppressed(RefEntity element);
 
   boolean isSuppressed(CommonProblemDescriptor descriptor);
+
+  @NotNull
+  CommonProblemDescriptor[] getSuppressedProblems(@NotNull RefEntity entity);
 
   void cleanup();
   @Nullable

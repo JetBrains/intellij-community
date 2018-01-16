@@ -260,6 +260,8 @@
     <action id="CloseEditor" class="com.intellij.ide.actions.CloseEditorAction"/>
     <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>
 
+    <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime" text="Log icons load time"/>
+
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
@@ -780,6 +782,7 @@
                   text="Test Mac Messages Sequences" />
         </group>
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
+        <action id="DumpFocusState" internal="true" class="com.intellij.internal.focus.DumpFocusStateAction" text="Dump Focus State"/>
         <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction" text="Start Focus Trace">
           <keyboard-shortcut first-keystroke="control shift F11" keymap="$default"/>
         </action>

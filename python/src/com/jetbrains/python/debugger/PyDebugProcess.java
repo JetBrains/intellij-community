@@ -1176,7 +1176,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
     final PsiFile file = getPsiFile(currentPosition);
 
-    if (file == null || typeName == null || !(file instanceof PyFile)) return null;
+    if (typeName == null || !(file instanceof PyFile)) return null;
 
 
     final PyType pyType = resolveTypeFromString(typeName, file);

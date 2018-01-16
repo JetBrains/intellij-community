@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.actions
 
@@ -235,7 +235,7 @@ private class ModuleNameUsageTarget(val moduleName: String) : UsageTarget, ItemP
 }
 
 private val regularWordsUsedAsModuleNames = setOf(
-  "CloudBees", "AngularJS", "CloudFoundry", "AWS", "CSS", "CFML", "Docker", "Dart", "EJS", "Guice", "Heroku", "Jade", "Kubernetes", "LiveEdit",
+  "CloudBees", "AngularJS", "CloudFoundry", "CSS", "CFML", "Docker", "Dart", "EJS", "Guice", "Heroku", "Jade", "Kubernetes", "LiveEdit",
   "OpenShift", "Meteor", "NodeJS", "Perforce", "TFS", "WSL", "android", "ant", "annotations", "appcode", "asp", "aspectj", "behat", "boot", "bootstrap", "build", "blade",
   "commandLineTool", "chronon", "codeception", "common", "commander", "copyright", "coverage", "dependencies", "designer", "ddmlib", "doxygen", "draw9patch", "drupal", "duplicates", "drools", "eclipse", "el", "emma", "editorconfig",
   "extensions", "flex", "gherkin", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",

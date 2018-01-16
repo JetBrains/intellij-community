@@ -18,7 +18,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -32,7 +31,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.function.Predicate
 import java.util.jar.Manifest
-
 /**
  * @author nik
  */
@@ -48,16 +46,126 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
+    checkOptions()
+
     def compilationTasks = CompilationTasks.create(context)
-    if (options.mainModule != null) {
+    def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
+      JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+    }
+    if (runConfigurations != null) {
+      compilationTasks.compileModules(["tests_bootstrap"], ["platform-build-scripts"] + runConfigurations.collect { it.moduleName })
+      compilationTasks.buildProjectArtifacts(runConfigurations.collectMany {it.requiredArtifacts})
+    }
+    else if (options.mainModule != null) {
       compilationTasks.compileModules(["tests_bootstrap"], [options.mainModule, "platform-build-scripts"])
     }
     else {
       compilationTasks.compileAllModulesAndTests()
     }
+
     setupTestingDependencies()
 
+    def remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
+    if (remoteDebugJvmOptions != null) {
+      debugTests(remoteDebugJvmOptions, additionalJvmOptions, defaultMainModule, rootExcludeCondition)
+    }
+    else if (runConfigurations != null) {
+      runTestsFromRunConfigurations(additionalJvmOptions, runConfigurations)
+    }
+    else {
+      runTestsFromGroupsAndPatterns(additionalJvmOptions, defaultMainModule, rootExcludeCondition)
+    }
+  }
+
+  private void checkOptions() {
+    if (options.testConfigurations != null) {
+      if (options.testPatterns != null) {
+        context.messages.warning("'intellij.build.test.configurations' option is specified so 'intellij.build.test.patterns' will be ignored.")
+      }
+      if (options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
+        context.messages.warning("'intellij.build.test.configurations' option is specified so 'intellij.build.test.groups' will be ignored.")
+      }
+      if (options.testConfigurations != null && options.mainModule != null) {
+        context.messages.warning("'intellij.build.test.configurations' option is specified so 'intellij.build.test.main.module' will be ignored.")
+      }
+    }
+    else if (options.testPatterns != null && options.testGroups != TestingOptions.ALL_EXCLUDE_DEFINED_GROUP) {
+      context.messages.warning("'intellij.build.test.patterns' option is specified so 'intellij.build.test.groups' will be ignored.")
+    }
+  }
+
+  private void runTestsFromRunConfigurations(List<String> additionalJvmOptions, List<JUnitRunConfigurationProperties> runConfigurations) {
+    runConfigurations.each { configuration ->
+      context.messages.block("Run '${configuration.name}' run configuration") {
+        runTestsFromRunConfiguration(configuration, additionalJvmOptions)
+      }
+    }
+  }
+
+  private void runTestsFromRunConfiguration(JUnitRunConfigurationProperties runConfigurationProperties, List<String> additionalJvmOptions) {
+    context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
+    List<String> filteredVmOptions = removeStandardJvmOptions(runConfigurationProperties.vmParameters)
+    runTestsProcess(runConfigurationProperties.moduleName, null, runConfigurationProperties.testClassPatterns.join(";"),
+                    filteredVmOptions + additionalJvmOptions, [:], false)
+  }
+
+  private static List<String> removeStandardJvmOptions(List<String> vmOptions) {
+    def ignoredPrefixes = [
+      "-ea", "-XX:+HeapDumpOnOutOfMemoryError",
+      "-Xbootclasspath",
+      "-Xmx", "-Xms",
+      "-Didea.system.path=", "-Didea.config.path=", "-Didea.home.path="
+    ]
+    vmOptions.findAll { option -> ignoredPrefixes.every { !option.startsWith(it) } }
+  }
+
+  private void runTestsFromGroupsAndPatterns(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
+    Map<String, String> additionalSystemProperties = [:]
     def mainModule = options.mainModule ?: defaultMainModule
+    if (rootExcludeCondition != null) {
+      List<JpsModule> excludedModules = context.project.modules.findAll {
+        List<String> contentRoots = it.contentRootsList.urls
+        !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
+      }
+      List<String> excludedRoots = excludedModules.collectMany {
+        [context.getModuleOutputPath(it), context.getModuleTestsOutputPath(it)]
+      }
+      File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
+      FileUtilRt.createParentDirs(excludedRootsFile)
+      excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
+      additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
+    }
+
+    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, false)
+  }
+
+  private void debugTests(String remoteDebugJvmOptions, List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
+    def testConfigurationType = System.getProperty("teamcity.remote-debug.type")
+    if (testConfigurationType != "junit") {
+      context.messages.error("Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType")
+    }
+
+    def testObject = System.getProperty("teamcity.remote-debug.junit.type")
+    def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
+    if (testObject != "class") {
+      context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
+    }
+    if (junitClass == null) {
+      context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
+    }
+    if (options.testPatterns != null) {
+      context.messages.warning("'intellij.build.test.patterns' option is ignored while debugging via TeamCity plugin")
+    }
+    if (options.testConfigurations != null) {
+      context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
+    }
+    def mainModule = options.mainModule ?: defaultMainModule
+    def filteredOptions = removeStandardJvmOptions(remoteDebugJvmOptions.split(";").toList())
+    runTestsProcess(mainModule, null, junitClass, filteredOptions + additionalJvmOptions, [:], true)
+  }
+
+  private void runTestsProcess(String mainModule, String testGroups, String testPatterns,
+                               List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
     def classpathFile = new File("$context.paths.temp/junit.classpath")
@@ -91,35 +199,14 @@ class TestingTasksImpl extends TestingTasks {
 
     String tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
 
-    def remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
-    if (remoteDebugJvmOptions != null) {
-      def testConfigurationType = System.getProperty("teamcity.remote-debug.type")
-      if (testConfigurationType != "junit") {
-        context.messages.error("Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is $testConfigurationType")
-      }
-
-      def testObject = System.getProperty("teamcity.remote-debug.junit.type")
-      def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
-      if (testObject != "class") {
-        context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
-      }
-      if (junitClass == null) {
-        context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
-      }
-      if (options.testPatterns != null) {
-        context.messages.warning("'intellij.build.test.patterns' option is ignored while debugging via TeamCity plugin")
-      }
-      options.testPatterns = junitClass
-    }
-
     Map<String, String> systemProperties = [
       "classpath.file"                         : classpathFile.absolutePath,
       "idea.platform.prefix"                   : options.platformPrefix,
       "idea.home.path"                         : context.paths.projectHome,
       "idea.config.path"                       : "$tempDir/config".toString(),
       "idea.system.path"                       : "$tempDir/system".toString(),
-      "intellij.build.test.patterns"           : options.testPatterns,
-      "intellij.build.test.groups"             : options.testGroups,
+      "intellij.build.test.patterns"           : testPatterns,
+      "intellij.build.test.groups"             : testGroups,
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
       "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
@@ -131,6 +218,7 @@ class TestingTasksImpl extends TestingTasks {
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",
     ] as Map<String, String>
+    systemProperties.putAll(additionalSystemProperties)
 
     (System.getProperties() as Hashtable<String, String>).each { String key, String value ->
       if (key.startsWith("pass.")) {
@@ -138,33 +226,12 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    if (rootExcludeCondition != null) {
-      List<JpsModule> excludedModules = context.project.modules.findAll {
-        List<String> contentRoots = it.contentRootsList.urls
-        !contentRoots.isEmpty() && rootExcludeCondition.test(JpsPathUtil.urlToFile(contentRoots.first()))
-      }
-      List<String> excludedRoots = excludedModules.collectMany {
-        [context.getModuleOutputPath(it), context.getModuleTestsOutputPath(it)]
-      }
-      File excludedRootsFile = new File("$context.paths.temp/excluded.classpath")
-      excludedRootsFile.text = excludedRoots.findAll { new File(it).exists() }.join('\n')
-      systemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
-    }
-
     boolean suspendDebugProcess = options.suspendDebugProcess
     if (systemProperties["idea.performance.tests"] == "true") {
       context.messages.info("Debugging disabled for performance tests")
       suspendDebugProcess = false
     }
-    else if (remoteDebugJvmOptions != null) {
-      // ignore all options from the run configuration because they may conflict with the options defined in the build script
-      String jvmDebugOption = StringUtil.splitHonorQuotes(remoteDebugJvmOptions, ' ' as char).find { it.startsWith("-agentlib:jdwp=") }
-      if (jvmDebugOption == null) {
-        context.messages.error("Cannot extract JVM debugging options from $remoteDebugJvmOptions")
-      }
-
-      jvmArgs.add(jvmDebugOption)
-
+    else if (remoteDebugging) {
       context.messages.info("Remote debugging via TeamCity plugin is activated.")
       if (suspendDebugProcess) {
         context.messages.warning("'intellij.build.test.debug.suspend' option is ignored while debugging via TeamCity plugin")
@@ -179,7 +246,7 @@ class TestingTasksImpl extends TestingTasks {
       jvmArgs.add(debuggerParameter)
     }
 
-    context.messages.info("Starting ${options.testGroups != null ? "test from groups '$options.testGroups'" : "all tests"}")
+    context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")
     }
@@ -194,11 +261,13 @@ class TestingTasksImpl extends TestingTasks {
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
     }
-    if (isBootstrapSuiteDefault())
+    if (isBootstrapSuiteDefault()) {
       runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
-     else
+    }
+    else {
       //run other suites instead of BootstrapTests
       runJUnitTask(jvmArgs, systemProperties, testsClasspath)
+    }
 
     if (new File(hprofSnapshotFilePath).exists()) {
       context.notifyArtifactBuilt(hprofSnapshotFilePath)

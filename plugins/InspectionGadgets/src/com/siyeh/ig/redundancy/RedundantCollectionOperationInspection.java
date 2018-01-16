@@ -52,7 +52,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       .register(CONTAINS_ALL, ContainsAllSingletonHandler::handler)
       .register(CONTAINS, SingletonContainsHandler::handler)
       .register(CONTAINS, ContainsBeforeAddRemoveHandler::handler)
-      .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler);
+      .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
+      .register(AS_LIST, RedundantAsListForIterationHandler::handler);
 
   @NotNull
   @Override
@@ -374,6 +375,75 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       if (!SINGLETON.test(qualifierCall)) return null;
       return new SingletonContainsHandler();
+    }
+  }
+
+  private static class RedundantAsListForIterationHandler implements RedundantCollectionOperationHandler {
+    @Override
+    public String getProblemName() {
+      return "Unnecessary 'Arrays.asList' call";
+    }
+
+    @NotNull
+    @Override
+    public String getFixName() {
+      return "Unwrap";
+    }
+
+    @Override
+    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      if (args.length != 1) return;
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      CommentTracker ct = new CommentTracker();
+      if (parent instanceof PsiLocalVariable) {
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (!typeElement.isInferredType()) {
+          PsiType type = args[0].getType();
+          if (type == null) return;
+          if(type instanceof PsiEllipsisType) {
+            type = ((PsiEllipsisType)type).toArrayType();
+          }
+          if (!typeElement.isInferredType()) {
+            typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(type));
+          }
+        }
+      }
+      ct.replaceAndRestoreComments(call, ct.markUnchanged(args[0]));
+    }
+
+    static RedundantAsListForIterationHandler handler(PsiMethodCallExpression call) {
+      if (MethodCallUtils.isVarArgCall(call)) return null;
+      PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      if (!(arg.getType() instanceof PsiArrayType)) return null;
+      if (isAllowedContext(call)) {
+        return new RedundantAsListForIterationHandler();
+      }
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
+      if (parent instanceof PsiLocalVariable) {
+        PsiLocalVariable localVariable = (PsiLocalVariable)parent;
+        if (!(localVariable.getParent() instanceof PsiDeclarationStatement) ||
+            ((PsiDeclarationStatement)localVariable.getParent()).getDeclaredElements().length != 1) {
+          return null;
+        }
+        PsiCodeBlock block = PsiTreeUtil.getParentOfType(localVariable, PsiCodeBlock.class);
+        if (block != null && VariableAccessUtils.variableIsUsed(localVariable, block) &&
+            PsiTreeUtil.processElements(block, element -> {
+          if (!(element instanceof PsiReferenceExpression)) return true;
+          PsiReferenceExpression ref = (PsiReferenceExpression)element;
+          if (!(ref.isReferenceTo(localVariable))) return true;
+          return isAllowedContext(ref);
+        })) {
+          return new RedundantAsListForIterationHandler();
+        }
+      }
+      return null;
+    }
+
+    private static boolean isAllowedContext(PsiExpression expression) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      return parent instanceof PsiForeachStatement &&
+             PsiTreeUtil.isAncestor(((PsiForeachStatement)parent).getIteratedValue(), expression, false);
     }
   }
 

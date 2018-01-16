@@ -89,7 +89,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
             : candidate;
           holder.registerProblem(holder.getManager().createProblemDescriptor(
             element,
-            "Can be replaced with method reference",
+            getDisplayName(),
             type != ProblemHighlightType.INFORMATION,
             type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
         }

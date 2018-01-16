@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -71,7 +71,12 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   @NotNull
-  public static ResourceBundle getResourceBundle(@NotNull final PropertiesFile representative) {
+  public static List<PropertiesFile> getResourceBundleFiles(@NotNull PropertiesFile representative) {
+    return getResourceBundleWithCachedFiles(representative).getFiles();
+  }
+
+  @NotNull
+  public static ResourceBundle getResourceBundle(@NotNull PropertiesFile representative) {
     return getResourceBundleWithCachedFiles(representative).getBundle();
   }
 
@@ -82,8 +87,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
       .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
-      .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
-                   isPropertiesFile(f) &&
+      .filter(f -> isPropertiesFile(f) &&
+                   Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
                    Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
       .map(PropertiesImplUtil::getPropertiesFile)
       .collect(Collectors.toList());
@@ -180,7 +185,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return true;
   }
 
-  public static IProperty getProperty(PsiElement element) {
+  @Nullable
+  public static IProperty getProperty(@Nullable PsiElement element) {
     if (element instanceof IProperty) {
       return (IProperty)element;
     }

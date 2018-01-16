@@ -134,6 +134,8 @@ public abstract class UsefulTestCase extends TestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      // don't use method references here to make stack trace reading easier
+      //noinspection Convert2MethodRef
       new RunAll(
         () -> disposeRootDisposable(),
         () -> cleanupSwingDataStructures(),
@@ -271,6 +273,8 @@ public abstract class UsefulTestCase extends TestCase {
   public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
                                               @NotNull CodeStyleSettings currentCodeStyleSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll()
       .append(() -> {
         try {

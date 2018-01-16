@@ -6,13 +6,13 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -162,7 +162,7 @@ public class AssignmentExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof AssignmentExprent)) return false;
+    if (!(o instanceof AssignmentExprent)) return false;
 
     AssignmentExprent as = (AssignmentExprent)o;
     return InterpreterUtil.equalObjects(left, as.getLeft()) &&

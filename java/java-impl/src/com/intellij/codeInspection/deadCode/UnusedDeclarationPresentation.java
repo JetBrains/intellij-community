@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.deadCode;
 
@@ -199,7 +199,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @NotNull
   @Override
   public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
-    return Arrays.stream(refElements).anyMatch(element -> !myFixedElements.containsKey(element) && element.isValid())
+    return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
            ? myQuickFixActions
            : QuickFixAction.EMPTY;
   }

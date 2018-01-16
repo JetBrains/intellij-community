@@ -35,8 +35,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
-
 /**
  * <p>
  * A container for global, language and custom code style settings and indent options. Global options are default options for multiple
@@ -476,7 +474,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
    * overwrite this one. Call {@link #isWrapOnTyping(Language)} method instead.</b>
    *
-   * @see #WRAP_ON_TYPING
+   * @see CommonCodeStyleSettings#WRAP_ON_TYPING
    */
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
 
@@ -1036,7 +1034,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   
   @Nullable
   private IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
-    if (fileType == null || !(fileType instanceof LanguageFileType)) return null;
+    if (!(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
     return getIndentOptions(lang);
   }
@@ -1257,9 +1255,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);
     if (settings == null) {
       settings = myCommonSettingsManager.getDefaults();
-      if (lang != null) {
-        LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
-      }
+      //if (lang != null) {
+      //  LOG.warn("Common code style settings for language '" + lang.getDisplayName() + "' not found, using defaults.");
+      //}
     }
     return settings;
   }

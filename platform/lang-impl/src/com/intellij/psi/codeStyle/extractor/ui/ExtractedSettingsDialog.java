@@ -18,14 +18,17 @@ package com.intellij.psi.codeStyle.extractor.ui;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.extractor.values.Value;
+import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.ui.TreeTableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.HorizontalLayout;
-import com.intellij.ui.treeStructure.treetable.*;
+import com.intellij.ui.treeStructure.treetable.ListTreeTableModel;
+import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.ui.treeStructure.treetable.TreeTableCellRenderer;
+import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
@@ -38,12 +41,17 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeCellRenderer;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Roman.Shein
@@ -217,7 +225,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
 
     protected void updateAncestorsUi(boolean accepted, SettingsTreeNode node) {
       TreeNode parent = node.getParent();
-      if (parent != null && parent instanceof SettingsTreeNode) {
+      if (parent instanceof SettingsTreeNode) {
         SettingsTreeNode settingsParent = (SettingsTreeNode) parent;
         settingsParent.accepted = false;
         if (!accepted) {

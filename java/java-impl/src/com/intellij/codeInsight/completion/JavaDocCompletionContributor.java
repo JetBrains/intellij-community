@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -76,13 +77,16 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     }
   };
+  static final PsiElementPattern.Capture<PsiElement> THROWS_TAG_EXCEPTION = psiElement().inside(
+    psiElement(PsiDocTag.class).withName(
+      string().oneOf(PsiKeyword.THROWS, "exception")));
 
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
 
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocComment.class), new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
@@ -90,6 +94,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
         final PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
         if (ref instanceof PsiJavaReference) {
+          result = JavaCompletionSorting.addJavaSorting(parameters, result);
           result.stopHere();
 
           for (LookupElement item : completeJavadocReference(position, (PsiJavaReference)ref)) {
@@ -116,9 +121,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, psiElement().inside(
-      psiElement(PsiDocTag.class).withName(
-        string().oneOf(PsiKeyword.THROWS, "exception"))), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, THROWS_TAG_EXCEPTION, new CompletionProvider<CompletionParameters>() {
       @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();

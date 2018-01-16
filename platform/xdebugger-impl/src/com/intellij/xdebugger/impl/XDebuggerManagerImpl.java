@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl;
 
@@ -26,11 +26,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.*;
@@ -44,11 +41,12 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,17 +63,16 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   private final Project myProject;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
-  private final Map<ProcessHandler, XDebugSessionImpl> mySessions;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
+  private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(final Project project, final StartupManager startupManager, MessageBus messageBus) {
+  public XDebuggerManagerImpl(final Project project, MessageBus messageBus) {
     myProject = project;
-    myBreakpointManager = new XBreakpointManagerImpl(project, this, startupManager);
+    myBreakpointManager = new XBreakpointManagerImpl(project, this);
     myWatchesManager = new XDebuggerWatchesManager();
-    mySessions = new LinkedHashMap<>();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
@@ -219,7 +216,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     return session;
   }
 
-  public void removeSession(@NotNull final XDebugSessionImpl session) {
+  void removeSession(@NotNull final XDebugSessionImpl session) {
     XDebugSessionTab sessionTab = session.getSessionTab();
     mySessions.remove(session.getDebugProcess().getProcessHandler());
     if (sessionTab != null &&
@@ -254,19 +251,21 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @Override
   @NotNull
   public XDebugSession[] getDebugSessions() {
-    final Collection<XDebugSessionImpl> sessions = mySessions.values();
-    return sessions.toArray(new XDebugSessionImpl[sessions.size()]);
+    // ConcurrentHashMap.values().toArray(new T[0]) guaranteed to return array with no nulls
+    return mySessions.values().toArray(new XDebugSessionImpl[0]);
   }
 
   @Override
   @Nullable
   public XDebugSession getDebugSession(@NotNull ExecutionConsole executionConsole) {
-    for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
-      XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
-      if (sessionTab != null) {
-        RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
-        if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
-          return debuggerSession;
+    synchronized (mySessions) {
+      for (final XDebugSessionImpl debuggerSession : mySessions.values()) {
+        XDebugSessionTab sessionTab = debuggerSession.getSessionTab();
+        if (sessionTab != null) {
+          RunContentDescriptor contentDescriptor = sessionTab.getRunContentDescriptor();
+          if (contentDescriptor != null && executionConsole == contentDescriptor.getExecutionConsole()) {
+            return debuggerSession;
+          }
         }
       }
     }
@@ -276,17 +275,9 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   @NotNull
   @Override
   public <T extends XDebugProcess> List<? extends T> getDebugProcesses(Class<T> processClass) {
-    List<T> list = null;
-    for (XDebugSessionImpl session : mySessions.values()) {
-      final XDebugProcess process = session.getDebugProcess();
-      if (processClass.isInstance(process)) {
-        if (list == null) {
-          list = new SmartList<>();
-        }
-        list.add(processClass.cast(process));
-      }
+    synchronized (mySessions) {
+      return StreamEx.of(mySessions.values()).map(XDebugSessionImpl::getDebugProcess).select(processClass).toList();
     }
-    return ContainerUtil.notNullize(list);
   }
 
   @Override

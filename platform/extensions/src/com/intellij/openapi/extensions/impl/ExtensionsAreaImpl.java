@@ -31,7 +31,10 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class ExtensionsAreaImpl implements ExtensionsArea {
@@ -69,11 +72,25 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public final void notifyAreaReplaced() {
+  public final void notifyAreaReplaced(@NotNull ExtensionsAreaImpl newArea) {
     for (final ExtensionPointImpl point : myExtensionPoints.values()) {
       point.notifyAreaReplaced(this);
     }
+    //this code is required because we have a lot of static extensions e.g. LanguageExtension that are initialized only once
+    //for the extensions AvailabilityListeners will be broken if the initialization happened in "fake" area which doesn't have required EP
+    for (Map.Entry<String, Collection<ExtensionPointAvailabilityListener>> entry : myAvailabilityListeners.entrySet()) {
+      String key = entry.getKey();
+      if (!myExtensionPoints.containsKey(key)) {
+        //if listeners are "detached" for any EP we have to transfer them to the new area (otherwise it will affect area searching)
+        for (ExtensionPointAvailabilityListener listener : entry.getValue()) {
+          if (!newArea.hasAvailabilityListener(key, listener)) {
+            newArea.addAvailabilityListener(key, listener);
+          }
+        }
+      }
+    }
   }
+
 
   @NotNull
   @Override
@@ -246,12 +263,19 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     synchronized (myAvailabilityListeners) {
+
+      
       myAvailabilityListeners.putValue(extensionPointName, listener);
     }
     ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
     if (ep != null) {
       listener.extensionPointRegistered(ep);
     }
+  }
+  
+  private boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+    Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPointName);
+    return ContainerUtil.containsIdentity(listeners, listener);
   }
 
   @Override

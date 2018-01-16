@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -55,8 +54,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiReferenceExpression methodExpression =
         (PsiReferenceExpression)element.getParent();
@@ -138,9 +136,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
       }
     }
 
-    private static void insertNewStatement(PsiStatement anchor,
-                                           PsiStatement newStatement)
-      throws IncorrectOperationException {
+    private static void insertNewStatement(PsiStatement anchor, PsiStatement newStatement) {
       final PsiElement statementParent = anchor.getParent();
       if (statementParent instanceof PsiForStatement) {
         final PsiElement statementGrandParent =
@@ -154,10 +150,9 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
     }
 
     @Nullable
-    private static PsiStatement createDeclaration(
-      PsiMethodCallExpression methodCallExpression,
-      String variableName, PsiType parameterType)
-      throws IncorrectOperationException {
+    private static PsiStatement createDeclaration(PsiMethodCallExpression methodCallExpression,
+                                                  String variableName,
+                                                  PsiType parameterType) {
       @NonNls final StringBuilder newStatementText = new StringBuilder();
       final Project project = methodCallExpression.getProject();
       final CodeStyleSettings codeStyleSettings =
@@ -228,13 +223,9 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
 
     /**
      * @return true if the initialization of the Enumeration variable can
-     *         be deleted.
+     * be deleted.
      */
-    private static int replaceMethodCalls(
-      PsiVariable enumerationVariable,
-      int startOffset,
-      String newVariableName)
-      throws IncorrectOperationException {
+    private static int replaceMethodCalls(PsiVariable enumerationVariable, int startOffset, String newVariableName) {
       final PsiManager manager = enumerationVariable.getManager();
       final Project project = manager.getProject();
       final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);

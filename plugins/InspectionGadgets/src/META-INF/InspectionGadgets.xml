@@ -625,9 +625,6 @@
                      key="constant.conditional.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.ConstantConditionalExpressionInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ConstantIfStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="constant.if.statement.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.siyeh.ig.controlflow.ConstantIfStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ContinueStatement" bundle="com.siyeh.InspectionGadgetsBundle" key="continue.statement.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.ContinueStatementInspection"/>
@@ -729,7 +726,7 @@
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.PointlessIndexOfComparisonInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="PointlessNullCheck" bundle="com.siyeh.InspectionGadgetsBundle" key="pointless.nullcheck.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.PointlessNullCheckInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableBooleanExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="simplifiable.boolean.expression.display.name" groupBundle="messages.InspectionsBundle"
@@ -2036,8 +2033,8 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.performance.issues" enabledByDefault="true"
                      level="INFORMATION" implementationClass="com.siyeh.ig.performance.TailRecursionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ToArrayCallWithZeroLengthArrayArgument" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="to.array.call.with.zero.length.array.argument.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"
+                     key="to.array.call.style.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.ToArrayCallWithZeroLengthArrayArgumentInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="ConcatenationWithEmptyString" shortName="TrivialStringConcatenation"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="trivial.string.concatenation.display.name"

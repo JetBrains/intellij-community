@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm.impl
 
@@ -37,8 +37,7 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   }
 
   override fun getModificationCount(): Long {
-    val windowManager = WindowManager.getInstance() as WindowManagerImpl
-    val frameInfoInDeviceSpace = windowManager.getFrameInfoInDeviceSpace(project)
+    val frameInfoInDeviceSpace = (WindowManager.getInstance() as? WindowManagerImpl)?.getFrameInfoInDeviceSpace(project)
     if (frameInfoInDeviceSpace != null) {
       if (rawFrameInfo == null) {
         rawFrameInfo = frameInfoInDeviceSpace
@@ -78,10 +77,10 @@ fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {
   return frameInfo
 }
 
-private val X_ATTR = "x"
-private val Y_ATTR = "y"
-private val WIDTH_ATTR = "width"
-private val HEIGHT_ATTR = "height"
+private const val X_ATTR = "x"
+private const val Y_ATTR = "y"
+private const val WIDTH_ATTR = "width"
+private const val HEIGHT_ATTR = "height"
 
 fun serializeBounds(bounds: Rectangle, element: Element) {
   element.setAttribute(X_ATTR, Integer.toString(bounds.x))

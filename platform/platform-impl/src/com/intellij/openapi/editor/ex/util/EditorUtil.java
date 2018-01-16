@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.ex.util;
 
@@ -599,14 +599,34 @@ public final class EditorUtil {
   }
 
   public static void scrollToTheEnd(@NotNull Editor editor) {
+    scrollToTheEnd(editor, false);
+  }
+
+  public static void scrollToTheEnd(@NotNull Editor editor, boolean preferVerticalScroll) {
     editor.getSelectionModel().removeSelection();
-    int lastLine = Math.max(0, editor.getDocument().getLineCount() - 1);
+    Document document = editor.getDocument();
+    int lastLine = Math.max(0, document.getLineCount() - 1);
     if (editor.getCaretModel().getLogicalPosition().line == lastLine) {
-      editor.getCaretModel().moveToOffset(editor.getDocument().getTextLength());
+      editor.getCaretModel().moveToOffset(document.getTextLength());
     } else {
       editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lastLine, 0));
     }
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    if (preferVerticalScroll && document.getLineStartOffset(lastLine) == document.getLineEndOffset(lastLine)) {
+      // don't move 'focus' to empty last line
+      int scrollOffset;
+      if (editor instanceof EditorEx) {
+        JScrollBar verticalScrollBar = ((EditorEx)editor).getScrollPane().getVerticalScrollBar();
+        scrollOffset = verticalScrollBar.getMaximum() - verticalScrollBar.getModel().getExtent();
+      }
+      else {
+        scrollOffset = editor.getContentComponent().getHeight() - scrollingModel.getVisibleArea().height;
+      }
+      scrollingModel.scrollVertically(scrollOffset);
+    }
+    else {
+      scrollingModel.scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 
   public static boolean isChangeFontSize(@NotNull MouseWheelEvent e) {

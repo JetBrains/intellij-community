@@ -66,8 +66,7 @@ public class CurrentBranchHighlighter implements VcsLogHighlighter {
 
   @Override
   public void update(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-    mySingleFilteredBranch = branchFilter == null ? null : VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs());
+    mySingleFilteredBranch = VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs());
     myConditions.clear();
   }
 

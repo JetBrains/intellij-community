@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.util.lang
 
@@ -58,6 +58,14 @@ class JavaVersionTest {
     assertThat(current.feature).isGreaterThanOrEqualTo(8)
     assertThat(current.minor).isEqualTo(0)
     assertThat(current.build).isGreaterThan(0)
+  }
+
+  @Test fun comparing() {
+    assertThat(JavaVersion.compose(9, 0, 0, 0, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, false))
+    assertThat(JavaVersion.compose(8, 1, 0, 0, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, false))
+    assertThat(JavaVersion.compose(8, 0, 1, 0, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, false))
+    assertThat(JavaVersion.compose(8, 0, 0, 1, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, false))
+    assertThat(JavaVersion.compose(8, 0, 0, 0, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, true))
   }
 
   private fun doTest(versionString: String,

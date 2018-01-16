@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Expirable;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 
 /**
  * This class receives focus requests, manages the, and delegates to the awt focus subsystem. All focus requests
@@ -87,12 +85,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);
 
-  /**
-   * Dispatches given key event. This methods should not be called by the user code
-   * @return true is the event was dispatched, false - otherwise.
-   */
-  public abstract boolean dispatch(@NotNull KeyEvent e);
-
   @Deprecated
   // use #typeAheadUntil(ActionCallback, String) instead
   public void typeAheadUntil(ActionCallback done) {
@@ -106,11 +98,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public void typeAheadUntil(ActionCallback done, @NotNull String cause) {}
 
   /**
-   * Reports if any focus activity is being done
-   */
-  public abstract boolean isFocusBeingTransferred();
-
-  /**
    * Requests default focus. The method should not be called by the user code.
    */
   @NotNull
@@ -122,26 +109,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
    * @see com.intellij.openapi.wm.FocusCommand#canExecuteOnInactiveApp()
    */
   public abstract boolean isFocusTransferEnabled();
-
-  /**
-   * Returns {@code Expirable} instance for the given counter of focus commands. As any new {@code FocusCommand}
-   * is emitted to execute, the counter increments thus making the returned {@code Expirable} objects expired.
-   */
-  @NotNull
-  public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
-
-  /**
-   * Returns {@code FocusRequestor} object which will emit focus requests unless expired.
-   * @see #getTimestamp(boolean)
-   */
-  @NotNull
-  public abstract FocusRequestor getFurtherRequestor();
-
-  /**
-   * Injects some procedure that will maybe do something with focus after all focus requests are fulfilled and
-   * before focus transfer is reported ready.
-   */
-  public abstract void revalidateFocus(@NotNull ExpirableRunnable runnable);
 
   /**
    * Enables or disables typeahead
@@ -231,6 +198,21 @@ public abstract class IdeFocusManager implements FocusRequestor {
   public static IdeFocusManager findInstance() {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null ? findInstanceByComponent(owner) : findInstanceByContext(null);
+  }
+
+  @Deprecated
+  @NotNull
+  public FocusRequestor getFurtherRequestor() {
+    return new FocusRequestor() {
+      @NotNull
+      @Override
+      public ActionCallback requestFocus(@NotNull Component c, boolean forced) {
+        return ActionCallback.REJECTED;
+      }
+
+      @Override
+      public void dispose() {}
+    };
   }
 
   @NotNull

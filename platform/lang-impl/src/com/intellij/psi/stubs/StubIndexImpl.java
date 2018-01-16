@@ -465,8 +465,8 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   @Override
   public void initComponent() {
     long started = System.nanoTime();
-    StubIndexExtension<?, ?>[] extensions = initExtensions();
-    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000);
+    StubIndexExtension<?, ?>[] extensions = IndexInfrastructure.hasIndices() ? initExtensions() : new StubIndexExtension[0];
+    LOG.info("All stub exts enumerated:" + (System.nanoTime() - started) / 1000000 + ", number of extensions:" + extensions.length);
     started = System.nanoTime();
 
     myStateFuture = IndexInfrastructure.submitGenesisTask(new StubIndexInitialization(extensions));
@@ -532,7 +532,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   private boolean dropUnregisteredIndices(AsyncState state) {
-    if (ApplicationManager.getApplication().isDisposed()) {
+    if (ApplicationManager.getApplication().isDisposed() || !IndexInfrastructure.hasIndices()) {
       return false;
     }
 

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package com.intellij.codeInsight.hint;
 
@@ -9,28 +11,19 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport;
-import com.intellij.lang.parameterInfo.ParameterInfoUtils;
-import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
+import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon.Position;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -61,8 +54,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
-public class ParameterInfoController implements Disposable {
+public class ParameterInfoController extends UserDataHolderBase implements VisibleAreaListener, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.ParameterInfoController");
+  private static final String WHITESPACE = " \t";
   private final Project myProject;
   @NotNull private final Editor myEditor;
 
@@ -155,6 +149,7 @@ public class ParameterInfoController implements Disposable {
       }
     };
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
+    myEditor.getScrollingModel().addVisibleAreaListener(this);
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
@@ -203,10 +198,16 @@ public class ParameterInfoController implements Disposable {
     if (myDisposed) return;
     myDisposed = true;
     myHint.hide();
-    myHandler.dispose();
+    myHandler.dispose(new MyDeleteParameterInfoContext());
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
     myEditor.getCaretModel().removeCaretListener(myEditorCaretListener);
+    myEditor.getScrollingModel().removeVisibleAreaListener(this);
+  }
+
+  @Override
+  public void visibleAreaChanged(VisibleAreaEvent e) {
+    if (Registry.is("editor.keep.completion.hints.even.longer")) rescheduleUpdate();
   }
 
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
@@ -299,7 +300,7 @@ public class ParameterInfoController implements Disposable {
                           ((ParameterInfoHandlerWithTabActionSupport)myHandler).getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
     int caretOffset = myEditor.getCaretModel().getOffset();
     final int offset = noDelimiter ? caretOffset :
-                       CharArrayUtil.shiftBackward(chars, caretOffset - 1, " \t") + 1;
+                       CharArrayUtil.shiftBackward(chars, caretOffset - 1, WHITESPACE) + 1;
 
     final UpdateParameterInfoContext context = new MyUpdateParameterInfoContext(offset, file);
     final Object elementForUpdating = myHandler.findElementForUpdatingParameterInfo(context);
@@ -382,9 +383,8 @@ public class ParameterInfoController implements Disposable {
 
   private int adjustOffsetToInlay(int offset) {
     CharSequence text = myEditor.getDocument().getImmutableCharSequence();
-    String whitespaceChars = " \t";
-    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, whitespaceChars) + 1;
-    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, whitespaceChars);
+    int whitespaceStart = CharArrayUtil.shiftBackward(text, offset, WHITESPACE) + 1;
+    int whitespaceEnd = CharArrayUtil.shiftForward(text, offset, WHITESPACE);
     List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(whitespaceStart, whitespaceEnd);
     for (Inlay inlay : inlays) {
       if (ParameterHintsPresentationManager.getInstance().isParameterHint(inlay)) return inlay.getOffset();
@@ -398,7 +398,8 @@ public class ParameterInfoController implements Disposable {
 
     boolean noDelimiter = handler.getActualParameterDelimiterType() == TokenType.WHITE_SPACE;
     int caretOffset = myEditor.getCaretModel().getOffset();
-    int offset = noDelimiter ? caretOffset : CharArrayUtil.shiftBackward(myEditor.getDocument().getCharsSequence(), caretOffset - 1, " \t") + 1;
+    CharSequence text = myEditor.getDocument().getImmutableCharSequence();
+    int offset = noDelimiter ? caretOffset : CharArrayUtil.shiftBackward(text, caretOffset - 1, WHITESPACE) + 1;
     int lbraceOffset = myLbraceMarker.getStartOffset();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argList = lbraceOffset < offset ? findArgumentList(file, offset, lbraceOffset) : null;
@@ -417,8 +418,7 @@ public class ParameterInfoController implements Disposable {
         return (parameterOwner != null && parameterOwner.isValid()) ? parameterOwner.getTextRange().getEndOffset() : -1;
       }
       else {
-        int startOffset = parameters[prevOrNextParameterIndex].getTextRange().getStartOffset();
-        return CharArrayUtil.shiftForward(myEditor.getDocument().getImmutableCharSequence(), startOffset, " \t");
+        return getParameterNavigationOffset(parameters[prevOrNextParameterIndex], text);
       }
     }
     else {
@@ -426,6 +426,13 @@ public class ParameterInfoController implements Disposable {
                                      !isNext && currentParameterIndex > 0 ? currentParameterIndex - 1 : -1;
       return prevOrNextParameterIndex != -1 ? parameters[prevOrNextParameterIndex].getTextRange().getStartOffset() : -1;
     }
+  }
+
+  private static int getParameterNavigationOffset(@NotNull PsiElement parameter, @NotNull CharSequence text) {
+    int rangeStart = parameter.getTextRange().getStartOffset();
+    int rangeEnd = parameter.getTextRange().getEndOffset();
+    int offset = CharArrayUtil.shiftBackward(text, rangeEnd - 1, WHITESPACE) + 1;
+    return offset > rangeStart ? offset : CharArrayUtil.shiftForward(text, rangeEnd, WHITESPACE);
   }
 
   @Nullable
@@ -659,6 +666,11 @@ public class ParameterInfoController implements Disposable {
       }
       return true;
     }
+
+    @Override
+    public UserDataHolderEx getCustomContext() {
+      return ParameterInfoController.this;
+    }
   }
 
   private static class MyBestLocationPointProvider  {
@@ -731,6 +743,23 @@ public class ParameterInfoController implements Disposable {
     @Override
     public String toString() {
       return getComponentCount() == 0 ? "<empty>" : getComponent(0).toString();
+    }
+  }
+
+  private class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
+    @Override
+    public PsiElement getParameterOwner() {
+      return myComponent.getParameterOwner();
+    }
+
+    @Override
+    public Editor getEditor() {
+      return myEditor;
+    }
+
+    @Override
+    public UserDataHolderEx getCustomContext() {
+      return ParameterInfoController.this;
     }
   }
 }

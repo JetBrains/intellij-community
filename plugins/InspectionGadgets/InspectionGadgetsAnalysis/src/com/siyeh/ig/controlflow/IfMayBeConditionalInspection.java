@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2015 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,7 +76,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
       final PsiStatement thenBranch = ifStatement.getThenBranch();
@@ -110,7 +109,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
         if (thenExpression instanceof PsiAssignmentExpression && elseExpression instanceof PsiAssignmentExpression) {
           final PsiAssignmentExpression thenAssignmentExpression = (PsiAssignmentExpression)thenExpression;
           final PsiExpression lhs = thenAssignmentExpression.getLExpression();
-          replacementText.append(tracker.markUnchanged(lhs).getText());
+          replacementText.append(tracker.text(lhs));
           final PsiJavaToken token = thenAssignmentExpression.getOperationSign();
           replacementText.append(token.getText());
           appendExpressionText(condition, replacementText, tracker);
@@ -127,7 +126,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
           final PsiMethodCallExpression thenMethodCallExpression = (PsiMethodCallExpression)thenExpression;
           final PsiMethodCallExpression elseMethodCallExpression = (PsiMethodCallExpression)elseExpression;
           final PsiReferenceExpression thenMethodExpression = thenMethodCallExpression.getMethodExpression();
-          replacementText.append(tracker.markUnchanged(thenMethodExpression).getText());
+          replacementText.append(tracker.text(thenMethodExpression));
           replacementText.append('(');
           final PsiExpressionList thenArgumentList = thenMethodCallExpression.getArgumentList();
           final PsiExpression[] thenArguments = thenArgumentList.getExpressions();
@@ -140,7 +139,7 @@ public class IfMayBeConditionalInspection extends BaseInspection {
             final PsiExpression thenArgument = thenArguments[i];
             final PsiExpression elseArgument = elseArguments[i];
             if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(thenArgument, elseArgument)) {
-              replacementText.append(tracker.markUnchanged(thenArgument).getText());
+              replacementText.append(tracker.text(thenArgument));
             }
             else {
               appendExpressionText(condition, replacementText, tracker);
@@ -167,11 +166,9 @@ public class IfMayBeConditionalInspection extends BaseInspection {
       if (expression == null) {
         return;
       }
-      final String expressionText = tracker.markUnchanged(expression).getText();
+      final String expressionText = tracker.text(expression);
       if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-        out.append('(');
-        out.append(expressionText);
-        out.append(')');
+        out.append('(').append(expressionText).append(')');
       }
       else {
         out.append(expressionText);

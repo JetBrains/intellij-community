@@ -16,6 +16,7 @@
 
 package com.intellij.lang.parameterInfo;
 
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 
 public interface UpdateParameterInfoContext extends ParameterInfoContext {
@@ -37,4 +38,6 @@ public interface UpdateParameterInfoContext extends ParameterInfoContext {
   boolean isPreservedOnHintHidden();
   void setPreservedOnHintHidden(boolean value);
   boolean isInnermostContext();
+  
+  UserDataHolderEx getCustomContext();
 }

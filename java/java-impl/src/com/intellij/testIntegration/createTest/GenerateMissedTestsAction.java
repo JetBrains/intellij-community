@@ -63,7 +63,8 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       return false;
     }
 
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class) != null;
+    PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    return aClass != null && TestFrameworks.detectFramework(aClass) == null;
   }
 
   @Override

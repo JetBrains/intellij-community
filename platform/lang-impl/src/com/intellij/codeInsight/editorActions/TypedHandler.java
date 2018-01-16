@@ -232,6 +232,10 @@ public class TypedHandler extends TypedActionHandlerBase {
       long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
       type(originalEditor, charTyped);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
+      
+      if (editor.isDisposed()) { // can be that injected editor disappear
+        return;
+      }
 
       if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&

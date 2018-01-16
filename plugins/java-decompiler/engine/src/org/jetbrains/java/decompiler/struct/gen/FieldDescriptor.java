@@ -36,7 +36,7 @@ public class FieldDescriptor {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof FieldDescriptor)) return false;
+    if (!(o instanceof FieldDescriptor)) return false;
 
     FieldDescriptor fd = (FieldDescriptor)o;
     return type.equals(fd.type);

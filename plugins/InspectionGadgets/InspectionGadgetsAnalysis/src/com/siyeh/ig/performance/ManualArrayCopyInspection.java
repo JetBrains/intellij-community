@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -77,7 +76,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement forElement = descriptor.getPsiElement();
       final PsiForStatement forStatement = (PsiForStatement)forElement.getParent();
       CommentTracker commentTracker = new CommentTracker();
@@ -89,7 +88,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
     }
 
     @Nullable
-    private String buildSystemArrayCopyText(PsiForStatement forStatement, CommentTracker commentTracker) throws IncorrectOperationException {
+    private String buildSystemArrayCopyText(PsiForStatement forStatement, CommentTracker commentTracker) {
       final PsiExpression condition = forStatement.getCondition();
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)ParenthesesUtils.stripParentheses(condition);
       if (binaryExpression == null) {
@@ -139,13 +138,13 @@ public class ManualArrayCopyInspection extends BaseInspection {
         return null;
       }
       final PsiExpression lArray = lhs.getArrayExpression();
-      final String toArrayText = commentTracker.markUnchanged(lArray).getText();
+      final String toArrayText = commentTracker.text(lArray);
       final PsiArrayAccessExpression rhs = getRhsArrayAccessExpression(forStatement);
       if (rhs == null) {
         return null;
       }
       final PsiExpression rArray = rhs.getArrayExpression();
-      final String fromArrayText = commentTracker.markUnchanged(rArray).getText();
+      final String fromArrayText = commentTracker.text(rArray);
       final PsiExpression rhsIndexExpression = rhs.getIndexExpression();
       final PsiExpression strippedRhsIndexExpression = ParenthesesUtils.stripParentheses(rhsIndexExpression);
       final PsiExpression limitExpression;
@@ -162,28 +161,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
       final String toOffsetText = buildOffsetText(strippedLhsIndexExpression, variable,
                                                   limitExpression, decrement && (JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType)),
                                                   commentTracker);
-      @NonNls final StringBuilder buffer = new StringBuilder(60);
-      buffer.append("System.arraycopy(");
-      buffer.append(fromArrayText);
-      buffer.append(", ");
-      buffer.append(fromOffsetText);
-      buffer.append(", ");
-      buffer.append(toArrayText);
-      buffer.append(", ");
-      buffer.append(toOffsetText);
-      buffer.append(", ");
-      buffer.append(lengthText);
-      buffer.append(");");
-      return buffer.toString();
+      return "System.arraycopy(" + fromArrayText + ", " + fromOffsetText + ", " + toArrayText + ", " + toOffsetText + ", " + lengthText + ");";
     }
 
     @Nullable
-    private static PsiArrayAccessExpression getLhsArrayAccessExpression(
-      PsiForStatement forStatement) {
+    private static PsiArrayAccessExpression getLhsArrayAccessExpression(PsiForStatement forStatement) {
       PsiStatement body = forStatement.getBody();
       while (body instanceof PsiBlockStatement) {
-        final PsiBlockStatement blockStatement =
-          (PsiBlockStatement)body;
+        final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
         final PsiStatement[] statements = codeBlock.getStatements();
         if (statements.length == 2) {
@@ -320,10 +305,10 @@ public class ManualArrayCopyInspection extends BaseInspection {
       final int precedence = ParenthesesUtils.getPrecedence(min);
       final String minText;
       if (precedence >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-        minText = '(' + commentTracker.markUnchanged(min).getText() + ')';
+        minText = '(' + commentTracker.text(min) + ')';
       }
       else {
-        minText = commentTracker.markUnchanged(min).getText();
+        minText = commentTracker.text(min);
       }
       final String maxText = buildExpressionText(max, plusOne, false, commentTracker);
       return maxText + '-' + minText;
@@ -336,13 +321,13 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (!plusOne) {
         final int precedence = ParenthesesUtils.getPrecedence(expression);
         if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-          return '(' + commentTracker.markUnchanged(expression).getText() + ')';
+          return '(' + commentTracker.text(expression) + ')';
         }
         else {
           if (parenthesize && precedence >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-            return '(' + commentTracker.markUnchanged(expression).getText() + ')';
+            return '(' + commentTracker.text(expression) + ')';
           }
-          return commentTracker.markUnchanged(expression).getText();
+          return commentTracker.text(expression);
         }
       }
       if (expression instanceof PsiBinaryExpression) {
@@ -351,7 +336,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
         if (tokenType == JavaTokenType.MINUS) {
           final PsiExpression rhs = binaryExpression.getROperand();
           if (ExpressionUtils.isOne(rhs)) {
-            return commentTracker.markUnchanged(binaryExpression.getLOperand()).getText();
+            return commentTracker.text(binaryExpression.getLOperand());
           }
         }
       }
@@ -366,10 +351,10 @@ public class ManualArrayCopyInspection extends BaseInspection {
       final int precedence = ParenthesesUtils.getPrecedence(expression);
       final String result;
       if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-        result = '(' + getText(expression, commentTracker) + ")+1";
+        result = '(' + commentTracker.text(expression) + ")+1";
       }
       else {
-        result = getText(expression, commentTracker) + "+1";
+        result = commentTracker.text(expression) + "+1";
       }
       if (parenthesize) {
         return '(' + result + ')';
@@ -377,21 +362,17 @@ public class ManualArrayCopyInspection extends BaseInspection {
       return result;
     }
 
-    private static String getText(PsiExpression expression, CommentTracker commentTracker) {
-      return commentTracker.markUnchanged(expression).getText();
-    }
-
     @NonNls
     @Nullable
     private static String buildOffsetText(PsiExpression expression,
                                           PsiLocalVariable variable,
                                           PsiExpression limitExpression,
-                                          boolean plusOne, CommentTracker commentTracker)
-      throws IncorrectOperationException {
+                                          boolean plusOne,
+                                          CommentTracker commentTracker) {
       if (expression == null) {
         return null;
       }
-      final String expressionText = getText(expression, commentTracker);
+      final String expressionText = commentTracker.text(expression);
       final String variableName = variable.getName();
       if (expressionText.equals(variableName)) {
         final PsiExpression initialValue =
@@ -429,12 +410,10 @@ public class ManualArrayCopyInspection extends BaseInspection {
         return collapseConstant(lhsText + sign.getText() + rhsText,
                                 variable);
       }
-      return collapseConstant(getText(expression, commentTracker), variable);
+      return collapseConstant(commentTracker.text(expression), variable);
     }
 
-    private static String collapseConstant(@NonNls String expressionText,
-                                           PsiElement context)
-      throws IncorrectOperationException {
+    private static String collapseConstant(@NonNls String expressionText, PsiElement context) {
       final Project project = context.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
       final PsiElementFactory factory = psiFacade.getElementFactory();

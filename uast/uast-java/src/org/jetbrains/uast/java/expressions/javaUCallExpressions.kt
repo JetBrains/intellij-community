@@ -24,7 +24,7 @@ import org.jetbrains.uast.psi.UElementWithLocation
 class JavaUCallExpression(
   override val psi: PsiMethodCallExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpression, UElementWithLocation {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx, UElementWithLocation {
   override val kind: UastCallKind
     get() = UastCallKind.METHOD_CALL
 
@@ -39,6 +39,8 @@ class JavaUCallExpression(
 
   override val valueArgumentCount by lz { psi.argumentList.expressions.size }
   override val valueArguments by lz { psi.argumentList.expressions.map { JavaConverter.convertOrEmpty(it, this) } }
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override val typeArgumentCount by lz { psi.typeArguments.size }
 
@@ -101,7 +103,7 @@ class JavaUCallExpression(
 class JavaConstructorUCallExpression(
   override val psi: PsiNewExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpression {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
   override val kind by lz {
     when {
       psi.arrayInitializer != null -> UastCallKind.NEW_ARRAY_WITH_INITIALIZER
@@ -144,6 +146,8 @@ class JavaConstructorUCallExpression(
     }
   }
 
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
+
   override val typeArgumentCount by lz { psi.classReference?.typeParameters?.size ?: 0 }
 
   override val typeArguments: List<PsiType>
@@ -161,7 +165,7 @@ class JavaConstructorUCallExpression(
 class JavaArrayInitializerUCallExpression(
   override val psi: PsiArrayInitializerExpression,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpression {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
   override val methodIdentifier: UIdentifier?
     get() = null
 
@@ -173,6 +177,8 @@ class JavaArrayInitializerUCallExpression(
 
   override val valueArgumentCount by lz { psi.initializers.size }
   override val valueArguments by lz { psi.initializers.map { JavaConverter.convertOrEmpty(it, this) } }
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
   override val typeArgumentCount: Int
     get() = 0
@@ -198,7 +204,10 @@ class JavaArrayInitializerUCallExpression(
 class JavaAnnotationArrayInitializerUCallExpression(
   override val psi: PsiArrayInitializerMemberValue,
   givenParent: UElement?
-) : JavaAbstractUExpression(givenParent), UCallExpression {
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
+
   override val kind: UastCallKind
     get() = UastCallKind.NESTED_ARRAY_INITIALIZER
 

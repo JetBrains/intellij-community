@@ -370,7 +370,6 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
                                                            !PsiDiamondTypeImpl.haveConstructorsGenericsParameters(psiClass);
       final PsiType initializerType = initializer.getType();
       if (hasDefaultConstructorOrNoGenericsOne &&
-          initializerType != null &&
           initializerType instanceof PsiClassType &&
           ((PsiClassType)initializerType).getParameters().length > 0) {
         type = initializerType;

@@ -148,8 +148,6 @@ public interface PopupComponent {
 
     public void show() {
 
-      UIUtil.suppressFocusStealing(getWindow());
-
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
       }

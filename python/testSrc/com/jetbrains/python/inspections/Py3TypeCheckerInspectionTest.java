@@ -276,4 +276,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testChainedComparisonsGenericMatching() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+  }
 }

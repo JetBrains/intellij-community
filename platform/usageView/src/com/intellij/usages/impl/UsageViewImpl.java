@@ -32,6 +32,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
@@ -155,6 +157,7 @@ public class UsageViewImpl implements UsageView {
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   private Usage myOriginUsage;
   @Nullable private Runnable myRerunActivity;
+  private boolean myDisposeSmartPointersOnClose = true;
 
   public UsageViewImpl(@NotNull final Project project,
                        @NotNull UsageViewPresentation presentation,
@@ -343,7 +346,8 @@ public class UsageViewImpl implements UsageView {
     };
   }
 
-  public UsageViewSettings getUsageViewSettings() {
+  @NotNull
+  UsageViewSettings getUsageViewSettings() {
     return UsageViewSettings.getInstance();
   }
 
@@ -1042,16 +1046,18 @@ public class UsageViewImpl implements UsageView {
     doReRun();
   }
 
+  /**
+   * @return usage view which will be shown after re-run (either {@code this} if it knows how to re-run itself, or the new created one otherwise)
+   */
   @SuppressWarnings("WeakerAccess") // used in rider
-  protected void doReRun() {
+  protected UsageView doReRun() {
     myChangesDetected = false;
-    if (myRerunActivity != null) {
-      myRerunActivity.run();
-    }
-    else {
-      com.intellij.usages.UsageViewManager.getInstance(getProject()).
+    if (myRerunActivity == null) {
+      return com.intellij.usages.UsageViewManager.getInstance(getProject()).
         searchAndShowUsages(myTargets, myUsageSearcherFactory, true, false, myPresentation, null);
     }
+    myRerunActivity.run();
+    return this;
   }
 
   private void reset() {
@@ -1270,6 +1276,20 @@ public class UsageViewImpl implements UsageView {
       }
       myUpdateAlarm.cancelAllRequests();
     }
+    if (myDisposeSmartPointersOnClose) {
+      disposeSmartPointers();
+    }
+  }
+
+  private void disposeSmartPointers() {
+    SmartPointerManager pointerManager = SmartPointerManager.getInstance(getProject());
+    for (Usage usage : myUsageNodes.keySet()) {
+      if (usage instanceof UsageInfo2UsageAdapter) {
+        SmartPsiElementPointer<?> pointer = ((UsageInfo2UsageAdapter)usage).getUsageInfo().getSmartPointer();
+        pointerManager.removePointer(pointer);
+      }
+    }
+    myUsageNodes.clear();
   }
 
   @Override
@@ -1352,7 +1372,7 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void addPerformOperationAction(@NotNull final Runnable processRunnable,
-                                        final String commandName,
+                                        @NotNull final String commandName,
                                         final String cannotMakeString,
                                         @NotNull String shortDescription) {
     addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, true);
@@ -1360,18 +1380,12 @@ public class UsageViewImpl implements UsageView {
 
   @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                        String commandName,
+                                        @NotNull String commandName,
                                         String cannotMakeString,
                                         @NotNull String shortDescription,
                                         boolean checkReadOnlyStatus) {
-    addButtonToLowerPane(newPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus), shortDescription);
-  }
-
-  @NotNull
-  private MyPerformOperationRunnable newPerformOperationRunnable(Runnable processRunnable,
-                                                                 String commandName,
-                                                                 String cannotMakeString, boolean checkReadOnlyStatus) {
-    return new MyPerformOperationRunnable(cannotMakeString, processRunnable, commandName, checkReadOnlyStatus);
+    Runnable runnable = new MyPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus);
+    addButtonToLowerPane(runnable, shortDescription);
   }
 
   private boolean allTargetsAreValid() {
@@ -1744,7 +1758,7 @@ public class UsageViewImpl implements UsageView {
   private static class MyAutoScrollToSourceOptionProvider implements AutoScrollToSourceOptionProvider {
     @NotNull private final UsageViewSettings myUsageViewSettings;
 
-    public MyAutoScrollToSourceOptionProvider(@NotNull UsageViewSettings usageViewSettings) {
+    MyAutoScrollToSourceOptionProvider(@NotNull UsageViewSettings usageViewSettings) {
       myUsageViewSettings = usageViewSettings;
     }
 
@@ -1841,9 +1855,7 @@ public class UsageViewImpl implements UsageView {
     private final String myCommandName;
     private final boolean myCheckReadOnlyStatus;
 
-    private MyPerformOperationRunnable(final String cannotMakeString,
-                                       final Runnable processRunnable,
-                                       final String commandName,
+    private MyPerformOperationRunnable(@NotNull Runnable processRunnable, @NotNull String commandName, final String cannotMakeString,
                                        boolean checkReadOnlyStatus) {
       myCannotMakeString = cannotMakeString;
       myProcessRunnable = processRunnable;
@@ -1873,13 +1885,20 @@ public class UsageViewImpl implements UsageView {
         return;
       }
 
+      // can't dispose pointers because refactoring might want to re-use the usage infos from the preview
+      myDisposeSmartPointersOnClose = false;
       close();
 
-      CommandProcessor.getInstance().executeCommand(
-        myProject, myProcessRunnable,
-        myCommandName,
-        null
-      );
+      try {
+        CommandProcessor.getInstance().executeCommand(
+          myProject, myProcessRunnable,
+          myCommandName,
+          null
+        );
+      }
+      finally {
+        disposeSmartPointers();
+      }
     }
   }
 

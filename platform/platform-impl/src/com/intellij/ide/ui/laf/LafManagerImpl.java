@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -107,11 +109,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     List<UIManager.LookAndFeelInfo> lafList = ContainerUtil.newArrayList();
 
     if (SystemInfo.isMac) {
-      if (useIntelliJInsteadOfAqua()) {
-        lafList.add(new UIManager.LookAndFeelInfo("Default", IntelliJLaf.class.getName()));
-      } else {
-        lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
-      }
+      String className = useIntelliJInsteadOfAqua() ? IntelliJLaf.class.getName() : UIManager.getSystemLookAndFeelClassName();
+      lafList.add(new UIManager.LookAndFeelInfo("Light", className));
     }
     else {
       if (isIntelliJLafEnabled()) {
@@ -126,7 +125,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             && !"CDE/Motif".equalsIgnoreCase(name)
             && !"Nimbus".equalsIgnoreCase(name)
             && !"Windows Classic".equalsIgnoreCase(name)
-            && !name.startsWith("JGoodies")) {
+            && !name.startsWith("JGoodies")
+            && !("Windows".equalsIgnoreCase(name) && SystemInfo.isWin8OrNewer)) {
           lafList.add(laf);
         }
       }
@@ -497,10 +497,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
       uiDefaults.put("Menu.invertedArrowIcon", getAquaMenuInvertedIcon());
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
-    }
-    else if (false) {
-      uiDefaults.put("Menu.opaque", true);
-      uiDefaults.put("MenuItem.opaque", true);
     }
 
     if (UIUtil.isUnderWin10LookAndFeel()) {

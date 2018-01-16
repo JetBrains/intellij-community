@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,7 +203,7 @@ public class AutoUnboxingInspection extends BaseInspection {
           if (rExpression == null) {
             return;
           }
-          final String text = commentTracker.markUnchanged(lExpression).getText() + '=' + newExpressionText + sign + commentTracker.markUnchanged(rExpression).getText();
+          final String text = commentTracker.text(lExpression) + '=' + newExpressionText + sign + commentTracker.text(rExpression);
           final PsiExpression newExpression = factory.createExpressionFromText(text, assignmentExpression);
           commentTracker.replaceAndRestoreComments(assignmentExpression, newExpression);
         }

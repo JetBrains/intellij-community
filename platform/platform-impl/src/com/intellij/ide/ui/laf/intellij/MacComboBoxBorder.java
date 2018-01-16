@@ -27,12 +27,12 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
-import static com.intellij.ide.ui.laf.intellij.MacIntelliJComboBoxUI.VALUE_OFFSET;
-
 /**
  * @author Konstantin Bulenkov
  */
 public class MacComboBoxBorder extends MacIntelliJTextBorder {
+
+  private static final int VALUE_OFFSET = 5;
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
@@ -66,9 +66,10 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
                                    height - (i.top + i.bottom));
             g2.fill(shape);
         } else {
+          int vo = JBUI.scale(VALUE_OFFSET);
           Path2D path = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-          path.moveTo(i.left + VALUE_OFFSET, i.top);
-          path.lineTo(i.left + VALUE_OFFSET, height - i.bottom);
+          path.moveTo(i.left + vo, i.top);
+          path.lineTo(i.left + vo, height - i.bottom);
           path.lineTo(i.left + arc, height - i.bottom);
           path.quadTo(i.left, height - i.bottom, i.left, height - arc - i.bottom);
           path.lineTo(i.left, arc + i.top);

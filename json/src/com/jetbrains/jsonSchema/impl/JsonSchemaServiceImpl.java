@@ -143,7 +143,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   private JsonSchemaObject readCachedObject(@NotNull VirtualFile schemaFile) {
     final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(schemaFile);
-    if (psiFile == null || !(psiFile instanceof JsonFile)) return null;
+    if (!(psiFile instanceof JsonFile)) return null;
 
     final CachedValueProvider<JsonSchemaObject> provider = () -> {
       final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);

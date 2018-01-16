@@ -593,10 +593,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
       final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
       myNodePopup = new NavBarPopup(this, siblings, selectedIndex);
-      if (item != null && item.isShowing()) {
+     // if (item != null && item.isShowing()) {
         myNodePopup.show(item);
         item.update();
-      }
+     // }
     }
   }
 

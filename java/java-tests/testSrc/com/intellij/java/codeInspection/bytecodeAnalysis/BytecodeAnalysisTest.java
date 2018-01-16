@@ -78,6 +78,11 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     checkAnnotations(Test02.class);
     checkAnnotations(TestNonStable.class);
     checkAnnotations(TestConflict.class);
+    checkAnnotations(TestEnum.class);
+  }
+
+  public void testHashCollision() {
+    checkAnnotations(TestHashCollision.class);
   }
 
   public void testConverter() {
@@ -138,7 +143,12 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
 
     for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
       if(javaMethod.isSynthetic()) continue; // skip lambda runtime representation
-      PsiMethod psiMethod = psiClass.findMethodsByName(javaMethod.getName(), false)[0];
+      PsiMethod psiMethod = ArrayUtil.getFirstElement(psiClass.findMethodsByName(javaMethod.getName(), false));
+      if (psiMethod == null) {
+        // Enum compilation adds some methods to bytecode which are not marked as synthetic
+        if(javaClass.isEnum()) continue;
+        fail("Unable to find method "+javaMethod.getName()+" in bytecode");
+      }
       Annotation[][] annotations = javaMethod.getParameterAnnotations();
 
       // not-null parameters

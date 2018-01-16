@@ -30,6 +30,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -41,7 +42,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.BinaryOperator;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
@@ -52,12 +53,15 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   private static final ID<HMethod, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int VERSION = 7; // change when inference algorithm changes
+  private static final int VERSION = 8; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
   private static final VirtualFileGist<Map<HMethod, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new EquationsExternalizer(), new ClassDataIndexer());
+  // Hash collision is possible: resolve it just flushing all the equations for colliding methods (unless equations are the same)
+  static final BinaryOperator<Equations> MERGER =
+    (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
   @NotNull
   @Override
@@ -175,8 +179,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
 
     @Override
     public Map<HMethod, Equations> read(@NotNull DataInput in) throws IOException {
-      return DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in))).
-        stream().collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
+      return StreamEx.of(DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in)))).
+        toMap(p -> p.getFirst(), p -> p.getSecond(), MERGER);
     }
 
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -39,7 +38,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
     if (statement == null) {
       return;
@@ -55,10 +54,10 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     CommentTracker tracker = new CommentTracker();
     @NonNls final StringBuilder methodCall = new StringBuilder();
     if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      methodCall.append('(').append(tracker.markUnchanged(iteratedValue).getText()).append(')');
+      methodCall.append('(').append(tracker.text(iteratedValue)).append(')');
     }
     else {
-      methodCall.append(tracker.markUnchanged(iteratedValue).getText());
+      methodCall.append(tracker.text(iteratedValue));
     }
     methodCall.append(".iterator()");
     final Project project = statement.getProject();
@@ -91,11 +90,11 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
       final PsiElement[] children = block.getChildren();
       for (int i = 1; i < children.length - 1; i++) {
         //skip the braces
-        newStatement.append(tracker.markUnchanged(children[i]).getText());
+        newStatement.append(tracker.text(children[i]));
       }
     }
     else {
-      newStatement.append(tracker.markUnchanged(body).getText());
+      newStatement.append(tracker.text(body));
     }
     newStatement.append('}');
 

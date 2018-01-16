@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
@@ -46,7 +45,6 @@ import org.jetbrains.annotations.NotNull
 
 import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait
-
 /**
  * @author spleaner
  */
@@ -1549,5 +1547,21 @@ java.util.List<? extends Integer> list;
 
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
     myFixture.checkResult ' foo g<caret>'
+  }
+
+  void testComments() {
+    myFixture.configureByText 'a.java', '<caret>'
+
+    TemplateManager manager = TemplateManager.getInstance(getProject())
+    Template template = manager.createTemplate("empty", "user", '$V1$ line comment\n$V2$ block comment $V3$\n$V4$ any comment $V5$')
+    template.addVariable("V1", 'lineCommentStart()', '', false)
+    template.addVariable("V2", 'blockCommentStart()', '', false)
+    template.addVariable("V3", 'blockCommentEnd()', '', false)
+    template.addVariable("V4", 'commentStart()', '', false)
+    template.addVariable("V5", 'commentEnd()', '', false)
+    
+    manager.startTemplate(myFixture.editor, template)
+    
+    myFixture.checkResult '// line comment\n/* block comment */\n// any comment '
   }
 }

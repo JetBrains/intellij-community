@@ -15,6 +15,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.AnalysisCanceledException;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -77,7 +78,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       if (parent instanceof PsiDoWhileStatement) return "Unwrap 'do-while' statement";
       if (parent instanceof PsiForStatement) return "Remove 'for' statement";
     }
-    return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(), constantValue);
+    return QuickFixBundle.message("simplify.boolean.expression.text", PsiExpressionTrimRenderer.render(expression), constantValue);
   }
 
   @Override
@@ -115,14 +116,10 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    if (isAvailable()) {
-      doSimplify();
-    }
-  }
-
-  public void doSimplify() {
+    if (!isAvailable()) return;
     PsiExpression subExpression = getSubExpression();
     if (subExpression == null) return;
+    CommentTracker ct = new CommentTracker();
     if (shouldExtractSideEffect()) {
       subExpression = RefactoringUtil.ensureCodeBlock(subExpression);
       if (subExpression == null) {
@@ -135,6 +132,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
       List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(subExpression);
+      sideEffects.forEach(ct::markUnchanged);
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, subExpression);
       if (statements.length > 0) {
         BlockUtils.addBefore(anchor, statements);
@@ -144,9 +142,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
     }
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(subExpression.getProject());
-    final PsiExpression constExpression = factory.createExpressionFromText(Boolean.toString(mySubExpressionValue), subExpression);
-    PsiExpression expression = (PsiExpression)subExpression.replace(constExpression);
+    PsiExpression expression = (PsiExpression)ct.replaceAndRestoreComments(subExpression, Boolean.toString(mySubExpressionValue));
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
     }

@@ -334,7 +334,7 @@ public class UIUtil {
 
   private static volatile Pair<String, Integer> ourSystemFontData;
 
-  public static final float DEF_SYSTEM_FONT_SIZE = 12f; // TODO: consider 12 * 1.33 to compensate JDK's 72dpi font scale
+  public static float DEF_SYSTEM_FONT_SIZE = 12f;
 
   @NonNls private static final String ROOT_PANE = "JRootPane.future";
 
@@ -2975,17 +2975,20 @@ public class UIUtil {
     if (Registry.is("ide.ui.scale.override")) {
       forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
     }
-    else if (SystemInfo.isLinux && !SystemInfo.isJetBrainsJvm) {
-      // With Oracle JDK: derive scale from X server DPI
-      float scale = getScreenScale();
-      if (scale > 1f) {
-        forcedScale = Float.valueOf(scale);
+    else if (SystemInfo.isLinux) {
+      Object value = Toolkit.getDefaultToolkit().getDesktopProperty("gnome.Xft/DPI");
+      if (value instanceof Integer) {
+        // If the property is defined, then:
+        // 1) it provides correct system scale
+        // 2) the label font size is scaled
+        int dpi = ((Integer)value).intValue() / 1024;
+        if (dpi < 50) dpi = 50;
+        float scale = JBUI.discreteScale(dpi / 96f);
+        DEF_SYSTEM_FONT_SIZE = font.getSize() / scale; // derive actual system base font size
       }
-      // Or otherwise leave the detected font. It's undetermined if it's scaled or not.
-      // If it is (likely with GTK DE), then the UI scale will be derived from it,
-      // if it's not, then IDEA will start unscaled. This lets the users of GTK DEs
-      // not to bother about X server DPI settings. Users of other DEs (like KDE)
-      // will have to set X server DPI to meet their display.
+      else {
+        forcedScale = Float.valueOf(getScreenScale());
+      }
     }
     else if (SystemInfo.isWindows) {
       //noinspection HardCodedStringLiteral
@@ -3014,14 +3017,7 @@ public class UIUtil {
     }
     catch (HeadlessException ignored) {
     }
-    float scale = 1f;
-    if (dpi < 120) scale = 1f;
-    else if (dpi < 144) scale = 1.25f;
-    else if (dpi < 168) scale = 1.5f;
-    else if (dpi < 192) scale = 1.75f;
-    else scale = 2f;
-
-    return scale;
+    return JBUI.discreteScale(dpi / 96f);
   }
 
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
@@ -4214,5 +4210,33 @@ public class UIUtil {
     // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
     if(component.isCursorSet() && component.getCursor() == cursor) return;
     component.setCursor(cursor);
+  }
+
+  public static boolean haveCommonOwner(Component c1, Component c2) {
+    if (c1 == null || c2 == null) return false;
+    Window c1Ancestor = findWindowAncestor(c1);
+    Window c2Ancestor = findWindowAncestor(c2);
+
+    Set <Window> ownerSet = new HashSet<Window>();
+
+    Window owner = c1Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      ownerSet.add(owner);
+      owner = owner.getOwner();
+    }
+
+    owner = c2Ancestor;
+
+    while (owner != null && !(owner instanceof JDialog || owner instanceof JFrame)) {
+      if (ownerSet.contains(owner)) return true;
+      owner = owner.getOwner();
+    }
+
+    return false;
+  }
+
+  private static Window findWindowAncestor(@NotNull Component c) {
+    return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
 }

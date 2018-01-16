@@ -20,12 +20,10 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.externalSystem.service.execution.cmd.ParametersListLexer;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
@@ -33,7 +31,6 @@ import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
@@ -117,10 +114,10 @@ public class MavenRunnerParametersPanel implements PanelWithAnchor {
     data.setWorkingDirPath(workingDirComponent.getComponent().getText());
 
     List<String> commandLine = ParametersListUtil.parse(goalsComponent.getComponent().getText());
-    int pomFileNameIndex = commandLine.indexOf("-f");
-    if (pomFileNameIndex != -1) {
-      if (pomFileNameIndex + 1 < commandLine.size()) {
-        data.setPomFileName(commandLine.remove(pomFileNameIndex + 1));
+    int pomFileNameIndex = 1 + commandLine.indexOf("-f");
+    if (pomFileNameIndex != 0) {
+      if (pomFileNameIndex < commandLine.size()) {
+        data.setPomFileName(commandLine.remove(pomFileNameIndex));
       }
       commandLine.remove(pomFileNameIndex);
     }

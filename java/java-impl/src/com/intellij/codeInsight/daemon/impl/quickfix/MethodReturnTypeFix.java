@@ -39,7 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodReturnBooleanFix");
@@ -84,17 +83,10 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
         !TypeConversionUtil.isNullType(myReturnType)) {
       final PsiType returnType = myMethod.getReturnType();
       if (returnType != null && returnType.isValid() && !Comparing.equal(myReturnType, returnType)) {
-        return allTypeParametersResolved(myMethod, myReturnType);
+        return PsiTypesUtil.allTypeParametersResolved(myMethod, myReturnType);
       }
     }
     return false;
-  }
-
-  private static boolean allTypeParametersResolved(PsiMethod myMethod, PsiType myReturnType) {
-    PsiTypesUtil.TypeParameterSearcher searcher = new PsiTypesUtil.TypeParameterSearcher();
-    myReturnType.accept(searcher);
-    Set<PsiTypeParameter> parameters = searcher.getTypeParameters();
-    return parameters.stream().allMatch(parameter -> PsiTypesUtil.isAccessibleAt(parameter, myMethod));
   }
 
   @Override

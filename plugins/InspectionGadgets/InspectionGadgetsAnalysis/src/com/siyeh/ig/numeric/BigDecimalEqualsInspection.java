@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -56,7 +55,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       assert expression != null;
@@ -66,11 +65,11 @@ public class BigDecimalEqualsInspection extends BaseInspection {
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      final String qualifierText = commentTracker.markUnchanged(qualifier).getText();
+      final String qualifierText = commentTracker.text(qualifier);
       assert call != null;
       final PsiExpressionList argumentList = call.getArgumentList();
       final PsiExpression[] args = argumentList.getExpressions();
-      final String argText = commentTracker.markUnchanged(args[0]).getText();
+      final String argText = commentTracker.text(args[0]);
       PsiReplacementUtil.replaceExpression(call, qualifierText + ".compareTo(" + argText + ")==0", commentTracker);
     }
   }

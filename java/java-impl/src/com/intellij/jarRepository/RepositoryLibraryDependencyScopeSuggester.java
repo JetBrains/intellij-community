@@ -34,7 +34,7 @@ public class RepositoryLibraryDependencyScopeSuggester extends LibraryDependency
     }
     LibraryEx libraryEx = (LibraryEx)library;
     LibraryProperties libraryProperties = libraryEx.getProperties();
-    if (libraryProperties == null || !(libraryProperties instanceof RepositoryLibraryProperties)) {
+    if (!(libraryProperties instanceof RepositoryLibraryProperties)) {
       return null;
     }
     RepositoryLibraryProperties repositoryLibraryProperties = (RepositoryLibraryProperties)libraryProperties;

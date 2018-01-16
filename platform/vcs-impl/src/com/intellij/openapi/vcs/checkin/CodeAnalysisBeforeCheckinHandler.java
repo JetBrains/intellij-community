@@ -108,12 +108,10 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
       CodeSmellDetector.getInstance(myProject).showCodeSmellErrors(codeSmells);
       return ReturnResult.CLOSE_WINDOW;
     }
-    else if (answer == Messages.CANCEL) {
+    if (answer == Messages.CANCEL) {
       return ReturnResult.CANCEL;
     }
-    else {
-      return ReturnResult.COMMIT;
-    }
+    return ReturnResult.COMMIT;
   }
 
   private static int collectErrors(final List<CodeSmellInfo> codeSmells) {

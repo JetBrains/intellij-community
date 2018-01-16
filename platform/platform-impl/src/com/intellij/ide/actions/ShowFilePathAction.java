@@ -301,6 +301,9 @@ public class ShowFilePathAction extends AnAction {
 
   private static String shortPath(String path) {
     if (path.contains("  ")) {
+      // On the way from Runtime.exec() to CreateProcess(), a command line goes through couple rounds of merging and splitting
+      // which breaks paths containing a sequence of two or more spaces.
+      // Conversion to a short format is an ugly hack allowing to open such paths in Explorer.
       char[] result = new char[WinDef.MAX_PATH];
       if (Kernel32.INSTANCE.GetShortPathName(path, result, result.length) <= result.length) {
         return Native.toString(result);

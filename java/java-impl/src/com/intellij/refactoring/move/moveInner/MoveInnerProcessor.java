@@ -88,6 +88,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     setup(innerClass, name, passOuterClass, parameterName, true, true, targetContainer);
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("move.inner.class.command", myDescriptiveName);
   }
@@ -134,6 +135,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return usageInfos.toArray(new UsageInfo[usageInfos.size()]);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     boolean condition = elements.length == 1 && elements[0] instanceof PsiClass;
     LOG.assertTrue(condition);
@@ -310,6 +312,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return (PsiField)myInnerClass.add(field);
   }
 
+  @Override
   protected void performPsiSpoilingRefactoring() {
     if (myNonCodeUsages != null) {
       RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class UnusedLabelInspection extends BaseInspection {
         return;
       }
       CommentTracker commentTracker = new CommentTracker();
-      final String statementText = commentTracker.markUnchanged(statement).getText();
+      final String statementText = commentTracker.text(statement);
       PsiReplacementUtil.replaceStatement(labeledStatement, statementText, commentTracker);
     }
   }

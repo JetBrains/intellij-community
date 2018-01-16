@@ -70,7 +70,6 @@ public class TooManyUsagesStatus {
 
   public void pauseProcessingIfTooManyUsages() {
     if (tooManyUsagesStatus.get() == Status.WARNING_DIALOG_SHOWN) {
-      //assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed();
       long start = System.currentTimeMillis();
       try {
         while (System.currentTimeMillis() < start + 2000) {

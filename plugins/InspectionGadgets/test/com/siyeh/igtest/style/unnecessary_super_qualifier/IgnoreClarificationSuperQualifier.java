@@ -5,13 +5,16 @@ package com.siyeh.igtest.style.unnecessary_super_qualifier;
 
 public class IgnoreClarificationSuperQualifier {
     int f;
+    void m() {}
     class Base {
         int f;
+        void m(){}
     }
 
     class Child extends Base {
         {
             System.out.println(super.f);
+            super.m();
         }
     }
 }

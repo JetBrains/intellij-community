@@ -611,6 +611,23 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
   }
 
+  public void testFormatRootNodeIgnored() {
+    mySMRootTestProxy.setTestsReporterAttached();
+    // See [PY-2434] Unittest: Do not show "No test were found" notification before completing test suite
+    mySMRootTestProxy.addChild(mySimpleTest);
+    mySMRootTestProxy.setStarted();
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestIgnored(null, null);
+    mySimpleTest.setFinished();
+    mySMRootTestProxy.setFinished();
+    TestsPresentationUtil.formatRootNodeWithoutChildren(mySMRootTestProxy, myRenderer);
+
+    assertEquals(PoolOfTestIcons.IGNORED_ICON, myRenderer.getIcon());
+    assertOneElement(myFragContainer.getFragments());
+    assertEquals("All Tests Passed (except ignored)", myFragContainer.getTextAt(0));
+    assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));
+  }
+
 
   public void testGetPresentableName() {
     //Test unit examples

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.siyeh.ipp.concatenation;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,10 +104,10 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
       count++;
       final PsiExpression argument = arguments[indexOfFormatString + count];
       if (builder.length() == 0 && !ExpressionUtils.hasStringType(argument)) {
-        builder.append("String.valueOf(").append(commentTracker.markUnchanged(argument).getText()).append(')');
+        builder.append("String.valueOf(").append(commentTracker.text(argument)).append(')');
       }
       else {
-        builder.append(commentTracker.markUnchanged(argument).getText());
+        builder.append(commentTracker.text(argument));
       }
       start = end + 2;
       end = value.indexOf("%s", start);

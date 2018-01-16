@@ -303,24 +303,17 @@ public class ProjectUtil {
   }
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
-    FocusCommand cmd = new FocusCommand() {
-      @NotNull
-      @Override
-      public ActionCallback run() {
-        JFrame f = WindowManager.getInstance().getFrame(p);
-        if (f != null) {
-          f.toFront();
-          //f.requestFocus();
-        }
-        return ActionCallback.DONE;
-      }
-    };
 
-    if (executeIfAppInactive) {
-      AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
-      cmd.run();
-    } else {
-      IdeFocusManager.getInstance(p).requestFocus(cmd, true);
+    JFrame f = WindowManager.getInstance().getFrame(p);
+
+    if (f != null) {
+      if (executeIfAppInactive) {
+        AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
+        f.toFront();
+      } else {
+        IdeFocusManager.getInstance(p).requestFocus(f, true);
+      }
+
     }
   }
 

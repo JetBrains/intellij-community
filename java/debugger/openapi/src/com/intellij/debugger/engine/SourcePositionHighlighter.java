@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.engine;
 
@@ -8,8 +8,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * During indexing, only extensions that implement {@link com.intellij.openapi.project.DumbAware} are called.

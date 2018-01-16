@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -70,8 +69,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceShiftWithMultiplyOrDivide(element);
     }
@@ -80,9 +78,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     }
   }
 
-  private static void replaceShiftAssignWithMultiplyOrDivideAssign(
-    PsiElement element)
-    throws IncorrectOperationException {
+  private static void replaceShiftAssignWithMultiplyOrDivideAssign(PsiElement element) {
     final PsiAssignmentExpression exp =
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = exp.getLExpression();
@@ -97,12 +93,11 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     }
     CommentTracker commentTracker = new CommentTracker();
     final String expString =
-      commentTracker.markUnchanged(lhs).getText() + assignString + ShiftUtils.getExpBase2(rhs);
+      commentTracker.text(lhs) + assignString + ShiftUtils.getExpBase2(rhs);
     PsiReplacementUtil.replaceExpression(exp, expString, commentTracker);
   }
 
-  private static void replaceShiftWithMultiplyOrDivide(PsiElement element)
-    throws IncorrectOperationException {
+  private static void replaceShiftWithMultiplyOrDivide(PsiElement element) {
     final PsiBinaryExpression exp =
       (PsiBinaryExpression)element;
     final PsiExpression lhs = exp.getLOperand();

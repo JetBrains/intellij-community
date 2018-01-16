@@ -118,7 +118,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }
     for (InjectionPlace place : places) {
-      ElementPattern<PsiElement> pattern = place.getElementPattern();
+      ElementPattern<? extends PsiElement> pattern = place.getElementPattern();
       if (pattern instanceof PatternCompilerImpl.LazyPresentablePattern) {
         try {
           ((PatternCompilerImpl.LazyPresentablePattern)pattern).compile();

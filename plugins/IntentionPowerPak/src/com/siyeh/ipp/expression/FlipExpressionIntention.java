@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,13 +71,13 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
     for (PsiExpression operand : operands) {
       final PsiJavaToken token1 = polyadicExpression.getTokenBeforeOperand(operand);
       if (token == token1) {
-        newExpression.append(commentTracker.markUnchanged(operand).getText()).append(tokenText);
+        newExpression.append(commentTracker.text(operand)).append(tokenText);
         continue;
       }
       if (prevOperand != null) {
         newExpression.append(prevOperand).append(tokenText);
       }
-      prevOperand = commentTracker.markUnchanged(operand).getText();
+      prevOperand = commentTracker.text(operand);
     }
     newExpression.append(prevOperand);
 

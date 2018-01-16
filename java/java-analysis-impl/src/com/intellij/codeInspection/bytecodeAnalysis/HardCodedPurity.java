@@ -28,14 +28,14 @@ import java.util.Set;
 class HardCodedPurity {
   static final boolean AGGRESSIVE_HARDCODED_PURITY = Registry.is("java.annotations.inference.aggressive.hardcoded.purity", true);
 
-  private static Set<Couple<String>> ownedFields = ContainerUtil.set(
+  private static final Set<Couple<String>> ownedFields = ContainerUtil.set(
     new Couple<>("java/lang/AbstractStringBuilder", "value")
   );
-  private static Set<Method> thisChangingMethods = ContainerUtil.set(
+  private static final Set<Method> thisChangingMethods = ContainerUtil.set(
     new Method("java/lang/Throwable", "fillInStackTrace", "()Ljava/lang/Throwable;")
   );
   // Assumed that all these methods are not only pure, but return object which could be safely modified
-  private static Set<Method> pureMethods = ContainerUtil.set(
+  private static final Set<Method> pureMethods = ContainerUtil.set(
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
     new Method("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
@@ -52,8 +52,8 @@ class HardCodedPurity {
     new Method("java/lang/Double", "doubleToRawLongBits", "(D)J"),
     new Method("java/lang/Double", "longBitsToDouble", "(J)D")
   );
-  private static Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
-  private static Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
+  private static final Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
+  private static final Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
 
   static {
     // Native
@@ -92,7 +92,14 @@ class HardCodedPurity {
   }
 
   boolean isPureMethod(Method method) {
-    return pureMethods.contains(method);
+    if(pureMethods.contains(method)) {
+      return true;
+    }
+    // Array clone() method is a special beast: it's qualifier class is array itself
+    if(method.internalClassName.startsWith("[") && method.methodName.equals("clone") && method.methodDesc.equals("()Ljava/lang/Object;")) {
+      return true;
+    }
+    return false;
   }
 
   boolean isOwnedField(FieldInsnNode fieldInsn) {

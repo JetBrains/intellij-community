@@ -496,10 +496,10 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
   }
 
   @TestOnly
-  final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea area) {
+  final synchronized void notifyAreaReplaced(@NotNull ExtensionsArea oldArea) {
     for (final ExtensionPointListener<T> listener : myEPListeners) {
       if (listener instanceof ExtensionPointAndAreaListener) {
-        ((ExtensionPointAndAreaListener)listener).areaReplaced(area);
+        ((ExtensionPointAndAreaListener)listener).areaReplaced(oldArea);
       }
     }
   }

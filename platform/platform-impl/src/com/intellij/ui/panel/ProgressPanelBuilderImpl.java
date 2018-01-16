@@ -231,7 +231,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       gc.fill = GridBagConstraints.HORIZONTAL;
 
       if (topSeparatorEnabled) {
-        gc.insets = JBUI.insetsBottom(13);
+        gc.insets = JBUI.insets(8, 0);
         gc.gridwidth = gridWidth();
         gc.weightx = 1.0;
         panel.add(mySeparatorComponent, gc);
@@ -240,15 +240,15 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
 
       gc.weightx = 0.0;
       gc.gridwidth = 1;
-      gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 13, 0, labelAbove ? 13 : 0);
+      gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 12, 13, 0, labelAbove ? 13 : 0);
       panel.add(label, gc);
 
       if (labelAbove) {
-        gc.insets = JBUI.insets(5, 13, 7, 0);
+        gc.insets = JBUI.insets(4, 13, 4, 0);
         gc.gridy++;
       }
       else {
-        gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 0 : 13, 12, 0, 0);
+        gc.insets = JBUI.insets(topSeparatorEnabled || smallVariant ? 2 : 14, 12, 0, 0);
         gc.gridx++;
       }
 
@@ -259,7 +259,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       myProgressBar.putClientProperty(LABELED_PANEL_PROPERTY, this);
 
       gc.weightx = 0.0;
-      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 0 : 13, 10, 0, 13);
+      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 0 : 14, 10, 0, 13);
 
       if (cancelAction != null) {
         if (cancelAsButton) {
@@ -280,11 +280,13 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
           if (state == State.PLAYING) {
             button.setIcons(resumeIcon);
             state = State.PAUSED;
+            setCommentText("Paused", true);
             pauseAction.run();
           }
           else {
             button.setIcons(pauseIcon);
             state = State.PLAYING;
+            setCommentText("Pause", true);
             resumeAction.run();
           }
         }).setFillBg(false);
@@ -305,7 +307,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       if (commentEnabled) {
         gc.gridy++;
         gc.gridx = labelAbove ? 0 : 1;
-        gc.insets = labelAbove ? JBUI.insets(0, 13) : JBUI.insets(-4, 13, 0, 13);
+        gc.insets = labelAbove ? JBUI.insets(-1, 13, 0, 13) : JBUI.insets(-1, 12, 0, 13);
         gc.weightx = 1.0;
         gc.anchor = GridBagConstraints.LINE_START;
         gc.fill = GridBagConstraints.HORIZONTAL;
@@ -331,7 +333,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setCommentText(null, true);
+        setCommentText(state != State.PAUSED ? null : "Paused", true);
       }
     }
   }

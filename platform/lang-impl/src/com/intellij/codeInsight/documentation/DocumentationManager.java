@@ -486,6 +486,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
       .setResizable(true)
       .setMovable(true)
+      .setFocusable(true)
       .setRequestFocus(requestFocus)
       .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
       .setTitle(getTitle(element, false))

@@ -61,7 +61,7 @@ public class AnonymousFromMapGenerator {
     for (GrNamedArgument arg : operand.getNamedArguments()) {
       final String name = arg.getLabelName();
       final GrExpression expression = arg.getExpression();
-      if (name == null || expression == null || !(expression instanceof GrClosableBlock)) continue;
+      if (name == null || !(expression instanceof GrClosableBlock)) continue;
 
       final GrClosableBlock closure = (GrClosableBlock)expression;
       final GrParameter[] allParameters = closure.getAllParameters();

@@ -1845,4 +1845,9 @@ class Bar {{
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  void testCompletingClassWithSameNameAsPackage() {
+    myFixture.addClass("package Apple; public class Apple {}")
+    doTest('\n')
+  }
+
 }

@@ -28,26 +28,27 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     other.myData.forEach(myData::add);
   }
 
-  boolean add(int firstIndex, int secondIndex, boolean ordered) {
-    if (ordered) {
-      TLongHashSet toAdd = new TLongHashSet();
-      toAdd.add(createPair(firstIndex, secondIndex, true));
-      for(DistinctPair pair : this) {
-        if (!pair.isOrdered()) continue;
-        if (pair.myFirst == secondIndex) {
-          if (pair.mySecond == firstIndex || myData.contains(createPair(pair.mySecond, firstIndex, true))) return false;
-          toAdd.add(createPair(firstIndex, pair.mySecond, true));
-        } else if (pair.mySecond == firstIndex) {
-          if (myData.contains(createPair(secondIndex, pair.myFirst, true))) return false;
-          toAdd.add(createPair(pair.myFirst, secondIndex, true));
-        }
+  boolean addOrdered(int firstIndex, int secondIndex) {
+    TLongHashSet toAdd = new TLongHashSet();
+    toAdd.add(createPair(firstIndex, secondIndex, true));
+    for(DistinctPair pair : this) {
+      if (!pair.isOrdered()) continue;
+      if (pair.myFirst == secondIndex) {
+        if (pair.mySecond == firstIndex || myData.contains(createPair(pair.mySecond, firstIndex, true))) return false;
+        toAdd.add(createPair(firstIndex, pair.mySecond, true));
+      } else if (pair.mySecond == firstIndex) {
+        if (myData.contains(createPair(secondIndex, pair.myFirst, true))) return false;
+        toAdd.add(createPair(pair.myFirst, secondIndex, true));
       }
-      myData.addAll(toAdd.toArray());
-    } else {
-      if (!myData.contains(createPair(firstIndex, secondIndex, true)) &&
-          !myData.contains(createPair(secondIndex, firstIndex, true))) {
-        myData.add(createPair(firstIndex, secondIndex, false));
-      }
+    }
+    myData.addAll(toAdd.toArray());
+    return true;
+  }
+
+  boolean addUnordered(int firstIndex, int secondIndex) {
+    if (!myData.contains(createPair(firstIndex, secondIndex, true)) &&
+        !myData.contains(createPair(secondIndex, firstIndex, true))) {
+      myData.add(createPair(firstIndex, secondIndex, false));
     }
     return true;
   }
@@ -216,7 +217,7 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
 
     @Override
     public String toString() {
-      return "{" + myFirst + (myOrdered ? "<" : "!=") + mySecond + "}";
+      return "{" + getFirst() + (myOrdered ? "<" : "!=") + getSecond() + "}";
     }
   }
 }

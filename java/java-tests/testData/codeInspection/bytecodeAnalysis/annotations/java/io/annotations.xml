@@ -453,6 +453,11 @@
     <item name='java.io.ObjectInputStream java.lang.Enum readEnum(boolean)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.io.ObjectInputStream java.lang.Object cloneArray(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.io.ObjectInputStream java.lang.Object cloneArray(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

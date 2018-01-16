@@ -2,12 +2,16 @@ package org.jetbrains.idea.eclipse;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleImportWorker;
+import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
+import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -261,6 +265,24 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       inputStream.close();
       schemes.deleteScheme(scheme);
       editorSettings.setEnsureNewLineAtEOF(currAddLineFeed);
+    }
+  }
+
+  public void testImportCodeStyleProperties() throws IOException, SchemeImportException {
+    File input = new File(getTestDataPath() + EclipseCodeStylePropertiesImporter.CODE_STYLE_PROPERTY_FILE);
+    CodeStyleSettings settings = new CodeStyleSettings();
+    CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
+    CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
+    JavaCodeStyleSettings javaCustomSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    javaSettings.BLANK_LINES_AFTER_IMPORTS = 0;
+    indentOptions.CONTINUATION_INDENT_SIZE = 2;
+    javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
+
+    try (InputStream stream = new FileInputStream(input)) {
+      new EclipseCodeStylePropertiesImporter().importProperties(stream, settings);
+      assertEquals(1, javaSettings.BLANK_LINES_AFTER_IMPORTS);
+      assertEquals(8, indentOptions.CONTINUATION_INDENT_SIZE);
+      assertTrue(javaCustomSettings.ENABLE_JAVADOC_FORMATTING);
     }
   }
 }

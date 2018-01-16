@@ -58,7 +58,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
   }
 
   @Override
-  protected boolean showMembersFromDefaultPackage() {
-    return true;
+  protected boolean toAddStaticImports() {
+    return false;
   }
 }

@@ -39,6 +39,7 @@ import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,6 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogColorManagerImpl myColorManager;
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
-  private boolean myInitialized = false;
 
   public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
     this(project, uiProperties, roots, true, null);
@@ -87,12 +87,9 @@ public class VcsLogManager implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @CalledInAny
   public void scheduleInitialization() {
-    if (!myInitialized) {
-      myInitialized = true;
-      myLogData.initialize();
-    }
+    myLogData.initialize();
   }
 
   @CalledInAwt

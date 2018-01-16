@@ -59,14 +59,14 @@ task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}_3_0.zip"
-  dest "$buildDir/android-sdk/${osFamily}.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.tar.gz"
+  dest "$buildDir/android-sdk/${osFamily}.tar.gz"
   onlyIfNewer true
   onlyIf { !currentOs.isMacOsX() && inJetBrainsNetwork }
 }
 
 task setupAndroidSdk(dependsOn: [downloadAndroidSdk, downloadGradleDistribution, downloadGradleDistribution2, setupOfflineRepo], type: Copy) {
-  from zipTree(downloadAndroidSdk.outputs.files.singleFile)
+  from tarTree(downloadAndroidSdk.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
   onlyIf { !currentOs.isMacOsX() }
   outputs.dir("$buildDir/android-sdk/prebuilts/tools/common")

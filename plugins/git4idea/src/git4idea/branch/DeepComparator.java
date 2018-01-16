@@ -141,8 +141,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     }
 
     String comparedBranch = myTask.myComparedBranch;
-    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-    if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs()))) {
+    if (!myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs()))) {
       stopAndUnhighlight();
       return;
     }

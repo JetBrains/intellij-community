@@ -42,7 +42,7 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     boolean[] foundLeaksBeforeTest = new boolean[1];
     LeakHunter.checkLeak(ApplicationManager.getApplication(), PsiFileImpl.class, file -> {
       if (!file.isPhysical()) return false;
-      System.err.println("Can't start the test: leaking PsiFiles found:");
+      System.err.println("DON'T BLAME ME, IT'S NOT MY FAULT! SOME SNEAKY TEST BEFORE ME HAS LEAKED PsiFiles!");
       foundLeaksBeforeTest[0] = true;
       return true;
     });
@@ -147,8 +147,8 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
 
     assertTrue(usageView.canPerformReRun());
 
-    usageView.doReRun();
-    Set<Usage> usages = usageView.getUsages();
+    UsageView newView = usageView.doReRun();
+    Set<Usage> usages = newView.getUsages();
     assertEquals(2, usages.size());
   }
 

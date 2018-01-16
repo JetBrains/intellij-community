@@ -127,6 +127,25 @@ public class ControlFlowUtils {
     }
   }
 
+  @Contract(value = "null -> false", pure = true)
+  public static boolean isEndlessLoop(@Nullable PsiLoopStatement loopStatement) {
+    if(loopStatement == null) return false;
+    if (loopStatement instanceof PsiWhileStatement) {
+      return BoolUtils.isTrue(((PsiWhileStatement)loopStatement).getCondition());
+    }
+    if (loopStatement instanceof PsiDoWhileStatement) {
+      return BoolUtils.isTrue(((PsiDoWhileStatement)loopStatement).getCondition());
+    }
+    if (loopStatement instanceof PsiForStatement) {
+      PsiForStatement forStatement = (PsiForStatement)loopStatement;
+      PsiExpression condition = forStatement.getCondition();
+      if(condition != null && !BoolUtils.isTrue(condition)) return false;
+      return (forStatement.getInitialization() == null || forStatement.getInitialization() instanceof PsiEmptyStatement)
+             && (forStatement.getUpdate() == null || forStatement.getUpdate() instanceof PsiEmptyStatement);
+    }
+    return false;
+  }
+
   private static boolean doWhileStatementMayCompleteNormally(@NotNull PsiDoWhileStatement loopStatement) {
     final PsiExpression condition = loopStatement.getCondition();
     final Object value = ExpressionUtils.computeConstantExpression(condition);

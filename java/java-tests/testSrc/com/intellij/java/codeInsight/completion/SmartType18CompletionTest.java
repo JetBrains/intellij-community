@@ -261,7 +261,7 @@ public void testConvertToObjectStream() {
 
   public void testPreferLambdaOverGenericGetter() {
     configureByTestName();
-    myFixture.assertPreferredCompletionItems(0, "isEmpty", "s -> ", "getSomeGenericValue");
+    myFixture.assertPreferredCompletionItems(0, "s -> ", "isEmpty", "getSomeGenericValue");
   }
 
   public void testNoInaccessibleConstructorRef() {

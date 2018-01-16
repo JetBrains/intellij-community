@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.debugger.engine;
 
@@ -132,7 +132,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   protected DebuggerSession mySession;
   @Nullable protected MethodReturnValueWatcher myReturnValueWatcher;
   protected final Disposable myDisposable = Disposer.newDisposable();
-  private final Alarm myStatusUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+  private final Alarm myStatusUpdateAlarm = new Alarm();
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
 
@@ -472,7 +472,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
         try {
           String listeningAddress = connector.startListening(myArguments);
-          String port = StringUtil.substringAfter(listeningAddress, ":");
+          String port = StringUtil.substringAfterLast(listeningAddress, ":");
           if (port != null) {
             listeningAddress = port;
           }
@@ -551,10 +551,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void showStatusText(final String text) {
-    if (!myStatusUpdateAlarm.isDisposed()) {
-      myStatusUpdateAlarm.cancelAllRequests();
-      myStatusUpdateAlarm.addRequest(() -> StatusBarUtil.setStatusBarInfo(myProject, text), 50);
-    }
+    myStatusUpdateAlarm.cancelAllRequests();
+    myStatusUpdateAlarm.addRequest(() -> {
+      if (!myProject.isDisposed()) {
+        StatusBarUtil.setStatusBarInfo(myProject, text);
+      }
+    }, 50);
   }
 
   @NotNull

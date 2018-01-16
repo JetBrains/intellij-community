@@ -457,7 +457,7 @@ public class JavaCompletionSorting {
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
       final Object object = element.getObject();
-      if (object instanceof PsiMethod && FunctionalExpressionCompletionProvider.FUNCTIONAL_EXPR_ITEM.get(element) == null) {
+      if (object instanceof PsiMethod && !FunctionalExpressionCompletionProvider.isFunExprItem(element)) {
         PsiType type = ((PsiMethod)object).getReturnType();
         final JavaMethodCallElement callItem = element.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
         if (callItem != null) {

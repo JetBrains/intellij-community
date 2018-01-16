@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -48,7 +47,7 @@ public class DemorgansIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)element;
     CommentTracker tracker = new CommentTracker();
     final String newExpression = convertConjunctionExpression(polyadicExpression, tracker);
@@ -79,12 +78,13 @@ public class DemorgansIntention extends MutablyNamedIntention {
       }
       if (tokenTypeAndAnd) {
         if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.OR_PRECEDENCE) {
-          return '(' + tracker.markUnchanged(negatedExpression).getText() + ')';
+          return '(' + tracker.text(negatedExpression) + ')';
         }
-      } else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
-        return '(' + tracker.markUnchanged(negatedExpression).getText() + ')';
       }
-      return tracker.markUnchanged(negatedExpression).getText();
+      else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
+        return '(' + tracker.text(negatedExpression) + ')';
+      }
+      return tracker.text(negatedExpression);
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -92,13 +92,13 @@ public class DemorgansIntention extends MutablyNamedIntention {
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
       assert rhs != null;
-      return tracker.markUnchanged(lhs).getText() + negatedComparison + tracker.markUnchanged(rhs).getText();
+      return tracker.text(lhs) + negatedComparison + tracker.text(rhs);
     }
     else if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      return "!(" + tracker.markUnchanged(expression).getText() + ')';
+      return "!(" + tracker.text(expression) + ')';
     }
     else {
-      return '!' + tracker.markUnchanged(expression).getText();
+      return '!' + tracker.text(expression);
     }
   }
 }

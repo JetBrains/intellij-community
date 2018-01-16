@@ -17,8 +17,10 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -56,7 +58,7 @@ public class AnnotateVcsVirtualFileAction {
     VirtualFile file = selectedFiles[0];
     if (file.isDirectory() || file.getFileType().isBinary()) return false;
 
-    if (VcsAnnotateUtil.getEditors(project, file).isEmpty()) return false;
+    if (getEditors(project, file, e.getDataContext()).isEmpty()) return false;
 
     AnnotationData data = extractData(project, file);
     if (data == null) return false;
@@ -71,16 +73,16 @@ public class AnnotateVcsVirtualFileAction {
   }
 
   private static boolean isAnnotated(AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    List<Editor> editors = VcsAnnotateUtil.getEditors(project, file);
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
+    List<Editor> editors = getEditors(project, file, e.getDataContext());
     return ContainerUtil.exists(editors, editor -> editor.getGutter().isAnnotationsShown());
   }
 
   private static void perform(AnActionEvent e, boolean selected) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE_ARRAY)[0];
-    List<Editor> editors = VcsAnnotateUtil.getEditors(project, file);
+    List<Editor> editors = getEditors(project, file, e.getDataContext());
 
     if (!selected) {
       for (Editor editor : editors) {
@@ -163,6 +165,16 @@ public class AnnotateVcsVirtualFileAction {
 
     AbstractVcs vcs = VcsUtil.getVcsFor(project, filePath);
     return vcs != null ? new AnnotationData(vcs, filePath, revisionNumber) : null;
+  }
+
+  @NotNull
+  private static List<Editor> getEditors(@NotNull Project project, @NotNull VirtualFile file, @NotNull DataContext context) {
+    Editor editor = context.getData(CommonDataKeys.EDITOR);
+    if (editor instanceof EditorEx && file.equals(((EditorEx)editor).getVirtualFile())) {
+      return Collections.singletonList(editor);
+    }
+
+    return VcsAnnotateUtil.getEditors(project, file);
   }
 
   private static class AnnotationData {

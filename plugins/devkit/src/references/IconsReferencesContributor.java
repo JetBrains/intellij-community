@@ -258,8 +258,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   private static void registerForPresentationAnnotation(@NotNull PsiReferenceRegistrar registrar) {
     UastReferenceRegistrar.registerUastReferenceProvider(
       registrar,
-      UastPatterns.literalExpression()
-        .filter(UastLiteralUtils::isStringLiteral)
+      UastPatterns.stringLiteralExpression()
         .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
         .annotationParam(Presentation.class.getName(), "icon"),
       UastReferenceRegistrar.uastLiteralReferenceProvider((uElement, referencePsiElement) -> new PsiReference[]{

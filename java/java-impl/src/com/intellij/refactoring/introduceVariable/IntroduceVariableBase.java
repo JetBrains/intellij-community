@@ -1339,7 +1339,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
 
         if (myOccurrences.size() > 1 && !myCantReplaceAll) {
-          occurrencesMap.put(JavaReplaceChoice.ALL, myOccurrences);
+          JavaReplaceChoice choice = occurrencesMap.containsKey(JavaReplaceChoice.NO_WRITE)
+                                     ? new JavaReplaceChoice("Replace read and write occurrences (will change semantics!)", true, true, false)
+                                     : JavaReplaceChoice.ALL;
+          occurrencesMap.put(choice, myOccurrences);
         }
       }
       return occurrencesMap;

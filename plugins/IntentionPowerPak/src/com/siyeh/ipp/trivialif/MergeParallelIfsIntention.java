@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ package com.siyeh.ipp.trivialif;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class MergeParallelIfsIntention extends Intention {
 
@@ -33,15 +32,13 @@ public class MergeParallelIfsIntention extends Intention {
   }
 
   @Override
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement firstStatement = (PsiIfStatement)token.getParent();
     final PsiIfStatement secondStatement =
       (PsiIfStatement)PsiTreeUtil.skipWhitespacesForward(firstStatement);
     final String statement =
       mergeIfStatements(firstStatement, secondStatement);
-    assert firstStatement != null;
     PsiReplacementUtil.replaceStatement(firstStatement, statement);
     assert secondStatement != null;
     secondStatement.delete();

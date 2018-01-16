@@ -50,13 +50,14 @@ import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
-import java.io.File
 import java.io.IOException
+import java.nio.file.FileAlreadyExistsException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-const val PROJECT_FILE = "\$PROJECT_FILE$"
-const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
+internal const val PROJECT_FILE = "\$PROJECT_FILE$"
+internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 
 val IProjectStore.nameFile: Path
   get() = Paths.get(directoryStorePath, ProjectImpl.NAME_FILE)
@@ -64,7 +65,7 @@ val IProjectStore.nameFile: Path
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
-abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
+internal abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
   var scheme = StorageScheme.DEFAULT
@@ -88,6 +89,11 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   }
 
   override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
+
+  /**
+   * `null` for default or non-directory based project.
+   */
+  override fun getProjectConfigDir() = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
 
   override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
@@ -134,7 +140,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
       storageManager.addMacro(PROJECT_FILE, filePath)
 
-      val workspacePath = composeWsPath(filePath)
+      val workspacePath = composeFileBasedProjectWorkSpacePath(filePath)
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, workspacePath)
 
       if (refreshVfs) {
@@ -145,24 +151,19 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !File(filePath).exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
       }
     }
     else {
       scheme = StorageScheme.DIRECTORY_BASED
 
-      // if useOldWorkspaceContentIfExists false, so, file path is expected to be correct (we must avoid file io operations)
-      val isDir = !useOldWorkspaceContentIfExists || Paths.get(filePath).isDirectory()
-      val configDir = "${(if (isDir) filePath else PathUtilRt.getParentPath(filePath))}/${Project.DIRECTORY_STORE_FOLDER}"
+      val configDir = "$filePath/${Project.DIRECTORY_STORE_FOLDER}"
       storageManager.addMacro(PROJECT_CONFIG_DIR, configDir)
       storageManager.addMacro(PROJECT_FILE, "$configDir/misc.xml")
       storageManager.addMacro(StoragePathMacros.WORKSPACE_FILE, "$configDir/workspace.xml")
 
-      if (!isDir) {
-        val workspace = File(workspaceFilePath)
-        if (!workspace.exists()) {
-          useOldWorkspaceContent(filePath, workspace)
-        }
+      if (useOldWorkspaceContentIfExists && !Paths.get(filePath).isDirectory()) {
+        useOldWorkspaceContent(filePath, Paths.get(workspaceFilePath))
       }
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -405,16 +406,19 @@ private class PlatformProjectStoreClassProvider : ProjectStoreClassProvider {
   }
 }
 
-private fun composeWsPath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
+private fun composeFileBasedProjectWorkSpacePath(filePath: String) = "${FileUtilRt.getNameWithoutExtension(filePath)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}"
 
-private fun useOldWorkspaceContent(filePath: String, ws: File) {
-  val oldWs = File(composeWsPath(filePath))
-  if (!oldWs.exists()) {
+private fun useOldWorkspaceContent(filePath: String, newWorkspacePath: Path) {
+  if (newWorkspacePath.exists()) {
     return
   }
 
   try {
-    FileUtil.copyContent(oldWs, ws)
+    Paths.get(composeFileBasedProjectWorkSpacePath(filePath)).copy(newWorkspacePath)
+  }
+  catch (ignored: NoSuchFileException) {
+  }
+  catch (ignored: FileAlreadyExistsException) {
   }
   catch (e: IOException) {
     LOG.error(e)

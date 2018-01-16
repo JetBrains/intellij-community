@@ -61,6 +61,12 @@
   <item name="java.lang.Comparable int compareTo(T) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.Enum int ordinal()'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
@@ -69,6 +75,24 @@
   </item>
   <item name='java.lang.Enum T valueOf(java.lang.Class&lt;T&gt;, java.lang.String) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Integer int numberOfLeadingZeros(int)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="32"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer int numberOfTrailingZeros(int)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="32"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Integer int bitCount(int)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="32"/>
+    </annotation>
   </item>
   <item name='java.lang.Integer java.lang.Integer valueOf(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -90,6 +114,24 @@
   </item>
   <item name='java.lang.Long java.lang.Long valueOf(long)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Long int numberOfLeadingZeros(long)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="64"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Long int numberOfTrailingZeros(long)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="64"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Long int bitCount(long)'>
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="64"/>
+    </annotation>
   </item>
   <item name='java.lang.Object java.lang.Class&lt;?&gt; getClass()'>
         <annotation name='org.jetbrains.annotations.Contract'>

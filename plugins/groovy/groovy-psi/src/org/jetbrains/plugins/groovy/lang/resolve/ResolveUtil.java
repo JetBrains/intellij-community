@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.plugins.groovy.lang.resolve;
@@ -51,6 +51,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -246,6 +247,10 @@ public class ResolveUtil {
       if (psiClass != null) {
         if (!processClassDeclarations(psiClass, processor, state, null, place)) return false;
       }
+    }
+    else if (type instanceof PsiArrayType) {
+      GrTypeDefinition arrayClass = GroovyPsiManager.getInstance(place.getProject()).getArrayClass(((PsiArrayType)type).getComponentType());
+      if (arrayClass!= null && !processClassDeclarations(arrayClass, processor, state, null, place)) return false;
     }
     if (ResolveUtilKt.processNonCodeMembers(state)) {
       if (!processCategoryMembers(place, processor, state)) return false;
