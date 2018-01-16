@@ -353,6 +353,8 @@ public class RunAnythingUtil {
                                           @NotNull String pattern,
                                           @Nullable Module module,
                                           @Nullable VirtualFile workDirectory) {
+    if (pattern.isEmpty()) return;
+
     RunAnythingProvider[] extensions = RunAnythingProvider.EP_NAME.getExtensions();
     for (RunAnythingProvider RunAnythingProvider : extensions) {
       if (RunAnythingProvider.isMatched(pattern)) {

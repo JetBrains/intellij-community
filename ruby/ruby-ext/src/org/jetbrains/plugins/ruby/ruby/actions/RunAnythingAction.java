@@ -1693,7 +1693,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
 
-  static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
+  class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
       super(false, "RunAnythingHistory");
       JTextField editor = getTextEditor();
@@ -1707,17 +1707,25 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     @Override
     protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
+      Runnable callback = () -> {
+        Project project = getProject();
+        Module module = getModule();
+        VirtualFile directory = getWorkDirectory(module);
+
+        RunAnythingUtil.runOrCreateRunConfiguration(project, textField.getText(), module, directory);
+      };
+
       if (UIUtil.isUnderDarcula()) {
-        uiConsumer.consume(new MyDarcula(ourIconsMap));
+        uiConsumer.consume(new MyDarcula(ourIconsMap, callback));
         textField.setBorder(new DarculaTextBorder());
       }
       else {
         if (SystemInfo.isMac) {
-          uiConsumer.consume(new MyMacUI(ourIconsMap));
+          uiConsumer.consume(new MyMacUI(ourIconsMap, callback));
           textField.setBorder(new MacIntelliJTextBorder());
         }
         else {
-          uiConsumer.consume(new MyWinUI(ourIconsMap));
+          uiConsumer.consume(new MyWinUI(ourIconsMap, callback));
           textField.setBorder(new WinIntelliJTextBorder());
         }
       }

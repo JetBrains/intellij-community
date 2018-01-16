@@ -29,13 +29,16 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   private final Consumer<ExtendableTextField.Extension> myConsumer;
 
   private final JTextComponent myComponent;
+  @NotNull private final Runnable myCommandRunnable;
 
   public RunAnythingIconHandler(@NotNull NotNullLazyValue<Map<String, Icon>> iconsMap,
-                               @NotNull Consumer<ExtendableTextField.Extension> consumer,
-                               @NotNull JTextComponent component) {
+                                @NotNull Consumer<ExtendableTextField.Extension> consumer,
+                                @NotNull JTextComponent component,
+                                @NotNull Runnable commandRunnable) {
     myIconsMap = iconsMap;
     myConsumer = consumer;
     myComponent = component;
+    myCommandRunnable = commandRunnable;
 
     setConfigurationIcon(component.getClientProperty(MATCHED_CONFIGURATION_PROPERTY));
     setExecutionTypeIcon(component.getClientProperty(EXEC_TYPE_PROPERTY));
@@ -61,7 +64,7 @@ class RunAnythingIconHandler implements PropertyChangeListener {
   private void setExecutionTypeIcon(Object variant) {
     if (!(variant instanceof String)) return;
 
-    myConsumer.consume(new ExecutionTypeExtension(((String)variant)));
+    myConsumer.consume(new ExecutionTypeExtension(((String)variant), myCommandRunnable));
   }
 
   private void setConfigurationIcon(Object variant) {
@@ -72,15 +75,20 @@ class RunAnythingIconHandler implements PropertyChangeListener {
 
   private static void installIconListeners(@NotNull NotNullLazyValue<Map<String, Icon>> iconsMap,
                                            @NotNull Consumer<ExtendableTextField.Extension> extensionConsumer,
-                                           @NotNull JTextComponent component) {
-    RunAnythingIconHandler handler = new RunAnythingIconHandler(iconsMap, extensionConsumer, component);
+                                           @NotNull JTextComponent component,
+                                           @NotNull Runnable commandRunnable) {
+    RunAnythingIconHandler handler = new RunAnythingIconHandler(iconsMap, extensionConsumer, component, commandRunnable);
     component.addPropertyChangeListener(handler);
   }
 
   public static class MyDarcula extends DarculaTextFieldUI {
     private NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final Runnable myCommandRunnable;
 
-    public MyDarcula(NotNullLazyValue<Map<String, Icon>> map) {myIconsMap = map;}
+    public MyDarcula(NotNullLazyValue<Map<String, Icon>> map, Runnable commandRunnable) {
+      myIconsMap = map;
+      myCommandRunnable = commandRunnable;
+    }
 
     @Override
     protected Icon getSearchIcon(boolean hovered, boolean clickable) {
@@ -95,14 +103,18 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     @Override
     protected void installListeners() {
       super.installListeners();
-      installIconListeners(myIconsMap, this::addExtension, getComponent());
+      installIconListeners(myIconsMap, this::addExtension, getComponent(), myCommandRunnable);
     }
   }
 
   public static class MyMacUI extends MacIntelliJTextFieldUI {
     private NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    private final Runnable myCallback;
 
-    public MyMacUI(NotNullLazyValue<Map<String, Icon>> map) {myIconsMap = map;}
+    public MyMacUI(NotNullLazyValue<Map<String, Icon>> map, Runnable callback) {
+      myIconsMap = map;
+      myCallback = callback;
+    }
 
     @Override
     protected Icon getSearchIcon(boolean hovered, boolean clickable) {
@@ -117,14 +129,18 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     @Override
     protected void installListeners() {
       super.installListeners();
-      installIconListeners(myIconsMap, this::addExtension, getComponent());
+      installIconListeners(myIconsMap, this::addExtension, getComponent(), myCallback);
     }
   }
 
   public static class MyWinUI extends WinIntelliJTextFieldUI {
     private NotNullLazyValue<Map<String, Icon>> myIconsMap;
+    @NotNull private final Runnable myCallback;
 
-    public MyWinUI(NotNullLazyValue<Map<String, Icon>> map) {myIconsMap = map;}
+    public MyWinUI(NotNullLazyValue<Map<String, Icon>> map, @NotNull Runnable callback) {
+      myIconsMap = map;
+      myCallback = callback;
+    }
 
     @Override
     protected Icon getSearchIcon(boolean hovered, boolean clickable) {
@@ -139,17 +155,22 @@ class RunAnythingIconHandler implements PropertyChangeListener {
     @Override
     public void installListeners() {
       super.installListeners();
-      installIconListeners(myIconsMap, this::addExtension, getComponent());
+      installIconListeners(myIconsMap, this::addExtension, getComponent(), myCallback);
     }
   }
 
   private static class ExecutionTypeExtension implements ExtendableTextField.Extension {
     private final String myVariant;
+    @NotNull private Runnable myCallback;
 
-    public ExecutionTypeExtension(String variant) {myVariant = variant;}
+    public ExecutionTypeExtension(String variant, @NotNull Runnable callback) {
+      myVariant = variant;
+      myCallback = callback;
+    }
 
     @Override
     public Icon getIcon(boolean hovered) {
+
       if (MODULE_CONTEXT_ICON_TEXT.equals(myVariant)) {
         return AllIcons.Actions.Rerun;
       } else if (DEBUG_ICON_TEXT.equals(myVariant)) {
@@ -158,6 +179,11 @@ class RunAnythingIconHandler implements PropertyChangeListener {
       else {
         return AllIcons.Toolwindows.ToolWindowRun;
       }
+    }
+
+    @Override
+    public Runnable getActionOnClick() {
+      return myCallback;
     }
 
     @Override
