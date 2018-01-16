@@ -631,3 +631,10 @@ java_import(
     tags = ["managed"],
     visibility = ["//visibility:public"],
 )
+
+java_import(
+    name = "xml-apis-ext",
+    jars = ["xml-apis-ext.jar"],
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+)

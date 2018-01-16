@@ -1211,3 +1211,11 @@ java_library(
     exports = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
     runtime_deps = ["//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.8.0:jar"],
 )
+
+java_library(
+    name = "xml-apis-ext",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/idea/lib:xml-apis-ext"],
+    runtime_deps = ["//tools/idea/lib:xml-apis-ext"],
+)
