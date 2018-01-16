@@ -39,6 +39,10 @@ open class ExtendedTreeFixture(val robot: Robot, val tree: JTree) : JTreeFixture
     myCellReader = defineCellReader()
   }
 
+  fun hasXPath(vararg pathStrings: String): Boolean{
+    return hasPath(pathStrings.toList())
+  }
+
   fun hasPath(pathStrings: List<String>): Boolean {
     try {
       myDriver.checkPathExists(tree, pathStrings)
