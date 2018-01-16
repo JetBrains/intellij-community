@@ -28,7 +28,7 @@ interface Ranker {
      * Items are sorted by descending order, so item with the highest rank will be on top
      * @param relevance map from LookupArranger.getRelevanceObjects
      */
-    fun rank(relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double?
+    fun rank(relevance: Map<String, Any>, userFactors: Map<String, Any?>): Double
 
     companion object {
         fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
@@ -44,12 +44,9 @@ class MLRanker(provider: FeatureTransformerProvider) : Ranker {
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
 
-    override fun rank(relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double? {
+    override fun rank(relevance: Map<String, Any>, userFactors: Map<String, Any?>): Double {
         val featureArray = featureTransformer.featureArray(relevance, userFactors)
-        if (featureArray != null) {
-            return ranker.rank(featureArray)
-        }
-        return null
+        return ranker.rank(featureArray)
     }
 
 }

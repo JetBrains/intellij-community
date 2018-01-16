@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.FeatureManagerImpl
 import com.intellij.stats.personalization.UserFactorDescriptions
 import com.intellij.stats.personalization.UserFactorStorage
+import com.jetbrains.completion.ranker.features.impl.FeatureUtils
 
 /**
  * @author Vitaliy.Bibaev
@@ -30,9 +31,13 @@ import com.intellij.stats.personalization.UserFactorStorage
 class LookupCompletedTracker : LookupAdapter() {
     override fun lookupCanceled(event: LookupEvent?) {
         val lookup = event?.lookup as? LookupImpl ?: return
-        val element = lookup.currentItem ?: return
-        if (isSelectedByTyping(lookup, element)) {
+        val element = lookup.currentItem
+        if (element != null && isSelectedByTyping(lookup, element)) {
             processTypedSelect(lookup, element)
+        } else {
+            UserFactorStorage.applyOnBoth(lookup.project, UserFactorDescriptions.COMPLETION_FINISH_TYPE) { updater ->
+                updater.fireLookupCancelled()
+            }
         }
     }
 
@@ -48,27 +53,29 @@ class LookupCompletedTracker : LookupAdapter() {
     private fun processElementSelected(lookup: LookupImpl, element: LookupElement) {
         val relevanceObjects =
                 lookup.getRelevanceObjects(listOf(element), false)
-        val relevanceMap = relevanceObjects[element]?.associate { it.first to it.second } ?: return
+        val relevanceMap = relevanceObjects[element]?.map { it.first to it.second } ?: return
+        val featuresValues = FeatureUtils.prepareRevelanceMap(relevanceMap, lookup.selectedIndex,
+                lookup.prefixLength(), element.lookupString.length)
         val project = lookup.project
         val featureManager = FeatureManagerImpl.getInstance()
         featureManager.binaryFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
             UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.binaryFeatureDescriptor(feature))
             { updater ->
-                updater.update(relevanceMap[feature.name])
+                updater.update(featuresValues[feature.name])
             }
         }
 
         featureManager.doubleFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
             UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.doubleFeatureDescriptor(feature))
             { updater ->
-                updater.update(relevanceMap[feature.name])
+                updater.update(featuresValues[feature.name])
             }
         }
 
         featureManager.categorialFactors.filter { !featureManager.isUserFeature(it.name) }.forEach { feature ->
             UserFactorStorage.applyOnBoth(project, UserFactorDescriptions.categoriealFeatureDescriptor(feature))
             { updater ->
-                updater.update(relevanceMap[feature.name])
+                updater.update(featuresValues[feature.name])
             }
         }
     }

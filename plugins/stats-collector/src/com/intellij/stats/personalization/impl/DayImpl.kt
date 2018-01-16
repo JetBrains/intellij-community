@@ -44,7 +44,9 @@ class DayImpl(date: Date) : Day {
         val calendar = Calendar.getInstance()
         calendar.time = date
         dayOfMonth = calendar.get(Calendar.DAY_OF_MONTH)
-        month = calendar.get(Calendar.MONTH)
+        // a month is a zero-based property for some reason
+        // see details: https://stackoverflow.com/questions/344380/why-is-january-month-0-in-java-calendar
+        month = calendar.get(Calendar.MONTH) + 1
         year = calendar.get(Calendar.YEAR)
     }
 

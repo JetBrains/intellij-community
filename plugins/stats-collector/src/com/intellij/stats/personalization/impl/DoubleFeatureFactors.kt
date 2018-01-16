@@ -25,17 +25,10 @@ import com.jetbrains.completion.ranker.features.impl.FeatureUtils
  */
 class DoubleFeatureReader(factor: DailyAggregatedDoubleFactor)
     : UserFactorReaderBase(factor) {
-    fun calculateAverageValue(): Double? {
-        return FactorsUtil.calculateAverageByAllDays(factor)
-    }
-
-    fun min(): Double? {
-        return factor.aggregateMin()["min"]
-    }
-
-    fun max(): Double? {
-        return factor.aggregateMax()["max"]
-    }
+    fun calculateAverageValue(): Double? = FactorsUtil.calculateAverageByAllDays(factor)
+    fun calculateVariance(): Double? = FactorsUtil.calculateVarianceByAllDays(factor)
+    fun min(): Double? = factor.aggregateMin()["min"]
+    fun max(): Double? = factor.aggregateMax()["max"]
 
     fun undefinedRatio(): Double? {
         val sums = factor.aggregateSum()
@@ -53,7 +46,7 @@ class DoubleFeatureUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBase(
         } else {
             val doubleValue = value.asDouble()
             factor.updateOnDate(DateUtil.today()) {
-                FactorsUtil.updateAverageValue(this, doubleValue)
+                FactorsUtil.updateAverageAndVariance(this, doubleValue)
                 compute("max", { _, old -> if (old == null) doubleValue else maxOf(old, doubleValue) })
                 compute("min", { _, old -> if (old == null) doubleValue else minOf(old, doubleValue) })
             }
@@ -84,4 +77,8 @@ class MaxDoubleFeatureValue(feature: DoubleFeature) : DoubleFeatureUserFactorBas
 
 class UndefinedDoubleFeatureValueRatio(feature: DoubleFeature) : DoubleFeatureUserFactorBase("undefinedRatio", feature) {
     override fun compute(reader: DoubleFeatureReader): String? = reader.undefinedRatio()?.toString()
+}
+
+class VarianceDoubleFeatureValue(feature: DoubleFeature) : DoubleFeatureUserFactorBase("variance", feature) {
+    override fun compute(reader: DoubleFeatureReader): String? = reader.calculateVariance()?.toString()
 }

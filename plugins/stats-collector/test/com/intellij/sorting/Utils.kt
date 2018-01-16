@@ -28,21 +28,17 @@ internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
     val lookupElements = getRelevanceObjects(items, false)
 
     lookupElements.forEach { element, relevance ->
-        val weights: MutableMap<String, Any?> = relevance.associate { it.first to it.second }.toMutableMap()
-        val mlRank = weights["ml_rank"]?.toString()
-        if (mlRank == "UNDEFINED" || weights["before_rerank_order"] == null) {
-            throw UnsupportedOperationException("Ranking failed")
-        }
+        val oldOrder = relevance.firstOrNull() { it.first == FeatureUtils.BEFORE_ORDER }?.second?.toString()?.toInt()
+                ?: throw UnsupportedOperationException("Ranking failed")
+        val weights: Map<String, Any> = FeatureUtils.prepareRevelanceMap(relevance.map { it.first to it.second },
+                oldOrder, prefix_length, element.lookupString.length)
 
-        val oldOrder = weights["before_rerank_order"].toString().toInt()
-
-        weights.put("position", oldOrder)
-        weights.put("query_length", prefix_length)
-        weights.put("result_length", element.lookupString.length)
+        val mlRank = weights[FeatureUtils.ML_RANK]?.toString()?.toDouble()
+                ?: throw UnsupportedOperationException("Ranking failed")
 
         val calculatedMlRank = ranker.rank(weights, emptyMap())
-        Assertions.assertThat(calculatedMlRank).isEqualTo(mlRank?.toDouble())
-                .withFailMessage("Calculated: $calculatedMlRank Regular: ${mlRank?.toDouble()}")
+        Assertions.assertThat(calculatedMlRank).isEqualTo(mlRank)
+                .withFailMessage("Calculated: $calculatedMlRank Regular: $mlRank")
     }
 }
 

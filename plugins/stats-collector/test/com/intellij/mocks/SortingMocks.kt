@@ -30,7 +30,7 @@ internal class FakeRanker : Ranker {
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
      */
-    override fun rank(relevance: Map<String, Any?>, userFactors: Map<String, Any?>): Double? {
+    override fun rank(relevance: Map<String, Any>, userFactors: Map<String, Any?>): Double {
         val lookupElementLength = relevance["result_length"]!!.toString().toDouble()
         return if (isShortFirst) -lookupElementLength else lookupElementLength
     }

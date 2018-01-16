@@ -23,33 +23,32 @@ import com.intellij.stats.personalization.*
  */
 private val explicitSelectKey = "explicitSelect"
 private val typedSelectKey = "typedSelect"
+private val cancelledKey = "cancelled"
 
 class CompletionFinishTypeReader(private val factor: DailyAggregatedDoubleFactor) : FactorReader {
-    fun getTotalExplicitSelectCount(): Double =
-            factor.aggregateSum()[explicitSelectKey] ?: 0.0
+    fun getCountByKey(key: String): Double = factor.aggregateSum()[key] ?: 0.0
 
-    fun getTotalTypedSelectCount(): Double =
-            factor.aggregateSum()[typedSelectKey] ?: 0.0
-
+    fun getTotalCount(): Double =
+            getCountByKey(explicitSelectKey) + getCountByKey(typedSelectKey) + getCountByKey(cancelledKey)
 }
 
 class CompletionFinishTypeUpdater(private val factor: MutableDoubleFactor) : FactorUpdater {
-    fun fireExplicitCompletionPerformed() {
-        factor.incrementOnToday(explicitSelectKey)
-    }
+    fun fireExplicitCompletionPerformed() = factor.incrementOnToday(explicitSelectKey)
+    fun fireTypedSelectPerformed() = factor.incrementOnToday(typedSelectKey)
+    fun fireLookupCancelled() = factor.incrementOnToday(cancelledKey)
 
-    fun fireTypedSelectPerformed() {
-        factor.incrementOnToday(typedSelectKey)
+}
+
+sealed class CompletionFinishTypeRatioBase(private val key: String)
+    : UserFactorBase<CompletionFinishTypeReader>("completionFinishType${key.capitalize()}", UserFactorDescriptions.COMPLETION_FINISH_TYPE) {
+    override fun compute(reader: CompletionFinishTypeReader): String? {
+        val total = reader.getTotalCount()
+        if (total <= 0) return null
+        return (reader.getCountByKey(key) / total).toString()
     }
 }
 
-class ExplicitCompletionRatio : UserFactor {
-    override val id: String = "explicitSelectRatio"
+class ExplicitSelectRatio : CompletionFinishTypeRatioBase(explicitSelectKey)
+class TypedSelectRatio : CompletionFinishTypeRatioBase(typedSelectKey)
+class LookupCancelledRatio : CompletionFinishTypeRatioBase(cancelledKey)
 
-    override fun compute(storage: UserFactorStorage): String? {
-        val factorReader = storage.getFactorReader(UserFactorDescriptions.COMPLETION_FINISH_TYPE)
-        val total = factorReader.getTotalExplicitSelectCount() + factorReader.getTotalTypedSelectCount()
-        if (total == 0.0) return null
-        return (factorReader.getTotalExplicitSelectCount() / total).toString()
-    }
-}

@@ -11,14 +11,14 @@ import java.util.*
  */
 class AggregatedFactorTest : UsefulTestCase() {
     private companion object {
-        val DATE_1 = DateUtil.byDate(Calendar.Builder().setDate(2010, 1, 1).build().time)
+        val DATE_1 = DateUtil.byDate(Calendar.Builder().setDate(2010, 0, 1).build().time)
         val DATE_2 = DATE_1.update(1)
         val DATE_3 = DATE_1.update(2)
         val DATE_4 = DATE_1.update(3)
 
         fun Day.update(count: Int): Day {
             return Calendar.getInstance().let {
-                it.set(year, month, dayOfMonth)
+                it.set(year, month - 1, dayOfMonth)
                 it.add(Calendar.DATE, count)
                 DateUtil.byDate(it.time)
             }

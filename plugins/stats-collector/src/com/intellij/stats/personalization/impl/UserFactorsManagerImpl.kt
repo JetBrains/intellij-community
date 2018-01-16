@@ -37,7 +37,10 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
     private val userFactors = mutableMapOf<String, UserFactor>()
     init {
         // user factors
-        register(ExplicitCompletionRatio())
+        register(TypedSelectRatio())
+        register(ExplicitSelectRatio())
+        register(LookupCancelledRatio())
+
         register(CompletionTypeRatio(CompletionType.BASIC))
         register(CompletionTypeRatio(CompletionType.SMART))
         register(CompletionTypeRatio(CompletionType.CLASS_NAME))
@@ -74,6 +77,7 @@ class UserFactorsManagerImpl : UserFactorsManager, ProjectComponent {
         register(MinDoubleFeatureValue(feature))
         register(AverageDoubleFeatureValue(feature))
         register(UndefinedDoubleFeatureValueRatio(feature))
+        register(VarianceDoubleFeatureValue(feature))
     }
 
     private fun registerCategorialFeatureDerivedFactors(feature: CatergorialFeature) {
