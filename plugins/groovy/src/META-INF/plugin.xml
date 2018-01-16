@@ -1730,8 +1730,7 @@
     <action id="ConvertToCompileStatic"
             class="org.jetbrains.plugins.groovy.actions.ConvertToStaticAction"
             text="Convert to @CompileStatic"
-            description="Convert Groovy files to @CompileStatic"
-            internal="true">
+            description="Convert Groovy files to @CompileStatic">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
 
