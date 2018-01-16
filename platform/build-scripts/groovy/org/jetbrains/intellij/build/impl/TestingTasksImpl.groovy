@@ -194,11 +194,13 @@ class TestingTasksImpl extends TestingTasks {
 ---------------------------------------^------^------^------^------^------^------^----------------------------------------
 """)
     }
-    if (isBootstrapSuiteDefault())
+    if (isBootstrapSuiteDefault()) {
       runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
-     else
+    }
+    else {
       //run other suites instead of BootstrapTests
       runJUnitTask(jvmArgs, systemProperties, testsClasspath)
+    }
 
     if (new File(hprofSnapshotFilePath).exists()) {
       context.notifyArtifactBuilt(hprofSnapshotFilePath)
