@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -26,7 +25,11 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.options.FontSize;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -34,17 +37,18 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import java.util.HashMap;
@@ -52,7 +56,6 @@ import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +104,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final ActionToolbar myToolBar;
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
-  private final JLabel myElementLabel;
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private boolean myIgnoreFontSizeSliderChange;
@@ -283,16 +285,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           public View create(Element elem) {
             if ("icon".equals(elem.getName())) {
               final Object src = elem.getAttributes().getAttribute(HTML.Attribute.SRC);
-              final Icon icon = src != null ? IconLoader.getIcon((String)src) : null;
+              Icon icon = src != null ? IconLoader.findIcon((String)src, false) : null;
+              if (icon == null) {
+                final ModuleType id = ModuleTypeManager.getInstance().findByID((String)src);
+                if (id != null) icon = id.getIcon();
+              }
               if (icon != null) {
+                Icon viewIcon = icon;
                 return new View(elem) {
                   @Override
                   public float getPreferredSpan(int axis) {
                     switch (axis) {
                       case View.X_AXIS:
-                        return icon.getIconWidth();
+                        return viewIcon.getIconWidth();
                       case View.Y_AXIS:
-                        return icon.getIconHeight();
+                        return viewIcon.getIconHeight();
                       default:
                         throw new IllegalArgumentException("Invalid axis: " + axis);
                     }
@@ -300,7 +307,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
                   @Override
                   public void paint(Graphics g, Shape allocation) {
-                    icon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
+                    viewIcon.paintIcon(null, g, allocation.getBounds().x, allocation.getBounds().y - 4);
                   }
 
                   @Override
@@ -329,6 +336,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule("table.sections td { padding-top: 6px; }");
     editorKit.getStyleSheet().addRule(".definition { padding: 7px 9px 5px 7px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(UI.getColor("panel.separator.color")) + "}");
     editorKit.getStyleSheet().addRule(".content { padding: 7px 9px 0 7px; line-height: 18px; }");
+    editorKit.getStyleSheet().addRule(".bottom { padding: 0 9px 0 7px; line-height: 18px; }");
     editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 7px 6px; line-height: 18px; }");
     editorKit.getStyleSheet().addRule(".section { color: #909090; }");
     myEditorPane.setEditorKit(editorKit);
@@ -412,11 +420,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myControlPanel = new JPanel(new BorderLayout(5, 5));
     myControlPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
 
-    myElementLabel = new JLabel();
-    myElementLabel.setMinimumSize(new Dimension(100, 0)); // do not recalculate size according to the text
-
     myControlPanel.add(myToolBar.getComponent(), BorderLayout.WEST);
-    myControlPanel.add(myElementLabel, BorderLayout.CENTER);
     myControlPanel.add(new MyShowSettingsButton(), BorderLayout.EAST);
     myControlPanelVisible = false;
 
@@ -639,14 +643,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myText = text;
 
-    PsiElement e = element == null ? null : element.getElement();
-    if (e != null) {
-      String title = DocumentationManager.getTitle(e, false);
-      if (myHint instanceof AbstractPopup) ((AbstractPopup)myHint).setCaption(title);
-      // Set panel name so that it is announced by readers when it gets the focus
-      AccessibleContextUtil.setName(this, title);
-    }
-
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
@@ -657,7 +653,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }});
   }
 
-  private static String decorate(String text) {
+  private String decorate(String text) {
+    final String location = getLocation(text);
+    if (location != null) {
+      text = text + "<div class='bottom'>" + location;
+    }
     text = addExternalLinksIcon(text);
     return text;
   }
@@ -665,6 +665,33 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static String addExternalLinksIcon(String text) {
     return text.replaceAll("(<a\\s*href=[\"']http[^>]*>)([^>]*)(</a>)",
                            "$1$2<icon src='AllIcons.Ide.External_link_arrow'>$3");
+  }
+
+  private String getLocation(String text) {
+    final PsiElement element = getElement();
+    if (element != null) {
+      PsiFile file = element.getContainingFile();
+      VirtualFile vfile = file == null ? null : file.getVirtualFile();
+
+      if (vfile == null) return text;
+
+      final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+      final Module module = fileIndex.getModuleForFile(vfile);
+
+      if (module != null) {
+        return "<icon src='" + ModuleType.get(module).getId() + "'>&nbsp;" + module.getName();
+      }
+      else {
+        final List<OrderEntry> entries = fileIndex.getOrderEntriesForFile(vfile);
+        for (OrderEntry order : entries) {
+          if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
+            return "<icon src='AllIcons.Nodes.PpLibFolder" + "'>&nbsp;" + order.getPresentableName();
+          }
+        }
+      }
+    }
+
+    return text;
   }
 
   private void applyFontProps() {
@@ -702,14 +729,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void restoreContext(Context context) {
-    setDataInternal(context.element, context.text, context.viewRect, null);
     myEffectiveExternalUrl = context.externalUrl;
+    setDataInternal(context.element, context.text, context.viewRect, null);
     highlightLink(context.highlightedLink);
   }
 
   private void updateControlState() {
-    ElementLocationUtil.customizeElementLabel(myElement != null ? myElement.getElement() : null, myElementLabel);
-    myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     if (Registry.is("documentation.show.toolbar")) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
