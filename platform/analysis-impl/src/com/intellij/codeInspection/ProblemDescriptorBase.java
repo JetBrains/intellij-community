@@ -206,6 +206,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       startRange = startRange.union(endRange);
     }
     else if (myTextRangeInElement != null) {
+      if (!startRange.contains(myTextRangeInElement)) return null;
       startRange = startRange.cutOut(myTextRangeInElement);
     }
     if (isAfterEndOfLine()) {
