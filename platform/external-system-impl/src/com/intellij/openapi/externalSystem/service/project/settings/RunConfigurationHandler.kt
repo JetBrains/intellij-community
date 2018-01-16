@@ -40,6 +40,7 @@ class RunConfigurationHandler: ConfigurationHandler {
 
   private fun ConfigurationData.eachRunConfiguration(runManager: RunManager, visit: (RunConfigurationImporter, RunConfiguration, Map<String, *>) -> Unit) {
     val runCfgMap = find("runConfigurations")
+    val runManagerEx = runManager as RunManagerEx
 
     if (runCfgMap !is List<*>) return
 
@@ -66,18 +67,34 @@ class RunConfigurationHandler: ConfigurationHandler {
       val isDefaults = cfg["defaults"].isTrue()
 
       val runnerAndConfigurationSettings = if (isDefaults) {
-        runManager.getConfigurationTemplate(importer.configurationFactory)
+        runManagerEx.getConfigurationTemplate(importer.configurationFactory)
       }
       else {
-        runManager.createConfiguration(name, importer.configurationFactory)
+        runManagerEx.createConfiguration(name, importer.configurationFactory)
       }
 
       try {
         visit(importer, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>)
 
         if (!isDefaults) {
-          runManager.addConfiguration(runnerAndConfigurationSettings)
+          runManagerEx.addConfiguration(runnerAndConfigurationSettings)
         }
+
+        (cfg["beforeRun"] as? List<*>)?.let {
+          // TODO add extension point
+          it.filterIsInstance(Map::class.java)
+            .firstOrNull { it["id"] == "Make" }
+            ?.let { cfg ->
+              val enabled = (cfg["enabled"] as? Boolean) ?: true
+              if (!enabled) {
+                val filtered = runManagerEx
+                  .getBeforeRunTasks(runnerAndConfigurationSettings.configuration)
+                  .filterNot { it.providerId == CompileStepBeforeRun.ID }
+                runManagerEx.setBeforeRunTasks(runnerAndConfigurationSettings.configuration, filtered)
+              }
+            }
+        }
+
       } catch (e: Exception) {
         LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
       }
@@ -107,25 +124,12 @@ class ApplicationRunConfigurationImporter : RunConfigurationImporter {
       throw IllegalArgumentException("Module with name ${cfg["moduleName"]} can not be found")
     }
 
+    val runManager = RunManager.getInstance(project) as RunManagerEx
 
     (cfg["mainClass"] as? String)?.let { runConfiguration.mainClassName = it }
     (cfg["jvmArgs"]   as? String)?.let { runConfiguration.vmParameters = it  }
     (cfg["programParameters"] as? String)?.let { runConfiguration.programParameters = it }
     (cfg["envs"] as? Map<*,*>)?.let { runConfiguration.envs = it as MutableMap<String, String> }
-
-    val runManager = RunManager.getInstance(project) as RunManagerEx
-    (cfg["beforeRun"] as? List<*>)?.let {
-      // TODO add extension point
-      it.filterIsInstance(Map::class.java)
-        .firstOrNull { it["id"] == "Make" }
-        ?.let { cfg ->
-          val enabled =(cfg["enabled"] as? Boolean) ?: true
-          runManager.getBeforeRunTasks(runConfiguration, CompileStepBeforeRun.ID).firstOrNull()?.let { beforeRunTask ->
-            beforeRunTask.isEnabled = enabled
-          }
-        }
-
-    }
 
     if (!isDefaults) {
       runConfiguration.setModule(module)
