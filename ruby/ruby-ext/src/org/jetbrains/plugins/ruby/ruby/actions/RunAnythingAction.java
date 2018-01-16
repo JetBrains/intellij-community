@@ -278,21 +278,24 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     myRenderer = new MyListRenderer();
     myList.setCellRenderer(myRenderer);
 
-    myList.addMouseListener(new MouseAdapter() {
+    new ClickListener() {
       @Override
-      public void mouseClicked(MouseEvent e) {
-        e.consume();
-        final int i = myList.locationToIndex(e.getPoint());
-        if (i != -1) {
-          mySkipFocusGain = true;
-          getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
-          ApplicationManager.getApplication().invokeLater(() -> {
-            myList.setSelectedIndex(i);
-            executeCommand();
-          });
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        if (clickCount > 1 && clickCount % 2 == 0) {
+          event.consume();
+          final int i = myList.locationToIndex(event.getPoint());
+          if (i != -1) {
+            mySkipFocusGain = true;
+            getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myList.setSelectedIndex(i);
+              executeCommand();
+            });
+          }
         }
+        return false;
       }
-    });
+    }.installOn(myList);
   }
 
   @Nullable
