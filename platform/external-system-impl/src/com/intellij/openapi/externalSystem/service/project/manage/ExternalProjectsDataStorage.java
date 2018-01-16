@@ -86,7 +86,9 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     long startTs = System.currentTimeMillis();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
-      if(projectInfos.isEmpty() && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
+      if (projectInfos.isEmpty() &&
+          myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE &&
+          hasLinkedExternalProjects()) {
         markDirtyAllExternalProjects();
       }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
@@ -113,6 +115,11 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     mergeLocalSettings();
     long finishTs = System.currentTimeMillis();
     LOG.info("Loaded external projects data in " + (finishTs - startTs) + " millis");
+  }
+
+  private boolean hasLinkedExternalProjects() {
+    return ExternalSystemApiUtil.getAllManagers().stream()
+      .anyMatch(manager -> !manager.getSettingsProvider().fun(myProject).getLinkedProjectsSettings().isEmpty());
   }
 
   private void markDirtyAllExternalProjects() {
