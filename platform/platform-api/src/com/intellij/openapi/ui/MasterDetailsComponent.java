@@ -66,10 +66,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     public ActionCallback navigateTo(@Nullable final Place place, final boolean requestFocus) {
       return null;
     }
-
-    @Override
-    public void queryPlace(@NotNull final Place place) {
-    }
   });
   private JComponent myMaster;
 

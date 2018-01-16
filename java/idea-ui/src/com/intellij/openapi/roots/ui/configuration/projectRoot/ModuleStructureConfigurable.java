@@ -968,7 +968,6 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   private class AddModuleAction extends AnAction implements DumbAware {
-
     private final boolean myImport;
 
     AddModuleAction(boolean anImport) {
