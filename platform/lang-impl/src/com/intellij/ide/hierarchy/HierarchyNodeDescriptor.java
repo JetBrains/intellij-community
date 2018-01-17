@@ -16,6 +16,7 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SmartElementDescriptor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -95,5 +96,13 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   @Override
   public boolean expandOnDoubleClick() {
     return false;
+  }
+
+  protected final boolean invalidElement() {
+    String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
+    if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
+      myHighlightedText.getBeginning().addText(invalidPrefix, getInvalidPrefixAttributes());
+    }
+    return true;
   }
 }

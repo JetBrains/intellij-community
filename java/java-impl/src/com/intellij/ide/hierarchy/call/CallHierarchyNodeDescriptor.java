@@ -98,11 +98,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     final PsiElement enclosingElement = getEnclosingElement();
 
     if (enclosingElement == null) {
-      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
-      if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
-        myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
-      }
-      return true;
+      return invalidElement();
     }
 
     Icon newIcon = enclosingElement.getIcon(flags);
