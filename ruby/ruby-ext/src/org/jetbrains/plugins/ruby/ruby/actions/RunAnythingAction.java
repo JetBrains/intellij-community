@@ -346,7 +346,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           return;
         }
 
-        onFocusLost();
+        onPopupFocusLost();
       }
     });
   }
@@ -356,7 +356,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     return (RunAnythingSearchListModel)myList.getModel();
   }
 
-  private ActionCallback onFocusLost() {
+  @NotNull
+  private ActionCallback onPopupFocusLost() {
     final ActionCallback result = new ActionCallback();
     //noinspection SSBasedInspection
     UIUtil.invokeLaterIfNeeded(() -> {
@@ -484,7 +485,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
     finally {
       token.finish();
-      final ActionCallback callback = onFocusLost();
+      final ActionCallback callback = onPopupFocusLost();
       if (onDone != null) {
         callback.doWhenDone(onDone);
       }
@@ -1691,11 +1692,20 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @Override
     protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
       Runnable callback = () -> {
+        IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(getTextEditor());
+
         Project project = getProject();
         Module module = getModule();
-        VirtualFile directory = getWorkDirectory(module);
-
-        RunAnythingUtil.runOrCreateRunConfiguration(project, textField.getText(), module, directory);
+        Runnable onDone = () -> {};
+        AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+        try {
+          onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(project, textField.getText(), module, getWorkDirectory(module));
+        }
+        finally {
+          token.finish();
+          onPopupFocusLost().doWhenDone(onDone);
+        }
+        focusManager.requestDefaultFocus(true);
       };
 
       if (UIUtil.isUnderDarcula()) {
