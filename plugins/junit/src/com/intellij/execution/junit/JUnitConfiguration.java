@@ -411,6 +411,13 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       idsElement.getChildren("uniqueId").forEach(uniqueIdElement -> ids.add(uniqueIdElement.getAttributeValue("value")));
       getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
     }
+
+    Element tagsElement = element.getChild("tags");
+    if (tagsElement != null) {
+      List<String> tags = new ArrayList<>();
+      tagsElement.getChildren("tag").forEach(tagElement -> tags.add(tagElement.getAttributeValue("value")));
+      getPersistentData().setTags(ArrayUtil.toStringArray(tags));
+    }
   }
 
   @Override
@@ -460,10 +467,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.setAttribute("repeat_mode", repeatMode);
     }
     String[] ids = persistentData.getUniqueIds();
-    if (ids != null) {
+    if (ids != null && ids.length > 0) {
       Element uniqueIds = new Element("uniqueIds");
       Arrays.stream(ids).forEach(id -> uniqueIds.addContent(new Element("uniqueId").setAttribute("value", id)));
       element.addContent(uniqueIds);
+    }
+
+    String[] tags = persistentData.getTags();
+    if (tags != null && tags.length > 0) {
+      Element tagsElement = new Element("tags");
+      Arrays.stream(tags).forEach(id -> tagsElement.addContent(new Element("tag").setAttribute("value", id)));
+      element.addContent(tagsElement);
     }
   }
 
