@@ -52,6 +52,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       }
 
       final RefManager refManager = globalContext.getRefManager();
+      currentDependencies:
       for (final OrderEntry entry : declaredDependencies) {
         if (entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
           final Module dependency = ((ModuleOrderEntry)entry).getModule();
@@ -62,6 +63,7 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
                 final Iterator<Module> iterator = graph.getOut(module);
                 while (iterator.hasNext()) {
                   final Module dep = iterator.next();
+                  if (!scope.containsModule(dep)) continue currentDependencies;
                   final RefModule depRefModule = refManager.getRefModule(dep);
                   if (depRefModule != null) {
                     final Set<Module> neededModules = depRefModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);

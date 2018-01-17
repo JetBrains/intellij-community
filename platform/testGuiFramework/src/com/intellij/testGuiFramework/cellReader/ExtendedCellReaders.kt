@@ -36,6 +36,7 @@ import java.util.*
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
 import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
 
 
 /**
@@ -46,10 +47,15 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
   override fun valueAt(tree: JTree, modelValue: Any?): String? {
     if (modelValue == null) return null
 
-    val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, true, 0, false)
+    val isLeaf = modelValue is DefaultMutableTreeNode && modelValue.leafCount == 1
+    val cellRendererComponent = if (isLeaf) {
+      tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, true, 0, false)
+    }
+    else {
+      tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, false, 0, false)
+    }
     return getValueWithCellRenderer(cellRendererComponent)
   }
-
 }
 
 class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
@@ -63,7 +69,7 @@ class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
   }
 }
 
-class ExtendedJTableCellReader: BasicJTableCellReader(), JTableCellReader {
+class ExtendedJTableCellReader : BasicJTableCellReader(), JTableCellReader {
 
   override fun valueAt(table: JTable, row: Int, column: Int): String? {
     val cellRendererComponent = table.prepareRenderer(table.getCellRenderer(row, column), row, column)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.lang.resolve;
 
@@ -23,48 +23,21 @@ import java.util.*;
  * @author ven
  */
 public class CollectClassMembersUtil {
+
   private static class ClassMembers {
-    private final Map<String, CandidateInfo> myFields;
-    private final Map<String, List<CandidateInfo>> myMethods;
-    private final Map<String, CandidateInfo> myInnerClasses;
-
-    private ClassMembers(@NotNull Map<String, CandidateInfo> fields,
-                         @NotNull Map<String, List<CandidateInfo>> methods,
-                         @NotNull Map<String, CandidateInfo> innerClasses) {
-      myFields = fields;
-      myMethods = methods;
-      myInnerClasses = innerClasses;
-    }
-
-    public static ClassMembers create(@NotNull LinkedHashMap<String, CandidateInfo> first,
-                                      @NotNull LinkedHashMap<String, List<CandidateInfo>> second,
-                                      @NotNull LinkedHashMap<String, CandidateInfo> third) {
-      return new ClassMembers(first, second, third);
-    }
-
-    private Map<String, CandidateInfo> getFields() {
-      return myFields;
-    }
-
-    private Map<String, List<CandidateInfo>> getMethods() {
-      return myMethods;
-    }
-
-    private Map<String, CandidateInfo> getInnerClasses() {
-      return myInnerClasses;
-    }
+    private final Map<String, CandidateInfo> fields = ContainerUtil.newLinkedHashMap();
+    private final Map<String, List<CandidateInfo>> methods = ContainerUtil.newLinkedHashMap();
+    private final Map<String, CandidateInfo> innerClasses = ContainerUtil.newLinkedHashMap();
   }
 
   private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS = Key.create("CACHED_CLASS_MEMBERS");
-
   private static final Key<CachedValue<ClassMembers>> CACHED_MEMBERS_INCLUDING_SYNTHETIC = Key.create("CACHED_MEMBERS_INCLUDING_SYNTHETIC");
 
-  private CollectClassMembersUtil() {
-  }
+  private CollectClassMembersUtil() {}
 
-
-  public static Map<String, List<CandidateInfo>> getAllMethods(final PsiClass aClass, boolean includeSynthetic) {
-    return getCachedMembers(aClass, includeSynthetic).getMethods();
+  @NotNull
+  public static Map<String, List<CandidateInfo>> getAllMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
+    return getCachedMembers(aClass, includeSynthetic).methods;
   }
 
   @NotNull
@@ -77,12 +50,12 @@ public class CollectClassMembersUtil {
     return buildCache(aClass, includeSynthetic && checkClass(aClass));
   }
 
-  private static boolean checkClass(PsiClass aClass) {
+  private static boolean checkClass(@NotNull PsiClass aClass) {
     Set<PsiClass> visited = ContainerUtil.newHashSet();
     Queue<PsiClass> queue = ContainerUtil.newLinkedList(aClass);
 
     while (!queue.isEmpty()) {
-      PsiClass current = queue.poll();
+      PsiClass current = queue.remove();
       if (current instanceof ClsClassImpl) continue;
       if (visited.add(current)) {
         if (TransformationUtilKt.isUnderTransformation(current)) return false;
@@ -98,31 +71,31 @@ public class CollectClassMembersUtil {
     return true;
   }
 
+  @NotNull
   public static Map<String, CandidateInfo> getAllInnerClasses(@NotNull final PsiClass aClass, boolean includeSynthetic) {
-    return getCachedMembers(aClass, includeSynthetic).getInnerClasses();
+    return getCachedMembers(aClass, includeSynthetic).innerClasses;
   }
 
+  @NotNull
   public static Map<String, CandidateInfo> getAllFields(@NotNull final PsiClass aClass, boolean includeSynthetic) {
-    return getCachedMembers(aClass, includeSynthetic).getFields();
+    return getCachedMembers(aClass, includeSynthetic).fields;
   }
 
+  @NotNull
   public static Map<String, CandidateInfo> getAllFields(@NotNull final PsiClass aClass) {
     return getAllFields(aClass, true);
   }
 
+  @NotNull
   private static ClassMembers buildCache(@NotNull final PsiClass aClass, final boolean includeSynthetic) {
     return CachedValuesManager.getManager(aClass.getProject()).getCachedValue(aClass, getMemberCacheKey(includeSynthetic), () -> {
-      LinkedHashMap<String, CandidateInfo> allFields = ContainerUtil.newLinkedHashMap();
-      LinkedHashMap<String, List<CandidateInfo>> allMethods = ContainerUtil.newLinkedHashMap();
-      LinkedHashMap<String, CandidateInfo> allInnerClasses = ContainerUtil.newLinkedHashMap();
-
-      processClass(aClass, allFields, allMethods, allInnerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);
-      return CachedValueProvider.Result.create(
-        ClassMembers.create(allFields, allMethods, allInnerClasses), PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT
-      );
+      ClassMembers result = new ClassMembers();
+      processClass(aClass, result.fields, result.methods, result.innerClasses, new HashSet<>(), PsiSubstitutor.EMPTY, includeSynthetic);
+      return CachedValueProvider.Result.create(result, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }, false);
   }
 
+  @NotNull
   private static Key<CachedValue<ClassMembers>> getMemberCacheKey(boolean includeSynthetic) {
     return includeSynthetic ? CACHED_MEMBERS_INCLUDING_SYNTHETIC : CACHED_MEMBERS;
   }
@@ -179,20 +152,24 @@ public class CollectClassMembersUtil {
     }
   }
 
+  @NotNull
   public static PsiField[] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getFields() : ((GrTypeDefinition)aClass).getCodeFields();
   }
 
+  @NotNull
   public static PsiMethod[] getMethods(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getMethods() : ((GrTypeDefinition)aClass).getCodeMethods();
   }
 
+  @NotNull
   public static PsiClass[] getInnerClasses(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return includeSynthetic || !(aClass instanceof GrTypeDefinition)
            ? aClass.getInnerClasses()
            : ((GrTypeDefinition)aClass).getCodeInnerClasses();
   }
 
+  @NotNull
   public static PsiClass[] getSupers(@NotNull PsiClass aClass, boolean includeSynthetic) {
     return aClass instanceof GrTypeDefinition
            ? ((GrTypeDefinition)aClass).getSupers(includeSynthetic)

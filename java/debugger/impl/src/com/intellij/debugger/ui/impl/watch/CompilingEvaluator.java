@@ -1,6 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -22,7 +22,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHandler;
 import com.sun.jdi.ClassLoaderReference;
-import com.sun.jdi.ClassType;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,10 +64,9 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
-    String version = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version();
-    Collection<ClassObject> classes = compile(JavaSdkVersion.fromVersionString(version));
-
-    defineClasses(classes, autoLoadContext, process, classLoader);
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
+    Collection<ClassObject> classes = compile(version);
+    defineClasses(version, classes, autoLoadContext, process, classLoader);
 
     try {
       // invoke base evaluator on call code
@@ -90,12 +88,12 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     }
   }
 
-  private ClassType defineClasses(Collection<ClassObject> classes,
-                                  EvaluationContext context,
-                                  DebugProcess process,
-                                  ClassLoaderReference classLoader) throws EvaluateException {
-    JavaSdkVersion targetVersion = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
-    boolean useMagicAccessorImpl = targetVersion != null && !targetVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
+  private void defineClasses(JavaSdkVersion version,
+                             Collection<ClassObject> classes,
+                             EvaluationContext context,
+                             DebugProcess process,
+                             ClassLoaderReference classLoader) throws EvaluateException {
+    boolean useMagicAccessorImpl = version != null && !version.isAtLeast(JavaSdkVersion.JDK_1_9);
 
     for (ClassObject cls : classes) {
       if (cls.getPath().contains(GEN_CLASS_NAME)) {
@@ -108,7 +106,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
         }
       }
     }
-    return (ClassType)process.findClass(context, getGenClassQName(), classLoader);
+    process.findClass(context, getGenClassQName(), classLoader);
   }
 
   private static byte[] changeSuperToMagicAccessor(byte[] bytes) {

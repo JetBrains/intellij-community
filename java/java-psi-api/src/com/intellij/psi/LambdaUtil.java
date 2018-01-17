@@ -143,8 +143,13 @@ public class LambdaUtil {
     return context instanceof PsiLambdaExpression ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression ||
-           context instanceof PsiVariable ||
+           context instanceof PsiVariable && !withInferredType((PsiVariable)context) ||
            context instanceof PsiArrayInitializerExpression;
+  }
+
+  private static boolean withInferredType(PsiVariable variable) {
+    PsiTypeElement typeElement = variable.getTypeElement();
+    return typeElement != null && typeElement.isInferredType();
   }
 
   @Contract("null -> null")

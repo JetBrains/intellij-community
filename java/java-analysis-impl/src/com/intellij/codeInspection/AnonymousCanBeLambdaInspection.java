@@ -78,10 +78,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       public void visitAnonymousClass(final PsiAnonymousClass aClass) {
         super.visitAnonymousClass(aClass);
         final PsiElement parent = aClass.getParent();
-        final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
-        if (lambdaContext != null &&
-            (LambdaUtil.isValidLambdaContext(lambdaContext) || !(lambdaContext instanceof PsiExpressionStatement)) &&
-            canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
+        if (canBeConvertedToLambda(aClass, false, isOnTheFly || reportNotAnnotatedInterfaces, Collections.emptySet())) {
           final PsiElement lBrace = aClass.getLBrace();
           LOG.assertTrue(lBrace != null);
           final TextRange rangeInElement = new TextRange(0, aClass.getStartOffsetInParent() + lBrace.getStartOffsetInParent());
@@ -199,6 +196,9 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
                                                boolean acceptParameterizedFunctionTypes,
                                                boolean reportNotAnnotatedInterfaces,
                                                @NotNull Set<String> ignoredRuntimeAnnotations) {
+    PsiElement parent = aClass.getParent();
+    final PsiElement lambdaContext = parent != null ? parent.getParent() : null;
+    if (lambdaContext == null || !LambdaUtil.isValidLambdaContext(lambdaContext) && !(lambdaContext instanceof PsiReferenceExpression)) return false;
     if (PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8)) {
       final PsiClassType baseClassType = aClass.getBaseClassType();
       final PsiClassType.ClassResolveResult resolveResult = baseClassType.resolveGenerics();

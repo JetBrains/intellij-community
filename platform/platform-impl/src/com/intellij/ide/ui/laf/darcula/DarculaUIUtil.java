@@ -94,6 +94,20 @@ public class DarculaUIUtil {
     abstract public void setGraphicsColor(Graphics2D g, boolean focused);
   }
 
+  /**
+   * Deprecated in favor of {@link #paintFocusBorder(Graphics2D, int, int, float, boolean)}
+   */
+  @Deprecated
+  public static void paintFocusRing(Graphics g, Rectangle r) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.translate(r.x, r.y);
+      paintFocusBorder(g2, r.width, r.height, arc(), true);
+    } finally {
+      g2.dispose();
+    }
+  }
+
   public static void paintFocusOval(Graphics2D g, float x, float y, float width, float height) {
     g.setPaint(IntelliJLaf.isGraphite() ? GRAPHITE_COLOR : REGULAR_COLOR);
 

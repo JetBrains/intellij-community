@@ -964,6 +964,10 @@ public class MavenUtil {
     if (isPomFileName(file.getName())) return true;
     if (!isPotentialPomFile(file.getPath())) return false;
 
+    return isPomFileIgnoringName(project, file);
+  }
+
+  public static boolean isPomFileIgnoringName(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null || !project.isInitialized()) {
       if (!FileUtil.extensionEquals(file.getName(), "xml")) return false;
       try {

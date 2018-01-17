@@ -55,6 +55,7 @@ import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -311,8 +312,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     catch (NumberFormatException e) {
       configuration.setRepeatCount(1);
     }
-    configuration.getPersistentData().setUniqueIds(myUniqueIdField.getComponent().getText().split(" "));
-    configuration.getPersistentData().setTags(myTagsField.getComponent().getText().split(" "));
+    configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField));
+    configuration.getPersistentData().setTags(setArrayFromText(myTagsField));
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     myModel.apply(getModuleSelector().getModule(), configuration);
     applyHelpersTo(configuration);
@@ -332,6 +333,14 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myCommonJavaParameters.applyTo(configuration);
     configuration.setForkMode((String)myForkCb.getSelectedItem());
     configuration.setShortenCommandLine((ShortenCommandLine)myShortenClasspathModeCombo.getComponent().getSelectedItem());
+  }
+
+  protected String[] setArrayFromText(LabeledComponent<RawCommandLineEditor> field) {
+    String text = field.getComponent().getText();
+    if (text.isEmpty()) {
+      return ArrayUtil.EMPTY_STRING_ARRAY;
+    }
+    return text.split(" ");
   }
 
   public void resetEditorFrom(@NotNull final JUnitConfiguration configuration) {

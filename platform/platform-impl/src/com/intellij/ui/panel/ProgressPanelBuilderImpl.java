@@ -28,6 +28,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
   private Runnable resumeAction;
   private Runnable pauseAction;
 
+  private String  cancelText = "Cancel";
   private boolean cancelAsButton;
   private boolean smallVariant;
 
@@ -56,6 +57,12 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
   public ProgressPanelBuilder withCancel(@NotNull Runnable cancelAction) {
     this.cancelAction = cancelAction;
     valid = resumeAction == null && pauseAction == null;
+    return this;
+  }
+
+  @Override
+  public ProgressPanelBuilder andCancelText(String cancelText) {
+    this.cancelText = cancelText;
     return this;
   }
 
@@ -231,7 +238,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       gc.fill = GridBagConstraints.HORIZONTAL;
 
       if (topSeparatorEnabled) {
-        gc.insets = JBUI.insets(8, 0);
+        gc.insets = JBUI.insets(14, 0, 10, 0);
         gc.gridwidth = gridWidth();
         gc.weightx = 1.0;
         panel.add(mySeparatorComponent, gc);
@@ -259,11 +266,11 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       myProgressBar.putClientProperty(LABELED_PANEL_PROPERTY, this);
 
       gc.weightx = 0.0;
-      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 0 : 14, 10, 0, 13);
+      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 1 : 14, 10, 0, 13);
 
       if (cancelAction != null) {
         if (cancelAsButton) {
-          JButton cancelButton = new JButton("Cancel");
+          JButton cancelButton = new JButton(cancelText);
           cancelButton.addActionListener((e) -> cancelAction.run());
           panel.add(cancelButton, gc);
         }
@@ -321,7 +328,7 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       @Override
       public void mouseEntered(MouseEvent e) {
         if (cancelAction != null) {
-          setCommentText("Cancel", true);
+          setCommentText(cancelText, true);
         }
         else if (resumeAction != null && pauseAction != null) {
           setCommentText(state == State.PLAYING ? "Pause" : "Resume", true);

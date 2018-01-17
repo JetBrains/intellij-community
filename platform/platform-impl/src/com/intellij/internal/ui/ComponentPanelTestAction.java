@@ -244,11 +244,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(pb1).
-          withLabel("Label ygp 1.1").
-          withCancel(()-> myAlarm.cancelRequest(timerRequest))).
+          withLabel("Label 1.1").
+          withCancel(()-> myAlarm.cancelRequest(timerRequest)).
+          andCancelText("Stop")).
         add(JBPanelFactory.panel(pb2).
-          withTopSeparator().
-          withLabel("Label ygp 1.2").
+          withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
         expandVertically().
@@ -261,7 +261,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JProgressBar pb4 = new JProgressBar(0, 100);
       panel.add(JBPanelFactory.grid().
         add(JBPanelFactory.panel(pb3).
-          withTopSeparator().
           withLabel("Label 2.1").moveLabelLeft().
           withCancel(()-> System.out.println("Cancel action #3"))).
         add(JBPanelFactory.panel(pb4).
