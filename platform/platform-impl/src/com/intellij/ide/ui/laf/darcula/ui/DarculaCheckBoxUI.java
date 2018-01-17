@@ -41,6 +41,11 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
     return new DarculaCheckBoxUI();
   }
 
+  @Override public void installDefaults(AbstractButton b) {
+    super.installDefaults(b);
+    b.setIconTextGap(JBUI.scale(b.getIconTextGap()));
+  }
+
   @Override
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;

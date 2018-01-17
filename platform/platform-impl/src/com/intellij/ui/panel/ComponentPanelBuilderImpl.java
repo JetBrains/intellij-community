@@ -186,18 +186,18 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
 
     if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
       top = 0;
-      left = isMacDefault ? 27 : 22;
+      left = isMacDefault ? 27 : 24;
       bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
     }
     else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
              myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
       top = isWin10 ? 3 : 4;
-      left = isWin10 ? 1 : isMacDefault ? 5 : 2;
+      left = isWin10 ? 1 : isMacDefault ? 5 : 4;
       bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
     }
     else if (myComponent instanceof JButton) {
       top = isWin10 ? 2 : 4;
-      left = isWin10 ? 1 : isMacDefault ? 5 : 4;
+      left = isWin10 ? 1 : isMacDefault ? 5 : 6;
       bottom = 0;
     }
 

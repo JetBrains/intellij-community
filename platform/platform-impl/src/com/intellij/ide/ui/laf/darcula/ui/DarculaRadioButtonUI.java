@@ -44,6 +44,11 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     return new DarculaRadioButtonUI();
   }
 
+  @Override public void installDefaults(AbstractButton b) {
+    super.installDefaults(b);
+    b.setIconTextGap(JBUI.scale(b.getIconTextGap()));
+  }
+
   @Override
   public synchronized void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
@@ -116,46 +121,46 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       if (!UIUtil.isUnderDarcula() && selected) {
         GraphicsConfig fillOvalConf = new GraphicsConfig(g);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-        g.fill(new Ellipse2D.Float(0, JBUI.scale(1), w, h));
+        g.fill(new Ellipse2D.Float(0, 0, w, h));
         fillOvalConf.restore();
       } else {
         if (focus) {
-          g.fill(new Ellipse2D.Float(0, JBUI.scale(1), w, h));
+          g.fill(new Ellipse2D.Float(0, 0, w, h));
         } else if (c.isEnabled()){
-          g.fill(new Ellipse2D.Float(0, JBUI.scale(1), w - JBUI.scale(1), h - JBUI.scale(1)));
+          g.fill(new Ellipse2D.Float(0, 0, w - JBUI.scale(1), h - JBUI.scale(1)));
         }
       }
 
       if (focus) {
-        DarculaUIUtil.paintFocusOval(g, 0, JBUI.scale(1), w, h);
+        DarculaUIUtil.paintFocusOval(g, 0, 0, w, h);
       } else {
         if (UIUtil.isUnderDarcula()) {
           if (c.isEnabled()) {
             g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
 
             Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-            shape.append(new Ellipse2D.Float(0, JBUI.scale(1) + 1, w - 1, h - 1), false);
-            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + 1 + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            shape.append(new Ellipse2D.Float(0, 1, w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, 1 + lw, w - 1 - lw*2, h - 1 - lw*2), false);
             g.fill(shape);
 
             g.setPaint(Gray._40.withAlpha(200));
             shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-            shape.append(new Ellipse2D.Float(0, JBUI.scale(1), w - 1, h - 1), false);
-            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            shape.append(new Ellipse2D.Float(0, 0, w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, lw, w - 1 - lw*2, h - 1 - lw*2), false);
             g.fill(shape);
           } else {
             g.setColor(Gray.x58);
             Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-            shape.append(new Ellipse2D.Float(0, JBUI.scale(1), w - 1, h - 1), false);
-            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            shape.append(new Ellipse2D.Float(0, 0, w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, lw, w - 1 - lw*2, h - 1 - lw*2), false);
             g.fill(shape);
           }
         } else {
           g.setPaint(selected ? ijGradient : c.isEnabled() ? Gray._30 : Gray._130);
           if (!selected) {
             Path2D shape = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-            shape.append(new Ellipse2D.Float(0, JBUI.scale(1) + 1, w - 1, h - 1), false);
-            shape.append(new Ellipse2D.Float(lw, JBUI.scale(1) + 1 + lw, w - 1 - lw*2, h - 1 - lw*2), false);
+            shape.append(new Ellipse2D.Float(0, 1, w - 1, h - 1), false);
+            shape.append(new Ellipse2D.Float(lw, 1 + lw, w - 1 - lw*2, h - 1 - lw*2), false);
             g.fill(shape);
           }
         }
@@ -163,7 +168,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
       if (selected) {
         boolean enabled = c.isEnabled();
-        int yOff = 1 + JBUI.scale(1);
+        int yOff = 1;
 
         if (!UIUtil.isUnderDarcula() || enabled) {
           g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledShadowColor" : "RadioButton.darcula.selectionDisabledShadowColor"));

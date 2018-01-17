@@ -50,6 +50,16 @@ public interface ProgressPanelBuilder extends PanelBuilder {
   ProgressPanelBuilder andCancelAsButton();
 
   /**
+   * If cancel button looks like a button (see {@link #andCancelAsButton()}) sets the text to be displayed on cancel button.
+   * Otherwise sets the text to be displayed under the progressbar on mouse hover over the cancel icon.
+   *
+   * "Cancel" is the default text.
+   *
+   * @return <code>this</code>
+   */
+  ProgressPanelBuilder andCancelText(String cancelText);
+
+  /**
    * Enables play button (icon styled) and sets action for it. Can't coexist with cancel action.
    *
    * @param playAction <code>Runnable</code> action.
