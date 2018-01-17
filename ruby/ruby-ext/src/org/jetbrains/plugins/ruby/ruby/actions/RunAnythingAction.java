@@ -285,7 +285,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           event.consume();
           final int i = myList.locationToIndex(event.getPoint());
           if (i != -1) {
-            mySkipFocusGain = true;
             getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(getField(), true));
             ApplicationManager.getApplication().invokeLater(() -> {
               myList.setSelectedIndex(i);
