@@ -1193,4 +1193,25 @@ public class ExpressionUtils {
       return parent instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(parent);
     });
   }
+
+  /**
+   * Returns true if expression result depends only on local variable values, so it does not change
+   * if locals don't change.
+   *
+   * @param expression expression to check
+   * @return true if expression result depends only on local variable values
+   */
+  public static boolean isLocallyDefinedExpression(PsiExpression expression) {
+    return PsiTreeUtil.processElements(expression, e -> {
+      if (e instanceof PsiMethodCallExpression) return false;
+      if (e instanceof PsiReferenceExpression) {
+        PsiElement target = ((PsiReferenceExpression)e).resolve();
+        if (target instanceof PsiField) {
+          return ((PsiField)target).hasModifierProperty(PsiModifier.FINAL);
+        }
+      }
+      if (e instanceof PsiArrayAccessExpression) return false;
+      return true;
+    });
+  }
 }
