@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,6 +109,12 @@ public abstract class PyAbstractPackageCache {
   public List<String> getVersions(@NotNull String packageName) {
     final PackageInfo packageInfo = myPackages.get(packageName);
     return packageInfo != null ? packageInfo.getVersions() : null;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s(size=%d): %s...", getClass().getSimpleName(), myPackages.size(),
+                         StreamEx.ofKeys(myPackages).limit(5).joining(", "));
   }
 
   protected static class PackageInfo {

@@ -16,8 +16,18 @@ public class PyPackageCacheTest extends PyTestCase {
   public void testCaseInsensitivePackageNameMatching() {
     final PyPIPackageCache cache = PyPIPackageCache.getInstance(Paths.get(getTestDataPath(), "pypi-cache.json"));
 
-    assertTrue(cache.containsPackage("flask"));
-    assertTrue(cache.containsPackage("Flask"));
+    assertTrue("Package name in original case is missing: " + cache.toString(), cache.containsPackage("Flask"));
+    assertTrue("Package name in altered case is missing: " + cache.toString(), cache.containsPackage("flask"));
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      PyPIPackageCache.reset();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @Override
