@@ -30,7 +30,7 @@ public class CaptureSettingsProvider {
     addCapture("javax/swing/SwingUtilities", "invokeLater", FIRST_PARAM);
     addInsert("java/awt/event/InvocationEvent",
               "dispatch",
-              new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable", "Ljava/lang/Runnable;"));
+              new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable"));
 
     addCapture("java/lang/Thread", "start", THIS_KEY);
     addInsert("java/lang/Thread", "run", THIS_KEY);
@@ -38,9 +38,7 @@ public class CaptureSettingsProvider {
     addCapture("java/util/concurrent/ExecutorService", "submit", FIRST_PARAM);
     addInsert("java/util/concurrent/Executors$RunnableAdapter",
               "call",
-              new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter",
-                                   "task",
-                                   "Ljava/lang/Runnable;"));
+              new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter", "task"));
 
     addCapture("java/util/concurrent/ThreadPoolExecutor", "execute", FIRST_PARAM);
     addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
@@ -48,9 +46,7 @@ public class CaptureSettingsProvider {
     addCapture("java/util/concurrent/CompletableFuture", "supplyAsync", FIRST_PARAM);
     AgentInsertPoint point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply",
                                                   "run",
-                                                  new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply",
-                                                                       "fn",
-                                                                       "Ljava/util/function/Supplier;"));
+                                                  new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncSupply", "fn"));
     point.myInsertPoint.myInsertMethodName = "run$$$capture";
     point.myInsertPoint.myInsertKeyExpression = "f";
     INSERT_POINTS.add(point);
@@ -58,9 +54,7 @@ public class CaptureSettingsProvider {
     addCapture("java/util/concurrent/CompletableFuture", "runAsync", FIRST_PARAM);
     point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncRun",
                                  "run",
-                                 new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun",
-                                                      "fn",
-                                                      "Ljava/lang/Runnable;"));
+                                 new FieldKeyProvider("java/util/concurrent/CompletableFuture$AsyncRun", "fn"));
     point.myInsertPoint.myInsertMethodName = "run$$$capture";
     point.myInsertPoint.myInsertKeyExpression = "f";
     INSERT_POINTS.add(point);
@@ -68,16 +62,12 @@ public class CaptureSettingsProvider {
     addCapture("java/util/concurrent/CompletableFuture", "thenAcceptAsync", FIRST_PARAM);
     addInsert("java/util/concurrent/CompletableFuture$UniAccept",
               "tryFire",
-              new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept",
-                                   "fn",
-                                   "Ljava/util/function/Consumer;"));
+              new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniAccept", "fn"));
 
     addCapture("java/util/concurrent/CompletableFuture", "thenRunAsync", FIRST_PARAM);
     addInsert("java/util/concurrent/CompletableFuture$UniRun",
               "tryFire",
-              new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniRun",
-                                   "fn",
-                                   "Ljava/lang/Runnable;"));
+              new FieldKeyProvider("java/util/concurrent/CompletableFuture$UniRun", "fn"));
 
     // netty
     addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
@@ -234,17 +224,15 @@ public class CaptureSettingsProvider {
   private static class FieldKeyProvider implements KeyProvider {
     private final String myClassName;
     private final String myFieldName;
-    private final String myFieldDesc;
 
-    public FieldKeyProvider(String className, String fieldName, String fieldDesc) {
+    public FieldKeyProvider(String className, String fieldName) {
       myClassName = className;
       myFieldName = fieldName;
-      myFieldDesc = fieldDesc;
     }
 
     @Override
     public String asString() {
-      return myClassName + AgentPoint.SEPARATOR + myFieldName + AgentPoint.SEPARATOR + myFieldDesc;
+      return myClassName + AgentPoint.SEPARATOR + myFieldName;
     }
   }
 

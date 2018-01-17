@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.org.objectweb.asm.*;
@@ -196,6 +198,7 @@ public class CaptureAgent {
   private static class CaptureInstrumentor extends ClassVisitor {
     private final List<CapturePoint> myCapturePoints;
     private final List<InsertPoint> myInsertPoints;
+    private final Map<String, String> myFields = new HashMap<String, String>();
 
     public CaptureInstrumentor(int api, ClassVisitor cv, List<CapturePoint> capturePoints, List<InsertPoint> insertPoints) {
       super(api, cv);
@@ -209,6 +212,12 @@ public class CaptureAgent {
 
     private static String getMethodDisplayName(String className, String methodName, String desc) {
       return className + "." + methodName + desc;
+    }
+
+    @Override
+    public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+      myFields.put(name, desc);
+      return super.visitField(access, name, desc, signature, value);
     }
 
     @Override
@@ -308,37 +317,37 @@ public class CaptureAgent {
       mv.visitEnd();
     }
 
-    private static void capture(MethodVisitor mv,
-                                KeyProvider keyProvider,
-                                boolean isStatic,
-                                Type[] argumentTypes,
-                                String methodDisplayName) {
+    private void capture(MethodVisitor mv,
+                         KeyProvider keyProvider,
+                         boolean isStatic,
+                         Type[] argumentTypes,
+                         String methodDisplayName) {
       storageCall(mv, keyProvider, isStatic, argumentTypes, "capture", methodDisplayName);
     }
 
-    private static void insertEnter(MethodVisitor mv,
-                                    KeyProvider keyProvider,
-                                    boolean isStatic,
-                                    Type[] argumentTypes,
-                                    String methodDisplayName) {
+    private void insertEnter(MethodVisitor mv,
+                             KeyProvider keyProvider,
+                             boolean isStatic,
+                             Type[] argumentTypes,
+                             String methodDisplayName) {
       storageCall(mv, keyProvider, isStatic, argumentTypes, "insertEnter", methodDisplayName);
     }
 
-    private static void insertExit(MethodVisitor mv,
-                                   KeyProvider keyProvider,
-                                   boolean isStatic,
-                                   Type[] argumentTypes,
-                                   String methodDisplayName) {
+    private void insertExit(MethodVisitor mv,
+                            KeyProvider keyProvider,
+                            boolean isStatic,
+                            Type[] argumentTypes,
+                            String methodDisplayName) {
       storageCall(mv, keyProvider, isStatic, argumentTypes, "insertExit", methodDisplayName);
     }
 
-    private static void storageCall(MethodVisitor mv,
-                                    KeyProvider keyProvider,
-                                    boolean isStatic,
-                                    Type[] argumentTypes,
-                                    String storageMethodName,
-                                    String methodDisplayName) {
-      keyProvider.loadKey(mv, isStatic, argumentTypes, methodDisplayName);
+    private void storageCall(MethodVisitor mv,
+                             KeyProvider keyProvider,
+                             boolean isStatic,
+                             Type[] argumentTypes,
+                             String storageMethodName,
+                             String methodDisplayName) {
+      keyProvider.loadKey(mv, isStatic, argumentTypes, methodDisplayName, this);
       mv.visitMethodInsn(Opcodes.INVOKESTATIC, CaptureStorage.class.getName().replaceAll("\\.", "/"), storageMethodName,
                          "(Ljava/lang/Object;)V", false);
     }
@@ -430,7 +439,11 @@ public class CaptureAgent {
 
   static final KeyProvider THIS_KEY_PROVIDER = new KeyProvider() {
     @Override
-    public void loadKey(MethodVisitor mv, boolean isStatic, Type[] argumentTypes, String methodDisplayName) {
+    public void loadKey(MethodVisitor mv,
+                        boolean isStatic,
+                        Type[] argumentTypes,
+                        String methodDisplayName,
+                        CaptureInstrumentor instrumentor) {
       if (isStatic) {
         throw new IllegalStateException("This is not available in a static method " + methodDisplayName);
       }
@@ -449,7 +462,7 @@ public class CaptureAgent {
       catch (NumberFormatException ignored) {
       }
     }
-    return new FieldKeyProvider(line[0], line[1], line[2]);
+    return new FieldKeyProvider(line[0], line[1]);
   }
 
   private static boolean isNumber(String s) {
@@ -461,36 +474,46 @@ public class CaptureAgent {
   }
 
   private interface KeyProvider {
-    void loadKey(MethodVisitor mv, boolean isStatic, Type[] argumentTypes, String methodDisplayName);
+    void loadKey(MethodVisitor mv, boolean isStatic, Type[] argumentTypes, String methodDisplayName, CaptureInstrumentor instrumentor);
   }
 
   private static class FieldKeyProvider implements KeyProvider {
-    String myClassName;
-    String myFieldName;
-    String myFieldDesc;
+    private final String myClassName;
+    private final String myFieldName;
 
-    public FieldKeyProvider(String className, String fieldName, String fieldDesc) {
+    public FieldKeyProvider(String className, String fieldName) {
       myClassName = className;
       myFieldName = fieldName;
-      myFieldDesc = fieldDesc;
     }
 
     @Override
-    public void loadKey(MethodVisitor mv, boolean isStatic, Type[] argumentTypes, String methodDisplayName) {
+    public void loadKey(MethodVisitor mv,
+                        boolean isStatic,
+                        Type[] argumentTypes,
+                        String methodDisplayName,
+                        CaptureInstrumentor instrumentor) {
+      String desc = instrumentor.myFields.get(myFieldName);
+      if (desc == null) {
+        throw new IllegalStateException("Field " + myFieldName + " was not found");
+      }
       mv.visitVarInsn(Opcodes.ALOAD, 0);
-      mv.visitFieldInsn(Opcodes.GETFIELD, myClassName, myFieldName, myFieldDesc);
+      mv.visitFieldInsn(Opcodes.GETFIELD, myClassName, myFieldName, desc);
     }
   }
 
   private static class ParamKeyProvider implements KeyProvider {
-    int myIdx;
+    private final int myIdx;
 
     public ParamKeyProvider(int idx) {
       myIdx = idx;
     }
 
     @Override
-    public void loadKey(MethodVisitor mv, boolean isStatic, Type[] argumentTypes, String methodDisplayName) {
+    public void loadKey(MethodVisitor mv,
+                        boolean isStatic,
+                        Type[] argumentTypes,
+                        String methodDisplayName,
+                        CaptureInstrumentor instrumentor) {
       int index = isStatic ? 0 : 1;
       if (myIdx >= argumentTypes.length) {
         throw new IllegalStateException(
