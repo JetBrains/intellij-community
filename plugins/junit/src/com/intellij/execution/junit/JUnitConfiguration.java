@@ -536,8 +536,8 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String PACKAGE_NAME;
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
-    private String[] UNIQUE_ID;
-    private String[] TAGS;
+    private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String[] TAGS = ArrayUtil.EMPTY_STRING_ARRAY;
     public String TEST_OBJECT = TEST_CLASS;
     public String VM_PARAMETERS;
     public String PARAMETERS;
@@ -700,10 +700,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
       }
       if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
-        return UNIQUE_ID != null ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+        return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+        return TAGS != null && TAGS.length > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
