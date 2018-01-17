@@ -35,3 +35,9 @@ open class UIdentifier(
 
   override val javaPsi: PsiElement? = null
 }
+
+open class LazyParentUIdentifier(psi: PsiElement?, private val givenParent: UElement?) : UIdentifier(psi, givenParent) {
+
+  override val uastParent: UElement? by lazy { givenParent ?: sourcePsi?.parent?.toUElement() }
+
+}

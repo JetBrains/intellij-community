@@ -178,9 +178,8 @@ internal object JavaConverter {
         is PsiResourceExpression -> convertExpression(el.expression, givenParent, requiredType)
         is PsiExpression -> convertExpression(el, givenParent, requiredType)
         is PsiStatement -> convertStatement(el, givenParent, requiredType)
-        is PsiIdentifier -> el<USimpleNameReferenceExpression> {
-          JavaUSimpleNameReferenceExpression(el, el.text, givenParent)
-        }
+        is PsiIdentifier -> el<USimpleNameReferenceExpression> { JavaUSimpleNameReferenceExpression(el, el.text, givenParent) }
+                            ?: el<UIdentifier> { LazyParentUIdentifier(el, givenParent) }
         is PsiNameValuePair -> el<UNamedExpression>(build(::JavaUNamedExpression))
         is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
