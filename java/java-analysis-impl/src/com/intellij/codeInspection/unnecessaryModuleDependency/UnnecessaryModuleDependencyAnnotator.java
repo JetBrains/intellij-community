@@ -1,15 +1,15 @@
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.InheritanceUtil;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
@@ -31,6 +31,20 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     final PsiElement onElement = refWhat.getElement();
     final PsiElement fromElement = refFrom.getElement();
     onReferenced(onElement, fromElement);
+  }
+
+  @Override
+  public void onInitialize(RefElement refElement) {
+    if (refElement instanceof RefClass) {
+      PsiElement currentClass = refElement.getElement();
+      if (currentClass instanceof PsiClass) {
+        LinkedHashSet<PsiClass> superClasses = new LinkedHashSet<>();
+        InheritanceUtil.getSuperClasses((PsiClass)currentClass, superClasses, false);
+        for (PsiClass superClass : superClasses) {
+          onReferenced(superClass, currentClass);
+        }
+      }
+    }
   }
 
   private void onReferenced(PsiElement onElement, PsiElement fromElement) {
