@@ -18,4 +18,3 @@ filegroup(
     srcs = ["META-INF/MANIFEST.MF"],
     visibility = ["//visibility:public"],
 )
-
