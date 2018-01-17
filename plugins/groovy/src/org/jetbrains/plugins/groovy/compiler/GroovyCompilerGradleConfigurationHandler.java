@@ -27,6 +27,26 @@ public class GroovyCompilerGradleConfigurationHandler implements ConfigurationHa
     final GroovyCompilerConfiguration compilerConfiguration = GroovyCompilerConfiguration.getInstance(project);
 
     asString(configurationMap.get("heapSize"), (String heapSize) -> compilerConfiguration.setHeapSize(heapSize));
+
+    final ExcludedEntriesConfiguration excludesConfig = (ExcludedEntriesConfiguration)compilerConfiguration.getExcludeFromStubGeneration();
+    asList(configurationMap.get("excludes"), list -> {
+      for (Object o : list) {
+        asMap(o, map -> {
+          final Object fileUrl = map.get("url");
+          final Object includeSubdirectories = map.get("includeSubdirectories");
+          final Object isFile = map.get("isFile");
+
+          if ((fileUrl instanceof String)
+            && (includeSubdirectories instanceof Boolean)
+            && (isFile instanceof Boolean)) {
+            excludesConfig.addExcludeEntryDescription(new ExcludeEntryDescription((String)fileUrl,
+                                                                                  (Boolean)includeSubdirectories,
+                                                                                  (Boolean)isFile,
+                                                                                  excludesConfig));
+          }
+        });
+      }
+    });
   }
 
   private static void asString(Object value, Consumer<String> consumer) {
