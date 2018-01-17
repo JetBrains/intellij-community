@@ -82,6 +82,9 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
                   " length ("+(endElementRange.getEndOffset()-startElementRange.getStartOffset())+").");
       }
     }
+    if (rangeInElement != null) {
+      TextRange.assertProperRange(rangeInElement);
+    }
 
     myHighlightType = highlightType;
     final Project project = startContainingFile == null ? startElement.getProject() : startContainingFile.getProject();
@@ -206,6 +209,10 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
       startRange = startRange.union(endRange);
     }
     else if (myTextRangeInElement != null) {
+      if (myTextRangeInElement.getEndOffset() > startRange.getLength()) {
+        // became invalid
+        return null;
+      }
       startRange = startRange.cutOut(myTextRangeInElement);
     }
     if (isAfterEndOfLine()) {
