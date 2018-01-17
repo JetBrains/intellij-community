@@ -369,7 +369,7 @@ public class RunAnythingUtil {
     }
 
     Collection<String> commands = RunAnythingCache.getInstance(project).getState().undefinedCommands;
-    if (commands.contains(pattern)) commands.remove(pattern);
+    commands.remove(pattern);
     commands.add(pattern);
 
     RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, pattern);
