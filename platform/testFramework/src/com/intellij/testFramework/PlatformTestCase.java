@@ -150,7 +150,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "Rider",
+    "Rider", "GoLand",
     null,
     "AppCode", "CLion", "CidrCommon",
     "DataGrip",
