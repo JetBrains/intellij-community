@@ -1696,15 +1696,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
         Project project = getProject();
         Module module = getModule();
-        Runnable onDone = () -> {};
-        AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          onDone = () -> RunAnythingUtil.runOrCreateRunConfiguration(project, textField.getText(), module, getWorkDirectory(module));
-        }
-        finally {
-          token.finish();
-          onPopupFocusLost().doWhenDone(onDone);
-        }
+        onPopupFocusLost()
+          .doWhenDone(() -> RunAnythingUtil.runOrCreateRunConfiguration(project, textField.getText(), module, getWorkDirectory(module)));
         focusManager.requestDefaultFocus(true);
       };
 
