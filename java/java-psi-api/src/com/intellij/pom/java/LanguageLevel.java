@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.pom.java;
 
@@ -20,14 +8,14 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a language level (i.e. features available) of a Java code.
+ * {@code org.jetbrains.jps.model.java.LanguageLevel} is a compiler-side counterpart of this enum.
+ *
  * @author dsl
  * @see LanguageLevelProjectExtension
  * @see LanguageLevelModuleExtension
@@ -86,12 +74,15 @@ public enum LanguageLevel {
     return myCompilerComplianceOptions[0];
   }
 
-  /**
-   * Parses string accordingly to format of '-source' parameter of javac. Synonyms ("8" for "1.8") are supported.
-   */
+  /** See {@link com.intellij.util.lang.JavaVersion#parse(String)} for supported formats. */
   @Nullable
   public static LanguageLevel parse(@Nullable String compilerComplianceOption) {
-    if (StringUtil.isEmpty(compilerComplianceOption)) return null;
-    return ContainerUtil.find(values(), level -> ArrayUtil.contains(compilerComplianceOption, level.myCompilerComplianceOptions));
+    if (compilerComplianceOption != null) {
+      JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(compilerComplianceOption);
+      if (sdkVersion != null) {
+        return sdkVersion.getMaxLanguageLevel();
+      }
+    }
+    return null;
   }
 }
