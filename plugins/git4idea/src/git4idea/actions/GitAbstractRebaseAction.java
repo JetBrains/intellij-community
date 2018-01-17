@@ -54,10 +54,8 @@ abstract class GitAbstractRebaseAction extends DumbAwareAction {
   @Override
   public final void actionPerformed(AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    ProgressManager progressManager = ProgressManager.getInstance();
-    String progressTitle = getProgressTitle();
     if (getRepositoryManager(project).hasOngoingRebase()) {
-      progressManager.run(new Task.Backgroundable(project, progressTitle) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, getProgressTitle()) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           performActionForProject(project, indicator);
@@ -67,14 +65,18 @@ abstract class GitAbstractRebaseAction extends DumbAwareAction {
     else {
       final GitRepository repositoryToOperate = chooseRepository(project, GitRebaseUtils.getRebasingRepositories(project));
       if (repositoryToOperate != null) {
-        progressManager.run(new Task.Backgroundable(project, progressTitle) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            performActionForRepository(project, repositoryToOperate, indicator);
-          }
-        });
+        performForRepoUnderProgress(repositoryToOperate);
       }
     }
+  }
+
+  protected void performForRepoUnderProgress(@NotNull GitRepository repositoryToOperate) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(repositoryToOperate.getProject(), getProgressTitle()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        performActionForRepository(repositoryToOperate.getProject(), repositoryToOperate, indicator);
+      }
+    });
   }
 
   @NotNull
