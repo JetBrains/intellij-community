@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang
 
 import org.assertj.core.api.Assertions.assertThat
@@ -67,6 +65,21 @@ class JavaVersionTest {
     assertThat(JavaVersion.compose(8, 0, 1, 0, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, false))
     assertThat(JavaVersion.compose(8, 0, 0, 1, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, false))
     assertThat(JavaVersion.compose(8, 0, 0, 0, false)).isGreaterThan(JavaVersion.compose(8, 0, 0, 0, true))
+  }
+
+  @Test fun formatting() {
+    assertThat(JavaVersion.compose(8, 0, 0, 0, false).toString()).isEqualTo("1.8")
+    assertThat(JavaVersion.compose(8, 1, 0, 0, false).toString()).isEqualTo("1.8.1")
+    assertThat(JavaVersion.compose(8, 0, 1, 0, false).toString()).isEqualTo("1.8.0_1")
+    assertThat(JavaVersion.compose(8, 0, 0, 1, false).toString()).isEqualTo("1.8.0-b1")
+    assertThat(JavaVersion.compose(8, 0, 0, 0, true).toString()).isEqualTo("1.8.0-ea")
+    assertThat(JavaVersion.compose(8, 1, 2, 3, true).toString()).isEqualTo("1.8.1_2-ea-b3")
+    assertThat(JavaVersion.compose(9, 0, 0, 0, false).toString()).isEqualTo("9")
+    assertThat(JavaVersion.compose(9, 1, 0, 0, false).toString()).isEqualTo("9.1")
+    assertThat(JavaVersion.compose(9, 0, 1, 0, false).toString()).isEqualTo("9.0.1")
+    assertThat(JavaVersion.compose(9, 0, 0, 1, false).toString()).isEqualTo("9+1")
+    assertThat(JavaVersion.compose(9, 0, 0, 0, true).toString()).isEqualTo("9-ea")
+    assertThat(JavaVersion.compose(9, 1, 2, 3, true).toString()).isEqualTo("9.1.2-ea+3")
   }
 
   private fun doTest(versionString: String,

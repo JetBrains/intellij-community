@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,13 +100,15 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     StringBuilder sb = new StringBuilder();
     if (feature > 8) {
       sb.append(feature);
-      if (minor > 0 || update > 0) sb.append('.').append(minor).append('.').append(update);
+      if (minor > 0 || update > 0) sb.append('.').append(minor);
+      if (update > 0) sb.append('.').append(update);
       if (ea) sb.append("-ea");
       if (build > 0) sb.append('+').append(build);
     }
     else {
-      sb.append("1.").append(feature).append('.').append(minor);
-      if (update > 0 || ea) sb.append('_').append(update);
+      sb.append("1.").append(feature);
+      if (minor > 0 || update > 0 || ea || build > 0) sb.append('.').append(minor);
+      if (update > 0) sb.append('_').append(update);
       if (ea) sb.append("-ea");
       if (build > 0) sb.append("-b").append(build);
     }
