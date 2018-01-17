@@ -9,7 +9,8 @@ public interface CompilationPhaseHint {
   Key<CompilationPhaseHint> HINT_KEY = Key.create("groovy.compilation.phase");
 
   enum Phase {
-    CONVERSION
+    CONVERSION,
+    TRANSFORMATION
   }
 
   @NotNull
