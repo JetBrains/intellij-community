@@ -925,8 +925,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myListModel.titleIndex.shift(index, shift);
       moreIndex.shift(index, shift);
 
-      //todo
-      //ScrollingUtil.selectItem(myList, index < myListModel.size() ? index : index - 1);
+      if (myListModel.size() > 0) ScrollingUtil.selectItem(myList, index < myListModel.size() ? index : index - 1);
 
       updatePopupBounds();
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("shift BACK_SPACE"), editor, balloon);
