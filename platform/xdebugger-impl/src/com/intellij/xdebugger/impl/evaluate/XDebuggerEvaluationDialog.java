@@ -137,9 +137,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
 
-    Condition<TreeNode> rootFilter = node -> node.getParent() instanceof EvaluatingExpressionRootNode;
-    myTreePanel.getTree().expandNodesOnLoad(rootFilter);
-    myTreePanel.getTree().selectNodeOnLoad(rootFilter);
+    myTreePanel.getTree().expandNodesOnLoad(getFirstChildCondition());
 
     EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
     if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
@@ -307,6 +305,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     final XDebuggerTree tree = myTreePanel.getTree();
     tree.markNodesObsolete();
     tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
+    tree.selectNodeOnLoad(getFirstChildCondition());
 
     myResultPanel.invalidate();
 
@@ -321,6 +320,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
     }
+  }
+
+  private static Condition<TreeNode> getFirstChildCondition() {
+    return node -> node.getParent() instanceof EvaluatingExpressionRootNode;
   }
 
   @Override
