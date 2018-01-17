@@ -35,9 +35,15 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.Place;
@@ -371,8 +377,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
   }
 
   private void highlightInjectedSyntax(@NotNull PsiFile injectedPsi, @NotNull HighlightInfoHolder holder) {
-    List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> tokens = InjectedLanguageUtil
-      .getHighlightTokens(injectedPsi);
+    List<InjectedLanguageUtil.TokenInfo> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
     if (tokens == null) return;
 
     final Language injectedLanguage = injectedPsi.getLanguage();
@@ -380,16 +385,24 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass imp
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(injectedLanguage, project, injectedPsi.getVirtualFile());
     final TextAttributes defaultAttrs = myGlobalScheme.getAttributes(HighlighterColors.TEXT);
 
-    for (Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange> token : tokens) {
+    Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
+    int shredIndex = -1;
+    int injectionHostTextRangeStart = -1;
+    for (InjectedLanguageUtil.TokenInfo token : tokens) {
       ProgressManager.checkCanceled();
-      IElementType tokenType = token.getFirst();
-      PsiLanguageInjectionHost injectionHost = token.getSecond().getElement();
-      if (injectionHost == null) continue;
-      TextRange textRange = token.getThird();
-      TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
-      if (textRange.getLength() == 0) continue;
+      IElementType tokenType = token.type;
+      TextRange range = token.rangeInsideInjectionHost;
+      if (range.getLength() == 0) continue;
+      if (shredIndex != token.shredIndex) {
+        shredIndex = token.shredIndex;
+        PsiLanguageInjectionHost.Shred shred = shreds.get(shredIndex);
+        PsiLanguageInjectionHost host = shred.getHost();
+        if (host == null) return;
+        injectionHostTextRangeStart = host.getTextRange().getStartOffset();
+      }
+      TextRange annRange = range.shiftRight(injectionHostTextRangeStart);
 
-      TextRange annRange = textRange.shiftRight(injectionHost.getTextRange().getStartOffset());
+      TextAttributesKey[] keys = syntaxHighlighter.getTokenHighlights(tokenType);
       // force attribute colors to override host' ones
       TextAttributes attributes = null;
       for(TextAttributesKey key:keys) {

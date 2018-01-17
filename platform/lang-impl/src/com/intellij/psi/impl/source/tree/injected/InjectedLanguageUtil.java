@@ -60,7 +60,6 @@ import java.util.List;
 @Deprecated
 public class InjectedLanguageUtil {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageUtil.class);
-  static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
@@ -89,8 +88,23 @@ public class InjectedLanguageUtil {
     return host;
   }
 
-  public static List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>> getHighlightTokens(@NotNull PsiFile file) {
+  private static final Key<List<TokenInfo>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
+  public static List<TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
     return file.getUserData(HIGHLIGHT_TOKENS);
+  }
+  public static class TokenInfo {
+    @NotNull public final IElementType type;
+    @NotNull public final ProperTextRange rangeInsideInjectionHost;
+    public final int shredIndex;
+
+    public TokenInfo(@NotNull IElementType type, @NotNull ProperTextRange rangeInsideInjectionHost, int shredIndex) {
+      this.type = type;
+      this.rangeInsideInjectionHost = rangeInsideInjectionHost;
+      this.shredIndex = shredIndex;
+    }
+  }
+  static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<TokenInfo> tokens) {
+    file.putUserData(HIGHLIGHT_TOKENS, tokens);
   }
 
   public static Place getShreds(@NotNull PsiFile injectedFile) {
@@ -174,7 +188,7 @@ public class InjectedLanguageUtil {
    * {@link #getEditorForInjectedLanguageNoCommit(Editor, Caret, PsiFile)} or other methods here, which don't work
    * for uncommitted documents.
    */
-  public static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
+  static boolean mightHaveInjectedFragmentAtCaret(@NotNull Project project, @NotNull Document hostDocument, int hostOffset) {
     PsiFile hostPsiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(hostDocument);
     if (hostPsiFile == null || !hostPsiFile.isValid()) return false;
     List<DocumentWindow> documents = InjectedLanguageManager.getInstance(project).getCachedInjectedDocumentsInRange(hostPsiFile, TextRange.create(hostOffset, hostOffset));
