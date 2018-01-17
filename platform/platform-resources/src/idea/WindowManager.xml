@@ -13,7 +13,7 @@
     <window_info id="Inspection" anchor="bottom" order="5" weight="0.4" />
     <window_info id="TODO" anchor="bottom" order="6" />
     <!-- right stripe -->
-    <window_info id="Commander" anchor="right" order="0" internal_type="sliding" type="sliding" weight="0.4" />
+    <window_info id="Commander" anchor="right" order="0" internal_type="SLIDING" type="sliding" weight="0.4" />
     <window_info id="Ant Build" anchor="right" order="1" weight="0.25" />
     <window_info id="Hierarchy" anchor="right" order="2" weight="0.25" content_ui="combo"/>
   </layout>
