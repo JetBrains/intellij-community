@@ -45,34 +45,6 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
     myComboBox = new ComboBox<>(myModel, 100);
-    myComboBox.setFocusCycleRoot(true);
-    myComboBox.setFocusTraversalPolicyProvider(true);
-    myComboBox.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-      @Override
-      public Component getComponentAfter(Container aContainer, Component aComponent) {
-        return null;
-      }
-
-      @Override
-      public Component getComponentBefore(Container aContainer, Component aComponent) {
-        return null;
-      }
-
-      @Override
-      public Component getFirstComponent(Container aContainer) {
-        return null;
-      }
-
-      @Override
-      public Component getLastComponent(Container aContainer) {
-        return null;
-      }
-
-      @Override
-      public Component getDefaultComponent(Container aContainer) {
-        return null;
-      }
-    });
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
