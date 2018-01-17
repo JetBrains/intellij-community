@@ -16,28 +16,20 @@
 
 package com.intellij.psi.impl.source.tree.injected;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -48,9 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +60,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   static final Object ourInjectionPsiLock = new String("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
-  private volatile DaemonProgressIndicator myProgress;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
     return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
@@ -105,74 +94,15 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     };
     final ExtensionPoint<LanguageInjector> psiManagerPoint = Extensions.getRootArea().getExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME);
     ((ExtensionPointImpl<LanguageInjector>)psiManagerPoint).addExtensionPointListener(myListener, false, this);
-    myProgress = new DaemonProgressIndicator();
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
-      @Override
-      public void daemonCancelEventOccurred(@NotNull String reason) {
-        if (!myProgress.isCanceled()) myProgress.cancel();
-      }
-    });
   }
 
   @Override
   public void dispose() {
-    myProgress.cancel();
     disposeInvalidEditors();
   }
 
   public static void disposeInvalidEditors() {
     EditorWindowImpl.disposeInvalidEditors();
-  }
-
-  @Override
-  public void startRunInjectorsInRange(@NotNull Document hostDocument, @NotNull TextRange range, boolean synchronously) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myProject.isDisposed()) return;
-    if (!synchronously && ApplicationManager.getApplication().isWriteAccessAllowed()) return;
-
-    // use cached to avoid recreate PSI in alien project
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-    final PsiFile hostPsiFile = documentManager.getCachedPsiFile(hostDocument);
-    if (hostPsiFile == null) return;
-
-    List<DocumentWindow> injected = getCachedInjectedDocumentsInRange(hostPsiFile, range);
-    if (injected.isEmpty()) return;
-
-    Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(hostPsiFile);
-    if (editor == null) return;
-
-    if (myProgress.isCanceled()) {
-      myProgress = new DaemonProgressIndicator();
-    }
-
-    Runnable commitInjectionsRunnable = () -> {
-      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-      if (myProgress.isCanceled() || myProject.isDisposed() || indicator != null && indicator.isCanceled()) return;
-      if (documentManager.isUncommited(hostDocument) || !hostPsiFile.isValid()) return; // will be committed later
-
-      // Re-parse injected fragments from the given range only (that's the range which changed after commit)
-      // These fragments may be needed by synchronous operation (e.g. reformat-commit-psi check)
-      // All others will be re-parsed later on request
-
-      for (DocumentWindow documentWindow : injected) {
-        int offset = documentWindow.injectedToHost(0);
-        PsiElement element = ObjectUtils.notNull(hostPsiFile.findElementAt(offset), hostPsiFile);
-        // it is here where the reparse happens and old file contents replaced
-        enumerateEx(element, hostPsiFile, true, (injectedPsi, places) -> {
-          DocumentWindow newDocument = (DocumentWindow)injectedPsi.getViewProvider().getDocument();
-          if (newDocument != null) {
-            PsiDocumentManagerBase.checkConsistency(injectedPsi, newDocument);
-          }
-        });
-      }
-    };
-
-    if (synchronously) {
-      commitInjectionsRunnable.run();
-    }
-    else {
-      JobLauncher.getInstance().submitToJobThread(() -> ApplicationManagerEx.getApplicationEx().tryRunReadAction(commitInjectionsRunnable), null);
-    }
   }
 
   @Override
@@ -282,9 +212,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
 
+  @NotNull
   @Override
-  public String
-  getUnescapedText(@NotNull final PsiElement injectedNode) {
+  public String getUnescapedText(@NotNull final PsiElement injectedNode) {
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
     // gather text from (patched) leaves
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
