@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.write
@@ -57,6 +58,9 @@ class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQu
     }
 
     dialog.importRenamingScheme(renamingState.oldToNewName)
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+      IdeFocusManager.getGlobalInstance().requestFocus(dialog.preferredFocusedComponent, true)
+    }
   }
 }
 
