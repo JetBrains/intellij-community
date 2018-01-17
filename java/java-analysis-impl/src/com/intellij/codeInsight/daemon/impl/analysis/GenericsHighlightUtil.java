@@ -1561,12 +1561,13 @@ public class GenericsHighlightUtil {
           }
         }
 
-        boolean isInLibrary = !index.isInContent(vFile);
-        for (PsiClassType superType : aClass.getSuperTypes()) {
-          final String notAccessibleMessage = isTypeAccessible(superType, classes, !isInLibrary, resolveScope, factory);
-          if (notAccessibleMessage != null) {
-            return notAccessibleMessage;
-          }
+      }
+
+      boolean isInLibrary = !index.isInContent(vFile);
+      for (PsiClassType superType : aClass.getSuperTypes()) {
+        final String notAccessibleMessage = isTypeAccessible(superType, classes, checkParameters && !isInLibrary, resolveScope, factory);
+        if (notAccessibleMessage != null) {
+          return notAccessibleMessage;
         }
       }
     }

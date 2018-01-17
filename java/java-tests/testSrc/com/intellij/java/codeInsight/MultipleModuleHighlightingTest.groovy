@@ -88,6 +88,34 @@ public class Usage {
     myFixture.checkHighlighting()
   }
 
+  void "test class qualifier with inaccessible super of return type"() {
+    def mod1 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    def mod2 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod1, myModule)
+    ModuleRootModificationUtil.addDependency(mod2, mod1)
+    myFixture.addClass"public class Class0 {}"
+
+    myFixture.addFileToProject "mod1/Class1.java", '''
+public class Class1 extends Class0 {}
+'''
+    myFixture.addFileToProject "mod1/Factory.java", '''
+public class Factory {
+  public static Class1 create() {return null;}
+}
+'''
+
+    myFixture.addFileToProject "mod2/Usage.java", '''
+public class Usage {
+  {
+    <error descr="Cannot access Class0">Factory.create</error>();
+  }
+}
+'''
+
+    myFixture.configureFromTempProjectFile "mod2/Usage.java"
+    myFixture.checkHighlighting()
+  }
+
   void "test use original place classpath for new expression type resolving"() {
     addTwoModules()
 
