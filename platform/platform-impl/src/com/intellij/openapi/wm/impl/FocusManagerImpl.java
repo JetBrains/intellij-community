@@ -235,7 +235,9 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
                                      new Exception() {
                                        @Override
                                        public String getMessage() {
-                                         return "Time: " + (System.currentTimeMillis() - currentTime) + "; cause: " + cause;
+                                         return "Time: " + (System.currentTimeMillis() - currentTime) + "; cause: " + cause +
+                                                "; runnable waiting for the focus change: " +
+                                                IdeEventQueue.getInstance().runnablesWaitingForFocusChangeState();
                                        }
                                      },
                                      true).doWhenProcessed(() -> {

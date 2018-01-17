@@ -144,11 +144,16 @@ public class IdeEventQueue extends EventQueue {
     }, runnable);
   }
 
+  public String runnablesWaitingForFocusChangeState() {
+    return "Focus event list (trying to execute runnable): " + focusEventsList.stream().
+      collect(StringBuilder::new, (builder, event) -> builder.append(", [").append(event.getID()).append("; ")
+        .append(event.getSource().getClass().getName()).append("]"), StringBuilder::append);
+  }
+
   private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
     if (!focusEventsList.isEmpty()) {
 
-      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): " + focusEventsList.stream().
-        collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+      FOCUS_AWARE_RUNNABLES_LOG.debug(runnablesWaitingForFocusChangeState());
 
       // find the latest focus gained
       Optional<AWTEvent> first = focusEventsList.stream().
@@ -161,7 +166,7 @@ public class IdeEventQueue extends EventQueue {
         yes.accept(first.get());
       }
       else {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run right away : " + no.getClass().getName());
+        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
         UIUtil.invokeLaterIfNeeded(no);
       }
     }
@@ -441,7 +446,7 @@ public class IdeEventQueue extends EventQueue {
       FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
         collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
       StreamEx.of(focusEventsList).
-        takeWhile(entry -> entry.equals(finalEvent)).
+        takeWhileInclusive(entry -> !entry.equals(finalEvent)).
         collect(Collectors.toList()).stream().map(entry -> {
           focusEventsList.remove(entry);
           return myRunnablesWaitingFocusChange.remove(entry);
