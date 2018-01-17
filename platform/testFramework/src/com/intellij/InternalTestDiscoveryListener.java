@@ -42,12 +42,14 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   private final String myModuleName;
   private final String myTracesDirectory;
   private final List<String> myCompletedMethodNames = new ArrayList<>();
+  private final boolean myCompactResults;
   private Object myDiscoveryIndex;
   private Class<?> myDiscoveryIndexClass;
 
   public InternalTestDiscoveryListener() {
     myTracesDirectory = System.getProperty("org.jetbrains.instrumentation.trace.dir");
     myModuleName = System.getProperty("org.jetbrains.instrumentation.main.module");
+    myCompactResults = Boolean.parseBoolean(System.getProperty("org.jetbrains.instrumentation.compact.traces", "true"));
     System.out.println(getClass().getSimpleName() + " instantiated with module='" + myModuleName + "' , directory='" + myTracesDirectory + "'");
   }
 
@@ -99,6 +101,7 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   }
 
   protected void flushCurrentTraces(final String[] fullTestNames) {
+    if (!myCompactResults) return;
     System.out.println("Start compacting to index");
     try {
       final Object index = getIndex();
@@ -151,13 +154,14 @@ public class InternalTestDiscoveryListener implements TestListener, Closeable {
   }
 
   private static void zipOutput(String tracesDirectory) {
-    final File[] files = new File(tracesDirectory).listFiles();
+    final String zipName = "out.zip";
+    final File[] files = new File(tracesDirectory).listFiles((dir, name) -> name != null && !name.equalsIgnoreCase(zipName));
     if (files == null) {
       System.out.println("No traces found.");
       return;
     }
     System.out.println("Preparing zip.");
-    try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tracesDirectory + File.separator + "out.zip"))) {
+    try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(new File(tracesDirectory, zipName)))) {
       for (File file : files) {
         ZipUtil.addFileToZip(zipOutputStream, file, "/" + file.getName(), null, null);
       }
