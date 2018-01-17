@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -623,6 +623,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
     loadSharedRunConfigurations()
+    projectRunConfigurationFirstLoaded()
   }
 
   override fun loadState(parentNode: Element) {
@@ -700,6 +701,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     if (isFirstLoadState) {
       loadSharedRunConfigurations()
+      projectRunConfigurationFirstLoaded()
     }
 
     fireBeforeRunTasksUpdated()
@@ -712,7 +714,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private fun loadSharedRunConfigurations() {
     if (schemeManagerIprProvider == null) {
       projectSchemeManager.loadSchemes()
-      return
     }
     else {
       project.service<IprRunManagerImpl>().lastLoadedState.getAndSet(null)?.let { data ->
@@ -720,8 +721,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         projectSchemeManager.reload()
       }
     }
-
-    projectRunConfigurationFirstLoaded()
   }
 
   private fun projectRunConfigurationFirstLoaded() {
