@@ -25,6 +25,7 @@ class JavaVersionTest {
   @Test fun `1_8_0_121-(big-number)-b11`() = doTest("1.8.0_121-99${Long.MAX_VALUE}-b11", 8, 0, 121, 11)
   @Test fun `1_10`() = doTest("1.10", 10)
 
+  @Test fun `5`() = doTest("5", 5)
   @Test fun `9`() = doTest("9", 9)
   @Test fun `9-ea`() = doTest("9-ea", 9, 0, 0, 0, true)
   @Test fun `9-internal`() = doTest("9-internal", 9, 0, 0, 0, true)
@@ -49,7 +50,7 @@ class JavaVersionTest {
   @Test fun incomplete2() = doFailTest("-1")
   @Test fun incomplete3() = doFailTest("1.")
   @Test fun outOfRange1() = doFailTest("0")
-  @Test fun outOfRange2() = doFailTest("5")
+  @Test fun outOfRange2() = doFailTest("4")
   @Test fun outOfRange3() = doFailTest("99${Long.MAX_VALUE}")
   @Test fun ibmRt() = doFailTest("pxa6480sr3fp10-20160720_02 (SR3 FP10)")
 
