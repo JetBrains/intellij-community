@@ -64,6 +64,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -226,7 +227,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       public void mouseEntered(MouseEvent e) {
         if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Nodes.Desktop);
+          label.setIcon(IconUtil.brighter(RubyIcons.RunAnything.Run_anything, 2));
         }
       }
 
