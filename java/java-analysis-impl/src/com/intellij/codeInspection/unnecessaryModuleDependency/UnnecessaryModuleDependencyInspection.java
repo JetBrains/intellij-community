@@ -12,7 +12,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.graph.Graph;
@@ -58,7 +57,6 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
           final Module dependency = ((ModuleOrderEntry)entry).getModule();
           if (dependency != null) {
             if (modules == null || !modules.contains(dependency)) {
-              List<String> dependenciesThroughExported = null;
               if (((ModuleOrderEntry)entry).isExported()) {
                 final Iterator<Module> iterator = graph.getOut(module);
                 while (iterator.hasNext()) {
@@ -68,33 +66,24 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
                   if (depRefModule != null) {
                     final Set<Module> neededModules = depRefModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
                     if (neededModules != null && neededModules.contains(dependency)) {
-                      if (dependenciesThroughExported == null) {
-                        dependenciesThroughExported = new ArrayList<>();
-                      }
-                      dependenciesThroughExported.add(dep.getName());
+                      continue currentDependencies;
                     }
                   }
                 }
               }
               if (modules != null) {
-                List<String> transitiveDependencies = new ArrayList<>();
                 final OrderEntry[] dependenciesOfDependencies = ModuleRootManager.getInstance(dependency).getOrderEntries();
                 for (OrderEntry secondDependency : dependenciesOfDependencies) {
                   if (secondDependency instanceof ModuleOrderEntry && ((ModuleOrderEntry)secondDependency).isExported()) {
                     final Module mod = ((ModuleOrderEntry)secondDependency).getModule();
                     if (mod != null && modules.contains(mod) && ArrayUtil.find(declaredModuleDependencies, mod) < 0) {
-                      transitiveDependencies.add(mod.getName());
+                      continue currentDependencies;
                     }
                   }
                 }
-                if (!transitiveDependencies.isEmpty()) {
-                  final String exported = StringUtil.join(transitiveDependencies, ", ");
-                  descriptors.add(manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.exported.problem.descriptor1", module.getName(), dependency.getName(), exported)));
-                  continue;
-                }
               }
 
-              descriptors.add(createDescriptor(scope, manager, module, dependency, dependenciesThroughExported));
+              descriptors.add(createDescriptor(scope, manager, module, dependency));
             }
           }
         }
@@ -138,15 +127,9 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
   private static CommonProblemDescriptor createDescriptor(AnalysisScope scope,
                                                           InspectionManager manager,
                                                           Module module,
-                                                          Module dependency,
-                                                          List<String> exportedDependencies) {
+                                                          Module dependency) {
     String dependencyName = dependency.getName();
     String moduleName = module.getName();
-    if (exportedDependencies != null) {
-      final String exported = StringUtil.join(exportedDependencies, ", ");
-      return manager.createProblemDescriptor(InspectionsBundle.message("unnecessary.module.dependency.exported.problem.descriptor", moduleName, dependencyName, exported), module);
-    }
-
     if (scope.containsModule(dependency)) { //external references are rejected -> annotator doesn't provide any information on them -> false positives
       final String allContainsMessage = InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", moduleName, dependencyName);
       return manager.createProblemDescriptor(allContainsMessage, module, new RemoveModuleDependencyFix(dependencyName));
