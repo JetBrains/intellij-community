@@ -642,7 +642,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                            @NotNull final List<String> activeProfiles,
                                                            @NotNull final List<String> inactiveProfiles,
                                                            final List<ResolutionListener> listeners) throws RemoteException {
-    final File file = files.size() == 1 ? files.iterator().next() : null;
+    final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
@@ -899,10 +899,15 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(result.getClass()), "setMultiModuleProjectDirectory", File.class);
       if (setMultiModuleProjectDirectoryMethod != null) {
         try {
+          File mavenMultiModuleProjectDirectory;
           if (file == null) {
-            file = new File(FileUtil.getTempDirectory());
+            mavenMultiModuleProjectDirectory = new File(FileUtil.getTempDirectory());
           }
-          setMultiModuleProjectDirectoryMethod.invoke(result, MavenServerUtil.findMavenBasedir(file));
+          else {
+            mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
+            result.setBaseDirectory(mavenMultiModuleProjectDirectory);
+          }
+          result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
         }
         catch (Exception e) {
           Maven3ServerGlobals.getLogger().error(e);
