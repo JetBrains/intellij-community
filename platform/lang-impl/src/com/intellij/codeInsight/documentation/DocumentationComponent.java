@@ -335,7 +335,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UI.getColor("link.foreground")) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule("table.sections td { padding-top: 6px; }");
-    editorKit.getStyleSheet().addRule(".definition { padding: 7px 9px 5px 7px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "}");
+    editorKit.getStyleSheet().addRule(".definition { padding: 0 9px 5px 8px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "}");
     editorKit.getStyleSheet().addRule(".content { padding: 7px 9px 0 7px; line-height: 18px; }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 0 9px 0 7px; line-height: 18px; }");
     editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 7px 6px; line-height: 18px; }");
