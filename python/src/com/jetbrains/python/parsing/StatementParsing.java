@@ -147,6 +147,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   protected void parseSimpleStatement() {
+    parseSimpleStatement(true);
+  }
+
+  protected void parseSimpleStatement(boolean checkLanguageLevel) {
     PsiBuilder builder = myContext.getBuilder();
     final IElementType firstToken = builder.getTokenType();
     if (firstToken == null) {
@@ -220,7 +224,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           builder.error(EXPRESSION_EXPECTED);
         }
       }
-      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && myContext.getLanguageLevel().isPy3K())) {
+      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && checkLanguageLevel && myContext.getLanguageLevel().isPy3K())) {
         exprStatement.rollbackTo();
         exprStatement = builder.mark();
         getExpressionParser().parseExpression(false, true);
@@ -287,8 +291,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     }
   }
 
-  private boolean hasPrintStatement() {
+  protected boolean hasPrintStatement() {
     return myContext.getLanguageLevel().hasPrintStatement() && !myFutureFlags.contains(FUTURE.PRINT_FUNCTION);
+  }
+
+  protected boolean hasWithStatement() {
+    return myContext.getLanguageLevel().hasWithStatement() || myFutureFlags.contains(FUTURE.WITH_STATEMENT);
   }
 
   protected void checkEndOfStatement() {
@@ -921,10 +929,12 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   }
 
   public IElementType filter(final IElementType source, final int start, final int end, final CharSequence text) {
-    if (
-      (myExpectAsKeyword || myContext.getLanguageLevel().hasWithStatement()) &&
-      source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)
-      ) {
+    return filter(source, start, end, text, true);
+  }
+
+  protected IElementType filter(final IElementType source, final int start, final int end, final CharSequence text, boolean checkLanguageLevel) {
+    if ((myExpectAsKeyword || hasWithStatement()) &&
+        source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_AS)) {
       return PyTokenTypes.AS_KEYWORD;
     }
     else if ( // filter
@@ -942,11 +952,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       ) {
       return PyTokenTypes.WITH_KEYWORD;
     }
-    else if (hasPrintStatement() && source == PyTokenTypes.IDENTIFIER &&
+    else if (hasPrintStatement() &&
+             source == PyTokenTypes.IDENTIFIER &&
              isWordAtPosition(text, start, end, TOK_PRINT)) {
       return PyTokenTypes.PRINT_KEYWORD;
     }
-    else if (myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
+    else if ((myContext.getLanguageLevel().isPy3K() || !checkLanguageLevel) &&
+             source == PyTokenTypes.IDENTIFIER) {
       if (isWordAtPosition(text, start, end, TOK_NONE)) {
         return PyTokenTypes.NONE_KEYWORD;
       }
@@ -962,7 +974,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       if (isWordAtPosition(text, start, end, TOK_NONLOCAL)) {
         return PyTokenTypes.NONLOCAL_KEYWORD;
       }
-      if (myContext.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON35)) {
+      if (myContext.getLanguageLevel().isAtLeast(LanguageLevel.PYTHON35) || !checkLanguageLevel) {
         if (isWordAtPosition(text, start, end, TOK_ASYNC)) {
           if (myContext.getScope().isAsync() || myBuilder.lookAhead(1) == PyTokenTypes.DEF_KEYWORD) {
             return PyTokenTypes.ASYNC_KEYWORD;
@@ -975,7 +987,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         }
       }
     }
-    else if (myContext.getLanguageLevel().isPython2() && source == PyTokenTypes.IDENTIFIER) {
+    else if ((myContext.getLanguageLevel().isPython2() || !checkLanguageLevel) &&
+             source == PyTokenTypes.IDENTIFIER) {
       if (isWordAtPosition(text, start, end, TOK_EXEC)) {
         return PyTokenTypes.EXEC_KEYWORD;
       }
@@ -991,7 +1004,4 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     return CharArrayUtil.regionMatches(text, start, end, tokenText) && end - start == tokenText.length();
   }
 
-  private boolean hasWithStatement() {
-    return myContext.getLanguageLevel().hasWithStatement() || myFutureFlags.contains(FUTURE.WITH_STATEMENT);
-  }
 }
