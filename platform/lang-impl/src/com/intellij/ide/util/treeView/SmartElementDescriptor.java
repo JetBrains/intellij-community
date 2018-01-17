@@ -37,7 +37,9 @@ import java.awt.*;
 public class SmartElementDescriptor extends NodeDescriptor{
   private final SmartPsiElementPointer mySmartPointer;
 
-  public SmartElementDescriptor(@NotNull Project project, NodeDescriptor parentDescriptor, @NotNull PsiElement element) {
+  public SmartElementDescriptor(@NotNull Project project,
+                                @Nullable NodeDescriptor parentDescriptor,
+                                @NotNull PsiElement element) {
     super(project, parentDescriptor);
     mySmartPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
   }

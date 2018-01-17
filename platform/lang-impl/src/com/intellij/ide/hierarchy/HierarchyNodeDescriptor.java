@@ -33,7 +33,10 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   private Object[] myCachedChildren = null;
   protected final boolean myIsBase;
 
-  protected HierarchyNodeDescriptor(@NotNull Project project, final NodeDescriptor parentDescriptor, @NotNull PsiElement element, final boolean isBase) {
+  protected HierarchyNodeDescriptor(@NotNull Project project,
+                                    @Nullable NodeDescriptor parentDescriptor,
+                                    @NotNull PsiElement element,
+                                    boolean isBase) {
     super(project, parentDescriptor, element);
     myHighlightedText = new CompositeAppearance();
     myName = "";
