@@ -167,14 +167,6 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
         LOG.error("Null reference returned, findUsagesHandler=" + findUsagesHandler + "; target=" + target + " of " + target.getClass());
         continue;
       }
-
-      if(!psiReference.getElement().getContainingFile().equals(psiElement.getContainingFile())) {
-        LOG.error("Out of scope reference returned, findUsagesHandler=" + findUsagesHandler +
-                  "; target=" + target + " of " + target.getClass() +
-                  "; file=" + psiReference.getElement().getContainingFile());
-        continue;
-      }
-
       List<TextRange> destination;
       if (detector == null || detector.getReferenceAccess(target, psiReference) == ReadWriteAccessDetector.Access.Read) {
         destination = readRanges;
