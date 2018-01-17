@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
-class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
+class DocumentWindowImpl extends com.intellij.injected.editor.DocumentWindowImpl implements Disposable, DocumentWindow, DocumentEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.injected.editor.DocumentWindowImpl");
   private final DocumentEx myDelegate;
   private final boolean myOneLine;
