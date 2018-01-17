@@ -2789,7 +2789,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
   @NotNull
   public static <K,V> Map<K,V> createSoftKeySoftValueMap() {
-    return new SoftKeySoftValueHashMap<K, V>();
+    return new SoftKeySoftValueHashMap<K, V>(true);
   }
 
   /**
