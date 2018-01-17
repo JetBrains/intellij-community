@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.util.Key;
@@ -18,6 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 import java.util.*;
+
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 /**
  * @author ven
@@ -114,21 +115,8 @@ public class CollectClassMembersUtil {
     if (visitedClasses.size() == 1 || !GrTraitUtil.isTrait(aClass)) {
       for (PsiField field : getFields(aClass, includeSynthetic)) {
         String name = field.getName();
-
         if (!allFields.containsKey(name)) {
           allFields.put(name, new CandidateInfo(field, substitutor));
-        }
-        else if (hasExplicitVisibilityModifiers(field)) {
-          final CandidateInfo candidateInfo = allFields.get(name);
-          final PsiElement element = candidateInfo.getElement();
-          if (element instanceof GrField) {
-            final GrModifierList modifierList = ((GrField)element).getModifierList();
-            if ((modifierList == null || !modifierList.hasExplicitVisibilityModifiers()) &&
-                aClass == ((GrField)element).getContainingClass()) {
-              //replace property-field with field with explicit visibilityModifier
-              allFields.put(name, new CandidateInfo(field, substitutor));
-            }
-          }
         }
       }
     }
@@ -153,8 +141,22 @@ public class CollectClassMembersUtil {
   }
 
   @NotNull
+  private static PsiField[] filterProperties(PsiField[] fields) {
+    if (fields.length == 0) return PsiField.EMPTY_ARRAY;
+
+    final List<String> fieldNamesList = mapNotNull(fields, it -> hasExplicitVisibilityModifiers(it) ? it.getName() : null);
+    if (fieldNamesList.isEmpty()) return fields;
+
+    final Set<String> fieldNames = new HashSet<>(fieldNamesList);
+    return filter(fields, it -> hasExplicitVisibilityModifiers(it) || !fieldNames.remove(it.getName())).toArray(PsiField.EMPTY_ARRAY);
+  }
+
+  @NotNull
   public static PsiField[] getFields(@NotNull PsiClass aClass, boolean includeSynthetic) {
-    return includeSynthetic || !(aClass instanceof GrTypeDefinition) ? aClass.getFields() : ((GrTypeDefinition)aClass).getCodeFields();
+    PsiField[] fields = includeSynthetic || !(aClass instanceof GrTypeDefinition)
+                        ? aClass.getFields()
+                        : ((GrTypeDefinition)aClass).getCodeFields();
+    return filterProperties(fields);
   }
 
   @NotNull
