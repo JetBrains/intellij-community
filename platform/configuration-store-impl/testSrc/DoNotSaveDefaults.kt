@@ -12,12 +12,14 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.project.isDirectoryBased
 import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.delete
 import org.junit.ClassRule
+import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -37,6 +39,11 @@ class DoNotSaveDefaultsTest {
     }
   }
 
+  @JvmField
+  @Rule
+  val tempDir = TemporaryDirectory()
+
+
   @Test
   fun testApp() {
     doTest(ApplicationManager.getApplication() as ApplicationImpl)
@@ -44,7 +51,9 @@ class DoNotSaveDefaultsTest {
 
   @Test
   fun testProject() {
-    doTest(projectRule.project as ProjectImpl)
+    createOrLoadProject(tempDir, directoryBased = false) { project ->
+      doTest(project as ProjectImpl)
+    }
   }
 
   private fun doTest(componentManager: ComponentManagerImpl) {
@@ -85,7 +94,6 @@ class DoNotSaveDefaultsTest {
     }
 
     if (componentManager is Project) {
-      assertThat(componentManager.isDirectoryBased).isTrue()
       assertThat(Paths.get(componentManager.projectFilePath!!)).doesNotExist()
       return
     }

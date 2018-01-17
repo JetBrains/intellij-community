@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -33,7 +31,7 @@ class ProjectInspectionManagerTest {
   val ruleChain = RuleChain(tempDirManager, InitInspectionRule())
 
   @Test fun `component`() {
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.path
     }) { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
@@ -83,7 +81,7 @@ class ProjectInspectionManagerTest {
   }
 
   @Test fun `do not save default project profile`() {
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.path
     }) { project ->
       val inspectionDir = Paths.get(project.stateStore.projectConfigDir, "inspectionProfiles")
@@ -104,7 +102,7 @@ class ProjectInspectionManagerTest {
   }
 
   @Test fun `profiles`() {
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.path
     }) { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
@@ -151,7 +149,7 @@ class ProjectInspectionManagerTest {
       <?xml version="1.0" encoding="UTF-8"?>
       <project version="4">
       </project>""".trimIndent()
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", emptyProjectFile).path
     }) { project ->
       val projectInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
