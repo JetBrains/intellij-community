@@ -16,6 +16,7 @@
 
 package com.intellij.ide.hierarchy;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.SmartElementDescriptor;
@@ -24,10 +25,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
   protected CompositeAppearance myHighlightedText;
@@ -104,5 +108,27 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
       myHighlightedText.getBeginning().addText(invalidPrefix, getInvalidPrefixAttributes());
     }
     return true;
+  }
+
+  protected final void installIcon(@Nullable Icon elementIcon, boolean changes) {
+    if (changes && myIsBase) {
+      //add right arrow to the base element
+      LayeredIcon icon = new LayeredIcon(2);
+      icon.setIcon(elementIcon, 0);
+      icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
+      setIcon(icon);
+    }
+    else {
+      setIcon(elementIcon);
+    }
+  }
+
+  protected final void installIcon(@NotNull PsiElement element, boolean changes) {
+    Icon icon = getIcon(element);
+    installIcon(icon, changes);
+  }
+
+  protected final void installIcon(boolean changes) {
+    installIcon(getIcon(), changes);
   }
 }
