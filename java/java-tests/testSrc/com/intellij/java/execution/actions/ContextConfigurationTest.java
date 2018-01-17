@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution.actions;
 
 import com.intellij.execution.Location;
@@ -78,7 +76,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     checkPackage(packageName, configuration);
     checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
   }
-  
+
   //fake parameterized by providing corresponding location
   public void testMethodInAbstractParameterizedTest() {
     String packageName = "abstractTests";
@@ -183,7 +181,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     ConfigurationContext context = createContext(psiClass);
     assertNull(context.findExisting());
     RunnerAndConfigurationSettings testClass = context.getConfiguration();
-    runManager.addConfiguration(testClass,  false);
+    runManager.addConfiguration(testClass);
     context = createContext(psiClass);
     assertSame(testClass, context.findExisting());
 
@@ -191,7 +189,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     context = createContext(psiPackage);
     assertNull(context.findExisting());
     RunnerAndConfigurationSettings testPackage = context.getConfiguration();
-    runManager.addConfiguration(testPackage,  false);
+    runManager.addConfiguration(testPackage);
     context = createContext(psiPackage);
     assertSame(testPackage, context.findExisting());
     assertSame(testClass, runManager.getSelectedConfiguration());
