@@ -49,9 +49,15 @@ class DoNotSaveDefaultsTest {
 
     // wake up (edt, some configurables want read action)
     runInEdtAndWait {
-      val appPicoContainer = componentManager.picoContainer
+      val picoContainer = componentManager.picoContainer
       ServiceManagerImpl.processAllImplementationClasses(componentManager, { clazz, _ ->
-        appPicoContainer.getComponentInstance(clazz.name)
+        val className = clazz.name
+        // CvsTabbedWindow calls invokeLater in constructor
+        if (className != "com.intellij.cvsSupport2.ui.CvsTabbedWindow"
+            && className != "com.intellij.lang.javascript.bower.BowerPackagingService"
+            && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole") {
+          picoContainer.getComponentInstance(className)
+        }
         true
       })
     }
