@@ -91,7 +91,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   };
 
-
   protected MyNode myRoot = new MyRootNode();
   protected Tree myTree = new Tree();
 

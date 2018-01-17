@@ -9,8 +9,10 @@ import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.project.isDirectoryBased
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
@@ -21,7 +23,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 private val testData: Path
-  get() = Paths.get(PathManagerEx.getHomePath(DoNotSaveDefaultsTest::class.java), FileUtil.toSystemDependentName("platform/configuration-store-impl/testSrc"))
+  get() = Paths.get(PathManagerEx.getHomePath(DoNotSaveDefaultsTest::class.java),
+                    FileUtil.toSystemDependentName("platform/configuration-store-impl/testSrc"))
 
 class DoNotSaveDefaultsTest {
   companion object {
@@ -81,7 +84,14 @@ class DoNotSaveDefaultsTest {
       app.doNotSave(true)
     }
 
-    val directoryTree = printDirectoryTree(Paths.get(componentManager.stateStore.stateStorageManager.expandMacros(if (componentManager === app) APP_CONFIG else PROJECT_CONFIG_DIR)), setOf(
+    if (componentManager is Project) {
+      assertThat(componentManager.isDirectoryBased).isTrue()
+      assertThat(Paths.get(componentManager.projectFilePath!!)).doesNotExist()
+      return
+    }
+
+    val directoryTree = printDirectoryTree(Paths.get(
+      componentManager.stateStore.stateStorageManager.expandMacros(APP_CONFIG)), setOf(
       "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
       "stubIndex.xml" /* low-level non-roamable stuff */,
       "usage.statistics.xml" /* SHOW_NOTIFICATION_ATTR in internal mode */,
