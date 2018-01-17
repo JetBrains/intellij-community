@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
@@ -124,18 +125,19 @@ public class CaptureSettingsProvider {
         else {
           return;
         }
+        String className = JVMNameUtil.getNonAnonymousClassName(method.getContainingClass()).replaceAll("\\.", "/");
+        String methodName = JVMNameUtil.getJVMMethodName(method);
+
         PsiModifierList modifierList = e.getModifierList();
         if (modifierList != null) {
           PsiAnnotation annotation = modifierList.findAnnotation(CaptureConfigurable.getAnnotationName(capture));
           if (annotation != null) {
             PsiAnnotationMemberValue keyExpressionValue = annotation.findAttributeValue("keyExpression");
             if (keyExpressionValue != null && !"\"\"".equals(keyExpressionValue.getText())) {
-              return; //skip for now
+              keyProvider = new FieldKeyProvider(className, StringUtil.unquoteString(keyExpressionValue.getText())); //treat as a field
             }
           }
         }
-        String className = JVMNameUtil.getNonAnonymousClassName(method.getContainingClass()).replaceAll("\\.", "/");
-        String methodName = JVMNameUtil.getJVMMethodName(method);
         AgentPoint point =
           capture ? new AgentCapturePoint(className, methodName, keyProvider) : new AgentInsertPoint(className, methodName, keyProvider);
         annotationPoints.add(point);
