@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
@@ -36,6 +37,10 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testSimpleAvailability() { doTest(); }
+  public void testDisabledInspections() {
+    enableInspectionTool(new AnonymousCanBeLambdaInspection());
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", true, false);
+  }
   public void testVarClassNameConflicts() { doTest(); }
   public void testStandaloneInVarContext() { doTest(); }
   public void testUpwardProjection() { doTest(); }
