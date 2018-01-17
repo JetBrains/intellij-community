@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.Disposable;
@@ -52,7 +53,6 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import java.util.HashMap;
-import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -328,18 +328,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         };
       }
     };
-    String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
-    if (isMonospacedFont(editorFontName)) {
-      editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
-      editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
-    }
-    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UI.getColor("link.foreground")) + "; text-decoration: none;}");
-    editorKit.getStyleSheet().addRule("table.sections td { padding-top: 6px; }");
-    editorKit.getStyleSheet().addRule(".definition { padding: 0 9px 5px 8px; font-family:\"" + editorFontName + "\"; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "}");
-    editorKit.getStyleSheet().addRule(".content { padding: 7px 9px 0 7px; line-height: 18px; }");
-    editorKit.getStyleSheet().addRule(".bottom { padding: 0 9px 0 7px; line-height: 18px; }");
-    editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 7px 6px; line-height: 18px; }");
-    editorKit.getStyleSheet().addRule(".section { color: #909090; }");
+    prepareCSS(editorKit);
     myEditorPane.setEditorKit(editorKit);
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
@@ -447,8 +436,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     updateControlState();
   }
 
-  private static boolean isMonospacedFont(String fontName) {
-    return FontInfo.isMonospaced(new Font(fontName, Font.PLAIN, 12));
+  private static void prepareCSS(HTMLEditorKit editorKit) {
+    String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
+    editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
+    editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UI.getColor("link.foreground")) + "; text-decoration: none;}");
+    editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
+    editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; }");
+    editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 5px 7px; }");
+    editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
+
+    // sections table
+    editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 0 7px; border-spacing: 0; }");
+    editorKit.getStyleSheet().addRule("tr { margin: 0 0 0 0; padding: 0 0 0 0; }");
+    editorKit.getStyleSheet().addRule("td { margin: 3px 0 3px 0; padding: 0 0 0 0; }");
+    editorKit.getStyleSheet().addRule(".section { color: #909090; padding-right: 4px}");
   }
 
   @Override
@@ -655,6 +657,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private String decorate(String text) {
+    if (!text.contains(DocumentationMarkup.CONTENT_START) && !text.contains(DocumentationMarkup.DEFINITION_START)) {
+      text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
+    }
     final String location = getLocationText();
     if (location != null) {
       text = text + "<div class='bottom'>" + location;
@@ -1199,16 +1204,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           if (!(lowerRight instanceof ActionButton)) return;
           if (vsb != null) {
             Rectangle bounds = vsb.getBounds();
-            vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - lowerRight.getPreferredSize().height - 6);
+            vsb.setBounds(bounds.x, bounds.y, bounds.width, bounds.height - lowerRight.getPreferredSize().height - 3);
           }
           if (hsb != null) {
             Rectangle bounds = hsb.getBounds();
             int vsbOffset = vsb != null ? vsb.getBounds().width : 0;
-            hsb.setBounds(bounds.x, bounds.y, bounds.width - lowerRight.getPreferredSize().width - 6 + vsbOffset, bounds.height);
+            hsb.setBounds(bounds.x, bounds.y, bounds.width - lowerRight.getPreferredSize().width - 3 + vsbOffset, bounds.height);
           }
           Rectangle bounds = lowerRight.getBounds();
-          lowerRight.setBounds(bounds.x - lowerRight.getPreferredSize().width - 6,
-                               bounds.y - lowerRight.getPreferredSize().height - 6,
+          lowerRight.setBounds(bounds.x - lowerRight.getPreferredSize().width - 3,
+                               bounds.y - lowerRight.getPreferredSize().height - 3,
                                lowerRight.getPreferredSize().width,
                                lowerRight.getPreferredSize().height);
         }

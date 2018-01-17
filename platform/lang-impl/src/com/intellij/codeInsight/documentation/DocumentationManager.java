@@ -495,6 +495,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
     final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+      .setMinSize(new Dimension(300, 59))
       .setProject(element.getProject())
       .setBorderColor(BORDER_COLOR)
       .addListener(updateProcessor)
@@ -757,7 +758,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           String message = ex[0] instanceof IndexNotReadyException
-                         ? "<div class='content'>Documentation is not available until indices are built.</div>"
+                         ? "Documentation is not available until indices are built."
                          : CodeInsightBundle.message("javadoc.external.fetch.error.message");
           component.setText(message, null, true);
           callback.setDone();
