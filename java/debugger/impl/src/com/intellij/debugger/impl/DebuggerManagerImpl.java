@@ -534,7 +534,15 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               agentFile = new File(classesRoot.getParentFile(), "rt/" + AGENT_FILE_NAME);
             }
             else {
-              agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + AGENT_FILE_NAME);
+              File artifactsInBuildScripts = new File(classesRoot.getParentFile().getParentFile().getParentFile(), "project-artifacts");
+              if (artifactsInBuildScripts.exists()) {
+                //running tests via build scripts
+                agentFile = new File(artifactsInBuildScripts, "debugger_agent/" + AGENT_FILE_NAME);
+              }
+              else {
+                //running IDE or tests in IDE
+                agentFile = new File(classesRoot.getParentFile().getParentFile(), "/artifacts/debugger_agent/" + AGENT_FILE_NAME);
+              }
             }
             if (agentFile.exists()) {
               String agentPath = handleSpacesInPath(agentFile.getAbsolutePath());
