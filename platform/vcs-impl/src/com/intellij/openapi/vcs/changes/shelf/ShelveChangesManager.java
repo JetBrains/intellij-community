@@ -6,6 +6,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PathMacroManager;
@@ -882,30 +883,15 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private void unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
-    final Ref<IOException> ex = new Ref<>();
-    final Ref<VirtualFile> patchedFileRef = new Ref<>();
     final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          if (shelvedFile == null) {
-            patchTarget.delete(this);
-          }
-          else {
-            patchTarget.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
-            patchedFileRef.set(patchTarget);
-          }
-        }
-        catch (IOException e) {
-          ex.set(e);
-        }
+    WriteAction.run(() -> {
+      if (shelvedFile == null) {
+        patchTarget.delete(this);
+      }
+      else {
+        patchTarget.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
       }
     });
-    if (!ex.isNull()) {
-      throw ex.get();
-    }
   }
 
   private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {

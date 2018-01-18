@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,6 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * for patches. for shelve.
@@ -308,16 +311,12 @@ public class PatchApplier<BinaryType extends FilePatch> {
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, applier -> applier.getFailedPatches());
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
-    final UndoApplyPatchDialog undoApplyPatchDialog =
-      new UndoApplyPatchDialog(project, ContainerUtil.map(allFailed, filePatch -> {
-        String path =
-          filePatch.getAfterName() == null
-          ? filePatch.getBeforeName()
-          : filePatch.getAfterName();
-        return VcsUtil.getFilePath(path);
-      }), shouldInformAboutBinaries);
-    undoApplyPatchDialog.show();
-    if (undoApplyPatchDialog.isOK()) {
+    List<FilePath> filePaths = ContainerUtil.map(allFailed, filePatch -> {
+      return VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName()));
+    });
+
+    final UndoApplyPatchDialog undoApplyPatchDialog = new UndoApplyPatchDialog(project, filePaths, shouldInformAboutBinaries);
+    if (undoApplyPatchDialog.showAndGet()) {
       rollbackUnderProgress(project, project.getBaseDir(), beforeLabel);
     }
   }
@@ -563,15 +562,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
     @Override
     public void consume(Collection<FilePath> directlyAffected) {
-      List<Change> changes = new ArrayList<>();
-      for(FilePath file: directlyAffected) {
-        final Change change = myChangeListManager.getChange(file);
-        if (change != null) {
-          changes.add(change);
-        }
-      }
-
-      myChangeListManager.moveChangesTo(myTargetChangeList, changes.toArray(new Change[0]));
+      List<Change> changes = ContainerUtil.mapNotNull(directlyAffected, myChangeListManager::getChange);
+      myChangeListManager.moveChangesTo(myTargetChangeList, ArrayUtil.toObjectArray(changes, Change.class));
     }
   }
 }

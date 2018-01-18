@@ -197,16 +197,13 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   @NotNull
   public Collection<FilePatch> filterBadFileTypePatches() {
     List<Pair<VirtualFile, ApplyTextFilePatch>> failedTextPatches =
-      ContainerUtil.findAll(myTextPatches, textPatch -> {
-        final VirtualFile file = textPatch.getFirst();
-        if (file.isDirectory()) return false;
-        return !isFileTypeOk(file);
-      });
+      ContainerUtil.findAll(myTextPatches, textPatch -> !isFileTypeOk(textPatch.getFirst()));
     myTextPatches.removeAll(failedTextPatches);
     return ContainerUtil.map(failedTextPatches, patchInfo -> patchInfo.getSecond().getPatch());
   }
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {
+    if (file.isDirectory()) return true;
     FileType fileType = file.getFileType();
     if (fileType == FileTypes.UNKNOWN) {
       fileType = FileTypeChooser.associateFileType(file.getName());
