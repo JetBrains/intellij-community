@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiPolyVariantReference
@@ -24,7 +22,7 @@ abstract class DependentResolver<T : PsiPolyVariantReference> : ResolveCache.Pol
     private val resolvingDependencies = ThreadLocal.withInitial { mutableSetOf<PsiPolyVariantReference>() }
   }
 
-  override final fun resolve(ref: T, incomplete: Boolean): Array<out ResolveResult> {
+  final override fun resolve(ref: T, incomplete: Boolean): Array<out ResolveResult> {
     val dependencies = resolveDependencies(ref, incomplete)
     val result = doResolve(ref, incomplete)
     dependencies?.clear()
