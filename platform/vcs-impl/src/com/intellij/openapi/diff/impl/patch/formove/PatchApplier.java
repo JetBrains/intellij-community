@@ -140,64 +140,54 @@ public class PatchApplier<Unused> {
     execute(true, false);
   }
 
-  private class ApplyPatchTask {
-    private final boolean myShowNotification;
-    private final boolean mySystemOperation;
+  @CalledInAwt
+  public ApplyPatchStatus execute(boolean showSuccessNotification, boolean silentAddDelete) {
+    myRemainingPatches.addAll(myPatches);
 
-    public ApplyPatchTask(final boolean showNotification, boolean systemOperation) {
-      myShowNotification = showNotification;
-      mySystemOperation = systemOperation;
+    final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
+    final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before patch");
+    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
+    final ApplyPatchStatus applyStatus = getApplyPatchStatus(trigger, silentAddDelete);
+    ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
+                              ApplyPatchStatus.and(patchStatus, applyStatus);
+    // listeners finished, all 'legal' file additions/deletions with VCS are done
+    trigger.processIt();
+    LocalHistory.getInstance().putSystemLabel(myProject, "After patch"); // insert a label to be visible in local history dialog
+    if (status == ApplyPatchStatus.FAILURE) {
+      suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
     }
-
-    @CalledInAwt
-    public ApplyPatchStatus run() {
-      myRemainingPatches.addAll(myPatches);
-
-      final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
-      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before patch");
-      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
-      final ApplyPatchStatus applyStatus = getApplyPatchStatus(trigger);
-      ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
-                                ApplyPatchStatus.and(patchStatus, applyStatus);
-      // listeners finished, all 'legal' file additions/deletions with VCS are done
-      trigger.processIt();
-      LocalHistory.getInstance().putSystemLabel(myProject, "After patch"); // insert a label to be visible in local history dialog
-      if (status == ApplyPatchStatus.FAILURE) {
-        suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
-      }
-      else if (status == ApplyPatchStatus.ABORT) {
-        rollbackUnderProgress(myProject, beforeLabel);
-      }
-      if (myShowNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
-        showApplyStatus(myProject, status);
-      }
-      refreshFiles(trigger.getAffected());
-
-      return status;
+    else if (status == ApplyPatchStatus.ABORT) {
+      rollbackUnderProgress(myProject, beforeLabel);
     }
-
-    @CalledInAwt
-    @NotNull
-    private ApplyPatchStatus getApplyPatchStatus(@NotNull final TriggerAdditionOrDeletion trigger) {
-      final Ref<ApplyPatchStatus> refStatus = Ref.create(null);
-      try {
-        runWithDefaultConfirmations(myProject, mySystemOperation, () -> {
-          CommandProcessor.getInstance().executeCommand(myProject, () -> {
-            //consider pre-check status only if not successful, otherwise we could not detect already applied status
-            refStatus.set(createFiles());
-
-            addSkippedItems(trigger);
-            trigger.prepare();
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
-          }, VcsBundle.message("patch.apply.command"), null);
-        });
-      }
-      finally {
-        VcsFileListenerContextHelper.getInstance(myProject).clearContext();
-      }
-      final ApplyPatchStatus status = refStatus.get();
-      return status == null ? ApplyPatchStatus.ALREADY_APPLIED : status;
+    if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
+      showApplyStatus(myProject, status);
     }
+    refreshFiles(trigger.getAffected());
+
+    return status;
+  }
+
+  @CalledInAwt
+  @NotNull
+  private ApplyPatchStatus getApplyPatchStatus(@NotNull final TriggerAdditionOrDeletion trigger, boolean silentAddDelete) {
+    final Ref<ApplyPatchStatus> refStatus = Ref.create(null);
+    try {
+      runWithDefaultConfirmations(myProject, silentAddDelete, () -> {
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          //consider pre-check status only if not successful, otherwise we could not detect already applied status
+          refStatus.set(createFiles());
+
+          addSkippedItems(trigger);
+          trigger.prepare();
+          refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
+        }, VcsBundle.message("patch.apply.command"), null);
+      });
+    }
+    finally {
+      VcsFileListenerContextHelper.getInstance(myProject).clearContext();
+    }
+    final ApplyPatchStatus status = refStatus.get();
+    return status == null ? ApplyPatchStatus.ALREADY_APPLIED : status;
   }
 
   private static void runWithDefaultConfirmations(@NotNull Project project, boolean resetConfirmations, @NotNull Runnable task) {
@@ -221,11 +211,6 @@ public class PatchApplier<Unused> {
         deleteConfirmation.setValue(deleteConfirmationValue);
       }
     }
-  }
-
-  @CalledInAwt
-  public ApplyPatchStatus execute(boolean showSuccessNotification, boolean silentAddDelete) {
-    return new ApplyPatchTask(showSuccessNotification, silentAddDelete).run();
   }
 
   @CalledInAwt
