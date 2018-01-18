@@ -8,26 +8,20 @@ import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.graph.Graph;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
-
-  private SoftReference<Graph<Module>> myGraph = new SoftReference<>(null);
-
   @Override
   public RefGraphAnnotator getAnnotator(@NotNull final RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);
@@ -40,54 +34,39 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final Module module = refModule.getModule();
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] declaredDependencies = moduleRootManager.getOrderEntries();
-      final Module[] declaredModuleDependencies = moduleRootManager.getDependencies();
 
-      List<CommonProblemDescriptor> descriptors = new ArrayList<>();
+      final List<CommonProblemDescriptor> descriptors = new ArrayList<>();
       final Set<Module> modules = refModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
-      Graph<Module> graph = myGraph.get();
-      if (graph == null) {
-        graph = ModuleManager.getInstance(globalContext.getProject()).moduleGraph();
-        myGraph = new SoftReference<>(graph);
-      }
-
-      final RefManager refManager = globalContext.getRefManager();
-      currentDependencies:
+      final List<Module> candidates = new ArrayList<>();
       for (final OrderEntry entry : declaredDependencies) {
-        if (entry instanceof ModuleOrderEntry && ((ModuleOrderEntry)entry).getScope() != DependencyScope.RUNTIME) {
-          final Module dependency = ((ModuleOrderEntry)entry).getModule();
-          if (dependency != null) {
-            if (modules == null || !modules.contains(dependency)) {
-              if (((ModuleOrderEntry)entry).isExported()) {
-                final Iterator<Module> iterator = graph.getOut(module);
-                while (iterator.hasNext()) {
-                  final Module dep = iterator.next();
-                  if (!scope.containsModule(dep)) continue currentDependencies;
-                  final RefModule depRefModule = refManager.getRefModule(dep);
-                  if (depRefModule != null) {
-                    final Set<Module> neededModules = depRefModule.getUserData(UnnecessaryModuleDependencyAnnotator.DEPENDENCIES);
-                    if (neededModules != null && neededModules.contains(dependency)) {
-                      continue currentDependencies;
-                    }
-                  }
-                }
-              }
-              if (modules != null) {
-                final OrderEntry[] dependenciesOfDependencies = ModuleRootManager.getInstance(dependency).getOrderEntries();
-                for (OrderEntry secondDependency : dependenciesOfDependencies) {
-                  if (secondDependency instanceof ModuleOrderEntry && ((ModuleOrderEntry)secondDependency).isExported()) {
-                    final Module mod = ((ModuleOrderEntry)secondDependency).getModule();
-                    if (mod != null && modules.contains(mod) && ArrayUtil.find(declaredModuleDependencies, mod) < 0) {
-                      continue currentDependencies;
-                    }
-                  }
-                }
-              }
+        if (entry instanceof ModuleOrderEntry &&
+            ((ModuleOrderEntry)entry).getScope() != DependencyScope.RUNTIME &&
+            !((ModuleOrderEntry)entry).isExported()) {
 
-              descriptors.add(createDescriptor(scope, manager, module, dependency));
-            }
+          final Module dependency = ((ModuleOrderEntry)entry).getModule();
+          if (dependency == null || modules != null && modules.remove(dependency)) {
+            continue;
           }
+
+          candidates.add(dependency);
         }
       }
+
+      for (Module dependency : candidates) {
+        if (modules != null) {
+          HashSet<Module> outs = new HashSet<>();
+          OrderEnumerator.orderEntries(dependency)
+            .withoutSdk()
+            .exportedOnly()
+            .recursively()
+            .forEachModule(outs::add);
+
+          if (ContainerUtil.intersects(modules, outs)) continue;
+        }
+
+        descriptors.add(createDescriptor(scope, manager, module, dependency));
+      }
+
       return descriptors.isEmpty() ? null : descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
     }
     return null;
