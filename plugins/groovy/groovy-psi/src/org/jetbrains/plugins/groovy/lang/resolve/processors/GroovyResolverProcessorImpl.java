@@ -1,11 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +9,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
@@ -49,20 +43,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
     candidates = getCandidates(GroovyResolveKind.ENUM_CONST);
     if (!candidates.isEmpty()) {
       return candidates;
-    }
-
-    candidates = getCandidates(GroovyResolveKind.FIELD);
-    if (!candidates.isEmpty()) {
-      assert candidates.size() == 1;
-      final GroovyResolveResult candidate = candidates.get(0);
-      final PsiElement element = candidate.getElement();
-      if (element instanceof PsiField) {
-        final PsiClass containingClass = ((PsiField)element).getContainingClass();
-        if (containingClass != null && PsiUtil.getContextClass(myRef) == containingClass) return candidates;
-      }
-      else if (!(element instanceof GrBindingVariable)) {
-        return candidates;
-      }
     }
 
     if (myIsPartOfFqn) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.psi.*;
@@ -20,7 +6,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
@@ -81,15 +70,21 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
                             String newName,
                             final UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
+    final Map<GrReferenceExpression, PsiElement> oldResolvedRefs = ContainerUtil.newHashMap();
+    for (UsageInfo usage : usages) {
+      final PsiReference ref = usage.getReference();
+      if (ref instanceof GrReferenceExpression) {
+        oldResolvedRefs.put((GrReferenceExpression)ref, ref.resolve());
+      }
+    }
+
     GrField field = (GrField)psiElement;
-    Map<GrReferenceExpression, PsiElement> handled = ContainerUtil.newHashMap();
 
     for (UsageInfo usage : usages) {
       final PsiReference ref = usage.getReference();
       if (ref instanceof GrReferenceExpression) {
-        PsiElement resolved = ref.resolve();
+        PsiElement resolved = oldResolvedRefs.get(ref);
         ref.handleElementRename(getNewNameFromTransformations(resolved, newName));
-        handled.put((GrReferenceExpression)ref, resolved);
       }
       else if (ref != null) {
         handleElementRename(newName, ref, field.getName());
@@ -99,8 +94,8 @@ public class RenameGrFieldProcessor extends RenameJavaVariableProcessor {
     field.setName(newName);
 
     PsiManager manager = psiElement.getManager();
-    for (GrReferenceExpression expression : handled.keySet()) {
-      PsiElement oldResolved = handled.get(expression);
+    for (GrReferenceExpression expression : oldResolvedRefs.keySet()) {
+      PsiElement oldResolved = oldResolvedRefs.get(expression);
       if (oldResolved == null) continue;
       PsiElement resolved = expression.resolve();
       if (resolved == null) continue;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
@@ -52,6 +50,7 @@ class ResolvePropertyTest extends GroovyResolveTestCase {
   }
 
   void testField1() throws Exception {
+    disableTransformations testRootDisposable
     doTest("field1/A.groovy")
   }
 
@@ -602,7 +601,7 @@ set<caret>Foo(2)
   }
 
   void testCommandExpressions() {
-    assertInstanceOf resolve("A.groovy"), GrField
+    assertInstanceOf resolve("A.groovy"), GrAccessorMethod
   }
 
   void testMetaClassIsNotResolvedWithMapQualifier() {
@@ -770,7 +769,7 @@ class SomeMapClass extends HashMap<String, Pojo> {
   }
 
   void testResolveInsideWith1() {
-    def resolved = resolve('a.groovy', GrField)
+    def resolved = resolve('a.groovy', GrAccessorMethod)
     assertEquals(resolved.containingClass.name, 'B')
   }
 
@@ -1337,66 +1336,6 @@ def A = [a:{-1}]
 
 print <caret>A.a()
 ''', GrVariable
-  }
-
-  void testPropertyVsAccessor() {
-    resolveByText('''\
-class ProductServiceImplTest  {
-    BackendClient backendClient
-
-    def setup() {
-        new ProductServiceImpl() {
-            protected BackendClient getBackendClient() {
-                return backend<caret>Client // <--- this expression is highlighted as member variable
-            }
-        }
-    }
-}
-
-class BackendClient{}
-class ProductServiceImpl{}
-''', GrMethod)
-  }
-
-  void testPropertyVsAccessor2() {
-    resolveByText('''\
-class ProductServiceImplTest  {
-    def setup() {
-        new ProductServiceImpl() {
-            BackendClient backendClient
-
-            protected BackendClient getBackendClient() {
-                return backendC<caret>lient
-            }
-        }
-    }
-}
-
-class BackendClient{}
-class ProductServiceImpl{}
-''', GrField)
-  }
-
-  void testPropertyVsAccessor3() {
-    resolveByText('''\
-class ProductServiceImplTest  {
-    BackendClient backendClient
-
-    protected BackendClient getBackendClient() {
-        return backendClient
-    }
-    def setup() {
-        new ProductServiceImpl() {
-           def foo() {
-             return backendClie<caret>nt
-           }
-        }
-    }
-}
-
-class BackendClient{}
-class ProductServiceImpl{}
-''', GrMethod)
   }
 
   void testTraitPublicField1() {

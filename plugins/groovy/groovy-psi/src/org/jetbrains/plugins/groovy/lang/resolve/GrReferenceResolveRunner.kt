@@ -10,16 +10,20 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.psi.util.isThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGet
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.canResolveToMethod
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.isDefinitelyKeyOfMap
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
+import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
 
@@ -100,8 +104,8 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
 fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Collection<GroovyResolveResult> {
   resolvePackageOrClass()?.let { return listOf(it) }
 
-  val localVariableResults = resolveLocalVariable()
-  if (localVariableResults.isNotEmpty()) return localVariableResults
+  val staticResults = resolveStatic()
+  if (staticResults.isNotEmpty()) return staticResults
 
   if (!canResolveToMethod(this) && isDefinitelyKeyOfMap(this)) return emptyList()
   val processor = GroovyResolverProcessorBuilder.builder()
@@ -142,8 +146,58 @@ private fun GrReferenceExpression.doResolvePackageOrClass(): PsiElement? {
   return null
 }
 
-private fun GrReferenceExpression.resolveLocalVariable(): Collection<GroovyResolveResult> {
-  if (isQualified) return emptyList()
+/**
+ * Resolves elements that exist before transformations are run.
+ *
+ * @see org.codehaus.groovy.control.ResolveVisitor
+ */
+private fun GrReferenceExpression.resolveStatic(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
+
+  val qualifier = qualifier
+
+  if (qualifier == null) {
+    val locals = resolveToLocalVariable(name)
+    if (locals.size == 1) return locals
+  }
+
+  if (qualifier == null || qualifier.isThisExpression()) {
+    val fields = resolveToField(name)
+    val field = fields.singleOrNull()
+    if (field != null && checkCurrentClass(field.element, this)) return fields
+  }
+
+  return emptyList()
+}
+
+/**
+ * Walks up the tree and returns when the first [local variable][GrVariable] is found.
+ *
+ * @name local variable name
+ * @receiver call site
+ * @return empty collection or a collection with 1 local variable result
+ */
+private fun PsiElement.resolveToLocalVariable(name: String): Collection<ElementGroovyResult<GrVariable>> {
   return treeWalkUpAndGet(LocalVariableProcessor(name))
+}
+
+/**
+ * Walks up the tree and returns when the first code [field][GrField] is found.
+ *
+ * @name field name
+ * @receiver call site
+ * @return empty collection or a collection with 1 code field result
+ */
+private fun PsiElement.resolveToField(name: String): Collection<ElementGroovyResult<GrField>> {
+  return treeWalkUpAndGet(CodeFieldProcessor(name, this))
+}
+
+/**
+ * Checks if resolved [field] is a field of current class owner.
+ *
+ * @see org.codehaus.groovy.control.ResolveVisitor.currentClass
+ */
+private fun checkCurrentClass(field: GrField, place: PsiElement): Boolean {
+  val containingClass = field.containingClass ?: return false
+  return containingClass == place.getOwner()
 }
