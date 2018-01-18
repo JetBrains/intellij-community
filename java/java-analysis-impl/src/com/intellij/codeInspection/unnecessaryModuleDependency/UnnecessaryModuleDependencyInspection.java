@@ -33,6 +33,17 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       final RefModule refModule = (RefModule)refEntity;
       final Module module = refModule.getModule();
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      boolean onlyGeneratedSources = true;
+      for (ContentEntry entry : moduleRootManager.getContentEntries()) {
+        for (SourceFolder folder : entry.getSourceFolders()) {
+          if (!JavaProjectRootsUtil.isForGeneratedSources(folder)) {
+            onlyGeneratedSources = false;
+            break;
+          }
+        }
+      }
+      if (onlyGeneratedSources) return null;
+
       final OrderEntry[] declaredDependencies = moduleRootManager.getOrderEntries();
 
       final List<CommonProblemDescriptor> descriptors = new ArrayList<>();

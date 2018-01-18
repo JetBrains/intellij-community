@@ -16,6 +16,8 @@ import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.junit.Assert
 
 class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase() {
@@ -106,6 +108,29 @@ class UnnecessaryModuleDependencyInspectionTest : JavaCodeInsightFixtureTestCase
                       presentation.hasReportedProblems())
     Assert.assertEquals("Module 'mod3' sources do not depend on module 'mod2' sources",
                         presentation.problemDescriptors.joinToString { problem -> problem.descriptionTemplate })
+  }
+
+  fun testDuplicatedDependencies() {
+    val mod1 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    val mod2 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    val mod3 = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "mod3", myFixture.tempDirFixture.findOrCreateDir("mod3"))
+    ModuleRootModificationUtil.updateModel(mod3) {
+      val contentEntry = it.contentEntries[0]
+      contentEntry.removeSourceFolder(contentEntry.sourceFolders[0])
+      contentEntry.addSourceFolder(myFixture.tempDirFixture.findOrCreateDir("mod3"),
+                                   JavaSourceRootType.SOURCE,
+                                   JpsJavaExtensionService.getInstance().createSourceRootProperties("", true))
+    }
+
+    ModuleRootModificationUtil.addDependency(mod2, mod1, DependencyScope.COMPILE, true)
+    ModuleRootModificationUtil.addDependency(mod1, myModule, DependencyScope.COMPILE, true)
+
+    ModuleRootModificationUtil.addDependency(mod3, mod1)
+    ModuleRootModificationUtil.addDependency(mod3, mod2)
+
+    myFixture.addClass("public class Class0 {}")
+    myFixture.addFileToProject("mod3/Class3.java", "public class Class3 extends Class0 {}")
+    assertInspectionProducesZeroResults()
   }
 
   fun testDeepExportedDependenciesNoDirectDependency() {
