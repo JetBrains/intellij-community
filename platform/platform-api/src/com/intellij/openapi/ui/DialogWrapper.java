@@ -237,7 +237,7 @@ public abstract class DialogWrapper {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
             if (myErrorText != null && myErrorText.isVisible()) {
-              myActualSize.height -= myErrorText.getMinimumHeight();
+              myActualSize.height -= myErrorText.myLabel.getHeight();
             }
           }
         }
@@ -1254,7 +1254,7 @@ public abstract class DialogWrapper {
         if (height != myHeight) {
           myHeight = height;
           myResizeInProgress = true;
-          myErrorText.setMinimumHeight(height);
+          myErrorText.setMinimumSize(new Dimension(0, height));
           JRootPane root = myPeer.getRootPane();
           if (root != null) {
             root.validate();
@@ -2175,14 +2175,6 @@ public abstract class DialogWrapper {
       } else {
         return false;
       }
-    }
-
-    public void setMinimumHeight(int height) {
-      setMinimumSize(new Dimension(0, height));
-    }
-
-    public int getMinimumHeight() {
-      return getMinimumSize().height;
     }
   }
 
