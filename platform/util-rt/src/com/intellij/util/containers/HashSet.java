@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.Contract;
+
 import java.util.Collection;
 
 @SuppressWarnings("ClassNameSameAsAncestorName")
@@ -33,6 +35,20 @@ public class HashSet<E> extends java.util.HashSet<E> {
     super(i);
   }
 
+  @Override
+  @Contract(pure = true)
+  public boolean contains(Object o) {
+    if (size() == 0) return false;
+    return super.contains(o);
+  }
+
+  @Override
+  public boolean containsAll(Collection<?> c) {
+    if (size() == 0) return c.isEmpty();
+    return super.containsAll(c);
+  }
+
+  @Override
   public void clear() {
     if (size() == 0) return; // optimization
     super.clear();
