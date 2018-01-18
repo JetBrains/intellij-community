@@ -124,11 +124,6 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   }
 
   @Override
-  protected boolean showAsPopup() {
-    return true;
-  }
-
-  @Override
   protected String getActionText(final AnActionEvent e) {
     String text = ApplicationBundle.message("action.add");
     if (e.getPresentation().isEnabled()) {

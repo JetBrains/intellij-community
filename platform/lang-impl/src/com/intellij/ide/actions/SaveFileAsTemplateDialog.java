@@ -36,12 +36,6 @@ public class SaveFileAsTemplateDialog extends SingleConfigurableEditor {
     setTitle("Save File as Template");
   }
 
-  @Nullable
-  @Override
-  protected JComponent createNorthPanel() {
-    return super.createNorthPanel();
-  }
-
   @NotNull
   @Override
   protected Action[] createActions() {

@@ -257,9 +257,6 @@ public class RemoteRepositoriesConfigurable extends BaseConfigurable implements 
     myReposModel.replaceAll(repositories);
   }
 
-  public void disposeUIResources() {
-  }
-
   private static final class URLInputVaslidator implements InputValidator {
     @Override
     public boolean checkInput(String inputString) {

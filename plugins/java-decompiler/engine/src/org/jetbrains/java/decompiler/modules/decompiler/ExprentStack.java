@@ -14,10 +14,6 @@ public class ExprentStack extends ListStack<Exprent> {
     pointer = list.getPointer();
   }
 
-  public void push(Exprent item) {
-    super.push(item);
-  }
-
   public Exprent pop() {
 
     return this.remove(--pointer);

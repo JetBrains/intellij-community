@@ -36,10 +36,6 @@ import java.util.Set;
 
 public class UnusedMessageFormatParameterInspection extends PropertiesInspectionBase {
   public static final String REGEXP = "regexp";
-  @NotNull
-  public String getGroupDisplayName() {
-    return PropertiesBundle.message("properties.files.inspection.group.display.name");
-  }
 
   @NotNull
   public String getDisplayName() {

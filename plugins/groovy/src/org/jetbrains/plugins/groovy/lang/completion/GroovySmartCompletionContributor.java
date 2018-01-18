@@ -339,11 +339,6 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
     return null;
   }
 
-  @Override
-  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    super.fillCompletionVariants(parameters, result);
-  }
-
   @Nullable
   private static LookupElement addExpectedType(PsiType type, final PsiElement place, CompletionParameters parameters, @Nullable PsiType diamond) {
     if (!JavaCompletionUtil.hasAccessibleConstructor(type)) return null;

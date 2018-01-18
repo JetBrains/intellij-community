@@ -533,11 +533,6 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     protected Point myPoint;
     private final boolean myIsFirst;
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-    }
-
     private IdeGlassPane myGlassPane;
 
     private class MyMouseAdapter extends MouseAdapter implements Weighted {

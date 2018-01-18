@@ -61,14 +61,6 @@ public class ShortcutPromoterManager implements Disposable, AnActionListener, Pe
     }
   }
 
-  @Override
-  public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-  }
-
-  @Override
-  public void beforeEditorTyping(char c, DataContext dataContext) {
-  }
-
   @Nullable
   @Override
   public Element getState() {

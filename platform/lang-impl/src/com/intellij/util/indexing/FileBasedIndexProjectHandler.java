@@ -53,8 +53,6 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
 
     if (ApplicationManager.getApplication().isInternal()) {
       project.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-        @Override
-        public void enteredDumbMode() { }
 
         @Override
         public void exitDumbMode() {

@@ -153,11 +153,6 @@ public class GitLineHandler extends GitTextHandler {
           }
 
           @Override
-          public boolean splitToLines() {
-            return true;
-          }
-
-          @Override
           public boolean sendIncompleteLines() {
             return false;
           }

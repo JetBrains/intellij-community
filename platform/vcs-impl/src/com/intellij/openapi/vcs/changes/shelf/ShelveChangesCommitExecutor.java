@@ -94,10 +94,6 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     }
 
     @Override
-    public void executionCanceled() {
-    }
-
-    @Override
     public String getHelpId() {
       return null;
     }

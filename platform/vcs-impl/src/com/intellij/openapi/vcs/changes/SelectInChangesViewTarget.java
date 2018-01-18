@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -65,10 +64,6 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
 
   public String getToolWindowId() {
     return ChangesViewContentManager.TOOLWINDOW_ID;
-  }
-
-  @Nullable public String getMinorViewId() {
-    return null;
   }
 
   public float getWeight() {

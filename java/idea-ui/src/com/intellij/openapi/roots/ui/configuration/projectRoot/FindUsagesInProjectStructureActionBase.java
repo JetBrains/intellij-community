@@ -89,13 +89,6 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
           return FINAL_CHOICE;
         }
 
-        @Override
-        public boolean isSelectable(ProjectStructureElementUsage value) {
-          //todo[nik] currently non-selectable items in popup don't work in dialogs (IDEA-174448)
-          //return value.getPlace().canNavigate();
-          return true;
-        }
-
         @NotNull
         @Override
         public String getTextFor(ProjectStructureElementUsage value) {

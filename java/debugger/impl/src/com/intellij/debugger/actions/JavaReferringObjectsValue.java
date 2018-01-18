@@ -46,11 +46,6 @@ public class JavaReferringObjectsValue extends JavaValue {
   }
 
   @Override
-  public boolean canNavigateToSource() {
-    return true;
-  }
-
-  @Override
   public void computeChildren(@NotNull final XCompositeNode node) {
     scheduleCommand(getEvaluationContext(), node, new SuspendContextCommandImpl(getEvaluationContext().getSuspendContext()) {
         @Override

@@ -626,11 +626,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return JavaPsiFacade.getInstance(expression.getProject()).findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   private static boolean isClassNonNls(@NotNull PsiClass clazz) {
     final PsiDirectory directory = clazz.getContainingFile().getContainingDirectory();
     return directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory));

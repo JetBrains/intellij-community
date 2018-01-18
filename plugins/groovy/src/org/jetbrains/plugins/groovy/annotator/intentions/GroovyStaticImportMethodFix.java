@@ -191,11 +191,6 @@ public class GroovyStaticImportMethodFix extends Intention {
       showInBestPositionFor(editor);
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   @NotNull
   private List<PsiMethod> getCandidates() {
     List<PsiMethod> result = myCandidates;

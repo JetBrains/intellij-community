@@ -117,9 +117,4 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
 
     return typeCast;
   }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
 }

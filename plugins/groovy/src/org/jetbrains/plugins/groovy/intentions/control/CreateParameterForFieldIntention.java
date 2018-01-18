@@ -71,12 +71,6 @@ public class CreateParameterForFieldIntention extends Intention {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.intentions.control.CreateParameterForFieldIntention");
   private static final Key<CachedValue<List<GrField>>> FIELD_CANDIDATES = Key.create("Fields.candidates");
 
-  @NotNull
-  @Override
-  public String getText() {
-    return super.getText();
-  }
-
   @Override
   protected void processIntention(@NotNull PsiElement element, @NotNull final Project project, final Editor editor)
     throws IncorrectOperationException {

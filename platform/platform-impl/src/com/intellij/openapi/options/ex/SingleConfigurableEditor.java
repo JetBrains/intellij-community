@@ -165,11 +165,6 @@ public class SingleConfigurableEditor extends DialogWrapper {
   }
 
   @Override
-  public void doCancelAction() {
-    super.doCancelAction();
-  }
-
-  @Override
   protected void doOKAction() {
     try {
       if (myConfigurable.isModified()) {

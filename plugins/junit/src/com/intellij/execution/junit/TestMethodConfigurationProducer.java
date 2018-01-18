@@ -27,6 +27,7 @@ public class TestMethodConfigurationProducer extends AbstractInClassConfiguratio
     super(JUnitConfigurationType.getInstance());
   }
 
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,
@@ -34,6 +35,7 @@ public class TestMethodConfigurationProducer extends AbstractInClassConfiguratio
     return super.setupConfigurationFromContext(configuration, context, sourceElement);
   }
 
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @Override
   public boolean isConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context) {
     return super.isConfigurationFromContext(configuration, context);

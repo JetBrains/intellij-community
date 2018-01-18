@@ -18,8 +18,4 @@ public class SimpleInstructionSequence extends InstructionSequence {
 
     return newseq;
   }
-
-  public void removeInstruction(int index) {
-    collinstr.remove(index);
-  }
 }

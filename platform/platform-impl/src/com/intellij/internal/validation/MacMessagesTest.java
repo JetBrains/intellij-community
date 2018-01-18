@@ -117,9 +117,6 @@ public class MacMessagesTest extends AnAction {
               showTestMessage(p1);
             }, ModalityState.any());
           }
-
-          @Override
-          public void onCancel() {}
         };
         ProgressManager.getInstance().run(task);
 

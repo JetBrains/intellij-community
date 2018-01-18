@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,11 +83,6 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   @NotNull
   public NodeDescriptor createDescriptor(final Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor)element;
-  }
-
-  @Override
-  public AsyncResult<Object> revalidateElement(Object element) {
-    return super.revalidateElement(element);
   }
 
   @Nullable

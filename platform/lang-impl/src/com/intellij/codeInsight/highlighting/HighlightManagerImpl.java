@@ -294,10 +294,6 @@ public class HighlightManagerImpl extends HighlightManager {
 
 
     @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
-    }
-
-    @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {
       requestHideHighlights(dataContext);
     }

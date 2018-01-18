@@ -180,11 +180,6 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     }
 
     @Override
-    public boolean isCellEditable(ClasspathTableItem<?> item) {
-      return false;
-    }
-
-    @Override
     public Class getColumnClass() {
       return ClasspathTableItem.class;
     }

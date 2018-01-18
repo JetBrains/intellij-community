@@ -559,11 +559,6 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     return generateExternalJavadoc(element);
   }
 
-  @Override
-  public PsiElement getDocumentationElementForLookupItem(final PsiManager psiManager, final Object object, final PsiElement element) {
-    return null;
-  }
-
   @Nullable
   public static String generateExternalJavadoc(@NotNull final PsiElement element) {
     List<String> docURLs = getExternalJavaDocUrl(element);

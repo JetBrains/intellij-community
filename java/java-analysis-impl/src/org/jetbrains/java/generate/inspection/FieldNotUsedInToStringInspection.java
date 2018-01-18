@@ -67,11 +67,6 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     }
 
     @Override
-    public void visitField(PsiField field) {
-      super.visitField(field);
-    }
-
-    @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       @NonNls final String methodName = method.getName();

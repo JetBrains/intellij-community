@@ -10,8 +10,4 @@ public abstract class BaseScopeProcessor implements PsiScopeProcessor {
   public <T> T getHint(@NotNull Key<T> hintKey) {
     return null;
   }
-
-  @Override
-  public void handleEvent(@NotNull Event event, Object associated) {
-  }
 }

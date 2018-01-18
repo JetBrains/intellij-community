@@ -741,9 +741,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final Window window = WindowManager.getInstance().suggestParentWindow(project);
 
     project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
 
       @Override
       public void exitDumbMode() {

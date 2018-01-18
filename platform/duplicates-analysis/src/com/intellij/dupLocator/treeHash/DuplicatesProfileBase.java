@@ -7,7 +7,6 @@ import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
@@ -46,10 +45,4 @@ public abstract class DuplicatesProfileBase extends DuplicatesProfile {
     }
     return false;
   }
-
-  @Nullable
-  public PsiElementRole getRole(@NotNull PsiElement element) {
-    return null;
-  }
-
 }

@@ -42,11 +42,6 @@ public class TopLevelNode extends AbstractTreeNode {
   }
 
   @Override
-  public String getName() {
-    return super.getName();
-  }
-
-  @Override
   protected void update(PresentationData presentation) {
   }
 

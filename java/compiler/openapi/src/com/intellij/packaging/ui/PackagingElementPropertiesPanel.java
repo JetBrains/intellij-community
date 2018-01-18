@@ -23,7 +23,4 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 public abstract class PackagingElementPropertiesPanel implements UnnamedConfigurable {
 
   public abstract void apply();
-
-  public void disposeUIResources() {
-  }
 }

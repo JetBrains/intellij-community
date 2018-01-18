@@ -57,11 +57,6 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
   }
 
 
-  @Override
-  public void setText(String text) {
-    super.setText(text);
-  }
-
   public VisibilityModifierChooser(@NotNull Supplier<Boolean> canBeEnabled,
                                    @NotNull String modifier,
                                    @NotNull Consumer<String> modifierChangedConsumer,

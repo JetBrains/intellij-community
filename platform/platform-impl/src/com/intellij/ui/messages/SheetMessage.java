@@ -72,10 +72,6 @@ public class SheetMessage implements Disposable {
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
     WindowAdapter windowListener = new WindowAdapter() {
-      @Override
-      public void windowActivated(@NotNull WindowEvent e) {
-        super.windowActivated(e);
-      }
     };
     myWindow.addWindowListener(windowListener);
     Disposer.register(this, () -> myWindow.removeWindowListener(windowListener));

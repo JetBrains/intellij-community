@@ -820,10 +820,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       return methodCallExpression.replace(expression);
     }
 
-    public PsiVariable[] getOutputVariables() {
-      return myOutputVariables;
-    }
-
     @Override
     protected void declareNecessaryVariablesAfterCall(final PsiVariable outputVariable) throws IncorrectOperationException {
       if (myMultipleExitPoints) {

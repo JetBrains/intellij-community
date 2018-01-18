@@ -124,10 +124,6 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
     }
 
     @Override
-    public void disposeUIResources() {
-    }
-
-    @Override
     public JComponent createComponent() {
       return this;
     }

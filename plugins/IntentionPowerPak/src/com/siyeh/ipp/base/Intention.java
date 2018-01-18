@@ -108,11 +108,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     return findMatchingElement(element, editor) != null;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
   private String getPrefix() {
     final Class<? extends Intention> aClass = getClass();
     final String name = aClass.getSimpleName();

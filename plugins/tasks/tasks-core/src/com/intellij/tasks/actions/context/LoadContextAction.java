@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
@@ -160,10 +159,6 @@ public class LoadContextAction extends BaseTaskAction {
       }
     });
     popup.addPopupListener(new JBPopupAdapter() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-
-      }
     });
     popup.showCenteredInCurrentWindow(project);
   }

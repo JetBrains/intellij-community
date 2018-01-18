@@ -156,9 +156,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
 
       @Override
       public void exitDumbMode() {

@@ -262,11 +262,6 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
     return true;
   }
 
-  @Override
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
-  }
-
   public String toString() {
     return "PsiPackageBase:" + getQualifiedName();
   }

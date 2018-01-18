@@ -149,9 +149,6 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
   }
 
   @Override
-  protected void refreshElements(@NotNull PsiElement[] elements) {}
-
-  @Override
   public void performRefactoring(@NotNull UsageInfo[] usages) {
     //try to create all directories beforehand
     try {

@@ -106,11 +106,6 @@ public class MacComboBoxBorder extends MacIntelliJTextBorder {
   }
 
   @Override
-  public boolean isBorderOpaque() {
-    return false;
-  }
-
-  @Override
   protected boolean isFocused(Component c) {
     if (c instanceof JComboBox) {
       JComboBox comboBox = (JComboBox)c;

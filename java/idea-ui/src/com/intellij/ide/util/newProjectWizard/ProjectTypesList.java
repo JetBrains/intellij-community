@@ -61,10 +61,6 @@ public class ProjectTypesList implements Disposable {
     myList = list;
 
     new ListSpeedSearch(myList) {
-      @Override
-      protected String getElementText(Object element) {
-        return super.getElementText(element);
-      }
     }.setComparator(new SpeedSearchComparator(false));
     List<TemplateItem> items = buildItems(map);
     final TemplatesGroup samplesGroup = new TemplatesGroup("Loading Templates...", "", null, 0, null, null, null);

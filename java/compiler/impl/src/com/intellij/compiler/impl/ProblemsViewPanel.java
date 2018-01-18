@@ -33,11 +33,6 @@ public class ProblemsViewPanel extends NewErrorTreeViewPanel {
   }
 
   @Override
-  protected boolean shouldShowFirstErrorInEditor() {
-    return false;
-  }
-
-  @Override
   protected boolean canHideWarnings() {
     return false;
   }

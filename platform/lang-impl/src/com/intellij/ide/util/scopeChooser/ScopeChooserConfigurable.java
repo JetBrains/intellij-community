@@ -239,11 +239,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   @Override
-  protected void processRemovedItems() {
-    //do nothing
-  }
-
-  @Override
   protected boolean wasObjectStored(Object editableObject) {
     if (editableObject instanceof NamedScope) {
       NamedScope scope = (NamedScope)editableObject;

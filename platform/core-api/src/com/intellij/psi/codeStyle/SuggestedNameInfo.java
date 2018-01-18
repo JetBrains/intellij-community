@@ -29,8 +29,6 @@ public abstract class SuggestedNameInfo {
   public static final Key<SuggestedNameInfo> SUGGESTED_NAME_INFO_KEY = Key.create("SUGGESTED_NAME_INFO_KEY");
 
   public static final SuggestedNameInfo NULL_INFO = new SuggestedNameInfo(ArrayUtil.EMPTY_STRING_ARRAY) {
-    @Override
-    public void nameChosen(String name) {}
   };
 
   /**

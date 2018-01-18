@@ -110,14 +110,6 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
           myLastActionInputEvent.add(event.getInputEvent());
         }
       }
-
-      @Override
-      public void beforeEditorTyping(char c, DataContext dataContext) {
-      }
-
-      @Override
-      public void afterActionPerformed(final AnAction action, final DataContext dataContext, final AnActionEvent event) {
-      }
     });
 
     myKeyProcessor = new MyKeyPostpocessor();

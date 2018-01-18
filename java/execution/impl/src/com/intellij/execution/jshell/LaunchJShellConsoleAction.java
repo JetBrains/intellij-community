@@ -64,9 +64,4 @@ public class LaunchJShellConsoleAction extends AnAction{
       JShellDiagnostic.notifyError(ex, project);
     }
   }
-
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-  }
 }

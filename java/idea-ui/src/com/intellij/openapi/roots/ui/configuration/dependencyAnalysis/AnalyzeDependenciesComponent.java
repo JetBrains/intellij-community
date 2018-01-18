@@ -150,23 +150,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
   /**
    * {@inheritDoc}
    */
-  @Override
-  protected void processRemovedItems() {
-    // no remove action so far
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  protected boolean wasObjectStored(Object editableObject) {
-    // no modifications so far
-    return false;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
   @Nls
   @Override
   public String getDisplayName() {
@@ -403,14 +386,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      * {@inheritDoc}
      */
     @Override
-    public void disposeUIResources() {
-      //Do nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public String getHelpTopic() {
       return null;
     }
@@ -429,14 +404,6 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
     @Override
     public void apply() throws ConfigurationException {
       // Do nothing
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void reset() {
-      //Do nothing
     }
 
     /**

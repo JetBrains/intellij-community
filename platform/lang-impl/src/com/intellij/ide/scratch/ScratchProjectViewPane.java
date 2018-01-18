@@ -49,7 +49,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.Collections;
@@ -74,11 +73,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Override
   public String getTitle() {
     return "Scratches";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return super.getIcon();
   }
 
   @NotNull

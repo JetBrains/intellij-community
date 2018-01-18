@@ -68,7 +68,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
@@ -346,12 +349,6 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
         ContainerUtil.addIfNotNull(result, fileSystem.findFileByPath(instance.getRootPath(rootType)));
       }
       return result;
-    }
-
-    @NotNull
-    @Override
-    public Set<VirtualFile> getAdditionalProjectRootsToIndex(@NotNull Project project) {
-      return Collections.emptySet();
     }
   }
 }

@@ -595,11 +595,6 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           ((JComponent)result).setBorder(BorderFactory.createLineBorder(JBColor.GRAY, 1));
           return result;
         }
-
-        @Override
-        public Object getCellEditorValue() {
-          return super.getCellEditorValue();
-        }
       });
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);

@@ -219,12 +219,6 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     public void apply() {
     }
 
-    public void reset() {
-    }
-
-    public void disposeUIResources() {
-    }
-
     public SvnFileRevision getRevision() {
       return myRevision;
     }

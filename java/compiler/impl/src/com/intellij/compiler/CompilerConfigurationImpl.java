@@ -45,7 +45,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.apache.oro.text.regex.*;
@@ -169,10 +168,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     Element state = new Element("state");
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
-      @Override
-      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        return super.accepts(accessor, bean);
-      }
     });
 
     if (!myAddNotNullAssertions) {

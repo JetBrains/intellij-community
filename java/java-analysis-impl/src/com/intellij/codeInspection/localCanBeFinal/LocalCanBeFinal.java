@@ -343,9 +343,4 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
     panel.addCheckbox(InspectionsBundle.message("inspection.local.can.be.final.option4"), "REPORT_IMPLICIT_FINALS");
     return panel;
   }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
 }

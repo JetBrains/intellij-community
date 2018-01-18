@@ -220,11 +220,6 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     return list.toArray(PsiField.EMPTY_ARRAY);
   }
 
-  @Override
-  protected String getHelpID() {
-    return "editing.altInsert.equals";
-  }
-
   private void equalsFieldsSelected() {
     Collection<MemberInfo> selectedMemberInfos = myEqualsPanel.getTable().getSelectedMemberInfos();
     updateHashCodeMemberInfos(selectedMemberInfos);

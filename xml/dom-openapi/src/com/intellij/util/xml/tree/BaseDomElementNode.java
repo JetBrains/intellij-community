@@ -259,11 +259,6 @@ public class BaseDomElementNode extends AbstractDomElementNode {
     return getParent() == null;
   }
 
-  @Override
-  public boolean expandOnDoubleClick() {
-    return true;
-  }
-
   public boolean isShowContainingFileInfo() {
     if (!myRootDomElement.isValid()) return false;
     DomElement root = myRootDomElement;

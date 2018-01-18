@@ -59,7 +59,6 @@ import git4idea.checkin.GitCheckinEnvironment;
 import git4idea.checkin.GitCommitAndPushExecutor;
 import git4idea.checkout.GitCheckoutProvider;
 import git4idea.commands.Git;
-import git4idea.util.GitVcsConsoleWriter;
 import git4idea.config.*;
 import git4idea.diff.GitDiffProvider;
 import git4idea.history.GitHistoryProvider;
@@ -70,6 +69,7 @@ import git4idea.roots.GitIntegrationEnabler;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
+import git4idea.util.GitVcsConsoleWriter;
 import git4idea.vfs.GitVFSListener;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -274,14 +274,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public boolean isVersionedDirectory(VirtualFile dir) {
     return dir.isDirectory() && GitUtil.gitRootOrNull(dir) != null;
-  }
-
-  @Override
-  protected void start() {
-  }
-
-  @Override
-  protected void shutdown() {
   }
 
   @Override

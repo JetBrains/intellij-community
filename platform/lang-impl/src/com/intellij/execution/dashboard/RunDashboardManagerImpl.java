@@ -164,9 +164,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       }
     });
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-      @Override
-      public void enteredDumbMode() {
-      }
 
       @Override
       public void exitDumbMode() {

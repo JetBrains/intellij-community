@@ -241,11 +241,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
-  }
-
-  @Override
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {

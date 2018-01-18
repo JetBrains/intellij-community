@@ -442,10 +442,5 @@ public class InstalledPluginsTableModel extends PluginTableModel {
         return comparator.compare(o1, o2);
       };
     }
-
-    @Override
-    public int getWidth(JTable table) {
-      return super.getWidth(table);
-    }
   }
 }

@@ -214,15 +214,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    //if (myIsCodeFragmentEvaluationSupported) {
-    //  return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
-    //}
-    return super.createActions();
-  }
-
   @Override
   protected String getHelpId() {
     return "debugging.debugMenu.evaluate";

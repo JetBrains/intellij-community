@@ -172,8 +172,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     myFocusWatcher = new FocusWatcher() {
-      @Override
-      protected void focusLostImpl(final FocusEvent e) {}
     };
     myFocusWatcher.install(myComponent);
     myShown = true;

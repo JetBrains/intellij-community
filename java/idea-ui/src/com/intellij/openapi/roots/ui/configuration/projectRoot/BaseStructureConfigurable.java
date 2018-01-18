@@ -408,10 +408,5 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     public ActionGroup getActionGroup() {
       return this;
     }
-
-    @Override
-    public int getDefaultIndex() {
-        return 0;
-      }
   }
 }
