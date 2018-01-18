@@ -29,8 +29,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.StreamEx;
-import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -40,7 +38,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size").parameterCount(0);
   private static final CallMatcher COLLECTION_TO_ARRAY =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "toArray").parameterCount(1);
-  private static final String PREFER_EMPTY_ARRAY_SETTING = "PreferEmptyArray";
 
   private static final PreferEmptyArray DEFAULT_MODE = PreferEmptyArray.ALWAYS;
 
@@ -62,11 +59,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
         default:
           return PsiUtil.isLanguageLevel7OrHigher(expression);
       }
-    }
-
-    @NotNull
-    static PreferEmptyArray from(String name) {
-      return StreamEx.of(values()).filterBy(PreferEmptyArray::name, name).findFirst().orElse(DEFAULT_MODE);
     }
   }
 
@@ -102,23 +94,6 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("to.array.call.style.display.name");
-  }
-
-  @Override
-  public void readSettings(@NotNull Element node) {
-    Element element = node.getChild(PREFER_EMPTY_ARRAY_SETTING);
-    if (element != null) {
-      myMode = PreferEmptyArray.from(element.getAttributeValue("value"));
-    }
-  }
-
-  @Override
-  public void writeSettings(@NotNull Element node) {
-    if (myMode != DEFAULT_MODE) {
-      Element element = new Element(PREFER_EMPTY_ARRAY_SETTING);
-      element.setAttribute("value", myMode.toString());
-      node.addContent(element);
-    }
   }
 
   @Override
@@ -178,7 +153,7 @@ public class ToArrayCallWithZeroLengthArrayArgumentInspection extends BaseInspec
   }
 
   private static class ToArrayCallWithZeroLengthArrayArgumentFix extends InspectionGadgetsFix {
-    private boolean myEmptyPreferred;
+    private final boolean myEmptyPreferred;
 
     public ToArrayCallWithZeroLengthArrayArgumentFix(boolean emptyPreferred) {
       myEmptyPreferred = emptyPreferred;
