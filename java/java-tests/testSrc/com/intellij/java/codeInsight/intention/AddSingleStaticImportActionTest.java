@@ -173,6 +173,14 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     assertNull(intention);
   }
 
+  public void testComment() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    IntentionAction intention = myFixture.getAvailableIntention("Add static import for 'java.util.Arrays.asList'");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/addSingleStaticImport";
