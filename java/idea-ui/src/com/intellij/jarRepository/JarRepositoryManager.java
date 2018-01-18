@@ -148,7 +148,12 @@ public class JarRepositoryManager {
     if (!MAVEN_REPOSITORY_MACRO.equals(expanded)) {
       repoPath = new File(expanded);
       if (repoPath.exists()) {
-        ourLocalRepositoryPath = repoPath;
+        try {
+          ourLocalRepositoryPath = repoPath.getCanonicalFile();
+        }
+        catch (IOException e) {
+          ourLocalRepositoryPath = repoPath;
+        }
         return repoPath;
       }
     }
