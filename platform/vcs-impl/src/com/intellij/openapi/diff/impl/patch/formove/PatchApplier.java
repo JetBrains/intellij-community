@@ -66,7 +66,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @Nullable private final LocalChangeList myTargetChangeList;
   @NotNull private final List<FilePatch> myRemainingPatches;
   @NotNull private final List<FilePatch> myFailedPatches;
-  private final PathsVerifier<BinaryType> myVerifier;
+  private final PathsVerifier myVerifier;
 
   private final boolean myReverseConflict;
   @Nullable private final String myLeftConflictPanelTitle;
@@ -92,7 +92,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myRightConflictPanelTitle = rightConflictPanelTitle;
     myRemainingPatches = new ArrayList<>();
     myFailedPatches = new ArrayList<>();
-    myVerifier = new PathsVerifier<>(myProject, myBaseDirectory, myPatches);
+    myVerifier = new PathsVerifier(myProject, myBaseDirectory, myPatches);
   }
 
   public void setIgnoreContentRootsCheck() {
@@ -124,9 +124,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   @NotNull
-  private List<BinaryType> getBinaryPatches() {
+  private List<FilePatch> getBinaryPatches() {
     return ContainerUtil.mapNotNull(myVerifier.getBinaryPatches(),
-                                    patchInfo -> (BinaryType)patchInfo.getApplyPatch().getPatch());
+                                    patchInfo -> patchInfo.getApplyPatch().getPatch());
   }
 
   @CalledInAwt

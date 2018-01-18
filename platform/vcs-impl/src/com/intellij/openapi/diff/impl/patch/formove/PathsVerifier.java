@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -26,13 +25,11 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
-import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,7 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class PathsVerifier<BinaryType extends FilePatch> {
+public class PathsVerifier {
   // in
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
@@ -395,16 +392,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   }
 
   private void addPatch(final FilePatch patch, final VirtualFile file) {
-    final Pair<VirtualFile, ApplyFilePatchBase> patchPair = Pair.create(file, ApplyFilePatchFactory.createGeneral(patch));
     if (patch instanceof TextFilePatch) {
       myTextPatches.add(new PatchAndFile(file, ApplyFilePatchFactory.create((TextFilePatch)patch)));
-    } else {
-      final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>)((patch instanceof BinaryFilePatch)
-                                                                                               ? ApplyFilePatchFactory
-                                                                                                 .create((BinaryFilePatch)patch)
-                                                                                               : ApplyFilePatchFactory
-                                                                                                 .create((ShelvedBinaryFilePatch)patch));
-      myBinaryPatches.add(new PatchAndFile(file, applyBinaryPatch));
+    }
+    else {
+      myBinaryPatches.add(new PatchAndFile(file, ApplyFilePatchFactory.createGeneral(patch)));
     }
     myWritableFiles.add(file);
   }
