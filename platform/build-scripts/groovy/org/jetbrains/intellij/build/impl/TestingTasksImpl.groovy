@@ -31,6 +31,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.function.Predicate
 import java.util.jar.Manifest
+
 /**
  * @author nik
  */
@@ -106,7 +107,7 @@ class TestingTasksImpl extends TestingTasks {
     context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
     List<String> filteredVmOptions = removeStandardJvmOptions(runConfigurationProperties.vmParameters)
     runTestsProcess(runConfigurationProperties.moduleName, null, runConfigurationProperties.testClassPatterns.join(";"),
-                    filteredVmOptions + additionalJvmOptions, [:], false)
+                    filteredVmOptions + additionalJvmOptions, [:], runConfigurationProperties.envVariables, false)
   }
 
   private static List<String> removeStandardJvmOptions(List<String> vmOptions) {
@@ -136,7 +137,7 @@ class TestingTasksImpl extends TestingTasks {
       additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.absolutePath
     }
 
-    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, false)
+    runTestsProcess(mainModule, options.testGroups, options.testPatterns, additionalJvmOptions, additionalSystemProperties, [:], false)
   }
 
   private void debugTests(String remoteDebugJvmOptions, List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
@@ -161,11 +162,11 @@ class TestingTasksImpl extends TestingTasks {
     }
     def mainModule = options.mainModule ?: defaultMainModule
     def filteredOptions = removeStandardJvmOptions(remoteDebugJvmOptions.split(";").toList())
-    runTestsProcess(mainModule, null, junitClass, filteredOptions + additionalJvmOptions, [:], true)
+    runTestsProcess(mainModule, null, junitClass, filteredOptions + additionalJvmOptions, [:], [:], true)
   }
 
   private void runTestsProcess(String mainModule, String testGroups, String testPatterns,
-                               List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, boolean remoteDebugging) {
+                               List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("tests_bootstrap"), false)
     def classpathFile = new File("$context.paths.temp/junit.classpath")
@@ -254,6 +255,9 @@ class TestingTasksImpl extends TestingTasks {
     context.messages.info("System properties: $systemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
     context.messages.info("Tests classpath: $testsClasspath")
+    if (!envVariables.isEmpty()) {
+      context.messages.info("Environment variables: $envVariables")
+    }
 
     if (suspendDebugProcess) {
       context.messages.info("""
@@ -262,11 +266,11 @@ class TestingTasksImpl extends TestingTasks {
 """)
     }
     if (isBootstrapSuiteDefault()) {
-      runJUnitTask(jvmArgs, systemProperties, bootstrapClasspath)
+      runJUnitTask(jvmArgs, systemProperties, envVariables, bootstrapClasspath)
     }
     else {
       //run other suites instead of BootstrapTests
-      runJUnitTask(jvmArgs, systemProperties, testsClasspath)
+      runJUnitTask(jvmArgs, systemProperties, envVariables, testsClasspath)
     }
 
     if (new File(hprofSnapshotFilePath).exists()) {
@@ -283,8 +287,9 @@ class TestingTasksImpl extends TestingTasks {
     return snapshotsDir
   }
 
+  @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
-  private void runJUnitTask(List<String> jvmArgs, Map<String, String> systemProperties, List<String> bootstrapClasspath) {
+  private void runJUnitTask(List<String> jvmArgs, Map<String, String> systemProperties, Map<String, String> envVariables, List<String> bootstrapClasspath) {
     defineJunitTask(context.ant, "$context.paths.communityHome/lib")
 
     String junitTemp = "$context.paths.temp/junit"
@@ -299,6 +304,9 @@ class TestingTasksImpl extends TestingTasks {
         if (value != null) {
           sysproperty(key: key, value: value)
         }
+      }
+      envVariables.each {
+        env(key: it.key, value: it.value)
       }
 
       if (teamCityFormatterClasspath != null) {

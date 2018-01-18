@@ -17,6 +17,7 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals(listOf("com.example.test.MainTest"), properties.testClassPatterns)
     assertEquals(listOf("-ea", "-Xmx512m"), properties.vmParameters)
     assertEquals(listOf("artifact1", "artifact2"), properties.requiredArtifacts)
+    assertEquals(mapOf("foo" to "1", "bar" to "2"), properties.envVariables)
   }
 
   @Test

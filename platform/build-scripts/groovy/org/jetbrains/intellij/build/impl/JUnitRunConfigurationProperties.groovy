@@ -15,6 +15,7 @@ class JUnitRunConfigurationProperties {
   final List<String> testClassPatterns
   final List<String> vmParameters
   final List<String> requiredArtifacts
+  final Map<String, String> envVariables
 
   static JUnitRunConfigurationProperties findRunConfiguration(String projectHome, String name, BuildMessages messages) {
     def file = new File(projectHome, ".idea/runConfigurations/${FileUtil.sanitizeFileName(name)}.xml")
@@ -64,18 +65,21 @@ class JUnitRunConfigurationProperties {
             artifact?.collect { it.@name } ?: []
 
     def vmParameters = options["VM_PARAMETERS"].tokenize()
-    return new JUnitRunConfigurationProperties(configuration.@name, moduleName, testClassPatterns, vmParameters, requiredArtifacts)
+    def envVariables = first(configuration.envs)?.env?.collectEntries { [it.@name, it.@value] } ?: [:]
+    return new JUnitRunConfigurationProperties(configuration.@name, moduleName, testClassPatterns, vmParameters, requiredArtifacts, envVariables)
   }
 
   private static <T> T first(Collection<T> collection) {
     collection == null || collection.isEmpty() ? null : collection.first()
   }
 
-  JUnitRunConfigurationProperties(String name, String moduleName, List<String> testClassPatterns, List<String> vmParameters, List<String> requiredArtifacts) {
+  JUnitRunConfigurationProperties(String name, String moduleName, List<String> testClassPatterns, List<String> vmParameters,
+                                  List<String> requiredArtifacts, Map<String, String> envVariables) {
     this.name = name
     this.moduleName = moduleName
     this.testClassPatterns = testClassPatterns
     this.requiredArtifacts = requiredArtifacts
     this.vmParameters = vmParameters
+    this.envVariables = envVariables
   }
 }

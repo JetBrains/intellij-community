@@ -13,6 +13,10 @@
     <option name="TEST_SEARCH_SCOPE">
       <value defaultName="moduleWithDependencies"/>
     </option>
+    <envs>
+      <env name="foo" value="1"/>
+      <env name="bar" value="2"/>
+    </envs>
     <method>
       <option name="BuildArtifacts" enabled="true">
         <artifact name="artifact1"/>
