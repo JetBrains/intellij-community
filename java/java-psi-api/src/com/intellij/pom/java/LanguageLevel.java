@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaCoreBundle;
@@ -22,19 +20,18 @@ import org.jetbrains.annotations.Nullable;
  * @see JavaSdkVersion
  */
 public enum LanguageLevel {
-  JDK_1_3("Java 1.3", JavaCoreBundle.message("jdk.1.3.language.level.description"), "1.3"),
-  JDK_1_4("Java 1.4", JavaCoreBundle.message("jdk.1.4.language.level.description"), "1.4"),
-  JDK_1_5("Java 5.0", JavaCoreBundle.message("jdk.1.5.language.level.description"), "1.5", "5"),
-  JDK_1_6("Java 6", JavaCoreBundle.message("jdk.1.6.language.level.description"), "1.6", "6"),
-  JDK_1_7("Java 7", JavaCoreBundle.message("jdk.1.7.language.level.description"), "1.7", "7"),
-  JDK_1_8("Java 8", JavaCoreBundle.message("jdk.1.8.language.level.description"), "1.8", "8"),
-  JDK_1_9("Java 9", JavaCoreBundle.message("jdk.1.9.language.level.description"), "9", "1.9"),
-  JDK_X("Java X", JavaCoreBundle.message("jdk.X.language.level.description"), "");
+  JDK_1_3(JavaCoreBundle.message("jdk.1.3.language.level.description"), "1.3"),
+  JDK_1_4(JavaCoreBundle.message("jdk.1.4.language.level.description"), "1.4"),
+  JDK_1_5(JavaCoreBundle.message("jdk.1.5.language.level.description"), "1.5", "5"),
+  JDK_1_6(JavaCoreBundle.message("jdk.1.6.language.level.description"), "1.6", "6"),
+  JDK_1_7(JavaCoreBundle.message("jdk.1.7.language.level.description"), "1.7", "7"),
+  JDK_1_8(JavaCoreBundle.message("jdk.1.8.language.level.description"), "1.8", "8"),
+  JDK_1_9(JavaCoreBundle.message("jdk.1.9.language.level.description"), "9", "1.9"),
+  JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), "");
 
   public static final LanguageLevel HIGHEST = JDK_1_9;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
-  private final String myName;
   private final String myPresentableText;
   private final String[] myCompilerComplianceOptions;
 
@@ -42,15 +39,14 @@ public enum LanguageLevel {
    * @param compilerComplianceOptions versions supported by Javac '-source' parameter
    * @see <a href="http://docs.oracle.com/javase/8/docs/technotes/tools/windows/javac.html">Javac Reference</a>
    */
-  LanguageLevel(String name, @Nls String presentableText, String... compilerComplianceOptions) {
-    myName = name;
+  LanguageLevel(@Nls String presentableText, String... compilerComplianceOptions) {
     myPresentableText = presentableText;
     myCompilerComplianceOptions = compilerComplianceOptions;
   }
 
-  @NotNull
+  /** @deprecated use {@link JavaSdkVersion#getDescription()} (to be removed in IDEA 2019) */
   public String getName() {
-    return myName;
+    return this == JDK_X ? "Java X" :  "Java " + JavaSdkVersion.fromLanguageLevel(this).getDescription();
   }
 
   @NotNull

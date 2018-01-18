@@ -42,7 +42,8 @@ public enum JavaSdkVersion {
 
   @NotNull
   public String getDescription() {
-    return JavaVersion.compose(ordinal(), 0, 0, 0, false).toString();
+    int feature = ordinal();
+    return feature < 5 ? "1." + feature : String.valueOf(feature);
   }
 
   public boolean isAtLeast(@NotNull JavaSdkVersion version) {

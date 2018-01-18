@@ -165,8 +165,7 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
             StringBuilder info = new StringBuilder().append("bytecode version: ").append(major).append('.').append(minor);
             JavaSdkVersion sdkVersion = ClsParsingUtil.getJdkVersionByBytecode(major);
             if (sdkVersion != null) {
-              int feature = sdkVersion.ordinal();
-              info.append(" (Java ").append(feature < 5 ? "1." : "").append(feature).append(')');
+              info.append(" (Java ").append(sdkVersion.getDescription()).append(')');
             }
             return info.toString();
           }
