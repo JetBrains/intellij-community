@@ -18,7 +18,7 @@ package com.jetbrains.env.python.testing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.jetbrains.extensions.TargetWithTypeExtKt;
+import com.jetbrains.extensions.TargetWithVariantExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
@@ -90,11 +90,11 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertThat("Bad directory", configuration.getWorkingDirectorySafe(), Matchers.endsWith("test-test"));
     }
     else if (element instanceof PsiDirectory && elementName.endsWith("package_test")) {
-      Assert.assertEquals("Working directory for folder should be same as folder", TargetWithTypeExtKt.asVirtualFile(target), workingDirectory);
+      Assert.assertEquals("Working directory for folder should be same as folder", TargetWithVariantExtKt.asVirtualFile(target), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("package_test"));
     }
     else if (element instanceof PyFile && elementName.endsWith("test_in_package.py")) {
-      final VirtualFile targetFile = TargetWithTypeExtKt.asVirtualFile(target);
+      final VirtualFile targetFile = TargetWithVariantExtKt.asVirtualFile(target);
       assert targetFile != null : "Failed to create virtual file for " + target;
       Assert.assertEquals("Working directory for file should be same as file's parent", targetFile.getParent(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test_in_package.py"));
@@ -105,11 +105,11 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertEquals("Bad configuration for class", "test_in_package.TestLogic", target.getTarget());
     }
     else if (element instanceof PsiDirectory && elementName.endsWith("tests_folder")) {
-      Assert.assertEquals("Bad configuration for no package folder", workingDirectory, TargetWithTypeExtKt.asVirtualFile(target));
+      Assert.assertEquals("Bad configuration for no package folder", workingDirectory, TargetWithVariantExtKt.asVirtualFile(target));
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("tests_folder"));
     }
     else if (element instanceof PyFile && elementName.endsWith("test_lonely.py")) {
-      final VirtualFile targetFile = TargetWithTypeExtKt.asVirtualFile(target);
+      final VirtualFile targetFile = TargetWithVariantExtKt.asVirtualFile(target);
       assert targetFile != null : "Failed to create virtual file for " + target;
       Assert.assertEquals("Bad configuration for no package file", targetFile.getParent(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test_lonely.py"));
