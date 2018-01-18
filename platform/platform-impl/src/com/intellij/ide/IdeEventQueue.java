@@ -32,6 +32,7 @@ import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
