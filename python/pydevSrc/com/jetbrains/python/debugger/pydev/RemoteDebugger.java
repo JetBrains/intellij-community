@@ -323,11 +323,15 @@ public class RemoteDebugger implements ProcessDebugger {
         }
         response = myResponseQueue.get(sequence);
       }
-      while (response == null && isConnected() && System.currentTimeMillis() < until);
+      while (response == null && shouldWaitForResponse() && System.currentTimeMillis() < until);
       myResponseQueue.remove(sequence);
     }
 
     return response;
+  }
+
+  private boolean shouldWaitForResponse() {
+    return myDebuggerTransport.isConnecting() || myDebuggerTransport.isConnected();
   }
 
   @Override
@@ -696,7 +700,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  protected void onProcessCreatedEvent() throws PyDebuggerException {
+  protected void onProcessCreatedEvent() {
   }
 
   protected void fireCloseEvent() {
