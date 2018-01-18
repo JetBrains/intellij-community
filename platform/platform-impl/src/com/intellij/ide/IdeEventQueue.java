@@ -456,6 +456,7 @@ public class IdeEventQueue extends EventQueue {
         filter(lor -> lor != null).
         flatMap(listOfRunnables -> listOfRunnables.stream()).
         filter(r -> r != null).
+        filter(r -> !(r instanceof ExpirableRunnable && ((ExpirableRunnable)r).isExpired())).
         forEach(runnable -> {
           try {
             runnable.run();
