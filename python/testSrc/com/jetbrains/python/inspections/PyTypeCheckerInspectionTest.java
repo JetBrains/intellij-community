@@ -530,4 +530,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testOverloadedFunctionAssignedToTargetInStub() {
     doMultiFileTest();
   }
+
+  // PY-27949
+  public void testAssigningToDictEntry() {
+    doTest();
+  }
 }
