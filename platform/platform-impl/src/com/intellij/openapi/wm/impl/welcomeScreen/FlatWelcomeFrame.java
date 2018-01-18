@@ -98,7 +98,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     AppUIUtil.updateWindowIcon(this);
     final int width = RecentProjectsManager.getInstance().getRecentProjectsActions(false).length == 0 ? 666 : MAX_DEFAULT_WIDTH;
     // Android Studio: Changed default frame height to accommodate extra action.
-    getRootPane().setPreferredSize(JBUI.size(width, Math.max(DEFAULT_HEIGHT, getMinimumSize().height)));
+    getRootPane().setPreferredSize(new Dimension(JBUI.scale(width), Math.max(JBUI.scale(DEFAULT_HEIGHT), getMinimumSize().height)));
     setResizable(false);
 
     Dimension size = getPreferredSize();
