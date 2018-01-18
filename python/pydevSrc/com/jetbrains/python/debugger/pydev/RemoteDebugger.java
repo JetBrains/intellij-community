@@ -315,15 +315,20 @@ public class RemoteDebugger implements ProcessDebugger {
     long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
 
     synchronized (myResponseQueue) {
+      boolean interrupted = false;
       do {
         try {
           myResponseQueue.wait(1000);
         }
-        catch (InterruptedException ignore) {
+        catch (InterruptedException e) {
+          // restore interrupted flag
+          Thread.currentThread().interrupt();
+
+          interrupted = true;
         }
         response = myResponseQueue.get(sequence);
       }
-      while (response == null && shouldWaitForResponse() && System.currentTimeMillis() < until);
+      while (response == null && shouldWaitForResponse() && !interrupted && System.currentTimeMillis() < until);
       myResponseQueue.remove(sequence);
     }
 
@@ -359,6 +364,9 @@ public class RemoteDebugger implements ProcessDebugger {
         myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
+        // restore interrupted flag
+        Thread.currentThread().interrupt();
+
         LOG.error(e);
       }
     }
