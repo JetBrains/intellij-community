@@ -95,18 +95,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myRightConflictPanelTitle = rightConflictPanelTitle;
     myRemainingPatches = new ArrayList<>();
     myFailedPatches = new ArrayList<>();
-    myVerifier = new PathsVerifier<>(myProject, myBaseDirectory, myPatches, new PathsVerifier.BaseMapper() {
-      @Override
-      @Nullable
-      public VirtualFile getFile(FilePatch patch, String path) {
-        return PathMerger.getFile(myBaseDirectory, path);
-      }
-
-      @Override
-      public FilePath getPath(FilePatch patch, String path) {
-        return PathMerger.getFile(VcsUtil.getFilePath(myBaseDirectory), path);
-      }
-    });
+    myVerifier = new PathsVerifier<>(myProject, myBaseDirectory, myPatches);
   }
 
   public void setIgnoreContentRootsCheck() {
