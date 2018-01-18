@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchFactory;
-import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
@@ -57,8 +56,8 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private final List<FilePath> myBeforePaths;
   private final List<VirtualFile> myCreatedDirectories;
   // out
-  private final List<Pair<VirtualFile, ApplyTextFilePatch>> myTextPatches;
-  private final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> myBinaryPatches;
+  private final List<PatchAndFile> myTextPatches;
+  private final List<PatchAndFile> myBinaryPatches;
   @NotNull private final List<VirtualFile> myWritableFiles;
   private ProjectLevelVcsManager myVcsManager;
   private final List<FilePatch> mySkipped;
@@ -150,7 +149,7 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   public List<FilePatch> execute() {
     List<FilePatch> failedPatches = ContainerUtil.newArrayList();
     try {
-      final List<CheckPath> checkers = new ArrayList<CheckPath>(myPatches.size());
+      final List<CheckPath> checkers = new ArrayList<>(myPatches.size());
       for (FilePatch patch : myPatches) {
         final CheckPath checker = getChecker(patch);
         checkers.add(checker);
@@ -196,10 +195,10 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
   @NotNull
   public Collection<FilePatch> filterBadFileTypePatches() {
-    List<Pair<VirtualFile, ApplyTextFilePatch>> failedTextPatches =
-      ContainerUtil.findAll(myTextPatches, textPatch -> !isFileTypeOk(textPatch.getFirst()));
+    List<PatchAndFile> failedTextPatches =
+      ContainerUtil.findAll(myTextPatches, textPatch -> !isFileTypeOk(textPatch.getFile()));
     myTextPatches.removeAll(failedTextPatches);
-    return ContainerUtil.map(failedTextPatches, patchInfo -> patchInfo.getSecond().getPatch());
+    return ContainerUtil.map(failedTextPatches, patchInfo -> patchInfo.getApplyPatch().getPatch());
   }
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {
@@ -398,14 +397,14 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private void addPatch(final FilePatch patch, final VirtualFile file) {
     final Pair<VirtualFile, ApplyFilePatchBase> patchPair = Pair.create(file, ApplyFilePatchFactory.createGeneral(patch));
     if (patch instanceof TextFilePatch) {
-      myTextPatches.add(Pair.create(file, ApplyFilePatchFactory.create((TextFilePatch)patch)));
+      myTextPatches.add(new PatchAndFile(file, ApplyFilePatchFactory.create((TextFilePatch)patch)));
     } else {
       final ApplyFilePatchBase<BinaryType> applyBinaryPatch = (ApplyFilePatchBase<BinaryType>)((patch instanceof BinaryFilePatch)
                                                                                                ? ApplyFilePatchFactory
                                                                                                  .create((BinaryFilePatch)patch)
                                                                                                : ApplyFilePatchFactory
                                                                                                  .create((ShelvedBinaryFilePatch)patch));
-      myBinaryPatches.add(Pair.create(file, applyBinaryPatch));
+      myBinaryPatches.add(new PatchAndFile(file, applyBinaryPatch));
     }
     myWritableFiles.add(file);
   }
@@ -527,11 +526,11 @@ public class PathsVerifier<BinaryType extends FilePatch> {
     return child;
   }
 
-  public List<Pair<VirtualFile, ApplyTextFilePatch>> getTextPatches() {
+  public List<PatchAndFile> getTextPatches() {
     return myTextPatches;
   }
 
-  public List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> getBinaryPatches() {
+  public List<PatchAndFile> getBinaryPatches() {
     return myBinaryPatches;
   }
 
@@ -673,5 +672,23 @@ public class PathsVerifier<BinaryType extends FilePatch> {
 
   public void setIgnoreContentRootsCheck(boolean ignoreContentRootsCheck) {
     myIgnoreContentRootsCheck = ignoreContentRootsCheck;
+  }
+
+  public static class PatchAndFile {
+    private final VirtualFile myFile;
+    private final ApplyFilePatchBase<?> myPatch;
+
+    public PatchAndFile(VirtualFile file, ApplyFilePatchBase<?> patch) {
+      myFile = file;
+      myPatch = patch;
+    }
+
+    public VirtualFile getFile() {
+      return myFile;
+    }
+
+    public ApplyFilePatchBase<?> getApplyPatch() {
+      return myPatch;
+    }
   }
 }

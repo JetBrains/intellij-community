@@ -27,11 +27,10 @@ import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchUtil;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.diff.impl.patch.apply.ApplyTextFilePatch;
+import com.intellij.openapi.diff.impl.patch.formove.PathsVerifier.PatchAndFile;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -127,7 +126,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @NotNull
   private List<BinaryType> getBinaryPatches() {
     return ContainerUtil.mapNotNull(myVerifier.getBinaryPatches(),
-                                    patchInfo -> patchInfo.getSecond().getPatch());
+                                    patchInfo -> (BinaryType)patchInfo.getApplyPatch().getPatch());
   }
 
   @CalledInAwt
@@ -338,7 +337,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());
     ApplyPatchStatus result = myFailedPatches.isEmpty() ? null : ApplyPatchStatus.FAILURE;
-    final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches = myVerifier.getTextPatches();
+    final List<PatchAndFile> textPatches = myVerifier.getTextPatches();
     try {
       markInternalOperation(textPatches, true);
       return ApplyPatchStatus.and(result, actualApply(textPatches, myVerifier.getBinaryPatches(), myCommitContext));
@@ -360,9 +359,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return isSuccess ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
   }
 
-  private static void markInternalOperation(List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches, boolean set) {
-    for (Pair<VirtualFile, ApplyTextFilePatch> patch : textPatches) {
-      ChangesUtil.markInternalOperation(patch.getFirst(), set);
+  private static void markInternalOperation(List<PatchAndFile> textPatches, boolean set) {
+    for (PatchAndFile patch : textPatches) {
+      ChangesUtil.markInternalOperation(patch.getFile(), set);
     }
   }
 
@@ -423,8 +422,8 @@ public class PatchApplier<BinaryType extends FilePatch> {
   }
 
   @Nullable
-  private ApplyPatchStatus actualApply(final List<Pair<VirtualFile, ApplyTextFilePatch>> textPatches,
-                                       final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> binaryPatches,
+  private ApplyPatchStatus actualApply(final List<PatchAndFile> textPatches,
+                                       final List<PatchAndFile> binaryPatches,
                                        final CommitContext commitContext) {
     final ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     ApplyPatchStatus status;
@@ -453,25 +452,25 @@ public class PatchApplier<BinaryType extends FilePatch> {
     return status;
   }
 
-  private void moveForCustomBinaries(final List<Pair<VirtualFile, ApplyFilePatchBase<BinaryType>>> patches,
+  private void moveForCustomBinaries(final List<PatchAndFile> patches,
                                      final List<FilePatch> appliedPatches) throws IOException {
-    for (Pair<VirtualFile, ApplyFilePatchBase<BinaryType>> patch : patches) {
-      if (appliedPatches.contains(patch.getSecond().getPatch())) {
-        myVerifier.doMoveIfNeeded(patch.getFirst());
+    for (PatchAndFile patch : patches) {
+      if (appliedPatches.contains(patch.getApplyPatch().getPatch())) {
+        myVerifier.doMoveIfNeeded(patch.getFile());
       }
     }
   }
 
-  private <V extends FilePatch, T extends ApplyFilePatchBase<V>> ApplyPatchStatus applyList(final List<Pair<VirtualFile, T>> patches,
-                                                                                            final ApplyPatchContext context,
-                                                                                            ApplyPatchStatus status,
-                                                                                            CommitContext commiContext) throws IOException {
-    for (Pair<VirtualFile, T> patch : patches) {
-      T applyFilePatch = patch.getSecond();
-      ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFirst(), commiContext,
+  private ApplyPatchStatus applyList(final List<PatchAndFile> patches,
+                                     final ApplyPatchContext context,
+                                     ApplyPatchStatus status,
+                                     CommitContext commiContext) throws IOException {
+    for (PatchAndFile patch : patches) {
+      ApplyFilePatchBase<?> applyFilePatch = patch.getApplyPatch();
+      ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFile(), commiContext,
                                                                    myReverseConflict, myLeftConflictPanelTitle, myRightConflictPanelTitle);
       if (patchStatus == ApplyPatchStatus.SUCCESS || patchStatus == ApplyPatchStatus.ALREADY_APPLIED) {
-        applyAdditionalPatchData(patch.getFirst(), applyFilePatch.getPatch());
+        applyAdditionalPatchData(patch.getFile(), applyFilePatch.getPatch());
       }
       if (patchStatus == ApplyPatchStatus.ABORT) return patchStatus;
       status = ApplyPatchStatus.and(status, patchStatus);
@@ -480,7 +479,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         continue;
       }
       if (patchStatus != ApplyPatchStatus.SKIP) {
-        myVerifier.doMoveIfNeeded(patch.getFirst());
+        myVerifier.doMoveIfNeeded(patch.getFile());
         myRemainingPatches.remove(applyFilePatch.getPatch());
       }
     }
