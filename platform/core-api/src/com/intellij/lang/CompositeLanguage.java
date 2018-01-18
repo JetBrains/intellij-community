@@ -40,7 +40,7 @@ public class CompositeLanguage extends Language {
     for (LanguageFilter filter : myFilters) {
       if (filter.isRelevantForFile(psi)) extensions.add(filter.getLanguage());
     }
-    return extensions.toArray(new Language[extensions.size()]);
+    return extensions.toArray(new Language[0]);
   }
 
   @NotNull

@@ -160,7 +160,7 @@ public class RngElementDescriptor implements XmlElementDescriptor {
     }
 
     final Collection<RngXmlAttributeDescriptor> result = name2descriptor.values();
-    return result.toArray(new RngXmlAttributeDescriptor[result.size()]);
+    return result.toArray(new RngXmlAttributeDescriptor[0]);
   }
 
   @Override

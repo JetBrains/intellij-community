@@ -38,7 +38,6 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
@@ -182,7 +181,7 @@ public class ExtractSuperClassUtil {
         }
       }
     }
-    return baseConstructors.toArray(new PsiMethod[baseConstructors.size()]);
+    return baseConstructors.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   private static void clearPsiReferenceList(PsiReferenceList refList) throws IncorrectOperationException {

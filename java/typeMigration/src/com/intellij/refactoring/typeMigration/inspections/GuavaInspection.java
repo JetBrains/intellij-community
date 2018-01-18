@@ -343,7 +343,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       TypeMigrationProcessor.runHighlightingTypeMigration(project,
                                                           null,
                                                           rules,
-                                                          elements.toArray(new PsiElement[elements.size()]),
+                                                          elements.toArray(PsiElement.EMPTY_ARRAY),
                                                           createMigrationTypeFunction(elements, types),
                                                           true,
                                                           true);

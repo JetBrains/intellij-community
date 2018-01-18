@@ -92,7 +92,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
     }
 
     public PsiClass[] getImportedClasses() {
-      return importedClasses.toArray(new PsiClass[importedClasses.size()]);
+      return importedClasses.toArray(PsiClass.EMPTY_ARRAY);
     }
   }
 

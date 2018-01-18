@@ -84,7 +84,7 @@ public class PyInconsistentIndentationInspection extends PyInspection {
         }
         lexer.advance();
       }
-      return myProblems.toArray(new ProblemDescriptor[myProblems.size()]);
+      return myProblems.toArray(ProblemDescriptor.EMPTY_ARRAY);
     }
 
     private void validateIndent(final int tokenStart, String indent) {

@@ -104,7 +104,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
         }
       }
     }
-    return result.toArray(new PyImportElement[result.size()]);
+    return result.toArray(new PyImportElement[0]);
   }
 
   @Nullable

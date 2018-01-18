@@ -34,7 +34,7 @@ public class MethodResolveProcessor implements PsiScopeProcessor, ElementClassHi
   }
 
   public PsiMethod[] getMethods() {
-    return myMethods.toArray(new PsiMethod[myMethods.size()]);
+    return myMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Override

@@ -440,7 +440,7 @@ public class FileTreeModelBuilder {
         }
       }
     }
-    return result.isEmpty() ? null : result.toArray(new PackageDependenciesNode[result.size()]);
+    return result.isEmpty() ? null : result.toArray(new PackageDependenciesNode[0]);
   }
 
   private PackageDependenciesNode getModuleDirNode(VirtualFile virtualFile, Module module, DirectoryNode childNode) {

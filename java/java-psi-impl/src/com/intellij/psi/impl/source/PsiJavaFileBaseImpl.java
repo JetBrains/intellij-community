@@ -192,7 +192,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         }
       }
     }
-    return array.toArray(new PsiClass[array.size()]);
+    return array.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Override

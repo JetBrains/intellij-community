@@ -99,7 +99,7 @@ public class ConflictFilterProcessor extends FilterScopeProcessor<CandidateInfo>
           }
         }
       }
-      myCachedResult = cachedResult = conflicts.toArray(new JavaResolveResult[conflicts.size()]);
+      myCachedResult = cachedResult = conflicts.toArray(JavaResolveResult.EMPTY_ARRAY);
     }
 
     return cachedResult;

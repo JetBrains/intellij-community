@@ -62,7 +62,7 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
         usages.add(new UsageInfo(function));
         usages.addAll(PyRefactoringUtil.findUsages(function, true));
       }
-      return usages.toArray(new UsageInfo[usages.size()]);
+      return usages.toArray(UsageInfo.EMPTY_ARRAY);
     }
     return UsageInfo.EMPTY_ARRAY;
   }

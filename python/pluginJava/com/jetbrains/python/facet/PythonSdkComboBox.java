@@ -61,7 +61,7 @@ public class PythonSdkComboBox extends ComboboxWithBrowseButton {
       sdkToSelect = sdkList.get(0);
     }
     sdkList.add(0, null);
-    getComboBox().setModel(new DefaultComboBoxModel(sdkList.toArray(new Sdk[sdkList.size()])));
+    getComboBox().setModel(new DefaultComboBoxModel(sdkList.toArray(new Sdk[0])));
     getComboBox().setSelectedItem(sdkToSelect);
   }
 

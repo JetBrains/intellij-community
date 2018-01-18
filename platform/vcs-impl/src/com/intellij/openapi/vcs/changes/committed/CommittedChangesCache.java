@@ -204,7 +204,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     if (vcsWithProviders.size() == 1) {
       return vcsWithProviders.get(0).getCommittedChangesProvider();
     }
-    return new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[vcsWithProviders.size()]));
+    return new CompositeCommittedChangesProvider(myProject, vcsWithProviders.toArray(new AbstractVcs[0]));
   }
 
   public boolean isMaxCountSupportedForProject() {

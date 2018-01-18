@@ -92,7 +92,7 @@ public class PyChangeSignatureDialog extends
   public BaseRefactoringProcessor createRefactoringProcessor() {
     final List<PyParameterInfo> parameters = getParameters();
     return new PyChangeSignatureProcessor(myProject, myMethod.getMethod(), getMethodName(),
-                                          parameters.toArray(new PyParameterInfo[parameters.size()]));
+                                          parameters.toArray(new PyParameterInfo[0]));
   }
 
   @Nullable
@@ -391,7 +391,7 @@ public class PyChangeSignatureDialog extends
             if (myDefaultInSignature != null) {
               focusable.add(myDefaultInSignature);
             }
-            return focusable.toArray(new JComponent[focusable.size()]);
+            return focusable.toArray(new JComponent[0]);
           }
         };
       }

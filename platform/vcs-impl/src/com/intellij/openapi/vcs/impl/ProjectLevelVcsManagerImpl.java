@@ -690,7 +690,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         vcsRoots.add(new VcsRoot(vcs, root));
       }
     }
-    return vcsRoots.toArray(new VcsRoot[vcsRoots.size()]);
+    return vcsRoots.toArray(new VcsRoot[0]);
   }
 
   @Override

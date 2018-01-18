@@ -183,7 +183,7 @@ public class ProblemsHolder {
   @NotNull
   public ProblemDescriptor[] getResultsArray() {
     final List<ProblemDescriptor> problems = getResults();
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull

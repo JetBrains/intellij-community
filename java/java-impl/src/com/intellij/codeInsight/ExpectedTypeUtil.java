@@ -91,7 +91,7 @@ public class ExpectedTypeUtil {
 
     @NotNull
     public ExpectedTypeInfo[] toArray() {
-      return myInfos.toArray(new ExpectedTypeInfo[myInfos.size()]);
+      return myInfos.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
   }
 
@@ -155,7 +155,7 @@ public class ExpectedTypeUtil {
         final PsiField field = aClass.findFieldByName(name, true);
         if (field != null) fields.add(field);
       }
-      return fields.toArray(new PsiField[fields.size()]);
+      return fields.toArray(PsiField.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -166,7 +166,7 @@ public class ExpectedTypeUtil {
         final PsiMethod[] occMethod = aClass.findMethodsByName(name, true);
         ContainerUtil.addAll(methods, occMethod);
       }
-      return methods.toArray(new PsiMethod[methods.size()]);
+      return methods.toArray(PsiMethod.EMPTY_ARRAY);
     }
   }
 

@@ -199,7 +199,7 @@ public class GroovyMarkerTypes {
 
         Set<PsiMethod> superMethods = collectSuperMethods(method);
         if (superMethods.isEmpty()) return;
-        PsiElementListNavigator.openTargets(e, superMethods.toArray(new NavigatablePsiElement[superMethods.size()]),
+        PsiElementListNavigator.openTargets(e, superMethods.toArray(new NavigatablePsiElement[0]),
                     DaemonBundle.message("navigation.title.super.method", method.getName()),
                     DaemonBundle.message("navigation.findUsages.title.super.method", method.getName()),
                     new MethodCellRenderer(true));

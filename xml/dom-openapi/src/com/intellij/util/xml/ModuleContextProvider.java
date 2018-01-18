@@ -43,6 +43,6 @@ public abstract class ModuleContextProvider {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     if (module != null) modules.add(module);
 
-    return modules.toArray(new Module[modules.size()]);
+    return modules.toArray(Module.EMPTY_ARRAY);
   }
 }

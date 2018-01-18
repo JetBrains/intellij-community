@@ -259,7 +259,7 @@ public class ExpectedTypesProvider {
 
     @NotNull
     public ExpectedTypeInfo[] getResult() {
-      return myResult.toArray(new ExpectedTypeInfo[myResult.size()]);
+      return myResult.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @Override
@@ -641,7 +641,7 @@ public class ExpectedTypesProvider {
       for (PsiMethod constructor : referencedClass.getConstructors()) {
         array.add(new MethodCandidateInfo(constructor, substitutor, false, false, argumentList, null, argumentList.getExpressionTypes(), null));
       }
-      CandidateInfo[] candidates = array.toArray(new CandidateInfo[array.size()]);
+      CandidateInfo[] candidates = array.toArray(CandidateInfo.EMPTY_ARRAY);
       Collections.addAll(myResult, getExpectedArgumentTypesForMethodCall(candidates, argumentList, myExpr, myForCompletion));
     }
 
@@ -1021,7 +1021,7 @@ public class ExpectedTypesProvider {
         }
       }
 
-      return array.toArray(new ExpectedTypeInfo[array.size()]);
+      return array.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -1192,7 +1192,7 @@ public class ExpectedTypesProvider {
         }
       }
 
-      return types.toArray(new ExpectedTypeInfo[types.size()]);
+      return types.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -1215,7 +1215,7 @@ public class ExpectedTypesProvider {
         //Do not filter inheritors!
         types.add(info);
       }
-      return types.toArray(new ExpectedTypeInfo[types.size()]);
+      return types.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
   }
 

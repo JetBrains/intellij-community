@@ -180,7 +180,7 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   @NotNull
   @Override
   public Sdk[] getAllJdks() {
-    return mySdks.toArray(new Sdk[mySdks.size()]);
+    return mySdks.toArray(new Sdk[0]);
   }
 
   @NotNull

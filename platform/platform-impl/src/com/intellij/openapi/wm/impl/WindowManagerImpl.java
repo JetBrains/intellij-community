@@ -148,7 +148,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @NotNull
   public IdeFrameImpl[] getAllProjectFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProjectToFrame.values();
-    return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
+    return ideFrames.toArray(new IdeFrameImpl[0]);
   }
 
   @Override

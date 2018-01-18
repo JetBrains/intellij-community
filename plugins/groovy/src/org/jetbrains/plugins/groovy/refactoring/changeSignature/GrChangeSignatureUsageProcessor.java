@@ -720,7 +720,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     else if (context instanceof GrMethod) {
       final PsiClassType[] handledExceptions = ((GrMethod)context).getThrowsList().getReferencedTypes();
       final List<PsiClassType> psiClassTypes = filterOutExceptions(exceptions, context, handledExceptions);
-      element = generateTryCatch(element, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]));
+      element = generateTryCatch(element, psiClassTypes.toArray(PsiClassType.EMPTY_ARRAY));
     }
     else if (context instanceof GroovyFile) {
       element = generateTryCatch(element, exceptions);
@@ -740,9 +740,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
       referencedTypes = ContainerUtil.skipNulls(referencedTypes);
       final List<PsiClassType> psiClassTypes =
-        filterOutExceptions(exceptions, context, referencedTypes.toArray(new PsiClassType[referencedTypes.size()]));
+        filterOutExceptions(exceptions, context, referencedTypes.toArray(PsiClassType.EMPTY_ARRAY));
 
-      element = fixCatchBlock((GrTryCatchStatement)context, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]));
+      element = fixCatchBlock((GrTryCatchStatement)context, psiClassTypes.toArray(PsiClassType.EMPTY_ARRAY));
     }
 
   //  CodeStyleManager.getInstance(element.getProject()).reformat(element);

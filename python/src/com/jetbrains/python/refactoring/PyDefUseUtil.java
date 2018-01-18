@@ -118,7 +118,7 @@ public class PyDefUseUtil {
     for (Instruction instruction : instructions[instr].allSucc()) {
       getPostRefs(var, instructions, instruction.num(), visited, result);
     }
-    return result.toArray(new PyElement[result.size()]);
+    return result.toArray(PyElement.EMPTY_ARRAY);
   }
 
   private static void getPostRefs(PyTargetExpression var,

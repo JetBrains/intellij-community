@@ -6,10 +6,8 @@ package org.jetbrains.idea.devkit.dom.impl;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
@@ -118,7 +116,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                        .withTailText(" (" + relativePath + ")", true));
         return true;
       }, this);
-      return variants.toArray(new LookupElement[variants.size()]);
+      return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
     @NotNull

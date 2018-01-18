@@ -366,7 +366,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -398,7 +398,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -498,7 +498,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
           }
         }
 
-        LocalQuickFix[] farr = fixes.toArray(new LocalQuickFix[fixes.size()]);
+        LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description, myOnTheFly, farr,
                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

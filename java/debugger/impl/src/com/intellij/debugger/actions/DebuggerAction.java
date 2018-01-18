@@ -96,7 +96,7 @@ public abstract class DebuggerAction extends AnAction {
         nodes.add((DebuggerTreeNodeImpl) component);
       }
     }
-    return nodes.toArray(new DebuggerTreeNodeImpl[nodes.size()]);
+    return nodes.toArray(new DebuggerTreeNodeImpl[0]);
   }
 
   @NotNull

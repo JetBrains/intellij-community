@@ -179,7 +179,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
       }
     }
 
-    return result.toArray(new XmlElementDescriptor[result.size()]);
+    return result.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   protected XmlElementDescriptor initDescriptor(@NotNull XmlElementDescriptor descriptor) {

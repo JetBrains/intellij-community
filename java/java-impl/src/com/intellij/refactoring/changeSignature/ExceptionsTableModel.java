@@ -38,7 +38,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
   }
 
   public ThrownExceptionInfo[] getThrownExceptions() {
-    return myExceptionInfos.toArray(new ThrownExceptionInfo[myExceptionInfos.size()]);
+    return myExceptionInfos.toArray(new ThrownExceptionInfo[0]);
   }
 
   public void addRow() {
@@ -123,7 +123,7 @@ public class ExceptionsTableModel extends AbstractTableModel implements Editable
   }
 
   public PsiTypeCodeFragment[] getTypeCodeFragments() {
-    return myTypeCodeFragments.toArray(new PsiTypeCodeFragment[myTypeCodeFragments.size()]);
+    return myTypeCodeFragments.toArray(new PsiTypeCodeFragment[0]);
   }
 
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {

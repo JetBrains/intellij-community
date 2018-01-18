@@ -75,7 +75,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
     }
 
     RelativePoint point = getPointToShowResults();
-    final ProjectStructureElementUsage[] usagesArray = usages.toArray(new ProjectStructureElementUsage[usages.size()]);
+    final ProjectStructureElementUsage[] usagesArray = usages.toArray(new ProjectStructureElementUsage[0]);
     Arrays.sort(usagesArray, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
 
     BaseListPopupStep<ProjectStructureElementUsage> step =

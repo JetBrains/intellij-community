@@ -77,7 +77,7 @@ public abstract class CvsOperationOnFiles extends CvsCommandOperation {
   protected File[] getFilesAsArray(CvsRootProvider root) {
     try {
       Collection<File> files = getRootsToFilesMap().get(root);
-      return files.toArray(new File[files.size()]);
+      return files.toArray(new File[0]);
     } catch (CannotFindCvsRootException e) {
       LOG.error(e);
       return new File[0];

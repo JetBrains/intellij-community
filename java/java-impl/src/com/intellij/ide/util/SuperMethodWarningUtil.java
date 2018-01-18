@@ -84,7 +84,7 @@ public class SuperMethodWarningUtil {
     dialog.show();
 
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-      return superMethods.toArray(new PsiMethod[superMethods.size()]);
+      return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
     }
     if (dialog.getExitCode() == SuperMethodWarningDialog.NO_EXIT_CODE) {
       return new PsiMethod[]{method};

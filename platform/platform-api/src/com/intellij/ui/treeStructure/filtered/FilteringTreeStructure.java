@@ -251,7 +251,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
           result.add(node);
         }
       }
-      return result.toArray(new FilteringNode[result.size()]);
+      return result.toArray(new FilteringNode[0]);
     }
 
     @Override

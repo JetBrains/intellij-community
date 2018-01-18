@@ -217,7 +217,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     for (MemberInfo info : infos) {
       list.add((PsiField)info.getMember());
     }
-    return list.toArray(new PsiField[list.size()]);
+    return list.toArray(PsiField.EMPTY_ARRAY);
   }
 
   @Override

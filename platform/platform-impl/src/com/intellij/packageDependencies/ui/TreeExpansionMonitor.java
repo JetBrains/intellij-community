@@ -85,7 +85,7 @@ public abstract class TreeExpansionMonitor<T> {
         if (myFrozen) return;
         TreePath path = event.getPath();
         if (path != null) {
-          TreePath[] allPaths = myExpandedPaths.toArray(new TreePath[myExpandedPaths.size()]);
+          TreePath[] allPaths = myExpandedPaths.toArray(new TreePath[0]);
           for (TreePath treePath : allPaths) {
             if (treePath.equals(path) || path.isDescendant(treePath)) {
               myExpandedPaths.remove(treePath);

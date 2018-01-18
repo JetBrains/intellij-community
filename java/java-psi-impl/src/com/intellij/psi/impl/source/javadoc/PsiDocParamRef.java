@@ -137,7 +137,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
             filtered.add(namedElement);
           }
         }
-        return filtered.toArray(new PsiElement[filtered.size()]);
+        return filtered.toArray(PsiElement.EMPTY_ARRAY);
       }
 
       @Override

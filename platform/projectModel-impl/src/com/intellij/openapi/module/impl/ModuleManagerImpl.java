@@ -678,7 +678,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       Module[] cache = myModulesCache;
       if (cache == null) {
         Collection<Module> modules = myModules.values();
-        myModulesCache = cache = modules.toArray(new Module[modules.size()]);
+        myModulesCache = cache = modules.toArray(Module.EMPTY_ARRAY);
       }
       return cache;
     }

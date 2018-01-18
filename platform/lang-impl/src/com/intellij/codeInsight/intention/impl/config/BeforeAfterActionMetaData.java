@@ -113,7 +113,7 @@ public abstract class BeforeAfterActionMetaData {
                 (children == null ? "" : "; directory contents: " + Arrays.asList(children)), cause);
       return EMPTY_EXAMPLE;
     }
-    return urls.toArray(new TextDescriptor[urls.size()]);
+    return urls.toArray(new TextDescriptor[0]);
   }
 
   @NotNull

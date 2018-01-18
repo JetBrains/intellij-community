@@ -249,7 +249,7 @@ public class ReplaceInProjectManager {
       return;
     }
 
-    final Usage[] usages = _usages.toArray(new Usage[_usages.size()]);
+    final Usage[] usages = _usages.toArray(Usage.EMPTY_ARRAY);
 
     //usageView.expandAll();
     for (int i = 0; i < usages.length; ++i) {

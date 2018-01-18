@@ -67,7 +67,7 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
       }
     }
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(new InspectionGadgetsFix[0]);
   }
 
   protected static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {

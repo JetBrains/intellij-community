@@ -59,6 +59,6 @@ public class ModulesScope extends GlobalSearchScope {
 
   @Override
   public String toString() {
-    return "Modules:" + Arrays.toString(myModules.toArray(new Module[myModules.size()]));
+    return "Modules:" + Arrays.toString(myModules.toArray(Module.EMPTY_ARRAY));
   }
 }

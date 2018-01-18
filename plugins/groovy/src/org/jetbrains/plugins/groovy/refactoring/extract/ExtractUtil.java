@@ -134,7 +134,7 @@ public class ExtractUtil {
     else {
       final List<GrStatement> result = generateVarDeclarations(mustAdd, helper.getProject(), null);
       result.add(createAssignment(outputVars, callExpression, helper.getProject()));
-      return result.toArray(new GrStatement[result.size()]);
+      return result.toArray(GrStatement.EMPTY_ARRAY);
     }
   }
 

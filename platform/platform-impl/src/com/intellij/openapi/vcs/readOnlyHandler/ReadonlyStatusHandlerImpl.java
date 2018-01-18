@@ -158,11 +158,11 @@ public class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler implements 
         fileInfos.add(new FileInfo(file, myProject));
       }
     }
-    return fileInfos.toArray(new FileInfo[fileInfos.size()]);
+    return fileInfos.toArray(new FileInfo[0]);
   }
 
   public static void processFiles(final List<FileInfo> fileInfos, @Nullable String changelist) {
-    FileInfo[] copy = fileInfos.toArray(new FileInfo[fileInfos.size()]);
+    FileInfo[] copy = fileInfos.toArray(new FileInfo[0]);
     MultiValuesMap<HandleType, VirtualFile> handleTypeToFile = new MultiValuesMap<>();
     for (FileInfo fileInfo : copy) {
       handleTypeToFile.put(fileInfo.getSelectedHandleType(), fileInfo.getFile());

@@ -124,7 +124,7 @@ abstract class FoldRegionsTree {
 
   @NotNull
   private static FoldRegion[] toFoldArray(@NotNull List<FoldRegion> topLevels) {
-    return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(new FoldRegion[topLevels.size()]);
+    return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(FoldRegion.EMPTY_ARRAY);
   }
 
   void updateCachedOffsets() {
@@ -152,7 +152,7 @@ abstract class FoldRegionsTree {
         topLevel.add(region);
       }
     }
-    FoldRegion[] topLevelRegions = topLevel.toArray(new FoldRegion[topLevel.size()]);
+    FoldRegion[] topLevelRegions = topLevel.toArray(FoldRegion.EMPTY_ARRAY);
     Arrays.sort(topLevelRegions, BY_END_OFFSET);
 
     int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);

@@ -309,7 +309,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
         visibleSchemes.add(scheme);
       }
     }
-    return visibleSchemes.toArray(new EditorColorsScheme[visibleSchemes.size()]);
+    return visibleSchemes.toArray(new EditorColorsScheme[0]);
   }
 
   @Override

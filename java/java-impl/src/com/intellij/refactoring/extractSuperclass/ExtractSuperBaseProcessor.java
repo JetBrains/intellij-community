@@ -118,7 +118,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
         result.add(new BindToOldUsageInfo(element, ref, myClass));
       }
     }
-    UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 

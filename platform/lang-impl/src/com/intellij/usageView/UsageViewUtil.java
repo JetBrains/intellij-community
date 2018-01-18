@@ -142,7 +142,7 @@ public class UsageViewUtil {
         }
       }
     }
-    return set.toArray(new UsageInfo[set.size()]);
+    return set.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull

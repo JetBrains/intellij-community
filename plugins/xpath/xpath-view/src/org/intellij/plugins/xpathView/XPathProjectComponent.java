@@ -137,11 +137,11 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
      * @return the history as an array of strings
      */
     public HistoryElement[] getHistory() {
-        return history.values().toArray(new HistoryElement[history.values().size()]);
+        return history.values().toArray(new HistoryElement[0]);
     }
 
     public HistoryElement[] getFindHistory() {
-        return findHistory.values().toArray(new HistoryElement[findHistory.values().size()]);
+        return findHistory.values().toArray(new HistoryElement[0]);
     }
 
     public static XPathProjectComponent getInstance(Project project) {

@@ -434,7 +434,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       for (FacetRenameInfo info : toRename) {
         info.myFacet.setName(info.myNewName);
       }
-      myModel.setAllFacets(newFacets.toArray(new Facet[newFacets.size()]));
+      myModel.setAllFacets(newFacets.toArray(Facet.EMPTY_ARRAY));
     }
     finally {
       myInsideCommit = false;

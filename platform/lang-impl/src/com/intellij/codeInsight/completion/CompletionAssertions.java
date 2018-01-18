@@ -173,7 +173,7 @@ class CompletionAssertions {
     private RangeMarkerSpy spy;
 
     public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
-      super(offsetMap, completionChar, items.toArray(new LookupElement[items.size()]),
+      super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
             completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
             completionChar != Lookup.NORMAL_SELECT_CHAR);

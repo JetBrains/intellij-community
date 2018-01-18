@@ -314,7 +314,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         return null;
       }
 
-      return accessibleIconList.toArray(new AccessibleIcon[accessibleIconList.size()]);
+      return accessibleIconList.toArray(new AccessibleIcon[0]);
     }
 
     @Override

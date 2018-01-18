@@ -187,12 +187,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), myConflicts,
-                                             allUsages.toArray(new UsageInfo[allUsages.size()]));
-    final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
+                                             allUsages.toArray(UsageInfo.EMPTY_ARRAY));
+    final UsageInfo[] usageInfos = allUsages.toArray(UsageInfo.EMPTY_ARRAY);
     detectPackageLocalsMoved(usageInfos, myConflicts);
     detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
     allUsages.removeAll(usagesToSkip);
-    return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));
+    return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(UsageInfo.EMPTY_ARRAY));
   }
 
   public List<PsiElement> getElements() {
@@ -403,7 +403,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        return result.toArray(new PsiReference[result.size()]);
+        return result.toArray(PsiReference.EMPTY_ARRAY);
       }
     };
     referenceScanner.processReferences(new ClassInstanceScanner(aClass, instanceReferenceVisitor));

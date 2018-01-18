@@ -576,7 +576,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       }
       return true;
     });
-    setSelectionPaths(treeSelection.toArray(new TreePath[treeSelection.size()]));
+    setSelectionPaths(treeSelection.toArray(new TreePath[0]));
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
   }
 

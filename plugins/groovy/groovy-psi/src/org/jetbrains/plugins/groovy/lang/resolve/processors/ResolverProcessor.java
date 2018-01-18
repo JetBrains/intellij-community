@@ -99,7 +99,7 @@ public abstract class ResolverProcessor<T extends GroovyResolveResult> extends G
   @NotNull
   public GroovyResolveResult[] getCandidates() {
     if (myCandidates == null) return GroovyResolveResult.EMPTY_ARRAY;
-    return myCandidates.toArray(new GroovyResolveResult[myCandidates.size()]);
+    return myCandidates.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   public boolean hasCandidates() {

@@ -35,7 +35,7 @@ public class MockMoveMembersOptions implements MoveMembersOptions {
   }
 
   public MockMoveMembersOptions(String targetClassName, Collection<PsiMember> memberSet) {
-    this(targetClassName, memberSet.toArray(new PsiMember[memberSet.size()]));
+    this(targetClassName, memberSet.toArray(PsiMember.EMPTY_ARRAY));
   }
 
   @Override

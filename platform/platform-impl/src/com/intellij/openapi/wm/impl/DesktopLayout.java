@@ -197,7 +197,7 @@ public final class DesktopLayout {
         list.add(info);
       }
     }
-    infos = list.toArray(new WindowInfoImpl[list.size()]);
+    infos = list.toArray(new WindowInfoImpl[0]);
     Arrays.sort(infos, ourWindowInfoComparator);
     return infos;
   }

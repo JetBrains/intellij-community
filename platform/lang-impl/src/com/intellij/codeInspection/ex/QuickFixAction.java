@@ -264,7 +264,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       return o1.getName().compareTo(o2.getName());
     });
 
-    return selection.toArray(new RefEntity[selection.size()]);
+    return selection.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY);
   }
 
   private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {

@@ -79,7 +79,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
           iterator.remove();
         }
       }
-      directories = dirs.toArray(new PsiDirectory[dirs.size()]);
+      directories = dirs.toArray(PsiDirectory.EMPTY_ARRAY);
     }
     myManager = PsiManager.getInstance(project);
     myDirectories = directories;
@@ -118,7 +118,7 @@ public class MoveDirectoryWithClassesProcessor extends BaseRefactoringProcessor 
     for (MoveDirectoryWithClassesHelper helper : MoveDirectoryWithClassesHelper.findAll()) {
       helper.findUsages(getPsiFiles(), myDirectories, usages, mySearchInComments, mySearchInNonJavaFiles, myProject);
     }
-    return UsageViewUtil.removeDuplicatedUsages(usages.toArray(new UsageInfo[usages.size()]));
+    return UsageViewUtil.removeDuplicatedUsages(usages.toArray(UsageInfo.EMPTY_ARRAY));
   }
 
   private void collectConflicts(@NotNull MultiMap<PsiElement, String> conflicts,

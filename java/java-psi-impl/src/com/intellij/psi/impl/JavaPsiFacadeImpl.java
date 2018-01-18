@@ -304,7 +304,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       filterClassesAndAppend(finder, classesFilter, classes, result);
     }
 
-    return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+    return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static void filterClassesAndAppend(PsiElementFinder finder,
@@ -351,7 +351,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     for (PsiElementFinder finder : filteredFinders()) {
       Collections.addAll(result, finder.getPackageFiles(psiPackage, scope));
     }
-    return result.toArray(new PsiFile[result.size()]);
+    return result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   public boolean processPackageDirectories(@NotNull PsiPackage psiPackage,

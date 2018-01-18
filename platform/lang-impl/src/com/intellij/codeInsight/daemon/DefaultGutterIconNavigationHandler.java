@@ -28,7 +28,7 @@ public class DefaultGutterIconNavigationHandler<T extends PsiElement> implements
   @Override
   public void navigate(MouseEvent e, T elt) {
     PsiElementListNavigator.openTargets(e,
-                                        myReferences.toArray(new NavigatablePsiElement[myReferences.size()]),
+                                        myReferences.toArray(new NavigatablePsiElement[0]),
                                         myTitle, null, createListCellRenderer());
   }
 

@@ -166,7 +166,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
       }
     }
     if (!directories.isEmpty()) {
-      return directories.toArray(new PsiDirectory[directories.size()]);
+      return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
 
     return super.getSelectedDirectories();
@@ -327,7 +327,7 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
           modules.add(entry.getOwnerModule());
         }
       }
-      return modules.toArray(new Module[modules.size()]);
+      return modules.toArray(Module.EMPTY_ARRAY);
     }
   }
 

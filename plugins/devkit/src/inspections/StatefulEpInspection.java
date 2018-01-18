@@ -67,7 +67,7 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
           }
         }
       }
-      return result.toArray(new ProblemDescriptor[result.size()]);
+      return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
     }
     return super.checkClass(psiClass, manager, isOnTheFly);
   }

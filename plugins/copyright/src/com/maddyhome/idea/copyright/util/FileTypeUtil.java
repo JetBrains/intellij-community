@@ -222,7 +222,7 @@ public class FileTypeUtil {
 
   public FileType[] getSupportedTypes() {
     Set<FileType> set = new HashSet<>(getMap().values());
-    return set.toArray(new FileType[set.size()]);
+    return set.toArray(FileType.EMPTY_ARRAY);
   }
 
   public FileType getFileTypeByFile(VirtualFile file) {

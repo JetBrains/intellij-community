@@ -112,7 +112,7 @@ public class PyOverrideImplementUtil {
     }
 
     final MemberChooser<PyMethodMember> chooser =
-      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[elements.size()]), false, true, project) {
+      new MemberChooser<PyMethodMember>(elements.toArray(new PyMethodMember[0]), false, true, project) {
         @Override
         protected SpeedSearchComparator getSpeedSearchComparator() {
           return new SpeedSearchComparator(false) {

@@ -504,7 +504,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     private synchronized LibraryTable.Listener[] getListeners() {
       if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new LibraryTable.Listener[myListeners.size()]);
+        myListenersArray = myListeners.toArray(new LibraryTable.Listener[0]);
       }
       return myListenersArray;
     }
@@ -564,7 +564,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     private synchronized ProjectJdkTable.Listener[] getListeners() {
       if (myListenersArray == null) {
-        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[myListeners.size()]);
+        myListenersArray = myListeners.toArray(new ProjectJdkTable.Listener[0]);
       }
       return myListenersArray;
     }

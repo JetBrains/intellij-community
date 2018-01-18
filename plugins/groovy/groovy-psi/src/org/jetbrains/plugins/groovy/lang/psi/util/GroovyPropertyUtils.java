@@ -147,7 +147,7 @@ public class GroovyPropertyUtils {
       }
     }
 
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -172,7 +172,7 @@ public class GroovyPropertyUtils {
       }
     }
 
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
 

@@ -425,7 +425,7 @@ public class PsiUtilCore {
   @NotNull
   public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    return collection.toArray(new PsiFile[collection.size()]);
+    return collection.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   @NotNull

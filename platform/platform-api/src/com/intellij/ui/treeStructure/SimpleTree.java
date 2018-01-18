@@ -193,7 +193,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
         lastNode = nodeFor;
       }
     }
-    return result.toArray(new SimpleNode[result.size()]);
+    return result.toArray(new SimpleNode[0]);
   }
 
   public void setSelectedNode(AbstractTreeBuilder builder, SimpleNode node, boolean expand) {

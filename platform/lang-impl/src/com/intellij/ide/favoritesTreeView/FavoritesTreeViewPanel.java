@@ -378,7 +378,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[0]);
     }
 
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
@@ -431,15 +431,15 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     }
     if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
       final List<ModuleGroup> selectedElements = getSelectedElements(ModuleGroup.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new ModuleGroup[0]);
     }
     if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<LibraryGroupElement> selectedElements = getSelectedElements(LibraryGroupElement.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new LibraryGroupElement[0]);
     }
     if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
       final List<NamedLibraryElement> selectedElements = getSelectedElements(NamedLibraryElement.class);
-      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[selectedElements.size()]);
+      return selectedElements.isEmpty() ? null : selectedElements.toArray(new NamedLibraryElement[0]);
     }
     if (CONTEXT_FAVORITES_ROOTS_DATA_KEY.is(dataId)) {
       List<FavoritesTreeNodeDescriptor> result = new ArrayList<>();
@@ -453,7 +453,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
           result.add(selectedNodeDescriptor);
         }
       }
-      return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+      return result.toArray(FavoritesTreeNodeDescriptor.EMPTY_ARRAY);
     }
     if (FAVORITES_TREE_KEY.is(dataId)) {
       return myTree;
@@ -529,7 +529,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new Module[result.size()]);
+    return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
   }
 
   private Object[] getSelectedNodeElements() {

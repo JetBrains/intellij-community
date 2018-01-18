@@ -72,7 +72,7 @@ public class ClassResolverProcessor implements PsiScopeProcessor, NameHint, Elem
       myHasInaccessibleCandidate = false;
     }
 
-    myResult = myCandidates.toArray(new JavaResolveResult[myCandidates.size()]);
+    myResult = myCandidates.toArray(JavaResolveResult.EMPTY_ARRAY);
     return myResult;
   }
 

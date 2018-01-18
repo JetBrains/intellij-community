@@ -139,7 +139,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
     }
 
-    return result.toArray(new PsiElement[result.size()]);
+    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable

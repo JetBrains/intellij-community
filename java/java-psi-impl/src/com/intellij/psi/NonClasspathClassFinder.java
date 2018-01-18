@@ -139,7 +139,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       }
       return true;
     });
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 
@@ -200,7 +200,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     for (String name : names) {
       result.add(createPackage(pkgName.isEmpty() ? name : pkgName + "." + name));
     }
-    return result.toArray(new PsiPackage[result.size()]);
+    return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -215,7 +215,7 @@ public class PluginsAdvertiser implements StartupActivity {
     ShowSettingsUtil.getInstance()
       .editConfigurable(project, managerConfigurable, () -> {
         final InstalledPluginsTableModel pluginsModel = (InstalledPluginsTableModel)createPanel.getPluginsModel();
-        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[disabledPlugins.size()]);
+        final IdeaPluginDescriptor[] descriptors = disabledPlugins.toArray(new IdeaPluginDescriptor[0]);
         pluginsModel.enableRows(descriptors, Boolean.TRUE);
         createPanel.getPluginTable().select(descriptors);
       });
@@ -271,7 +271,7 @@ public class PluginsAdvertiser implements StartupActivity {
         if (myAllPlugins != null) {
           final PluginsAdvertiserDialog advertiserDialog =
             new PluginsAdvertiserDialog(null,
-                                        myPlugins.toArray(new PluginDownloader[myPlugins.size()]),
+                                        myPlugins.toArray(new PluginDownloader[0]),
                                         myAllPlugins);
           if (advertiserDialog.showAndGet()) {
             onSuccess.run();
@@ -533,7 +533,7 @@ public class PluginsAdvertiser implements StartupActivity {
         else if ("configure".equals(description)) {
           LOG.assertTrue(myAllPlugins != null);
           notification.expire();
-          new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins).show();
+          new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[0]), myAllPlugins).show();
         }
         else if ("enable".equals(description)) {
           enablePlugins(myProject, myDisabledPlugins.values());

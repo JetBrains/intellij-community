@@ -65,7 +65,7 @@ public class LibrariesUtil {
       accessToken.finish();
     }
 
-    return libraries.toArray(new Library[libraries.size()]);
+    return libraries.toArray(Library.EMPTY_ARRAY);
   }
 
   private static void populateOrderEntries(@NotNull Module module, Condition<Library> condition, ArrayList<Library> libraries, boolean exportedOnly, Set<Module> visited) {
@@ -97,7 +97,7 @@ public class LibrariesUtil {
   public static Library[] getGlobalLibraries(Condition<Library> condition) {
     LibraryTable table = LibraryTablesRegistrar.getInstance().getLibraryTable();
     List<Library> libs = ContainerUtil.findAll(table.getLibraries(), condition);
-    return libs.toArray(new Library[libs.size()]);
+    return libs.toArray(Library.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -1413,7 +1413,7 @@ public class RefactoringUtil {
       used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }
 
-    PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
+    PsiTypeParameter[] typeParameters = used.toArray(PsiTypeParameter.EMPTY_ARRAY);
 
     Arrays.sort(typeParameters, Comparator.comparingInt(tp -> tp.getTextRange().getStartOffset()));
 

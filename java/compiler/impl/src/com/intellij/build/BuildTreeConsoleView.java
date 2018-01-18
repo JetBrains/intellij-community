@@ -579,7 +579,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       List<Navigatable> navigatable = each.getNavigatables();
       navigatables.addAll(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
   }
 
   private ExecutionNode[] getSelectedNodes() {

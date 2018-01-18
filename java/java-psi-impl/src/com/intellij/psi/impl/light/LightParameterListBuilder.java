@@ -51,7 +51,7 @@ public class LightParameterListBuilder extends LightElement implements PsiParame
         myCachedParameters = PsiParameter.EMPTY_ARRAY;
       }
       else {
-        myCachedParameters = myParameters.toArray(new PsiParameter[myParameters.size()]);
+        myCachedParameters = myParameters.toArray(PsiParameter.EMPTY_ARRAY);
       }
     }
 

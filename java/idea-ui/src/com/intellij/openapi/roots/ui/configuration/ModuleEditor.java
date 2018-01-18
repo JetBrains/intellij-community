@@ -225,7 +225,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
       reportDeprecatedModuleEditor(component.getClass());
     }
     ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
-    return result.toArray(new ModuleConfigurationEditorProvider[result.size()]);
+    return result.toArray(new ModuleConfigurationEditorProvider[0]);
   }
 
   public ModuleConfigurationState createModuleConfigurationState() {

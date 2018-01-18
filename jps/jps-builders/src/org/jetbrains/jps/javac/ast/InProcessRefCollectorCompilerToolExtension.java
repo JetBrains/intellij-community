@@ -71,7 +71,7 @@ public class InProcessRefCollectorCompilerToolExtension extends AbstractRefColle
           registrars.add(registrar);
         }
       }
-      myRegistrars = registrars.toArray(new JavacFileReferencesRegistrar[registrars.size()]);
+      myRegistrars = registrars.toArray(new JavacFileReferencesRegistrar[0]);
     }
 
     @Override

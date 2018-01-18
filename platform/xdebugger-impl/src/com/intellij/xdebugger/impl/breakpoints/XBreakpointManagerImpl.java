@@ -214,7 +214,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   @NotNull
   public XBreakpointBase<?,?,?>[] getAllBreakpoints() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return myAllBreakpoints.toArray(new XBreakpointBase[myAllBreakpoints.size()]);
+    return myAllBreakpoints.toArray(new XBreakpointBase[0]);
   }
 
   @Override

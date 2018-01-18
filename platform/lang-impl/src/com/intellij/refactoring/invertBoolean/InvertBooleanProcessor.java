@@ -114,7 +114,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
 
     final UsageInfo[] renameUsages = myRenameProcessor != null ? myRenameProcessor.findUsages() : UsageInfo.EMPTY_ARRAY;
 
-    final SmartPsiElementPointer[] usagesToInvert = toInvert.toArray(new SmartPsiElementPointer[toInvert.size()]);
+    final SmartPsiElementPointer[] usagesToInvert = toInvert.toArray(new SmartPsiElementPointer[0]);
 
     //merge rename and invert usages
     Map<PsiElement, UsageInfo> expressionsToUsages = new HashMap<>();
@@ -136,7 +136,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override
@@ -154,7 +154,7 @@ public class InvertBooleanProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return extractedUsages.toArray(new UsageInfo[extractedUsages.size()]);
+    return extractedUsages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Override

@@ -116,7 +116,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
     collectUsedVariables(variableInfoMap, myAnonClass);
-    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
+    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[0]);
     myVariableInfos = infos;
     Arrays.sort(myVariableInfos, (o1, o2) -> {
       final PsiType type1 = o1.variable.getType();

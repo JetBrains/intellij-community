@@ -193,7 +193,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         result.add(sourceNode);
       }
     }
-    return result.toArray(new TreeNode[result.size()]);
+    return result.toArray(new TreeNode[0]);
   }
 
   public DropHandler getDropHandler(final int dropAction) {
@@ -269,7 +269,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
         }
       }
     }
-    return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
+    return sourceFiles.toArray(new PsiFileSystemItem[0]);
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {

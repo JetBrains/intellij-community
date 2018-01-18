@@ -353,7 +353,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       }
     }
     if (result.isEmpty()) return null;
-    return result.toArray(new File[result.size()]);
+    return result.toArray(new File[0]);
   }
 
   int getFilteredFilesCount() {

@@ -53,7 +53,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       }
     }
 
-    return problems == null ? null : problems.toArray(new CommonProblemDescriptor[problems.size()]);
+    return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override

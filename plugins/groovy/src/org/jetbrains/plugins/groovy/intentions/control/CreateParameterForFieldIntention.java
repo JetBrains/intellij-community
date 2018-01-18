@@ -101,7 +101,7 @@ public class CreateParameterForFieldIntention extends Intention {
       return;
     }
 
-    final JList list = new JBList(constructors.toArray(new GrMethod[constructors.size()]));
+    final JList list = new JBList(constructors.toArray(GrMethod.EMPTY_ARRAY));
     list.setCellRenderer(new MethodCellRenderer(true));
 
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).
@@ -127,7 +127,7 @@ public class CreateParameterForFieldIntention extends Intention {
       }
       return;
     }
-    final JList list = new JBList(candidates.toArray(new GrField[candidates.size()]));
+    final JList list = new JBList(candidates.toArray(GrField.EMPTY_ARRAY));
     list.setCellRenderer(new DefaultPsiElementCellRenderer());
 
     new PopupChooserBuilder(list).setTitle(GroovyIntentionsBundle.message("create.parameter.for.field.intention.name")).

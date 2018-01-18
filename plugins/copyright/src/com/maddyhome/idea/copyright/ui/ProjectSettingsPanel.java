@@ -334,7 +334,7 @@ public class ProjectSettingsPanel {
               final NamedScope[] model = super.createModel();
               final ArrayList<NamedScope> filteredScopes = new ArrayList<>(Arrays.asList(model));
               CustomScopesProviderEx.filterNoSettingsScopes(myProject, filteredScopes);
-              return filteredScopes.toArray(new NamedScope[filteredScopes.size()]);
+              return filteredScopes.toArray(new NamedScope[0]);
             }
           };
           

@@ -686,7 +686,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     myCanBeNullInInstanceof.add(instruction);
 
-    return states.toArray(new DfaInstructionState[states.size()]);
+    return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   @NotNull

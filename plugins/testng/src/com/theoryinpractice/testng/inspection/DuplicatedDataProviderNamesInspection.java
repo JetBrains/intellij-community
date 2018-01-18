@@ -60,6 +60,6 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
         }
       }
     }
-    return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.isEmpty() ? null : descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

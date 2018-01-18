@@ -275,7 +275,7 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
         list.add(action);
       }
     }
-    return list.toArray(new IntentionAction[list.size()]);
+    return list.toArray(IntentionAction.EMPTY_ARRAY);
   }
 
   public boolean hasActiveRequests() {

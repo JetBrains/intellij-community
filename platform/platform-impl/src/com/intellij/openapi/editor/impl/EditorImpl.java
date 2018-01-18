@@ -2590,7 +2590,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       caretPoints.add(new CaretRectangle(pos1, width, caret, isRtl));
     }
-    myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[caretPoints.size()]));
+    myCaretCursor.setPositions(caretPoints.toArray(new CaretRectangle[0]));
   }
 
   @Override

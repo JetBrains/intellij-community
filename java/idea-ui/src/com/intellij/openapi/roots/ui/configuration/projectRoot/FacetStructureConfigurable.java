@@ -290,7 +290,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       return false;
     }
 
-    FacetEditor[] selectedEditors = facetEditors.toArray(new FacetEditor[facetEditors.size()]);
+    FacetEditor[] selectedEditors = facetEditors.toArray(new FacetEditor[0]);
     MultipleFacetSettingsEditor editor = selectedFacetType.createMultipleConfigurationsEditor(myProject, selectedEditors);
     if (editor == null) {
       return false;

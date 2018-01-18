@@ -190,7 +190,7 @@ public class InspectionTree extends Tree {
         final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
         addElementsInNode(node, result);
       }
-      return ArrayUtil.reverseArray(result.toArray(new RefEntity[result.size()]));
+      return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
     }
     return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
@@ -285,7 +285,7 @@ public class InspectionTree extends Tree {
       }
     }
 
-    return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+    return descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull

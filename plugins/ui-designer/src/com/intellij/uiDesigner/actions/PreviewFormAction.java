@@ -102,7 +102,7 @@ public final class PreviewFormAction extends AnAction{
         throw new RuntimeException(exc);
       }
     }
-    return new InstrumentationClassFinder(urls.toArray(new URL[urls.size()]));
+    return new InstrumentationClassFinder(urls.toArray(new URL[0]));
   }
 
   public void actionPerformed(final AnActionEvent e) {
@@ -251,7 +251,7 @@ public final class PreviewFormAction extends AnAction{
             }
           }
         }
-        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(new Module[modules.size()]));
+        FileSetCompileScope scope = new FileSetCompileScope(virtualFiles, modules.toArray(Module.EMPTY_ARRAY));
 
         CompilerManager.getInstance(module.getProject()).make(scope, new CompileStatusNotification() {
           public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {

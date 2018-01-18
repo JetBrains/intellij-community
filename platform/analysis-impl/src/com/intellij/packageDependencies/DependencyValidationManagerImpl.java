@@ -115,7 +115,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         result.add(dependencyRule);
       }
     }
-    return result.toArray(new DependencyRule[result.size()]);
+    return result.toArray(new DependencyRule[0]);
   }
 
   @NotNull
@@ -127,7 +127,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
         result.add(dependencyRule);
       }
     }
-    return result.toArray(new DependencyRule[result.size()]);
+    return result.toArray(new DependencyRule[0]);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @Override
   public DependencyRule[] getAllRules() {
     List<DependencyRule> rules = myState.rules;
-    return rules.toArray(new DependencyRule[rules.size()]);
+    return rules.toArray(new DependencyRule[0]);
   }
 
   @Override

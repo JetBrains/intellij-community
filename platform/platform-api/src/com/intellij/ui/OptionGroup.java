@@ -142,7 +142,7 @@ public class OptionGroup implements PanelWithAnchor {
         components.add((JComponent)o);
       }
     }
-    return components.toArray(new JComponent[components.size()]);
+    return components.toArray(new JComponent[0]);
   }
 
   @Nullable

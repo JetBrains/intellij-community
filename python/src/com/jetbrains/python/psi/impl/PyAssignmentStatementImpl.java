@@ -98,7 +98,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         targets.add(expr);
       }
     }
-    return targets.toArray(new PyExpression[targets.size()]);
+    return targets.toArray(PyExpression.EMPTY_ARRAY);
   }
 
   @Nullable

@@ -94,7 +94,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
       }
     }
 
-    return problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
+    return problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   private static void checkMethodNameDependency(InspectionManager manager,
@@ -119,7 +119,7 @@ public class DependsOnMethodInspection extends AbstractBaseJavaLocalInspectionTo
         final String methodNameMask = StringUtil.trimEnd(methodName, "*");
         final List<PsiMethod> methods = ContainerUtil.filter(psiClass.getMethods(),
                                                              method -> method.getName().startsWith(methodNameMask));
-        foundMethods = methods.toArray(new PsiMethod[methods.size()]);
+        foundMethods = methods.toArray(PsiMethod.EMPTY_ARRAY);
       }
       else {
         foundMethods = psiClass.findMethodsByName(methodName, true);

@@ -363,7 +363,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
 
     @Nullable
     public ProblemDescriptor[] getProblems() {
-      return myList != null ? myList.toArray(new ProblemDescriptor[myList.size()]) : null;
+      return myList != null ? myList.toArray(ProblemDescriptor.EMPTY_ARRAY) : null;
     }
   }
 

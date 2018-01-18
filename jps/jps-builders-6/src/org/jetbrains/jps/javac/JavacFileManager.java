@@ -250,7 +250,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       }
     }
     // ensure processor's loader will not resolve against JPS classes and libraries used in JPS
-    return new URLClassLoader(urls.toArray(new URL[urls.size()]), myContext.getStandardFileManager().getClass().getClassLoader());
+    return new URLClassLoader(urls.toArray(new URL[0]), myContext.getStandardFileManager().getClass().getClassLoader());
   }
 
   private File getSingleOutputDirectory(final Location loc, final JavaFileObject sourceFile) {

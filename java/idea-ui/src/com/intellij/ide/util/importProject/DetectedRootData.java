@@ -21,7 +21,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author nik
@@ -64,7 +67,7 @@ public class DetectedRootData {
 
   public DetectedProjectRoot[] getAllRoots() {
     final Set<DetectedProjectRoot> roots = myRoots.keySet();
-    return roots.toArray(new DetectedProjectRoot[roots.size()]);
+    return roots.toArray(new DetectedProjectRoot[0]);
   }
 
   public boolean isEmpty() {

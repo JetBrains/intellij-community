@@ -185,8 +185,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         sharedScopes.add(namedScope);
       }
     }
-    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[localScopes.size()]));
-    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[sharedScopes.size()]));
+    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[0]));
+    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[0]));
   }
 
   private void loadStateOrder() {

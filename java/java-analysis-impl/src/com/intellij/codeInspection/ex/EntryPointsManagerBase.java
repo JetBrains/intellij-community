@@ -379,7 +379,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
     entries.addAll(myTemporaryEntryPoints);
 
-    return entries.toArray(new RefElement[entries.size()]);
+    return entries.toArray(new RefElement[0]);
   }
 
   @Override
@@ -392,7 +392,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     if (count != myLastModificationCount) {
       myLastModificationCount = count;
       Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();
-      SmartRefElementPointer[] entries = collection.toArray(new SmartRefElementPointer[collection.size()]);
+      SmartRefElementPointer[] entries = collection.toArray(new SmartRefElementPointer[0]);
       for (SmartRefElementPointer entry : entries) {
         RefElement refElement = (RefElement)entry.getRefElement();
         if (refElement != null && !refElement.isValid()) {

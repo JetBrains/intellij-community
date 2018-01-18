@@ -136,7 +136,7 @@ public class GrClosureType extends GrLiteralClassType {
       return create(signatures.get(0), resolveScope, facade, LanguageLevel.JDK_1_5, true);
     }
     else {
-      return create(GrClosureSignatureUtil.createMultiSignature(signatures.toArray(new GrClosureSignature[signatures.size()])),
+      return create(GrClosureSignatureUtil.createMultiSignature(signatures.toArray(GrClosureSignature.EMPTY_ARRAY)),
                     resolveScope, facade, LanguageLevel.JDK_1_5, true);
     }
   }

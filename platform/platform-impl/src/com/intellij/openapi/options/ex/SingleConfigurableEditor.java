@@ -156,7 +156,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     if (myConfigurable.getHelpTopic() != null) {
       actions.add(getHelpAction());
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @Override

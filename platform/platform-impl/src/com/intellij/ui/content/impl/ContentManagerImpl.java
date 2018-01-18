@@ -32,7 +32,6 @@ import com.intellij.ui.content.*;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -302,7 +301,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   @NotNull
   public Content[] getContents() {
-    return myContents.toArray(new Content[myContents.size()]);
+    return myContents.toArray(new Content[0]);
   }
 
   //TODO[anton,vova] is this method needed?
@@ -418,7 +417,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   @Override
   @NotNull
   public Content[] getSelectedContents() {
-    return mySelection.toArray(new Content[mySelection.size()]);
+    return mySelection.toArray(new Content[0]);
   }
 
   @Override

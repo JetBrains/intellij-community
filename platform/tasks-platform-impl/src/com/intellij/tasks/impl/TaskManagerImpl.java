@@ -158,7 +158,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public TaskRepository[] getAllRepositories() {
-    return myRepositories.toArray(new TaskRepository[myRepositories.size()]);
+    return myRepositories.toArray(new TaskRepository[0]);
   }
 
   public <T extends TaskRepository> void setRepositories(List<T> repositories) {

@@ -87,7 +87,7 @@ public class AnonymousFromMapGenerator {
           }
         }
 
-        final GrParameter[] parameters = actual.toArray(new GrParameter[actual.size()]);
+        final GrParameter[] parameters = actual.toArray(GrParameter.EMPTY_ARRAY);
 
         final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(parameters, clReturnType);
         final GrMethod pattern = factory.createMethodFromSignature(name, signature);

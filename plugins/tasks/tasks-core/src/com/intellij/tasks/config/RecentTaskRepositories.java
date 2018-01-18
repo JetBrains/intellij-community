@@ -20,7 +20,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskManagerImpl;
@@ -81,7 +80,7 @@ public class RecentTaskRepositories implements PersistentStateComponent<Element>
   }
 
   public Element getState() {
-    return XmlSerializer.serialize(myRepositories.toArray(new TaskRepository[myRepositories.size()]));
+    return XmlSerializer.serialize(myRepositories.toArray(new TaskRepository[0]));
   }
 
   public void loadState(Element state) {

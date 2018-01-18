@@ -725,7 +725,7 @@ public final class Palette implements Disposable, PersistentStateComponent<Eleme
       throw new RuntimeException(e);
     }
 
-    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[result.size()]);
+    final IntrospectedProperty[] properties = result.toArray(new IntrospectedProperty[0]);
     myClass2Properties.put(aClass, properties);
     return properties;
   }

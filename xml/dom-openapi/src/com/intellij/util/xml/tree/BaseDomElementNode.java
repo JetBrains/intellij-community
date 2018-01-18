@@ -126,7 +126,7 @@ public class BaseDomElementNode extends AbstractDomElementNode {
       }
     }
 
-    AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[children.size()]);
+    AbstractDomElementNode[] childrenNodes = children.toArray(new AbstractDomElementNode[0]);
 
     Comparator<AbstractDomElementNode> comparator = DomUtil.getFile(myDomElement).getUserData(COMPARATOR_KEY);
     if (comparator == null) {

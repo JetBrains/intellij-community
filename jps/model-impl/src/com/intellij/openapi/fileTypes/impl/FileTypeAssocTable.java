@@ -135,7 +135,7 @@ public class FileTypeAssocTable<T> {
 
   private boolean removeAssociationsFromMap(@NotNull Map<CharSequence, T> extensionMappings, @NotNull T type, boolean changed) {
     Set<CharSequence> exts = extensionMappings.keySet();
-    CharSequence[] extsStrings = exts.toArray(new CharSequence[exts.size()]);
+    CharSequence[] extsStrings = exts.toArray(new CharSequence[0]);
     for (CharSequence s : extsStrings) {
       if (extensionMappings.get(s) == type) {
         extensionMappings.remove(s);

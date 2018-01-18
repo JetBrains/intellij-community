@@ -105,7 +105,7 @@ public class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileCha
   private void checkFiles() {
     final VirtualFile[] files;
     synchronized (myFilesToCheck) {
-      files = myFilesToCheck.toArray(new VirtualFile[myFilesToCheck.size()]);
+      files = myFilesToCheck.toArray(VirtualFile.EMPTY_ARRAY);
       myFilesToCheck.clear();
     }
     final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();

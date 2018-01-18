@@ -60,7 +60,7 @@ public class PublicConstructorInNonPublicClassInspection extends BaseInspection 
       fixes.add(new SetConstructorModifierFix(PsiModifier.PRIVATE));
     }
     fixes.add(new RemoveModifierFix(PsiModifier.PUBLIC));
-    return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+    return fixes.toArray(new InspectionGadgetsFix[0]);
   }
 
   private static class SetConstructorModifierFix extends InspectionGadgetsFix {

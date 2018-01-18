@@ -116,7 +116,7 @@ public class CreateResourceBundleDialogComponent {
         Messages.showErrorDialog(getContentPanel(), errorString);
       } else {
         final List<PsiFile> createFiles = myComponent.createPropertiesFiles();
-        myCreatedFiles = createFiles.toArray(new PsiElement[createFiles.size()]);
+        myCreatedFiles = createFiles.toArray(PsiElement.EMPTY_ARRAY);
         super.doOKAction();
       }
     }

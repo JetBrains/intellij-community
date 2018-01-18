@@ -263,7 +263,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   @Override
   @NotNull
   public CoverageSuite[] getSuites() {
-    return myCoverageSuites.toArray(new CoverageSuite[myCoverageSuites.size()]);
+    return myCoverageSuites.toArray(new CoverageSuite[0]);
   }
 
   @Override

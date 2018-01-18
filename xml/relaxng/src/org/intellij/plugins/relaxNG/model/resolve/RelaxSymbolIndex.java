@@ -84,7 +84,7 @@ public class RelaxSymbolIndex extends ScalarIndexExtension<String> {
         }
       }
     }
-    return result.toArray(new NavigationItem[result.size()]);
+    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @NotNull

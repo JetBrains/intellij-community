@@ -397,7 +397,7 @@ public final class ErrorAnalyzer {
     if (errorInfos != null) {
       result.addAll(errorInfos);
     }
-    return result.toArray(new ErrorInfo[result.size()]);
+    return result.toArray(ErrorInfo.EMPTY_ARRAY);
   }
 
   private static ArrayList<ErrorInfo> getErrorInfos(final IComponent component) {

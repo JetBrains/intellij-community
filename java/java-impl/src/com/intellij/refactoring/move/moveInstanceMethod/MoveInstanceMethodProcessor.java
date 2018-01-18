@@ -216,7 +216,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       });
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void addInheritorUsages(PsiClass aClass, final GlobalSearchScope searchScope, final List<UsageInfo> usages) {

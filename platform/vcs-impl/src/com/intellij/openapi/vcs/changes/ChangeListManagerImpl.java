@@ -1214,7 +1214,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             foundChanges.set(newChanges);
 
             if (moveRequired && !newChanges.isEmpty()) {
-              moveChangesTo(list, newChanges.toArray(new Change[newChanges.size()]));
+              moveChangesTo(list, newChanges.toArray(new Change[0]));
             }
           }
         });

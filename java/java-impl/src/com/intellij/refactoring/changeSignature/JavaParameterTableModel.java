@@ -167,7 +167,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       Set<LookupElement> set = new LinkedHashSet<>();
       JavaCompletionUtil.completeVariableNameForRefactoring(editorTextField.getProject(), set, prefix, type, VariableKind.PARAMETER);
 
-      LookupElement[] lookupItems = set.toArray(new LookupElement[set.size()]);
+      LookupElement[] lookupItems = set.toArray(LookupElement.EMPTY_ARRAY);
       editor.getCaretModel().moveToOffset(prefix.length());
       editor.getSelectionModel().removeSelection();
       LookupManager.getInstance(editorTextField.getProject()).showLookup(editor, lookupItems, prefix);

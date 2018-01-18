@@ -19,7 +19,6 @@ import com.intellij.build.BuildDescriptor;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -84,13 +83,13 @@ public class StartBuildEventImpl extends StartEventImpl implements StartBuildEve
   @NotNull
   @Override
   public AnAction[] getRestartActions() {
-    return myRestartActions.toArray(new AnAction[myRestartActions.size()]);
+    return myRestartActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull
   @Override
   public Filter[] getExecutionFilters() {
-    return myFilters.toArray(new Filter[myFilters.size()]);
+    return myFilters.toArray(Filter.EMPTY_ARRAY);
   }
 
   @Nullable

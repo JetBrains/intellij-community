@@ -35,7 +35,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.inCallers.AbstractJavaMemberCallerChooser;
@@ -208,7 +211,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     return manager.showUsages(targets,
                               UsageInfoToUsageConverter.convert(elements,
-                                                                others.toArray(new UsageInfo[others.size()])),
+                                                                others.toArray(UsageInfo.EMPTY_ARRAY)),
                               presentation
     );
   }
@@ -233,7 +236,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
               validGetters.add(getter);
             }
           }
-          getters = validGetters.isEmpty() ? null : validGetters.toArray(new PsiMethod[validGetters.size()]);
+          getters = validGetters.isEmpty() ? null : validGetters.toArray(PsiMethod.EMPTY_ARRAY);
         }
 
         PsiMethod setter = PropertyUtilBase.findPropertySetter(aClass, propertyName, isStatic, false);
@@ -439,7 +442,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
           methodsToDelete.add(info.getElement());
         }
         methodsToDelete.add(member);
-        final Condition<PsiElement> insideDeletedCondition = getUsageInsideDeletedFilter(methodsToDelete.toArray(new PsiElement[methodsToDelete.size()]));
+        final Condition<PsiElement> insideDeletedCondition = getUsageInsideDeletedFilter(methodsToDelete.toArray(PsiElement.EMPTY_ARRAY));
         for (UsageInfo info : list) {
           PsiElement psi = info.getElement();
           JavaRefactoringSettings refactoringSettings = JavaRefactoringSettings.getInstance();
@@ -450,7 +453,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       }
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static boolean allSuperMethodsSelectedToDelete(List<PsiMethod> unselectedMethods, PsiMethod method) {
@@ -728,7 +731,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
         list.add(method);
       }
     }
-    return list.toArray(new PsiMethod[list.size()]);
+    return list.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Nullable

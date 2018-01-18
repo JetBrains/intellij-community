@@ -134,7 +134,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         }
       }
     }
-    return children.toArray(new StructureViewTreeElement[children.size()]);
+    return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
   protected boolean elementIsField(PyElement element) {

@@ -575,7 +575,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
         }
       }
-      return result.isEmpty() ? candidates : result.toArray(new CandidateInfo[result.size()]);
+      return result.isEmpty() ? candidates : result.toArray(CandidateInfo.EMPTY_ARRAY);
     }
     else {
       assert call instanceof PsiEnumConstant;
@@ -605,7 +605,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       return CandidateInfo.EMPTY_ARRAY;
     }
     final List<CandidateInfo> results = processor.getResults();
-    return results.toArray(new CandidateInfo[results.size()]);
+    return results.toArray(CandidateInfo.EMPTY_ARRAY);
   }
 
   public static String updateMethodPresentation(@NotNull PsiMethod method, @Nullable PsiSubstitutor substitutor, @NotNull ParameterInfoUIContext context) {

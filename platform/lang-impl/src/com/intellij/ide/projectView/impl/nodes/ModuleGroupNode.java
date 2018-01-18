@@ -147,7 +147,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   @Override
   public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
     final List<Module> modules = extractModules(sourceNodes);
-    MoveModulesToGroupAction.doMove(modules.toArray(new Module[modules.size()]), getValue(), null);
+    MoveModulesToGroupAction.doMove(modules.toArray(Module.EMPTY_ARRAY), getValue(), null);
   }
 
   @Override

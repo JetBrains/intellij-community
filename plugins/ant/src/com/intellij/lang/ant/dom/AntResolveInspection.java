@@ -135,7 +135,7 @@ public class AntResolveInspection extends AntInspection {
           ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
           antDomRef.getUnresolvedMessagePattern(),
           ref.getRangeInElement(),
-          quickFixList.toArray((new LocalQuickFix[quickFixList.size()]))
+          quickFixList.toArray(LocalQuickFix.EMPTY_ARRAY)
         );
 
         if (ref instanceof AntDomFileReference) {

@@ -139,7 +139,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    UsageInfo[] usageInfos = usagesList.toArray(new UsageInfo[usagesList.size()]);
+    UsageInfo[] usageInfos = usagesList.toArray(UsageInfo.EMPTY_ARRAY);
     usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
     return usageInfos;
   }
@@ -276,7 +276,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         filtered.add(usage);
       }
     }
-    UsageInfo[] infos = filtered.toArray(new UsageInfo[filtered.size()]);
+    UsageInfo[] infos = filtered.toArray(UsageInfo.EMPTY_ARRAY);
     VisibilityUtil.fixVisibility(UsageViewUtil.toElements(infos), newMember, myNewVisibility);
   }
 

@@ -102,6 +102,6 @@ public class UnusedMessageFormatParameterInspection extends PropertiesInspection
         }
       }
     }
-    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(new ProblemDescriptor[problemDescriptors.size()]);
+    return problemDescriptors.isEmpty() ? null : problemDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

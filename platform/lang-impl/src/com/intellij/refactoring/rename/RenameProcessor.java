@@ -222,7 +222,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     if (conflictUsages != null) {
       mySkippedUsages.addAll(conflictUsages);
     }
-    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
+    refUsages.set(usagesSet.toArray(UsageInfo.EMPTY_ARRAY));
 
     prepareSuccessful();
     return PsiElementRenameHandler.canRename(myProject, null, myPrimaryElement);
@@ -315,7 +315,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     usageInfos = UsageViewUtil.removeDuplicatedUsages(usageInfos);
     return usageInfos;
   }
@@ -378,7 +378,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
       Runnable postRenameCallback = renamePsiElementProcessor.getPostRenameCallback(element, newName, elementListener);
       final Collection<UsageInfo> infos = classified.get(element);
       try {
-        RenameUtil.doRename(element, newName, infos.toArray(new UsageInfo[infos.size()]), myProject, elementListener);
+        RenameUtil.doRename(element, newName, infos.toArray(UsageInfo.EMPTY_ARRAY), myProject, elementListener);
       }
       catch (final IncorrectOperationException e) {
         RenameUtil.showErrorMessage(e, element, myProject);
@@ -399,7 +399,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         nonCodeUsages.add((NonCodeUsageInfo)usage);
       }
     }
-    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+    myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
     if (!mySkippedUsages.isEmpty()) {
       if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
         ApplicationManager.getApplication().invokeLater(() -> {

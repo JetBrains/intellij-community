@@ -310,7 +310,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (classesToImport.size() > 1) {
       reduceSuggestedClassesBasedOnDependencyRuleViolation(psiFile, classesToImport);
     }
-    PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+    PsiClass[] classes = classesToImport.toArray(PsiClass.EMPTY_ARRAY);
     final Project project = myElement.getProject();
     CodeInsightUtil.sortIdenticalShortNamedMembers(classes, myRef);
 
@@ -428,7 +428,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       List<PsiClass> classesToImport = getClassesToImport(true);
-      PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+      PsiClass[] classes = classesToImport.toArray(PsiClass.EMPTY_ARRAY);
       if (classes.length == 0) return;
 
       AddImportAction action = createAddImportAction(classes, project, editor);

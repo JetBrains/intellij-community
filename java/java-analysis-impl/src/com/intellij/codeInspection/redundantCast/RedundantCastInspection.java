@@ -63,7 +63,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
       }
     }
     if (descriptions.isEmpty()) return null;
-    return descriptions.toArray(new ProblemDescriptor[descriptions.size()]);
+    return descriptions.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override

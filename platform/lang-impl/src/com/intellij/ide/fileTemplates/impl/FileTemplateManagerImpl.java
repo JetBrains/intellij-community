@@ -145,7 +145,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @NotNull
   public FileTemplate[] getAllTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
@@ -370,7 +370,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @NotNull
   public FileTemplate[] getAllPatterns() {
     final Collection<FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
-    return allTemplates.toArray(new FileTemplate[allTemplates.size()]);
+    return allTemplates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
@@ -382,14 +382,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @NotNull
   public FileTemplate[] getAllCodeTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
   @NotNull
   public FileTemplate[] getAllJ2eeTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override

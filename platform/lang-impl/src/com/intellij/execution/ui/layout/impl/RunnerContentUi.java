@@ -58,8 +58,8 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1160,7 +1160,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public void restoreLayout() {
-    final RunnerContentUi[] children = myChildren.toArray(new RunnerContentUi[myChildren.size()]);
+    final RunnerContentUi[] children = myChildren.toArray(new RunnerContentUi[0]);
     final List<Content> contents = new ArrayList<>();
     Collections.addAll(contents, myManager.getContents());
     for (RunnerContentUi child : children) {
@@ -1170,7 +1170,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
       final Content content = ((RestoreViewAction)action).getContent();
       contents.add(content);
     }
-    Content[] all = contents.toArray(new Content[contents.size()]);
+    Content[] all = contents.toArray(new Content[0]);
     Arrays.sort(all, (content, content1) -> {
       final int i = getStateFor(content).getTab().getDefaultIndex();
       final int i1 = getStateFor(content1).getTab().getDefaultIndex();

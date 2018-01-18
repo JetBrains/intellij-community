@@ -227,7 +227,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
 
       Map<Extension, String> targetExtensionsWithMarks = filterAndMarkExtensions(extensionsForThisEp, project);
       List<LookupElement> idCompletionVariants = getLookupElements(targetExtensionsWithMarks);
-      return idCompletionVariants.toArray(new LookupElement[idCompletionVariants.size()]);
+      return idCompletionVariants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
     @NotNull

@@ -30,7 +30,6 @@ import com.intellij.uiDesigner.shared.XYLayoutManager;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * @author yole
@@ -146,7 +145,7 @@ public class GridBuildUtil {
         createNewContainer = false;
       }
       else {
-        componentsToConvert = selection.toArray(new RadComponent[selection.size()]);
+        componentsToConvert = selection.toArray(RadComponent.EMPTY_ARRAY);
         parent = selection.get(0).getParent();
         createNewContainer = true;
       }

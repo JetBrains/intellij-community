@@ -115,7 +115,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
             }
             ((ResourceBundlePropertyStructureViewElement)treeElement).setInspectedPropertyProblems(allDescriptors.isEmpty()
                                               ? null
-                                              : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[allDescriptors.size()]),
+                                              : new InspectedPropertyProblems(allDescriptors.toArray(new Pair[0]),
                                                                               highlightTypes));
           }
         }

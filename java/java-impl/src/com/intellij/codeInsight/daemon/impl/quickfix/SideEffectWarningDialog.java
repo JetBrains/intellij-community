@@ -85,7 +85,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
 
     };
     actions.add(myCancelAllAction);
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @NotNull

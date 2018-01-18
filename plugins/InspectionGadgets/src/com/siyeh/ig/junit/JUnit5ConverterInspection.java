@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.actions.CleanupInspectionIntention;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.project.Project;
@@ -226,7 +225,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
             migrateUsages.add(usage);
           }
         }
-        super.performRefactoring(migrateUsages.toArray(new UsageInfo[migrateUsages.size()]));
+        super.performRefactoring(migrateUsages.toArray(UsageInfo.EMPTY_ARRAY));
         CleanupInspectionUtil.getInstance().applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
 

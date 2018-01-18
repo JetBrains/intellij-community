@@ -352,7 +352,7 @@ public class ControlFlowUtil {
         }
       }
     }
-    PsiVariable[] outputVariables = array.toArray(new PsiVariable[array.size()]);
+    PsiVariable[] outputVariables = array.toArray(new PsiVariable[0]);
     if (LOG.isDebugEnabled()) {
       LOG.debug("output variables:");
       for (PsiVariable variable : outputVariables) {

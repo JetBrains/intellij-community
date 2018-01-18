@@ -85,7 +85,7 @@ public class GroovyExpectedTypesProvider {
 
         if (!custom.isEmpty()) {
           custom.addAll(0, Arrays.asList(result));
-          return custom.toArray(new TypeConstraint[custom.size()]);
+          return custom.toArray(TypeConstraint.EMPTY_ARRAY);
         }
 
         return result;
@@ -357,7 +357,7 @@ public class GroovyExpectedTypesProvider {
         }
       }
       if (!constraints.isEmpty()) {
-        myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
+        myResult = constraints.toArray(TypeConstraint.EMPTY_ARRAY);
       }
     }
 

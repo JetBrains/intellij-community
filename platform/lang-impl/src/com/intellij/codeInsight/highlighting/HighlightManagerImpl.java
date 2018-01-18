@@ -103,7 +103,7 @@ public class HighlightManagerImpl extends HighlightManager {
       HighlightInfo info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
     }
-    return set.toArray(new RangeHighlighter[set.size()]);
+    return set.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {

@@ -185,6 +185,6 @@ public class ShowCoveringTestsAction extends AnAction {
       }
     }
 
-    return files.isEmpty() ? null : files.toArray(new File[files.size()]);
+    return files.isEmpty() ? null : files.toArray(new File[0]);
   }
 }

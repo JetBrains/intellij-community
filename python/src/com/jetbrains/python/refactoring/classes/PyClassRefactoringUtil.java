@@ -136,7 +136,7 @@ public final class PyClassRefactoringUtil {
     for (final PsiElement e : methods) {
       rememberNamedReferences(e);
     }
-    final PyFunction[] elements = methods.toArray(new PyFunction[methods.size()]);
+    final PyFunction[] elements = methods.toArray(PyFunction.EMPTY_ARRAY);
     return addMethods(superClass, skipIfExist, elements);
   }
 

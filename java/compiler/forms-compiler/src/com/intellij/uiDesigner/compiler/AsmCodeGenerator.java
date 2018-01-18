@@ -193,11 +193,11 @@ public class AsmCodeGenerator {
   }
 
   public FormErrorInfo[] getErrors() {
-    return (FormErrorInfo[])myErrors.toArray(new FormErrorInfo[myErrors.size()]);
+    return (FormErrorInfo[])myErrors.toArray(new FormErrorInfo[0]);
   }
 
   public FormErrorInfo[] getWarnings() {
-    return (FormErrorInfo[])myWarnings.toArray(new FormErrorInfo[myWarnings.size()]);
+    return (FormErrorInfo[])myWarnings.toArray(new FormErrorInfo[0]);
   }
 
   public byte[] getPatchedData() {

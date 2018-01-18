@@ -170,7 +170,7 @@ public class BatchEvaluator {
         ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep((ArrayReference)value); // to avoid ObjectCollectedException for both the array and its elements
         final ArrayReference strings = (ArrayReference)value;
         final List<Value> allValuesArray = strings.getValues();
-        final Value[] allValues = allValuesArray.toArray(new Value[allValuesArray.size()]);
+        final Value[] allValues = allValuesArray.toArray(new Value[0]);
         int idx = 0;
         for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext(); idx++) {
           ToStringCommand request = iterator.next();

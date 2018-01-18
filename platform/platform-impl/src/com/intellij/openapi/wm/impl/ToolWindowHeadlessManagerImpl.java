@@ -602,7 +602,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     @Override
     @NotNull
     public Content[] getContents() {
-      return myContents.toArray(new Content[myContents.size()]);
+      return myContents.toArray(new Content[0]);
     }
 
     @Override

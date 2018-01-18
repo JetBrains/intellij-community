@@ -67,7 +67,7 @@ public class DirDiffToolbarActions extends ActionGroup {
         ((DirDiffModelHolder)action).setModel(model);
       }
     }
-    myActions = actions.toArray(new AnAction[actions.size()]);
+    myActions = actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull

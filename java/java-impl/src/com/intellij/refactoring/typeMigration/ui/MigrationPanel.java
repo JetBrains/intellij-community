@@ -317,7 +317,7 @@ public class MigrationPanel extends JPanel implements Disposable {
             collectInfos(usageInfos, (MigrationNode)userObject);
           }
         }
-        return usageInfos.toArray(new TypeMigrationUsageInfo[usageInfos.size()]);
+        return usageInfos.toArray(new TypeMigrationUsageInfo[0]);
       }
       return null;
     }

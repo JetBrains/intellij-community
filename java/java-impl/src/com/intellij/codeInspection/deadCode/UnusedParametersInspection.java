@@ -68,7 +68,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
         }
       }
-      return result.toArray(new CommonProblemDescriptor[result.size()]);
+      return result.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
     }
     return null;
   }

@@ -100,7 +100,7 @@ public abstract class TemplateLanguageStructureViewBuilder extends TreeBasedStru
       Icon icon = ObjectUtils.notNull(LanguageUtil.getLanguageFileType(language), FileTypes.UNKNOWN).getIcon();
       viewDescriptors.add(new StructureViewComposite.StructureViewDescriptor(title, structureView, icon));
     }
-    StructureViewComposite.StructureViewDescriptor[] array = viewDescriptors.toArray(new StructureViewComposite.StructureViewDescriptor[viewDescriptors.size()]);
+    StructureViewComposite.StructureViewDescriptor[] array = viewDescriptors.toArray(new StructureViewComposite.StructureViewDescriptor[0]);
     return new StructureViewComposite(array) {
       @Override
       public boolean isOutdated() {

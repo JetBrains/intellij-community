@@ -412,7 +412,7 @@ public class ActionMacroManager implements PersistentStateComponent<Element>, Di
   }
 
   public ActionMacro[] getAllMacros() {
-    return myMacros.toArray(new ActionMacro[myMacros.size()]);
+    return myMacros.toArray(new ActionMacro[0]);
   }
 
   public void removeAllMacros() {

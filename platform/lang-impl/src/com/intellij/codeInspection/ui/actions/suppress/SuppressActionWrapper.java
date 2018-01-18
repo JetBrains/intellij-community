@@ -82,7 +82,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
         final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
         LOG.assertTrue(wrapper != null);
         final Set<SuppressableInspectionTreeNode> nodesAsSet = getNodesToSuppress(view);
-        final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[nodesAsSet.size()]);
+        final SuppressableInspectionTreeNode[] nodes = nodesAsSet.toArray(new SuppressableInspectionTreeNode[0]);
         CommandProcessor.getInstance().executeCommand(project, () -> {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
           final SequentialModalProgressTask progressTask =

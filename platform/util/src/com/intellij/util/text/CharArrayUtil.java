@@ -498,7 +498,7 @@ public class CharArrayUtil {
     if (lastTextFound < result.size()) {
       result = result.subList(0, lastTextFound);
     }
-    return result.toArray(new TextRange[result.size()]);
+    return result.toArray(new TextRange[0]);
   }
 
   public static boolean containLineBreaks(@NotNull CharSequence seq) {

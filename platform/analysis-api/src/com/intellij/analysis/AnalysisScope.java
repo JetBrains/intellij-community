@@ -600,7 +600,7 @@ public class AnalysisScope {
       modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
       modulesToAnalyze.add(module);
     }
-    return new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()]));
+    return new AnalysisScope(modulesToAnalyze.toArray(Module.EMPTY_ARRAY));
   }
 
   @NotNull

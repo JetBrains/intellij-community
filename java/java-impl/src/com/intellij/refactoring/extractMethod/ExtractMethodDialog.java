@@ -125,7 +125,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     if (canBeChainedConstructor) {
       myCbChainedConstructor = new NonFocusableCheckBox(RefactoringBundle.message("extract.chained.constructor.checkbox"));
     }
-    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
 
     init();
   }
@@ -315,11 +315,11 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
     myFoldParameters.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldParameters.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldParameters.isSelected());
-    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
     myFoldParameters.addActionListener(e -> {
       myVariableData.setFoldingAvailable(myFoldParameters.isSelected());
       myInputVariables =
-        myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+        myVariableData.getInputVariables().toArray(new VariableData[0]);
       updateVarargsEnabled();
       createParametersPanel();
       updateSignature();
@@ -386,7 +386,7 @@ public class ExtractMethodDialog extends DialogWrapper implements AbstractExtrac
       myMakeStatic.addItemListener(e -> {
         if (myVariableData.hasInstanceFields()) {
           myVariableData.setPassFields(myMakeStatic.isSelected());
-          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+          myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
           updateVarargsEnabled();
           createParametersPanel();
         }

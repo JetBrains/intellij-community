@@ -41,7 +41,7 @@ public abstract class GenericsInspectionToolBase extends AbstractBaseJavaLocalIn
       }
     }
     if (descriptors.isEmpty()) return null;
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
+    return descriptors.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override

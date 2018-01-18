@@ -251,6 +251,6 @@ public class FavoritesPanel {
         }
       }
     }
-    return sourceFiles.toArray(new PsiFileSystemItem[sourceFiles.size()]);
+    return sourceFiles.toArray(new PsiFileSystemItem[0]);
   }
 }

@@ -129,7 +129,7 @@ public class GrClassImplUtil {
       List<PsiMethod> list = ContainerUtil.newArrayList();
       getAllMethodsInner(grType, list, new HashSet<>());
       return CachedValueProvider.Result
-        .create(list.toArray(new PsiMethod[list.size()]), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
+        .create(list.toArray(PsiMethod.EMPTY_ARRAY), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT, grType);
     });
   }
 
@@ -175,7 +175,7 @@ public class GrClassImplUtil {
       final PsiClass psiClass = type.resolve();
       if (psiClass != null) result.add(psiClass);
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -189,7 +189,7 @@ public class GrClassImplUtil {
       }
     }
 
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   public static boolean processDeclarations(@NotNull GrTypeDefinition grType,
@@ -408,7 +408,7 @@ public class GrClassImplUtil {
         if (name.equals(method.getName())) result.add(method);
       }
 
-      return result.toArray(new PsiMethod[result.size()]);
+      return result.toArray(PsiMethod.EMPTY_ARRAY);
     }
 
     Map<String, List<CandidateInfo>> methodsMap = CollectClassMembersUtil.getAllMethods(grType, includeSyntheticAccessors);
@@ -442,7 +442,7 @@ public class GrClassImplUtil {
         result.add(method);
       }
     }
-    return result.toArray(new PsiMethod[result.size()]);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
   @Nullable

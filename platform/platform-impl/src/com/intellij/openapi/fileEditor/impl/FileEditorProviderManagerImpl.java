@@ -101,7 +101,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
     // Sort editors according policies
     Collections.sort(sharedProviders, MyComparator.ourInstance);
 
-    return sharedProviders.toArray(new FileEditorProvider[sharedProviders.size()]);
+    return sharedProviders.toArray(new FileEditorProvider[0]);
   }
 
   @Override

@@ -153,7 +153,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     else {
       myMergeSession = null;
     }
-    myModel = new ListTableModel<>(columns.toArray(new ColumnInfo[columns.size()]));
+    myModel = new ListTableModel<>(columns.toArray(ColumnInfo.EMPTY_ARRAY));
     myModel.setItems(new ArrayList<>(myFiles));
     myTable.setModelAndUpdateColumns(myModel);
     myVirtualFileRenderer.setFont(UIUtil.getListFont());

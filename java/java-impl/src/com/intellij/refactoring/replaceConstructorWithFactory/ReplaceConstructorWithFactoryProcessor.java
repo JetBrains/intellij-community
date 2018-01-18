@@ -128,7 +128,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     //  });
     //}
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {

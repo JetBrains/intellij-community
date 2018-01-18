@@ -63,7 +63,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     Collection<PsiClass> allClasses = new SmartList<>();
     processClassesWithName(name, Processors.cancelableCollectProcessor(allClasses), scope, null);
     if (allClasses.isEmpty()) return PsiClass.EMPTY_ARRAY;
-    return allClasses.toArray(new PsiClass[allClasses.size()]);
+    return allClasses.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   public List<PsiClass> getScriptClassesByFQName(final String name, final GlobalSearchScope scope, final boolean srcOnly) {
@@ -174,7 +174,7 @@ public class GroovyShortNamesCache extends PsiShortNamesCache {
     final Collection<? extends PsiField> fields = StubIndex.getElements(GrFieldNameIndex.KEY, name, myProject,
                                                                         new GrSourceFilterScope(scope), GrField.class);
     if (fields.isEmpty()) return PsiField.EMPTY_ARRAY;
-    return fields.toArray(new PsiField[fields.size()]);
+    return fields.toArray(PsiField.EMPTY_ARRAY);
   }
 
   @Override

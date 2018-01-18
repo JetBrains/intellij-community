@@ -50,7 +50,7 @@ public abstract class GrIntroduceFieldHandlerBase<Settings extends GrIntroduceSe
         aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
         ContainerUtil.addIfNotNull(result, aClass);
       }
-      return result.toArray(new PsiClass[result.size()]);
+      return result.toArray(PsiClass.EMPTY_ARRAY);
     }
   }
 

@@ -165,7 +165,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
       handlers.addAll(DumbService.getInstance(project).filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }
     if (handlers.isEmpty()) return null;
-    return handlers.toArray(new ParameterInfoHandler[handlers.size()]);
+    return handlers.toArray(new ParameterInfoHandler[0]);
   }
 }
 

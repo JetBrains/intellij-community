@@ -245,7 +245,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
         list.add(editor);
       }
     }
-    return list == null ? Editor.EMPTY_ARRAY : list.toArray(new Editor[list.size()]);
+    return list == null ? Editor.EMPTY_ARRAY : list.toArray(Editor.EMPTY_ARRAY);
   }
 
   @Override

@@ -82,7 +82,7 @@ public class GrThrowsClauseImpl extends GrReferenceListImpl implements GrThrowsC
         result.add(new LightClassReference(manager, type.getCanonicalText(), resolved, resolveResult.getSubstitutor()));
       }
     }
-    return result.toArray(new PsiJavaCodeReferenceElement[result.size()]);
+    return result.toArray(PsiJavaCodeReferenceElement.EMPTY_ARRAY);
   }
 
   @Override

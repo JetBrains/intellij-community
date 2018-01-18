@@ -140,7 +140,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         addNonCodeUsages(element, usages, getDefaultInsideDeletedCondition(myElements), mySearchNonJava, mySearchInCommentsAndStrings);
       }
     }
-    UsageInfo[] result = usages.toArray(new UsageInfo[usages.size()]);
+    UsageInfo[] result = usages.toArray(UsageInfo.EMPTY_ARRAY);
     result = UsageViewUtil.removeDuplicatedUsages(result);
     Arrays.sort(result, (o1, o2) -> PsiUtilCore.compareElementsByPosition(o2.getElement(), o1.getElement()));
     return result;
@@ -363,7 +363,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
         list.add(info);
       }
     }
-    return list.toArray(new UsageInfo[list.size()]);
+    return list.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Nullable

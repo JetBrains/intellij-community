@@ -70,6 +70,6 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
       }
     }
 
-    new ConvertToJavaProcessor(project, files.toArray(new GroovyFile[files.size()])).run();
+    new ConvertToJavaProcessor(project, files.toArray(GroovyFile.EMPTY_ARRAY)).run();
   }
 }

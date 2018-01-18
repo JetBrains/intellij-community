@@ -1268,7 +1268,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (body != null) {
       addReturnStatements(vector, body);
     }
-    return vector.toArray(new PsiReturnStatement[vector.size()]);
+    return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
   private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {

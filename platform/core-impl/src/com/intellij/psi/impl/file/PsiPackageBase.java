@@ -81,7 +81,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
         result.add(directory);
       }
     }
-    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(new PsiDirectory[result.size()]);
+    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override

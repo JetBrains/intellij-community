@@ -170,7 +170,7 @@ public class LineBlocks {
     for (LineFragment fragment : lines) {
       if (fragment.getType() != null) filtered.add(fragment);
     }
-    return createLineBlocks(filtered.toArray(new LineBlock[filtered.size()]));
+    return createLineBlocks(filtered.toArray(new LineBlock[0]));
   }
 
   static LineBlocks createLineBlocks(LineBlock[] blocks) {

@@ -82,7 +82,7 @@ public class PsiTryStatementImpl extends CompositePsiElement implements PsiTrySt
         PsiParameter parameter = catchSections[i].getParameter();
         if (parameter != null) parameters.add(parameter);
       }
-      myCachedCatchParameters = catchParameters = parameters.toArray(new PsiParameter[parameters.size()]);
+      myCachedCatchParameters = catchParameters = parameters.toArray(PsiParameter.EMPTY_ARRAY);
     }
     return catchParameters;
   }

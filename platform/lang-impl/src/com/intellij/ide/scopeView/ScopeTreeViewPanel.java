@@ -428,7 +428,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           result.addAll(moduleGroup.modulesInGroup(myProject, true));
         }
       }
-      return result.isEmpty() ? null : result.toArray(new Module[result.size()]);
+      return result.isEmpty() ? null : result.toArray(Module.EMPTY_ARRAY);
     }
     return null;
   }

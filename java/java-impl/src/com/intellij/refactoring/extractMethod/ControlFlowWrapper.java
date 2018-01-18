@@ -194,7 +194,7 @@ public class ControlFlowWrapper {
         });
       }
 
-      myOutputVariables = outputVariables.toArray(new PsiVariable[outputVariables.size()]);
+      myOutputVariables = outputVariables.toArray(new PsiVariable[0]);
     }
     Arrays.sort(myOutputVariables, PsiUtil.BY_POSITION);
     return myOutputVariables;

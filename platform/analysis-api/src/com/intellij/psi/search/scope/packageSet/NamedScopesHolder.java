@@ -82,12 +82,12 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     List<NamedScope> list = getPredefinedScopes();
     scopes.addAll(list);
     scopes.addAll(myScopes);
-    return scopes.toArray(new NamedScope[scopes.size()]);
+    return scopes.toArray(new NamedScope[0]);
   }
 
   @NotNull
   public NamedScope[] getEditableScopes() {
-    return myScopes.toArray(new NamedScope[myScopes.size()]);
+    return myScopes.toArray(new NamedScope[0]);
   }
 
   public void removeAllSets() {

@@ -45,7 +45,7 @@ public class ImportUsageFilteringRuleProvider implements UsageFilteringRuleProvi
     if (!ImportFilteringUsageViewSetting.getInstance().SHOW_IMPORTS) {
       ContainerUtil.addAll(rules, Extensions.getExtensions(ImportFilteringRule.EP_NAME));
     }
-    return rules.toArray(new UsageFilteringRule[rules.size()]);
+    return rules.toArray(UsageFilteringRule.EMPTY_ARRAY);
   }
 
   @Override

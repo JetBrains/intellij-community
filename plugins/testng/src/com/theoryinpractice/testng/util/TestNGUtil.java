@@ -375,7 +375,7 @@ public class TestNGUtil {
           set.add(psiClass);
         }
       }
-      holder[0] = set.toArray(new PsiClass[set.size()]);
+      holder[0] = set.toArray(PsiClass.EMPTY_ARRAY);
     };
     if (sync) {
        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, "Searching For Tests...", true, filter.getProject());

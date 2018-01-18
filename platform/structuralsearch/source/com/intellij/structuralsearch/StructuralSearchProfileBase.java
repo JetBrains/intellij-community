@@ -412,7 +412,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       topElement = topElement.getNextSibling();
     }
 
-    return result.toArray(new PsiElement[result.size()]);
+    return result.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   // todo: support expression patterns

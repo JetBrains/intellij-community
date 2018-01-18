@@ -220,7 +220,7 @@ public class GroovyExtractChooser {
         statementList.add(((GrStatement)element));
       }
     }
-    return statementList.toArray(new GrStatement[statementList.size()]);
+    return statementList.toArray(GrStatement.EMPTY_ARRAY);
   }
 
   private static PsiElement[] getElementsInOffset(PsiFile file, int startOffset, int endOffset, boolean forceStatements) {

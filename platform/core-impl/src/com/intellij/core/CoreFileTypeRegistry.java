@@ -50,7 +50,7 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
   @NotNull
   @Override
   public FileType[] getRegisteredFileTypes() {
-    return myAllFileTypes.toArray(new FileType[myAllFileTypes.size()]);
+    return myAllFileTypes.toArray(FileType.EMPTY_ARRAY);
   }
 
   @NotNull

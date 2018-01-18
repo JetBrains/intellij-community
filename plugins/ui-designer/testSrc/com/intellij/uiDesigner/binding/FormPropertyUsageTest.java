@@ -19,7 +19,6 @@ package com.intellij.uiDesigner.binding;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -98,7 +97,7 @@ public class FormPropertyUsageTest extends PsiTestCase {
   }
 
   private void verifyReference(final Collection<PsiReference> result, final int index, final String fileName, final int offset) {
-    PsiReference ref = result.toArray(new PsiReference[result.size()]) [index];
+    PsiReference ref = result.toArray(PsiReference.EMPTY_ARRAY) [index];
     final PsiElement element = ref.getElement();
     assertEquals(fileName, element.getContainingFile().getName());
     int startOffset = element.getTextOffset() + ref.getRangeInElement().getStartOffset();

@@ -24,7 +24,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -144,7 +147,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
 
       myMatchingVisitor.setResult(set.isEmpty() ||
-                                  myMatchingVisitor.matchInAnyOrder(set.toArray(new PsiAnnotation[set.size()]), list2.getAnnotations()));
+                                  myMatchingVisitor.matchInAnyOrder(set.toArray(PsiAnnotation.EMPTY_ARRAY), list2.getAnnotations()));
     }
     else {
       myMatchingVisitor.setResult(true);
@@ -1383,8 +1386,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         final List<PsiResourceListElement> resources1 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList1, PsiResourceListElement.class);
         final List<PsiResourceListElement> resources2 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList2, PsiResourceListElement.class);
         myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(
-          resources1.toArray(new PsiResourceListElement[resources1.size()]),
-          resources2.toArray(new PsiResourceListElement[resources2.size()])));
+          resources1.toArray(new PsiResourceListElement[0]),
+          resources2.toArray(new PsiResourceListElement[0])));
         if (!myMatchingVisitor.getResult()) return;
       }
       else if (resourceList2 != null){

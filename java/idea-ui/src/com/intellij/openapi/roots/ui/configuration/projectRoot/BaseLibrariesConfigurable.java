@@ -246,7 +246,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
       }
     }
     myContext.getDaemonAnalyzer().removeElements(libraries);
-    removePaths(pathsToRemove.toArray(new TreePath[pathsToRemove.size()]));
+    removePaths(pathsToRemove.toArray(new TreePath[0]));
   }
 
   @Override

@@ -117,7 +117,7 @@ public class CustomizationUtil {
       }
     }
 
-    return reorderedChildren.toArray(new AnAction[reorderedChildren.size()]);
+    return reorderedChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
@@ -272,7 +272,7 @@ public class CustomizationUtil {
       url.setComponent(userObject instanceof Pair ? ((Pair)userObject).first : userObject);
       result.add(url);
     }
-    return result.toArray(new ActionUrl[result.size()]);
+    return result.toArray(new ActionUrl[0]);
   }
 
   @NotNull

@@ -261,7 +261,7 @@ public class Commander extends JPanel implements PersistentStateComponent<Elemen
         strokes.add(((KeyboardShortcut)shortcut).getFirstKeyStroke());
       }
     }
-    return strokes.toArray(new KeyStroke[strokes.size()]);
+    return strokes.toArray(new KeyStroke[0]);
   }
 
   private DefaultActionGroup createToolbarActions() {

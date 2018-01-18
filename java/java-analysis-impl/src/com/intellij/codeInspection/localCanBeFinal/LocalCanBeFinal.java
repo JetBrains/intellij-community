@@ -53,7 +53,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
   @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> list = checkCodeBlock(method.getBody(), manager, isOnTheFly);
-    return list == null ? null : list.toArray(new ProblemDescriptor[list.size()]);
+    return list == null ? null : list.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool {
         allProblems.addAll(problems);
       }
     }
-    return allProblems == null ? null : allProblems.toArray(new ProblemDescriptor[allProblems.size()]);
+    return allProblems == null ? null : allProblems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable

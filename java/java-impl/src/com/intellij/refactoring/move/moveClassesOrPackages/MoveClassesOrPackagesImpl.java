@@ -312,7 +312,7 @@ public class MoveClassesOrPackagesImpl {
     List<PsiDirectory> sourceRootDirectories = buildRearrangeTargetsList(project, directories);
     DirectoryChooser chooser = new DirectoryChooser(project);
     chooser.setTitle(RefactoringBundle.message("select.source.root.chooser.title"));
-    chooser.fillList(sourceRootDirectories.toArray(new PsiDirectory[sourceRootDirectories.size()]), null, project, "");
+    chooser.fillList(sourceRootDirectories.toArray(PsiDirectory.EMPTY_ARRAY), null, project, "");
     if (!chooser.showAndGet()) {
       return;
     }

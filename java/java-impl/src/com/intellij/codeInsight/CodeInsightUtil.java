@@ -246,7 +246,7 @@ public class CodeInsightUtil {
       }
       if (!found) array.add(expr);
     }
-    return array.toArray(new PsiExpression[array.size()]);
+    return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   private static void addExpressionOccurrences(PsiExpression expr, List<PsiExpression> array, PsiElement scope) {

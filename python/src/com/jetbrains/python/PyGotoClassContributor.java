@@ -46,6 +46,6 @@ public class PyGotoClassContributor implements ChooseByNameContributor {
     final List<NavigationItem> results = new ArrayList<>();
     results.addAll(PyClassNameIndex.find(name, project, includeNonProjectItems));
     results.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
-    return results.toArray(new NavigationItem[results.size()]);
+    return results.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 }

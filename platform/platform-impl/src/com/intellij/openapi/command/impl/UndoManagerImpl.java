@@ -550,7 +550,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
 
     if (refs.size() <= FREE_QUEUES_LIMIT) return;
 
-    DocumentReference[] backSorted = refs.toArray(new DocumentReference[refs.size()]);
+    DocumentReference[] backSorted = refs.toArray(DocumentReference.EMPTY_ARRAY);
     Arrays.sort(backSorted, Comparator.comparingInt(this::getLastCommandTimestamp));
 
     for (int i = 0; i < backSorted.length - FREE_QUEUES_LIMIT; i++) {

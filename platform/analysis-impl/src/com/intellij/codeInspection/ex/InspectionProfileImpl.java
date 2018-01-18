@@ -419,7 +419,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (Tools toolList : myTools.values()) {
       result.add(toolList.getInspectionTool(element));
     }
-    return result.toArray(new InspectionToolWrapper[result.size()]);
+    return result.toArray(InspectionToolWrapper.EMPTY_ARRAY);
   }
 
   @Override

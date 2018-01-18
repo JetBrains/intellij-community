@@ -654,7 +654,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return;
       }
 
-      registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(new LocalQuickFix[actions.size()]));
+      registerProblem(node, description, hl_type, null, rangeInElement, actions.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
 
     private static void addInstallPackageAction(List<LocalQuickFix> actions, String packageName, Module module, Sdk sdk) {

@@ -335,7 +335,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
-            occurrences.toArray(new PsiElement[occurrences.size()]), null);
+            occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myOperation = operation;
       if (operation.getAvailableInitPlaces().size() > 1) {

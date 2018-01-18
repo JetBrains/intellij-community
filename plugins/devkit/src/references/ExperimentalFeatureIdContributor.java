@@ -103,7 +103,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
                        .withTypeText(percentage != null ? percentage + "%" : ""));
         return true;
       });
-      return variants.toArray(new LookupElement[variants.size()]);
+      return variants.toArray(LookupElement.EMPTY_ARRAY);
     }
 
     @Nullable

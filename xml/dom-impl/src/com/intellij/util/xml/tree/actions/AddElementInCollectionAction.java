@@ -93,7 +93,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
     if (node instanceof BaseDomElementNode) {
       List<DomCollectionChildDescription> consolidated = ((BaseDomElementNode)node).getConsolidatedChildrenDescriptions();
       if (consolidated.size() > 0) {
-        return consolidated.toArray(new DomCollectionChildDescription[consolidated.size()]);
+        return consolidated.toArray(DomCollectionChildDescription.EMPTY_ARRAY);
       }
     }
 

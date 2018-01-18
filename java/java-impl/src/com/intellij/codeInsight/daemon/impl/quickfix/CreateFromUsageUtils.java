@@ -521,7 +521,7 @@ public class CreateFromUsageUtils {
     if (parent != null) {
       parent.accept(visitor);
     }
-    return result.toArray(new PsiReferenceExpression[result.size()]);
+    return result.toArray(new PsiReferenceExpression[0]);
   }
 
   @NotNull
@@ -579,7 +579,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    return result.toArray(new PsiVariable[result.size()]);
+    return result.toArray(new PsiVariable[0]);
   }
 
   private static void getExpectedInformation(final PsiExpression expression,
@@ -703,7 +703,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -755,7 +755,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -847,7 +847,7 @@ public class CreateFromUsageUtils {
     }
 
     if (!l.isEmpty()) {
-      types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
+      types.add(l.toArray(ExpectedTypeInfo.EMPTY_ARRAY));
     }
   }
 
@@ -1060,7 +1060,7 @@ public class CreateFromUsageUtils {
         }
       }
 
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 }

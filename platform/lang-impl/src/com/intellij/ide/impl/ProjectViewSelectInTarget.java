@@ -153,7 +153,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   private TreeStructureProvider[] getProvidersDumbAware() {
     TreeStructureProvider[] allProviders = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
     List<TreeStructureProvider> dumbAware = DumbService.getInstance(myProject).filterByDumbAwareness(allProviders);
-    return dumbAware.toArray(new TreeStructureProvider[dumbAware.size()]);
+    return dumbAware.toArray(new TreeStructureProvider[0]);
   }
 
   @Override

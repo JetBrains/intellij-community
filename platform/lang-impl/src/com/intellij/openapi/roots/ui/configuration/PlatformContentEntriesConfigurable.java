@@ -83,7 +83,7 @@ public class PlatformContentEntriesConfigurable implements Configurable {
       @Override
       protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
         List<ContentEntry> entries = super.addContentEntries(files);
-        addContentEntryPanels(entries.toArray(new ContentEntry[entries.size()]));
+        addContentEntryPanels(entries.toArray(new ContentEntry[0]));
         return entries;
       }
     };

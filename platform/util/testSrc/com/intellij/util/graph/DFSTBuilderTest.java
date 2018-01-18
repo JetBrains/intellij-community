@@ -191,7 +191,7 @@ public class DFSTBuilderTest {
     for (int oIndex = 0; oIndex < 4; oIndex++) {
       List<TestNode> list = new ArrayList<>(Arrays.asList(a, b, c));
       list.add(oIndex, o);
-      TestNode[] allNodes = list.toArray(new TestNode[list.size()]);
+      TestNode[] allNodes = list.toArray(new TestNode[0]);
 
       Map<TestNode, TestNode[]> mapIn = new HashMap<>();
       mapIn.put(o, new TestNode[]{a, b, c});
@@ -216,7 +216,7 @@ public class DFSTBuilderTest {
       List<TestNode> list = new ArrayList<>(Arrays.asList(a, b, c));
       list.add(oIndex, o1);
       list.add(oIndex, o2);
-      TestNode[] allNodes = list.toArray(new TestNode[list.size()]);
+      TestNode[] allNodes = list.toArray(new TestNode[0]);
 
       Map<TestNode, TestNode[]> mapIn = new HashMap<>();
       mapIn.put(o1, new TestNode[]{a, b, c, o2});

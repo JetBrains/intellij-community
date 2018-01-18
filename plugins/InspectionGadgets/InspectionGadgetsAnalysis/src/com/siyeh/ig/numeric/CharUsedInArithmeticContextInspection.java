@@ -65,7 +65,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       }
     }
     if (!(expression instanceof PsiLiteralExpression)) {
-      return result.toArray(new InspectionGadgetsFix[result.size()]);
+      return result.toArray(new InspectionGadgetsFix[0]);
     }
     while (parent instanceof PsiPolyadicExpression) {
       if (ExpressionUtils.hasStringType((PsiExpression)parent)) {
@@ -75,7 +75,7 @@ public class CharUsedInArithmeticContextInspection extends BaseInspection {
       parent = parent.getParent();
     }
 
-    return result.toArray(new InspectionGadgetsFix[result.size()]);
+    return result.toArray(new InspectionGadgetsFix[0]);
   }
 
   private static class CharUsedInArithmeticContentFix extends InspectionGadgetsFix {

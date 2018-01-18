@@ -408,7 +408,7 @@ public class PackageAnnotator {
     }
     packageCoverageInfo.append(classWithoutSourceCoverageInfo);
 
-    return dirs.toArray(new DirCoverageInfo[dirs.size()]);
+    return dirs.toArray(new DirCoverageInfo[0]);
   }
 
   private static boolean isClassFile(File classFile) {

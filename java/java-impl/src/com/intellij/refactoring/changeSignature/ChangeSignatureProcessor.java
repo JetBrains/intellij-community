@@ -171,7 +171,7 @@ public class ChangeSignatureProcessor extends ChangeSignatureProcessorBase {
       askToRemoveCovariantOverriders(usagesSet);
     }
 
-    refUsages.set(usagesSet.toArray(new UsageInfo[usagesSet.size()]));
+    refUsages.set(usagesSet.toArray(UsageInfo.EMPTY_ARRAY));
     prepareSuccessful();
     return true;
   }

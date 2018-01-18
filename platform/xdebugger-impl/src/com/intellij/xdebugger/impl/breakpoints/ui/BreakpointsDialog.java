@@ -75,7 +75,7 @@ public class BreakpointsDialog extends DialogWrapper {
     @Override
     public ItemWrapper[] getSelectedItems() {
       final List<BreakpointItem> res = myTreeController.getSelectedBreakpoints(false);
-      return res.toArray(new ItemWrapper[res.size()]);
+      return res.toArray(new ItemWrapper[0]);
     }
 
     @Override
@@ -287,7 +287,7 @@ public class BreakpointsDialog extends DialogWrapper {
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
           res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
-        return res.toArray(new AnAction[res.size()]);
+        return res.toArray(AnAction.EMPTY_ARRAY);
       }
     }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
 

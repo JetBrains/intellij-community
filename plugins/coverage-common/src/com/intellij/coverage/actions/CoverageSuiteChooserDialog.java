@@ -96,7 +96,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
     myCoverageManager
-      .chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[suites.size()])));
+      .chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0])));
     super.doOKAction();
   }
 

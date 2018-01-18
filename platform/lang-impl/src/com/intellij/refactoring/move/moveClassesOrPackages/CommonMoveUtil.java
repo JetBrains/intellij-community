@@ -11,7 +11,10 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class CommonMoveUtil {
 
@@ -57,6 +60,6 @@ public class CommonMoveUtil {
         }
       }
     }
-    return nonCodeUsages.toArray(new NonCodeUsageInfo[nonCodeUsages.size()]);
+    return nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
   }
 }

@@ -614,7 +614,7 @@ public class FindInProjectUtil {
     Set<VirtualFile> result = new LinkedHashSet<>();
     result.add(directory);
     addSourceDirectoriesFromLibraries(project, directory, result);
-    VirtualFile[] array = result.toArray(new VirtualFile[result.size()]);
+    VirtualFile[] array = result.toArray(VirtualFile.EMPTY_ARRAY);
     return GlobalSearchScopesCore.directoriesScope(project, withSubdirectories, array);
   }
 }

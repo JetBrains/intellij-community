@@ -82,7 +82,7 @@ public class LibrariesDownloadAssistant {
       }
     }
 
-    return versions.toArray(new Artifact[versions.size()]);
+    return versions.toArray(Artifact.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -124,7 +124,7 @@ public class LibrariesDownloadAssistant {
 
     final List<LibraryInfo> infos = convert(version.getUrlPrefix(), version.getItems());
 
-    return infos.toArray(new LibraryInfo[infos.size()]);
+    return infos.toArray(LibraryInfo.EMPTY_ARRAY);
   }
 
   @NotNull

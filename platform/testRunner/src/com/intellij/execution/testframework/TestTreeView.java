@@ -109,7 +109,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
             }
           }
         }
-        return els.isEmpty() ? null : els.toArray(new PsiElement[els.size()]);
+        return els.isEmpty() ? null : els.toArray(PsiElement.EMPTY_ARRAY);
       }
     }
 
@@ -127,7 +127,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
             }
           }
         }
-        return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
+        return locations.isEmpty() ? null : locations.toArray(new Location[0]);
       }
     }
 

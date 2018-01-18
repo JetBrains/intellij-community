@@ -134,7 +134,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
           allFiles.add(new File(chunkBaseDir, BuildProperties.getModuleChunkBuildFileName(chunk) + XML_EXTENSION));
         }
 
-        ensureFilesWritable(project, allFiles.toArray(new File[allFiles.size()]));
+        ensureFilesWritable(project, allFiles.toArray(new File[0]));
       }
 
       new Task.Modal(project, CompilerBundle.message("generate.ant.build.title"), false) {
@@ -352,7 +352,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
 
     filesToRefresh.addAll(generated);
-    return generated.toArray(new File[generated.size()]);
+    return generated.toArray(new File[0]);
   }
 
 }

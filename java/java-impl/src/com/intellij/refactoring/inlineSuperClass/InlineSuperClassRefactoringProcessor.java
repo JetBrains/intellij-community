@@ -66,7 +66,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     for (MemberInfo member : members) {
       member.setChecked(true);
     }
-    myMemberInfos = members.toArray(new MemberInfo[members.size()]);
+    myMemberInfos = members.toArray(new MemberInfo[0]);
   }
 
   public static List<MemberInfo> getClassMembersToPush(PsiClass superClass) {
@@ -94,7 +94,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
     else {
       Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(mySuperClass).findAll();
-      myTargetClasses = inheritors.toArray(new PsiClass[inheritors.size()]);
+      myTargetClasses = inheritors.toArray(PsiClass.EMPTY_ARRAY);
     }
 
     if (myCurrentInheritor != null) {

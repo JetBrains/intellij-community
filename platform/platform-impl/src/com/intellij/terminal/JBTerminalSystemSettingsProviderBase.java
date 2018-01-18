@@ -115,7 +115,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
       }
     }
 
-    return keyStrokes.toArray(new KeyStroke[keyStrokes.size()]);
+    return keyStrokes.toArray(new KeyStroke[0]);
   }
 
   @Override

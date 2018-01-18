@@ -920,7 +920,7 @@ public class TypeMigrationLabeler {
 
     Collections.sort(validReferences, Comparator.comparingInt(o -> o.getElement().getTextOffset()));
 
-    return validReferences.toArray(new PsiReference[validReferences.size()]);
+    return validReferences.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   public void setRootAndMigrate(final TypeMigrationUsageInfo newRootUsageInfo, final PsiType migrationType, final PsiReference[] usages) {

@@ -136,7 +136,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   public void exchangeRows(int idx1, int idx2) {
     super.exchangeRows(idx1, idx2);
     List<OrderEntry> entries = getEntries();
-    myState.getRootModel().rearrangeOrderEntries(entries.toArray(new OrderEntry[entries.size()]));
+    myState.getRootModel().rearrangeOrderEntries(entries.toArray(OrderEntry.EMPTY_ARRAY));
   }
 
   public void clear() {

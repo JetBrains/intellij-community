@@ -148,7 +148,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
       PsiParameter parameter = parameters[i];
       result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
     }
-    return result.toArray(new ParameterInfoImpl[result.size()]);
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 
   @Nullable

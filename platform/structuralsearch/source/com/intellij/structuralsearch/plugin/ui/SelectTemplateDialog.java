@@ -283,7 +283,7 @@ public class SelectTemplateDialog extends DialogWrapper {
           configurations.add((Configuration)userObject);
         }
       }
-      return configurations.toArray(new Configuration[configurations.size()]);
+      return configurations.toArray(new Configuration[0]);
     }
   }
 

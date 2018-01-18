@@ -518,7 +518,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
           markers.add(hostMarker);
         }
       }
-      return markers.isEmpty() ? Segment.EMPTY_ARRAY : markers.toArray(new Segment[markers.size()]);
+      return markers.isEmpty() ? Segment.EMPTY_ARRAY : markers.toArray(Segment.EMPTY_ARRAY);
     }
   }
 
@@ -881,7 +881,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   public boolean isValid() {
     PsiLanguageInjectionHost.Shred[] shreds;
     synchronized (myLock) {
-      shreds = myShreds.toArray(new PsiLanguageInjectionHost.Shred[myShreds.size()]);
+      shreds = myShreds.toArray(new PsiLanguageInjectionHost.Shred[0]);
     }
     // can grab PsiLock in SmartPsiPointer.restore()
     for (PsiLanguageInjectionHost.Shred shred : shreds) {

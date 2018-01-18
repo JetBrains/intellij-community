@@ -54,7 +54,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
   @Override
   public synchronized ExcludeEntryDescription[] getExcludeEntryDescriptions() {
     if (myCachedDescriptions == null) {
-      myCachedDescriptions = myExcludeEntryDescriptions.toArray(new ExcludeEntryDescription[myExcludeEntryDescriptions.size()]);
+      myCachedDescriptions = myExcludeEntryDescriptions.toArray(new ExcludeEntryDescription[0]);
     }
     return myCachedDescriptions;
   }

@@ -84,7 +84,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) continue;
       settings.add(getSettings(group.getDisplayId()));
     }
-    NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);
+    NotificationSettings[] result = settings.toArray(new NotificationSettings[0]);
     Arrays.sort(result, NOTIFICATION_SETTINGS_COMPARATOR);
     return result;
   }

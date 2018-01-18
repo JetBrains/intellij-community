@@ -138,7 +138,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     }
 
     List<MemberInfo> infos = getSelectedMemberInfos();
-    invokeRefactoring(new PullUpProcessor(myClass, superClass, infos.toArray(new MemberInfo[infos.size()]),
+    invokeRefactoring(new PullUpProcessor(myClass, superClass, infos.toArray(new MemberInfo[0]),
                                                new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);
   }

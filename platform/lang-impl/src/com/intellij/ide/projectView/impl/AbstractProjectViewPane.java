@@ -311,7 +311,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         return null;
       }
       else {
-        return navigatables.toArray(new Navigatable[navigatables.size()]);
+        return navigatables.toArray(new Navigatable[0]);
       }
     }
     if (myTreeStructure instanceof AbstractTreeStructureBase) {
@@ -423,7 +423,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         result.add ( (TreeNode) lastPathComponent);
       }
     }
-    return result.toArray(new TreeNode[result.size()]);
+    return result.toArray(new TreeNode[0]);
   }
 
 
@@ -546,7 +546,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     if (!directories.isEmpty()) {
-      return directories.toArray(new PsiDirectory[directories.size()]);
+      return directories.toArray(PsiDirectory.EMPTY_ARRAY);
     }
 
     final PsiElement[] elements = getSelectedPSIElements();
@@ -602,7 +602,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
             dirs.add(directory);
           }
         }
-        return dirs.toArray(new PsiDirectory[dirs.size()]);
+        return dirs.toArray(PsiDirectory.EMPTY_ARRAY);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;

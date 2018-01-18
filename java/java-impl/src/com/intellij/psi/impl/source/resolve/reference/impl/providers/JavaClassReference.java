@@ -256,7 +256,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
             staticClasses.add(c);
           }
         }
-        return staticClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : staticClasses.toArray(new PsiClass[staticClasses.size()]);
+        return staticClasses.isEmpty() ? PsiClass.EMPTY_ARRAY : staticClasses.toArray(PsiClass.EMPTY_ARRAY);
       }
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
@@ -313,7 +313,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
         list.add(JavaClassNameCompletionContributor.createClassLookupItem(clazz, false));
       }
     }
-    return list.toArray(new LookupElement[list.size()]);
+    return list.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -574,7 +574,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   @Override
   public LocalQuickFix[] getQuickFixes() {
     final List<? extends LocalQuickFix> list = registerFixes();
-    return list == null ? LocalQuickFix.EMPTY_ARRAY : list.toArray(new LocalQuickFix[list.size()]);
+    return list == null ? LocalQuickFix.EMPTY_ARRAY : list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Nullable

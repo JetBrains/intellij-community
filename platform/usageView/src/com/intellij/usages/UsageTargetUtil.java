@@ -48,7 +48,7 @@ public class UsageTargetUtil {
       if (targets != null)Collections.addAll(result, targets);
     }
 
-    return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);
+    return result.isEmpty() ? null : result.toArray(UsageTarget.EMPTY_ARRAY);
   }
 
   public static UsageTarget[] findUsageTargets(@NotNull Editor editor, @NotNull PsiFile file) {
@@ -57,7 +57,7 @@ public class UsageTargetUtil {
       UsageTarget[] targets = provider.getTargets(editor, file);
       if (targets != null) Collections.addAll(result, targets);
     }
-    return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);
+    return result.isEmpty() ? null : result.toArray(UsageTarget.EMPTY_ARRAY);
   }
 
   public static UsageTarget[] findUsageTargets(@NotNull PsiElement psiElement) {
@@ -66,7 +66,7 @@ public class UsageTargetUtil {
       UsageTarget[] targets = provider.getTargets(psiElement);
       if (targets != null) Collections.addAll(result, targets);
     }
-    return result.isEmpty() ? null : result.toArray(new UsageTarget[result.size()]);
+    return result.isEmpty() ? null : result.toArray(UsageTarget.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -178,7 +178,7 @@ public class ConfigurableExtensionPointUtilTest extends LightPlatformTestCase {
                                       @Nullable ConfigurableFilter filter,
                                       @NotNull List<Node> expectedTopLevelNodes) {
     //noinspection unchecked
-    ConfigurableEP<Configurable>[] extensions = configurableEPs.toArray(new ConfigurableEP[configurableEPs.size()]);
+    ConfigurableEP<Configurable>[] extensions = configurableEPs.toArray(new ConfigurableEP[0]);
     List<Configurable> list = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, filter);
     assertEquals(expectedTopLevelNodes.size(), list.size());
     for (int i = 0; i < list.size(); i++) {

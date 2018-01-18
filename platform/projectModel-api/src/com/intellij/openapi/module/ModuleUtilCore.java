@@ -105,7 +105,7 @@ public class ModuleUtilCore {
         for (OrderEntry orderEntry : orderEntries) {
           modules.add(orderEntry.getOwnerModule());
         }
-        final Module[] candidates = modules.toArray(new Module[modules.size()]);
+        final Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
         Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
         return candidates[0];
       }

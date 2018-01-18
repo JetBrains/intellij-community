@@ -98,7 +98,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
           }
           holder.registerProblem(
             header.getNameElement(), ManifestBundle.message("inspection.header.message"),
-            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(new LocalQuickFix[fixes.size()])
+            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
           );
         }
       }

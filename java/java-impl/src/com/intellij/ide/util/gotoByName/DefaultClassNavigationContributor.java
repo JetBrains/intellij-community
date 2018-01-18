@@ -66,7 +66,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
     return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY :
-           result.toArray(new NavigationItem[result.size()]);
+           result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @Override

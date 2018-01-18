@@ -119,7 +119,7 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
       ContainerUtil.quickSort(list, PsiClassUtil.createScopeComparator(scope));
     }
 
-    return list.toArray(new PsiClass[list.size()]);
+    return list.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @NotNull

@@ -230,7 +230,7 @@ public class GenericInlineHandler {
 
   //order of usages across different files is irrelevant
   public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<? extends PsiReference> allReferences) {
-    final PsiReference[] usages = allReferences.toArray(new PsiReference[allReferences.size()]);
+    final PsiReference[] usages = allReferences.toArray(PsiReference.EMPTY_ARRAY);
     Arrays.sort(usages, (usage1, usage2) -> {
       final PsiElement element1 = usage1.getElement();
       final PsiElement element2 = usage2.getElement();

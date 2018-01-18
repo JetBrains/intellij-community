@@ -367,7 +367,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @Override
   public AntBuildFile[] getBuildFiles() {
     //noinspection SuspiciousToArrayCall
-    return myBuildFiles.toArray(new AntBuildFileBase[myBuildFiles.size()]);
+    return myBuildFiles.toArray(new AntBuildFileBase[0]);
   }
 
   @Override

@@ -293,7 +293,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
 
     ReplaceWithLambdaFix
       .giveUniqueNames(project, elementFactory, lambdaExpression,
-                       usedLocalNames, variables.toArray(new PsiVariable[variables.size()]));
+                       usedLocalNames, variables.toArray(new PsiVariable[0]));
 
     final PsiExpression singleExpr = RedundantLambdaCodeBlockInspection.isCodeBlockRedundant(lambdaExpression.getBody());
     if (singleExpr != null) {

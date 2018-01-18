@@ -146,7 +146,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
           final String attributeValue = child.getAttributeValue(ROOT_ATT_PREFIX + index++);
           settings.add(Enum.valueOf(FileHighlightingSetting.class, attributeValue));
         }
-        myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlightingSetting[settings.size()]));
+        myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlightingSetting[0]));
       }
     }
   }

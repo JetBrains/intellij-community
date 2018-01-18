@@ -33,7 +33,6 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -63,7 +62,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
@@ -498,7 +496,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       ContainerUtil.addAll(windows, eachList);
     }
 
-    return windows.toArray(new EditorWindow[windows.size()]);
+    return windows.toArray(new EditorWindow[0]);
   }
 
   @Override
@@ -987,8 +985,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         }
       }
       if (editorList.isEmpty()) return null;
-      editors = editorList.toArray(new FileEditor[editorList.size()]);
-      providers = providerList.toArray(new FileEditorProvider[providerList.size()]);
+      editors = editorList.toArray(new FileEditor[0]);
+      providers = providerList.toArray(new FileEditorProvider[0]);
     }
     return new EditorWithProviderComposite(file, editors, providers, this);
   }
@@ -1253,7 +1251,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       ContainerUtil.addAll(selectedEditors, each.getSelectedEditors());
     }
 
-    return selectedEditors.toArray(new FileEditor[selectedEditors.size()]);
+    return selectedEditors.toArray(new FileEditor[0]);
   }
 
   @Override
@@ -1329,7 +1327,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     for (EditorWithProviderComposite composite : editorComposites) {
       ContainerUtil.addAll(editors, composite.getEditors());
     }
-    return editors.toArray(new FileEditor[editors.size()]);
+    return editors.toArray(new FileEditor[0]);
   }
 
   @Nullable
@@ -1364,7 +1362,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         ContainerUtil.addAll(result, editors);
       }
     }
-    return result.toArray(new FileEditor[result.size()]);
+    return result.toArray(new FileEditor[0]);
   }
 
   @Override

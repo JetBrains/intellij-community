@@ -313,7 +313,7 @@ public class TreeTable extends JBTable {
               }
             }
             if (!selectionPaths.isEmpty()) {
-              addSelectionPaths(selectionPaths.toArray(new TreePath[selectionPaths.size()]));
+              addSelectionPaths(selectionPaths.toArray(new TreePath[0]));
             }
           }
         }

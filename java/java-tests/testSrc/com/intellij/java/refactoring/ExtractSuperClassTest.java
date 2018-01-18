@@ -159,7 +159,7 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
       protected void run() {
         ExtractSuperClassUtil
           .extractSuperClass(myProject, psiClass.getContainingFile().getContainingDirectory(), "TestSubclass", anonymousClass,
-                             infos.toArray(new MemberInfo[infos.size()]), new DocCommentPolicy(DocCommentPolicy.ASIS));
+                             infos.toArray(new MemberInfo[0]), new DocCommentPolicy(DocCommentPolicy.ASIS));
       }
     }.execute();
     String rootAfter = getRoot() + "/after";

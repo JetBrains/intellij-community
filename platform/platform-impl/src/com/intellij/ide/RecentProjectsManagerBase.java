@@ -528,7 +528,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       return AnAction.EMPTY_ARRAY;
     }
 
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private AnAction createOpenAction(@SystemIndependent String path, Set<String> duplicates) {

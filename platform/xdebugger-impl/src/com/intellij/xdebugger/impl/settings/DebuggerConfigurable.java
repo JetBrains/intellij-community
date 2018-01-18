@@ -17,7 +17,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 public class DebuggerConfigurable implements SearchableConfigurable.Parent {
   public static final String DISPLAY_NAME = XDebuggerBundle.message("debugger.configurable.display.name");
@@ -87,7 +90,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       }
     }
     else {
-      myChildren = configurables.toArray(new Configurable[configurables.size()]);
+      myChildren = configurables.toArray(new Configurable[0]);
       myRootConfigurable = mergedGeneralConfigurable;
     }
   }
@@ -98,7 +101,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       if (!configurables.isEmpty()) {
         String id = category.name().toLowerCase(Locale.ENGLISH);
         result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
-                                                   configurables.toArray(new Configurable[configurables.size()])));
+                                                   configurables.toArray(new Configurable[0])));
       }
     }
   }
@@ -110,7 +113,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       return null;
     }
 
-    Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[rootConfigurables.size()]);
+    Configurable[] mergedRootConfigurables = rootConfigurables.toArray(new Configurable[0]);
     // move unnamed to top
     Arrays.sort(mergedRootConfigurables, (o1, o2) -> {
       boolean c1e = StringUtil.isEmpty(o1.getDisplayName());

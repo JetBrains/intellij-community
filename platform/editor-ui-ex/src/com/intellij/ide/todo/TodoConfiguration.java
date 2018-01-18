@@ -166,7 +166,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
       patternsList.add(new TodoPattern(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes()));
     }
 
-    TodoPattern[] patterns = patternsList.isEmpty() ? getDefaultPatterns() : patternsList.toArray(new TodoPattern[patternsList.size()]);
+    TodoPattern[] patterns = patternsList.isEmpty() ? getDefaultPatterns() : patternsList.toArray(new TodoPattern[0]);
     doSetTodoPatterns(patterns, false);
 
     List<TodoFilter> filtersList = new SmartList<>();
@@ -175,7 +175,7 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
 
     if (!(filtersList.isEmpty() && myTodoFilters.length == 0)) {
-      setTodoFilters(filtersList.toArray(new TodoFilter[filtersList.size()]));
+      setTodoFilters(filtersList.toArray(new TodoFilter[0]));
     }
   }
 

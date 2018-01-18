@@ -54,7 +54,7 @@ public class RTagOperation extends LocalPathIndifferentOperation {
       }
     }
 
-    return result.toArray(new RTagOperation[result.size()]);
+    return result.toArray(new RTagOperation[0]);
   }
 
   public RTagOperation(CvsEnvironment environment, String tagName, boolean overrideExisting) {

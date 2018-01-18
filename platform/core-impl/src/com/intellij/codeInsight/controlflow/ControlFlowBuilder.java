@@ -263,7 +263,7 @@ public class ControlFlowBuilder {
     checkPending(startNode(null));
 
     final List<Instruction> result = instructions;
-    return new ControlFlowImpl(result.toArray(new Instruction[result.size()]));
+    return new ControlFlowImpl(result.toArray(new Instruction[0]));
   }
 
   protected void addEntryPointNode(final PsiElement startElement) {

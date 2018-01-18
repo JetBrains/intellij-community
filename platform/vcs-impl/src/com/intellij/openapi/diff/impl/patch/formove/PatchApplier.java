@@ -571,7 +571,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
         }
       }
 
-      myChangeListManager.moveChangesTo(myTargetChangeList, changes.toArray(new Change[changes.size()]));
+      myChangeListManager.moveChangesTo(myTargetChangeList, changes.toArray(new Change[0]));
     }
   }
 }

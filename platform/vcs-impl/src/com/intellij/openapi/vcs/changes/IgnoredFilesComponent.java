@@ -182,7 +182,7 @@ public class IgnoredFilesComponent {
   public IgnoredFileBean[] getFilesToIgnore() {
     myReadLock.lock();
     try {
-      return myFilesToIgnore.toArray(new IgnoredFileBean[myFilesToIgnore.size()]);
+      return myFilesToIgnore.toArray(new IgnoredFileBean[0]);
     }
     finally {
       myReadLock.unlock();

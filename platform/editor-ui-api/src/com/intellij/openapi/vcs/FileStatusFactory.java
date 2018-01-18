@@ -44,7 +44,7 @@ public class FileStatusFactory {
   }
 
   public synchronized FileStatus[] getAllFileStatuses() {
-    return myStatuses.toArray(new FileStatus[myStatuses.size()]);
+    return myStatuses.toArray(new FileStatus[0]);
   }
 
   public static FileStatusFactory getInstance() {

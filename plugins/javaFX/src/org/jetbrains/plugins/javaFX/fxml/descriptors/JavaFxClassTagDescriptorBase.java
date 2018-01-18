@@ -68,7 +68,7 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
         collectStaticElementDescriptors(context, children);
 
         if (!children.isEmpty()) {
-          return children.toArray(new XmlElementDescriptor[children.size()]);
+          return children.toArray(XmlElementDescriptor.EMPTY_ARRAY);
         }
       }
     }

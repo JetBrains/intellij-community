@@ -51,7 +51,7 @@ public class JavaFxNamespaceDescriptor implements XmlNSDescriptor, Validator<Xml
           result.add(new JavaFxClassTagDescriptor(psiClass.getName(), psiClass));
           return true;
         });
-        return result.toArray(new XmlElementDescriptor[result.size()]);
+        return result.toArray(XmlElementDescriptor.EMPTY_ARRAY);
       }
     }
     return XmlElementDescriptor.EMPTY_ARRAY;

@@ -728,7 +728,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
               modules.add((Module)o);
             }
           }
-          return !modules.isEmpty() ? modules.toArray(new Module[modules.size()]) : null;
+          return !modules.isEmpty() ? modules.toArray(Module.EMPTY_ARRAY) : null;
         }
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
@@ -828,7 +828,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
           result.add(new Separator());
         }
         result.addAll(actionsFromExtensions);
-        return result.toArray(new AnAction[result.size()]);
+        return result.toArray(AnAction.EMPTY_ARRAY);
       }
     };
   }

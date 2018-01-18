@@ -248,25 +248,25 @@ public class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   @NotNull
   public MemberSignature[] getNonPrivateConstructors() {
     init();
-    return nonPrivateConstructors.toArray(new MemberSignature[nonPrivateConstructors.size()]);
+    return nonPrivateConstructors.toArray(new MemberSignature[0]);
   }
 
   @NotNull
   public MemberSignature[] getNonPrivateFields() {
     init();
-    return nonPrivateFields.toArray(new MemberSignature[nonPrivateFields.size()]);
+    return nonPrivateFields.toArray(new MemberSignature[0]);
   }
 
   @NotNull
   public MemberSignature[] getNonPrivateMethodSignatures() {
     init();
-    return nonPrivateMethods.toArray(new MemberSignature[nonPrivateMethods.size()]);
+    return nonPrivateMethods.toArray(new MemberSignature[0]);
   }
 
   @NotNull
   public MemberSignature[] getStaticInitializers() {
     init();
-    return staticInitializers.toArray(new MemberSignature[staticInitializers.size()]);
+    return staticInitializers.toArray(new MemberSignature[0]);
   }
 
   private static boolean hasStaticInitializer(PsiField field) {

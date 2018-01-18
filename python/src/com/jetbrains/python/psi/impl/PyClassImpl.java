@@ -331,7 +331,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         result.add(((PyClassType)type).getPyClass());
       }
     }
-    return result.toArray(new PyClass[result.size()]);
+    return result.toArray(PyClass.EMPTY_ARRAY);
   }
 
   @Override

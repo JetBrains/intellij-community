@@ -290,7 +290,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
       refManager.inspectionReadActionFinished();
       globalContext.close(true);
     }
-    return result.toArray(new ProblemDescriptor[result.size()]);
+    return result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   protected GlobalInspectionContextBase createContext(PsiFile file) {

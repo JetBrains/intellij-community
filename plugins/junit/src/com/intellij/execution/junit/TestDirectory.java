@@ -74,7 +74,7 @@ class TestDirectory extends TestPackage {
       @Override
       public Module[] getModulesToCompile() {
         final Collection<Module> validModules = getConfiguration().getValidModules();
-        return validModules.toArray(new Module[validModules.size()]);
+        return validModules.toArray(Module.EMPTY_ARRAY);
       }
     };
   }

@@ -96,7 +96,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
         }
       }
     }
-    return columns.toArray(new ChangeListColumn[columns.size()]);
+    return columns.toArray(new ChangeListColumn[0]);
   }
 
   @Nullable

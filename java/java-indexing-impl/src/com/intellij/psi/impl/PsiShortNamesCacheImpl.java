@@ -107,7 +107,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
 
     if (hiddenClassesToRemove != null) result.removeAll(hiddenClassesToRemove);
 
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   @Override

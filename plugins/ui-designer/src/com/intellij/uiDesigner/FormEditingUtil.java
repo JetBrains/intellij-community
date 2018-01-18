@@ -517,7 +517,7 @@ public final class FormEditingUtil {
         locales.add(propFile.getLocale());
       }
     }
-    return locales.toArray(new Locale[locales.size()]);
+    return locales.toArray(new Locale[0]);
   }
 
   public static void deleteRowOrColumn(final GuiEditor editor, final RadContainer container,

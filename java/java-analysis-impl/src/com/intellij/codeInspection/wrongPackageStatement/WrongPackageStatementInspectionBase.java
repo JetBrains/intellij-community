@@ -60,7 +60,7 @@ public class WrongPackageStatementInspectionBase extends AbstractBaseJavaLocalIn
           String description = JavaErrorMessages.message("package.name.file.path.mismatch",
                                                          packageReference.getQualifiedName(),
                                                          dirPackage.getQualifiedName());
-          LocalQuickFix[] fixes = availableFixes.toArray(new LocalQuickFix[availableFixes.size()]);
+          LocalQuickFix[] fixes = availableFixes.toArray(LocalQuickFix.EMPTY_ARRAY);
           ProblemDescriptor descriptor =
             manager.createProblemDescriptor(packageStatement.getPackageReference(), description, isOnTheFly,
                                             fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);

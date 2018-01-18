@@ -177,7 +177,7 @@ public class GroovyStaticImportMethodFix extends Intention {
   }
 
   private void chooseAndImport(Editor editor) {
-    final JList list = new JBList(getCandidates().toArray(new PsiMethod[getCandidates().size()]));
+    final JList list = new JBList(getCandidates().toArray(PsiMethod.EMPTY_ARRAY));
     list.setCellRenderer(new MethodCellRenderer(true));
     new PopupChooserBuilder(list).
       setTitle(QuickFixBundle.message("static.import.method.choose.method.to.import")).

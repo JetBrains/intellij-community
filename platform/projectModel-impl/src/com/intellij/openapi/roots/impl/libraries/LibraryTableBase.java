@@ -272,7 +272,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     @Override
     @NotNull
     public Library[] getLibraries() {
-      return myLibraries.toArray(new Library[myLibraries.size()]);
+      return myLibraries.toArray(Library.EMPTY_ARRAY);
     }
 
     private void assertWritable() {

@@ -284,7 +284,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
         explicated.add(anImport);
       }
 
-      return explicated.toArray(new GrImportStatement[explicated.size()]);
+      return explicated.toArray(GrImportStatement.EMPTY_ARRAY);
     }
   }
 }
