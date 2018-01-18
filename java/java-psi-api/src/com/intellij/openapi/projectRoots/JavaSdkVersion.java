@@ -40,13 +40,9 @@ public enum JavaSdkVersion {
     return myMaxLanguageLevel;
   }
 
-  public int getMajorVersion() {
-    return ordinal();
-  }
-
   @NotNull
   public String getDescription() {
-    return JavaVersion.compose(getMajorVersion(), 0, 0, 0, false).toString();
+    return JavaVersion.compose(ordinal(), 0, 0, 0, false).toString();
   }
 
   public boolean isAtLeast(@NotNull JavaSdkVersion version) {
