@@ -372,7 +372,7 @@ public class RunAnythingUtil {
     commands.remove(pattern);
     commands.add(pattern);
 
-    RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, pattern);
+    RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, StringUtil.trim(pattern));
     undefinedRunAnythingItem.run(getExecutor(), workDirectory);
   }
 
