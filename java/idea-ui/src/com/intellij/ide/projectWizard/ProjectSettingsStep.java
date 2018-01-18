@@ -224,7 +224,8 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   @Nullable
   @Override
   public ModuleNameLocationSettings getModuleNameLocationSettings() {
-    return myModuleNameLocationComponent;
+    return myWizardContext.isCreatingNewProject() ? new NewProjectNameLocationSettings(myNamePathComponent, myModuleNameLocationComponent)
+                                                  : myModuleNameLocationComponent;
   }
 
   @TestOnly
