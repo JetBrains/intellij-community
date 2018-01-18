@@ -209,7 +209,7 @@ public class ApplyPatchTest extends PlatformTestCase {
     List<FilePatch> patches = new ArrayList<>(reader.readTextPatches());
 
     ApplyPatchAction.applySkipDirs(patches, skipTopDirs);
-    final PatchApplier patchApplier = new PatchApplier<BinaryFilePatch>(myProject, patchedDir, patches, null, null, null);
+    final PatchApplier patchApplier = new PatchApplier<BinaryFilePatch>(myProject, patchedDir, patches, null, null);
     ApplyPatchStatus applyStatus = patchApplier.execute(false, false);
 
     assertEquals(expectedStatus, applyStatus);

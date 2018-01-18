@@ -50,7 +50,7 @@ public abstract class PatchingTestCase extends IntegrationTestCase {
 
     List<FilePatch> patches = new ArrayList<>(reader.readTextPatches());
 
-    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null, null).execute();
+    new PatchApplier<BinaryFilePatch>(myProject, myRoot, patches, null, null).execute();
   }
 
   protected static void createChildDataWithContent(@NotNull VirtualFile dir, @NotNull String name) {

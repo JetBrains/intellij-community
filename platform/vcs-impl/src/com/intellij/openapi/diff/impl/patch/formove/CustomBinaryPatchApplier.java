@@ -15,16 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.patch.formove;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
-import com.intellij.openapi.diff.impl.patch.FilePatch;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.IOException;
-import java.util.List;
-
-public interface CustomBinaryPatchApplier<T extends FilePatch> {
-  @NotNull
-  ApplyPatchStatus apply(List<PathsVerifier.PatchAndFile> patches) throws IOException;
-  @NotNull
-  List<FilePatch> getAppliedPatches();
+@Deprecated
+public interface CustomBinaryPatchApplier {
 }

@@ -56,12 +56,11 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 /**
  * for patches. for shelve.
  */
-public class PatchApplier<BinaryType extends FilePatch> {
+public class PatchApplier<Unused> {
   private static final Logger LOG = Logger.getInstance(PatchApplier.class);
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
   @NotNull private final List<FilePatch> myPatches;
-  private final CustomBinaryPatchApplier<BinaryType> myCustomForBinaries;
   private final CommitContext myCommitContext;
   @Nullable private final LocalChangeList myTargetChangeList;
   @NotNull private final List<FilePatch> myRemainingPatches;
@@ -76,7 +75,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
                       @NotNull VirtualFile baseDirectory,
                       @NotNull List<FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
-                      @Nullable CustomBinaryPatchApplier<BinaryType> customForBinaries,
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
                       @Nullable String leftConflictPanelTitle,
@@ -85,7 +83,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myBaseDirectory = baseDirectory;
     myPatches = patches;
     myTargetChangeList = targetChangeList;
-    myCustomForBinaries = customForBinaries;
     myCommitContext = commitContext;
     myReverseConflict = reverseConflict;
     myLeftConflictPanelTitle = leftConflictPanelTitle;
@@ -103,9 +100,18 @@ public class PatchApplier<BinaryType extends FilePatch> {
                       @NotNull VirtualFile baseDirectory,
                       @NotNull List<FilePatch> patches,
                       @Nullable LocalChangeList targetChangeList,
-                      @Nullable CustomBinaryPatchApplier<BinaryType> customForBinaries,
                       @Nullable CommitContext commitContext) {
-    this(project, baseDirectory, patches, targetChangeList, customForBinaries, commitContext, false, null, null);
+    this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
+  }
+
+  @Deprecated
+  public PatchApplier(@NotNull Project project,
+                      @NotNull VirtualFile baseDirectory,
+                      @NotNull List<FilePatch> patches,
+                      @Nullable LocalChangeList targetChangeList,
+                      @Nullable CustomBinaryPatchApplier ignored,
+                      @Nullable CommitContext commitContext) {
+    this(project, baseDirectory, patches, targetChangeList, commitContext, false, null, null);
   }
 
   @NotNull
@@ -441,32 +447,13 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
       if (status == ApplyPatchStatus.ABORT) return status;
 
-      if (myCustomForBinaries == null) {
-        status = applyList(binaryPatches, context, status, commitContext);
-      }
-      else {
-        ApplyPatchStatus patchStatus = myCustomForBinaries.apply(binaryPatches);
-        final List<FilePatch> appliedPatches = myCustomForBinaries.getAppliedPatches();
-        moveForCustomBinaries(binaryPatches, appliedPatches);
-
-        status = ApplyPatchStatus.and(status, patchStatus);
-        myRemainingPatches.removeAll(appliedPatches);
-      }
+      status = applyList(binaryPatches, context, status, commitContext);
     }
     catch (IOException e) {
       showError(myProject, e.getMessage());
       return ApplyPatchStatus.ABORT;
     }
     return status;
-  }
-
-  private void moveForCustomBinaries(final List<PatchAndFile> patches,
-                                     final List<FilePatch> appliedPatches) throws IOException {
-    for (PatchAndFile patch : patches) {
-      if (appliedPatches.contains(patch.getApplyPatch().getPatch())) {
-        myVerifier.doMoveIfNeeded(patch.getFile());
-      }
-    }
   }
 
   private ApplyPatchStatus applyList(final List<PatchAndFile> patches,

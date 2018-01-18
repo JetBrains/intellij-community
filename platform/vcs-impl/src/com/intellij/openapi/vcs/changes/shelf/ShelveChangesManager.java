@@ -666,7 +666,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final PatchApplier<ShelvedBinaryFilePatch> patchApplier =
         new PatchApplier<>(myProject, myProject.getBaseDir(),
-                           patches, targetChangeList, null, commitContext, reverse, leftConflictTitle,
+                           patches, targetChangeList, commitContext, reverse, leftConflictTitle,
                            rightConflictTitle);
       patchApplier.execute(showSuccessNotification, systemOperation);
       if (isRemoveFilesFromShelf() || systemOperation) {
