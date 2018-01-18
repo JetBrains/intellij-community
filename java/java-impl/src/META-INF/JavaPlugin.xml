@@ -424,6 +424,7 @@
     <langCodeStyleSettingsProvider implementation="com.intellij.ide.JavaLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.GenerationSettingsProvider"/>
     <codeStyleSettingsProvider implementation="com.intellij.application.options.JavaCodeStyleSettingsProvider"/>
+    <codeStyleConfigurationImporter implementation="com.intellij.psi.codeStyle.JavaCodeStyleImporter" />
     <iconProvider implementation="com.intellij.psi.impl.JavaDirectoryIconProvider" id="javaDirectory"/>
     <codeStyle.ReferenceAdjuster language="JAVA" implementationClass="com.intellij.psi.impl.source.codeStyle.JavaReferenceAdjuster"/>
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.JavaEnterAfterUnmatchedBraceHandler" order="before afterUnmatchedBrace"/>

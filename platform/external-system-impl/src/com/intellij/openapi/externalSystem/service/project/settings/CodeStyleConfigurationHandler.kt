@@ -15,10 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.service.project.settings
 
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSchemes
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 
 /**
  * Created by Nikita.Skvortsov
@@ -29,7 +32,7 @@ class CodeStyleConfigurationHandler: ConfigurationHandler {
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val importedSchemeName = "Gradle Imported"
 
-    val codeStyleSettings: Map<String, *> = configuration.find("codeStyle") as? Map<String,*> ?: return
+    val codeStyleSettings: Map<String, *> = configuration.find("codeStyle") as? Map<String, *> ?: return
     val schemes = CodeStyleSchemes.getInstance()
 
     val existingScheme = schemes.findPreferredScheme(importedSchemeName)
@@ -39,22 +42,48 @@ class CodeStyleConfigurationHandler: ConfigurationHandler {
 
     val importedScheme = schemes.createNewScheme(importedSchemeName, schemes.defaultScheme)
 
-    codeStyleSettings["indent"]?.let { indentType ->
-      val indentOptions = importedScheme.codeStyleSettings.indentOptions ?: return@let
-      when (indentType) {
-        "tabs"   -> { indentOptions.USE_TAB_CHARACTER = true  }
-        "spaces" -> { indentOptions.USE_TAB_CHARACTER = false }
-        else     -> {} // warn?
+    val styleSettings = importedScheme.codeStyleSettings
+    // GLOBAL
+    styleSettings.apply {
+      (codeStyleSettings["USE_SAME_INDENTS"] as? Boolean)?.let { USE_SAME_INDENTS = it }
+      (codeStyleSettings["RIGHT_MARGIN"] as? Number)?.toInt()?.let { defaultRightMargin = it }
+      (codeStyleSettings["KEEP_CONTROL_STATEMENT_IN_ONE_LINE"] as? Boolean)?.let { KEEP_CONTROL_STATEMENT_IN_ONE_LINE = it }
+    }
+
+
+    val languages = listOf("java", "groovy")
+    val importedLangs: Map<String,*> = (codeStyleSettings["languages"] as? Map<String,*>) ?: mapOf<String, Any?>()
+
+    languages.forEach { langName ->
+      (importedLangs[langName] as? Map<*, *>)?.let { langCfg ->
+        val importer = CodeStyleImporterExtensionManager.importerForLang(langName) ?: return@let
+        importCommonSettings(styleSettings.getCommonSettings(importer.language), langCfg)
+        importer.processSettings(styleSettings.getCustomSettings(importer.customClass), langCfg)
       }
     }
 
-    codeStyleSettings["indentSize"]?.let {
-      val indentOptions = importedScheme.codeStyleSettings.indentOptions ?: return@let
-      if (it is Number) {
-        indentOptions.INDENT_SIZE = it.toInt()
-      }
-    }
-
+    schemes.addScheme(importedScheme)
     schemes.currentScheme = importedScheme
+  }
+
+  private fun importCommonSettings(commonSettings: CommonCodeStyleSettings, langCfg: Map<*, *>) {
+    commonSettings.apply {
+      (langCfg["RIGHT_MARGIN"] as? Number)?.toInt()?.let { RIGHT_MARGIN = it }
+      (langCfg["WRAP_COMMENTS"] as? Boolean)?.let { WRAP_COMMENTS = it }
+      (langCfg["IF_BRACE_FORCE"] as? String)?.let { IF_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      (langCfg["DOWHILE_BRACE_FORCE"] as? String)?.let { DOWHILE_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      (langCfg["WHILE_BRACE_FORCE"] as? String)?.let { WHILE_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      (langCfg["FOR_BRACE_FORCE"] as? String)?.let { FOR_BRACE_FORCE = ForceEnum.valueOf(it).index }
+      (langCfg["KEEP_CONTROL_STATEMENT_IN_ONE_LINE"] as? Boolean)?.let { KEEP_CONTROL_STATEMENT_IN_ONE_LINE = it }
+    }
+  }
+
+  enum class ForceEnum(val index: Int) {  DO_NOT_FORCE(0), FORCE_BRACES_IF_MULTILINE(1), FORCE_BRACES_ALWAYS(3);  }
+}
+
+class CodeStyleImporterExtensionManager {
+  companion object {
+    fun importerForLang(langName: String): CodeStyleConfigurationImporter<CustomCodeStyleSettings>? =
+      Extensions.getExtensions(CodeStyleConfigurationImporter.EP_NAME).firstOrNull { it.canImport(langName) }
   }
 }
