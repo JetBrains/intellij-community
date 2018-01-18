@@ -142,55 +142,7 @@ public class PatchApplier<Unused> {
 
   @CalledInAwt
   public ApplyPatchStatus execute(boolean showSuccessNotification, boolean silentAddDelete) {
-    myRemainingPatches.addAll(myPatches);
-
-    final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
-
-    final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before patch");
-    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
-
-    final Ref<ApplyPatchStatus> refStatus = Ref.create(null);
-    try {
-      runWithDefaultConfirmations(myProject, silentAddDelete, () -> {
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          //consider pre-check status only if not successful, otherwise we could not detect already applied status
-          refStatus.set(createFiles());
-
-          addSkippedItems(trigger);
-          trigger.prepare();
-          refStatus.set(ApplyPatchStatus.and(refStatus.get(), executeWritable()));
-        }, VcsBundle.message("patch.apply.command"), null);
-      });
-    }
-    finally {
-      VcsFileListenerContextHelper.getInstance(myProject).clearContext();
-    }
-
-    final ApplyPatchStatus applyStatus = refStatus.get() == null ? ApplyPatchStatus.ALREADY_APPLIED : refStatus.get();
-    ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
-                              ApplyPatchStatus.and(patchStatus, applyStatus);
-
-    // listeners finished, all 'legal' file additions/deletions with VCS are done
-    trigger.processIt();
-    LocalHistory.getInstance().putSystemLabel(myProject, "After patch"); // insert a label to be visible in local history dialog
-
-    if (status == ApplyPatchStatus.FAILURE) {
-      suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
-    }
-    else if (status == ApplyPatchStatus.ABORT) {
-      rollbackUnderProgress(myProject, beforeLabel);
-    }
-
-    if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
-      showApplyStatus(myProject, status);
-    }
-
-    final List<FilePath> directlyAffected = getDirectlyAffected();
-    final List<VirtualFile> indirectlyAffected = getIndirectlyAffected();
-    directlyAffected.addAll(trigger.getAffected());
-    refreshPassedFilesAndMoveToChangelist(myProject, directlyAffected, indirectlyAffected, myTargetChangeList);
-
-    return status;
+    return executePatchGroup(Collections.singletonList(this), myTargetChangeList, showSuccessNotification, silentAddDelete);
   }
 
   private static void runWithDefaultConfirmations(@NotNull Project project, boolean resetConfirmations, @NotNull Runnable task) {
@@ -325,6 +277,7 @@ public class PatchApplier<Unused> {
     final List<FilePatch> failedPreCheck = myVerifier.nonWriteActionPreCheck();
     final List<FilePatch> skipped = myVerifier.getSkipped();
 
+    myRemainingPatches.addAll(myPatches);
     myFailedPatches.addAll(failedPreCheck);
     myPatches.removeAll(failedPreCheck);
     myPatches.removeAll(skipped);
