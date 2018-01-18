@@ -10,18 +10,19 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
-public @interface MapAnnotation {
-  boolean surroundWithTag() default true;
+public @interface XMap {
+  /**
+   * The property element name.
+   */
+  String propertyElementName() default "";
+
+  String entryTagName() default Constants.ENTRY;
 
   String keyAttributeName() default Constants.KEY;
 
   String valueAttributeName() default Constants.VALUE;
 
-  String entryTagName() default Constants.ENTRY;
+  boolean surroundKeyWithTag() default false;
 
-  boolean surroundKeyWithTag() default true;
-
-  boolean surroundValueWithTag() default true;
-
-  boolean sortBeforeSave() default true;
+  boolean surroundValueWithTag() default false;
 }

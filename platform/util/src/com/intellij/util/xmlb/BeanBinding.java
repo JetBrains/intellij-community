@@ -361,6 +361,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
            object.getAnnotation(Text.class) != null ||
            object.getAnnotation(CollectionBean.class) != null ||
            object.getAnnotation(MapAnnotation.class) != null ||
+           object.getAnnotation(XMap.class) != null ||
            object.getAnnotation(XCollection.class) != null ||
            object.getAnnotation(AbstractCollection.class) != null;
   }
@@ -478,14 +479,18 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return new TagBinding(accessor, xCollection.propertyElementName());
     }
 
-    MapAnnotation xMap = accessor.getAnnotation(MapAnnotation.class);
-    if (xMap != null && (!xMap.propertyElementName().isEmpty())) {
-      return new TagBinding(accessor, xMap.propertyElementName());
+    OptionTag optionTag = accessor.getAnnotation(OptionTag.class);
+
+    if (optionTag == null) {
+      XMap xMap = accessor.getAnnotation(XMap.class);
+      if (xMap != null) {
+        return new TagBinding(accessor, xMap.propertyElementName());
+      }
     }
 
     if (propertyStyle == Property.Style.ATTRIBUTE) {
       return new AttributeBinding(accessor, null);
     }
-    return new OptionTagBinding(accessor, accessor.getAnnotation(OptionTag.class));
+    return new OptionTagBinding(accessor, optionTag);
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XMap
 import gnu.trove.THashMap
 import org.junit.Test
 import java.util.*
@@ -27,12 +28,12 @@ import java.util.*
 internal class XmlSerializerMapTest {
   @Test fun beanValueUsingSkipDefaultsFilter() {
     @Tag("bean")
-    class BeanWithMapWithBeanValue2 {
+    class Bean {
       @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
       var values: Map<String, BeanWithProperty> = THashMap()
     }
 
-    val bean = BeanWithMapWithBeanValue2()
+    val bean = Bean()
     testSerializer("<bean />", bean, SkipDefaultsSerializationFilter())
   }
 
@@ -53,6 +54,43 @@ internal class XmlSerializerMapTest {
     <bean>
       <option name="option" value="xxx" />
       <entry key="a" value="b" />
+    </bean>""", bean)
+  }
+
+  @Test fun mapAtTopLevelUsingXMap() {
+    @Tag("bean")
+    class BeanWithMapAtTopLevel {
+      @Property(surroundWithTag = false)
+      @XMap(surroundKeyWithTag = false, surroundValueWithTag = false)
+      var map = LinkedHashMap<String, String>()
+
+      var option: String? = null
+    }
+
+    val bean = BeanWithMapAtTopLevel()
+    bean.map.put("a", "b")
+    bean.option = "xxx"
+    testSerializer("""
+    <bean>
+      <option name="option" value="xxx" />
+      <entry key="a" value="b" />
+    </bean>""", bean)
+  }
+
+  @Test fun propertyElementName() {
+    @Tag("bean")
+    class Bean {
+      @XMap(surroundKeyWithTag = false, surroundValueWithTag = false)
+      var map = LinkedHashMap<String, String>()
+    }
+
+    val bean = Bean()
+    bean.map.put("a", "b")
+    testSerializer("""
+    <bean>
+      <map>
+        <entry key="a" value="b" />
+      </map>
     </bean>""", bean)
   }
 
@@ -103,6 +141,56 @@ internal class XmlSerializerMapTest {
             f
           </BeanWithTextAnnotation>
         </pair>
+      </map>
+    </bean>""", bean)
+  }
+
+  @Test fun notSurroundingKeyAndValueUsingXMap() {
+    @Tag("bean")
+    class Bean {
+      @XMap(propertyElementName = "map")
+      var MAP = LinkedHashMap<BeanWithPublicFields, BeanWithTextAnnotation>()
+    }
+
+    val bean = Bean()
+
+    bean.MAP.put(BeanWithPublicFields(1, "a"), BeanWithTextAnnotation(2, "b"))
+    bean.MAP.put(BeanWithPublicFields(3, "c"), BeanWithTextAnnotation(4, "d"))
+    bean.MAP.put(BeanWithPublicFields(5, "e"), BeanWithTextAnnotation(6, "f"))
+
+    testSerializer("""
+    <bean>
+      <map>
+        <entry>
+          <BeanWithPublicFields>
+            <option name="INT_V" value="1" />
+            <option name="STRING_V" value="a" />
+          </BeanWithPublicFields>
+          <BeanWithTextAnnotation>
+            <option name="INT_V" value="2" />
+            b
+          </BeanWithTextAnnotation>
+        </entry>
+        <entry>
+          <BeanWithPublicFields>
+            <option name="INT_V" value="3" />
+            <option name="STRING_V" value="c" />
+          </BeanWithPublicFields>
+          <BeanWithTextAnnotation>
+            <option name="INT_V" value="4" />
+            d
+          </BeanWithTextAnnotation>
+        </entry>
+        <entry>
+          <BeanWithPublicFields>
+            <option name="INT_V" value="5" />
+            <option name="STRING_V" value="e" />
+          </BeanWithPublicFields>
+          <BeanWithTextAnnotation>
+            <option name="INT_V" value="6" />
+            f
+          </BeanWithTextAnnotation>
+        </entry>
       </map>
     </bean>""", bean)
   }
