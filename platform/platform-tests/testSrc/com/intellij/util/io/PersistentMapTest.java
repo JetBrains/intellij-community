@@ -25,16 +25,72 @@ import com.intellij.util.io.storage.AbstractStorage;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
 public class PersistentMapTest extends PersistentMapTestBase {
+  public void testRetainWriteOrderWhenCompactingBackward() throws IOException {
+    clearMap(myFile, myMap);
+    myMap = null;
+    
+    String longString = StringUtil.repeat("1234567890", 120);
+    assertTrue(longString.length() > PersistentHashMapValueStorage.BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT);
+    String removalMarker = "\uFFFF";
+    PersistentMapPerformanceTest.MapConstructor<Integer, Collection<String>> mapConstructor = 
+      (file) -> new PersistentHashMap<>(
+        file,
+        EnumeratorIntegerDescriptor.INSTANCE,
+        new DataExternalizer<Collection<String>>() {
+          @Override
+          public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
+            for(String str:value) {
+              IOUtil.writeUTF(out, str);
+            }
+          }
+  
+          @Override
+          public Collection<String> read(@NotNull DataInput in) throws IOException {
+            List<String> result = new ArrayList<>();
+            while(((InputStream)in).available() > 0) {
+              String string = IOUtil.readUTF(in);
+              if (string.equals(removalMarker)) {
+                result.remove(result.size() - 1);
+              } else {
+                result.add(string);
+              }
+            }
+            return result;
+          }
+        }
+    );
+    PersistentHashMap<Integer, Collection<String>> map = mapConstructor.createMap(myFile);
+    try {
+      int keys = 10_000;
+      for(int iteration = 0; iteration < 5; ++iteration) {
+        String toAppend = iteration % 2 == 0 ? longString : removalMarker;
+        for (int i = 0; i < keys; ++i) {
+          map.appendData(i, out -> IOUtil.writeUTF(out, toAppend));
+        }
+      }
+
+      map.close();
+      assertTrue(map.getValueStorage().getSize() > 2 * PersistentHashMapValueStorage.SOFT_MAX_RETAINED_LIMIT);
+      map = mapConstructor.createMap(myFile);
+      map.compact();
+
+      for (int i = 0; i < keys; ++i) {
+        Collection<String> strings = map.get(i);
+        assertTrue(strings != null && strings.size() == 1);
+        assertEquals(longString, strings.iterator().next());
+      }
+    } finally {
+      clearMap(myFile, map);
+    }
+  }
+  
   public void testMap() throws IOException {
     myMap.put("AAA", "AAA_VALUE");
 
@@ -308,7 +364,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
   public void testOpeningWithCompact2() throws IOException {
     File file = FileUtil.createTempFile("persistent", "map");
 
-    PersistentHashMap<Integer, String> map = new PersistentHashMap<>(file, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE);
+    PersistentHashMap<Integer, String> map = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
     try {
       final int stringsCount = 5/*1000000*/;
       Map<Integer, String> testMapping = new LinkedHashMap<>(stringsCount);
@@ -319,7 +375,7 @@ public class PersistentMapTest extends PersistentMapTestBase {
         map.put(i, value);
       }
       map.close();
-      map = new PersistentHashMap<>(file, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE);
+      map = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE);
 
       { // before compact
         final Collection<Integer> allKeys = new HashSet<>(map.getAllKeysWithExistingMapping());
