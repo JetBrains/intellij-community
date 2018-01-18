@@ -170,8 +170,8 @@ public class RunAnythingUtil {
 
   static void jumpNextGroup(boolean forward, JBList list) {
     final int index = list.getSelectedIndex();
-    final RunAnythingSearchListModel model = (RunAnythingSearchListModel)list.getModel();
-    if (index >= 0) {
+    final RunAnythingSearchListModel model = RunAnythingAction.tryGetSearchingModel(list);
+    if (model != null && index >= 0) {
       final int newIndex = forward ? model.next(index) : model.prev(index);
       list.setSelectedIndex(newIndex);
       int more = model.next(newIndex) - 1;

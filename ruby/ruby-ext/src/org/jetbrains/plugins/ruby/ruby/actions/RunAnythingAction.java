@@ -283,7 +283,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        if (clickCount > 1 && clickCount % 2 == 0) {
+        if (clickCount > 1 && clickCount % 2 == 0 || tryGetSettingsModel() != null) {
           event.consume();
           final int i = myList.locationToIndex(event.getPoint());
           if (i != -1) {
@@ -354,10 +354,6 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
 
-  private RunAnythingSearchListModel getModel() {
-    return (RunAnythingSearchListModel)myList.getModel();
-  }
-
   @NotNull
   private ActionCallback onPopupFocusLost() {
     final ActionCallback result = new ActionCallback();
@@ -400,37 +396,39 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     if (index != -1) {
 
-      final RunAnythingSearchListModel model = getModel();
-      if (isMoreItem(index)) {
-        WidgetID wid = null;
-        if (index == model.moreIndex.permanentRunConfigurations) {
-          wid = WidgetID.PERMANENT;
-        }
-        else if (index == model.moreIndex.rakeTasks) {
-          wid = WidgetID.RAKE;
-        }
-        else if (index == model.moreIndex.generators) {
-          wid = WidgetID.GENERATORS;
-        }
-        else if (index == model.moreIndex.bundlerActions) {
-          wid = WidgetID.BUNDLER;
-        }
-        else if (index == model.moreIndex.temporaryRunConfigurations) {
-          wid = WidgetID.TEMPORARY;
-        }
-        else if (index == model.moreIndex.undefined) {
-          wid = WidgetID.UNDEFINED;
-        }
+      final RunAnythingSearchListModel model = tryGetSearchingModel(myList);
+      if (model != null) {
+        if (isMoreItem(index)) {
+          WidgetID wid = null;
+          if (index == model.moreIndex.permanentRunConfigurations) {
+            wid = WidgetID.PERMANENT;
+          }
+          else if (index == model.moreIndex.rakeTasks) {
+            wid = WidgetID.RAKE;
+          }
+          else if (index == model.moreIndex.generators) {
+            wid = WidgetID.GENERATORS;
+          }
+          else if (index == model.moreIndex.bundlerActions) {
+            wid = WidgetID.BUNDLER;
+          }
+          else if (index == model.moreIndex.temporaryRunConfigurations) {
+            wid = WidgetID.TEMPORARY;
+          }
+          else if (index == model.moreIndex.undefined) {
+            wid = WidgetID.UNDEFINED;
+          }
 
-        if (wid != null) {
-          final WidgetID widgetID = wid;
-          myCurrentWorker.doWhenProcessed(() -> {
-            myCalcThread = new CalcThread(project, pattern, true);
-            myPopupActualWidth = 0;
-            myCurrentWorker = myCalcThread.insert(index, widgetID);
-          });
+          if (wid != null) {
+            final WidgetID widgetID = wid;
+            myCurrentWorker.doWhenProcessed(() -> {
+              myCalcThread = new CalcThread(project, pattern, true);
+              myPopupActualWidth = 0;
+              myCurrentWorker = myCalcThread.insert(index, widgetID);
+            });
 
-          return;
+            return;
+          }
         }
       }
     }
@@ -531,13 +529,27 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private boolean isMoreItem(int index) {
-    final RunAnythingSearchListModel model = getModel();
+    RunAnythingSearchListModel model = tryGetSearchingModel(myList);
+    if (model == null) return false;
+
     return index == model.moreIndex.permanentRunConfigurations ||
            index == model.moreIndex.rakeTasks ||
            index == model.moreIndex.bundlerActions ||
            index == model.moreIndex.generators ||
            index == model.moreIndex.undefined ||
            index == model.moreIndex.temporaryRunConfigurations;
+  }
+
+  @Nullable
+  public static RunAnythingSearchListModel tryGetSearchingModel(@NotNull JBList list) {
+    ListModel model = list.getModel();
+    return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
+  }
+
+  @Nullable
+  private RunAnythingSettingsModel tryGetSettingsModel() {
+    ListModel model = myList.getModel();
+    return model instanceof RunAnythingSettingsModel ? (RunAnythingSettingsModel)model : null;
   }
 
   private void rebuildList(final String pattern) {
@@ -826,7 +838,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private void showSettings() {
     myPopupField.setText("");
-    final RunAnythingSearchListModel model = new RunAnythingSearchListModel();
+    final RunAnythingSettingsModel model = new RunAnythingSettingsModel();
     model.addElement(new RunAnythingSEOption("Show generators", "run.anything.generators"));
     model.addElement(new RunAnythingSEOption("Show rake tasks", "run.anything.rake.tasks"));
     model.addElement(new RunAnythingSEOption("Show bundler actions", "run.anything.bundler.actions"));
@@ -909,8 +921,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     DumbAwareAction.create(e -> {
       //todo
-      ListModel model = myList.getModel();
-      if (!(model instanceof RunAnythingSearchListModel)) return;
+      RunAnythingSearchListModel model = tryGetSearchingModel(myList);
+      if (model == null) return;
 
       Object selectedValue = myList.getSelectedValue();
       if (!(selectedValue instanceof RunAnythingUndefinedItem)) return;
@@ -920,14 +932,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       int shift = -1;
       int index = myList.getSelectedIndex();
 
-      RunAnythingSearchListModel myListModel = (RunAnythingSearchListModel)model;
-      myListModel.remove(index);
+      model.remove(index);
 
-      RunAnythingMoreIndex moreIndex = myListModel.moreIndex;
-      myListModel.titleIndex.shift(index, shift);
+      RunAnythingMoreIndex moreIndex = model.moreIndex;
+      model.titleIndex.shift(index, shift);
       moreIndex.shift(index, shift);
 
-      if (myListModel.size() > 0) ScrollingUtil.selectItem(myList, index < myListModel.size() ? index : index - 1);
+      if (model.size() > 0) ScrollingUtil.selectItem(myList, index < model.size() ? index : index - 1);
 
       updatePopupBounds();
     }).registerCustomShortcutSet(CustomShortcutSet.fromString("shift BACK_SPACE"), editor, balloon);
@@ -1014,11 +1025,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         cmp.setBackground(UIUtil.getListBackground(isSelected));
         bg = cmp.getBackground();
       }
-      String title = getModel().titleIndex.getTitle(index);
       myMainPanel.removeAll();
-      if (title != null) {
-        myTitle.setText(title);
-        myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
+      RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
+      if (model != null) {
+        String title = model.titleIndex.getTitle(index);
+        if (title != null) {
+          myTitle.setText(title);
+          myMainPanel.add(RunAnythingUtil.createTitle(" " + title), BorderLayout.NORTH);
+        }
       }
       JPanel wrapped = new JPanel(new BorderLayout());
       wrapped.setBackground(bg);
@@ -1041,12 +1055,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     public void recalculateWidth() {
-      ListModel model = myList.getModel();
+      RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
+      if (model == null) return;
+
       myTitle.setIcon(EmptyIcon.ICON_16);
       myTitle.setFont(RunAnythingUtil.getTitleFont());
       int index = 0;
       while (index < model.getSize()) {
-        String title = getModel().titleIndex.getTitle(index);
+        String title = model.titleIndex.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
         }
@@ -1090,7 +1106,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       myProject = project;
       myModule = getModule();
       myPattern = pattern;
-      myListModel = reuseModel ? (RunAnythingSearchListModel)myList.getModel() : new RunAnythingSearchListModel();
+      RunAnythingSearchListModel model = tryGetSearchingModel(RunAnythingAction.this.myList);
+      myListModel = reuseModel ? model != null ? model : new RunAnythingSearchListModel() : new RunAnythingSearchListModel();
     }
 
     @Override
@@ -1103,7 +1120,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           // this line must be called on EDT to avoid context switch at clear().append("text") Don't touch. Ask [kb]
           myList.getEmptyText().setText("Searching...");
 
-          if (myList.getModel() instanceof RunAnythingSearchListModel) {
+          if (tryGetSearchingModel(myList) != null) {
             //noinspection unchecked
             myAlarm.cancelAllRequests();
             myAlarm.addRequest(() -> {
@@ -1746,5 +1763,8 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @Override
     public void dispose() {
     }
+  }
+
+  private static class RunAnythingSettingsModel extends DefaultListModel {
   }
 }
