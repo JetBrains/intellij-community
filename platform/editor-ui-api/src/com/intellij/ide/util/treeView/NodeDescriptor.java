@@ -61,6 +61,11 @@ public abstract class NodeDescriptor<E> {
     myIndex = index;
   }
 
+  /**
+   * Make sure the descriptor is up to date with its content
+   *
+   * @return true if any descriptor's properties changed during the update
+   */
   public abstract boolean update();
 
   public abstract E getElement();
