@@ -141,29 +141,6 @@ public class BuildView extends CompositeView<ExecutionConsole> implements BuildP
       if(runContentDescriptor != null) {
         Disposer.register(this, runContentDescriptor);
       }
-
-      // Android Studio hack: make sure we switch to the text view when there are errors, switch
-      // to the task view on next build, and back to the text view if that's where we started.
-      // THIS IS SUPER HACKY, AND THE INTENT IS FOR THIS TO GO AWAY IN 3.2!
-      // Since we auto-toggle to the console view on build failure, auto-toggle to the
-      // tree view when build starts
-      final boolean switchToConsoleOnSuccess = isViewEnabled(CONSOLE_VIEW_NAME);
-      if (!isViewEnabled(BuildTreeConsoleView.class.getName())) {
-        enableView(BuildTreeConsoleView.class.getName());
-      }
-
-      if (executionConsoleView instanceof BuildTextConsoleView) {
-        BuildTextConsoleView view = (BuildTextConsoleView)executionConsoleView;
-        view.setLineHandler((line) -> {
-          if (line.startsWith("FAILURE:") // / Gradle error text shown on each failed build
-               || switchToConsoleOnSuccess && line.startsWith("BUILD SUCCESSFUL")) {
-            if (!isViewEnabled(CONSOLE_VIEW_NAME)) {
-              enableView(CONSOLE_VIEW_NAME);
-            }
-            view.setLineHandler(null);
-          }
-        });
-      }
     }
 
     BuildProcessHandler processHandler = startBuildEvent.getProcessHandler();

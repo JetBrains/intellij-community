@@ -24,7 +24,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -50,24 +49,6 @@ public class BuildTextConsoleView extends ConsoleViewImpl implements BuildConsol
   @Override
   public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
     print(text, ConsoleViewContentType.getConsoleViewType(attributes));
-
-    // Android Studio: Support fronting on build errors
-    // THIS IS SUPER HACKY, AND THE INTENT IS FOR THIS TO GO AWAY IN 3.2!
-    if (lineHandler != null) {
-      lineHandler.handle(text);
-    }
-  }
-
-  interface LineHandler {
-    void handle(@NotNull String line);
-  }
-
-  // Android Studio: Support fronting on build errors
-  private LineHandler lineHandler = null;
-
-  public void setLineHandler(@Nullable LineHandler lineHandler) {
-    assert lineHandler == null || this.lineHandler == null; // there can only be one at a time
-    this.lineHandler = lineHandler;
   }
 }
 
