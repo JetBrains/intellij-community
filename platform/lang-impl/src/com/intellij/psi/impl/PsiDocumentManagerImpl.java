@@ -155,7 +155,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   @Override
   protected boolean finishCommitInWriteAction(@NotNull Document document,
                                               @NotNull List<BooleanRunnable> finishProcessors,
-                                              List<BooleanRunnable> reparseInjectedProcessors,
+                                              @NotNull List<BooleanRunnable> reparseInjectedProcessors,
                                               boolean synchronously,
                                               boolean forceNoPsiCommit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) { // can be false for non-physical PSI
