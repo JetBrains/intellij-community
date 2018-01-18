@@ -68,7 +68,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @NotNull private final List<FilePatch> myRemainingPatches;
   @NotNull private final List<FilePatch> myFailedPatches;
   private final PathsVerifier<BinaryType> myVerifier;
-  private boolean mySystemOperation;
 
   private final boolean myReverseConflict;
   @Nullable private final String myLeftConflictPanelTitle;
@@ -108,10 +107,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
                       @Nullable CustomBinaryPatchApplier<BinaryType> customForBinaries,
                       @Nullable CommitContext commitContext) {
     this(project, baseDirectory, patches, targetChangeList, customForBinaries, commitContext, false, null, null);
-  }
-
-  public void setIsSystemOperation(boolean systemOperation) {
-    mySystemOperation = systemOperation;
   }
 
   @NotNull
