@@ -304,7 +304,7 @@ public class RunAnythingUtil {
     Color groupFg = UIUtil.getLabelDisabledForeground();
 
     if (showIcon) {
-      panel.add(createIconLabel(icon, true), BorderLayout.WEST);
+      panel.add(createIconLabel(icon, false), BorderLayout.WEST);
     }
     appendWithColoredMatches(nameComponent, StringUtil.notNullize(value.getText()), "", fg, isSelected);
     //todo
@@ -338,7 +338,7 @@ public class RunAnythingUtil {
     Color fg = defaultActionForeground(isSelected, null);
 
     if (showIcon) {
-      panel.add(createIconLabel(icon, true), BorderLayout.WEST);
+      panel.add(createIconLabel(icon, false), BorderLayout.WEST);
     }
     String presentationText = StringUtil.shortenTextWithEllipsis(value.getText(), 50, 0);
 
