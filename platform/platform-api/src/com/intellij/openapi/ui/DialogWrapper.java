@@ -236,7 +236,7 @@ public abstract class DialogWrapper {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
             if (myErrorText != null && myErrorText.isVisible()) {
-              myActualSize.height -= myErrorText.myLabel.getHeight();
+              myActualSize.height -= myErrorText.getMinimumSize().height;
             }
           }
         }
