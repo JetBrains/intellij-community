@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.execution.configurations.ConfigurationTypeBase;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader;
 import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -107,11 +108,12 @@ public class JBListPopupFixture extends JComponentFixture<JBListPopupFixture, JB
   private static Pair<JListFixture, Integer> getJListFixtureAndClickableItem(@NotNull Matcher<String> labelMatcher,
                                                                              @NotNull Robot robot,
                                                                              JBList list) {
-    ListPopupModel model = (ListPopupModel)list.getModel();
-    for (int i = 0; i < model.getSize(); i++) {
-      String popupItem = readPopupItem(model, i);
-      if (labelMatcher.matches(popupItem)) {
-        return new Pair<>(new JListFixture(robot, list), i);
+    JListFixture jListFixture = new JListFixture(robot, list);
+    jListFixture.replaceCellReader(new ExtendedJListCellReader());
+    int itemCount = jListFixture.target().getModel().getSize();
+    for (int i = 0; i < itemCount; i++) {
+      if (labelMatcher.matches(jListFixture.item(i).value())) {
+        return new Pair<>(jListFixture, i);
       }
     }
     return null;
