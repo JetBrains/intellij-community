@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -166,8 +165,7 @@ public class ScratchFileActions {
   static void doCreateNewScratch(@NotNull Project project, boolean buffer, @NotNull Language language, @NotNull String text) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
 
-    LanguageFileType fileType = language.getAssociatedFileType();
-    String ext = buffer || fileType == null? "" : fileType.getDefaultExtension();
+    String ext = buffer ? "" : ScratchFileLanguageProvider.Companion.getDefaultFileExtension(language);
     String fileName = buffer ? "buffer" + nextBufferIndex() : "scratch";
     ScratchFileService.Option option = buffer ? ScratchFileService.Option.create_if_missing : ScratchFileService.Option.create_new_always;
     VirtualFile f = ScratchRootType.getInstance().createScratchFile(project, PathUtil.makeFileName(fileName, ext), language, text, option);
