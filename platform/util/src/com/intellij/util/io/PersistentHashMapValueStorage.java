@@ -48,6 +48,10 @@ public class PersistentHashMapValueStorage {
 
   private static final int CACHE_PROTECTED_QUEUE_SIZE = 10;
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
+  private static final long MAX_RETAINED_LIMIT_WHEN_COMPACTING = 100 * 1024 * 1024;
+  
+  static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
+  static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
   public static class CreationTimeOptions {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION = new ThreadLocal<ExceptionalIOCancellationCallback>();
@@ -254,12 +258,10 @@ public class PersistentHashMapValueStorage {
     int fragments = 0;
     int newFragments = 0;
     int allRecordsLength = 0;
+    
     byte[] stuffFromPreviousRecord = null;
     int bytesRead = (int)(mySize - (mySize / fileBufferLength) * fileBufferLength);
     long retained = 0;
-    final long softMaxRetainedLimit = 10 * 1024* 1024;
-    final int blockSizeToWriteWhenSoftMaxRetainedLimitIsHit = 1024;
-    final long maxRetainedLimit = 100 * 1024* 1024;
 
     while(lastReadOffset != 0) {
       final long readStartOffset = lastReadOffset - bytesRead;
@@ -350,12 +352,19 @@ public class PersistentHashMapValueStorage {
             info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
             ++newFragments;
           } else {
-            if (retained > softMaxRetainedLimit && b.length > blockSizeToWriteWhenSoftMaxRetainedLimitIsHit ||
-                retained > maxRetainedLimit) {
+            if (retained > SOFT_MAX_RETAINED_LIMIT && b.length > BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT ||
+                retained > MAX_RETAINED_LIMIT_WHEN_COMPACTING) {
+              // to avoid OOME we need to save 'b' accumulated from chunks
+              // to preserve write order prev data is loaded in usual backward chunk reads 
+              ReadResult result = readBytes(prevChunkAddress);
+              info.newValueAddress = storage.appendBytes(result.buffer, 0, result.buffer.length, info.newValueAddress);
               ++newFragments;
               info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
+              ++newFragments;
               info.value = null;
+              info.valueAddress = 0;
               retained -= b.length;
+              continue;
             } else {
               info.value = b;
             }
