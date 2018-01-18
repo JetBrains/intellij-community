@@ -1329,31 +1329,6 @@ public class AbstractPopup implements JBPopup {
       return;
     }
 
-    if (myFinalRunnable != null) {
-      final ActionCallback typeAheadDone = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone);
-
-      ModalityState modalityState = ModalityState.current();
-      Runnable finalRunnable = myFinalRunnable;
-
-      getFocusManager().doWhenFocusSettlesDown(() -> {
-        //noinspection SSBasedInspection
-
-        if (ModalityState.current().equals(modalityState)) {
-          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
-        } else {
-          System.err.println("Final runnable of popup is skipped");
-        }
-        // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
-        // And we don't want finalRunnable to perform potentially destructive actions
-        //   in the context of a suddenly appeared modal dialog.
-      });
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(typeAheadDone.createSetDoneRunnable());
-      myFinalRunnable = null;
-
-    }
-
     debugState("dispose popup", State.INIT, State.CANCEL);
     myState = State.DISPOSE;
 
@@ -1395,6 +1370,31 @@ public class AbstractPopup implements JBPopup {
       }
     }
     myMouseOutCanceller = null;
+
+    if (myFinalRunnable != null) {
+      final ActionCallback typeAheadDone = new ActionCallback();
+      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone, "Abstract Popup Disposal");
+
+      ModalityState modalityState = ModalityState.current();
+      Runnable finalRunnable = myFinalRunnable;
+
+      getFocusManager().doWhenFocusSettlesDown(() -> {
+        //noinspection SSBasedInspection
+
+        if (ModalityState.current().equals(modalityState)) {
+          //noinspection SSBasedInspection
+          typeAheadDone.setDone();
+          ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
+        } else {
+          typeAheadDone.setRejected();
+          LOG.debug("Final runnable of popup is skipped");
+        }
+        // Otherwise the UI has changed unexpectedly and the action is likely not applicable.
+        // And we don't want finalRunnable to perform potentially destructive actions
+        //   in the context of a suddenly appeared modal dialog.
+      });
+      myFinalRunnable = null;
+    }
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("stop disposing content");
