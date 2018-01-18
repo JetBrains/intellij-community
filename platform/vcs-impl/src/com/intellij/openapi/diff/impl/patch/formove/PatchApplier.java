@@ -20,6 +20,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchContext;
@@ -28,6 +29,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchUtil;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.formove.PathsVerifier.PatchAndFile;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -39,7 +41,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -50,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
@@ -174,68 +177,111 @@ public class PatchApplier<Unused> {
   }
 
   @CalledInAwt
-  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList,
+  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList targetChangeList,
                                                    boolean showSuccessNotification, boolean silentAddDelete) {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
-    ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
-    for (PatchApplier patchApplier : group) {
-      result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
+    return runUnderChangeList(project, targetChangeList, () -> {
+      ApplyPatchStatus result = ApplyPatchStatus.SUCCESS;
+      for (PatchApplier patchApplier : group) {
+        result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
+      }
+
+      final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
+      final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
+
+      final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
+      try {
+        runWithDefaultConfirmations(project, silentAddDelete, () -> {
+          CommandProcessor.getInstance().executeCommand(project, () -> {
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+              applier.addSkippedItems(trigger);
+            }
+            trigger.prepare();
+            if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+              // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+              refStatus.set(null);
+            }
+            for (PatchApplier applier : group) {
+              refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+              if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+            }
+          }, VcsBundle.message("patch.apply.command"), null);
+        });
+      }
+      finally {
+        VcsFileListenerContextHelper.getInstance(project).clearContext();
+        LocalHistory.getInstance().putSystemLabel(project, "After patch");
+      }
+      result = refStatus.get();
+      result = result == null ? ApplyPatchStatus.FAILURE : result;
+
+      trigger.processIt();
+
+      if (result == ApplyPatchStatus.FAILURE) {
+        suggestRollback(project, group, beforeLabel);
+      }
+      else if (result == ApplyPatchStatus.ABORT) {
+        rollbackUnderProgress(project, beforeLabel);
+      }
+
+      if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(result)) {
+        showApplyStatus(project, result);
+      }
+
+      final Set<FilePath> directlyAffected = new HashSet<>();
+      final Set<VirtualFile> indirectlyAffected = new HashSet<>();
+      for (PatchApplier applier : group) {
+        directlyAffected.addAll(applier.getDirectlyAffected());
+        indirectlyAffected.addAll(applier.getIndirectlyAffected());
+      }
+      directlyAffected.addAll(trigger.getAffected());
+      refreshPassedFiles(project, directlyAffected, indirectlyAffected);
+
+      return result;
+    });
+  }
+
+  private static <T> T runUnderChangeList(@NotNull Project project,
+                                          @Nullable LocalChangeList targetChangeList,
+                                          @NotNull Computable<T> task) {
+    ChangeListManager clm = ChangeListManager.getInstance(project);
+    LocalChangeList oldDefaultList = clm.getDefaultChangeList();
+
+    if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
+      return task.compute();
     }
 
-    final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
-    final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
-
-    final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
+    clm.setDefaultChangeList(targetChangeList);
     try {
-      runWithDefaultConfirmations(project, silentAddDelete, () -> {
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          for (PatchApplier applier : group) {
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-            applier.addSkippedItems(trigger);
+      return task.compute();
+    }
+    finally {
+      try {
+        CountDownLatch waiter = new CountDownLatch(1);
+
+        // wait for CLM update
+        clm.invokeAfterUpdate(() -> waiter.countDown(),
+                              InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "Apply Patch", ModalityState.NON_MODAL);
+
+        boolean success = false;
+        while (!success) {
+          ProgressManager.checkCanceled();
+          try {
+            success = waiter.await(50, TimeUnit.MILLISECONDS);
           }
-          trigger.prepare();
-          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-            refStatus.set(null);
+          catch (InterruptedException e) {
+            LOG.warn(e);
+            throw new ProcessCanceledException(e);
           }
-          for (PatchApplier applier : group) {
-            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-          }
-        }, VcsBundle.message("patch.apply.command"), null);
-      });
-    } finally {
-      VcsFileListenerContextHelper.getInstance(project).clearContext();
-      LocalHistory.getInstance().putSystemLabel(project, "After patch");
+        }
+      }
+      finally {
+        clm.setDefaultChangeList(oldDefaultList);
+      }
     }
-    result =  refStatus.get();
-    result = result == null ? ApplyPatchStatus.FAILURE : result;
-
-    trigger.processIt();
-
-    if (result == ApplyPatchStatus.FAILURE) {
-      suggestRollback(project, group, beforeLabel);
-    }
-    else if (result == ApplyPatchStatus.ABORT) {
-      rollbackUnderProgress(project, beforeLabel);
-    }
-
-    if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(result)) {
-      showApplyStatus(project, result);
-    }
-
-    final Set<FilePath> directlyAffected = new HashSet<>();
-    final Set<VirtualFile> indirectlyAffected = new HashSet<>();
-    for (PatchApplier applier : group) {
-      directlyAffected.addAll(applier.getDirectlyAffected());
-      indirectlyAffected.addAll(applier.getIndirectlyAffected());
-    }
-    directlyAffected.addAll(trigger.getAffected());
-    refreshPassedFilesAndMoveToChangelist(project, directlyAffected, indirectlyAffected, localChangeList);
-
-    return result;
   }
 
   private static void suggestRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group, @NotNull Label beforeLabel) {
@@ -343,40 +389,16 @@ public class PatchApplier<Unused> {
   }
 
   @CalledInAwt
-  private static void refreshPassedFilesAndMoveToChangelist(@NotNull final Project project,
-                                                           @NotNull Collection<FilePath> directlyAffected,
-                                                           @NotNull Collection<VirtualFile> indirectlyAffected,
-                                                           @Nullable LocalChangeList targetChangeList) {
+  private static void refreshPassedFiles(@NotNull final Project project,
+                                         @NotNull Collection<FilePath> directlyAffected,
+                                         @NotNull Collection<VirtualFile> indirectlyAffected) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
     }
     if (project.isDisposed()) return;
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (!directlyAffected.isEmpty() && targetChangeList != null &&
-        !changeListManager.getDefaultListName().equals(targetChangeList.getName())) {
-      changeListManager.invokeAfterUpdate(() -> movePathsToChangeList(changeListManager, directlyAffected, targetChangeList),
-                                          InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
-                                          VcsBundle.message("change.lists.manager.move.changes.to.list"),
-                                          vcsDirtyScopeManager -> markDirty(vcsDirtyScopeManager, directlyAffected, indirectlyAffected),
-                                          null);
-    }
-    else {
-      markDirty(VcsDirtyScopeManager.getInstance(project), directlyAffected, indirectlyAffected);
-    }
-  }
-
-  private static void movePathsToChangeList(@NotNull ChangeListManager changeListManager,
-                                            @NotNull Collection<FilePath> directlyAffected,
-                                            @Nullable LocalChangeList targetChangeList) {
-    List<Change> changes = ContainerUtil.mapNotNull(directlyAffected, changeListManager::getChange);
-    changeListManager.moveChangesTo(targetChangeList, ArrayUtil.toObjectArray(changes, Change.class));
-  }
-
-  private static void markDirty(@NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                                @NotNull Collection<FilePath> directlyAffected,
-                                @NotNull Collection<VirtualFile> indirectlyAffected) {
+    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
     vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
     vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
   }
