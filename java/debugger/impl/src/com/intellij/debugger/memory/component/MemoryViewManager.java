@@ -32,11 +32,7 @@ public class MemoryViewManager implements ApplicationComponent, PersistentStateC
   }
 
   @Override
-  public void loadState(MemoryViewManagerState state) {
-    if (state == null) {
-      state = new MemoryViewManagerState();
-    }
-
+  public void loadState(@NotNull MemoryViewManagerState state) {
     myState = state;
     fireStateChanged();
   }
@@ -62,6 +58,13 @@ public class MemoryViewManager implements ApplicationComponent, PersistentStateC
     }
   }
 
+  public void setAutoUpdate(boolean value) {
+    if (myState.isAutoUpdateModeOn != value) {
+      myState.isAutoUpdateModeOn = value;
+      fireStateChanged();
+    }
+  }
+
   public boolean isNeedShowDiffOnly() {
     return myState.isShowWithDiffOnly;
   }
@@ -72,6 +75,10 @@ public class MemoryViewManager implements ApplicationComponent, PersistentStateC
 
   public boolean isNeedShowTrackedOnly() {
     return myState.isShowTrackedOnly;
+  }
+
+  public boolean isAutoUpdateModeEnabled() {
+    return myState.isAutoUpdateModeOn;
   }
 
   public void addMemoryViewManagerListener(MemoryViewManagerListener listener, @NotNull Disposable parentDisposable) {

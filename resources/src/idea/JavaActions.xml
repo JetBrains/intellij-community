@@ -270,6 +270,11 @@
       <action class="com.intellij.debugger.memory.action.EnableBackgroundTrackingAction"
               id="MemoryView.EnableTrackingWithClosedWindow"
               text="Enable Tracking With Hidden Memory View"/>
+
+      <action class="com.intellij.debugger.memory.action.SwitchUpdateModeAction"
+              id="MemoryView.SwitchUpdateMode"
+              text="Update Loaded Classes On Debugger Stop"
+              description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
     </group>
 
     <group id="MemoryView.ClassesPopupActionGroup">
