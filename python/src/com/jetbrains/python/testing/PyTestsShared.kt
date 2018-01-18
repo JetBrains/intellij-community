@@ -23,10 +23,7 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.RefactoringListenerProvider
-import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
@@ -695,6 +692,19 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
   PythonTestConfigurationType.getInstance()) {
 
   override val configurationClass = PyAbstractTestConfiguration::class.java
+
+  override fun createLightConfiguration(context: ConfigurationContext): RunConfiguration? {
+    // Parent implementation does not obey several factories
+    // We need to get factory according to settings
+    val conf = findConfigurationFactoryFromSettings(context.module).createTemplateConfiguration(context.project)
+                 as? PyAbstractTestConfiguration ?: return null
+
+    val ref = Ref(context.psiLocation)
+    if (setupConfigurationFromContext(conf, context, ref)) {
+      return conf
+    }
+    return null
+  }
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
