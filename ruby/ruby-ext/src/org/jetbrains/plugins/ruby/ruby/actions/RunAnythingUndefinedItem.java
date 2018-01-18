@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
 import com.intellij.execution.Executor;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import icons.RubyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
@@ -16,6 +16,7 @@ import javax.swing.*;
 import java.util.Objects;
 
 public class RunAnythingUndefinedItem extends RunAnythingItem {
+  static final Icon UNDEFINED_COMMAND_ICON = RubyIcons.RunAnything.Run_anything;
   private static final String TITLE = "Command execution";
   @Nullable private final Module myModule;
   @NotNull private final String myCommandLine;
@@ -62,6 +63,6 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.RunConfigurations.Unknown;
+    return UNDEFINED_COMMAND_ICON;
   }
 }

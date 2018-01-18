@@ -104,6 +104,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingIconHandler.*;
+import static org.jetbrains.plugins.ruby.ruby.actions.RunAnythingUndefinedItem.UNDEFINED_COMMAND_ICON;
 
 @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
 public class RunAnythingAction extends AnAction implements CustomComponentAction, DumbAware, DataProvider {
@@ -167,7 +168,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       protected Map<String, Icon> compute() {
         Map<String, Icon> map = ContainerUtil.newHashMap();
-        map.put(UNKNOWN_CONFIGURATION, AllIcons.Actions.IntentionBulb);
+        map.put(UNKNOWN_CONFIGURATION, UNDEFINED_COMMAND_ICON);
 
         for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
           map.put(provider.getConfigurationFactory().getName(), provider.getConfigurationFactory().getIcon());
