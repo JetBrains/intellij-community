@@ -75,6 +75,7 @@ class PartialLocalLineStatusTracker(project: Project,
 
   private var isFreezedByBackgroundTask: Boolean = false
   private var hasUndoInCommand: Boolean = false
+  private var undoModificationStamp: Int = 0
 
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
@@ -202,6 +203,7 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
+    undoModificationStamp++
     updateAffectedChangeLists(false) // no need to notify CLM, as we're inside it's action
 
     for (block in affectedBlocks) {
@@ -234,7 +236,7 @@ class PartialLocalLineStatusTracker(project: Project,
     val undoState = documentTracker.readLock {
       blocks.map { RangeState(it.range, it.marker.changelistId) }
     }
-    undoManager.undoableActionPerformed(MyUndoableAction(project, document, undoState, undo))
+    undoManager.undoableActionPerformed(MyUndoableAction(project, document, undoModificationStamp, undoState, undo))
   }
 
   private inner class MyBackgroundVfsOperationListener : BackgroundVfsOperationListener {
@@ -465,6 +467,7 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
+    undoModificationStamp++
     updateAffectedChangeLists()
   }
 
@@ -531,6 +534,7 @@ class PartialLocalLineStatusTracker(project: Project,
   private class MyUndoableAction(
     project: Project,
     document: Document,
+    val undoModificationStamp: Int,
     val states: List<RangeState>,
     val undo: Boolean
   ) : BasicUndoableAction(document) {
@@ -549,7 +553,8 @@ class PartialLocalLineStatusTracker(project: Project,
       val project = projectRef.get()
       if (document != null && project != null) {
         val tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document)
-        if (tracker is PartialLocalLineStatusTracker) {
+        if (tracker is PartialLocalLineStatusTracker &&
+            tracker.undoModificationStamp == undoModificationStamp) {
           tracker.restoreState(states)
         }
       }
