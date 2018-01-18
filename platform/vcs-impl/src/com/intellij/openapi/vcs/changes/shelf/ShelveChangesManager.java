@@ -6,14 +6,11 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
-import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
-import com.intellij.openapi.diff.impl.patch.formove.CustomBinaryPatchApplier;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
@@ -667,10 +664,9 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      final BinaryPatchApplier binaryPatchApplier = new BinaryPatchApplier();
       final PatchApplier<ShelvedBinaryFilePatch> patchApplier =
         new PatchApplier<>(myProject, myProject.getBaseDir(),
-                           patches, targetChangeList, binaryPatchApplier, commitContext, reverse, leftConflictTitle,
+                           patches, targetChangeList, null, commitContext, reverse, leftConflictTitle,
                            rightConflictTitle);
       patchApplier.execute(showSuccessNotification, systemOperation);
       if (isRemoveFilesFromShelf() || systemOperation) {
@@ -838,31 +834,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     return localChangeList != null ? localChangeList : manager.addChangeList(getChangeListNameForUnshelve(list), "");
   }
 
-  private class BinaryPatchApplier implements CustomBinaryPatchApplier<ShelvedBinaryFilePatch> {
-    private final List<FilePatch> myAppliedPatches;
-
-    private BinaryPatchApplier() {
-      myAppliedPatches = new ArrayList<>();
-    }
-
-    @Override
-    @NotNull
-    public ApplyPatchStatus apply(final List<Pair<VirtualFile, ApplyFilePatchBase<ShelvedBinaryFilePatch>>> patches) throws IOException {
-      for (Pair<VirtualFile, ApplyFilePatchBase<ShelvedBinaryFilePatch>> patch : patches) {
-        final ShelvedBinaryFilePatch shelvedPatch = patch.getSecond().getPatch();
-        unshelveBinaryFile(shelvedPatch.getShelvedBinaryFile(), patch.getFirst());
-        myAppliedPatches.add(shelvedPatch);
-      }
-      return ApplyPatchStatus.SUCCESS;
-    }
-
-    @Override
-    @NotNull
-    public List<FilePatch> getAppliedPatches() {
-      return myAppliedPatches;
-    }
-  }
-
   private static List<ShelvedBinaryFile> getBinaryFilesToUnshelve(final ShelvedChangeList changeList,
                                                                   final List<ShelvedBinaryFile> binaryFiles,
                                                                   final List<ShelvedBinaryFile> remainingBinaries) {
@@ -879,18 +850,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
       }
     }
     return result;
-  }
-
-  private void unshelveBinaryFile(final ShelvedBinaryFile file, @NotNull final VirtualFile patchTarget) throws IOException {
-    final File shelvedFile = file.SHELVED_PATH == null ? null : new File(file.SHELVED_PATH);
-    WriteAction.run(() -> {
-      if (shelvedFile == null) {
-        patchTarget.delete(this);
-      }
-      else {
-        patchTarget.setBinaryContent(FileUtil.loadFileBytes(shelvedFile));
-      }
-    });
   }
 
   private static boolean needUnshelve(final FilePatch patch, final List<ShelvedChange> changes) {

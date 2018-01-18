@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.impl.patch.apply;
 
-import com.intellij.openapi.diff.impl.patch.ApplyPatchStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
@@ -39,16 +38,12 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
 
   protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents)
     throws IOException {
-    try {
-      ShelvedBinaryFile shelvedBinaryFile = myPatch.getShelvedBinaryFile();
-      if (shelvedBinaryFile.SHELVED_PATH != null) {
-        byte[] binaryContent = FileUtil.loadFileBytes(new File(shelvedBinaryFile.SHELVED_PATH));
-        fileToPatch.setBinaryContent(binaryContent);
-      }
+    ShelvedBinaryFile shelvedBinaryFile = myPatch.getShelvedBinaryFile();
+    if (shelvedBinaryFile.SHELVED_PATH == null) {
+      fileToPatch.delete(this);
     }
-    catch (IOException e) {
-      LOG.error("Couldn't apply shelved binary patch", e);
-      return new Result(ApplyPatchStatus.FAILURE);
+    else {
+      fileToPatch.setBinaryContent(FileUtil.loadFileBytes(new File(shelvedBinaryFile.SHELVED_PATH)));
     }
     return SUCCESS;
   }
