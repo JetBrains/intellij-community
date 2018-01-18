@@ -26,7 +26,7 @@ class MPSBuilder {
 
         AntBuilder ant = buildContext.ant
         String jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
-        new LayoutBuilder(ant, buildContext.project, false).layout(jpsArtifactDir) {
+        new LayoutBuilder(buildContext, false).layout(jpsArtifactDir) {
             jar("jps-build-test.jar") {
                 moduleTests("jps-builders")
                 moduleTests("jps-model-tests")
