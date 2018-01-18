@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.Couple;
@@ -75,8 +73,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   public Element serializeInto(@NotNull Object o, @Nullable Element element, @Nullable SerializationFilter filter) {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
-
-      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor,  o)) {
+      if (o instanceof SerializationFilter && !((SerializationFilter)o).accepts(accessor, o)) {
         continue;
       }
 
@@ -373,16 +370,29 @@ public class BeanBinding extends NotNullDeserializeBinding {
     do {
       for (Field field : currentClass.getDeclaredFields()) {
         int modifiers = field.getModifiers();
-        //noinspection deprecation
-        if (!Modifier.isStatic(modifiers) &&
-            (hasStoreAnnotations(field) ||
-             (Modifier.isPublic(modifiers) &&
-              // we don't want to allow final fields of all types, but only supported
-              (!Modifier.isFinal(modifiers) || Collection.class.isAssignableFrom(field.getType())) &&
-              !Modifier.isTransient(modifiers) &&
-              field.getAnnotation(Transient.class) == null))) {
-          accessors.add(new FieldAccessor(field));
+        if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+          continue;
         }
+
+        if (!hasStoreAnnotations(field)) {
+          if (!(Modifier.isPublic(modifiers))) {
+            continue;
+          }
+
+          if (Modifier.isFinal(modifiers)) {
+            Class<?> fieldType = field.getType();
+            // we don't want to allow final fields of all types, but only supported
+            if (!(Collection.class.isAssignableFrom(fieldType) || Map.class.isAssignableFrom(fieldType))) {
+              continue;
+            }
+          }
+
+          if (field.getAnnotation(Transient.class) != null) {
+            continue;
+          }
+        }
+
+        accessors.add(new FieldAccessor(field));
       }
     }
     while ((currentClass = currentClass.getSuperclass()) != null && currentClass.getAnnotation(Transient.class) == null);

@@ -1,9 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
@@ -33,6 +32,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
   };
 
   private final MapAnnotation myMapAnnotation;
+  @NotNull private final Class<? extends Map> mapClass;
 
   private Class<?> keyClass;
   private Class<?> valueClass;
@@ -40,10 +40,11 @@ class MapBinding extends Binding implements MultiNodeBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  public MapBinding(@NotNull MutableAccessor accessor) {
+  public MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
     super(accessor);
 
-    myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
+    myMapAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
+    this.mapClass = mapClass;
   }
 
   @Override
@@ -133,7 +134,8 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   private Map deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
-    Map map = (Map)context;
+    // if accessor is null, it is sub-map and we must not use context
+    Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {
       map.clear();
     }
@@ -145,7 +147,18 @@ class MapBinding extends Binding implements MultiNodeBinding {
       }
 
       if (map == null) {
-        map = new THashMap();
+        if (mapClass == Map.class) {
+          map = new THashMap();
+        }
+        else {
+          try {
+            map = ReflectionUtil.newInstance(mapClass);
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+            map = new THashMap();
+          }
+        }
       }
 
       //noinspection unchecked

@@ -211,7 +211,7 @@ internal class XmlSerializerCollectionTest {
     var VALUES: Set<String> = LinkedHashSet(Arrays.asList("a", "b", "w"))
   }
 
-  @Test fun SetSerialization() {
+  @Test fun setSerialization() {
     val bean = BeanWithSet()
     testSerializer(
       "<BeanWithSet>\n  <option name=\"VALUES\">\n    <set>\n      <option value=\"a\" />\n      <option value=\"b\" />\n      <option value=\"w\" />\n    </set>\n  </option>\n</BeanWithSet>",

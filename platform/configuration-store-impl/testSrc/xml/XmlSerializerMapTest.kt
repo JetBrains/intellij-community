@@ -15,12 +15,12 @@
  */
 package com.intellij.configurationStore.xml
 
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import gnu.trove.THashMap
-import org.assertj.core.api.Assertions
 import org.junit.Test
 import java.util.*
 
@@ -28,7 +28,8 @@ internal class XmlSerializerMapTest {
   @Test fun beanValueUsingSkipDefaultsFilter() {
     @Tag("bean")
     class BeanWithMapWithBeanValue2 {
-      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false) var values: Map<String, BeanWithProperty> = THashMap()
+      @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+      var values: Map<String, BeanWithProperty> = THashMap()
     }
 
     val bean = BeanWithMapWithBeanValue2()
@@ -209,10 +210,62 @@ internal class XmlSerializerMapTest {
     bean.myMap.put(LinkedHashSet(Arrays.asList("a", "b", "c")), "letters")
     bean.myMap.put(LinkedHashSet(Arrays.asList("1", "2", "3")), "numbers")
 
-    val bb = testSerializer("<bean>\n  <option name=\"myMap\">\n    <map>\n      <entry value=\"letters\">\n        <key>\n          <set>\n            <option value=\"a\" />\n            <option value=\"b\" />\n            <option value=\"c\" />\n          </set>\n        </key>\n      </entry>\n      <entry value=\"numbers\">\n        <key>\n          <set>\n            <option value=\"1\" />\n            <option value=\"2\" />\n            <option value=\"3\" />\n          </set>\n        </key>\n      </entry>\n    </map>\n  </option>\n</bean>", bean)
+    val bb = testSerializer("""
+      <bean>
+      <option name="myMap">
+        <map>
+          <entry value="letters">
+            <key>
+              <set>
+                <option value="a" />
+                <option value="b" />
+                <option value="c" />
+              </set>
+            </key>
+          </entry>
+          <entry value="numbers">
+            <key>
+              <set>
+                <option value="1" />
+                <option value="2" />
+                <option value="3" />
+              </set>
+            </key>
+          </entry>
+        </map>
+      </option>
+    </bean>""", bean)
 
     for (collection in bb.myMap.keys) {
-      Assertions.assertThat(collection).isInstanceOf(Set::class.java)
+      assertThat(collection).isInstanceOf(Set::class.java)
     }
+  }
+
+  @Test
+  fun nestedMapAndFinalFieldWithoutAnnotation() {
+    @Tag("bean")
+    class MapMap {
+      // do not add store annotations - this test also checks that map field without annotation is supported
+      @JvmField
+      val foo: MutableMap<String, TreeMap<Long, String>> = TreeMap()
+    }
+
+    val bean = MapMap()
+    bean.foo.put("bar", TreeMap(mapOf(12L to "22")))
+    testSerializer("""
+    <bean>
+      <option name="foo">
+        <map>
+          <entry key="bar">
+            <value>
+              <map>
+                <entry key="12" value="22" />
+              </map>
+            </value>
+          </entry>
+        </map>
+      </option>
+    </bean>
+    """, bean)
   }
 }

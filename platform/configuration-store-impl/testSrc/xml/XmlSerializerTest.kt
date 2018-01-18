@@ -583,7 +583,7 @@ internal class XmlSerializerTest {
 
   @Test fun cdataAfterNewLine() {
     @Tag("bean")
-    data class Bean(@Tag var description: String? = null)
+    data class Bean(@Tag val description: String? = null)
 
     var bean = loadElement("""<bean>
   <description>
@@ -635,8 +635,7 @@ internal class BeanWithTextAnnotation {
 internal class BeanWithProperty {
   var name: String = "James"
 
-  constructor() {
-  }
+  constructor()
 
   constructor(name: String) {
     this.name = name

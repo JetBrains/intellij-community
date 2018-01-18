@@ -71,10 +71,13 @@ public final class XmlSerializerImpl {
         }
         return new CollectionBinding((ParameterizedType)originalType, accessor);
       }
+
+      if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
+        //noinspection unchecked
+        return new MapBinding(accessor, (Class<? extends Map>)aClass);
+      }
+
       if (accessor != null) {
-        if (Map.class.isAssignableFrom(aClass) && originalType instanceof ParameterizedType) {
-          return new MapBinding(accessor);
-        }
         if (Element.class.isAssignableFrom(aClass)) {
           return new JDOMElementBinding(accessor);
         }
