@@ -169,16 +169,17 @@ public class PathsVerifier {
     final String beforeFileName = patch.getBeforeName();
     final String afterFileName = patch.getAfterName();
 
-    if ((beforeFileName == null) || (patch.isNewFile())) {
+    if (beforeFileName == null || patch.isNewFile()) {
       return new CheckAdded(patch);
-    } else if ((afterFileName == null) || (patch.isDeletedFile())) {
+    }
+    else if (afterFileName == null || patch.isDeletedFile()) {
       return new CheckDeleted(patch);
-    } else {
-      if (! beforeFileName.equals(afterFileName)) {
-        return new CheckMoved(patch);
-      } else {
-        return new CheckModified(patch);
-      }
+    }
+    else if (!beforeFileName.equals(afterFileName)) {
+      return new CheckMoved(patch);
+    }
+    else {
+      return new CheckModified(patch);
     }
   }
 
@@ -303,7 +304,7 @@ public class PathsVerifier {
       } else if (afterFile != null) {
         setErrorMessage(fileAlreadyExists(afterFile.getPath()));
       }
-      return (beforeFile != null) && (afterFile == null);
+      return beforeFile != null && afterFile == null;
     }
 
     public boolean check() throws IOException {
@@ -366,7 +367,7 @@ public class PathsVerifier {
     protected boolean checkModificationValid(final VirtualFile file, final String name) {
       if (ApplicationManager.getApplication().isUnitTestMode() && myIgnoreContentRootsCheck) return true;
       // security check to avoid overwriting system files with a patch
-      if ((file == null) || (!inContent(file)) || (myVcsManager.getVcsRootFor(file) == null)) {
+      if (file == null || !inContent(file) || myVcsManager.getVcsRootFor(file) == null) {
         setErrorMessage("File to patch found outside content root: " + name);
         return false;
       }
@@ -497,7 +498,7 @@ public class PathsVerifier {
   private VirtualFile makeSureParentPathExists(final String[] pieces) throws IOException {
     VirtualFile child = myBaseDirectory;
 
-    final int size = (pieces.length - 1);
+    final int size = pieces.length - 1;
     for (int i = 0; i < size; i++) {
       final String piece = pieces[i];
       if (StringUtil.isEmptyOrSpaces(piece)) {

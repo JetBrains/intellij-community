@@ -317,20 +317,30 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @NotNull
   private ApplyPatchStatus nonWriteActionPreCheck() {
     final List<FilePatch> failedPreCheck = myVerifier.nonWriteActionPreCheck();
+    final List<FilePatch> skipped = myVerifier.getSkipped();
+
     myFailedPatches.addAll(failedPreCheck);
     myPatches.removeAll(failedPreCheck);
-    final List<FilePatch> skipped = myVerifier.getSkipped();
-    final boolean applyAll = skipped.isEmpty();
     myPatches.removeAll(skipped);
-    if (!failedPreCheck.isEmpty()) return ApplyPatchStatus.FAILURE;
-    return applyAll
-           ? ApplyPatchStatus.SUCCESS
-           : ((skipped.size() == myPatches.size()) ? ApplyPatchStatus.ALREADY_APPLIED : ApplyPatchStatus.PARTIAL);
+
+    if (!failedPreCheck.isEmpty()) {
+      return ApplyPatchStatus.FAILURE;
+    }
+    else if (skipped.isEmpty()) {
+      return ApplyPatchStatus.SUCCESS;
+    }
+    else if (skipped.size() == myPatches.size()) {
+      return ApplyPatchStatus.ALREADY_APPLIED;
+    }
+    else {
+      return ApplyPatchStatus.PARTIAL;
+    }
   }
 
   @Nullable
   private ApplyPatchStatus executeWritable() {
-    final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus = getReadOnlyFilesStatus(myVerifier.getWritableFiles());
+    final ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
+      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myVerifier.getWritableFiles());
     if (readOnlyFilesStatus.hasReadonlyFiles()) {
       showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage());
       return ApplyPatchStatus.ABORT;
@@ -511,11 +521,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
     else if (status == ApplyPatchStatus.SUCCESS) {
       vcsNotifier.notifySuccess(VcsBundle.message("patch.apply.success.applied.text"));
     }
-  }
-
-  private ReadonlyStatusHandler.OperationStatus getReadOnlyFilesStatus(@NotNull final List<VirtualFile> filesToMakeWritable) {
-    final VirtualFile[] fileArray = VfsUtilCore.toVirtualFileArray(filesToMakeWritable);
-    return ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(fileArray);
   }
 
   public static void showError(final Project project, final String message) {
