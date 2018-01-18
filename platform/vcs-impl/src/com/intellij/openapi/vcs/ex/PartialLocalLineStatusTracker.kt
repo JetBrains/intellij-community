@@ -64,6 +64,7 @@ class PartialLocalLineStatusTracker(project: Project,
 ) : LineStatusTracker<LocalRange>(project, document, virtualFile, mode), ChangeListWorker.PartialChangeTracker {
   private val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
   private val projectLevelVcsManager: ProjectLevelVcsManager = ProjectLevelVcsManager.getInstance(project)
+  private val undoManager = UndoManager.getInstance(project)
 
   override val renderer = MyLineStatusMarkerRenderer(this)
 
@@ -212,6 +213,7 @@ class PartialLocalLineStatusTracker(project: Project,
   private inner class MyUndoDocumentListener : DocumentListener {
     override fun beforeDocumentChange(event: DocumentEvent?) {
       if (hasUndoInCommand) return
+      if (undoManager.isRedoInProgress || undoManager.isUndoInProgress) return
       hasUndoInCommand = true
 
       registerUndoAction(true)
@@ -219,13 +221,11 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyUndoCommandListener : CommandListener {
-    override fun commandFinished(event: CommandEvent?) {
-      if (hasUndoInCommand && CommandProcessor.getInstance().currentCommand == null) {
+    override fun beforeCommandFinished(event: CommandEvent?) {
+      if (hasUndoInCommand) {
         hasUndoInCommand = false
 
-        CommandProcessor.getInstance().runUndoTransparentAction {
-          registerUndoAction(false)
-        }
+        registerUndoAction(false)
       }
     }
   }
@@ -234,7 +234,7 @@ class PartialLocalLineStatusTracker(project: Project,
     val undoState = documentTracker.readLock {
       blocks.map { RangeState(it.range, it.marker.changelistId) }
     }
-    UndoManager.getInstance(project).undoableActionPerformed(MyUndoableAction(project, document, undoState, undo))
+    undoManager.undoableActionPerformed(MyUndoableAction(project, document, undoState, undo))
   }
 
   private inner class MyBackgroundVfsOperationListener : BackgroundVfsOperationListener {
