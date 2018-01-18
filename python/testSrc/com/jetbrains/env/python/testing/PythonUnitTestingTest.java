@@ -37,7 +37,7 @@ import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.*;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -61,17 +61,17 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testEmptyValidation() {
-    new ConfigurationTarget("", PyTargetType.PATH).checkValid();
+    new ConfigurationTarget("", PyRunTargetVariant.PATH).checkValid();
   }
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testPythonValidation() {
-    new ConfigurationTarget("c:/bad/", PyTargetType.PYTHON).checkValid();
+    new ConfigurationTarget("c:/bad/", PyRunTargetVariant.PYTHON).checkValid();
   }
 
   @Test
   public void testValidationOk() {
-    new ConfigurationTarget("foo.bar", PyTargetType.PYTHON).checkValid();
+    new ConfigurationTarget("foo.bar", PyRunTargetVariant.PYTHON).checkValid();
   }
 
   /**
@@ -184,7 +184,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void validateConfiguration() {
         final PyUnitTestConfiguration configuration = getConfiguration();
         configuration.setPattern("foo");
-        configuration.getTarget().setTargetType(PyTargetType.PATH);
+        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("foo.py");
         configuration.checkConfiguration();
       }

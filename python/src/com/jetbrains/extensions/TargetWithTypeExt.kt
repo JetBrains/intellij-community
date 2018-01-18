@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
-import com.jetbrains.python.run.targetBasedConfiguration.TargetWithType
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
 
@@ -16,8 +16,8 @@ import com.jetbrains.python.run.targetBasedConfiguration.targetAsVirtualFile
 /**
  * @see targetAsPsiElement
  */
-fun TargetWithType.asPsiElement(configuration: AbstractPythonRunConfiguration<*>,
-                                workingDirectory: VirtualFile?
+fun TargetWithVariant.asPsiElement(configuration: AbstractPythonRunConfiguration<*>,
+                                   workingDirectory: VirtualFile?
                                 = LocalFileSystem.getInstance().findFileByPath(configuration.getWorkingDirectorySafe())) =
   target?.let { targetAsPsiElement(targetType, it, configuration, workingDirectory) }
 
@@ -25,18 +25,18 @@ fun TargetWithType.asPsiElement(configuration: AbstractPythonRunConfiguration<*>
 /**
  * @see targetAsVirtualFile
  */
-fun TargetWithType.asVirtualFile() = target?.let { targetAsVirtualFile(targetType, it) }
+fun TargetWithVariant.asVirtualFile() = target?.let { targetAsVirtualFile(targetType, it) }
 
 /**
  * Sanity check for "target" value. Does not resolve target, only check its syntax
  * CUSTOM type is not checked.
  */
-fun TargetWithType.isWellFormed(): Boolean {
-  if (targetType == PyTargetType.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target ?: "")) {
+fun TargetWithVariant.isWellFormed(): Boolean {
+  if (targetType == PyRunTargetVariant.PYTHON && !Regex("^[a-zA-Z0-9._]+[a-zA-Z0-9_]$").matches(target ?: "")) {
     return false
   }
 
-  if (targetType == PyTargetType.PATH && VfsUtil.isBadName(target)) {
+  if (targetType == PyRunTargetVariant.PATH && VfsUtil.isBadName(target)) {
     return false
   }
   return true

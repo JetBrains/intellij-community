@@ -16,7 +16,7 @@ import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurat
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.PyTestConfiguration;
 import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PyTestFrameworkService;
@@ -434,7 +434,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             final VirtualFile fullFilePath = myFixture.getTempDirFixture().getFile("dir_test.py");
             assert fullFilePath != null : String.format("No dir_test.py in %s", myFixture.getTempDirFixture().getTempDirPath());
             configuration.getTarget().setTarget(fullFilePath.getPath());
-            configuration.getTarget().setTargetType(PyTargetType.PATH);
+            configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
           }
         };
       }

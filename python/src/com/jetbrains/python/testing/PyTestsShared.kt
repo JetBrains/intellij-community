@@ -57,8 +57,8 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.*
-import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
-import com.jetbrains.python.run.targetBasedConfiguration.TargetWithType
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
+import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.reflection.DelegationProperty
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
@@ -195,7 +195,7 @@ object PyTestsLocator : SMTestLocator {
       val pathNoParentheses = QualifiedName.fromComponents(
         qualifiedName.components.filter { !it.contains('(') }).toString()
       return listOf(
-        PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, PyTargetType.PYTHON), element))
+        PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, PyRunTargetVariant.PYTHON), element))
     }
     else {
       return listOf()
@@ -247,7 +247,7 @@ private val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField override var target: String,
-                               @ConfigField override var targetType: PyTargetType) : TargetWithType {
+                               @ConfigField override var targetType: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -258,10 +258,10 @@ data class ConfigurationTarget(@ConfigField override var target: String,
    * Validates configuration and throws exception if target is invalid
    */
   fun checkValid() {
-    if (targetType != PyTargetType.CUSTOM && target.isEmpty()) {
+    if (targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning("Target not provided")
     }
-    if (targetType == PyTargetType.PYTHON && !isWellFormed()) {
+    if (targetType == PyRunTargetVariant.PYTHON && !isWellFormed()) {
       throw RuntimeConfigurationError("Provide a qualified name of function, class or a module")
     }
   }
@@ -271,9 +271,9 @@ data class ConfigurationTarget(@ConfigField override var target: String,
 
   fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
     when (targetType) {
-      PyTargetType.CUSTOM -> emptyList()
-      PyTargetType.PYTHON -> getArgumentsForPythonTarget(configuration)
-      PyTargetType.PATH -> listOf("--path", target.trim())
+      PyRunTargetVariant.CUSTOM -> emptyList()
+      PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration)
+      PyRunTargetVariant.PATH -> listOf("--path", target.trim())
     }
 
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> {
@@ -369,7 +369,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     RefactoringListenerProvider,
     ConfigurationWithFields {
   @DelegationProperty
-  val target = ConfigurationTarget(DEFAULT_PATH, PyTargetType.PATH)
+  val target = ConfigurationTarget(DEFAULT_PATH, PyRunTargetVariant.PATH)
   @ConfigField
   var additionalArguments = ""
 
@@ -454,7 +454,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     val qualifiedName = (location.psiElement as PyQualifiedNameOwner).qualifiedName ?: return emptyList()
 
     // Resolve name as python qname as last resort
-    return ConfigurationTarget(qualifiedName, PyTargetType.PYTHON).generateArgumentsLine(this)
+    return ConfigurationTarget(qualifiedName, PyRunTargetVariant.PYTHON).generateArgumentsLine(this)
   }
 
   override fun getTestSpec(location: Location<*>,
@@ -495,11 +495,11 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   override fun suggestedName() =
     when (target.targetType) {
-      PyTargetType.PATH -> {
+      PyRunTargetVariant.PATH -> {
         val name = target.asVirtualFile()?.name
         "$testFrameworkName in " + (name ?: target.target)
       }
-      PyTargetType.PYTHON -> {
+      PyRunTargetVariant.PYTHON -> {
         "$testFrameworkName for " + target.target
       }
       else -> {
@@ -515,7 +515,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   fun reset() {
     target.target = DEFAULT_PATH
-    target.targetType = PyTargetType.PATH
+    target.targetType = PyRunTargetVariant.PATH
     additionalArguments = ""
   }
 
@@ -539,8 +539,8 @@ abstract class PyAbstractTestConfiguration(project: Project,
    * Checks if element could be test target for this config.
    * Function is used to create tests by context.
    *
-   * If yes, and element is [PsiElement] then it is [PyTargetType.PYTHON].
-   * If file then [PyTargetType.PATH]
+   * If yes, and element is [PsiElement] then it is [PyRunTargetVariant.PYTHON].
+   * If file then [PyRunTargetVariant.PATH]
    */
   fun couldBeTestTarget(element: PsiElement): Boolean {
 
@@ -669,7 +669,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
                                               folderToStart = workingDirectory.virtualFile)
             val parts = element.tryResolveAndSplit(context) ?: return null
             val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
-            return Pair(ConfigurationTarget(qualifiedName.toString(), PyTargetType.PYTHON),
+            return Pair(ConfigurationTarget(qualifiedName.toString(), PyRunTargetVariant.PYTHON),
                         workingDirectory.virtualFile.path)
           }
           is PsiFileSystemItem -> {
@@ -681,7 +681,7 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
                                      is PsiDirectory -> element
                                      else -> return null
                                    }?.virtualFile?.path ?: return null
-            return Pair(ConfigurationTarget(path.path, PyTargetType.PATH), workingDirectory)
+            return Pair(ConfigurationTarget(path.path, PyRunTargetVariant.PATH), workingDirectory)
           }
         }
       }

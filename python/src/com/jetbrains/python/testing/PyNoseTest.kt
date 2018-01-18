@@ -25,7 +25,7 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.ConfigField
-import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 /**
  * Nose runner
@@ -34,7 +34,7 @@ import com.jetbrains.python.run.targetBasedConfiguration.PyTargetType
 class PyNoseTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration, PyTestSharedForm.CustomOption(
-      PyNoseTestConfiguration::regexPattern.name, PyTargetType.PATH)))
+      PyNoseTestConfiguration::regexPattern.name, PyRunTargetVariant.PATH)))
 
 class PyNoseTestExecutionEnvironment(configuration: PyNoseTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyNoseTestConfiguration>(configuration, environment) {

@@ -17,7 +17,7 @@ import com.jetbrains.python.run.PythonRunConfigurationForm
 /**
  * Types of target (symbol, path or custom) many python runners may have
  */
-enum class PyTargetType(private val customName: String? = null) {
+enum class PyRunTargetVariant(private val customName: String? = null) {
   PYTHON(PythonRunConfigurationForm.MODULE_NAME), PATH(PythonRunConfigurationForm.SCRIPT_PATH), CUSTOM;
 
   fun getCustomName() = customName ?: name.toLowerCase().capitalize()
@@ -26,13 +26,13 @@ enum class PyTargetType(private val customName: String? = null) {
 /**
  * Converts target to PSI element if possible resolving it against roots and working directory
  */
-fun targetAsPsiElement(targetType: PyTargetType,
+fun targetAsPsiElement(targetType: PyRunTargetVariant,
                        target: String,
                        configuration: AbstractPythonRunConfiguration<*>,
                        workingDirectory: VirtualFile? = LocalFileSystem.getInstance().findFileByPath(
                          configuration.getWorkingDirectorySafe()))
   : PsiElement? {
-  if (targetType == PyTargetType.PYTHON) {
+  if (targetType == PyRunTargetVariant.PYTHON) {
     val module = configuration.getModule() ?: return null
     val context = TypeEvalContext.userInitiated(configuration.getProject(), null)
 
@@ -46,8 +46,8 @@ fun targetAsPsiElement(targetType: PyTargetType,
 /**
  * Converts target to file if possible
  */
-fun targetAsVirtualFile(targetType: PyTargetType, target: String): VirtualFile? {
-  if (targetType == PyTargetType.PATH) {
+fun targetAsVirtualFile(targetType: PyRunTargetVariant, target: String): VirtualFile? {
+  if (targetType == PyRunTargetVariant.PATH) {
     return LocalFileSystem.getInstance().findFileByPath(target)
   }
   return null
@@ -58,7 +58,7 @@ fun targetAsVirtualFile(targetType: PyTargetType, target: String): VirtualFile? 
  * Implement it to obtain extension methods for [targetAsPsiElement]
  * and [targetAsVirtualFile]
  */
-interface TargetWithType {
+interface TargetWithVariant {
   val target: String?
-  val targetType: PyTargetType
+  val targetType: PyRunTargetVariant
 }
