@@ -145,31 +145,10 @@ public class PatchApplier<Unused> {
     myRemainingPatches.addAll(myPatches);
 
     final ApplyPatchStatus patchStatus = nonWriteActionPreCheck();
+
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(myProject, "Before patch");
     final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(myProject);
-    final ApplyPatchStatus applyStatus = getApplyPatchStatus(trigger, silentAddDelete);
-    ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
-                              ApplyPatchStatus.and(patchStatus, applyStatus);
-    // listeners finished, all 'legal' file additions/deletions with VCS are done
-    trigger.processIt();
-    LocalHistory.getInstance().putSystemLabel(myProject, "After patch"); // insert a label to be visible in local history dialog
-    if (status == ApplyPatchStatus.FAILURE) {
-      suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
-    }
-    else if (status == ApplyPatchStatus.ABORT) {
-      rollbackUnderProgress(myProject, beforeLabel);
-    }
-    if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
-      showApplyStatus(myProject, status);
-    }
-    refreshFiles(trigger.getAffected());
 
-    return status;
-  }
-
-  @CalledInAwt
-  @NotNull
-  private ApplyPatchStatus getApplyPatchStatus(@NotNull final TriggerAdditionOrDeletion trigger, boolean silentAddDelete) {
     final Ref<ApplyPatchStatus> refStatus = Ref.create(null);
     try {
       runWithDefaultConfirmations(myProject, silentAddDelete, () -> {
@@ -186,8 +165,32 @@ public class PatchApplier<Unused> {
     finally {
       VcsFileListenerContextHelper.getInstance(myProject).clearContext();
     }
-    final ApplyPatchStatus status = refStatus.get();
-    return status == null ? ApplyPatchStatus.ALREADY_APPLIED : status;
+
+    final ApplyPatchStatus applyStatus = refStatus.get() == null ? ApplyPatchStatus.ALREADY_APPLIED : refStatus.get();
+    ApplyPatchStatus status = ApplyPatchStatus.SUCCESS.equals(patchStatus) ? applyStatus :
+                              ApplyPatchStatus.and(patchStatus, applyStatus);
+
+    // listeners finished, all 'legal' file additions/deletions with VCS are done
+    trigger.processIt();
+    LocalHistory.getInstance().putSystemLabel(myProject, "After patch"); // insert a label to be visible in local history dialog
+
+    if (status == ApplyPatchStatus.FAILURE) {
+      suggestRollback(myProject, Collections.singletonList(PatchApplier.this), beforeLabel);
+    }
+    else if (status == ApplyPatchStatus.ABORT) {
+      rollbackUnderProgress(myProject, beforeLabel);
+    }
+
+    if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(status)) {
+      showApplyStatus(myProject, status);
+    }
+
+    final List<FilePath> directlyAffected = getDirectlyAffected();
+    final List<VirtualFile> indirectlyAffected = getIndirectlyAffected();
+    directlyAffected.addAll(trigger.getAffected());
+    refreshPassedFilesAndMoveToChangelist(myProject, directlyAffected, indirectlyAffected, myTargetChangeList);
+
+    return status;
   }
 
   private static void runWithDefaultConfirmations(@NotNull Project project, boolean resetConfirmations, @NotNull Runnable task) {
@@ -214,7 +217,13 @@ public class PatchApplier<Unused> {
   }
 
   @CalledInAwt
-  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, final LocalChangeList localChangeList) {
+  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList) {
+    return executePatchGroup(group, localChangeList, true, false);
+  }
+
+  @CalledInAwt
+  public static ApplyPatchStatus executePatchGroup(final Collection<PatchApplier> group, @Nullable LocalChangeList localChangeList,
+                                                   boolean showSuccessNotification, boolean silentAddDelete) {
     if (group.isEmpty()) return ApplyPatchStatus.SUCCESS; //?
     final Project project = group.iterator().next().myProject;
 
@@ -222,25 +231,29 @@ public class PatchApplier<Unused> {
     for (PatchApplier patchApplier : group) {
       result = ApplyPatchStatus.and(result, patchApplier.nonWriteActionPreCheck());
     }
+
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before patch");
     final TriggerAdditionOrDeletion trigger = new TriggerAdditionOrDeletion(project);
+
     final Ref<ApplyPatchStatus> refStatus = new Ref<>(result);
     try {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        for (PatchApplier applier : group) {
-          refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
-          applier.addSkippedItems(trigger);
-        }
-        trigger.prepare();
-        if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
-          // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
-          refStatus.set(null);
-        }
-        for (PatchApplier applier : group) {
-          refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
-          if (refStatus.get() == ApplyPatchStatus.ABORT) break;
-        }
-      }, VcsBundle.message("patch.apply.command"), null);
+      runWithDefaultConfirmations(project, silentAddDelete, () -> {
+        CommandProcessor.getInstance().executeCommand(project, () -> {
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.createFiles()));
+            applier.addSkippedItems(trigger);
+          }
+          trigger.prepare();
+          if (refStatus.get() == ApplyPatchStatus.SUCCESS) {
+            // all pre-check results are valuable only if not successful; actual status we can receive after executeWritable
+            refStatus.set(null);
+          }
+          for (PatchApplier applier : group) {
+            refStatus.set(ApplyPatchStatus.and(refStatus.get(), applier.executeWritable()));
+            if (refStatus.get() == ApplyPatchStatus.ABORT) break;
+          }
+        }, VcsBundle.message("patch.apply.command"), null);
+      });
     } finally {
       VcsFileListenerContextHelper.getInstance(project).clearContext();
       LocalHistory.getInstance().putSystemLabel(project, "After patch");
@@ -249,6 +262,18 @@ public class PatchApplier<Unused> {
     result = result == null ? ApplyPatchStatus.FAILURE : result;
 
     trigger.processIt();
+
+    if (result == ApplyPatchStatus.FAILURE) {
+      suggestRollback(project, group, beforeLabel);
+    }
+    else if (result == ApplyPatchStatus.ABORT) {
+      rollbackUnderProgress(project, beforeLabel);
+    }
+
+    if (showSuccessNotification || !ApplyPatchStatus.SUCCESS.equals(result)) {
+      showApplyStatus(project, result);
+    }
+
     final Set<FilePath> directlyAffected = new HashSet<>();
     final Set<VirtualFile> indirectlyAffected = new HashSet<>();
     for (PatchApplier applier : group) {
@@ -257,13 +282,7 @@ public class PatchApplier<Unused> {
     }
     directlyAffected.addAll(trigger.getAffected());
     refreshPassedFilesAndMoveToChangelist(project, directlyAffected, indirectlyAffected, localChangeList);
-    if (result == ApplyPatchStatus.FAILURE) {
-      suggestRollback(project, group, beforeLabel);
-    }
-    else if (result == ApplyPatchStatus.ABORT) {
-      rollbackUnderProgress(project, beforeLabel);
-    }
-    showApplyStatus(project, result);
+
     return result;
   }
 
@@ -360,15 +379,6 @@ public class PatchApplier<Unused> {
     for (PatchAndFile patch : textPatches) {
       ChangesUtil.markInternalOperation(patch.getFile(), set);
     }
-  }
-
-  @CalledInAwt
-  private void refreshFiles(final Collection<FilePath> additionalDirectly) {
-    final List<FilePath> directlyAffected = getDirectlyAffected();
-    final List<VirtualFile> indirectlyAffected = getIndirectlyAffected();
-    directlyAffected.addAll(additionalDirectly);
-
-    refreshPassedFilesAndMoveToChangelist(myProject, directlyAffected, indirectlyAffected, myTargetChangeList);
   }
 
   private List<FilePath> getDirectlyAffected() {
