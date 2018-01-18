@@ -18,7 +18,6 @@ iml_module(
         "//tools/idea/platform/annotations[module]",
         "//tools/idea/.idea/libraries:Slf4j",
         "//tools/idea/.idea/libraries:Gradle",
-        "//tools/idea/plugins/gradle/lib:guava-jdk5-17.0",
         "//tools/idea/.idea/libraries:Groovy",
     ],
 )
