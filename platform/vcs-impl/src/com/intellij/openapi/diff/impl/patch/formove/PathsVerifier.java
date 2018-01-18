@@ -68,7 +68,10 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   private List<FilePath> myDeletedPaths;
   private boolean myIgnoreContentRootsCheck;
 
-  public PathsVerifier(final Project project, final VirtualFile baseDirectory, final List<FilePatch> patches, BaseMapper baseMapper) {
+  public PathsVerifier(@NotNull Project project,
+                       @NotNull VirtualFile baseDirectory,
+                       @NotNull List<FilePatch> patches,
+                       @Nullable BaseMapper baseMapper) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
