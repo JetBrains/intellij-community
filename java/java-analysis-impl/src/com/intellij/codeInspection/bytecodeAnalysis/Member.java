@@ -21,7 +21,7 @@ import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
 
 import java.security.MessageDigest;
 
-public final class Method implements MethodDescriptor {
+public final class Member implements MemberDescriptor {
   final String internalClassName;
   final String methodName;
   final String methodDesc;
@@ -30,7 +30,7 @@ public final class Method implements MethodDescriptor {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    Method method = (Method) o;
+    Member method = (Member) o;
     return internalClassName.equals(method.internalClassName) && methodDesc.equals(method.methodDesc) && methodName.equals(method.methodName);
   }
 
@@ -49,7 +49,7 @@ public final class Method implements MethodDescriptor {
    * @param methodName method name
    * @param methodDesc method descriptor in asm format
    */
-  public Method(String internalClassName, String methodName, String methodDesc) {
+  public Member(String internalClassName, String methodName, String methodDesc) {
     this.internalClassName = internalClassName;
     this.methodName = methodName;
     this.methodDesc = methodDesc;
@@ -60,7 +60,7 @@ public final class Method implements MethodDescriptor {
    *
    * @param mNode asm node from which method key is extracted
    */
-  public Method(MethodInsnNode mNode) {
+  public Member(MethodInsnNode mNode) {
     this.internalClassName = mNode.owner;
     this.methodName = mNode.name;
     this.methodDesc = mNode.desc;
@@ -68,8 +68,8 @@ public final class Method implements MethodDescriptor {
 
   @NotNull
   @Override
-  public HMethod hashed(@Nullable MessageDigest md) {
-    return new HMethod(this, md);
+  public HMember hashed(@Nullable MessageDigest md) {
+    return new HMember(this, md);
   }
 
   @Override

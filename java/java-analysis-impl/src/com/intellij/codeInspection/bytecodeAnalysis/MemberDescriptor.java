@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.security.MessageDigest;
 
 /**
- * An uniquely method (class name+method name+signature) identifier: either {@link Method} or {@link HMethod}.
+ * An uniquely method (class name+method name+signature) identifier: either {@link Member} or {@link HMember}.
  */
-public interface MethodDescriptor {
+public interface MemberDescriptor {
   /**
    * Creates and returns the hashed representation of this method descriptor.
    * May return itself if already hashed. Note that hashed descriptor is not equal to
@@ -32,5 +32,6 @@ public interface MethodDescriptor {
    * @param md message digest to use for hashing (could be null to use the default one)
    * @return a corresponding HMethod.
    */
-  @NotNull HMethod hashed(@Nullable MessageDigest md);
+  @NotNull
+  HMember hashed(@Nullable MessageDigest md);
 }

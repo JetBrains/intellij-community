@@ -27,7 +27,7 @@ import static com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConve
 /**
  * Hashed representation of method.
  */
-public final class HMethod implements MethodDescriptor {
+public final class HMember implements MemberDescriptor {
   // how many bytes are taken from class fqn digest
   private static final int CLASS_HASH_SIZE = 10;
   // how many bytes are taken from signature digest
@@ -37,7 +37,7 @@ public final class HMethod implements MethodDescriptor {
   @NotNull
   final byte[] myBytes;
 
-  HMethod(Method method, MessageDigest md) {
+  HMember(Member method, MessageDigest md) {
     if (md == null) {
       md = getMessageDigest();
     }
@@ -50,7 +50,7 @@ public final class HMethod implements MethodDescriptor {
     System.arraycopy(sigDigest, 0, myBytes, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
   }
 
-  public HMethod(@NotNull byte[] bytes) {
+  public HMember(@NotNull byte[] bytes) {
     myBytes = bytes;
   }
 
@@ -58,7 +58,7 @@ public final class HMethod implements MethodDescriptor {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    return Arrays.equals(myBytes, ((HMethod)o).myBytes);
+    return Arrays.equals(myBytes, ((HMember)o).myBytes);
   }
 
   @Override
@@ -68,7 +68,7 @@ public final class HMethod implements MethodDescriptor {
 
   @NotNull
   @Override
-  public HMethod hashed(MessageDigest md) {
+  public HMember hashed(MessageDigest md) {
     return this;
   }
 
