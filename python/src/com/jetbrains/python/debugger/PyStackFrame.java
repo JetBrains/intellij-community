@@ -57,8 +57,8 @@ public class PyStackFrame extends XStackFrame {
 
   private Project myProject;
   protected final PyFrameAccessor myDebugProcess;
-  private final PyStackFrameInfo myFrameInfo;
-  private final XSourcePosition myPosition;
+  protected final PyStackFrameInfo myFrameInfo;
+  protected final XSourcePosition myPosition;
 
   public PyStackFrame(@NotNull Project project,
                       @NotNull final PyFrameAccessor debugProcess,
@@ -93,6 +93,16 @@ public class PyStackFrame extends XStackFrame {
       return;
     }
 
+    boolean isExternal = isExternal();
+
+    component.append(myFrameInfo.getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+    component.append(", ", gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+    component.append(myPosition.getFile().getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+    component.append(":", gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+    component.append(Integer.toString(myPosition.getLine() + 1), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+  }
+
+  protected boolean isExternal() {
     boolean isExternal = true;
     final VirtualFile file = myPosition.getFile();
     AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
@@ -105,15 +115,10 @@ public class PyStackFrame extends XStackFrame {
     finally {
       lock.finish();
     }
-
-    component.append(myFrameInfo.getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(", ", gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(myPosition.getFile().getName(), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(":", gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
-    component.append(Integer.toString(myPosition.getLine() + 1), gray(SimpleTextAttributes.REGULAR_ATTRIBUTES, isExternal));
+    return isExternal;
   }
 
-  private static SimpleTextAttributes gray(SimpleTextAttributes attributes, boolean gray) {
+  protected static SimpleTextAttributes gray(SimpleTextAttributes attributes, boolean gray) {
     if (!gray) {
       return attributes;
     }
