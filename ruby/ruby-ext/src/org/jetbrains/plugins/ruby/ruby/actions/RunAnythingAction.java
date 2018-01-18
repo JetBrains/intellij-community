@@ -130,6 +130,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in context of the current file", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+  private static final Icon RUN_ANYTHING_BRIGHTER_ICON = IconUtil.brighter(RubyIcons.RunAnything.Run_anything, 2);
   private AnAction[] myRakeActions = AnAction.EMPTY_ARRAY;
   private AnAction[] myGeneratorsActions = AnAction.EMPTY_ARRAY;
   private RunAnythingAction.MyListRenderer myRenderer;
@@ -227,7 +228,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       public void mouseEntered(MouseEvent e) {
         if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(IconUtil.brighter(RubyIcons.RunAnything.Run_anything, 2));
+          label.setIcon(RUN_ANYTHING_BRIGHTER_ICON);
         }
       }
 
