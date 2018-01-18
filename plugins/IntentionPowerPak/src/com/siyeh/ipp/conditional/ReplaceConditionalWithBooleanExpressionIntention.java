@@ -10,7 +10,6 @@ import com.intellij.psi.PsiType;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -55,11 +54,6 @@ public class ReplaceConditionalWithBooleanExpressionIntention extends Intention 
     if (expression == null) {
       return "";
     }
-    if (ParenthesesUtils.getPrecedence(expression) > AND_PRECEDENCE) {
-      return '(' + tracker.text(expression) + ')';
-    }
-    else {
-      return tracker.text(expression);
-    }
+    return tracker.text(expression, AND_PRECEDENCE);
   }
 }

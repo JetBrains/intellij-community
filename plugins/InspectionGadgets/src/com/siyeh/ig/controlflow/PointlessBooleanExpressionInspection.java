@@ -218,12 +218,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         out.append(tracker.text(lhs)).append(negatedComparison).append(tracker.text(rhs));
       }
       else {
-        if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-          out.append("!(").append(tracker.text(expression)).append(')');
-        }
-        else {
-          out.append('!').append(tracker.text(expression));
-        }
+        out.append('!').append(tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE));
       }
     }
     else {

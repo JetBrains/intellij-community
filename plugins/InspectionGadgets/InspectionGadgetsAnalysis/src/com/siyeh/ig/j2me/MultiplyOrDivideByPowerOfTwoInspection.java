@@ -93,20 +93,12 @@ public class MultiplyOrDivideByPowerOfTwoInspection
 
     if (!(rhs instanceof PsiLiteralExpression)) return null;
 
-    commentTracker.markUnchanged(lhs);
-    final String lhsText;
-    if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.SHIFT_PRECEDENCE) {
-      lhsText = '(' + lhs.getText() + ')';
-    }
-    else {
-      lhsText = lhs.getText();
-    }
+    final String lhsText = commentTracker.text(lhs, ParenthesesUtils.SHIFT_PRECEDENCE);
     String expString = lhsText + operator + ShiftUtils.getLogBaseTwo((PsiLiteralExpression)rhs);
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpression) {
       if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecedence((PsiExpression)parent) <
-          ParenthesesUtils.SHIFT_PRECEDENCE) {
+          ParenthesesUtils.getPrecedence((PsiExpression)parent) < ParenthesesUtils.SHIFT_PRECEDENCE) {
         expString = '(' + expString + ')';
       }
     }

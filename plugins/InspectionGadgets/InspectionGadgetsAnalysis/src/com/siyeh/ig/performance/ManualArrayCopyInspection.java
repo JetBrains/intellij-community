@@ -272,7 +272,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       }
       min = ParenthesesUtils.stripParentheses(min);
       if (min == null) {
-        return buildExpressionText(max, plusOne, false, commentTracker);
+        return buildExpressionText(max, plusOne, commentTracker);
       }
       final Object minConstant = ExpressionUtils.computeConstantExpression(min);
       if (minConstant instanceof Number) {
@@ -285,7 +285,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
           minValue = minNumber.intValue();
         }
         if (minValue == 0) {
-          return buildExpressionText(max, false, false, commentTracker);
+          return buildExpressionText(max, false, commentTracker);
         }
         if (max instanceof PsiLiteralExpression) {
           final Object maxConstant = ExpressionUtils.computeConstantExpression(max);
@@ -294,7 +294,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
             return String.valueOf(number.intValue() - minValue);
           }
         }
-        final String maxText = buildExpressionText(max, false, false, commentTracker);
+        final String maxText = buildExpressionText(max, false, commentTracker);
         if (minValue > 0) {
           return maxText + '-' + minValue;
         }
@@ -302,33 +302,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
           return maxText + '+' + -minValue;
         }
       }
-      final int precedence = ParenthesesUtils.getPrecedence(min);
-      final String minText;
-      if (precedence >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-        minText = '(' + commentTracker.text(min) + ')';
-      }
-      else {
-        minText = commentTracker.text(min);
-      }
-      final String maxText = buildExpressionText(max, plusOne, false, commentTracker);
+      final String minText = commentTracker.text(min, ParenthesesUtils.ADDITIVE_PRECEDENCE);
+      final String maxText = buildExpressionText(max, plusOne, commentTracker);
       return maxText + '-' + minText;
     }
 
-    private static String buildExpressionText(PsiExpression expression,
-                                              boolean plusOne,
-                                              boolean parenthesize,
-                                              CommentTracker commentTracker) {
+    private static String buildExpressionText(PsiExpression expression, boolean plusOne, CommentTracker commentTracker) {
       if (!plusOne) {
-        final int precedence = ParenthesesUtils.getPrecedence(expression);
-        if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-          return '(' + commentTracker.text(expression) + ')';
-        }
-        else {
-          if (parenthesize && precedence >= ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-            return '(' + commentTracker.text(expression) + ')';
-          }
-          return commentTracker.text(expression);
-        }
+        return commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE);
       }
       if (expression instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -348,18 +329,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
           return String.valueOf(integer.intValue() + 1);
         }
       }
-      final int precedence = ParenthesesUtils.getPrecedence(expression);
-      final String result;
-      if (precedence > ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-        result = '(' + commentTracker.text(expression) + ")+1";
-      }
-      else {
-        result = commentTracker.text(expression) + "+1";
-      }
-      if (parenthesize) {
-        return '(' + result + ')';
-      }
-      return result;
+      return commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+1";
     }
 
     @NonNls
@@ -380,11 +350,10 @@ public class ManualArrayCopyInspection extends BaseInspection {
         if (initialValue == null) {
           return null;
         }
-        return buildExpressionText(initialValue, plusOne, false, commentTracker);
+        return buildExpressionText(initialValue, plusOne, commentTracker);
       }
       else if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
+        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
         final PsiExpression lhs = binaryExpression.getLOperand();
         final PsiExpression rhs = binaryExpression.getROperand();
         final String rhsText =
@@ -399,16 +368,13 @@ public class ManualArrayCopyInspection extends BaseInspection {
         }
         if (plusOne && tokenType.equals(JavaTokenType.MINUS) &&
             ExpressionUtils.isOne(rhs)) {
-          return buildOffsetText(lhs, variable, limitExpression,
-                                 false, commentTracker);
+          return buildOffsetText(lhs, variable, limitExpression, false, commentTracker);
         }
-        final String lhsText = buildOffsetText(lhs, variable,
-                                               limitExpression, plusOne, commentTracker);
+        final String lhsText = buildOffsetText(lhs, variable, limitExpression, plusOne, commentTracker);
         if (ExpressionUtils.isZero(rhs)) {
           return lhsText;
         }
-        return collapseConstant(lhsText + sign.getText() + rhsText,
-                                variable);
+        return collapseConstant(lhsText + sign.getText() + rhsText, variable);
       }
       return collapseConstant(commentTracker.text(expression), variable);
     }

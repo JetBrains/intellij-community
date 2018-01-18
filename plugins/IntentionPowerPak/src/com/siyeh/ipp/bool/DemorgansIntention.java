@@ -68,23 +68,13 @@ public class DemorgansIntention extends MutablyNamedIntention {
     return result.toString();
   }
 
-  private static String convertLeafExpression(PsiExpression expression,
-                                              boolean tokenTypeAndAnd,
-                                              CommentTracker tracker) {
+  private static String convertLeafExpression(PsiExpression expression, boolean tokenTypeAndAnd, CommentTracker tracker) {
     if (BoolUtils.isNegation(expression)) {
       final PsiExpression negatedExpression = BoolUtils.getNegated(expression);
       if (negatedExpression == null) {
         return "";
       }
-      if (tokenTypeAndAnd) {
-        if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.OR_PRECEDENCE) {
-          return '(' + tracker.text(negatedExpression) + ')';
-        }
-      }
-      else if (ParenthesesUtils.getPrecedence(negatedExpression) > ParenthesesUtils.AND_PRECEDENCE) {
-        return '(' + tracker.text(negatedExpression) + ')';
-      }
-      return tracker.text(negatedExpression);
+      return tracker.text(negatedExpression, tokenTypeAndAnd ? ParenthesesUtils.OR_PRECEDENCE : ParenthesesUtils.AND_PRECEDENCE);
     }
     else if (ComparisonUtils.isComparison(expression)) {
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
@@ -94,11 +84,8 @@ public class DemorgansIntention extends MutablyNamedIntention {
       assert rhs != null;
       return tracker.text(lhs) + negatedComparison + tracker.text(rhs);
     }
-    else if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.PREFIX_PRECEDENCE) {
-      return "!(" + tracker.text(expression) + ')';
-    }
     else {
-      return '!' + tracker.text(expression);
+      return '!' + tracker.text(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
     }
   }
 }

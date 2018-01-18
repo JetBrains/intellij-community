@@ -159,20 +159,12 @@ public class IfMayBeConditionalInspection extends BaseInspection {
       PsiReplacementUtil.replaceStatement(ifStatement, replacementText.toString(), tracker);
     }
 
-    private static void appendExpressionText(@Nullable PsiExpression expression,
-                                             StringBuilder out,
-                                             CommentTracker tracker) {
+    private static void appendExpressionText(@Nullable PsiExpression expression, StringBuilder out, CommentTracker tracker) {
       expression = ParenthesesUtils.stripParentheses(expression);
       if (expression == null) {
         return;
       }
-      final String expressionText = tracker.text(expression);
-      if (ParenthesesUtils.getPrecedence(expression) > ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
-        out.append('(').append(expressionText).append(')');
-      }
-      else {
-        out.append(expressionText);
-      }
+      out.append(tracker.text(expression, ParenthesesUtils.CONDITIONAL_PRECEDENCE));
     }
   }
 

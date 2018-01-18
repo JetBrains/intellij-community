@@ -98,8 +98,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
   }
 
   private static void replaceShiftWithMultiplyOrDivide(PsiElement element) {
-    final PsiBinaryExpression exp =
-      (PsiBinaryExpression)element;
+    final PsiBinaryExpression exp = (PsiBinaryExpression)element;
     final PsiExpression lhs = exp.getLOperand();
     final PsiExpression rhs = exp.getROperand();
     final IElementType tokenType = exp.getOperationTokenType();
@@ -110,23 +109,13 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     else {
       operatorString = "/";
     }
-    final String lhsText;
-    if (ParenthesesUtils.getPrecedence(lhs) >
-        ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE) {
-      lhsText = '(' + lhs.getText() + ')';
-    }
-    else {
-      lhsText = lhs.getText();
-    }
     CommentTracker commentTracker = new CommentTracker();
-    commentTracker.markUnchanged(lhs);
-    String expString =
-      lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
+    final String lhsText = commentTracker.text(lhs, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE);
+    String expString = lhsText + operatorString + ShiftUtils.getExpBase2(rhs);
     final PsiElement parent = exp.getParent();
     if (parent instanceof PsiExpression) {
       if (!(parent instanceof PsiParenthesizedExpression) &&
-          ParenthesesUtils.getPrecedence((PsiExpression)parent) <
-          ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE) {
+          ParenthesesUtils.getPrecedence((PsiExpression)parent) < ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE) {
         expString = '(' + expString + ')';
       }
     }

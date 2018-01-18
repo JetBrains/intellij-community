@@ -134,13 +134,8 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
           }
         }
         CommentTracker commentTracker = new CommentTracker();
-        final String castExpression;
-        if (ParenthesesUtils.getPrecedence(expression) <= ParenthesesUtils.TYPE_CAST_PRECEDENCE) {
-          castExpression = '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(expression);
-        }
-        else {
-          castExpression = '(' + expectedType.getCanonicalText() + ")(" + commentTracker.text(expression) + ')';
-        }
+        final String castExpression =
+          '(' + expectedType.getCanonicalText() + ')' + commentTracker.text(expression, ParenthesesUtils.TYPE_CAST_PRECEDENCE);
         PsiReplacementUtil.replaceExpression(expression, castExpression, commentTracker);
       }
     }

@@ -104,12 +104,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }
-    if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      newExpression.append('(').append(commentTracker.text(lhs)).append(')');
-    }
-    else {
-      newExpression.append(commentTracker.text(lhs));
-    }
+    newExpression.append(commentTracker.text(lhs, ParenthesesUtils.METHOD_CALL_PRECEDENCE));
     newExpression.append(".equals(").append(commentTracker.text(rhs)).append(')');
 
     PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString(), commentTracker);

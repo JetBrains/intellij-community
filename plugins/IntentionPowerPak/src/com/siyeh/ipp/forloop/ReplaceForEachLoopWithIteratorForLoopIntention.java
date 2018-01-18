@@ -52,17 +52,10 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
       return;
     }
     CommentTracker tracker = new CommentTracker();
-    @NonNls final StringBuilder methodCall = new StringBuilder();
-    if (ParenthesesUtils.getPrecedence(iteratedValue) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      methodCall.append('(').append(tracker.text(iteratedValue)).append(')');
-    }
-    else {
-      methodCall.append(tracker.text(iteratedValue));
-    }
-    methodCall.append(".iterator()");
+    final String methodCall = tracker.text(iteratedValue, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".iterator()";
     final Project project = statement.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    final PsiExpression iteratorCall = factory.createExpressionFromText(methodCall.toString(), iteratedValue);
+    final PsiExpression iteratorCall = factory.createExpressionFromText(methodCall, iteratedValue);
     final PsiType variableType = GenericsUtil.getVariableTypeByExpressionType(iteratorCall.getType());
     if (variableType == null) {
       return;
