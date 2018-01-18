@@ -22,6 +22,7 @@ import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByText
+import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.junit.Test
 
 class JavaUastApiTest : AbstractJavaUastTest() {
@@ -116,4 +117,28 @@ class JavaUastApiTest : AbstractJavaUastTest() {
       assertEquals("TestBase", file.findElementByText<UCallExpression>("barBase(7)").receiverType?.canonicalText)
     }
   }
+
+  @Test
+  fun testSuperTypes() {
+    doTest("Simple/SuperTypes.java") { name, file ->
+      val testClass = file.findElementByTextFromPsi<UIdentifier>("Test").uastParent as UClass
+      assertEquals("base class", "A", testClass.superClass?.qualifiedName)
+      assertEquals("base classes", listOf("A", "B"), testClass.uastSuperTypes.map { it.getQualifiedName() })
+    }
+  }
+
+  @Test
+  fun testSuperTypesForAnonymous() {
+    doTest("Simple/Anonymous.java") { name, file ->
+      val testClass = file.findElementByTextFromPsi<UElement>("""Runnable() {
+
+            public void run() {
+                int variable = 24;
+                variable++;
+            }
+        }""") as UAnonymousClass
+      assertEquals("base classes", listOf("java.lang.Runnable"), testClass.uastSuperTypes.map { it.getQualifiedName() })
+    }
+  }
+
 }
