@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -66,7 +65,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   @NotNull private final List<FilePatch> myPatches;
   private final CustomBinaryPatchApplier<BinaryType> myCustomForBinaries;
   private final CommitContext myCommitContext;
-  private final Consumer<Collection<FilePath>> myToTargetListsMover;
+  @Nullable private final LocalChangeList myTargetChangeList;
   @NotNull private final List<FilePatch> myRemainingPatches;
   @NotNull private final List<FilePatch> myFailedPatches;
   private final PathsVerifier<BinaryType> myVerifier;
@@ -79,7 +78,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
                       @NotNull List<FilePatch> patches,
-                      @Nullable Consumer<Collection<FilePath>> toTargetListsMover,
+                      @Nullable LocalChangeList targetChangeList,
                       @Nullable CustomBinaryPatchApplier<BinaryType> customForBinaries,
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
@@ -88,7 +87,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
-    myToTargetListsMover = toTargetListsMover;
+    myTargetChangeList = targetChangeList;
     myCustomForBinaries = customForBinaries;
     myCommitContext = commitContext;
     myReverseConflict = reverseConflict;
@@ -110,19 +109,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
     });
   }
 
-  public PatchApplier(@NotNull Project project,
-                      @NotNull VirtualFile baseDirectory,
-                      @NotNull List<FilePatch> patches,
-                      @Nullable LocalChangeList targetChangeList,
-                      @Nullable CustomBinaryPatchApplier<BinaryType> customForBinaries,
-                      @Nullable CommitContext commitContext,
-                      boolean reverseConflict,
-                      @Nullable String leftConflictPanelTitle,
-                      @Nullable String rightConflictPanelTitle) {
-    this(project, baseDirectory, patches, createMover(project, targetChangeList), customForBinaries, commitContext,
-         reverseConflict, leftConflictPanelTitle, rightConflictPanelTitle);
-  }
-
   public void setIgnoreContentRootsCheck() {
     myVerifier.setIgnoreContentRootsCheck(true);
   }
@@ -138,13 +124,6 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
   public void setIsSystemOperation(boolean systemOperation) {
     mySystemOperation = systemOperation;
-  }
-
-  @Nullable
-  private static Consumer<Collection<FilePath>> createMover(final Project project, final LocalChangeList targetChangeList) {
-    final ChangeListManager clm = ChangeListManager.getInstance(project);
-    if (targetChangeList == null || clm.getDefaultListName().equals(targetChangeList.getName())) return null;
-    return new FilesMover(clm, targetChangeList);
   }
 
   @NotNull
@@ -308,8 +287,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
       indirectlyAffected.addAll(applier.getIndirectlyAffected());
     }
     directlyAffected.addAll(trigger.getAffected());
-    final Consumer<Collection<FilePath>> mover = localChangeList == null ? null : createMover(project, localChangeList);
-    refreshPassedFilesAndMoveToChangelist(project, directlyAffected, indirectlyAffected, mover);
+    refreshPassedFilesAndMoveToChangelist(project, directlyAffected, indirectlyAffected, localChangeList);
     if (result == ApplyPatchStatus.FAILURE) {
       suggestRollback(project, group, beforeLabel);
     }
@@ -413,7 +391,7 @@ public class PatchApplier<BinaryType extends FilePatch> {
     final List<VirtualFile> indirectlyAffected = myVerifier.getAllAffected();
     directlyAffected.addAll(additionalDirectly);
 
-    refreshPassedFilesAndMoveToChangelist(myProject, directlyAffected, indirectlyAffected, myToTargetListsMover);
+    refreshPassedFilesAndMoveToChangelist(myProject, directlyAffected, indirectlyAffected, myTargetChangeList);
   }
 
   public List<FilePath> getDirectlyAffected() {
@@ -426,9 +404,9 @@ public class PatchApplier<BinaryType extends FilePatch> {
 
   @CalledInAwt
   public static void refreshPassedFilesAndMoveToChangelist(@NotNull final Project project,
-                                                           final Collection<FilePath> directlyAffected,
-                                                           final Collection<VirtualFile> indirectlyAffected,
-                                                           final Consumer<Collection<FilePath>> targetChangelistMover) {
+                                                           @NotNull Collection<FilePath> directlyAffected,
+                                                           @NotNull Collection<VirtualFile> indirectlyAffected,
+                                                           @Nullable LocalChangeList targetChangeList) {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (FilePath filePath : directlyAffected) {
       lfs.refreshAndFindFileByIoFile(filePath.getIOFile());
@@ -436,13 +414,24 @@ public class PatchApplier<BinaryType extends FilePatch> {
     if (project.isDisposed()) return;
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
-      changeListManager.invokeAfterUpdate(() -> targetChangelistMover.consume(directlyAffected), InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
+    if (!directlyAffected.isEmpty() && targetChangeList != null &&
+        !changeListManager.getDefaultListName().equals(targetChangeList.getName())) {
+      changeListManager.invokeAfterUpdate(() -> movePathsToChangeList(changeListManager, directlyAffected, targetChangeList),
+                                          InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE,
                                           VcsBundle.message("change.lists.manager.move.changes.to.list"),
-                                          vcsDirtyScopeManager -> markDirty(vcsDirtyScopeManager, directlyAffected, indirectlyAffected), null);
-    } else {
+                                          vcsDirtyScopeManager -> markDirty(vcsDirtyScopeManager, directlyAffected, indirectlyAffected),
+                                          null);
+    }
+    else {
       markDirty(VcsDirtyScopeManager.getInstance(project), directlyAffected, indirectlyAffected);
     }
+  }
+
+  private static void movePathsToChangeList(@NotNull ChangeListManager changeListManager,
+                                            @NotNull Collection<FilePath> directlyAffected,
+                                            @Nullable LocalChangeList targetChangeList) {
+    List<Change> changes = ContainerUtil.mapNotNull(directlyAffected, changeListManager::getChange);
+    changeListManager.moveChangesTo(targetChangeList, ArrayUtil.toObjectArray(changes, Change.class));
   }
 
   private static void markDirty(@NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
@@ -561,21 +550,5 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(
       () -> Messages.showErrorDialog(project, message, VcsBundle.message("patch.apply.dialog.title")), null, project);
-  }
-
-  private static class FilesMover implements Consumer<Collection<FilePath>> {
-    private final ChangeListManager myChangeListManager;
-    private final LocalChangeList myTargetChangeList;
-
-    public FilesMover(final ChangeListManager changeListManager, final LocalChangeList targetChangeList) {
-      myChangeListManager = changeListManager;
-      myTargetChangeList = targetChangeList;
-    }
-
-    @Override
-    public void consume(Collection<FilePath> directlyAffected) {
-      List<Change> changes = ContainerUtil.mapNotNull(directlyAffected, myChangeListManager::getChange);
-      myChangeListManager.moveChangesTo(myTargetChangeList, ArrayUtil.toObjectArray(changes, Change.class));
-    }
   }
 }
