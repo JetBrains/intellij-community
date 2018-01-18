@@ -1020,15 +1020,15 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//tools/idea/plugins/gradle/lib:gradle-api-4.0",
-        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.0",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-api-4.4",
+        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.4",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.4",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//tools/idea/plugins/gradle/lib:gradle-api-4.0",
-        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.0",
-        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.0",
+        "//tools/idea/plugins/gradle/lib:gradle-api-4.4",
+        "//tools/idea/plugins/gradle/lib:gradle-launcher-4.4",
+        "//tools/idea/plugins/gradle/lib:gradle-wrapper-4.4",
     ],
 )
 
