@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -23,17 +24,23 @@ public abstract class CollapseBlockHandlerImpl implements CollapseBlockHandler {
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       final EditorFoldingInfo info = EditorFoldingInfo.get(editor);
       FoldingModelEx model = (FoldingModelEx) editor.getFoldingModel();
-      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset() - 1);
+      int offset = editor.getCaretModel().getOffset();
+      PsiElement element = file.findElementAt(offset - 1);
       if (!isEndBlockToken(element)) {
-        element = file.findElementAt(editor.getCaretModel().getOffset());
+        element = file.findElementAt(offset);
       }
       if (element == null) return;
       PsiElement block = findParentBlock(element);
       FoldRegion previous = null;
       FoldRegion myPrevious = null;
       while (block != null) {
-        int start = block.getTextRange().getStartOffset();
-        int end = block.getTextRange().getEndOffset();
+        TextRange range = getFoldingRange(block);
+        if (!range.containsOffset(offset)) {
+          block = findParentBlock(block);
+          continue;
+        }
+        int start = range.getStartOffset();
+        int end = range.getEndOffset();
         FoldRegion existing = FoldingUtil.findFoldRegion(editor, start, end);
         if (existing != null) {
           if (existing.isExpanded()) {
@@ -54,7 +61,7 @@ public abstract class CollapseBlockHandlerImpl implements CollapseBlockHandler {
             info.removeRegion(myPrevious);
             model.removeFoldRegion(myPrevious);
           }
-          targetCaretOffset[0] = block.getTextRange().getEndOffset() < editor.getCaretModel().getOffset() ? start : end;
+          targetCaretOffset[0] = block.getTextRange().getEndOffset() < offset ? start : end;
           return;
         } else break;
       }
@@ -77,4 +84,9 @@ public abstract class CollapseBlockHandlerImpl implements CollapseBlockHandler {
 
   @NotNull
   protected String getPlaceholderText() { return "{...}"; }
+
+  @NotNull
+  protected TextRange getFoldingRange(@NotNull PsiElement element) {
+    return element.getTextRange();
+  }
 }
