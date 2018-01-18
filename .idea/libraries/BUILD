@@ -1219,3 +1219,11 @@ java_library(
     exports = ["//tools/idea/lib:xml-apis-ext"],
     runtime_deps = ["//tools/idea/lib:xml-apis-ext"],
 )
+
+java_library(
+    name = "aia-manifest-proto-1.0-jarjar",
+    tags = ["managed"],
+    visibility = ["//visibility:public"],
+    exports = ["//tools/base/sdk-common/aia-manifest-jar-generator:jarjar"],
+    runtime_deps = ["//tools/base/sdk-common/aia-manifest-jar-generator:jarjar"],
+)
