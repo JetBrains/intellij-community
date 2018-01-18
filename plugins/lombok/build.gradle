@@ -1,16 +1,14 @@
 buildscript {
   repositories {
     mavenCentral()
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
     maven { url 'http://dl.bintray.com/jetbrains/intellij-plugin-service' }
     maven { url 'https://jitpack.io' }
   }
   dependencies {
+    classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.3.0-SNAPSHOT"
     classpath "com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1"
   }
-}
-
-plugins {
-    id "org.jetbrains.intellij" version "0.2.17"
 }
 
 import org.jetbrains.grammarkit.tasks.GenerateLexer
@@ -64,19 +62,24 @@ intellij {
   println "Building for IntelliJ version: ${version}"
 
   pluginName pluginName
-  downloadSources !Boolean.valueOf(System.getenv('CI'))
-
-  updateSinceUntilBuild false
-  sameSinceUntilBuild Boolean.valueOf(isEAP)
+  updateSinceUntilBuild true
+  sameSinceUntilBuild false
 
   sandboxDirectory = "${rootProject.projectDir}/idea-sandbox/idea-${version}"
 
   plugins 'coverage'
+}
 
-  publishPlugin {
-    username publishUsername
-    password publishPassword
-  }
+patchPluginXml {
+  def ideaVersionExternDefinition = System.getenv("IDEA_VERSION")
+  ideaVersion = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
+
+  version pluginVersion + "-" + ideaVersion
+}
+
+publishPlugin {
+  username publishUsername
+  password publishPassword
 }
 
 grammarKit {
@@ -106,7 +109,7 @@ configurations {
 }
 
 dependencies {
-  lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.18', classifier: 'sources', ext: 'jar'
+  lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.20', classifier: 'sources', ext: 'jar'
   hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
   compile(project(':patcher')) {
