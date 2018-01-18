@@ -228,9 +228,12 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   @Nullable
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
-    final JTextField moduleNameField = settingsStep.getModuleNameField();
-    if (moduleNameField != null && myProjectId != null && myProjectId.getArtifactId() != null) {
-      moduleNameField.setText(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
+    final ModuleNameLocationSettings nameLocationSettings = settingsStep.getModuleNameLocationSettings();
+    if (nameLocationSettings != null && myProjectId != null && myProjectId.getArtifactId() != null) {
+      nameLocationSettings.setModuleName(StringUtil.sanitizeJavaIdentifier(myProjectId.getArtifactId()));
+      if (myAggregatorProject != null) {
+        nameLocationSettings.setModuleContentRoot(myAggregatorProject.getDirectory() + "/" + myProjectId.getArtifactId());
+      }
     }
     return super.modifySettingsStep(settingsStep);
   }

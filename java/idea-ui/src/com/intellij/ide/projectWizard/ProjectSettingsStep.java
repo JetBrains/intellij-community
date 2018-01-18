@@ -221,6 +221,12 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
     return getNameComponent();
   }
 
+  @Nullable
+  @Override
+  public ModuleNameLocationSettings getModuleNameLocationSettings() {
+    return myModuleNameLocationComponent;
+  }
+
   @TestOnly
   @Nullable
   public ModuleWizardStep getSettingsStep() {
