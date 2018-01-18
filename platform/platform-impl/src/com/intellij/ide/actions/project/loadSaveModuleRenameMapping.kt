@@ -89,6 +89,7 @@ internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedName
     state.oldToNewName.putAll(dialog.getRenamingScheme())
     try {
       XmlSerializer.serialize(state).write(fileWrapper.file.toPath())
+      fileWrapper.virtualFile?.refresh(true, false)
       return true
     }
     catch (e: Exception) {
@@ -100,7 +101,7 @@ internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedName
   return false
 }
 
-private val EXPORTED_PATH_PROPERTY = "module.renaming.scheme.file"
+private const val EXPORTED_PATH_PROPERTY = "module.renaming.scheme.file"
 
 private fun saveDefaultRenamingSchemeFilePath(project: Project, filePath: String?) {
   PropertiesComponent.getInstance(project).setValue(EXPORTED_PATH_PROPERTY, filePath)
