@@ -45,7 +45,6 @@ class MPSProperties extends ProductProperties {
                 withModule("java-runtime", "idea_rt.jar", false)
                 withProjectLibrary("Eclipse")
                 withProjectLibrary("jgoodies-common")
-                withProjectLibrary("jgoodies-looks")
                 withProjectLibrary("commons-net")
                 withProjectLibrary("JUnit4")
                 withProjectLibrary("http-client-3.1")
