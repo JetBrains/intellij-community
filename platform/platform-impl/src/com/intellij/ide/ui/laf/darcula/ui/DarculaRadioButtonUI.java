@@ -39,6 +39,8 @@ import java.awt.geom.Path2D;
  * @author Konstantin Bulenkov
  */
 public class DarculaRadioButtonUI extends MetalRadioButtonUI {
+  private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(20)).asUIResource();
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaRadioButtonUI();
@@ -214,6 +216,6 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
 
   @Override
   public Icon getDefaultIcon() {
-    return JBUI.scale(EmptyIcon.create(20)).asUIResource();
+    return DEFAULT_ICON;
   }
 }

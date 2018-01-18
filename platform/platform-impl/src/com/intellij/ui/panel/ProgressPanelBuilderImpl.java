@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -266,7 +267,9 @@ public class ProgressPanelBuilderImpl implements ProgressPanelBuilder, GridBagPa
       myProgressBar.putClientProperty(LABELED_PANEL_PROPERTY, this);
 
       gc.weightx = 0.0;
-      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 1 : 14, 10, 0, 13);
+      gc.insets = JBUI.insets(labelAbove || topSeparatorEnabled || smallVariant ? 1 : 14,
+                              UIUtil.isUnderWin10LookAndFeel() ? 9 : 10,
+                              0, 13);
 
       if (cancelAction != null) {
         if (cancelAsButton) {
