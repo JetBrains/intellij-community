@@ -1466,7 +1466,10 @@ public class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiReferenceExpression ref) {
-    return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
+    if (ref.getParent() instanceof PsiMethodCallExpression) {
+      return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
+    }
+    return null;
   }
 
   private static HighlightInfo checkClassSupersAccessibility(PsiClass aClass,
