@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
@@ -18,7 +16,6 @@ import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +26,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,11 +172,11 @@ public class CreateClassInPackageInModuleFix implements IntentionAction {
     @Nullable
     @Override
     protected JComponent createNorthPanel() {
-      return JBPanelFactory.grid()
-        .add(JBPanelFactory.panel(myNameTextField).withLabel("Name:")
+      return UI.PanelFactory.grid()
+        .add(UI.PanelFactory.panel(myNameTextField).withLabel("Name:")
                .withComment("The class will be created in the package '" + myPackageName + "'"))
-        .add(JBPanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
-        .add(JBPanelFactory.panel(myKindCombo).withLabel("Kind:"))
+        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
+        .add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"))
         .createPanel();
     }
 

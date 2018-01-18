@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.ui.panel.ProgressPanel;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ComboboxWithBrowseButton;
@@ -21,6 +20,7 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,26 +90,26 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       Dimension d = text.getPreferredSize();
       text.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
 
-      panel.add(JBPanelFactory.panel(text).
+      panel.add(UI.PanelFactory.panel(text).
         withLabel("&Textfield:").
         withComment("Textfield description").
         moveCommentRight().createPanel());
 
-      panel.add(JBPanelFactory.panel(new JTextField()).
+      panel.add(UI.PanelFactory.panel(new JTextField()).
         withLabel("&Path:").createPanel());
 
-      panel.add(JBPanelFactory.panel(new JCheckBox("This is a checkbox 1")).
+      panel.add(UI.PanelFactory.panel(new JCheckBox("This is a checkbox 1")).
         withComment("My long long long long long long long long long long comment").
         createPanel());
 
-      panel.add(JBPanelFactory.panel(new JCheckBox("This is a checkbox 2")).
+      panel.add(UI.PanelFactory.panel(new JCheckBox("This is a checkbox 2")).
         withTooltip("Help tooltip description").createPanel());
 
-      panel.add(JBPanelFactory.panel(new JButton("Abracadabra")).
+      panel.add(UI.PanelFactory.panel(new JButton("Abracadabra")).
         withComment("Abradabra comment").createPanel());
 
       String[] items = new String[]{ "One", "Two", "Three", "Four", "Five", "Six" };
-      panel.add(JBPanelFactory.panel(new JComboBox<>(items)).
+      panel.add(UI.PanelFactory.panel(new JComboBox<>(items)).
         withComment("Combobox comment").createPanel());
 
       String[] columns = { "First column", "Second column" };
@@ -130,7 +130,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       pane.setPreferredSize(JBUI.size(200, 100));
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
-      panel.add(JBPanelFactory.panel(pane).
+      panel.add(UI.PanelFactory.panel(pane).
         withLabel("Table label:").moveLabelOnTop().withComment("Table comment").createPanel());
 
       panel.add(new Box.Filler(JBUI.size(100,20), JBUI.size(200,30), JBUI.size(Integer.MAX_VALUE, Integer.MAX_VALUE)));
@@ -144,26 +144,26 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       JBScrollPane pane = new JBScrollPane(new JTextArea(3, 40));
       pane.putClientProperty(UIUtil.KEEP_BORDER_SIDES, SideBorder.ALL);
 
-      JPanel p1 = JBPanelFactory.grid().
-      add(JBPanelFactory.panel(new JTextField()).
+      JPanel p1 = UI.PanelFactory.grid().
+      add(UI.PanelFactory.panel(new JTextField()).
         withLabel("&Port:").withComment("Port comment")).
 
-      add(JBPanelFactory.panel(new JTextField()).
+      add(UI.PanelFactory.panel(new JTextField()).
         withLabel("&Host:").withComment("Host comment")).
 
-      add(JBPanelFactory.panel(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
+      add(UI.PanelFactory.panel(new JComboBox<>(new String[]{"HTTP", "HTTPS", "FTP", "SSL"})).
         withLabel("P&rotocol:").withComment("Protocol comment").withTooltip("Protocol selection").
         withTooltipLink("Check here for more info", ()-> System.out.println("More info"))).
 
-      add(JBPanelFactory.panel(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
+      add(UI.PanelFactory.panel(new ComponentWithBrowseButton<>(new JTextField(), (e) -> System.out.println("Browse for text"))).
         withLabel("&Text field:").withComment("Text field comment")).
 
-      add(JBPanelFactory.panel(cbb).
+      add(UI.PanelFactory.panel(cbb).
         withLabel("&Combobox selection:")).
 
-      add(JBPanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
+      add(UI.PanelFactory.panel(new JCheckBox("Checkbox")).withComment("Checkbox comment text")).
 
-      add(JBPanelFactory.panel(pane).
+      add(UI.PanelFactory.panel(pane).
         withLabel("Text area:").withComment("Text area comment").moveLabelOnTop()).
 
       createPanel();
@@ -177,14 +177,14 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       bg.add(rb3);
       rb1.setSelected(true);
 
-      JPanel p2 = JBPanelFactory.grid().
-        add(JBPanelFactory.panel(new JCheckBox("Checkbox 1")).withComment("Comment 1").moveCommentRight()).
-        add(JBPanelFactory.panel(new JCheckBox("Checkbox 2")).withComment("Comment 2")).
-        add(JBPanelFactory.panel(new JCheckBox("Checkbox 3")).withTooltip("Checkbox tooltip")).
+      JPanel p2 = UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 1")).withComment("Comment 1").moveCommentRight()).
+        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 2")).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(new JCheckBox("Checkbox 3")).withTooltip("Checkbox tooltip")).
 
-        add(JBPanelFactory.panel(rb1).withComment("Comment 1").moveCommentRight()).
-        add(JBPanelFactory.panel(rb2).withComment("Comment 2")).
-        add(JBPanelFactory.panel(rb3).withTooltip("RadioButton tooltip")).
+        add(UI.PanelFactory.panel(rb1).withComment("Comment 1").moveCommentRight()).
+        add(UI.PanelFactory.panel(rb2).withComment("Comment 2")).
+        add(UI.PanelFactory.panel(rb3).withTooltip("RadioButton tooltip")).
 
         createPanel();
 
@@ -242,12 +242,12 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         progressPanel.setCommentText(Integer.toString(0));
       }
 
-      panel.add(JBPanelFactory.grid().
-        add(JBPanelFactory.panel(pb1).
+      panel.add(UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(pb1).
           withLabel("Label 1.1").
           withCancel(()-> myAlarm.cancelRequest(timerRequest)).
           andCancelText("Stop")).
-        add(JBPanelFactory.panel(pb2).
+        add(UI.PanelFactory.panel(pb2).
           withLabel("Label 1.2").
           withPause(()-> System.out.println("Pause action #2")).
           withResume(()-> System.out.println("Resume action #2"))).
@@ -259,11 +259,11 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       JProgressBar pb3 = new JProgressBar(0, 100);
       JProgressBar pb4 = new JProgressBar(0, 100);
-      panel.add(JBPanelFactory.grid().
-        add(JBPanelFactory.panel(pb3).
+      panel.add(UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(pb3).
           withLabel("Label 2.1").moveLabelLeft().
           withCancel(()-> System.out.println("Cancel action #3"))).
-        add(JBPanelFactory.panel(pb4).
+        add(UI.PanelFactory.panel(pb4).
           withTopSeparator().
           withLabel("Label 2.2").moveLabelLeft().
           withPause(()-> System.out.println("Pause action #4")).
@@ -274,8 +274,8 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb3)).setCommentText("Long long long long long long text");
       ObjectUtils.assertNotNull(ProgressPanel.forComponent(pb4)).setCommentText("Short text");
 
-      panel.add(JBPanelFactory.grid().
-        add(JBPanelFactory.panel(new JProgressBar(0, 100)).
+      panel.add(UI.PanelFactory.grid().
+        add(UI.PanelFactory.panel(new JProgressBar(0, 100)).
           withTopSeparator().withoutComment().
           andCancelAsButton().
           withCancel(()-> System.out.println("Cancel action #11"))).

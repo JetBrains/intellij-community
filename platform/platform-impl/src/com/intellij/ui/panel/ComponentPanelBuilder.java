@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.panel;
 
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.panel.GridBagPanelBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBagPanelBuilder {
+public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   private final JComponent myComponent;
 
@@ -30,43 +29,62 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
   private Runnable myHTAction;
   private boolean valid = true;
 
-  ComponentPanelBuilderImpl(JComponent component) {
+  public ComponentPanelBuilder(JComponent component) {
     myComponent = component;
   }
 
-  @Override
+  /**
+   * @param labelText text for the label.
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder withLabel(@NotNull String labelText) {
     myLabelText = labelText;
     return this;
   }
 
-  @Override
+  /**
+   * Move label on top of the owner component. Default position is on the left of the owner component.
+   *
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder moveLabelOnTop() {
     myLabelOnTop = true;
     return this;
   }
 
-  @Override
+  /**
+   * @param comment help context styled text written below the owner component.
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder withComment(@NotNull String comment) {
     myComment = comment;
     valid = StringUtil.isNotEmpty(comment) && StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
-  @Override
+  /**
+   * Move comment to the right of the owner component. Default position is below the owner component.
+   *
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder moveCommentRight() {
     myCommentBelow = false;
     return this;
   }
 
-  @Override
+  /**
+   * Enables the help tooltip icon on the right of the owner component and sets the description text for the tooltip.
+   *
+   * @param description help tooltip description.
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder withTooltip(@NotNull String description) {
     myHTDescription = description;
     valid = StringUtil.isNotEmpty(description) && StringUtil.isEmpty(myComment);
     return this;
   }
 
-  @Override
+
   public ComponentPanelBuilder withTooltipLink(@NotNull String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
@@ -171,7 +189,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
     if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
       return isMacDefault ? 8 : 13;
     }
-    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
+    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||//todo[kirill.kirichenko] provide markup interface for EditorTextField in platform-api
              myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
       return isMacDefault ? 13 : 14;
     } else {
@@ -189,7 +207,7 @@ public class ComponentPanelBuilderImpl implements ComponentPanelBuilder, GridBag
       left = isMacDefault ? 27 : isWin10 ? 17 : 24;
       bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
     }
-    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||
+    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField || //todo[kirill.kirichenko] provide markup interface for EditorTextField in platform-api
              myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
       top = isWin10 ? 3 : 4;
       left = isWin10 ? 2 : isMacDefault ? 5 : 4;

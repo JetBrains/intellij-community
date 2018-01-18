@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -13,7 +11,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.panel.JBPanelFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,6 +19,7 @@ import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.UI;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -194,11 +192,11 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
     protected JComponent createNorthPanel() {
       JTextField nameTextField = new JTextField(myInterfaceName);
       nameTextField.setEditable(false);
-      return JBPanelFactory.grid()
-        .add(JBPanelFactory.panel(nameTextField).withLabel("Name:"))
-        .add(JBPanelFactory.panel(myModuleCombo).withLabel("Module:"))
-        .add(JBPanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
-        .add(JBPanelFactory.panel(myKindCombo).withLabel("Kind:"))
+      return UI.PanelFactory.grid()
+        .add(UI.PanelFactory.panel(nameTextField).withLabel("Name:"))
+        .add(UI.PanelFactory.panel(myModuleCombo).withLabel("Module:"))
+        .add(UI.PanelFactory.panel(myRootDirCombo).withLabel("Source root:"))
+        .add(UI.PanelFactory.panel(myKindCombo).withLabel("Kind:"))
         .createPanel();
     }
 
