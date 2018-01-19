@@ -18,7 +18,7 @@ package org.jetbrains.idea.eclipse.importer.colors;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

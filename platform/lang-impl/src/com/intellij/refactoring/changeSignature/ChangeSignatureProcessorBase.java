@@ -80,7 +80,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
       final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
       for (PsiElement key : conflicts.keySet()) {
         Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.isEmpty()) collection = new com.intellij.util.containers.HashSet<>();
+        if (collection.isEmpty()) collection = new java.util.HashSet<>();
         collection.addAll(conflicts.get(key));
         conflictDescriptions.put(key, collection);
       }

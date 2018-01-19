@@ -50,7 +50,7 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -581,7 +581,7 @@ public final class FormEditingUtil {
   }
 
   /**
-   * @return {@link com.intellij.uiDesigner.designSurface.GuiEditor} from the context. Can be {@code null}.
+   * @return {@link GuiEditor} from the context. Can be {@code null}.
    */
   @Nullable
   public static GuiEditor getEditorFromContext(@NotNull final DataContext context) {
@@ -611,7 +611,7 @@ public final class FormEditingUtil {
    * @param componentToAssignBinding
    * @param binding
    * @param component                topmost container where to find duplicate binding. In most cases
-   *                                 it should be {@link com.intellij.uiDesigner.designSurface.GuiEditor#getRootContainer()}
+   *                                 it should be {@link GuiEditor#getRootContainer()}
    */
   public static boolean isBindingUnique(
     final IComponent componentToAssignBinding,

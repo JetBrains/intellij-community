@@ -4,7 +4,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
 

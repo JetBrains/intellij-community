@@ -21,7 +21,7 @@ import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
 import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandAbortedException;

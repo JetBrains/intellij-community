@@ -53,7 +53,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;

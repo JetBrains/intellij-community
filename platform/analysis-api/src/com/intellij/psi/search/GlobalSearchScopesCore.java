@@ -32,7 +32,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

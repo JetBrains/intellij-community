@@ -40,7 +40,6 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

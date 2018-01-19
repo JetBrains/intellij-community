@@ -25,7 +25,7 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.InconsistentDebugInfoException;
 import com.sun.jdi.InvalidStackFrameException;
@@ -168,7 +168,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     }
     Map<ObjectReference, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
     if (map == null) {
-      map = new java.util.HashMap<>();
+      map = new HashMap<>();
       process.putUserData(MARKUP_MAP_KEY, map);
     }
     return map;

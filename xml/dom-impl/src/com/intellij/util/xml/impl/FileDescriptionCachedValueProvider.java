@@ -28,7 +28,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.semantic.SemElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.stubs.FileStub;

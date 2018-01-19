@@ -27,10 +27,10 @@ import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

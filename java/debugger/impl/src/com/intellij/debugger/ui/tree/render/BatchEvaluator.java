@@ -15,7 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 

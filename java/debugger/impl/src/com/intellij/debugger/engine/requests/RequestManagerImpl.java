@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;

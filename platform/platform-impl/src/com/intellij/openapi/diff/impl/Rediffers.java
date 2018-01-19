@@ -21,7 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 public class Rediffers {
   private final HashMap<EditorSource, Rediff> myRediffers = new HashMap<>();

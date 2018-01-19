@@ -33,7 +33,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;

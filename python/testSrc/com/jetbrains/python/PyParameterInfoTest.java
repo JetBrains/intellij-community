@@ -28,7 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -910,7 +910,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     @NotNull
     public Color getDefaultParameterColor() {
-      return java.awt.Color.BLACK;
+      return Color.BLACK;
     }
 
     @Override

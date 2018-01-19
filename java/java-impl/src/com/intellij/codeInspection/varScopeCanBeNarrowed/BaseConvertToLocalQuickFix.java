@@ -32,16 +32,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.HashSet;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * refactored from {@link com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection}
+ * refactored from {@link FieldCanBeLocalInspection}
  *
  * @author Danila Ponomarenko
  */

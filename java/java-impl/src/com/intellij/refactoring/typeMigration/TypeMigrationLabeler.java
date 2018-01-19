@@ -262,7 +262,7 @@ public class TypeMigrationLabeler {
   }
 
   MigrationProducer createMigratorFor(UsageInfo[] usages) {
-    final Map<UsageInfo, Object> conversions = new com.intellij.util.containers.HashMap<>();
+    final Map<UsageInfo, Object> conversions = new HashMap<>();
     for (UsageInfo usage : usages) {
       final Object conversion = getConversion(usage.getElement());
       if (conversion != null) {

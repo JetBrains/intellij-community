@@ -20,7 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;

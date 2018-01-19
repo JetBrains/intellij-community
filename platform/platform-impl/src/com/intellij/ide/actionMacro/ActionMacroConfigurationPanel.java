@@ -26,13 +26,13 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Couple;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 
 public class ActionMacroConfigurationPanel implements Disposable {

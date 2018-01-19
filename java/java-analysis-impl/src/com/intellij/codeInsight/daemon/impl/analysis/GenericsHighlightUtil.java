@@ -28,8 +28,8 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -1432,7 +1432,7 @@ public class GenericsHighlightUtil {
       if (checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
-        Map<PsiTypeParameter, PsiType> map = new java.util.HashMap<>();
+        Map<PsiTypeParameter, PsiType> map = new HashMap<>();
         for (int j = 0; j < classTypeParameters.length; j++) {
           PsiTypeParameter classTypeParameter = classTypeParameters[j];
           PsiType actualTypeParameter = actualTypeParameters[j];

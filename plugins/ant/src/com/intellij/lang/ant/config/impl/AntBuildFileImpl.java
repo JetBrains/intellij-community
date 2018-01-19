@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

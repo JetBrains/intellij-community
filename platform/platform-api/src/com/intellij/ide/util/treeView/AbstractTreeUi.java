@@ -35,7 +35,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.LockToken;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.enumeration.EnumerationCopy;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;

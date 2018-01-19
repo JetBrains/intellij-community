@@ -22,7 +22,6 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;

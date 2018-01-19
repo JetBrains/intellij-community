@@ -56,7 +56,6 @@ import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +114,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final List<AntBuildFileBase> myBuildFiles = new CopyOnWriteArrayList<>();
 
   private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<>();
-  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<>();
+  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new HashMap<>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final StartupManager myStartupManager;
 

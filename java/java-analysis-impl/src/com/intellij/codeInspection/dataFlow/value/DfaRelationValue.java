@@ -19,7 +19,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

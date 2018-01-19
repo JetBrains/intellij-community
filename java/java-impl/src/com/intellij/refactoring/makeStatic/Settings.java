@@ -19,7 +19,7 @@ package com.intellij.refactoring.makeStatic;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

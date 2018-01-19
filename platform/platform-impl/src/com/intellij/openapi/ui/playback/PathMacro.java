@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.ui.playback;
 
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.io.File;
 import java.util.Iterator;
