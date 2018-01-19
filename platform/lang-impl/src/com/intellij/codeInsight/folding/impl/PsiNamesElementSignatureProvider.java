@@ -181,6 +181,7 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
         return null;
       }
       int index = getChildIndex(named, element.getParent(), name, PsiNamedElement.class);
+      if (index < 0) return null;
       StringBuilder bufferToUse = buffer;
       if (bufferToUse == null) {
         bufferToUse = new StringBuilder();
