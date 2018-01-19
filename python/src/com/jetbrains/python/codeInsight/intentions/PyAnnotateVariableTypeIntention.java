@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -96,9 +97,42 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   }
 
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
-    final PyType inferredType = context.getType(target);
-    final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
+    final String annotationText = generateNestedTypeHint(target);
     PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText);
+  }
+
+  @NotNull
+  private static String generateNestedTypeHint(@NotNull PyTargetExpression target) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
+    final StringBuilder builder = new StringBuilder();
+    final PyElement validTargetContainer = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
+    assert validTargetContainer != null;
+    final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetContainer, target);
+    generateNestedTypeHint(topmostTarget, context, builder);
+    return builder.toString();
+  }
+
+  private static void generateNestedTypeHint(@NotNull PsiElement target, @NotNull TypeEvalContext context, @NotNull StringBuilder builder) {
+    if (target instanceof PyParenthesizedExpression) {
+      final PyExpression contained = ((PyParenthesizedExpression)target).getContainedExpression();
+      if (contained != null) {
+        generateNestedTypeHint(contained, context, builder);
+      }
+    }
+    else if (target instanceof PyTupleExpression) {
+      builder.append("(");
+      final PyExpression[] elements = ((PyTupleExpression)target).getElements();
+      for (int i = 0; i < elements.length; i++) {
+        if (i > 0) {
+          builder.append(", ");
+        }
+        generateNestedTypeHint(elements[i], context, builder);
+      }
+      builder.append(")");
+    }
+    else if (target instanceof PyTypedElement) {
+      final String type = PythonDocumentationProvider.getTypeName(context.getType((PyTypedElement)target), context);
+      builder.append(type);
+    }
   }
 }
