@@ -908,4 +908,20 @@ public class PyStubsTest extends PyTestCase {
       assertNull(funcStub.findChildStubByType(PyElementTypes.ANNOTATION));
     });
   }
+
+  // PY-26163
+  public void testClassAttributeTypeDeclaration() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      final PyFile file = getTestFile();
+      final PyClass pyClass = file.findTopLevelClass("MyClass");
+      final TypeEvalContext context = TypeEvalContext.codeAnalysis(file.getProject(), file);
+
+      assertNotNull(pyClass.findClassAttribute("foo", false, context));
+      assertNotParsed(file);
+
+      //noinspection ResultOfMethodCallIgnored
+      pyClass.getText();
+      assertNotNull(pyClass.findClassAttribute("foo", false, context));
+    });
+  }
 }

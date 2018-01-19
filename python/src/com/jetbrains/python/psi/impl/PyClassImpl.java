@@ -1066,6 +1066,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
           }
         }
       }
+      else if (psiElement instanceof PyTypeDeclarationStatement) {
+        final PyExpression target = ((PyTypeDeclarationStatement)psiElement).getTarget();
+        if (target instanceof PyTargetExpression) {
+          result.add((PyTargetExpression)target);
+        }
+      }
     }
     return result;
   }
