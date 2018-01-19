@@ -74,6 +74,7 @@ import java.util.stream.Collectors;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Arrays.stream;
 
 /**
@@ -701,16 +702,6 @@ public class GitUtil {
     return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
   }
 
-  @Nullable
-  public static GitRemote findOrigin(Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals("origin")) {
-        return remote;
-      }
-    }
-    return null;
-  }
-
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
     return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
@@ -943,12 +934,12 @@ public class GitUtil {
 
   @Nullable
   public static GitRemote getDefaultRemote(@NotNull Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(GitRemote.ORIGIN)) {
-        return remote;
-      }
-    }
-    return null;
+    return ContainerUtil.find(remotes, r -> r.getName().equals(GitRemote.ORIGIN));
+  }
+
+  @Nullable
+  public static GitRemote getDefaultOrFirstRemote(@NotNull Collection<GitRemote> remotes) {
+    return chooseNotNull(getDefaultRemote(remotes), ContainerUtil.getFirstItem(remotes));
   }
 
   @NotNull

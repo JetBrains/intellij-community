@@ -37,6 +37,7 @@ import java.util.List;
 
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 import static git4idea.GitUtil.findRemoteBranch;
+import static git4idea.GitUtil.getDefaultOrFirstRemote;
 
 public class GitPushTarget implements PushTarget {
 
@@ -139,7 +140,7 @@ public class GitPushTarget implements PushTarget {
     if (trackInfo != null) {
       return trackInfo.getRemote();
     }
-    return GitUtil.findOrigin(repository.getRemotes());
+    return getDefaultOrFirstRemote(repository.getRemotes());
   }
 
   @Override
