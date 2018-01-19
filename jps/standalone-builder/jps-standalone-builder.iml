@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="jps-builders" exported="" />
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="library" name="cli-parser" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
