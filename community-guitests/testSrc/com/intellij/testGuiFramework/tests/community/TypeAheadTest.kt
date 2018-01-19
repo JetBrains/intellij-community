@@ -31,6 +31,7 @@ class TypeAheadTest : GuiTestCase() {
           combobox("Test kind:").selectItem("Method")
           Pause.pause(2000)
         }
+        button("OK").click()
       }
       Pause.pause(30000)
     }
@@ -47,6 +48,7 @@ class TypeAheadTest : GuiTestCase() {
   private fun GuiTestCase.createProject() {
     welcomeFrame {
       actionLink("Create New Project").click()
+      GuiTestUtilKt.waitProgressDialogUntilGone(robot(), "Loading Templates")
       dialog("New Project") {
         button("Next").click()
         checkbox("Create project from template").click()
