@@ -1410,8 +1410,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-20797
-  // TODO: Enable after switching to collections stub from Typeshed
-  public void _testValueOfEmptyDefaultDict() {
+  public void testValueOfEmptyDefaultDict() {
     doTest("list",
            "from collections import defaultdict\n" +
            "expr = defaultdict(lambda: [])['x']\n");

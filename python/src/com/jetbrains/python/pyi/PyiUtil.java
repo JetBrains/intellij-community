@@ -148,6 +148,7 @@ public class PyiUtil {
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
       .stream()
       .findFirst()
+      .map(PyUtil::turnDirIntoInit)
       .orElse(null), PyiFile.class);
   }
 
@@ -161,6 +162,7 @@ public class PyiUtil {
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
                        .stream()
                        .findFirst()
+                       .map(PyUtil::turnDirIntoInit)
                        .orElse(null), PyFile.class);
   }
 
