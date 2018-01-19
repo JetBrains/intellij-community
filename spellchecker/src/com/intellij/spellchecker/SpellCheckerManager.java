@@ -230,13 +230,16 @@ public class SpellCheckerManager implements Disposable {
             restartInspections();
             notification.expire();
           }
-        }, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-            openDictionaryInEditor(DictionaryLevel.PROJECT == dictionaryLevel ? getProjectDictionaryPath() : getAppDictionaryPath());
-            notification.expire();
-          }
-        });
+        }
+        // TODO: [bzixilu] hidden option till WI-39681 fix
+        //, new NotificationAction(SpellCheckerBundle.message("show.changes.action.title")) {
+        //  @Override
+        //  public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        //    openDictionaryInEditor(DictionaryLevel.PROJECT == dictionaryLevel ? getProjectDictionaryPath() : getAppDictionaryPath());
+        //    notification.expire();
+        //  }
+        //}
+        );
       }
     }
   }
