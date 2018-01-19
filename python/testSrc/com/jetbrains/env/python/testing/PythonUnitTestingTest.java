@@ -184,7 +184,7 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       protected void validateConfiguration() {
         final PyUnitTestConfiguration configuration = getConfiguration();
         configuration.setPattern("foo");
-        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+        configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
         configuration.getTarget().setTarget("foo.py");
         configuration.checkConfiguration();
       }

@@ -52,7 +52,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
     }
 
     if (myScriptName.startsWith(TEST_PATTERN_PREFIX)) {
-      configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+      configuration.getTarget().setTargetVariant(PyRunTargetVariant.PATH);
       configuration.getTarget().setTarget(".");
       configuration.setPattern(myScriptName.substring(TEST_PATTERN_PREFIX.length()));
     }

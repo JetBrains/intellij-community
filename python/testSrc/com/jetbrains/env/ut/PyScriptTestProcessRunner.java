@@ -68,10 +68,10 @@ public class PyScriptTestProcessRunner<CONF_T extends AbstractPythonRunConfigura
       final ConfigurationTarget target = ((PyAbstractTestConfiguration)configuration).getTarget();
       if (myScriptName.startsWith(TEST_TARGET_PREFIX)) {
         target.setTarget(myScriptName.substring(TEST_TARGET_PREFIX.length()));
-        target.setTargetType(PyRunTargetVariant.PYTHON);
+        target.setTargetVariant(PyRunTargetVariant.PYTHON);
       } else {
         target.setTarget(myScriptName);
-        target.setTargetType(PyRunTargetVariant.PATH);
+        target.setTargetVariant(PyRunTargetVariant.PATH);
       }
     }
   }

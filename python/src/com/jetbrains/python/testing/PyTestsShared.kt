@@ -247,21 +247,21 @@ private val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField override var target: String,
-                               @ConfigField override var targetType: PyRunTargetVariant) : TargetWithVariant {
+                               @ConfigField override var targetVariant: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
-    dst.targetType = targetType
+    dst.targetVariant = targetVariant
   }
 
   /**
    * Validates configuration and throws exception if target is invalid
    */
   fun checkValid() {
-    if (targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
+    if (targetVariant != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning("Target not provided")
     }
-    if (targetType == PyRunTargetVariant.PYTHON && !isWellFormed()) {
+    if (targetVariant == PyRunTargetVariant.PYTHON && !isWellFormed()) {
       throw RuntimeConfigurationError("Provide a qualified name of function, class or a module")
     }
   }
@@ -270,7 +270,7 @@ data class ConfigurationTarget(@ConfigField override var target: String,
     asPsiElement(configuration, configuration.getWorkingDirectoryAsVirtual())
 
   fun generateArgumentsLine(configuration: PyAbstractTestConfiguration): List<String> =
-    when (targetType) {
+    when (targetVariant) {
       PyRunTargetVariant.CUSTOM -> emptyList()
       PyRunTargetVariant.PYTHON -> getArgumentsForPythonTarget(configuration)
       PyRunTargetVariant.PATH -> listOf("--path", target.trim())
@@ -494,7 +494,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
   }
 
   override fun suggestedName() =
-    when (target.targetType) {
+    when (target.targetVariant) {
       PyRunTargetVariant.PATH -> {
         val name = target.asVirtualFile()?.name
         "$testFrameworkName in " + (name ?: target.target)
@@ -515,7 +515,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   fun reset() {
     target.target = DEFAULT_PATH
-    target.targetType = PyRunTargetVariant.PATH
+    target.targetVariant = PyRunTargetVariant.PATH
     additionalArguments = ""
   }
 
