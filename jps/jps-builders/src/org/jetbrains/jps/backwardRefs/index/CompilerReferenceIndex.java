@@ -59,7 +59,7 @@ public class CompilerReferenceIndex<Input> {
       throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
     }
     try {
-      if (CompilerReferenceIndexUtil.versionDiffers(buildDir, myDescriptor)) {
+      if (CompilerReferenceIndexUtil.indexVersionDiffers(buildDir, myDescriptor)) {
         saveVersion(buildDir);
       }
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {

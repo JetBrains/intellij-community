@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndexDescriptor;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndexUtil;
 
 import java.io.File;
@@ -141,8 +142,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
           File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
-          boolean indexExist = CompilerReferenceIndexUtil.existsWithLatestVersion(buildDir, myReaderFactory.getIndexDescriptor());
-          if (indexExist) {
+          CompilerIndexDescriptor<?> descriptor = myReaderFactory.getIndexDescriptor();
+          
+          boolean validIndexExists = buildDir != null 
+                                     && CompilerReferenceIndexUtil.indexExists(buildDir, descriptor) 
+                                     && !CompilerReferenceIndexUtil.indexVersionDiffers(buildDir, descriptor);
+          
+          if (validIndexExists) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
           } else {
@@ -152,7 +158,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
             if (isUpToDate) {
               openReaderIfNeed(IndexOpenReason.UP_TO_DATE_CACHE);
             } else {
-              markAsOutdated(indexExist);
+              markAsOutdated(validIndexExists);
             }
           });
         });

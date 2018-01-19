@@ -22,6 +22,7 @@ import org.jetbrains.jps.backwardRefs.BackwardReferenceIndexDescriptor;
 import org.jetbrains.jps.backwardRefs.CompilerBackwardReferenceIndex;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
+import org.jetbrains.jps.backwardRefs.index.CompilerIndexDescriptor;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndexUtil;
 
@@ -33,7 +34,7 @@ import static java.util.stream.Collectors.toList;
 
 public class BackwardReferenceIndexReaderFactory implements CompilerReferenceReaderFactory<BackwardReferenceIndexReaderFactory.BackwardReferenceReader> {
   public static final BackwardReferenceIndexReaderFactory INSTANCE = new BackwardReferenceIndexReaderFactory();
-  
+
   private static final Logger LOG = Logger.getInstance(BackwardReferenceIndexReaderFactory.class);
 
   @NotNull
@@ -46,7 +47,14 @@ public class BackwardReferenceIndexReaderFactory implements CompilerReferenceRea
   @Nullable
   public BackwardReferenceReader create(Project project) {
     File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
-    if (!CompilerReferenceIndexUtil.existsWithLatestVersion(buildDir, BackwardReferenceIndexDescriptor.INSTANCE)) return null;
+    CompilerIndexDescriptor<?> descriptor = getIndexDescriptor();
+
+    if (buildDir == null
+        || !CompilerReferenceIndexUtil.indexExists(buildDir, descriptor)
+        || CompilerReferenceIndexUtil.indexVersionDiffers(buildDir, descriptor)) {
+      return null;
+    }
+
     try {
       return new BackwardReferenceReader(BuildManager.getInstance().getProjectSystemDirectory(project));
     }

@@ -15,7 +15,7 @@ public class CompilerReferenceIndexUtil {
 
   private CompilerReferenceIndexUtil() {}
 
-  public static boolean exists(@NotNull File buildDir, CompilerIndexDescriptor<?> descriptor) {
+  public static boolean indexExists(@NotNull File buildDir, CompilerIndexDescriptor<?> descriptor) {
     return descriptor.getIndicesDir(buildDir).exists();
   }
 
@@ -26,7 +26,7 @@ public class CompilerReferenceIndexUtil {
     }
   }
 
-  public static boolean versionDiffers(@NotNull File buildDir, CompilerIndexDescriptor<?> descriptor) {
+  public static boolean indexVersionDiffers(@NotNull File buildDir, CompilerIndexDescriptor<?> descriptor) {
     File versionFile = descriptor.getVersionFile(buildDir);
 
     try {
@@ -47,13 +47,5 @@ public class CompilerReferenceIndexUtil {
       LOG.info("backward reference index version differ due to: " + ignored.getClass());
     }
     return true;
-  }
-
-
-  public static boolean existsWithLatestVersion(File buildDir, CompilerIndexDescriptor<?> descriptor) {
-    if (buildDir == null || versionDiffers(buildDir, descriptor)) {
-      return false;
-    }
-    return exists(buildDir, descriptor);
   }
 }

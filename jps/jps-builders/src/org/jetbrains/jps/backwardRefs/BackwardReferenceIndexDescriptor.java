@@ -2,6 +2,7 @@
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.util.indexing.IndexExtension;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.index.CompiledFileData;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndexDescriptor;
 import org.jetbrains.jps.backwardRefs.index.CompilerIndices;
@@ -16,6 +17,7 @@ public class BackwardReferenceIndexDescriptor implements CompilerIndexDescriptor
   private static final String INDEX_DIR = "backward-refs";
 
   @Override
+  @NotNull
   public Collection<IndexExtension<?, ?, CompiledFileData>> getIndices() {
     return CompilerIndices.getIndices();
   }
@@ -26,12 +28,14 @@ public class BackwardReferenceIndexDescriptor implements CompilerIndexDescriptor
   }
 
   @Override
-  public File getIndicesDir(File buildDir) {
+  @NotNull
+  public File getIndicesDir(@NotNull File buildDir) {
     return new File(buildDir, INDEX_DIR);
   }
 
   @Override
-  public File getVersionFile(File buildDir) {
+  @NotNull
+  public File getVersionFile(@NotNull File buildDir) {
     return new File(buildDir, VERSION_FILE);
   }
 }

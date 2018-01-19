@@ -2,6 +2,7 @@
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.util.indexing.IndexExtension;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
@@ -10,8 +11,14 @@ import java.util.Collection;
  * Provides access to information about underlying indices in a {@link CompilerReferenceIndex} instance.
  */
 public interface CompilerIndexDescriptor<Input> {
+  @NotNull
   Collection<IndexExtension<?, ?, Input>> getIndices();
+  
   int getVersion();
-  File getIndicesDir(File buildDir);
-  File getVersionFile(File buildDir);
+  
+  @NotNull
+  File getIndicesDir(@NotNull File buildDir);
+  
+  @NotNull
+  File getVersionFile(@NotNull File buildDir);
 }

@@ -62,7 +62,7 @@ public class BackwardReferenceIndexWriter extends CompilerReferenceWriter<Compil
       }
       if (isRebuild) {
         CompilerReferenceIndexUtil.removeIndexFiles(buildDir, DESCRIPTOR);
-      } else if (CompilerReferenceIndexUtil.versionDiffers(buildDir, DESCRIPTOR)) {
+      } else if (CompilerReferenceIndexUtil.indexVersionDiffers(buildDir, DESCRIPTOR)) {
         CompilerReferenceIndexUtil.removeIndexFiles(buildDir, DESCRIPTOR);
         if ((attempt == 0 && areAllJavaModulesAffected(context))) {
           throw new BuildDataCorruptedException("backward reference index should be updated to actual version");
@@ -71,7 +71,7 @@ public class BackwardReferenceIndexWriter extends CompilerReferenceWriter<Compil
         }
       }
 
-      if (CompilerReferenceIndexUtil.exists(buildDir, DESCRIPTOR) || isRebuild) {
+      if (CompilerReferenceIndexUtil.indexExists(buildDir, DESCRIPTOR) || isRebuild) {
         ourInstance = new BackwardReferenceIndexWriter(new CompilerBackwardReferenceIndex(buildDir, false));
       }
     } else {
