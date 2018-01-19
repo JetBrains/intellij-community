@@ -464,20 +464,20 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   private void registerToolWindowsFromBeans(List<FinalizableCommand> list) {
     ToolWindowEP[] beans = Extensions.getExtensions(ToolWindowEP.EP_NAME);
     for (ToolWindowEP bean : beans) {
-      Condition<Project> condition = bean.getCondition();
-      if (condition == null || condition.value(myProject)) {
-        list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
-          @Override
-          public void run() {
-            initToolWindow(bean);
-          }
-        });
-      }
+      list.add(new FinalizableCommand(EmptyRunnable.INSTANCE) {
+        @Override
+        public void run() {
+          initToolWindow(bean);
+        }
+      });
     }
   }
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
+    Condition<Project> condition = bean.getCondition();
+    if (condition != null && !condition.value(myProject)) return;
+
     WindowInfoImpl before = myLayout.getInfo(bean.id, false);
     boolean visible = before != null && before.isVisible();
     JLabel label = createInitializingLabel();
