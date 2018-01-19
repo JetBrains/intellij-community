@@ -84,6 +84,14 @@ public abstract class LookupElement extends UserDataHolderBase {
   public void handleInsert(InsertionContext context) {
   }
 
+  /**
+   * @return whether {@link #handleInsert} expects all documents to be committed at the moment of its invocation.
+   * The default is {@code true}, overriders can change that, for example if automatic commit is too slow. 
+   */
+  public boolean requiresCommittedDocuments() {
+    return true;
+  } 
+
   public AutoCompletionPolicy getAutoCompletionPolicy() {
     return AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }

@@ -651,7 +651,9 @@ public class CodeCompletionHandlerBase {
         assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
 
         Project project = indicator.getProject();
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        if (item.requiresCommittedDocuments()) {
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+        }
         item.handleInsert(context);
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }
