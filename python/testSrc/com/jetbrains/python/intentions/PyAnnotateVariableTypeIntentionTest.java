@@ -9,7 +9,27 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
-  public void testAnnotationLocalAssignmentTarget() {
+  public void testAnnotationLocalSimpleAssignmentTarget() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationLocalSimpleAssignmentTargetInParentheses() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationLocalUnpackedAssignmentTarget() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationLocalChainedAssignmentTarget() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationLocalForTarget() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationLocalWithTarget() {
     doTestAnnotation();
   }
 
