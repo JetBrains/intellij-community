@@ -34,4 +34,6 @@ public interface AbstractExtractDialog {
 
   void show();
   boolean isOK();
+
+  default boolean isPreviewUsages() {return false;}
 }
