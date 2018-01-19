@@ -15,11 +15,6 @@ public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecR
     return "rspec";
   }
 
-  @Override
-  public boolean isMatched(@NotNull String commandLine) {
-    return super.isMatched(commandLine) && getArguments(commandLine) != null;
-  }
-
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {

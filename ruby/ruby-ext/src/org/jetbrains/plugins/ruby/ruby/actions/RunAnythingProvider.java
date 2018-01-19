@@ -11,8 +11,9 @@ import org.jetbrains.annotations.Nullable;
 public abstract class RunAnythingProvider {
   public static final ExtensionPointName<RunAnythingProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.ruby.runAnythingConfigurationProvider");
 
-  public abstract boolean isMatched(@NotNull String commandLine);
+  public abstract boolean isMatched(Project project, @NotNull String commandLine, @Nullable VirtualFile workDirectory);
 
+  @NotNull
   public abstract RunnerAndConfigurationSettings createConfiguration(@NotNull Project project,
                                                                      @NotNull String commandLine,
                                                                      @Nullable VirtualFile workingDirectory);

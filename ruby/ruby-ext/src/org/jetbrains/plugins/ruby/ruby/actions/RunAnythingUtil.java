@@ -356,9 +356,9 @@ public class RunAnythingUtil {
     if (pattern.isEmpty()) return;
 
     RunAnythingProvider[] extensions = RunAnythingProvider.EP_NAME.getExtensions();
-    for (RunAnythingProvider RunAnythingProvider : extensions) {
-      if (RunAnythingProvider.isMatched(pattern)) {
-        RunnerAndConfigurationSettings configuration = RunAnythingProvider.createConfiguration(project, pattern, workDirectory);
+    for (RunAnythingProvider provider : extensions) {
+      if (provider.isMatched(project, pattern, workDirectory)) {
+        RunnerAndConfigurationSettings configuration = provider.createConfiguration(project, pattern, workDirectory);
 
         TemporaryConfigurationRunAnythingItem temporaryConfigurationRunAnythingItem =
           new TemporaryConfigurationRunAnythingItem(project, pattern, configuration);

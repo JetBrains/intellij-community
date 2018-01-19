@@ -783,7 +783,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
         String name = null;
         for (RunAnythingProvider provider : RunAnythingProvider.EP_NAME.getExtensions()) {
-          if (provider.isMatched(pattern)) {
+          if (provider.isMatched(getProject(), pattern, getWorkDirectory(getModule()))) {
             name = provider.getConfigurationFactory().getName();
           }
         }
