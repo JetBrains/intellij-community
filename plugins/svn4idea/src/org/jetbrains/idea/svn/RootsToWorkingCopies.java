@@ -98,7 +98,7 @@ public class RootsToWorkingCopies implements VcsListener {
 
   @Nullable
   private WorkingCopy calculateRoot(@NotNull VirtualFile root) {
-    File workingCopyRoot = SvnUtil.getWorkingCopyRootNew(virtualToIoFile(root));
+    File workingCopyRoot = SvnUtil.getWorkingCopyRoot(virtualToIoFile(root));
     WorkingCopy workingCopy = null;
 
     if (workingCopyRoot != null) {

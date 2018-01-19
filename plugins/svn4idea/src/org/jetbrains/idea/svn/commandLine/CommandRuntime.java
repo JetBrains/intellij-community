@@ -190,7 +190,7 @@ public class CommandRuntime {
 
   private void cleanup(@NotNull CommandExecutor executor, @NotNull File workingDirectory) throws SvnBindException {
     if (executor.getCommandName().isWriteable()) {
-      File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
+      File wcRoot = SvnUtil.getWorkingCopyRoot(workingDirectory);
 
       // not all commands require cleanup - for instance, some commands operate only with repository - like "svn info <url>"
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
