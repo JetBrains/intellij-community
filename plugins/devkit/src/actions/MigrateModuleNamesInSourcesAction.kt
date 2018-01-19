@@ -236,9 +236,9 @@ private class ModuleNameUsageTarget(val moduleName: String) : UsageTarget, ItemP
 
 private val regularWordsUsedAsModuleNames = setOf(
   "CloudBees", "AngularJS", "CloudFoundry", "CSS", "CFML", "Docker", "Dart", "EJS", "Guice", "Heroku", "Jade", "Kubernetes", "LiveEdit",
-  "OpenShift", "Meteor", "NodeJS", "Perforce", "TFS", "WSL", "android", "ant", "annotations", "appcode", "asp", "aspectj", "behat", "boot", "bootstrap", "build", "blade",
+  "OpenShift", "Meteor", "NodeJS", "Perforce", "TFS", "WSL", "analyzer", "android", "ant", "annotations", "appcode", "asp", "aspectj", "behat", "boot", "bootstrap", "build", "blade",
   "commandLineTool", "chronon", "codeception", "common", "commander", "copyright", "coverage", "dependencies", "designer", "ddmlib", "doxygen", "draw9patch", "drupal", "duplicates", "drools", "eclipse", "el", "emma", "editorconfig",
-  "extensions", "flex", "gherkin", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",
+  "extensions", "flex", "gherkin", "flags", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",
   "json", "junit", "layoutlib", "less", "localization", "manifest", "main", "markdown", "maven", "ognl", "openapi", "ninepatch", "perflib", "observable", "phing", "php", "phpspec",
   "pixelprobe", "play", "profilers", "properties", "puppet", "postcss", "python", "quirksmode", "repository", "resources", "rs", "relaxng", "restClient", "rest", "ruby", "sass", "sdklib", "seam", "ssh",
   "spellchecker", "stylus", "swift", "terminal", "tomcat", "textmate", "testData", "testFramework", "testng", "testRunner", "twig", "util", "updater", "vaadin", "vagrant", "vuejs", "velocity", "weblogic",
