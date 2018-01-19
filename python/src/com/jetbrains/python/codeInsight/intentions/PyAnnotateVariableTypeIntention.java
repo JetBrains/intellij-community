@@ -95,7 +95,10 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     PyTypeHintGenerationUtil.insertVariableAnnotation(target, annotationText);
   }
 
-  private void insertVariableTypeComment(@NotNull PyTargetExpression target) {
-
+  private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
+    final PyType inferredType = context.getType(target);
+    final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
+    PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText);
   }
 }

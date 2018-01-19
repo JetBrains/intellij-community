@@ -38,4 +38,23 @@ public class PyTypeHintGenerationUtil {
     final PyAssignmentStatement assignment = as(target.getParent(), PyAssignmentStatement.class);
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
+
+  public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull String annotation) {
+    final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
+    final String typeCommentText = "  # type: " + annotation;
+    if (statement instanceof PyAssignmentStatement) {
+      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        document.insertString(statement.getTextRange().getEndOffset(), typeCommentText);
+      });
+    }
+    else if (statement instanceof PyWithStatement || statement instanceof PyForStatement) {
+      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        final PyStatementListContainer container = statement instanceof PyForStatement ?
+                                                   ((PyForStatement)statement).getForPart() :
+                                                   (PyWithStatement)statement;
+        final int endOffset = PyUtil.getHeaderEndAnchor(container).getTextRange().getEndOffset();
+        document.insertString(endOffset, typeCommentText);
+      });
+    }
+  }
 }

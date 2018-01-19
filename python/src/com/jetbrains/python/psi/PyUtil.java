@@ -869,8 +869,13 @@ public class PyUtil {
    */
   @Nullable
   public static PsiComment getCommentOnHeaderLine(@NotNull PyStatementListContainer container) {
+    return as(getHeaderEndAnchor(container), PsiComment.class);
+  }
+
+  @NotNull
+  public static PsiElement getHeaderEndAnchor(@NotNull PyStatementListContainer container) {
     final PyStatementList statementList = container.getStatementList();
-    return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
+    return ObjectUtils.notNull(PyPsiUtils.getPrevNonWhitespaceSibling(statementList));
   }
 
   public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
