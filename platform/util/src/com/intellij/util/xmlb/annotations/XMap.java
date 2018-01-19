@@ -21,8 +21,4 @@ public @interface XMap {
   String keyAttributeName() default Constants.KEY;
 
   String valueAttributeName() default Constants.VALUE;
-
-  boolean surroundKeyWithTag() default false;
-
-  boolean surroundValueWithTag() default false;
 }

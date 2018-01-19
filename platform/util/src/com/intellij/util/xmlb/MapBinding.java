@@ -253,7 +253,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   private boolean isSurroundKey() {
     if (annotation != null) {
-      return annotation.surroundKeyWithTag();
+      return false;
     }
     return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
   }

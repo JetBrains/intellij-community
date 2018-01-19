@@ -12,6 +12,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SoftFactoryMap;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XMap;
 import gnu.trove.TIntLongHashMap;
 import gnu.trove.TIntProcedure;
@@ -105,6 +106,7 @@ public class PropertiesSeparatorManager implements PersistentStateComponent<Prop
   }
 
   public static class PropertiesSeparatorManagerState {
+    @Property(surroundWithTag = false)
     @XMap(keyAttributeName = "url", valueAttributeName = "separator", entryTagName = "file")
     public Map<String, String> mySeparators = new HashMap<>();
 

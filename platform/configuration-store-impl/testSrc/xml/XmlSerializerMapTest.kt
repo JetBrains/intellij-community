@@ -61,7 +61,7 @@ internal class XmlSerializerMapTest {
     @Tag("bean")
     class BeanWithMapAtTopLevel {
       @Property(surroundWithTag = false)
-      @XMap(surroundKeyWithTag = false, surroundValueWithTag = false)
+      @XMap
       var map = LinkedHashMap<String, String>()
 
       var option: String? = null
@@ -80,7 +80,7 @@ internal class XmlSerializerMapTest {
   @Test fun propertyElementName() {
     @Tag("bean")
     class Bean {
-      @XMap(surroundKeyWithTag = false, surroundValueWithTag = false)
+      @XMap
       var map = LinkedHashMap<String, String>()
     }
 
