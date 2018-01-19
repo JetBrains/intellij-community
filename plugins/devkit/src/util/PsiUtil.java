@@ -183,11 +183,7 @@ public class PsiUtil {
     }
 
     GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
-    if (JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) == null) {
-      return false;
-    }
-
-    return true;
+    return JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) != null;
   }
 
   @NotNull
