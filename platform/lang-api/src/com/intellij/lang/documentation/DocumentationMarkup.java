@@ -10,7 +10,7 @@ public interface DocumentationMarkup {
   String CONTENT_END = "</div>";
   String SECTIONS_START = "<table class='sections'>";
   String SECTIONS_END = "</table>";
-  String SECTION_START = "<tr><td valign='top' class='section'>";
+  String SECTION_START = "<tr><td valign='top' class='section'><p>";
   String SECTION_SEPARATOR = "</td><td>";
   String SECTION_END = "</td>";
 }
