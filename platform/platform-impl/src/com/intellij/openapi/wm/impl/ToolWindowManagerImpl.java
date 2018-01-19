@@ -885,7 +885,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
 
-      if (wasActive && moveFocus) {
+      if (wasActive && moveFocus && !myActiveStack.isEmpty()) {
         final String toBeActivatedId = myActiveStack.pop();
         if (getInfo(toBeActivatedId).isVisible() || isStackEnabled()) {
           activateToolWindowImpl(toBeActivatedId, commandList, false, true);
