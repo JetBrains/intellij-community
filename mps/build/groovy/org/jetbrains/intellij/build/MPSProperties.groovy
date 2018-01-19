@@ -44,7 +44,7 @@ class MPSProperties extends ProductProperties {
             layout.customize {
                 withModule("java-runtime", "idea_rt.jar", false)
                 withProjectLibrary("Eclipse")
-                withProjectLibrary("jgoodies-common")
+//                withProjectLibrary("jgoodies-common")
                 withProjectLibrary("commons-net")
                 withProjectLibrary("JUnit4")
                 withProjectLibrary("http-client-3.1")
