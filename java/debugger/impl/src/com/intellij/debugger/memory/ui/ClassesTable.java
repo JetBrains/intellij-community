@@ -194,6 +194,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       @Override
       public void mouseClicked(MouseEvent e) {
         onClick.run();
+        releaseMouseListener();
       }
 
       @Override
