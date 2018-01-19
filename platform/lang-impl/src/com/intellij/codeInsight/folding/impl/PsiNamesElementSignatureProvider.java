@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,8 +19,7 @@ import java.util.StringTokenizer;
  * @since 11/7/11 11:58 AM
  */
 public class PsiNamesElementSignatureProvider extends AbstractElementSignatureProvider {
-  private static final int CHILDREN_COUNT_LIMIT = 100;
-  
+
   private static final String TYPE_MARKER            = "n";
   private static final String TOP_LEVEL_CHILD_MARKER = "!!top";
   private static final String DOC_COMMENT_MARKER     = "!!doc";
@@ -178,14 +175,12 @@ public class PsiNamesElementSignatureProvider extends AbstractElementSignaturePr
   @Nullable
   private static StringBuilder getSignature(@NotNull PsiElement element, @Nullable StringBuilder buffer) {
     if (element instanceof PsiNamedElement) {
-      PsiElement parent = element.getParent();
-      if (parent.getChildren().length > CHILDREN_COUNT_LIMIT) return null; // for performance reasons
       PsiNamedElement named = (PsiNamedElement)element;
       final String name = named.getName();
       if (StringUtil.isEmpty(name)) {
         return null;
       }
-      int index = getChildIndex(named, parent, name, PsiNamedElement.class);
+      int index = getChildIndex(named, element.getParent(), name, PsiNamedElement.class);
       StringBuilder bufferToUse = buffer;
       if (bufferToUse == null) {
         bufferToUse = new StringBuilder();
