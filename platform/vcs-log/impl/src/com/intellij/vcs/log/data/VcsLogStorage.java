@@ -57,6 +57,14 @@ public interface VcsLogStorage {
   void iterateCommits(@NotNull Function<CommitId, Boolean> consumer);
 
   /**
+   * Checks whether the storage contains the commit.
+   *
+   * @param id commit to check
+   * @return true if storage contains the commit, false otherwise
+   */
+  boolean containsCommit(@NotNull CommitId id);
+
+  /**
    * Iterates over known commit ids to find the first one which satisfies given condition.
    *
    * @return matching commit or null if no commit matches the given condition

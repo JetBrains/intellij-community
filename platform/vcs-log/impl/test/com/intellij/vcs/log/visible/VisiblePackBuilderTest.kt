@@ -226,13 +226,14 @@ class VisiblePackBuilderTest {
     fun done() = Graph(commits, refs, data)
   }
 
-  class ConstantVcsLogStorage(val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>, val root: VirtualFile) : VcsLogStorage {
-    val hashesReversed = hashes.entries.map { Pair(it.value, it.key) }.toMap()
+  class ConstantVcsLogStorage(private val hashes: Map<Int, Hash>, val refs: Map<Int, VcsRef>, val root: VirtualFile) : VcsLogStorage {
+    private val hashesReversed = hashes.entries.map { Pair(it.value, it.key) }.toMap()
     val refsReversed = refs.entries.map { Pair(it.value, it.key) }.toMap()
-
     override fun getCommitIndex(hash: Hash, root: VirtualFile) = hashesReversed[hash]!!
 
     override fun getCommitId(commitIndex: Int) = CommitId(hashes[commitIndex]!!, root)
+
+    override fun containsCommit(id: CommitId): Boolean = root == id.root && hashesReversed.containsKey(id.hash)
 
     override fun getVcsRef(refIndex: Int): VcsRef = refs[refIndex]!!
 
