@@ -32,9 +32,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
   private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
-  private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.NOT_SPECIFIED.getName();
+  private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
-  private static final boolean DEFAULT_USE_SINGLE_DICT = false;
+  private static final boolean DEFAULT_USE_SINGLE_DICT = true;
 
   // Paths
   private List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
@@ -178,7 +178,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       }
       myCorrectionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
       myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
-      myUseSingleDictionaryToSave = parseBoolean(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), DEFAULT_USE_SINGLE_DICT);
+      myUseSingleDictionaryToSave =
+        parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)),
+                     DEFAULT_USE_SINGLE_DICT);
     }
     catch (Exception ignored) {
     }
