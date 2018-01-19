@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.StateSplitterEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -35,6 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.*;
 
@@ -113,7 +113,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
 
   @Nullable
   private static ProjectModelExternalSource findExternalSource(Element element) {
-    @Nullable String externalSourceId = element.getAttributeValue(StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE);
+    @Nullable String externalSourceId = element.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE);
     return externalSourceId != null ? ExternalProjectSystemRegistry.getInstance().getSourceById(externalSourceId) : null;
   }
 
@@ -376,7 +376,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
       }
       if (ProjectUtilCore.isExternalStorageEnabled(project)) {
         //we can add this attribute only if the library configuration will be stored separately, otherwise we will get modified files in .idea/libraries.
-        element.setAttribute(StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE, myExternalSource.getId());
+        element.setAttribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE, myExternalSource.getId());
       }
     }
 
