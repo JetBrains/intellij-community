@@ -4,10 +4,12 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -18,15 +20,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer.formatTextWithLinks;
 import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
 public class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
@@ -75,15 +78,14 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String replaceHashes(@NotNull String s, @NotNull Map<String, CommitId> resolvedHashes) {
+  private static String replaceHashes(@NotNull String s, @NotNull Set<String> resolvedHashes) {
     Matcher matcher = HASH_PATTERN.matcher(s);
     StringBuffer result = new StringBuffer();
 
     while (matcher.find()) {
       String hash = matcher.group();
 
-      CommitId commitId = resolvedHashes.get(hash);
-      if (commitId != null) {
+      if (resolvedHashes.contains(hash)) {
         hash = "<a href=\"" + GO_TO_HASH + hash + "\">" + hash + "</a>";
       }
       matcher.appendReplacement(result, hash);
@@ -112,7 +114,7 @@ public class CommitPresentationUtil {
                                          @NotNull String subject,
                                          @NotNull String description,
                                          @NotNull String hashAndAuthor,
-                                         @NotNull Map<String, CommitId> resolvedHashes) {
+                                         @NotNull Set<String> resolvedHashes) {
     Convertor<String, String> convertor = s -> replaceHashes(s, resolvedHashes);
     return "<b>" +
            getHtmlWithFonts(escapeMultipleSpaces(formatTextWithLinks(project, subject, convertor)), Font.BOLD) +
@@ -268,13 +270,13 @@ public class CommitPresentationUtil {
     String description = fullMessage.substring(subject.length());
 
     Set<String> unresolvedHashesForCommit = findHashes(project, subject, description);
-    String text = formatCommitText(project, subject, description, hashAndAuthor, ContainerUtil.newHashMap());
+    String text = formatCommitText(project, subject, description, hashAndAuthor, Collections.emptySet());
     if (unresolvedHashesForCommit.isEmpty()) {
-      return new CommitPresentation(text, Collections.emptyMap());
+      return new CommitPresentation(text, commit.getRoot(), MultiMap.empty());
     }
 
     unresolvedHashes.addAll(unresolvedHashesForCommit);
-    return new UnresolvedPresentation(project, subject, description, hashAndAuthor, text);
+    return new UnresolvedPresentation(project, commit.getRoot(), subject, description, hashAndAuthor, text);
   }
 
   private static class UnresolvedPresentation extends CommitPresentation {
@@ -284,11 +286,12 @@ public class CommitPresentationUtil {
     private final String myHashAndAuthor;
 
     public UnresolvedPresentation(@NotNull Project project,
+                                  @NotNull VirtualFile root,
                                   @NotNull String subject,
                                   @NotNull String description,
                                   @NotNull String hashAndAuthor,
                                   @NotNull String text) {
-      super(text, Collections.emptyMap());
+      super(text, root, MultiMap.empty());
       myProject = project;
       mySubject = subject;
       myDescription = description;
@@ -296,9 +299,9 @@ public class CommitPresentationUtil {
     }
 
     @NotNull
-    public CommitPresentation resolve(@NotNull Map<String, CommitId> resolvedHashes) {
-      String text = formatCommitText(myProject, mySubject, myDescription, myHashAndAuthor, resolvedHashes);
-      return new CommitPresentation(text, resolvedHashes);
+    public CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {
+      String text = formatCommitText(myProject, mySubject, myDescription, myHashAndAuthor, resolvedHashes.keySet());
+      return new CommitPresentation(text, myRoot, resolvedHashes);
     }
 
     @Override
@@ -309,10 +312,13 @@ public class CommitPresentationUtil {
 
   public static class CommitPresentation {
     @NotNull protected final String myText;
-    @NotNull private final Map<String, CommitId> myResolvedHashes;
+    @NotNull protected final VirtualFile myRoot;
+    @NotNull private final MultiMap<String, CommitId> myResolvedHashes;
 
-    public CommitPresentation(@NotNull String text, @NotNull Map<String, CommitId> resolvedHashes) {
+    public CommitPresentation(@NotNull String text,
+                              @NotNull VirtualFile root, @NotNull MultiMap<String, CommitId> resolvedHashes) {
       myText = text;
+      myRoot = root;
       myResolvedHashes = resolvedHashes;
     }
 
@@ -325,11 +331,18 @@ public class CommitPresentationUtil {
     public CommitId parseTargetCommit(@NotNull HyperlinkEvent e) {
       if (!e.getDescription().startsWith(GO_TO_HASH)) return null;
       String hash = e.getDescription().substring(GO_TO_HASH.length());
-      return myResolvedHashes.get(hash);
+      Collection<CommitId> ids = myResolvedHashes.get(hash);
+      if (ids.size() <= 1) return getFirstItem(ids);
+      for (CommitId id : ids) {
+        if (myRoot.equals(id.getRoot())) {
+          return id;
+        }
+      }
+      return getFirstItem(ids);
     }
 
     @NotNull
-    public CommitPresentation resolve(@NotNull Map<String, CommitId> resolvedHashes) {
+    public CommitPresentation resolve(@NotNull MultiMap<String, CommitId> resolvedHashes) {
       return this;
     }
 

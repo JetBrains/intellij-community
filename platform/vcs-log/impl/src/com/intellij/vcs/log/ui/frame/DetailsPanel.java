@@ -32,18 +32,22 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil.CommitPresentation;
 import com.intellij.vcs.log.ui.table.CommitSelectionListener;
@@ -55,8 +59,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresentation;
 
@@ -182,20 +188,32 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
                              @NotNull Condition<Object> expired) {
     if (!unResolvedHashes.isEmpty()) {
       myResolveIndicator = BackgroundTaskUtil.executeOnPooledThread(this, () -> {
-        Map<String, CommitId> resolvedHashes = ContainerUtil.newHashMap();
-        myLogData.getStorage().iterateCommits(commitId -> {
-          Set<String> found = ContainerUtil.newHashSet();
-          for (String hashString : unResolvedHashes) {
+        MultiMap<String, CommitId> resolvedHashes = MultiMap.createSmart();
 
-            if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
-              resolvedHashes.put(hashString, commitId);
-              found.add(hashString);
-              // do not break, check all hashes (we can have several substrings of the same hash)
+        Set<String> fullHashes =
+          ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == HashImpl.FULL_HASH_LENGTH));
+        for (String fullHash : fullHashes) {
+          Hash hash = HashImpl.build(fullHash);
+          for (VirtualFile root : myLogData.getRoots()) {
+            CommitId id = new CommitId(hash, root);
+            if (myLogData.getStorage().containsCommit(id)) {
+              resolvedHashes.putValue(fullHash, id);
             }
           }
-          unResolvedHashes.removeAll(found);
-          return unResolvedHashes.isEmpty();
-        });
+        }
+        unResolvedHashes.removeAll(fullHashes);
+
+        if (!unResolvedHashes.isEmpty()) {
+          myLogData.getStorage().iterateCommits(commitId -> {
+
+            for (String hashString : unResolvedHashes) {
+              if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
+                resolvedHashes.putValue(hashString, commitId);
+              }
+            }
+            return false;
+          });
+        }
 
         List<CommitPresentation> resolvedPresentations = ContainerUtil.map2List(presentations,
                                                                                 presentation -> presentation.resolve(resolvedHashes));
