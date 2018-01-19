@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class SubstringBeforeMacro extends MacroBase {
   public SubstringBeforeMacro() {
-    super("substringBefore", "snakeCase(String, Delimiter)");
+    super("substringBefore", "substringBefore(String, Delimiter)");
   }
 
   @Override
