@@ -49,6 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
@@ -66,6 +67,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -511,13 +513,13 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           myOkActionListener.actionPerformed(null);
         }
         else {
-          navigateToSelectedUsage();
+          navigateToSelectedUsage(null);
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
     DumbAwareAction.create(e -> {
       if (enterAsOK) {
-        navigateToSelectedUsage();
+        navigateToSelectedUsage(null);
       }
       else {
         myOkActionListener.actionPerformed(null);
@@ -537,7 +539,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       new AnAction() {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          navigateToSelectedUsage();
+          navigateToSelectedUsage(e);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(navigationKeyStrokes.toArray(Shortcut.EMPTY_ARRAY)), this);
     }
@@ -584,7 +586,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       @Override
       protected boolean onDoubleClick(MouseEvent event) {
         if (event.getSource() != myResultsPreviewTable) return false;
-        navigateToSelectedUsage();
+        navigateToSelectedUsage(null);
         return true;
       }
     }.installOn(myResultsPreviewTable);
@@ -1245,7 +1247,14 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     model.setFileFilter(mask);
   }
 
-  private void navigateToSelectedUsage() {
+  private void navigateToSelectedUsage(AnActionEvent e) {
+    Navigatable[] navigatables = e != null ? e.getData(CommonDataKeys.NAVIGATABLE_ARRAY) : null;
+    if (navigatables != null) {
+      myBalloon.cancel();
+      OpenSourceUtil.navigate(navigatables);
+      return;
+    }
+
     Map<Integer, Usage> usages = getSelectedUsages();
     if (usages != null) {
       myBalloon.cancel();

@@ -20,7 +20,8 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -28,8 +29,11 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -38,6 +42,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -84,8 +90,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (CommonDataKeys.EDITOR.getName().equals(dataId) && myEditor != null) {
+    if (CommonDataKeys.EDITOR.is(dataId) && myEditor != null) {
       return myEditor;
+    }
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId) && myEditor instanceof EditorEx) {
+      LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
+      VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
+      if (file != null) {
+        return new Navigatable[] {new OpenFileDescriptor(myProject, file, position.line, position.column)};
+      }
     }
     return null;
   }
