@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseIntentionAction {
@@ -48,24 +47,11 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
           final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
           assert target != null;
-          PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-            document.insertString(target.getTextRange().getEndOffset(), ": " + map.get(target));
-          });
+          PyTypeHintGenerationUtil.insertVariableAnnotation(target, map.get(target));
         }
         else {
-          final PyStatement statement = PsiTreeUtil.getParentOfType(typeComment, PyStatement.class);
-          assert statement != null;
-
-          final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-          final List<Map.Entry<PyTargetExpression, String>> entries = new ArrayList<>(map.entrySet());
-
-          for (Map.Entry<PyTargetExpression, String> entry : entries) {
-            final PyTargetExpression target = entry.getKey();
-            final String annotation = entry.getValue();
-            final PyTypeDeclarationStatement declaration = generator.createFromText(LanguageLevel.PYTHON36,
-                                                                                    PyTypeDeclarationStatement.class,
-                                                                                    target.getText() + ": " + annotation);
-            statement.getParent().addBefore(declaration, statement);
+          for (Map.Entry<PyTargetExpression, String> entry : new ArrayList<>(map.entrySet())) {
+            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), entry.getValue());
           }
         }
 

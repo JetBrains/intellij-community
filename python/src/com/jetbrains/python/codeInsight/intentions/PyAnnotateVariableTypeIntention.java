@@ -9,9 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -74,7 +76,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final List<PyTargetExpression> targets = findSuitableTargetsUnderCaret(project, editor, file);
     assert targets.size() == 1;
     final PyTargetExpression annotationTarget = targets.get(0);
-    if (LanguageLevel.forElement(annotationTarget).isAtLeast(LanguageLevel.PYTHON36)) {
+    if (preferSyntacticAnnotation(annotationTarget)) {
       insertVariableAnnotation(annotationTarget);
     }
     else {
@@ -82,8 +84,15 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     }
   }
 
-  private void insertVariableAnnotation(@NotNull PyTargetExpression target) {
+  private static boolean preferSyntacticAnnotation(@NotNull PyTargetExpression annotationTarget) {
+    return LanguageLevel.forElement(annotationTarget).isAtLeast(LanguageLevel.PYTHON36);
+  }
 
+  private static void insertVariableAnnotation(@NotNull PyTargetExpression target) {
+    final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
+    final PyType inferredType = context.getType(target);
+    final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
+    PyTypeHintGenerationUtil.insertVariableAnnotation(target, annotationText);
   }
 
   private void insertVariableTypeComment(@NotNull PyTargetExpression target) {
