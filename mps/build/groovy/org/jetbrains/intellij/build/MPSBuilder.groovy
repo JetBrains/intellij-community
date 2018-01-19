@@ -16,15 +16,11 @@ class MPSBuilder {
     }
 
     def build() {
-        def buildContext = BuildContext.createContext(
-                binding.ant, binding.projectBuilder, binding.project, binding.global,
-                "$home/community", home, new MPSProperties(home)
-        )
+        def buildContext = BuildContext.createContext("$home/community", home, new MPSProperties(home))
         buildContext.getOptions().targetOS = ""
         def buildTasks = BuildTasks.create(buildContext)
         buildTasks.buildDistributions()
 
-        AntBuilder ant = buildContext.ant
         String jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
         new LayoutBuilder(buildContext, false).layout(jpsArtifactDir) {
             jar("jps-build-test.jar") {
