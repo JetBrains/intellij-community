@@ -111,7 +111,13 @@ interface RenderLogTestBase {
                                 uElement.getContainingUFile())
         }
 
-        val anchorPsi = (node as? UDeclaration)?.uastAnchor?.psi
+        val uastAnchor = (node as? UDeclaration)?.uastAnchor
+        if (uastAnchor != null) {
+          TestCase.assertEquals("should be appropriate sourcePsi for uastAnchor for ${node.javaClass} [${node.sourcePsi?.text}] ",
+                                node.sourcePsiElement!!.containingFile!!, uastAnchor.sourcePsi?.containingFile)
+        }
+
+        val anchorPsi = uastAnchor?.psi
         if (anchorPsi != null) {
           TestCase.assertEquals(anchorPsi.containingFile, node.sourcePsiElement!!.containingFile!!)
         }

@@ -16,10 +16,7 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiAnonymousClass
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
@@ -93,6 +90,14 @@ class JavaUAnonymousClass(
 
   override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
     listOf(createJavaUTypeReferenceExpression(psi.baseClassReference)) + super.uastSuperTypes
+  }
+
+  override val uastAnchor: UIdentifier? by lazy {
+    when (javaPsi) {
+      is PsiEnumConstantInitializer ->
+        (javaPsi.parent as? PsiEnumConstant)?.let { UIdentifier(it.nameIdentifier, this) }
+      else -> UIdentifier(psi.baseClassReference.referenceNameElement, this)
+    }
   }
 
   override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
