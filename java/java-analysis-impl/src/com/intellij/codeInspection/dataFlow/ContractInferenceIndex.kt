@@ -30,7 +30,7 @@ import java.util.*
  * @author peter
  */
 
-private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 5, MethodDataExternalizer) { file ->
+private val gist = GistManager.getInstance().newPsiFileGist("contractInference", 6, MethodDataExternalizer) { file ->
   indexFile(file.node.lighterAST)
 }
 
