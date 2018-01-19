@@ -87,6 +87,6 @@ public class GradleRefreshProjectDependenciesAction extends RefreshExternalProje
                                         .useDefaultCallback()
                                         .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
                                         .withArguments("--refresh-dependencies")
-                                        .build());
+                                        .build(), true);
   }
 }

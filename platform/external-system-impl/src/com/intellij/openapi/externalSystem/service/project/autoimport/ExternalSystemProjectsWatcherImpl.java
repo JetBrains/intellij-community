@@ -449,7 +449,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
           // Do nothing.
         }
-      }, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, reportRefreshError);
+      }, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, reportRefreshError, true);
   }
 
   private static void makeUserAware(final MergingUpdateQueue mergingUpdateQueue, final Project project) {

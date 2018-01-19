@@ -253,7 +253,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
           .createDirectoriesForEmptyContentRoots()
           .useDefaultCallback()
           .build();
-        ExternalSystemUtil.refreshProject(rootProjectPath, importSpec);
+        ExternalSystemUtil.refreshProject(rootProjectPath, importSpec, true);
 
         final PsiFile psiFile;
         if (finalBuildScriptFile != null) {

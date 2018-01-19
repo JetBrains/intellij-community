@@ -192,7 +192,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
 
   @Override
   public void refreshProject(@NotNull final String externalProjectPath, @NotNull final ImportSpec importSpec) {
-    ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
+    ExternalSystemUtil.refreshProject(externalProjectPath, importSpec, true);
   }
 
   @Override
