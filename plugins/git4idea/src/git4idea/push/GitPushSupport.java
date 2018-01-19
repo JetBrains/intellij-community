@@ -87,11 +87,6 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
       return null;
     }
 
-    GitPushTarget persistedTarget = getPersistedTarget(repository, currentBranch);
-    if (persistedTarget != null) {
-      return persistedTarget;
-    }
-
     GitPushTarget pushSpecTarget = GitPushTarget.getFromPushSpec(repository, currentBranch);
     if (pushSpecTarget != null) {
       return pushSpecTarget;
@@ -102,12 +97,6 @@ public class GitPushSupport extends PushSupport<GitRepository, GitPushSource, Gi
       return new GitPushTarget(trackInfo.getRemoteBranch(), false);
     }
     return proposeTargetForNewBranch(repository, currentBranch);
-  }
-
-  @Nullable
-  private GitPushTarget getPersistedTarget(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
-    GitRemoteBranch target = mySettings.getPushTarget(repository, branch.getName());
-    return target == null ? null : new GitPushTarget(target, !repository.getBranches().getRemoteBranches().contains(target));
   }
 
   private static GitPushTarget proposeTargetForNewBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch currentBranch) {
