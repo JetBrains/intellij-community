@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
@@ -8,7 +6,6 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
@@ -54,5 +51,5 @@ val Project.isExternalStorageEnabled: Boolean
   get() {
     val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
     val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
-    return manager.isStoredExternally || Registry.`is`("store.imported.project.elements.separately", false)
+    return manager.isStoredExternally
   }
