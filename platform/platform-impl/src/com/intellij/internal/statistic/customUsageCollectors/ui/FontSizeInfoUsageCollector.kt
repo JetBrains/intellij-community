@@ -16,6 +16,7 @@
 package com.intellij.internal.statistic.customUsageCollectors.ui
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.CollectUsagesException
 import com.intellij.internal.statistic.UsagesCollector
 import com.intellij.internal.statistic.beans.GroupDescriptor
@@ -53,6 +54,12 @@ class FontSizeInfoUsageCollector : UsagesCollector() {
       usages += setOf(
         UsageDescriptor("Console font size: ${scheme.consoleFontSize}"),
         UsageDescriptor("Console font name: ${scheme.consoleFontName}")
+      )
+    }
+    val quickDocFontSize = PropertiesComponent.getInstance().getValue("quick.doc.font.size")
+    if (quickDocFontSize != null) {
+      usages += setOf(
+        UsageDescriptor("QuickDoc font size:" + quickDocFontSize)
       )
     }
     return usages
