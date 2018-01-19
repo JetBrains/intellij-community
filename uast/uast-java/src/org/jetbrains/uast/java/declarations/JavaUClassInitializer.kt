@@ -23,13 +23,13 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 class JavaUClassInitializer(
   psi: PsiClassInitializer,
   uastParent: UElement?
-) : JavaAbstractUElement(uastParent), UClassInitializer, JavaUElementWithComments, PsiClassInitializer by psi {
+) : JavaAbstractUElement(uastParent), UClassInitializer, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by psi {
   override val psi
     get() = javaPsi
 
   override val javaPsi = unwrap<UClassInitializer, PsiClassInitializer>(psi)
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
     get() = null
 
   override val uastBody by lz {

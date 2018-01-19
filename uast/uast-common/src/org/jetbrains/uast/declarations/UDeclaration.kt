@@ -58,3 +58,14 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
 }
 
 fun UElement.getContainingDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+
+/**
+ * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]
+ *
+ * Note: [UDeclaration] and [UAnnotation] will extend this interface after all implementations will do
+ */
+interface UAnchorOwner : UElement {
+
+  val uastAnchor: UIdentifier?
+
+}

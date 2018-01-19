@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.uast.*
 
 class GrUClass(val grElement: GrTypeDefinition,
-               parentProvider: () -> UElement?) : UClassTypeSpecific, JvmDeclarationUElement, PsiClass by grElement {
+               parentProvider: () -> UElement?) : UClassTypeSpecific, JvmDeclarationUElement, UAnchorOwner, PsiClass by grElement {
 
   override val sourcePsi = grElement
 
@@ -32,7 +32,7 @@ class GrUClass(val grElement: GrTypeDefinition,
     }
   }
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val uastParent by lazy(parentProvider)
@@ -54,7 +54,7 @@ class GrUClass(val grElement: GrTypeDefinition,
 
 
 class GrUMethod(val grElement: GrMethod,
-                parentProvider: () -> UElement?) : UMethodTypeSpecific, JvmDeclarationUElement, PsiMethod by grElement {
+                parentProvider: () -> UElement?) : UMethodTypeSpecific, JvmDeclarationUElement, UAnchorOwner, PsiMethod by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 
   override val sourcePsi: PsiElement = grElement
@@ -68,7 +68,7 @@ class GrUMethod(val grElement: GrMethod,
 
   override val isOverride: Boolean by lazy { psi.modifierList.findAnnotation("java.lang.Override") != null }
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }
@@ -80,7 +80,7 @@ class GrUMethod(val grElement: GrMethod,
 }
 
 class GrUParameter(val grElement: GrParameter,
-                   parentProvider: () -> UElement?) : UParameter, JvmDeclarationUElement, PsiParameter by grElement {
+                   parentProvider: () -> UElement?) : UParameter, JvmDeclarationUElement, UAnchorOwner, PsiParameter by grElement {
   override val uastParent: UElement? by lazy(parentProvider)
 
   override val sourcePsi: PsiElement = grElement
@@ -95,7 +95,7 @@ class GrUParameter(val grElement: GrParameter,
 
   override val typeReference: UTypeReferenceExpression? = null //not implemented
 
-  override val uastAnchor: UElement
+  override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)
 
   override val annotations: List<UAnnotation> by lazy { grAnnotations(grElement.modifierList, this) }

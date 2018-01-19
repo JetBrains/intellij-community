@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(
-  givenParent), UClassTypeSpecific, JavaUElementWithComments {
+  givenParent), UClassTypeSpecific, JavaUElementWithComments, UAnchorOwner {
 
   abstract override val javaPsi: PsiClass
 
@@ -48,7 +48,7 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
     psi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
   }
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
     get() = UIdentifier(psi.nameIdentifier, this)
 
   override val annotations: List<UAnnotation>
@@ -59,7 +59,7 @@ abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement
 }
 
 class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) :
-  AbstractJavaUClass(givenParent), PsiClass by psi {
+  AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by psi {
 
   override val psi: PsiClass
     get() = javaPsi
@@ -85,7 +85,7 @@ class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) 
 class JavaUAnonymousClass(
   psi: PsiAnonymousClass,
   uastParent: UElement?
-) : AbstractJavaUClass(uastParent), UAnonymousClass, PsiAnonymousClass by psi {
+) : AbstractJavaUClass(uastParent), UAnonymousClass, UAnchorOwner, PsiAnonymousClass by psi {
   override val psi
     get() = javaPsi
 
