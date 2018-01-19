@@ -49,7 +49,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
     }
     int w = c.getWidth();
     int h = c.getHeight();
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, c.hasFocus());
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
@@ -113,7 +113,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     Dimension size = super.getPreferredSize(c);
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       Icon icon = MacIntelliJIconCache.getIcon("helpButton", false, false);
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else if (c.getBorder() instanceof MacIntelliJButtonBorder || isComboButton(c)) {

@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -296,7 +295,7 @@ public class HelpTooltip implements Disposable {
     tipPanel.setBorder(isMultiline ? DEFAULT_BORDER : SMALL_BORDER);
 
     myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
-    neverHide = neverHide || DarculaButtonUI.isHelpButton(component);
+    neverHide = neverHide || UIUtil.isHelpButton(component);
 
     myPopupBuilder = JBPopupFactory.getInstance().
       createComponentPopupBuilder(tipPanel, null).

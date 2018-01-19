@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -66,7 +67,7 @@ public class DarculaButtonPainter implements Border, UIResource {
         int diam = JBUI.scale(22);
         if (c.hasFocus()) {
           int off = JBUI.scale(2);
-          if (DarculaButtonUI.isHelpButton((JComponent)c)) {
+          if (UIUtil.isHelpButton((JComponent)c)) {
             g2.translate(off, (height - diam) / 2.0 - off);
             DarculaUIUtil.paintFocusBorder(g2, width - off * 2, diam + off * 2, diam / 2.0f + 2.0f * off , true);
           }
@@ -83,7 +84,7 @@ public class DarculaButtonPainter implements Border, UIResource {
           int h = c.getHeight();
 
           g2.setPaint(getBorderColor());
-          if (DarculaButtonUI.isHelpButton((JComponent)c)) {
+          if (UIUtil.isHelpButton((JComponent)c)) {
             g2.drawOval((w - diam) / 2, (h - diam) / 2, diam, diam);
           }
           else {

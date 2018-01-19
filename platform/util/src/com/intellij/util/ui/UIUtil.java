@@ -4239,4 +4239,8 @@ public class UIUtil {
   private static Window findWindowAncestor(@NotNull Component c) {
     return c instanceof Window ? (Window)c : SwingUtilities.getWindowAncestor(c);
   }
+
+  public static boolean isHelpButton(JComponent button) {
+    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
+  }
 }

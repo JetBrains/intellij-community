@@ -64,10 +64,6 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
   }
 
-  public static boolean isHelpButton(JComponent button) {
-    return button instanceof JButton && "help".equals(button.getClientProperty("JButton.buttonType"));
-  }
-
   /**
    * Paints additional buttons decorations
    * @param g Graphics
@@ -78,7 +74,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
     int w = c.getWidth();
     int h = c.getHeight();
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, h, getButtonColor2()));
       int off = JBUI.scale(22);
       int x = (w - off) / 2;
@@ -131,7 +127,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
-    if (isHelpButton(c)) {
+    if (UIUtil.isHelpButton(c)) {
       return;
     }
     
