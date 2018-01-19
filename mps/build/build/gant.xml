@@ -167,6 +167,7 @@
 
     <!-- Exists as standalone task for TeamCity build -->
     <target name="compile" description="Runs building script.">
+        <ant antfile="${community.folder}/build/gant.xml" target="init" inheritall="true" inheritrefs="true"/>
         <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true"/>
     </target>
 
