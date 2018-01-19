@@ -8,6 +8,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * ```xml
+ * <option value="$value" />
+ * ... n item elements
+ * ```
+ *
+ * Where `option` it is item element (use `elementName` to customize element name) and
+ * `value` it is value attribute (use `valueAttributeName` to customize attribute name).
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE, ElementType.METHOD})
 public @interface XMap {

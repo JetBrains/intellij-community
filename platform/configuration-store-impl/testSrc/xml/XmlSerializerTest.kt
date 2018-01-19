@@ -36,6 +36,7 @@ import java.util.*
 @Suite.SuiteClasses(
   XmlSerializerTest::class,
   XmlSerializerMapTest::class,
+  XmlSerializerOldMapAnnotationTest::class,
   XmlSerializerCollectionTest::class,
   StoredPropertyStateTest::class,
   KotlinXmlSerializerTest::class,
