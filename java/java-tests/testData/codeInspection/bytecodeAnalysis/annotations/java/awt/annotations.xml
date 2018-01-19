@@ -119,11 +119,6 @@
     <item name='java.awt.Component boolean isSameOrAncestorOf(java.awt.Component, boolean) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.awt.Component boolean isValid()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.awt.Component boolean isVisible()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -586,11 +581,6 @@
         </annotation>
     </item>
     <item name='java.awt.Window boolean isAlwaysOnTop()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.awt.Window boolean isAutoRequestFocus()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
