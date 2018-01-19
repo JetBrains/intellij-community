@@ -99,7 +99,7 @@ public class AttachToLocalProcessAction extends AnAction {
               debuggerName = StringUtil.shortenTextWithEllipsis(debuggerName, 50, 0);
               popup.setCaption(XDebuggerBundle.message("xdebugger.attach.toLocal.popup.title", debuggerName));
               String description = attachItem.getTooltipText(project);
-              popup.setAdText(description != null ? description : "");
+              popup.setAdText(description != null ? description : " ");
             }
           };
           popup.addListSelectionListener(listener);
