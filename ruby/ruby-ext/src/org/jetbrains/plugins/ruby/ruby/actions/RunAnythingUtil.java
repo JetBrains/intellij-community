@@ -368,10 +368,6 @@ public class RunAnythingUtil {
       }
     }
 
-    Collection<String> commands = RunAnythingCache.getInstance(project).getState().undefinedCommands;
-    commands.remove(pattern);
-    commands.add(pattern);
-
     RunAnythingUndefinedItem undefinedRunAnythingItem = new RunAnythingUndefinedItem(project, module, StringUtil.trim(pattern));
     undefinedRunAnythingItem.run(getExecutor(), workDirectory);
   }

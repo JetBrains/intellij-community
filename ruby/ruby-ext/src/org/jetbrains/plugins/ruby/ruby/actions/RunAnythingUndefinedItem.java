@@ -20,6 +20,7 @@ import org.jetbrains.plugins.ruby.version.management.rbenv.gemsets.RbenvGemsetMa
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -40,6 +41,10 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
 
   @Override
   public void run(@NotNull Executor executor, @Nullable VirtualFile workDirectory) {
+    Collection<String> commands = RunAnythingCache.getInstance(myProject).getState().undefinedCommands;
+    commands.remove(myCommandLine);
+    commands.add(myCommandLine);
+
     Sdk sdk = RModuleUtil.getInstance().findRubySdkForModule(myModule);
 
     String command = myCommandLine;
