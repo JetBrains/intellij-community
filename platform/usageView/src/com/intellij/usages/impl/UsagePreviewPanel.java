@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -93,7 +94,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (CommonDataKeys.EDITOR.is(dataId) && myEditor != null) {
       return myEditor;
     }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId) && myEditor instanceof EditorEx) {
+    if (Registry.is("ide.find.preview.navigate.to.caret") && CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId) && myEditor instanceof EditorEx) {
       LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
       VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
       if (file != null) {
