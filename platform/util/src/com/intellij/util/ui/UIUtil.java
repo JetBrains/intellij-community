@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -544,11 +544,8 @@ public class UIUtil {
     }
   }
 
-  public static boolean isRetina (Graphics2D graphics) {
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
-      return DetectRetinaKit.isMacRetina(graphics);
-    }
-    return isRetina();
+  public static boolean isRetina(Graphics2D graphics) {
+    return SystemInfo.isMac ? DetectRetinaKit.isMacRetina(graphics) : isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -565,32 +562,23 @@ public class UIUtil {
 
     if (Registry.is("new.retina.detection")) {
       return DetectRetinaKit.isRetina();
-    } else {
+    }
+    else {
       synchronized (ourRetina) {
         if (ourRetina.isNull()) {
           ourRetina.set(false); // in case HiDPIScaledImage.drawIntoImage is not called for some reason
 
-          if (SystemInfo.isJavaVersionAtLeast("1.6.0_33") && SystemInfo.isAppleJvm) {
-            if (!"false".equals(System.getProperty("ide.mac.retina"))) {
-              ourRetina.set(IsRetina.isRetina());
-              return ourRetina.get();
+          try {
+            GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            final GraphicsDevice device = env.getDefaultScreenDevice();
+            Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
+            if (scale != null && scale.intValue() == 2) {
+              ourRetina.set(true);
+              return true;
             }
           }
-          else if (SystemInfo.isJavaVersionAtLeast("1.7.0_40") /*&& !SystemInfo.isOracleJvm*/) {
-            try {
-              GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-              final GraphicsDevice device = env.getDefaultScreenDevice();
-              Integer scale = ReflectionUtil.getField(device.getClass(), device, int.class, "scale");
-              if (scale != null && scale.intValue() == 2) {
-                ourRetina.set(true);
-                return true;
-              }
-            }
-            catch (AWTError ignore) {
-            }
-            catch (Exception ignore) {
-            }
-          }
+          catch (AWTError ignore) { }
+          catch (Exception ignore) { }
           ourRetina.set(false);
         }
 
@@ -712,7 +700,7 @@ public class UIUtil {
     char c = e.getKeyChar();
     if (c < 0x20 || c == 0x7F) return false;
 
-    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4 
+    // Allow input of special characters on Windows in Persian keyboard layout using Ctrl+Shift+1..4
     if (SystemInfo.isWindows && c >= 0x200C && c <= 0x200F) return true;
 
     if (SystemInfo.isMac) {
@@ -3803,12 +3791,10 @@ public class UIUtil {
     }
   }
 
-  public static void setAutoRequestFocus (final Window onWindow, final boolean set){
-    if (SystemInfo.isMac) return;
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+  public static void setAutoRequestFocus(final Window onWindow, final boolean set) {
+    if (!SystemInfo.isMac) {
       try {
-        Method setAutoRequestFocusMethod  = onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class);
-        setAutoRequestFocusMethod.invoke(onWindow, set);
+        onWindow.getClass().getMethod("setAutoRequestFocus", boolean.class).invoke(onWindow, set);
       }
       catch (NoSuchMethodException e) { LOG.debug(e); }
       catch (InvocationTargetException e) { LOG.debug(e); }

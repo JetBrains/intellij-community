@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -183,7 +181,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Nullable private MouseEvent myMousePressedEvent;
   @Nullable private MouseEvent myMouseMovedEvent;
-  
+
   private final MouseListener myMouseListener = new MyMouseAdapter();
   private final MouseMotionListener myMouseMotionListener = new MyMouseMotionListener();
 
@@ -555,10 +553,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     updateCaretCursor();
 
-    if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
+    if (SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
     }
-    
+
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
 
     PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
@@ -576,7 +574,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
     Rectangle oldRectangle = e.getOldRectangle();
     Rectangle newRectangle = e.getNewRectangle();
-    if (!myScrollingToCaret && 
+    if (!myScrollingToCaret &&
         oldRectangle != null && oldRectangle.height != newRectangle.height && oldRectangle.y == newRectangle.y && newRectangle.height > 0) {
       int caretY = myView.visualLineToY(myCaretModel.getVisualPosition().line);
       if (caretY < oldRectangle.getMaxY() && caretY > newRectangle.getMaxY()) {
@@ -1346,7 +1344,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   int offsetToVisualLine(int offset) {
     return myView.offsetToVisualLine(offset, false);
   }
-  
+
   public int visualLineStartOffset(int visualLine) {
     return myView.visualLineToOffset(visualLine);
   }
@@ -1406,7 +1404,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void repaint(int startOffset, int endOffset) {
     repaint(startOffset, endOffset, true);
   }
-  
+
   void repaint(int startOffset, int endOffset, boolean invalidateTextLayout) {
     if (myDocument.isInBulkUpdate()) {
       return;
@@ -1468,7 +1466,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myView.getPreferredSize(); // make sure size is calculated (in case it will be required while bulk mode is active)
 
     myScrollingModel.onBulkDocumentUpdateStarted();
-    
+
     saveCaretRelativePosition();
 
     myCaretModel.onBulkDocumentUpdateStarted();
@@ -1497,7 +1495,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void beforeChangedUpdate() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    
+
     myDocumentChangeInProgress = true;
     if (isStickySelection()) {
       setStickySelection(false);
@@ -1581,7 +1579,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void restoreCaretRelativePosition() {
-    Point newLocation = myTopLeftCornerMarker == null || !myTopLeftCornerMarker.isValid() 
+    Point newLocation = myTopLeftCornerMarker == null || !myTopLeftCornerMarker.isValid()
                         ? visualPositionToXY(getCaretModel().getVisualPosition())
                         : offsetToXY(myTopLeftCornerMarker.getStartOffset());
     getScrollingModel().disableAnimation();
@@ -1627,7 +1625,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   void validateSize() {
     if (isReleased) return;
-    
+
     Dimension dim = getPreferredSize();
 
     if (!dim.equals(myPreferredSize) && !myDocument.isInBulkUpdate()) {
@@ -1876,7 +1874,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public CharSequence getPlaceholder() {
     return myPlaceholderText;
   }
-  
+
   @Override
   public void setShowPlaceholderWhenFocused(boolean show) {
     myShowPlaceholderWhenFocused = show;
@@ -2244,7 +2242,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myGutterComponent.setActiveFoldRegion(null);
       if (myEditorComponent.isCursorSet()) {
         Cursor cursor = myEditorComponent.getCursor();
-        if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) && 
+        if (cursor != Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR) &&
             cursor != Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) &&
             cursor != EMPTY_CURSOR &&
             (!SystemInfo.isMac || cursor != MacUIUtil.getInvertedTextCursor())) {
@@ -2432,7 +2430,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 if (mySettings.isDndEnabled()) {
                   boolean isCopy = UIUtil.isControlKeyDown(e) || isViewer() || !getDocument().isWritable();
                   mySavedCaretOffsetForDNDUndoHack = oldCaretOffset;
-                  getContentComponent().getTransferHandler().exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY 
+                  getContentComponent().getTransferHandler().exportAsDrag(getContentComponent(), e, isCopy ? TransferHandler.COPY
                                                                                                            : TransferHandler.MOVE);
                 }
                 else {
@@ -3458,7 +3456,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
       if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
-          (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") && 
+          (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
                                                                    (e.getCommittedCharacterCount() > 0 || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
@@ -3600,7 +3598,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       else {
         processMousePressed(e);
       }
-      
+
       invokePopupIfNeeded(event);
     }
 
@@ -3782,7 +3780,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       int newEnd = mySelectionModel.getSelectionEnd();
 
       myMouseSelectedRegion = myFoldingModel.getFoldingPlaceholderAt(new Point(x, y));
-      myMousePressedInsideSelectionForDrag = mySettings.isDndEnabled() && mySelectionModel.hasSelection() && 
+      myMousePressedInsideSelectionForDrag = mySettings.isDndEnabled() && mySelectionModel.hasSelection() &&
                                              caretOffset >= mySelectionModel.getSelectionStart() &&
                                              caretOffset <= mySelectionModel.getSelectionEnd();
 
@@ -3814,7 +3812,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
         }
         else {
-          if (!myMousePressedInsideSelectionForDrag && getSelectionModel().hasSelection() && !isCreateRectangularSelectionEvent(e) && 
+          if (!myMousePressedInsideSelectionForDrag && getSelectionModel().hasSelection() && !isCreateRectangularSelectionEvent(e) &&
               !JBSwingUtilities.isRightMouseButton(e)) {
             setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
             mySelectionModel.setSelection(caretOffset, caretOffset);
@@ -4079,7 +4077,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorColorsScheme delegate = getDelegate();
       String editorFontName = getEditorFontName();
       int editorFontSize = getEditorFontSize();
-      updatePreferences(myFontPreferences, editorFontName, editorFontSize, 
+      updatePreferences(myFontPreferences, editorFontName, editorFontSize,
                         delegate == null ? null : delegate.getFontPreferences());
       String consoleFontName = getConsoleFontName();
       int consoleFontSize = getConsoleFontSize();
@@ -4406,7 +4404,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Component comp = support.getComponent();
       return comp instanceof JComponent && handleDrop(getEditor((JComponent)comp), support.getTransferable(), support.getDropAction());
     }
-    
+
     @Override
     public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
       Editor editor = getEditor(comp);
@@ -4719,14 +4717,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private static class NullEditorHighlighter extends EmptyEditorHighlighter {
     private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
-  
+
     NullEditorHighlighter() {
       super(NULL_ATTRIBUTES);
     }
-  
+
     @Override
     public void setAttributes(TextAttributes attributes) {}
-  
+
     @Override
     public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
   }

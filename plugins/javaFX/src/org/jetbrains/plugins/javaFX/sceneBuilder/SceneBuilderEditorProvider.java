@@ -6,7 +6,6 @@ import com.intellij.openapi.fileEditor.FileEditorPolicy;
 import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +22,7 @@ public class SceneBuilderEditorProvider implements FileEditorProvider, DumbAware
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) &&
-           SystemInfo.isJavaVersionAtLeast("1.8") &&
-           Registry.is("embed.scene.builder");
+    return JavaFxFileTypeFactory.FXML_EXTENSION.equalsIgnoreCase(file.getExtension()) && Registry.is("embed.scene.builder");
   }
 
   @NotNull
