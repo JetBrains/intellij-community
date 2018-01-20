@@ -509,7 +509,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setCancelOnClickOutside(!hasLookup) // otherwise selecting lookup items by mouse would close the doc
       .setModalContext(false)
       .setCancelCallback(() -> {
+        if (MenuSelectionManager.defaultManager().getSelectedPath().length > 0) {
+          return false;
+        }
         myCloseOnSneeze = false;
+
         if (closeCallback != null) {
           closeCallback.run();
         }
