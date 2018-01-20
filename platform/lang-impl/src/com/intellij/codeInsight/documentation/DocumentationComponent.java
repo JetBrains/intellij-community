@@ -741,7 +741,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void updateControlState() {
-    if (Registry.is("documentation.show.toolbar")) {
+    if (myHint != null && Registry.is("documentation.show.toolbar")) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
       removeCornerMenu();
