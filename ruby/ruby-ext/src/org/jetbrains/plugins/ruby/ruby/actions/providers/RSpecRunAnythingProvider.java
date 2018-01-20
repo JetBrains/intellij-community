@@ -1,12 +1,17 @@
 package org.jetbrains.plugins.ruby.ruby.actions.providers;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ruby.testing.rspec.run.RSpecRunConfiguration;
 import org.jetbrains.plugins.ruby.testing.rspec.run.RSpecRunConfigurationType;
 
-import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
+import java.io.File;
+import java.util.List;
+
+import static org.jetbrains.plugins.ruby.testing.rspec.run.RSpecRunCommandLineState.RSPEC_EXAMPLE_NAME_KEY;
 
 public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecRunConfiguration> {
   @NotNull
@@ -25,6 +30,20 @@ public class RSpecRunAnythingProvider extends RubyRunAnythingProviderBase<RSpecR
   void extendConfiguration(@NotNull RSpecRunConfiguration configuration,
                            @NotNull VirtualFile baseDirectory,
                            @NotNull String commandLine) {
-    configuration.setTestScriptPath(baseDirectory.getPath() + VFS_SEPARATOR_CHAR + getArguments(commandLine));
+
+    List<String> options = ContainerUtil.newArrayList();
+    for (String argument : StringUtil.split(getArguments(commandLine), " ")) {
+      if (RSPEC_EXAMPLE_NAME_KEY.equals(argument)) {
+        configuration.setExampleNameFilter(argument);
+      }
+      else if (argument.startsWith("-") && argument.length() > 1 || argument.startsWith("--") && argument.length() > 2) {
+        options.add(argument);
+        continue;
+      }
+
+      configuration.setTestScriptPath(new File(baseDirectory.getPath(), argument).getAbsolutePath());
+    }
+
+    appendParameters(parameter -> configuration.setRunnerOptions(parameter), () -> configuration.getRunnerOptions(), options);
   }
 }

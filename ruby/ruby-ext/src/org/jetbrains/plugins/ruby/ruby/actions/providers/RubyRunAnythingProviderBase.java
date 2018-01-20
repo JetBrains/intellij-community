@@ -4,12 +4,16 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.actions.RunAnythingProvider;
 import org.jetbrains.plugins.ruby.ruby.run.configuration.AbstractRubyRunConfiguration;
+
+import java.util.List;
 
 public abstract class RubyRunAnythingProviderBase<T extends AbstractRubyRunConfiguration> extends RunAnythingProvider {
   @Override
@@ -55,5 +59,11 @@ public abstract class RubyRunAnythingProviderBase<T extends AbstractRubyRunConfi
     extendConfiguration((T)templateConfiguration, baseDir, commandLine);
 
     return settings;
+  }
+
+  protected static void appendParameters(@NotNull Consumer<String> set, @NotNull Computable<String> predefined,
+                                         @NotNull List<String> parameters) {
+    String defaults = predefined.compute();
+    set.consume((StringUtil.isEmpty(defaults) ? "" : defaults + " ") + StringUtil.join(parameters, " "));
   }
 }
