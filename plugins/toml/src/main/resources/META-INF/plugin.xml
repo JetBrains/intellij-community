@@ -2,7 +2,7 @@
     <id>org.toml.lang</id>
     <name>Toml</name>
     <version>0.0.1</version>
-    <idea-version since-build="162" until-build="173.*"/>
+    <idea-version since-build="162" until-build="181.*"/>
 
     <vendor url="https://github.com/intellij-rust/intellij-rust"/>
 
