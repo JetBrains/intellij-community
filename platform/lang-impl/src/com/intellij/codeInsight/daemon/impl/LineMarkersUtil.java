@@ -102,10 +102,10 @@ class LineMarkersUtil {
     RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
     if (highlighter == null) {
       highlighter = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.LINES_IN_RANGE);
-    }
-    MarkupEditorFilter editorFilter = info.getEditorFilter();
-    if (editorFilter != MarkupEditorFilter.EMPTY) {
-      highlighter.setEditorFilter(editorFilter);
+      MarkupEditorFilter editorFilter = info.getEditorFilter();
+      if (editorFilter != MarkupEditorFilter.EMPTY) {
+        highlighter.setEditorFilter(editorFilter);
+      }
     }
     highlighter.putUserData(LINE_MARKER_INFO, info);
     LineMarkerInfo.LineMarkerGutterIconRenderer newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
