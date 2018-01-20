@@ -145,3 +145,18 @@ class Annotations2 extends Annotations1{
     super.m();
   }
 }
+///////////////
+interface XX {
+  void x();
+}
+interface YY {
+  default void x() {
+    System.out.println();
+  }
+}
+class ZZ implements YY, XX {
+  @Override
+  public void x() {
+    YY.super.x();
+  }
+}

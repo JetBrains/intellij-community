@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 Bas Leijdekkers
+ * Copyright 2005-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,14 +86,15 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       final PsiCodeBlock body = method.getBody();
-      if (body == null) {
+      if (body == null || method.getNameIdentifier() == null) {
         return;
       }
-      if (method.getNameIdentifier() == null) {
+      final PsiMethod[] methods = method.findSuperMethods();
+      if (methods.length == 0) {
         return;
       }
-      final PsiMethod superMethod = MethodUtils.getSuper(method);
-      if (superMethod == null) {
+      final PsiMethod superMethod = methods[0];
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && methods.length > 1) {
         return;
       }
       if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
