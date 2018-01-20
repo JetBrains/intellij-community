@@ -1,8 +1,6 @@
 package org.jetbrains.plugins.ruby.ruby.actions;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -47,9 +45,10 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
     String command = myCommandLine;
     Map<String, String> env = ContainerUtil.newHashMap();
     if (RVMSupportUtil.isRVMInterpreter(sdk)) {
-      command = getRVMAwareCommand(sdk, myCommandLine);
-    } else if (RbenvGemsetManager.isRbenvSdk(sdk)) {
-      command = getRbenvAwareCommand(sdk, myCommandLine, myModule, env);
+      command = getRVMAwareCommand(sdk);
+    }
+    else if (RbenvGemsetManager.isRbenvSdk(sdk)) {
+      command = getRbenvAwareCommand(sdk, env);
     }
 
     final MergingCommandLineArgumentsProvider argumentsProvider =
@@ -62,13 +61,10 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
                       argumentsProvider, null, false);
   }
 
-  private static String getRbenvAwareCommand(@NotNull Sdk sdk,
-                                             @NotNull String commandLine,
-                                             @Nullable Module module,
-                                             @NotNull Map<String, String> env) {
-    String exeCommand = commandLine.contains(" ") ? StringUtil.substringBefore(commandLine, " ") : commandLine;
+  private String getRbenvAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env) {
+    String exeCommand = myCommandLine.contains(" ") ? StringUtil.substringBefore(myCommandLine, " ") : myCommandLine;
     String shimsExec = RbenvGemsetManager.getShimsCommandPath(Objects.requireNonNull(exeCommand));
-    if (shimsExec == null) return commandLine;
+    if (shimsExec == null) return myCommandLine;
 
     for (String shim : Objects.requireNonNull(new File(shimsExec).getParentFile().list())) {
       if (shim.equals(exeCommand)) {
@@ -77,45 +73,21 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
       }
     }
 
-    if (shimsExec == null) return commandLine;
+    if (shimsExec == null || !RunAnythingCache.getInstance(myProject).CAN_RUN_RBENV) return myCommandLine;
 
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine(shimsExec);
-    try {
-      generalCommandLine.createProcess();
-    }
-    catch (ExecutionException e) {
-      return commandLine;
-    }
+    RubyAbstractRunner.patchRbenvEnv(env, myModule, sdk);
 
-    RubyAbstractRunner.patchRbenvEnv(env, module, sdk);
-
-    String arguments = commandLine.contains(" ") ? " " + StringUtil.substringAfter(commandLine, " ") : "";
-
-    return shimsExec + arguments;
+    return shimsExec + (myCommandLine.contains(" ") ? " " + StringUtil.substringAfter(myCommandLine, " ") : "");
   }
 
   @NotNull
-  private static String getRVMAwareCommand(@NotNull Sdk sdk, @NotNull String commandLine) {
-    String exeCommand = (commandLine.contains(" ")) ? StringUtil.substringBefore(commandLine, " ") : commandLine;
-
-    //todo provide better rvm-supported commands definition
-    if (!COMMANDS.contains(exeCommand)) {
-      return commandLine;
-    }
-
-    GeneralCommandLine generalCommandLine = new GeneralCommandLine("rvm");
-    generalCommandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
-    try {
-      generalCommandLine.createProcess();
-    }
-    catch (ExecutionException e) {
-      return commandLine;
-    }
-
+  private String getRVMAwareCommand(@NotNull Sdk sdk) {
+    String exeCommand = (myCommandLine.contains(" ")) ? StringUtil.substringBefore(myCommandLine, " ") : myCommandLine;
     String version = RVMSupportUtil.getRVMSdkVersion(sdk);
-    if (version == null) return commandLine;
 
-    return "rvm " + version + " do " + commandLine;
+    if (!COMMANDS.contains(exeCommand) || !RunAnythingCache.getInstance(myProject).CAN_RUN_RVM || version == null) return myCommandLine;
+
+    return "rvm " + version + " do " + myCommandLine;
   }
 
   @Override
