@@ -63,8 +63,20 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     return StreamEx.of(PyUtil.multiResolveTopPriority(elementAtCaret, resolveContext))
       .select(PyTargetExpression.class)
       .filter(target -> !index.isInLibraryClasses(target.getContainingFile().getVirtualFile()))
+      .filter(target -> canBeAnnotated(target))
       .filter(target -> !isAnnotated(target, typeEvalContext))
       .toList();
+  }
+
+  private static boolean canBeAnnotated(@NotNull PyTargetExpression target) {
+    final PsiElement directParent = target.getParent();
+    if (directParent instanceof PyImportElement ||
+        directParent instanceof PyComprehensionForComponent ||
+        directParent instanceof PyGlobalStatement ||
+        directParent instanceof PyNonlocalStatement) {
+      return false;
+    }
+    return PsiTreeUtil.getParentOfType(target, PyWithItem.class, PyAssignmentStatement.class, PyForPart.class) != null;
   }
 
   private static boolean isAnnotated(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
@@ -105,9 +117,9 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   private static String generateNestedTypeHint(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final StringBuilder builder = new StringBuilder();
-    final PyElement validTargetContainer = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
-    assert validTargetContainer != null;
-    final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetContainer, target);
+    final PyElement validTargetParent = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
+    assert validTargetParent != null;
+    final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetParent, target);
     generateNestedTypeHint(topmostTarget, context, builder);
     return builder.toString();
   }
