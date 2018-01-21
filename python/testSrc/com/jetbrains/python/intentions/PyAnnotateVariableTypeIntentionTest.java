@@ -74,6 +74,10 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doTestTypeComment();
   }
 
+  public void testTypeCommentComplexUnpackedAssignmentTarget() {
+    doTestTypeComment();
+  }
+
   public void testTypeCommentLocalChainedAssignmentTarget() {
     doTestTypeComment();
   }
