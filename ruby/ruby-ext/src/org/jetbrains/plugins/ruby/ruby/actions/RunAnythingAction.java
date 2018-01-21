@@ -130,7 +130,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_ACTION_TEXT = String.format("Press %s to run with default settings", SHIFT_SHORTCUT_TEXT);
   private static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
   private static final String AD_MODULE_CONTEXT =
-    String.format("Press %s to run in context of the current file", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
+    String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
   private static final Icon RUN_ANYTHING_BRIGHTER_ICON = IconUtil.brighter(RubyIcons.RunAnything.Run_anything, 2);
   private AnAction[] myRakeActions = AnAction.EMPTY_ARRAY;
   private AnAction[] myGeneratorsActions = AnAction.EMPTY_ARRAY;
@@ -159,6 +159,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private JLabel myAdComponent;
   private DataContext myDataContext;
   private static final NotNullLazyValue<Map<String, Icon>> ourIconsMap;
+  private JLabel myTextFieldTitle;
 
   static {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(RUN_ANYTHING_ACTION_ID, KeyEvent.VK_CONTROL, -1, false);
@@ -629,11 +630,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       Disposer.dispose(myPopupField);
     }
     myPopupField = new MySearchTextField();
-    myPopupField.setPreferredSize(new Dimension(500, 50));
-    myPopupField.getTextEditor().setFont(EditorUtil.getEditorFont().deriveFont(24f));
+    myPopupField.setPreferredSize(new Dimension(500, 43));
+    myPopupField.getTextEditor().setFont(EditorUtil.getEditorFont().deriveFont(18f));
 
     JBTextField myTextField = myPopupField.getTextEditor();
-    myTextField.putClientProperty(EXEC_TYPE_PROPERTY, RUN_ICON_TEXT);
     myTextField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
 
     setHandleMatchedConfiguration(myTextField);
@@ -645,11 +645,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       public void keyPressed(KeyEvent e) {
         switch (e.getKeyCode()) {
           case KeyEvent.VK_SHIFT:
-            myTextField.putClientProperty(EXEC_TYPE_PROPERTY, DEBUG_ICON_TEXT);
+            myTextFieldTitle.setText(RBundle.message("run.anything.run.debug.title"));
             break;
-          //todo ctrl
           case KeyEvent.VK_ALT:
-            myTextField.putClientProperty(EXEC_TYPE_PROPERTY, MODULE_CONTEXT_ICON_TEXT);
+            myTextFieldTitle.setText(RBundle.message("run.anything.run.in.context.title"));
             break;
         }
       }
@@ -658,10 +657,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
           case KeyEvent.VK_SHIFT:
-            myTextField.putClientProperty(EXEC_TYPE_PROPERTY, RUN_ICON_TEXT);
+            myTextFieldTitle.setText(RBundle.message("run.anything.run.anything.title"));
             break;
           case KeyEvent.VK_ALT:
-            myTextField.putClientProperty(EXEC_TYPE_PROPERTY, RUN_ICON_TEXT);
+            myTextFieldTitle.setText(RBundle.message("run.anything.run.anything.title"));
             break;
         }
       }
@@ -680,22 +679,25 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     editor.setColumns(SEARCH_FIELD_COLUMNS);
     JPanel panel = new JPanel(new BorderLayout());
 
-    JLabel title = new JLabel(" Run command:       ");
-    title.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+    myTextFieldTitle = new JLabel(RBundle.message("run.anything.run.anything.title"));
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
+    Color foregroundColor = UIUtil.isUnderWin10LookAndFeel() ?
+                            UIManager.getColor("ffffff") :
+                            new JBColor(Gray._240, Gray._200);
 
-    title.setForeground(UIUtil.getLabelForeground());
+    myTextFieldTitle.setForeground(foregroundColor);
+    myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(3, 5, 5, 0));
     if (SystemInfo.isMac) {
-      title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() + 15f));
+      myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD, myTextFieldTitle.getFont().getSize() - 1f));
+    } else {
+      myTextFieldTitle.setFont(myTextFieldTitle.getFont().deriveFont(Font.BOLD));
     }
-    else {
-      title.setFont(title.getFont().deriveFont(Font.BOLD, 16f));
-    }
-    topPanel.add(title, BorderLayout.WEST);
+
+    topPanel.add(myTextFieldTitle, BorderLayout.WEST);
     JPanel controls = new JPanel(new BorderLayout());
     controls.setOpaque(false);
 
-    JLabel settings = new JLabel(AllIcons.General.Gear);
+    JLabel settings = new JLabel(AllIcons.General.GearPlain);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -790,7 +792,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
         if (name != null) {
           textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, name);
-          setAdText(AD_MODULE_CONTEXT + "; " + AD_DEBUG_TEXT);
+          setAdText(AD_MODULE_CONTEXT + ", " + AD_DEBUG_TEXT);
         }
         else {
           textField.putClientProperty(MATCHED_CONFIGURATION_PROPERTY, UNKNOWN_CONFIGURATION);
@@ -804,7 +806,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     String text = AD_MODULE_CONTEXT;
     if (isRunConfigurationItem(value)) {
-      text += " | " + AD_DEBUG_TEXT;
+      text += " , " + AD_DEBUG_TEXT;
     }
     else if (isActionValue(value)) {
       text = AD_ACTION_TEXT;
@@ -1697,7 +1699,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
   private enum HistoryType {PSI, FILE, SETTING, ACTION, RUN_CONFIGURATION}
 
-  class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
+  static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
       super(false, "RunAnythingHistory");
       JTextField editor = getTextEditor();
@@ -1711,27 +1713,17 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     @Override
     protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
-      Runnable callback = () -> {
-        IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(getTextEditor());
-
-        Project project = getProject();
-        Module module = getModule();
-        onPopupFocusLost()
-          .doWhenDone(() -> RunAnythingUtil.runOrCreateRunConfiguration(project, textField.getText(), module, getWorkDirectory(module)));
-        focusManager.requestDefaultFocus(true);
-      };
-
       if (UIUtil.isUnderDarcula()) {
-        uiConsumer.consume(new MyDarcula(ourIconsMap, callback));
+        uiConsumer.consume(new MyDarcula(ourIconsMap));
         textField.setBorder(new DarculaTextBorder());
       }
       else {
         if (SystemInfo.isMac) {
-          uiConsumer.consume(new MyMacUI(ourIconsMap, callback));
+          uiConsumer.consume(new MyMacUI(ourIconsMap));
           textField.setBorder(new MacIntelliJTextBorder());
         }
         else {
-          uiConsumer.consume(new MyWinUI(ourIconsMap, callback));
+          uiConsumer.consume(new MyWinUI(ourIconsMap));
           textField.setBorder(new WinIntelliJTextBorder());
         }
       }
