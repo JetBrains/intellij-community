@@ -13,11 +13,13 @@ import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.Condition
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton.PROP_OPTIONS
 import com.intellij.ui.components.JBOptionButton.PROP_OPTION_TOOLTIP
 import com.intellij.ui.popup.PopupFactoryImpl
+import com.intellij.ui.popup.PopupFactoryImpl.ActionGroupPopup.getActionItems
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.AbstractLayoutManager
 import com.intellij.util.ui.JBUI
@@ -223,7 +225,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   override fun showPopup(toSelect: Action?, ensureSelection: Boolean) {
     if (!isSimpleButton) {
       isPopupShowing = true
-      popup = createPopup(createActionGroup(), toSelect, ensureSelection).apply {
+      popup = createPopup(toSelect, ensureSelection).apply {
         setFinalRunnable { isPopupShowing = false }
         addListener(object : JBPopupAdapter() {
           override fun beforeShown(event: LightweightWindowEvent) {
@@ -267,19 +269,27 @@ open class BasicOptionButtonUI : OptionButtonUI() {
   protected open val showPopupBelowLocation get() = RelativePoint(optionButton, Point(showPopupXOffset, optionButton.height + scale(6)))
   protected open val showPopupAboveLocation get() = RelativePoint(optionButton, Point(showPopupXOffset, -scale(6)))
 
-  // TODO ensureSelection, toSelect
-  protected open fun createPopup(actions: ActionGroup, toSelect: Action?, ensureSelection: Boolean): ListPopup =
-    OptionButtonPopup(actions, createActionDataContext())
+  protected open fun createPopup(toSelect: Action?, ensureSelection: Boolean): ListPopup {
+    val (actionGroup, mapping) = createActionMapping()
+    val dataContext = createActionDataContext()
+    val actionItems = getActionItems(actionGroup, dataContext, false, false, true, true, ActionPlaces.UNKNOWN)
+    val defaultSelection = if (toSelect != null) Condition<AnAction> { mapping[it] == toSelect } else null
+
+    return OptionButtonPopup(OptionButtonPopupStep(actionItems, defaultSelection), dataContext, toSelect != null || ensureSelection)
+  }
 
   protected open fun createActionDataContext(): DataContext = DataManager.getInstance().getDataContext(optionButton)
 
-  protected open fun createActionGroup(): ActionGroup = DefaultActionGroup().apply {
-    optionButton.options
-      ?.map(this@BasicOptionButtonUI::createAnAction)
-      ?.forEachIndexed { index, it ->
+  protected open fun createActionMapping(): Pair<ActionGroup, Map<AnAction, Action>> {
+    val mapping = optionButton.options?.associateBy(this@BasicOptionButtonUI::createAnAction) ?: emptyMap()
+    val actionGroup = DefaultActionGroup().apply {
+      mapping.keys.forEachIndexed { index, it ->
         if (index > 0) addSeparator()
         add(it)
       }
+    }
+
+    return Pair(actionGroup, mapping)
   }
 
   protected open fun createAnAction(action: Action) = action.getValue(OptionAction.AN_ACTION) as? AnAction ?: ActionDelegate(action)
@@ -316,21 +326,35 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun minimumLayoutSize(parent: Container) = parent.minimumSize
   }
 
-  open inner class OptionButtonPopup(actions: ActionGroup, dataContext: DataContext)
-    : PopupFactoryImpl.ActionGroupPopup(null, actions, dataContext, false, false, true, true, null, -1, null, ActionPlaces.UNKNOWN) {
+  open inner class OptionButtonPopup(step: PopupFactoryImpl.ActionPopupStep, dataContext: DataContext, private val ensureSelection: Boolean)
+    : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, ActionPlaces.UNKNOWN, -1) {
     init {
       list.background = background
     }
 
+    override fun afterShow() {
+      if (ensureSelection) super.afterShow()
+    }
+
     protected val background get() = mainButton.background
 
-    override fun createContent() = super.createContent().also { list.border = JBUI.Borders.empty(2, 0) }
+    override fun createContent() = super.createContent().also {
+      list.clearSelection() // prevents first action selection if all actions are disabled
+      list.border = JBUI.Borders.empty(2, 0)
+    }
 
     override fun getListElementRenderer() = object : PopupListElementRenderer<Any>(this) {
       override fun getBackground() = this@OptionButtonPopup.background
       override fun createSeparator() = super.createSeparator().apply { border = JBUI.Borders.empty(2, 6) }
       override fun getDefaultItemComponentBorder() = JBUI.Borders.empty(6, 8)
     }
+  }
+
+  open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>, private val defaultSelection: Condition<AnAction>?)
+    : PopupFactoryImpl.ActionPopupStep(actions, null, optionButton, true, defaultSelection, false, true) {
+    // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
+    // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
+    override fun getDefaultOptionIndex() = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1
   }
 
   open inner class ActionDelegate(val action: Action) : DumbAwareAction() {
