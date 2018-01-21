@@ -54,8 +54,11 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getKeystrokeText;
+import static com.intellij.util.containers.ContainerUtil.indexOf;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 /**
  * The standard base class for modal dialog boxes. The dialog wrapper could be used only on event dispatch thread.
@@ -459,7 +462,7 @@ public abstract class DialogWrapper {
    */
   protected JComponent createSouthPanel() {
     List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
-    List<Action> leftSideActions = ContainerUtil.newArrayList(createLeftSideActions());
+    List<Action> leftSideActions = newArrayList(createLeftSideActions());
 
     if (!ApplicationInfo.contextHelpAvailable()) {
       actions.remove(getHelpAction());
@@ -1695,18 +1698,10 @@ public abstract class DialogWrapper {
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
-    rootPane.registerKeyboardAction(new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        focusPreviousButton();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    rootPane.registerKeyboardAction(new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        focusNextButton();
-      }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    rootPane.registerKeyboardAction(e -> focusButton(false), KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0),
+                                    JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    rootPane.registerKeyboardAction(e -> focusButton(true), KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0),
+                                    JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     if (myYesAction != null) {
       rootPane.registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -1733,32 +1728,24 @@ public abstract class DialogWrapper {
       };
   }
 
-  private void focusPreviousButton() {
-    JButton[] myButtons = new ArrayList<>(myButtonMap.values()).toArray(new JButton[0]);
-    for (int i = 0; i < myButtons.length; i++) {
-      if (myButtons[i].hasFocus()) {
-        if (i == 0) {
-          myButtons[myButtons.length - 1].requestFocus();
-          return;
-        }
-        myButtons[i - 1].requestFocus();
-        return;
-      }
+  private void focusButton(boolean next) {
+    List<JButton> buttons = newArrayList(myButtonMap.values());
+    int focusedIndex = indexOf(buttons, (Condition<? super Component>)Component::hasFocus);
+
+    if (focusedIndex >= 0) {
+      getEnabledIndexCyclic(buttons, focusedIndex, next).ifPresent(i -> buttons.get(i).requestFocus());
     }
   }
 
-  private void focusNextButton() {
-    JButton[] myButtons = new ArrayList<>(myButtonMap.values()).toArray(new JButton[0]);
-    for (int i = 0; i < myButtons.length; i++) {
-      if (myButtons[i].hasFocus()) {
-        if (i == myButtons.length - 1) {
-          myButtons[0].requestFocus();
-          return;
-        }
-        myButtons[i + 1].requestFocus();
-        return;
-      }
-    }
+  @NotNull
+  private static OptionalInt getEnabledIndexCyclic(@NotNull List<? extends Component> components, int currentIndex, boolean next) {
+    assert -1 <= currentIndex && currentIndex <= components.size();
+    int start = !next && currentIndex == -1 ? components.size() : currentIndex;
+
+    return IntStream.range(0, components.size())
+      .map(i -> (next ? start + i + 1 : start + components.size() - i - 1) % components.size())
+      .filter(i -> components.get(i).isEnabled())
+      .findFirst();
   }
 
   public long getTypeAheadTimeoutMs() {
