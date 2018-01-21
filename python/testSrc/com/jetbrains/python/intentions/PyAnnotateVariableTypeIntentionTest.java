@@ -9,6 +9,35 @@ import org.jetbrains.annotations.NotNull;
  * @author Mikhail Golubev
  */
 public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
+
+  public void testNotSuggestedForLocalAssignmentTargetWithAnnotation() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForLocalAssignmentTargetWithAheadOfTimeAnnotation() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForLocalAssignmentTargetWithTypeComment() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForComprehensionTarget() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForImportTarget() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForGlobalTarget() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForNonlocalTarget() {
+    doNegativeTest();
+  }
+
   public void testAnnotationLocalSimpleAssignmentTarget() {
     doTestAnnotation();
   }
@@ -67,5 +96,9 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
 
   private void doTest(@NotNull LanguageLevel languageLevel) {
     doTest(PyBundle.message("INTN.annotate.types"), languageLevel);
+  }
+
+  private void doNegativeTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doNegativeTest(PyBundle.message("INTN.annotate.types")));
   }
 }
