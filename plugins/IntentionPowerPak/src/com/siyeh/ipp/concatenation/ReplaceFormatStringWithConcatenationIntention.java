@@ -112,7 +112,7 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
       start = end + 2;
       end = value.indexOf("%s", start);
     }
-    if (start < value.length() - 1) {
+    if (start < value.length()) {
       if (builder.length() > 0) {
         builder.append('+');
       }
