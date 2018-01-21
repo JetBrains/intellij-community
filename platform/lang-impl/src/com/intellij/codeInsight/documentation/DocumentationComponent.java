@@ -50,6 +50,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import java.util.HashMap;
@@ -68,6 +69,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -373,7 +375,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     mySettingsPanel = createSettingsPanel();
     add(myScrollPane, BorderLayout.CENTER);
     setOpaque(true);
-    myScrollPane.setViewportBorder(JBScrollPane.createIndentBorder());
+    myScrollPane.setBorder(JBUI.Borders.empty());
 
     final DefaultActionGroup actions = new DefaultActionGroup();
     final BackAction back = new BackAction();
@@ -662,6 +664,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     myText = text;
 
+    if (myHint != null && ((AbstractPopup)myHint).getDimensionServiceKey() == null) {
+      final int width = definitionPreferredWidth();
+      if (width >= 0) {
+        myHint.setSize(new Dimension(Math.min(800, Math.max(300, width)), Math.max(59, myEditorPane.getPreferredSize().height)));
+      }
+    }
+
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       myEditorPane.scrollRectToVisible(viewRect); // if ref is defined but is not found in document, this provides a default location
@@ -670,6 +679,24 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       } else if (ScreenReader.isActive()) {
         myEditorPane.setCaretPosition(0);
       }});
+  }
+
+  private int definitionPreferredWidth() {
+    final TextUI ui = myEditorPane.getUI();
+    final View view = ui.getRootView(myEditorPane);
+    final View definition = findDefinition(view);
+    return definition != null ? (int)definition.getPreferredSpan(View.X_AXIS) : -1;
+  }
+
+  private static View findDefinition(View view) {
+    if ("definition".equals(view.getElement().getAttributes().getAttribute(HTML.Attribute.CLASS))) {
+      return view;
+    }
+    for (int i = 0; i < view.getViewCount(); i++) {
+      final View definition = findDefinition(view.getView(i));
+      if (definition != null) return definition;
+    }
+    return null;
   }
 
   private String decorate(String text) {

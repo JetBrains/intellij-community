@@ -70,7 +70,7 @@ import static com.intellij.codeInsight.documentation.DocumentationComponent.BORD
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
-  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
+  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup2";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
 
   private static final Logger LOG = Logger.getInstance(DocumentationManager.class);
@@ -494,14 +494,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
-    final JBPopup hint = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+    AbstractPopup hint = (AbstractPopup)JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
       .setMinSize(new Dimension(300, 59))
       .setProject(element.getProject())
       .setBorderColor(BORDER_COLOR)
       .addListener(updateProcessor)
       .addUserData(updateProcessor)
       .setKeyboardActions(actions)
-      .setDimensionServiceKey(myProject, JAVADOC_LOCATION_AND_SIZE, false)
       .setResizable(true)
       .setMovable(true)
       .setFocusable(true)
@@ -544,6 +543,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       myToolWindow.setAutoHide(false);
       hint.cancel();
     });
+
+    if (DimensionService.getInstance().getSize(JAVADOC_LOCATION_AND_SIZE, myProject) != null) {
+      hint.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
+    }
 
     if (myEditor == null) {
       // subsequent invocation of javadoc popup from completion will have myEditor == null because of cancel invoked, 
