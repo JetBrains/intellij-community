@@ -1336,15 +1336,11 @@ public abstract class DialogWrapper {
   }
 
   private void expandNextOptionButton() {
-    if (myCurrentOptionsButtonIndex > 0) {
+    if (myCurrentOptionsButtonIndex >= 0) {
       myOptionsButtons.get(myCurrentOptionsButtonIndex).closePopup();
-      myCurrentOptionsButtonIndex++;
     }
-    else if (!myOptionsButtons.isEmpty()) {
-      myCurrentOptionsButtonIndex = 0;
-    }
-
-    if (myCurrentOptionsButtonIndex >= 0 && myCurrentOptionsButtonIndex < myOptionsButtons.size()) {
+    myCurrentOptionsButtonIndex = getEnabledIndexCyclic(myOptionsButtons, myCurrentOptionsButtonIndex, true).orElse(-1);
+    if (myCurrentOptionsButtonIndex >= 0) {
       myOptionsButtons.get(myCurrentOptionsButtonIndex).showPopup(null, true);
     }
   }
