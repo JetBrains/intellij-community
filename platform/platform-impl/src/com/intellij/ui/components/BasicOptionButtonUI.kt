@@ -355,6 +355,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     // if there is no default selection condition - -1 should be returned, this way first enabled action should be selected by
     // OptionButtonPopup.afterShow() (if corresponding ensureSelection parameter is true)
     override fun getDefaultOptionIndex() = defaultSelection?.let { super.getDefaultOptionIndex() } ?: -1
+    override fun isSpeedSearchEnabled() = false
   }
 
   open inner class ActionDelegate(val action: Action) : DumbAwareAction() {
