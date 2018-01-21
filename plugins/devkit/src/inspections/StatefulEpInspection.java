@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -48,16 +34,16 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
     List<ExtensionCandidate> targets = locator.findCandidates();
     if (isQuickFix || !targets.isEmpty()) {
       boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
-      boolean projectService = ContainerUtil.find(targets, candidate -> {
+      boolean projectInjectableEP = ContainerUtil.find(targets, candidate -> {
         XmlTag element = candidate.pointer.getElement();
         String name = element != null ? element.getName() : null;
-        return "projectService".equals(name);
+        return "projectService".equals(name) || "projectConfigurable".equals(name);
       }) != null;
 
       List<ProblemDescriptor> result = ContainerUtil.newArrayList();
       for (PsiField field : fields) {
         for (Class c : new Class[]{PsiElement.class, PsiReference.class, Project.class}) {
-          if (c == Project.class && (field.hasModifierProperty(PsiModifier.FINAL) || isProjectComponent || projectService)) continue;
+          if (c == Project.class && (field.hasModifierProperty(PsiModifier.FINAL) || isProjectComponent || projectInjectableEP)) continue;
           String message = c == PsiElement.class
                            ? "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead" +
                              (isQuickFix ? "; also see LocalQuickFixOnPsiElement" : "")
