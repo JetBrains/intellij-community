@@ -2047,6 +2047,7 @@
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
 
     <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+    <scratch.creationHelper language="JAVA" implementationClass="com.intellij.ide.actions.JavaScratchFileCreationHelper" />
 
     <javaModuleSystem implementation="com.intellij.psi.impl.JavaPlatformModuleSystem"/>
 
