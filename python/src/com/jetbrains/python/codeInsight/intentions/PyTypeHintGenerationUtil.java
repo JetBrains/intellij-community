@@ -19,6 +19,9 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -77,7 +80,17 @@ public class PyTypeHintGenerationUtil {
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
 
-  public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
+  @SuppressWarnings("unused")
+  public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
+                                               @NotNull String annotation,
+                                               boolean startTemplate) {
+    insertVariableTypeComment(target, annotation, startTemplate, Collections.singletonList(TextRange.from(0, annotation.length())));
+  }
+
+  public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
+                                               @NotNull String annotation,
+                                               boolean startTemplate,
+                                               @NotNull List<TextRange> typeRanges) {
     final String typeCommentPrefix = "# type: ";
     final String typeCommentText = "  " + typeCommentPrefix + annotation;
 
@@ -124,7 +137,9 @@ public class PyTypeHintGenerationUtil {
         editor.getCaretModel().moveToOffset(initialCaretOffset);
         final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
         //noinspection ConstantConditions
-        templateBuilder.replaceRange(TextRange.from(typeCommentPrefix.length(), annotation.length()), annotation);
+        for (TextRange range : typeRanges) {
+          templateBuilder.replaceRange(range.shiftRight(typeCommentPrefix.length()), range.substring(annotation));
+        }
         templateBuilder.run(editor, true);
       }
     }
