@@ -53,5 +53,7 @@ val Project.isExternalStorageEnabled: Boolean
   get() {
     val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
     val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
-    return manager.isStoredExternally || Registry.`is`("store.imported.project.elements.separately", ApplicationManager.getApplication().isUnitTestMode)
+    return manager.isStoredExternally || isUseExternalStorage()
   }
+
+fun isUseExternalStorage() = (ApplicationManager.getApplication()?.isUnitTestMode ?: false) || Registry.`is`("store.imported.project.elements.separately")

@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -30,7 +31,7 @@ public class ExternalProjectsState {
   }
 
   @Attribute
-  public boolean storeExternally;
+  public boolean storeExternally = ProjectUtilCore.isUseExternalStorage();
 
   @Tag("state")
   public static class State {

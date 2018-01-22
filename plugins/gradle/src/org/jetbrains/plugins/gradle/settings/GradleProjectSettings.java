@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
@@ -17,7 +18,6 @@ import java.util.List;
  * @since 4/24/13 11:57 AM
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
-
   @Nullable private String myGradleHome;
   @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
   @Nullable private DistributionType distributionType;
@@ -25,7 +25,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
 
-  private boolean storeProjectFilesExternally = false;
+  private boolean storeProjectFilesExternally = ProjectUtilCore.isUseExternalStorage();
 
   @Nullable
   public String getGradleHome() {
