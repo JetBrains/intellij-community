@@ -8,7 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="openapi" scope="TEST" />
-    <orderEntry type="module" module-name="groovy_rt" scope="TEST" />
     <orderEntry type="module" module-name="lang-api" scope="TEST" />
     <orderEntry type="module" module-name="groovy-psi" scope="TEST" />
     <orderEntry type="module" module-name="uast-tests" scope="TEST" />
