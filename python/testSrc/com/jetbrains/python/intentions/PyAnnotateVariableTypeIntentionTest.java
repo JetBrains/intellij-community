@@ -50,6 +50,14 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doNegativeTest();
   }
 
+  public void testNotSuggestedInstanceAttributeWithAnnotation() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedInstanceAttributeWithTypeComment() {
+    doNegativeTest();
+  }
+
   public void testAnnotationLocalSimpleAssignmentTarget() {
     doTestAnnotation();
   }
@@ -71,6 +79,22 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testAnnotationLocalWithTarget() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationInstanceAttribute() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationInstanceAttributeDocstring() {
+    doTestAnnotation();
+  }
+
+  public void testTypeCommentInstanceAttribute() {
+    doTestAnnotation();
+  }
+
+  public void testTypeCommentInstanceAttributeDocstring() {
     doTestAnnotation();
   }
 

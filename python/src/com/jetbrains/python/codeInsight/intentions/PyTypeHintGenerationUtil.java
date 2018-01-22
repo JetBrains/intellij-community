@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -30,6 +31,39 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyTypeHintGenerationUtil {
   private PyTypeHintGenerationUtil() {}
+
+  public static void insertAttributeAnnotation(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
+    final LanguageLevel langLevel = LanguageLevel.forElement(target);
+    if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
+      throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);
+    }
+
+    final PyClass pyClass = target.getContainingClass();
+    if (pyClass == null) {
+      throw new IllegalArgumentException("Target '" + target.getText() + "' in not contained in a class definition");
+    }
+
+    final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
+    final String declarationText = target.getName() + ": " + annotation;
+    final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
+    final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
+    PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+    inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+
+    if (startTemplate && inserted != null) {
+      openEditorAndAddTemplateForAnnotation(inserted);
+    }
+  }
+
+  @Nullable
+  private static PsiElement findPrecedingAnchorForAttributeDeclaration(@NotNull PyClass pyClass) {
+    final PyStatement firstStatement = pyClass.getStatementList().getStatements()[0];
+    final PyStringLiteralExpression classDocstring = pyClass.getDocStringExpression();
+    if (firstStatement instanceof PyExpressionStatement && classDocstring == ((PyExpressionStatement)firstStatement).getExpression()) {
+      return firstStatement;
+    }
+    return null;
+  }
 
   public static void insertVariableAnnotation(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
@@ -50,7 +84,7 @@ public class PyTypeHintGenerationUtil {
     }
     else {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-      final String declarationText = target.getText() + ": " + annotation;
+      final String declarationText = target.getName() + ": " + annotation;
       final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
       final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
       assert statement != null;
@@ -59,21 +93,28 @@ public class PyTypeHintGenerationUtil {
     }
 
     if (startTemplate && createdAnnotationOwner != null) {
-      assert createdAnnotationOwner.getAnnotationValue() != null;
+      openEditorAndAddTemplateForAnnotation(createdAnnotationOwner);
+    }
+  }
 
-      final int initialCaretOffset = createdAnnotationOwner.getTextRange().getStartOffset();
-      final VirtualFile updatedVirtualFile = createdAnnotationOwner.getContainingFile().getVirtualFile();
-      final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, updatedVirtualFile, initialCaretOffset);
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+  private static void openEditorAndAddTemplateForAnnotation(@NotNull PyAnnotationOwner annotated) {
+    assert annotated.isValid();
+    assert annotated.getAnnotationValue() != null;
 
-      if (editor != null) {
-        editor.getCaretModel().moveToOffset(initialCaretOffset);
-        final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(createdAnnotationOwner);
-        final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
-        //noinspection ConstantConditions
-        templateBuilder.replaceElement(createdAnnotationOwner.getAnnotation().getValue(), replacementText);
-        templateBuilder.run(editor, true);
-      }
+    final Project project = annotated.getProject();
+    final int initialCaretOffset = annotated.getTextRange().getStartOffset();
+    final VirtualFile updatedVirtualFile = annotated.getContainingFile().getVirtualFile();
+    final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, updatedVirtualFile, initialCaretOffset);
+    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+
+    if (editor != null) {
+      editor.getCaretModel().moveToOffset(initialCaretOffset);
+      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(annotated);
+      final String annotation = annotated.getAnnotationValue();
+      final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
+      //noinspection ConstantConditions
+      templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
+      templateBuilder.run(editor, true);
     }
   }
 
