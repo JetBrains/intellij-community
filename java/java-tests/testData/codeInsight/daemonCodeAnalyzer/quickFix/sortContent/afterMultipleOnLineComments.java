@@ -6,7 +6,9 @@ public class Main {
   private void test() {
     new String[]{
             "aaa", // a
-            "bbb", // b
-            "ccc"/* c */};
+            "bbb",
+            "ccc"/* c */, "dd", // d
+            "ff"// f
+    };
   }
 }
