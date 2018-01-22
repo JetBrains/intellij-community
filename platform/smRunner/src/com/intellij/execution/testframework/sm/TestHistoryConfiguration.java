@@ -10,6 +10,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -55,7 +56,7 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
   

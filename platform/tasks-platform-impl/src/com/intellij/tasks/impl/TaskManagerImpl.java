@@ -583,7 +583,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myConfig;
   }
 
-  public void loadState(Config config) {
+  public void loadState(@NotNull Config config) {
     XmlSerializerUtil.copyBean(config, myConfig);
 
     myRepositories.clear();

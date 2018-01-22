@@ -54,7 +54,7 @@ class XsltConfigImpl extends XsltConfig implements PersistentStateComponent<Xslt
   }
 
   @Override
-  public void loadState(XsltConfigImpl state) {
+  public void loadState(@NotNull XsltConfigImpl state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

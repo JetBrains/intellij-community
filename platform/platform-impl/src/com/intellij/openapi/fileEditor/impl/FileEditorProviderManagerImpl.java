@@ -121,7 +121,7 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   }
 
   @Override
-  public void loadState(FileEditorProviderManagerImpl state) {
+  public void loadState(@NotNull FileEditorProviderManagerImpl state) {
     mySelectedProviders.clear();
     mySelectedProviders.putAll(state.mySelectedProviders);
   }

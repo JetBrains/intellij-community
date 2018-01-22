@@ -219,7 +219,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     String className = null;
     Element lafElement = element.getChild(ELEMENT_LAF);
     if (lafElement != null) {

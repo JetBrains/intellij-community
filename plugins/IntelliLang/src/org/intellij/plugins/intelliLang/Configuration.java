@@ -101,7 +101,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     }
 
     @Override
-    public void loadState(final Element element) {
+    public void loadState(@NotNull final Element element) {
       myAdvancedConfiguration.loadState(element);
       super.loadState(element);
     }
@@ -221,7 +221,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     myInjections.clear();
 
     List<Element> injectionElements = element.getChildren("injection");

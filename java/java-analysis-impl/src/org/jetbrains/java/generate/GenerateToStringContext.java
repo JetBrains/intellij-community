@@ -19,6 +19,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.config.Config;
 
 /**
@@ -44,7 +45,7 @@ public class GenerateToStringContext implements PersistentStateComponent<Config>
         return config;
     }
 
-    public void loadState(Config state) {
+    public void loadState(@NotNull Config state) {
         config = state;
     }
 }

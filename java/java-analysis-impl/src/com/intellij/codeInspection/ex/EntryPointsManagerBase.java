@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.ToolExtensionPoints;
@@ -109,7 +109,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     Element entryPointsElement = element.getChild("entry_points");
     if (entryPointsElement != null) {
       final String version = entryPointsElement.getAttributeValue(VERSION_ATTR);

@@ -427,7 +427,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   }
 
   @Override
-  public synchronized void loadState(State state) {
+  public synchronized void loadState(@NotNull State state) {
     myState = state == null ? new State() : state;
   }
 

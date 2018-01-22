@@ -50,7 +50,7 @@ public class FacetFromExternalSourcesStorage implements PersistentStateComponent
   }
 
   @Override
-  public void loadState(FacetManagerState state) {
+  public void loadState(@NotNull FacetManagerState state) {
     XmlSerializerUtil.copyBean(state, myState);
   }
 }

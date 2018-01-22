@@ -71,7 +71,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
     myState.myShowVariablesByDefault = state.myShowVariablesByDefault;
     myState.myPythonConsoleState = state.myPythonConsoleState;
