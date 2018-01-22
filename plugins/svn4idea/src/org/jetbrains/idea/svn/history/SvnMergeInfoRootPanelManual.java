@@ -98,8 +98,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   private void init() {
-    myContentPanel = new JPanel(new GridBagLayout()) {
-    };
+    myContentPanel = new JPanel(new GridBagLayout());
     myContentPanel.setMinimumSize(new Dimension(200, 100));
 
     final GridBagConstraints gb =

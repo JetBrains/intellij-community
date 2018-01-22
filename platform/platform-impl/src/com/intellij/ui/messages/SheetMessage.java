@@ -26,27 +26,26 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * Created by Denis Fokin
  */
-public class SheetMessage implements Disposable {
+class SheetMessage implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
 
   private final JDialog myWindow;
   private final Window myParent;
   private final SheetController myController;
 
-  private final static int TIME_TO_SHOW_SHEET = 250;
+  private static final int TIME_TO_SHOW_SHEET = 250;
 
   private Image staticImage;
   private int imageHeight;
 
-  public SheetMessage(final Window owner,
-                      final String title,
-                      final String message,
-                      final Icon icon,
-                      final String[] buttons,
-                      final DialogWrapper.DoNotAskOption doNotAskOption,
-                      final String defaultButton,
-                      final String focusedButton)
-  {
+  SheetMessage(final Window owner,
+               final String title,
+               final String message,
+               final Icon icon,
+               final String[] buttons,
+               final DialogWrapper.DoNotAskOption doNotAskOption,
+               final String defaultButton,
+               final String focusedButton) {
     final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     final Component recentFocusOwner = activeWindow == null ? null : activeWindow.getMostRecentFocusOwner();
     WeakReference<Component> beforeShowFocusOwner = new WeakReference<>(recentFocusOwner);
@@ -55,11 +54,6 @@ public class SheetMessage implements Disposable {
 
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
-
-    WindowAdapter windowListener = new WindowAdapter() {
-    };
-    myWindow.addWindowListener(windowListener);
-    Disposer.register(this, () -> myWindow.removeWindowListener(windowListener));
 
     myParent = owner;
 
@@ -111,7 +105,7 @@ public class SheetMessage implements Disposable {
                              | InputEvent.ALT_DOWN_MASK
                              | InputEvent.META_DOWN_MASK;
 
-        boolean modifiersAreNotPressed = ((modifiers & modifiersUnion) == 0);
+        boolean modifiersAreNotPressed = (modifiers & modifiersUnion) == 0;
 
         if (modifiersAreNotPressed) {
           if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -237,7 +231,7 @@ public class SheetMessage implements Disposable {
       public void paintNow(int frame, int totalFrames, int cycle) {
         setPositionRelativeToParent();
         float percentage = (float)frame/(float)totalFrames;
-        imageHeight = enlarge ? (int)(((float)myController.SHEET_NC_HEIGHT) * percentage):
+        imageHeight = enlarge ? (int)((float)myController.SHEET_NC_HEIGHT * percentage) :
                       (int)(myController.SHEET_NC_HEIGHT - percentage * myController.SHEET_HEIGHT);
         myWindow.repaint();
       }
