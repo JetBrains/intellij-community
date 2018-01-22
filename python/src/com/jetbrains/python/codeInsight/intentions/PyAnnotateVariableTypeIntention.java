@@ -4,6 +4,8 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -20,6 +22,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -109,26 +112,30 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   }
 
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
-    final String annotationText = generateNestedTypeHint(target);
-    PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText, true);
+    final Pair<String, List<TextRange>> annotationAndRanges = generateNestedTypeHint(target);
+    PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationAndRanges.getFirst(), true, annotationAndRanges.getSecond());
   }
 
   @NotNull
-  private static String generateNestedTypeHint(@NotNull PyTargetExpression target) {
+  private static Pair<String, List<TextRange>> generateNestedTypeHint(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
-    final StringBuilder builder = new StringBuilder();
     final PyElement validTargetParent = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
     assert validTargetParent != null;
     final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetParent, target);
-    generateNestedTypeHint(topmostTarget, context, builder);
-    return builder.toString();
+    final StringBuilder builder = new StringBuilder();
+    final ArrayList<TextRange> typeRanges = new ArrayList<>();
+    generateNestedTypeHint(topmostTarget, context, builder, typeRanges);
+    return Pair.create(builder.toString(), typeRanges);
   }
 
-  private static void generateNestedTypeHint(@NotNull PsiElement target, @NotNull TypeEvalContext context, @NotNull StringBuilder builder) {
+  private static void generateNestedTypeHint(@NotNull PsiElement target,
+                                             @NotNull TypeEvalContext context,
+                                             @NotNull StringBuilder builder,
+                                             @NotNull List<TextRange> typeRanges) {
     if (target instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)target).getContainedExpression();
       if (contained != null) {
-        generateNestedTypeHint(contained, context, builder);
+        generateNestedTypeHint(contained, context, builder, typeRanges);
       }
     }
     else if (target instanceof PyTupleExpression) {
@@ -138,12 +145,13 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
         if (i > 0) {
           builder.append(", ");
         }
-        generateNestedTypeHint(elements[i], context, builder);
+        generateNestedTypeHint(elements[i], context, builder, typeRanges);
       }
       builder.append(")");
     }
     else if (target instanceof PyTypedElement) {
       final String type = PythonDocumentationProvider.getTypeName(context.getType((PyTypedElement)target), context);
+      typeRanges.add(TextRange.from(builder.length(), type.length()));
       builder.append(type);
     }
   }
