@@ -171,13 +171,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     myTargetClass.add(aClass);
 
     PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
-    @NonNls StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
     buf.append("new ");
     buf.append(aClass.getName());
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
       int idx = 0;
-      //noinspection ForLoopThatDoesntUseLoopVariable
       for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
         if (idx > 0) buf.append(", ");
         String typeParamName = it.next().getName();
@@ -401,7 +400,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
 
-    Collections.sort(toAdd, (e1, e2) -> e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset());
+    toAdd.sort(Comparator.comparingInt(e -> e.getTextRange().getStartOffset()));
 
     for (PsiElement element : toAdd) {
       if (element instanceof PsiClassInitializer) {

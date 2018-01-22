@@ -238,10 +238,6 @@
                      key="equals.doesnt.check.class.parameter.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EqualsWhichDoesntCheckParameterClassInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ForLoopThatDoesntUseLoopVariable" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="for.loop.not.use.loop.variable.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.bugs.ForLoopThatDoesntUseLoopVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonFinalFieldReferencedInHashCode" shortName="HashCodeUsesNonFinalVariable"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.final.field.in.hashcode.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
@@ -681,7 +677,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.LabeledStatementInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LoopConditionNotUpdatedInsideLoop" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="loop.condition.not.updated.inside.loop.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.controlflow.LoopConditionNotUpdatedInsideLoopInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="LoopStatementThatDoesntLoop" shortName="LoopStatementsThatDontLoop"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="loop.statements.that.dont.loop.display.name"
