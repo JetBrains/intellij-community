@@ -107,6 +107,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final ActionToolbar myToolBar;
   private volatile boolean myIsEmpty;
   private boolean myIsShown;
+  private boolean myResizing;
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private boolean myIgnoreFontSizeSliderChange;
@@ -179,7 +180,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private int myHighlightedLink = -1;
   private Object myHighlightingTag;
 
-  private JBPopup myHint;
+  private AbstractPopup myHint;
 
   private final Map<KeyStroke, ActionListener> myKeyboardActions = new HashMap<>();
 
@@ -564,7 +565,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   public void setHint(JBPopup hint) {
-    myHint = hint;
+    myHint = (AbstractPopup)hint;
   }
 
   public JBPopup getHint() {
@@ -658,15 +659,33 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     applyFontProps();
 
     if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      myResizing = true;
       myManager.showHint(myHint);
       myIsShown = true;
+      if (myHint.getDimensionServiceKey() == null) {
+        final Window window = myHint.getPopupWindow();
+        final ComponentAdapter listener = new ComponentAdapter() {
+          @Override
+          public void componentResized(ComponentEvent e) {
+            if (myResizing) {
+              myResizing = false;
+              return;
+            }
+            myHint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+            myHint.getPopupWindow().removeComponentListener(this);
+          }
+        };
+        window.addComponentListener(listener);
+        Disposer.register(this, () -> myHint.getPopupWindow().removeComponentListener(listener));
+      }
     }
 
     myText = text;
 
-    if (myHint != null && ((AbstractPopup)myHint).getDimensionServiceKey() == null) {
+    if (myHint != null && myHint.getDimensionServiceKey() == null) {
       final int width = definitionPreferredWidth();
       if (width >= 0) {
+        myResizing = true;
         myHint.setSize(new Dimension(Math.min(800, Math.max(300, width)), Math.max(59, myEditorPane.getPreferredSize().height)));
       }
     }

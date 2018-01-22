@@ -70,7 +70,8 @@ import static com.intellij.codeInsight.documentation.DocumentationComponent.BORD
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
-  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup2";
+  @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
+  @NonNls public static final String NEW_JAVADOC_LOCATION_AND_SIZE = "javadoc.popup.new";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
 
   private static final Logger LOG = Logger.getInstance(DocumentationManager.class);
@@ -544,8 +545,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       hint.cancel();
     });
 
-    if (DimensionService.getInstance().getSize(JAVADOC_LOCATION_AND_SIZE, myProject) != null) {
-      hint.setDimensionServiceKey(JAVADOC_LOCATION_AND_SIZE);
+    if (DimensionService.getInstance().getSize(NEW_JAVADOC_LOCATION_AND_SIZE, myProject) != null) {
+      hint.setDimensionServiceKey(NEW_JAVADOC_LOCATION_AND_SIZE);
     }
 
     if (myEditor == null) {
