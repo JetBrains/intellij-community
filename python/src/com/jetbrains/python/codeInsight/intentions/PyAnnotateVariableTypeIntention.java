@@ -187,13 +187,18 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   }
 
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
-    final Pair<String, List<TextRange>> annotationAndRanges = generateNestedTypeHint(target);
-    PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationAndRanges.getFirst(), true, annotationAndRanges.getSecond());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
+    final Pair<String, List<TextRange>> annotationAndRanges = generateNestedTypeHint(target, context);
+    if (isInstanceAttribute(target, context)) {
+      PyTypeHintGenerationUtil.insertAttributeTypeComment(target, annotationAndRanges.getFirst(), true, annotationAndRanges.getSecond());
+    }
+    else {
+      PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationAndRanges.getFirst(), true, annotationAndRanges.getSecond());
+    }
   }
 
   @NotNull
-  private static Pair<String, List<TextRange>> generateNestedTypeHint(@NotNull PyTargetExpression target) {
-    final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
+  private static Pair<String, List<TextRange>> generateNestedTypeHint(@NotNull PyTargetExpression target, TypeEvalContext context) {
     final PyElement validTargetParent = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
     assert validTargetParent != null;
     final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetParent, target);

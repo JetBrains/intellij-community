@@ -1,6 +1,5 @@
 class MyClass:
-    """Docstring."""
-    attr = None  # type: [int]
+    attr = ...  # type: [int]
 
     def __init__(self):
         self.attr = 42

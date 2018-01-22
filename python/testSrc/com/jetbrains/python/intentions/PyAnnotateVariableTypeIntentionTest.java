@@ -91,11 +91,15 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testTypeCommentInstanceAttribute() {
-    doTestAnnotation();
+    doTestTypeComment();
+  }
+
+  public void testTypeCommentInstanceAttributePy3() {
+    doTest(LanguageLevel.PYTHON30);
   }
 
   public void testTypeCommentInstanceAttributeDocstring() {
-    doTestAnnotation();
+    doTestTypeComment();
   }
 
   public void testTypeCommentLocalSimpleAssignmentTarget() {

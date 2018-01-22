@@ -30,7 +30,36 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author Mikhail Golubev
  */
 public class PyTypeHintGenerationUtil {
+
+  public static final String TYPE_COMMENT_PREFIX = "# type: ";
+
   private PyTypeHintGenerationUtil() {}
+
+  public static void insertAttributeTypeComment(@NotNull PyTargetExpression target,
+                                                @NotNull String annotation,
+                                                boolean startTemplate,
+                                                @NotNull List<TextRange> typeRanges) {
+
+    final PyClass pyClass = target.getContainingClass();
+    if (pyClass == null) {
+      throw new IllegalArgumentException("Target '" + target.getText() + "' in not contained in a class definition");
+    }
+
+    final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
+    final LanguageLevel langLevel = LanguageLevel.forElement(target);
+    final String assignedValue = langLevel.isAtLeast(LanguageLevel.PYTHON30) ? "..." : "None";
+    final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + annotation;
+    final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
+    final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
+    PyAssignmentStatement inserted = (PyAssignmentStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+    inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+
+    final PsiComment insertedComment = as(inserted.getLastChild(), PsiComment.class);
+
+    if (startTemplate && insertedComment != null) {
+      openEditorAndAddTemplateForTypeComment(insertedComment, annotation, typeRanges);
+    }
+  }
 
   public static void insertAttributeAnnotation(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
@@ -127,15 +156,14 @@ public class PyTypeHintGenerationUtil {
   public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
                                                @NotNull String annotation,
                                                boolean startTemplate) {
-    insertVariableTypeComment(target, annotation, startTemplate, Collections.singletonList(TextRange.from(0, annotation.length())));
+    insertVariableTypeComment(target, annotation, startTemplate, Collections.singletonList(TextRange.allOf(annotation)));
   }
 
   public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
                                                @NotNull String annotation,
                                                boolean startTemplate,
                                                @NotNull List<TextRange> typeRanges) {
-    final String typeCommentPrefix = "# type: ";
-    final String typeCommentText = "  " + typeCommentPrefix + annotation;
+    final String typeCommentText = "  " + TYPE_COMMENT_PREFIX + annotation;
 
     final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
     final PsiElement insertionAnchor;
@@ -170,24 +198,30 @@ public class PyTypeHintGenerationUtil {
 
     final PsiComment insertedComment = target.getTypeComment();
     if (startTemplate && insertedComment != null) {
-      final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
-      final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
-      final Project project = target.getProject();
-      final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, updatedVirtualFile, initialCaretOffset);
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      openEditorAndAddTemplateForTypeComment(insertedComment, annotation, typeRanges);
+    }
+  }
 
-      if (editor != null) {
-        final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
-        editor.getCaretModel().moveToOffset(initialCaretOffset);
-        final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
-        //noinspection ConstantConditions
-        for (TextRange range : typeRanges) {
-          final String individualType = range.substring(annotation);
-          final String replacementText = testMode ? "[" + individualType + "]" : individualType;
-          templateBuilder.replaceRange(range.shiftRight(typeCommentPrefix.length()), replacementText);
-        }
-        templateBuilder.run(editor, true);
+  private static void openEditorAndAddTemplateForTypeComment(@NotNull PsiComment insertedComment,
+                                                             @NotNull String annotation,
+                                                             @NotNull List<TextRange> typeRanges) {
+    final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
+    final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
+    final Project project = insertedComment.getProject();
+    final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, updatedVirtualFile, initialCaretOffset);
+    final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+
+    if (editor != null) {
+      final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+      editor.getCaretModel().moveToOffset(initialCaretOffset);
+      final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
+      //noinspection ConstantConditions
+      for (TextRange range : typeRanges) {
+        final String individualType = range.substring(annotation);
+        final String replacementText = testMode ? "[" + individualType + "]" : individualType;
+        templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
       }
+      templateBuilder.run(editor, true);
     }
   }
 }
