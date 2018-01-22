@@ -38,6 +38,18 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doNegativeTest();
   }
 
+  public void testNotSuggestedForLocalAssignmentTargetWithUnresolvedAnnotation() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForLocalAssignmentTargetWithUnresolvedTypeComment() {
+    doNegativeTest();
+  }
+
+  public void testNotSuggestedForLocalAssignmentTargetWithUnresolvedAheadOfTimeAnnotation() {
+    doNegativeTest();
+  }
+
   public void testAnnotationLocalSimpleAssignmentTarget() {
     doTestAnnotation();
   }
