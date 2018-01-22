@@ -468,6 +468,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
     editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 5px 7px; }");
+    editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 5px 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
 
     // sections table
@@ -758,12 +759,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private String decorate(String text) {
-    if (!text.contains(DocumentationMarkup.CONTENT_START) && !text.contains(DocumentationMarkup.DEFINITION_START)) {
+    final boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
+    if (!hasContent && !text.contains(DocumentationMarkup.DEFINITION_START)) {
       text = DocumentationMarkup.CONTENT_START + text + DocumentationMarkup.CONTENT_END;
     }
     final String location = getLocationText();
     if (location != null) {
-      text = text + "<div class='bottom'>" + location;
+      text = text + "<div class='" + (hasContent ? "bottom" : "bottom-no-content") +"'>" + location;
     }
     text = addExternalLinksIcon(text);
     return text;
