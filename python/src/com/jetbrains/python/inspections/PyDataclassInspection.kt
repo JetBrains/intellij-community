@@ -99,13 +99,13 @@ class PyDataclassInspection : PyInspection() {
             leftDataclassParameters != null &&
             parseDataclassParameters(rightClass, myTypeEvalContext) != null) {
           registerProblem(node.psiOperator,
-                          "${node.referencedName} not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
+                          "'${node.referencedName}' not supported between instances of '${leftClass.name}' and '${rightClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
         }
 
         if (leftClass == rightClass && leftDataclassParameters?.order == false) {
           registerProblem(node.psiOperator,
-                          "${node.referencedName} not supported between instances of '${leftClass.name}'",
+                          "'${node.referencedName}' not supported between instances of '${leftClass.name}'",
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }
@@ -166,7 +166,7 @@ class PyDataclassInspection : PyInspection() {
       if (!dataclassParameters.eq && dataclassParameters.order) {
         val eqArgument = dataclassParameters.eqArgument
         if (eqArgument != null) {
-          registerProblem(eqArgument, "eq must be true if order is true", ProblemHighlightType.GENERIC_ERROR)
+          registerProblem(eqArgument, "'eq' must be true if 'order' is true", ProblemHighlightType.GENERIC_ERROR)
         }
       }
     }
@@ -182,7 +182,7 @@ class PyDataclassInspection : PyInspection() {
             valueClass == builtinCache.setType?.pyClass ||
             valueClass == builtinCache.tupleType?.pyClass) {
           registerProblem(value,
-                          "mutable default '${valueClass.name}' is not allowed",
+                          "Mutable default '${valueClass.name}' is not allowed",
                           ProblemHighlightType.GENERIC_ERROR)
         }
       }
@@ -194,7 +194,7 @@ class PyDataclassInspection : PyInspection() {
       if (type is PyClassType && type.classQName == DATACLASSES_INITVAR_TYPE) {
         if (postInit == null) {
           registerProblem(field,
-                          "attribute '${field.name}' is useless until '${DUNDER_POST_INIT}' is declared",
+                          "Attribute '${field.name}' is useless until '${DUNDER_POST_INIT}' is declared",
                           ProblemHighlightType.LIKE_UNUSED_SYMBOL)
         }
 
@@ -209,7 +209,7 @@ class PyDataclassInspection : PyInspection() {
       if (fieldStub != null && fieldStub.hasDefault() && fieldStub.hasDefaultFactory()) {
         val call = field.findAssignedValue() as? PyCallExpression ?: return
 
-        registerProblem(call.argumentList, "cannot specify both default and default_factory", ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(call.argumentList, "Cannot specify both 'default' and 'default_factory'", ProblemHighlightType.GENERIC_ERROR)
       }
     }
 
