@@ -151,10 +151,15 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
-    String path = ScratchFileService.getInstance().getRootPath(rootId);
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
+  static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
+    VirtualFile virtualFile = getVirtualFile(rootId);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
+  }
+
+  @Nullable
+  static VirtualFile getVirtualFile(@NotNull RootType rootId) {
+    String path = ScratchFileService.getInstance().getRootPath(rootId);
+    return LocalFileSystem.getInstance().findFileByPath(path);
   }
 
   @Override
@@ -229,17 +234,27 @@ public class ScratchProjectViewPane extends ProjectViewPane {
       super(project, type, settings);
     }
 
+    @NotNull
+    public RootType getRootType() {
+      return ObjectUtils.notNull(getValue());
+    }
+
     @Override
     public boolean contains(@NotNull VirtualFile file) {
       return ScratchFileService.getInstance().getRootType(file) == getValue();
     }
 
+    @Nullable
+    @Override
+    public VirtualFile getVirtualFile() {
+      return ScratchProjectViewPane.getVirtualFile(getRootType());
+    }
+
     @NotNull
     @Override
     public Collection<VirtualFile> getRoots() {
-      PsiDirectory directory = getDirectory();
-      if (directory == null || !directory.isValid()) return EMPTY_ROOTS;
-      return Collections.singleton(directory.getVirtualFile());
+      VirtualFile root = getVirtualFile();
+      return root == null ? EMPTY_ROOTS : Collections.singleton(root);
     }
 
     @NotNull
@@ -256,9 +271,8 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected void update(PresentationData presentation) {
-      RootType rootType = ObjectUtils.notNull(getValue());
       presentation.setIcon(AllIcons.Nodes.Folder);
-      presentation.setPresentableText(rootType.getDisplayName());
+      presentation.setPresentableText(getRootType().getDisplayName());
     }
 
     @Override
@@ -267,18 +281,20 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
 
     public boolean isEmpty() {
-      PsiDirectory directory = getDirectory();
-      if (directory == null) return true;
-      RootType rootType = ObjectUtils.notNull(getValue());
-      Project project = directory.getProject();
-      return directory.processChildren(element -> rootType.isIgnored(project, element.getVirtualFile()));
+      VirtualFile root = getVirtualFile();
+      if (root == null) return true;
+      RootType rootType = getRootType();
+      Project project = ObjectUtils.notNull(getProject());
+      for (VirtualFile f : root.getChildren()) {
+        if (!rootType.isIgnored(project, f)) return false;
+      }
+      return true;
     }
 
     @Override
     public boolean shouldShow(@NotNull PsiFileSystemItem item) {
-      RootType rootType = ObjectUtils.notNull(getValue());
       //noinspection ConstantConditions
-      return !rootType.isIgnored(getProject(), item.getVirtualFile());
+      return !getRootType().isIgnored(getProject(), item.getVirtualFile());
     }
 
     @NotNull
