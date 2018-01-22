@@ -10,10 +10,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Dmitry Avdeev
  */
-
 @State(name = "ProjectType")
 public class ProjectTypeService implements PersistentStateComponent<ProjectType> {
-
   private ProjectType myProjectType;
 
   @Nullable
@@ -41,7 +39,7 @@ public class ProjectTypeService implements PersistentStateComponent<ProjectType>
   }
 
   @Override
-  public void loadState(@NotNull ProjectType state) {
+  public void loadState(@Nullable ProjectType state) {
     myProjectType = state;
   }
 }
