@@ -1,8 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -40,20 +43,36 @@ public class PyTypeHintGenerationUtil {
   }
 
   public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull String annotation) {
-    final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
     final String typeCommentText = "  # type: " + annotation;
+
+    final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
+    final PsiElement insertionAnchor;
     if (statement instanceof PyAssignmentStatement) {
+      insertionAnchor = statement.getLastChild();
+    }
+    else if (statement instanceof PyWithStatement) {
+      insertionAnchor = PyUtil.getHeaderEndAnchor((PyStatementListContainer)statement);
+    }
+    else if (statement instanceof PyForStatement) {
+      insertionAnchor = PyUtil.getHeaderEndAnchor(((PyForStatement)statement).getForPart());
+    }
+    else {
+      throw new IllegalArgumentException("Target expression must belong to an assignment, \"with\" statement or \"for\" loop");
+    }
+
+    if (insertionAnchor instanceof PsiComment) {
+      final String combinedTypeCommentText = typeCommentText + " " + insertionAnchor.getText();
+      final PsiElement lastNonComment = PyPsiUtils.getPrevNonCommentSibling(insertionAnchor, true);
+      final int startOffset = lastNonComment.getTextRange().getEndOffset();
+      final int endOffset = insertionAnchor.getTextRange().getEndOffset();
       PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-        document.insertString(statement.getTextRange().getEndOffset(), typeCommentText);
+        document.replaceString(startOffset, endOffset, combinedTypeCommentText);
       });
     }
-    else if (statement instanceof PyWithStatement || statement instanceof PyForStatement) {
+    else if (insertionAnchor != null) {
+      final int offset = insertionAnchor.getTextRange().getEndOffset();
       PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-        final PyStatementListContainer container = statement instanceof PyForStatement ?
-                                                   ((PyForStatement)statement).getForPart() :
-                                                   (PyWithStatement)statement;
-        final int endOffset = PyUtil.getHeaderEndAnchor(container).getTextRange().getEndOffset();
-        document.insertString(endOffset, typeCommentText);
+        document.insertString(offset, typeCommentText);
       });
     }
   }
