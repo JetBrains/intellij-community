@@ -90,7 +90,7 @@ public class VMOptions {
   }
 
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
-    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z]*)"), "-D" + option + separator + value);
+    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z0-9]*)"), "-D" + option + separator + value);
   }
 
 
