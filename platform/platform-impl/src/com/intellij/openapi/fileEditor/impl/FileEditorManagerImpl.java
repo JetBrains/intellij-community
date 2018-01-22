@@ -1087,35 +1087,38 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
 
   @Override
   @NotNull
-  public List<FileEditor> openEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
+  public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, final boolean focusEditor) {
     assertDispatchThread();
+    OpenFileDescriptor realDescriptor;
     if (descriptor.getFile() instanceof VirtualFileWindow) {
       VirtualFileWindow delegate = (VirtualFileWindow)descriptor.getFile();
       int hostOffset = delegate.getDocumentWindow().injectedToHost(descriptor.getOffset());
-      OpenFileDescriptor realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
+      realDescriptor = new OpenFileDescriptor(descriptor.getProject(), delegate.getDelegate(), hostOffset);
       realDescriptor.setUseCurrentWindow(descriptor.isUseCurrentWindow());
-      return openEditor(realDescriptor, focusEditor);
+    }
+    else {
+      realDescriptor = descriptor;
     }
 
     final List<FileEditor> result = new SmartList<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      VirtualFile file = descriptor.getFile();
-      final FileEditor[] editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow());
+      VirtualFile file = realDescriptor.getFile();
+      final FileEditor[] editors = openFile(file, focusEditor, !realDescriptor.isUseCurrentWindow());
       ContainerUtil.addAll(result, editors);
 
       boolean navigated = false;
       for (final FileEditor editor : editors) {
         if (editor instanceof NavigatableFileEditor &&
-            getSelectedEditor(descriptor.getFile()) == editor) { // try to navigate opened editor
-          navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor);
+            getSelectedEditor(realDescriptor.getFile()) == editor) { // try to navigate opened editor
+          navigated = navigateAndSelectEditor((NavigatableFileEditor)editor, realDescriptor);
           if (navigated) break;
         }
       }
 
       if (!navigated) {
         for (final FileEditor editor : editors) {
-          if (editor instanceof NavigatableFileEditor && getSelectedEditor(descriptor.getFile()) != editor) { // try other editors
-            if (navigateAndSelectEditor((NavigatableFileEditor)editor, descriptor)) {
+          if (editor instanceof NavigatableFileEditor && getSelectedEditor(realDescriptor.getFile()) != editor) { // try other editors
+            if (navigateAndSelectEditor((NavigatableFileEditor)editor, realDescriptor)) {
               break;
             }
           }
