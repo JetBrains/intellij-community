@@ -351,7 +351,7 @@ public class ClassesFilteredView extends BorderLayoutPanel implements Disposable
           }
         }
       }
-    }, x -> myProject.isDisposed());
+    }, myProject.getDisposed());
   }
 
   private static ActionPopupMenu createContextMenu() {

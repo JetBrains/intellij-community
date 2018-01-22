@@ -186,7 +186,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     releaseMouseListener();
     getEmptyText().setText(text);
 
-    if (!GraphicsEnvironment.isHeadless() && getMousePosition() != null) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && getMousePosition() != null) {
       setBackground(CLICKABLE_COLOR);
     }
 
