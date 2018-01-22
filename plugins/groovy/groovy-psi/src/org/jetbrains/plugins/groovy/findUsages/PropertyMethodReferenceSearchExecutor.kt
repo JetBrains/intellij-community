@@ -17,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 /**
  * author ven
  */
-class AccessorMethodReferencesSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
+class PropertyMethodReferenceSearchExecutor : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
 
   override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<PsiReference>) {
     val method = queryParameters.method
