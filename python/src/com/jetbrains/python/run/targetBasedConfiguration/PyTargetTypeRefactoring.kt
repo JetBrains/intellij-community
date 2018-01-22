@@ -11,12 +11,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.extensions.getQName
 import com.jetbrains.python.psi.PyQualifiedNameOwner
-import com.jetbrains.python.run.UndoRefactoringElementCompositable
-
-/**
- * Tools to support configuration refactoring for configurations based on [PyTargetType].
- * Configuration may be "qname-based" (PYTHON) or "file-path based" (SCRIPT_PATH)
- */
+import com.jetbrains.python.run.UndoRefactoringCompletionListener
 
 
 /**
@@ -31,7 +26,7 @@ fun createRefactoringListenerIfPossible(elementUnderRefactoring: PsiElement,
                                         targetPsiElement: PsiElement?,
                                         targetVirtualFile: VirtualFile?,
                                         setTarget: (String) -> Unit)
-  : UndoRefactoringElementCompositable? {
+  : UndoRefactoringCompletionListener? {
   if (targetPsiElement != null && PsiTreeUtil.isAncestor(elementUnderRefactoring, targetPsiElement, false)) {
     return PyElementTargetRenamer(targetPsiElement, setTarget)
   }
@@ -47,7 +42,7 @@ fun createRefactoringListenerIfPossible(elementUnderRefactoring: PsiElement,
  * Renames python target if python symbol, module or folder renamed
  */
 private class PyElementTargetRenamer(private val originalElement: PsiElement, private val setTarget: (String) -> Unit) :
-  UndoRefactoringElementCompositable() {
+  UndoRefactoringCompletionListener() {
   override fun refactored(element: PsiElement, oldQualifiedName: String?) {
     if (originalElement is PyQualifiedNameOwner) {
       originalElement.qualifiedName?.let { setTarget(it) }
@@ -67,7 +62,7 @@ private class PyElementTargetRenamer(private val originalElement: PsiElement, pr
  * Renames folder target if file or folder really renamed
  */
 private class PyVirtualFileRenamer(private val virtualFile: VirtualFile, private val setTarget: (String) -> Unit) :
-  UndoRefactoringElementCompositable() {
+  UndoRefactoringCompletionListener() {
   override fun refactored(element: PsiElement, oldQualifiedName: String?) {
     setTarget(virtualFile.path)
   }

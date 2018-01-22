@@ -16,14 +16,14 @@ import com.intellij.refactoring.listeners.UndoRefactoringElementAdapter
 /**
  * @see CompositeRefactoringElementListener
  */
-abstract class UndoRefactoringElementCompositable : UndoRefactoringElementAdapter() {
+abstract class UndoRefactoringCompletionListener : UndoRefactoringElementAdapter() {
   public abstract override fun refactored(element: PsiElement, oldQualifiedName: String?)
 }
 
 /**
  * Chains several [com.intellij.refactoring.listeners.RefactoringElementListener]
  */
-class CompositeRefactoringElementListener(private vararg val listeners: UndoRefactoringElementCompositable) : UndoRefactoringElementAdapter() {
+class CompositeRefactoringElementListener(private vararg val listeners: UndoRefactoringCompletionListener) : UndoRefactoringElementAdapter() {
   override fun refactored(element: PsiElement, oldQualifiedName: String?) {
     listeners.forEach { it.refactored(element, oldQualifiedName) }
   }
@@ -31,7 +31,7 @@ class CompositeRefactoringElementListener(private vararg val listeners: UndoRefa
   /**
    * Creates new listener adding provided one
    */
-  operator fun plus(listener: UndoRefactoringElementCompositable) = CompositeRefactoringElementListener(*arrayOf(listener) + listeners)
+  operator fun plus(listener: UndoRefactoringCompletionListener) = CompositeRefactoringElementListener(*arrayOf(listener) + listeners)
 }
 
 
@@ -39,7 +39,7 @@ class CompositeRefactoringElementListener(private vararg val listeners: UndoRefa
  * Renames working directory if folder physically renamed
  */
 class PyWorkingDirectoryRenamer(private val workingDirectoryFile: VirtualFile?,
-                                private val conf: AbstractPythonRunConfiguration<*>) : UndoRefactoringElementCompositable() {
+                                private val conf: AbstractPythonRunConfiguration<*>) : UndoRefactoringCompletionListener() {
   override fun refactored(element: PsiElement, oldQualifiedName: String?) {
     workingDirectoryFile?.let {
       conf.setWorkingDirectory(it.path)
