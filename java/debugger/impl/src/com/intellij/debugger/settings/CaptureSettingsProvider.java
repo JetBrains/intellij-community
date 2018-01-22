@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
@@ -36,13 +34,13 @@ public class CaptureSettingsProvider {
     addCapture("java/lang/Thread", "start", THIS_KEY);
     addInsert("java/lang/Thread", "run", THIS_KEY);
 
-    addCapture("java/util/concurrent/ExecutorService", "submit", FIRST_PARAM);
+    addCapture("java/util/concurrent/AbstractExecutorService", "submit", FIRST_PARAM);
     addInsert("java/util/concurrent/Executors$RunnableAdapter",
               "call",
               new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter", "task"));
 
     addCapture("java/util/concurrent/ThreadPoolExecutor", "execute", FIRST_PARAM);
-    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
+    addInsert("java/util/concurrent/FutureTask", "run", new FieldKeyProvider("java/util/concurrent/FutureTask", "callable"));
 
     addCapture("java/util/concurrent/CompletableFuture", "supplyAsync", FIRST_PARAM);
     AgentInsertPoint point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply",
