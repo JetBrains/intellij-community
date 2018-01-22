@@ -108,14 +108,18 @@ public class GitPushTarget implements PushTarget {
   }
 
   @Nullable
-  private static GitRemote findRemote(@NotNull Collection<GitRemote> remotes, @NotNull final String candidate) {
+  static GitRemote findRemote(@NotNull Collection<GitRemote> remotes, @NotNull final String candidate) {
     return ContainerUtil.find(remotes, remote -> remote.getName().equals(candidate));
   }
 
   @Nullable
   public static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitLocalBranch sourceBranch) {
     final GitRemote remote = getRemoteToPush(repository, GitBranchUtil.getTrackInfoForBranch(repository, sourceBranch));
-    if (remote == null) return null;
+    return remote == null ? null : getFromPushSpec(repository, remote, sourceBranch);
+  }
+
+  @Nullable
+  static GitPushTarget getFromPushSpec(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull GitLocalBranch sourceBranch) {
     List<String> specs = remote.getPushRefSpecs();
     if (specs.isEmpty()) return null;
 
