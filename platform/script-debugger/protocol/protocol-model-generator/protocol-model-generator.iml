@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="schema-reader-generator" />
     <orderEntry type="module" module-name="protocol-reader" />
     <orderEntry type="library" name="Trove4j" level="project" />
-    <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="util-rt" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />

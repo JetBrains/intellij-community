@@ -10,7 +10,6 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="protocol-reader-runtime" exported="" />
-    <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
