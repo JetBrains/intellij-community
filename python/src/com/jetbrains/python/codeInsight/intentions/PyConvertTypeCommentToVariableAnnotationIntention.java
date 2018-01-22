@@ -47,11 +47,11 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
           final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
           assert target != null;
-          PyTypeHintGenerationUtil.insertVariableAnnotation(target, map.get(target));
+          PyTypeHintGenerationUtil.insertVariableAnnotation(target, map.get(target), false);
         }
         else {
           for (Map.Entry<PyTargetExpression, String> entry : new ArrayList<>(map.entrySet())) {
-            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), entry.getValue());
+            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), entry.getValue(), false);
           }
         }
 
