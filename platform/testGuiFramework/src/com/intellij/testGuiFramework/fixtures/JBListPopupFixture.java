@@ -100,6 +100,7 @@ public class JBListPopupFixture extends JComponentFixture<JBListPopupFixture, JB
 
     Pair<JListFixture, Integer> fixtureAndClickableItemPair = fixtureAndClickableItemRef.get();
     JListFixture popupListFixture = fixtureAndClickableItemPair.first;
+    popupListFixture.replaceCellReader(new ExtendedJListCellReader());
     int clickableItem = fixtureAndClickableItemPair.second;
     popupListFixture.clickItem(clickableItem);
   }
