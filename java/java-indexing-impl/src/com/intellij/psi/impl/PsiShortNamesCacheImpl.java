@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.*;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;

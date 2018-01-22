@@ -30,7 +30,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
-import java.util.HashSet;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +67,7 @@ public class JavaTestFinder implements TestFinder {
   }
 
   /**
-   * @deprecated {@link JavaTestFinder#getSearchScope(PsiElement, boolean)}
+   * @deprecated {@link JavaTestFinder#getSearchScope(com.intellij.psi.PsiElement, boolean)}
    */
   protected GlobalSearchScope getSearchScope(PsiElement element) {
     return getSearchScope(element, true);
