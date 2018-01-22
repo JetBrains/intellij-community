@@ -123,10 +123,12 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, myIsSkipped, false, false));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsSkipped, false, false));
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
+    if (myIsSkipped) return;
+
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
     TextDiffType type = DiffUtil.getDiffType(fragment);
@@ -136,7 +138,7 @@ public class SimpleDiffChange {
     end += startOffset;
 
     Editor editor = myViewer.getEditor(side);
-    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type, myIsSkipped));
+    myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, start, end, type));
   }
 
   private void createNonSquashedChangesSeparator(@Nullable LineFragment previousFragment, @NotNull Side side) {
@@ -152,7 +154,7 @@ public class SimpleDiffChange {
     if (prevStartLine == prevEndLine) return;
     if (prevEndLine != startLine) return;
 
-    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myViewer.getEditor(side), startLine, TextDiffType.MODIFIED, myIsSkipped));
+    myHighlighters.addAll(DiffDrawUtil.createLineMarker(myViewer.getEditor(side), startLine, TextDiffType.MODIFIED));
   }
 
   public void updateGutterActions(boolean force) {

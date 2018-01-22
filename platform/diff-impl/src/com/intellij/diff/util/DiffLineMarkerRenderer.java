@@ -29,6 +29,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
   @NotNull private final TextDiffType myDiffType;
   private final boolean myIgnoredFoldingOutline;
   private final boolean myResolved;
+  private final boolean mySkipped;
   private final boolean myHideWithoutLineNumbers;
 
   private final boolean myEmptyRange;
@@ -39,6 +40,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
                                 @NotNull TextDiffType diffType,
                                 boolean ignoredFoldingOutline,
                                 boolean resolved,
+                                boolean skipped,
                                 boolean hideWithoutLineNumbers,
                                 boolean isEmptyRange,
                                 boolean isFirstLine,
@@ -47,6 +49,7 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
     myDiffType = diffType;
     myIgnoredFoldingOutline = ignoredFoldingOutline;
     myResolved = resolved;
+    mySkipped = skipped;
     myHideWithoutLineNumbers = hideWithoutLineNumbers;
     myEmptyRange = isEmptyRange;
     myFirstLine = isFirstLine;
@@ -84,32 +87,34 @@ class DiffLineMarkerRenderer implements LineMarkerRendererEx {
       int annotationsOffset = gutter.getAnnotationsAreaOffset();
       int annotationsWidth = gutter.getAnnotationsAreaWidth();
       if (annotationsWidth != 0) {
-        drawMarker(editor, g2, x1, annotationsOffset, y1, y2, false);
+        drawMarker(editor, g2, x1, annotationsOffset, y1, y2, false, false);
         x1 = annotationsOffset + annotationsWidth;
       }
     }
 
-    if (myIgnoredFoldingOutline) {
+    if (myIgnoredFoldingOutline || mySkipped) {
       int xOutline = gutter.getWhitespaceSeparatorOffset();
-      drawMarker(editor, g2, xOutline, x2, y1, y2, true);
-      drawMarker(editor, g2, x1, xOutline, y1, y2, false);
+      drawMarker(editor, g2, xOutline, x2, y1, y2, true, mySkipped);
+      drawMarker(editor, g2, x1, xOutline, y1, y2, false, false);
     }
     else {
-      drawMarker(editor, g2, x1, x2, y1, y2, false);
+      drawMarker(editor, g2, x1, x2, y1, y2, false, false);
     }
   }
 
   private void drawMarker(Editor editor, Graphics2D g2,
                           int x1, int x2, int y1, int y2,
-                          boolean ignoredBackgroundColor) {
+                          boolean useIgnoredBackgroundColor,
+                          boolean paintBorderOnly) {
     if (x1 >= x2) return;
 
     Color color = myDiffType.getColor(editor);
     if (y2 - y1 > 2) {
-      if (!myResolved) {
-        g2.setColor(ignoredBackgroundColor ? myDiffType.getIgnoredColor(editor) : color);
+      if (!myResolved && !paintBorderOnly) {
+        g2.setColor(useIgnoredBackgroundColor || mySkipped ? myDiffType.getIgnoredColor(editor) : color);
         g2.fillRect(x1, y1, x2 - x1, y2 - y1);
-      } else {
+      }
+      if (myResolved || mySkipped) {
         DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y1, color, false, myResolved);
         DiffDrawUtil.drawChunkBorderLine(g2, x1, x2, y2 - 1, color, false, myResolved);
       }

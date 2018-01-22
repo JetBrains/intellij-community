@@ -773,9 +773,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Override
     public void process(@NotNull Handler handler) {
       for (SimpleDiffChange diffChange : myDiffChanges) {
-        if (!handler.process(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
-                             diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                             diffChange.getDiffType().getColor(getEditor1()), diffChange.isSkipped())) {
+        if (!handler.processSkippable(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
+                                      diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
+                                      getEditor1(), diffChange.getDiffType(), diffChange.isSkipped())) {
           return;
         }
       }
