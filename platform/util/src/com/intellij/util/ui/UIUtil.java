@@ -195,8 +195,9 @@ public class UIUtil {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
+  /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
   public static boolean isAppleRetina() {
-    return isRetina() && SystemInfo.isAppleJvm;
+    return false;
   }
 
   public static Couple<Color> getCellColors(JTable table, boolean isSel, int row, int column) {
@@ -412,7 +413,7 @@ public class UIUtil {
       }
     }
     if (SystemInfo.isMac) {
-      jreHiDPI = !SystemInfo.isAppleJvm;
+      jreHiDPI = true;
     }
     return jreHiDPI;
   }
@@ -441,12 +442,9 @@ public class UIUtil {
      * value that has been got on AppKit previously.
      */
     static boolean isOracleMacRetinaDevice (GraphicsDevice device) {
-
-      if (SystemInfo.isAppleJvm) return false;
-
       Boolean isRetina  = devicesToRetinaSupportCacheMap.get(device);
 
-      if (isRetina != null){
+      if (isRetina != null) {
         return isRetina;
       }
 
@@ -481,28 +479,8 @@ public class UIUtil {
       return isRetina;
     }
 
-    /*
-      Could be quite easily implemented with [NSScreen backingScaleFactor]
-      and JNA
-     */
-    //private static boolean isAppleRetina (Graphics2D g2d) {
-    //  return false;
-    //}
-
-    /**
-     * For JDK6 we have a dedicated property which does not allow to understand anything
-     * per device but could be useful for image creation. We will get true in case
-     * if at least one retina device is present.
-     */
-    private static boolean hasAppleRetinaDevice() {
-      return (Float)Toolkit.getDefaultToolkit()
-        .getDesktopProperty(
-          "apple.awt.contentScaleFactor") != 1.0f;
-    }
-
     /**
      * This method perfectly detects retina Graphics2D for jdk7+
-     * For Apple JDK6 it returns false.
      * @param g graphics to be tested
      * @return false if the device of the Graphics2D is not a retina device,
      * jdk is an Apple JDK or Oracle API has been changed.
@@ -520,10 +498,6 @@ public class UIUtil {
      * @return true if at least one device is a retina device
      */
     private static boolean isRetina() {
-      if (SystemInfo.isAppleJvm) {
-        return hasAppleRetinaDevice();
-      }
-
       // Oracle JDK
 
       if (SystemInfo.isMac) {
