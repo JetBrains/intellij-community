@@ -110,7 +110,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
 
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
     final String annotationText = generateNestedTypeHint(target);
-    PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText);
+    PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText, true);
   }
 
   @NotNull

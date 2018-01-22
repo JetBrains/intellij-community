@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -76,8 +77,9 @@ public class PyTypeHintGenerationUtil {
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
 
-  public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull String annotation) {
-    final String typeCommentText = "  # type: " + annotation;
+  public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
+    final String typeCommentPrefix = "# type: ";
+    final String typeCommentText = "  " + typeCommentPrefix + annotation;
 
     final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
     final PsiElement insertionAnchor;
@@ -108,6 +110,23 @@ public class PyTypeHintGenerationUtil {
       PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
         document.insertString(offset, typeCommentText);
       });
+    }
+
+    final PsiComment insertedComment = target.getTypeComment();
+    if (startTemplate && insertedComment != null) {
+      final int initialCaretOffset = insertedComment.getTextRange().getStartOffset();
+      final VirtualFile updatedVirtualFile = insertedComment.getContainingFile().getVirtualFile();
+      final Project project = target.getProject();
+      final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, updatedVirtualFile, initialCaretOffset);
+      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+
+      if (editor != null) {
+        editor.getCaretModel().moveToOffset(initialCaretOffset);
+        final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
+        //noinspection ConstantConditions
+        templateBuilder.replaceRange(TextRange.from(typeCommentPrefix.length(), annotation.length()), annotation);
+        templateBuilder.run(editor, true);
+      }
     }
   }
 }
