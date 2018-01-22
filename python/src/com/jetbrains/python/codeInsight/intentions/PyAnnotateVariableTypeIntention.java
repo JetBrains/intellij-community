@@ -116,37 +116,38 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
         return candidates.anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
       }
     }
-    else {
-      final PyClass pyClass = target.getContainingClass();
-      if (pyClass != null && scopeOwner instanceof PyFunction) {
-        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    else if (isInstanceAttribute(target, context)) {
+      // Set isDefinition=true to start searching right from the class level.
+      //noinspection ConstantConditions
+      final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);
+      final List<? extends RatedResolveResult> classAttrs =
+        classType.resolveMember(name, target, AccessDirection.READ, PyResolveContext.noImplicits().withTypeEvalContext(context), true);
+      if (classAttrs == null) {
+        return false;
+      }
+      return StreamEx.of(classAttrs)
+        .map(RatedResolveResult::getElement)
+        .select(PyTargetExpression.class)
+        .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+        .anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
+    }
+    return false;
+  }
 
-        final boolean isInstanceAttribute;
-        if (context.maySwitchToAST(target)) {
-          //noinspection ConstantConditions
-          isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
-            .select(PyParameter.class)
-            .filter(PyParameter::isSelf)
-            .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
-        }
-        else {
-          isInstanceAttribute = PyUtil.isInstanceAttribute(target);
-        }
-        if (!isInstanceAttribute) {
-          return false;
-        }
-        // Set isDefinition=true to start searching right from the class level.
-        final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
-        final List<? extends RatedResolveResult> classAttrs =
-          classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
-        if (classAttrs == null) {
-          return false;
-        }
-        return StreamEx.of(classAttrs)
-          .map(RatedResolveResult::getElement)
-          .select(PyTargetExpression.class)
-          .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-          .anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
+  private static boolean isInstanceAttribute(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
+    if (target.isQualified() && target.getContainingClass() != null && scopeOwner instanceof PyFunction) {
+
+      if (context.maySwitchToAST(target)) {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+        //noinspection ConstantConditions
+        return StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
+          .select(PyParameter.class)
+          .filter(PyParameter::isSelf)
+          .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
+      }
+      else {
+        return PyUtil.isInstanceAttribute(target);
       }
     }
     return false;
@@ -177,7 +178,12 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final PyType inferredType = context.getType(target);
     final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
-    PyTypeHintGenerationUtil.insertVariableAnnotation(target, annotationText, true);
+    if (isInstanceAttribute(target, context)) {
+      PyTypeHintGenerationUtil.insertAttributeAnnotation(target, annotationText, true);
+    }
+    else {
+      PyTypeHintGenerationUtil.insertVariableAnnotation(target, annotationText, true);
+    }
   }
 
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
