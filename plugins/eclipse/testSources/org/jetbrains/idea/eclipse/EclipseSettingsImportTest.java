@@ -7,12 +7,14 @@ import com.intellij.psi.codeStyle.*;
 import com.intellij.testFramework.PlatformTestCase;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleImportWorker;
 import org.jetbrains.idea.eclipse.importer.EclipseCodeStylePropertiesImporter;
-import org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
+
+import static org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData.CORE_PREFS_FILE_NAME;
 
 /**
  * @author Rustam Vishnyakov
@@ -269,7 +271,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
   }
 
   public void testImportCodeStyleProperties() throws IOException, SchemeImportException {
-    File input = new File(getTestDataPath() + EclipseCodeStylePropertiesImporter.CODE_STYLE_PROPERTY_FILE);
+    File input = new File(getTestDataPath() + CORE_PREFS_FILE_NAME);
     CodeStyleSettings settings = new CodeStyleSettings();
     CommonCodeStyleSettings javaSettings = settings.getCommonSettings("Java");
     CommonCodeStyleSettings.IndentOptions indentOptions = javaSettings.getIndentOptions();
@@ -279,7 +281,9 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaCustomSettings.ENABLE_JAVADOC_FORMATTING = false;
 
     try (InputStream stream = new FileInputStream(input)) {
-      new EclipseCodeStylePropertiesImporter().importProperties(stream, settings);
+      Properties eclipseProperties = new Properties();
+      eclipseProperties.load(stream);
+      new EclipseCodeStylePropertiesImporter().importProperties(eclipseProperties, settings);
       assertEquals(1, javaSettings.BLANK_LINES_AFTER_IMPORTS);
       assertEquals(8, indentOptions.CONTINUATION_INDENT_SIZE);
       assertTrue(javaCustomSettings.ENABLE_JAVADOC_FORMATTING);

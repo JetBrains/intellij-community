@@ -18,6 +18,8 @@ public interface EclipseFormatterOptions {
   String TAB_CHAR_SPACE = "space";
   String TAB_CHAR_MIXED = "mixed";
 
+  String FORMATTER_OPTIONS_PREFIX = "org.eclipse.jdt.core.formatter";
+
   String OPTION_SPACE_AFTER_BINARY_OPERATOR = "org.eclipse.jdt.core.formatter.insert_space_after_binary_operator";
   String OPTION_REMOVE_JAVADOC_BLANK_LINES = "org.eclipse.jdt.core.formatter.comment.clear_blank_lines_in_javadoc_comment";
   String OPTION_NEW_LINE_AT_EOF = "org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing";
