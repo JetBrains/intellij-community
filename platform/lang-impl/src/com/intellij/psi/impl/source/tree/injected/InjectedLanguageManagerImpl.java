@@ -145,7 +145,7 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
   // used only from tests => no need for complex synchronization
-  private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<MultiHostInjector>());
+  private final Set<MultiHostInjector> myManualInjectors = Collections.synchronizedSet(new LinkedHashSet<>());
   private volatile ClassMapCachingNulls<MultiHostInjector> cachedInjectors;
 
   public void processInjectableElements(@NotNull Collection<PsiElement> in, @NotNull Processor<PsiElement> processor) {

@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,19 +48,18 @@ public abstract class BeforeAfterActionMetaData {
   @NonNls private static final String AFTER_TEMPLATE_PREFIX = "after";
   protected final ClassLoader myLoader;
   protected final String myDescriptionDirectoryName;
-  protected TextDescriptor[] myExampleUsagesBefore = null;
-  protected TextDescriptor[] myExampleUsagesAfter = null;
-  protected TextDescriptor myDescription = null;
+  private TextDescriptor[] myExampleUsagesBefore;
+  private TextDescriptor[] myExampleUsagesAfter;
+  protected TextDescriptor myDescription;
 
-
-  public BeforeAfterActionMetaData(ClassLoader loader, String descriptionDirectoryName) {
+  public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName) {
     myLoader = loader;
     myDescriptionDirectoryName = descriptionDirectoryName;
   }
 
-  public BeforeAfterActionMetaData(final TextDescriptor description,
-                                   final TextDescriptor[] exampleUsagesBefore,
-                                   final TextDescriptor[] exampleUsagesAfter) {
+  public BeforeAfterActionMetaData(@NotNull TextDescriptor description,
+                                   @NotNull TextDescriptor[] exampleUsagesBefore,
+                                   @NotNull TextDescriptor[] exampleUsagesAfter) {
     myLoader = null;
     myDescriptionDirectoryName = null;
 
