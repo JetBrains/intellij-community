@@ -996,6 +996,7 @@ public class MavenUtil {
     if (mavenProjectsManager.findProject(file) != null) return true;
 
     return ReadAction.compute(() -> {
+      if (project.isDisposed()) return false;
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return false;
       return MavenDomUtil.isProjectFile(psiFile);
