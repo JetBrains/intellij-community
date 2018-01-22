@@ -382,6 +382,9 @@ public class InferenceSession {
         if (expectedActualErrorMessage != null && myErrorMessages != null) {
           myErrorMessages.add(0, expectedActualErrorMessage);
         }
+        if (isOverloadCheck()) {
+          return;
+        }
       }
       //proceed to B3 constraints
       else if (parameters != null && args != null && !isOverloadCheck()) {
