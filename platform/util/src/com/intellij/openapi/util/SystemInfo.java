@@ -1,22 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -179,8 +168,8 @@ public class SystemInfo extends SystemInfoRt {
     }
   }
 
-  public static boolean isJavaVersionAtLeast(String v) {
-    return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
+  public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
+    return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
 
   private static boolean vendorContains(String s) {
@@ -189,6 +178,11 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
+  public static boolean isJavaVersionAtLeast(String v) {
+    return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
+  }
+
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
   public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
