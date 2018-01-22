@@ -7,10 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.ExtensionCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionLocator;
 import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UElementKt;
 
 import java.util.List;
 
@@ -29,11 +27,12 @@ public class StatefulEpInspection extends DevKitUastInspectionBase {
     PsiField[] fields = psiClass.getFields();
     if (fields.length == 0) return super.checkClass(psiClass, manager, isOnTheFly);
 
-    final boolean isQuickFix = InheritanceUtil.isInheritor(psiClass, LocalQuickFix.class.getCanonicalName());
-    ExtensionLocator locator = ExtensionLocator.byPsiClass(psiClass);
+    PsiClass javaClass = UElementKt.getAsJavaPsiElement(psiClass, PsiClass.class);
+    boolean isQuickFix = InheritanceUtil.isInheritor(javaClass, LocalQuickFix.class.getCanonicalName());
+    ExtensionLocator locator = ExtensionLocator.byPsiClass(javaClass);
     List<ExtensionCandidate> targets = locator.findCandidates();
     if (isQuickFix || !targets.isEmpty()) {
-      boolean isProjectComponent = InheritanceUtil.isInheritor(psiClass, ProjectComponent.class.getCanonicalName());
+      boolean isProjectComponent = InheritanceUtil.isInheritor(javaClass, ProjectComponent.class.getCanonicalName());
       boolean projectInjectableEP = ContainerUtil.find(targets, candidate -> {
         XmlTag element = candidate.pointer.getElement();
         String name = element != null ? element.getName() : null;
