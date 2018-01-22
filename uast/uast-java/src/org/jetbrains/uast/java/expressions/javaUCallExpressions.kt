@@ -44,12 +44,12 @@ class JavaUCallExpression(
   override fun getArgumentForParameter(i: Int): UExpression? {
     val psiMethod = resolve() ?: return null
     val isVarArgs = psiMethod.parameterList.parameters.getOrNull(i)?.isVarArgs ?: return null
-    return when {
-      isVarArgs -> JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this).apply {
+    if (isVarArgs) {
+      return JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this).apply {
         expressions = valueArguments.drop(i)
       }
-      else -> valueArguments.getOrNull(i)
     }
+    return valueArguments.getOrNull(i)
   }
 
   override val typeArgumentCount by lz { psi.typeArguments.size }
