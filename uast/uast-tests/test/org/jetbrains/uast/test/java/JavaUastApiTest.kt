@@ -23,6 +23,7 @@ import junit.framework.TestCase
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.junit.Assert
 import org.junit.Test
 
 class JavaUastApiTest : AbstractJavaUastTest() {
@@ -71,6 +72,29 @@ class JavaUastApiTest : AbstractJavaUastTest() {
       UsefulTestCase.assertInstanceOf(uLiteral, ULiteralExpression::class.java)
       UsefulTestCase.assertInstanceOf(uLiteral.uastParent, UQualifiedReferenceExpression::class.java)
       UsefulTestCase.assertInstanceOf(uLiteral.getUCallExpression(), UCallExpression::class.java)
+    }
+  }
+
+  @Test
+  fun testCallExpressionArguments() {
+    doTest("Simple/CallExpression.java") { name, file ->
+      fun assertArguments(argumentsInPositionalOrder: List<String?>?, refText: String) =
+        file.findElementByTextFromPsi<UCallExpression>(refText).let { call ->
+          if (call !is UCallExpressionEx) throw AssertionError("${call.javaClass} is not a UCallExpressionEx")
+          Assert.assertEquals(
+            argumentsInPositionalOrder, call.resolve()?.let { psiMethod ->
+            (0 until psiMethod.parameterList.parametersCount).map {
+              call.getArgumentForParameter(it)?.asRenderString()
+            }
+          }
+          )
+        }
+      assertArguments(listOf("\"q\"", "varargs "), "String.format(\"q\")")
+      assertArguments(listOf("\"%d %s\"", "varargs 1 : \"asd\""), "String.format(\"%d %s\", 1, \"asd\")")
+      assertArguments(listOf("\"%s\"", "varargs String(\"a\", \"b\", \"c\") as java.lang.Object[]"),
+                      "String.format(\"%s\", (Object[])new String[]{\"a\", \"b\", \"c\"})")
+      assertArguments(listOf("\"%s\"", "varargs String(\"d\", \"e\", \"f\")"), "String.format(\"%s\", new String[]{\"d\", \"e\", \"f\"})")
+
     }
   }
 

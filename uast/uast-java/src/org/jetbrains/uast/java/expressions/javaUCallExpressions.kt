@@ -19,6 +19,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.uast.*
+import org.jetbrains.uast.java.expressions.JavaUExpressionList
 import org.jetbrains.uast.psi.UElementWithLocation
 
 class JavaUCallExpression(
@@ -40,7 +41,16 @@ class JavaUCallExpression(
   override val valueArgumentCount by lz { psi.argumentList.expressions.size }
   override val valueArguments by lz { psi.argumentList.expressions.map { JavaConverter.convertOrEmpty(it, this) } }
 
-  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
+  override fun getArgumentForParameter(i: Int): UExpression? {
+    val psiMethod = resolve() ?: return null
+    val isVarArgs = psiMethod.parameterList.parameters.getOrNull(i)?.isVarArgs ?: return null
+    return when {
+      isVarArgs -> JavaUExpressionList(null, UastSpecialExpressionKind.VARARGS, this).apply {
+        expressions = valueArguments.drop(i)
+      }
+      else -> valueArguments.getOrNull(i)
+    }
+  }
 
   override val typeArgumentCount by lz { psi.typeArguments.size }
 
