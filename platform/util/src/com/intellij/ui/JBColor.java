@@ -46,7 +46,8 @@ public class JBColor extends Color {
       @NotNull
       @Override
       public Color produce() {
-        return UIManager.getColor("link.foreground");
+        Color linkColor = UIManager.getColor("link.foreground");
+        return linkColor == null ? new Color(0x589df6) : linkColor;
       }
     });
   }
