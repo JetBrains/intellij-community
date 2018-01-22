@@ -30,7 +30,7 @@ public class ExternalProjectsState {
   }
 
   @Attribute
-  public boolean storeExternally = true;
+  public boolean storeExternally;
 
   @Tag("state")
   public static class State {

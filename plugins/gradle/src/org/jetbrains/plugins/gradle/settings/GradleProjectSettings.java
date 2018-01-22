@@ -25,7 +25,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
 
-  private boolean storeProjectFilesExternally = true;
+  private boolean storeProjectFilesExternally = false;
 
   @Nullable
   public String getGradleHome() {

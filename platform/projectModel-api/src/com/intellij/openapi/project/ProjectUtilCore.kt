@@ -2,10 +2,12 @@
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PlatformUtils
@@ -51,5 +53,5 @@ val Project.isExternalStorageEnabled: Boolean
   get() {
     val key = "com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
     val manager = picoContainer.getComponentInstance(key) as? ProjectFileStoreOptionManager ?: return false
-    return manager.isStoredExternally
+    return manager.isStoredExternally || Registry.`is`("store.imported.project.elements.separately", ApplicationManager.getApplication().isUnitTestMode)
   }
