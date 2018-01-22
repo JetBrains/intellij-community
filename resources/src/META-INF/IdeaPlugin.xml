@@ -341,6 +341,7 @@
     <projectConfigurable groupId="build" groupWeight="120" instance="com.intellij.jarRepository.settings.RemoteRepositoriesConfigurable" order="last"/>
 
     <scratch.rootType implementation="com.intellij.execution.jshell.JShellRootType"/>
+    <scratch.creationHelper language="JAVA" implementationClass="com.intellij.ide.actions.JavaScratchFileCreationHelper" />
 
     <intentionAction>
       <className>com.intellij.testIntegration.createTest.GenerateMissedTestsAction</className>
