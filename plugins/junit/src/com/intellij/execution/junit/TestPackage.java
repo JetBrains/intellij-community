@@ -81,7 +81,19 @@ public class TestPackage extends TestObject {
             final TestClassFilter classFilter = getClassFilter(data);
             LOG.assertTrue(classFilter.getBase() != null);
             long start = System.currentTimeMillis();
-            if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
+            if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
+              String packageName = getPackageName(data);
+              PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
+              PsiClass[] classes = aPackage == null
+                                   ? PsiClass.EMPTY_ARRAY
+                                   : ReadAction.compute(() ->
+                                                          aPackage.getClasses(GlobalSearchScope.projectScope(myProject)
+                                                                                               .intersectWith(classFilter.getScope())));
+              Arrays.stream(classes)
+                    .filter(aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)))
+                    .forEach(myClasses::add);
+            }
+            else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
               String packageName = getPackageName(data);
               String[] classNames = TestClassCollector.collectClassFQNames(packageName, getRootPath(), getConfiguration(), TestPackage::createPredicate);
               PsiManager manager = PsiManager.getInstance(myProject);
