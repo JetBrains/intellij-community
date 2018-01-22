@@ -165,10 +165,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
   @Override
   public Element getState() {
-
     Element state = new Element("state");
-    XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
-    });
+    XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters());
 
     if (!myAddNotNullAssertions) {
       addChild(state, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
