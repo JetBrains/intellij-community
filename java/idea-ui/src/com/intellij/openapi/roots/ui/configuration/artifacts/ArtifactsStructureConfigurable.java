@@ -289,11 +289,10 @@ public class ArtifactsStructureConfigurable extends BaseStructureConfigurable {
           modifiableModel.commit();
         }
       }.execute();
-      myPackagingEditorContext.resetModifiableModel();
     }
-
-
-    reset(); // TODO: fix to not reset on apply!
+    myPackagingEditorContext.resetModifiableModel();
+    reloadTreeNodes();
+    restoreLastSelection();
   }
 
   @Override
