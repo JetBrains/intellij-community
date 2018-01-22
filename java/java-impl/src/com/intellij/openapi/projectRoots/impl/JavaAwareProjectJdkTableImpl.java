@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
   public Sdk getInternalJdk() {
     if (myInternalJdk == null) {
       final String jdkHome = SystemProperties.getJavaHome();
-      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemProperties.getJavaVersion());
+      final String versionName = ProjectBundle.message("sdk.java.name.template", SystemInfo.JAVA_VERSION);
       myInternalJdk = myJavaSdk.createJdk(versionName, jdkHome);
     }
     return myInternalJdk;

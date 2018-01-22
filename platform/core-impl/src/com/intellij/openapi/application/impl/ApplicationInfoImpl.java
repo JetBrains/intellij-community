@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -30,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBRectangle;
 import org.jdom.Document;
@@ -690,7 +675,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
       " " + ApplicationNamesInfo.getInstance().getProductName() +
       ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
-      ", java-version:" + SystemProperties.getJavaVendor() + " " + SystemInfo.JAVA_RUNTIME_VERSION);
+      ", java-version:" + SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {

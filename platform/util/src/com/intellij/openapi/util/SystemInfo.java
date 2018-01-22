@@ -4,11 +4,12 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
@@ -17,6 +18,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final String OS_ARCH = System.getProperty("os.arch");
   public static final String JAVA_VERSION = System.getProperty("java.version");
   public static final String JAVA_RUNTIME_VERSION = getRtVersion(JAVA_VERSION);
+  public static final String JAVA_VENDOR = System.getProperty("java.vm.vendor", "Unknown");
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
@@ -32,11 +34,11 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
-  public static final boolean isAppleJvm = vendorContains("Apple");
-  public static final boolean isOracleJvm = vendorContains("Oracle");
-  public static final boolean isSunJvm = vendorContains("Sun") && vendorContains("Microsystems");
-  public static final boolean isIbmJvm = vendorContains("IBM");
-  public static final boolean isJetBrainsJvm = vendorContains("JetBrains");
+  public static final boolean isAppleJvm = containsIgnoreCase(JAVA_VENDOR, "Apple");
+  public static final boolean isOracleJvm = containsIgnoreCase(JAVA_VENDOR, "Oracle");
+  public static final boolean isSunJvm = containsIgnoreCase(JAVA_VENDOR, "Sun") && containsIgnoreCase(JAVA_VENDOR, "Microsystems");
+  public static final boolean isIbmJvm = containsIgnoreCase(JAVA_VENDOR, "IBM");
+  public static final boolean isJetBrainsJvm = containsIgnoreCase(JAVA_VENDOR, "JetBrains");
 
   public static final boolean IS_AT_LEAST_JAVA9 = isModularJava();
 
@@ -174,11 +176,6 @@ public class SystemInfo extends SystemInfoRt {
 
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
-  }
-
-  private static boolean vendorContains(String s) {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, s);
   }
 
   //<editor-fold desc="Deprecated stuff.">

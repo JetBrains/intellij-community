@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -8,6 +9,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * Utility wrappers for accessing system properties.
  *
+ * @see SystemInfo
  * @author yole
  */
 public class SystemProperties {
@@ -33,19 +35,19 @@ public class SystemProperties {
     return System.getProperty("line.separator");
   }
 
+  /** @deprecated use {@link SystemInfo#OS_NAME} (to be removed in IDEA 2020) */
   public static String getOsName() {
-    return System.getProperty("os.name");
+    return SystemInfo.OS_NAME;
   }
 
-  /**
-   * If you need to compare the version with some value, use {@link com.intellij.openapi.util.SystemInfo#isJavaVersionAtLeast(int, int, int)}.
-   */
+  /** @deprecated use {@link SystemInfo#JAVA_VERSION} (to be removed in IDEA 2020) */
   public static String getJavaVersion() {
-    return System.getProperty("java.version");
+    return SystemInfo.JAVA_VERSION;
   }
 
+  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
   public static String getJavaVmVendor() {
-    return System.getProperty("java.vm.vendor");
+    return SystemInfo.JAVA_VENDOR;
   }
 
   public static String getJavaHome() {
@@ -79,8 +81,9 @@ public class SystemProperties {
     return defaultValue;
   }
 
+  /** @deprecated use {@link SystemInfo#JAVA_VENDOR} (to be removed in IDEA 2020) */
   public static String getJavaVendor() {
-    return System.getProperty("java.vendor");
+    return SystemInfo.JAVA_VENDOR;
   }
 
   public static boolean is(String key) {
