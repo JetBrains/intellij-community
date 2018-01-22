@@ -42,8 +42,27 @@ public class JBColor extends Color {
   }
 
   public static Color link() {
-    return UIManager.getColor("link.foreground");
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return UIManager.getColor("link.foreground");
+      }
+    });
   }
+
+  public static Color linkHover() {
+    return new JBColor(0x52639b, 0x52639b);
+  }
+
+  public static Color linkPressed() {
+    return new JBColor(0xba6f25, 0xba6f25);
+  }
+
+  public static Color linkVisited() {
+    return new JBColor(0x800080, 0x9776a9);
+  }
+
 
   public static void setDark(boolean dark) {
     DARK = dark;
