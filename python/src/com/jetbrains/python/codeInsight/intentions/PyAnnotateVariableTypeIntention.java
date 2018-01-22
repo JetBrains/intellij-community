@@ -11,11 +11,16 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
@@ -82,9 +87,73 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     return PsiTreeUtil.getParentOfType(target, PyWithItem.class, PyAssignmentStatement.class, PyForPart.class) != null;
   }
 
+  // TODO unify this logic with PyTypingTypeProvider somehow
   private static boolean isAnnotated(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
-    // TODO filter out fields explicitly annotated as Any
-    return new PyTypingTypeProvider().getReferenceType(target, context, null) != null;
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(target);
+    final String name = target.getName();
+    if (scopeOwner == null || name == null) {
+      return false;
+    }
+
+    if (!target.isQualified()) {
+      if (hasInlineAnnotation(target)) {
+        return true;
+      }
+
+      StreamEx<PyTargetExpression> candidates = null;
+      if (context.maySwitchToAST(target)) {
+        final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        candidates = StreamEx.of(scope.getNamedElements(name, false)).select(PyTargetExpression.class);
+      }
+      // Unqualified target expression in either class or module
+      else if (scopeOwner instanceof PyFile) {
+        candidates = StreamEx.of(((PyFile)scopeOwner).getTopLevelAttributes()).filter(t -> name.equals(t.getName()));
+      }
+      else if (scopeOwner instanceof PyClass) {
+        candidates = StreamEx.of(((PyClass)scopeOwner).getClassAttributes()).filter(t -> name.equals(t.getName()));
+      }
+      if (candidates != null) {
+        return candidates.anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
+      }
+    }
+    else {
+      final PyClass pyClass = target.getContainingClass();
+      if (pyClass != null && scopeOwner instanceof PyFunction) {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+
+        final boolean isInstanceAttribute;
+        if (context.maySwitchToAST(target)) {
+          //noinspection ConstantConditions
+          isInstanceAttribute = StreamEx.of(PyUtil.multiResolveTopPriority(target.getQualifier(), resolveContext))
+            .select(PyParameter.class)
+            .filter(PyParameter::isSelf)
+            .anyMatch(p -> PsiTreeUtil.getParentOfType(p, PyFunction.class) == scopeOwner);
+        }
+        else {
+          isInstanceAttribute = PyUtil.isInstanceAttribute(target);
+        }
+        if (!isInstanceAttribute) {
+          return false;
+        }
+        // Set isDefinition=true to start searching right from the class level.
+        final PyClassTypeImpl classType = new PyClassTypeImpl(pyClass, true);
+        final List<? extends RatedResolveResult> classAttrs =
+          classType.resolveMember(name, target, AccessDirection.READ, resolveContext, true);
+        if (classAttrs == null) {
+          return false;
+        }
+        return StreamEx.of(classAttrs)
+          .map(RatedResolveResult::getElement)
+          .select(PyTargetExpression.class)
+          .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+          .anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasInlineAnnotation(@NotNull PyTargetExpression target) {
+    return target.getAnnotationValue() != null || target.getTypeCommentAnnotation() != null;
   }
 
   @Override
