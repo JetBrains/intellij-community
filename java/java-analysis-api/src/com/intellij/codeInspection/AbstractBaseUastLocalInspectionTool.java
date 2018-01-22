@@ -8,10 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.uast.UastVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UField;
-import org.jetbrains.uast.UFile;
-import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
@@ -84,6 +81,11 @@ public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectio
       @Override
       public boolean visitFile(@NotNull UFile node) {
         addDescriptors(checkFile(node.getPsi(), holder.getManager(), isOnTheFly));
+        return true;
+      }
+
+      @Override
+      public boolean visitElement(@NotNull UElement node) {
         return true;
       }
 
