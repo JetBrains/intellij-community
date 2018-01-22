@@ -32,6 +32,6 @@ public final class FitZoomToWindowAction extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(ImageEditorActionUtil.setEnabled(e));
+    ImageEditorActionUtil.setEnabled(e);
   }
 }
