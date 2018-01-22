@@ -24,7 +24,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -61,7 +60,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 
 //todo listen & notifyListeners readonly events?
-public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements SettingsSavingComponent {
+public class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   private final DocumentCommitProcessor myDocumentCommitThread;
   private final boolean myUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
@@ -176,17 +175,6 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
     final PostprocessReformattingAspect component = myProject.getComponent(PostprocessReformattingAspect.class);
     final FileViewProvider viewProvider = getCachedViewProvider(doc);
     if (viewProvider != null && component != null) component.doPostponedFormatting(viewProvider);
-  }
-
-  @Override
-  public void save() {
-    // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
-    try {
-      commitAllDocuments();
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
   }
 
   @Override
