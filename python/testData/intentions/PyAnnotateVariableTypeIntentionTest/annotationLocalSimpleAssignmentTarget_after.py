@@ -1,3 +1,3 @@
 def func():
-    var: str = 'spam'
+    var: [str] = 'spam'
     var
