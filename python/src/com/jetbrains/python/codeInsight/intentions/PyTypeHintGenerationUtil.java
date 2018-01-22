@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -68,8 +69,9 @@ public class PyTypeHintGenerationUtil {
       if (editor != null) {
         editor.getCaretModel().moveToOffset(initialCaretOffset);
         final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(createdAnnotationOwner);
+        final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
         //noinspection ConstantConditions
-        templateBuilder.replaceElement(createdAnnotationOwner.getAnnotation().getValue(), createdAnnotationOwner.getAnnotationValue());
+        templateBuilder.replaceElement(createdAnnotationOwner.getAnnotation().getValue(), replacementText);
         templateBuilder.run(editor, true);
       }
     }
@@ -134,11 +136,14 @@ public class PyTypeHintGenerationUtil {
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
 
       if (editor != null) {
+        final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
         editor.getCaretModel().moveToOffset(initialCaretOffset);
         final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
         //noinspection ConstantConditions
         for (TextRange range : typeRanges) {
-          templateBuilder.replaceRange(range.shiftRight(typeCommentPrefix.length()), range.substring(annotation));
+          final String individualType = range.substring(annotation);
+          final String replacementText = testMode ? "[" + individualType + "]" : individualType;
+          templateBuilder.replaceRange(range.shiftRight(typeCommentPrefix.length()), replacementText);
         }
         templateBuilder.run(editor, true);
       }

@@ -1,4 +1,4 @@
 def func():
-    var: TextIO
+    var: [TextIO]
     with open('file.txt') as var:
         var

@@ -1,3 +1,3 @@
 def func():
-    var = 'foo'  # type: str # comment
+    var = 'foo'  # type: [str] # comment
     var

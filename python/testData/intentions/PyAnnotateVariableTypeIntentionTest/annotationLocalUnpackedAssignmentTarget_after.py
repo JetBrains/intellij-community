@@ -1,4 +1,4 @@
 def func():
-    var: str
+    var: [str]
     var, _ = 'spam', 42
     var

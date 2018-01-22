@@ -1,4 +1,4 @@
 def func():
-    var: Any
+    var: [Any]
     (var) = 'spam'
     var

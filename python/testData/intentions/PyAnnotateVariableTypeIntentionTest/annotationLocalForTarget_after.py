@@ -1,4 +1,4 @@
 def func():
-    var: str
+    var: [str]
     for var in 'spam':
         var
