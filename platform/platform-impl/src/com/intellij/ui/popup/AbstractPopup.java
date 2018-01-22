@@ -924,27 +924,31 @@ public class AbstractPopup implements JBPopup {
       window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
-          return myPreferredFocusedComponent;
+          return getComponent();
+        }
+
+        private Component getComponent() {
+          return myPreferredFocusedComponent == null ? myComponent : myPreferredFocusedComponent;
         }
 
         @Override
         public Component getComponentBefore(Container aContainer, Component aComponent) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
 
         @Override
         public Component getFirstComponent(Container aContainer) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
 
         @Override
         public Component getLastComponent(Container aContainer) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
 
         @Override
         public Component getDefaultComponent(Container aContainer) {
-          return myPreferredFocusedComponent;
+          return getComponent();
         }
       });
     }
