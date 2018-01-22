@@ -60,7 +60,7 @@ public class Patches {
   public static final boolean USE_REFLECTION_TO_ACCESS_JDK8 = Boolean.TRUE; // non-compile-const to trick "Constant expression is always true" inspection
 
   /**
-   * Support default methods in JDI
+   * Support default methods in JDI.
    * See <a href="https://bugs.openjdk.java.net/browse/JDK-8042123">JDK-8042123</a>
    */
   public static final boolean JDK_BUG_ID_8042123 = !SystemInfo.isJavaVersionAtLeast(8, 0, 45);
@@ -132,5 +132,9 @@ public class Patches {
    */
   public static final boolean JDK_BUG_ID_8032832 = SystemInfo.isJavaVersionAtLeast(8, 0, 20);
 
-  public static final boolean JDK_BUG_ID_8147994 = !SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast(8, 0, 102);
+  /**
+   * Since 8u102, AWT supports Shift-scroll on all platforms (before, it only worked on macOS).
+   * Ultimately fixed by <a href="https://bugs.openjdk.java.net/browse/JDK-8147994">JDK-8147994</a>.
+   */
+  public static final boolean JDK_BUG_ID_8147994 = !(SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast(8, 0, 102));
 }
