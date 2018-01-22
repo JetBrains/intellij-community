@@ -708,7 +708,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
           @Override
           public void lookupCanceled(LookupEvent event) {
             final AbstractPopup hint = myHint;
-            if (hint.canClose() && hint.isVisible()) {
+            if (hint != null && hint.canClose() && hint.isVisible()) {
               hint.cancel();
             }
           }
