@@ -69,7 +69,7 @@
       <zipfileset src="${out.dir}/studio/artifacts/updater.jar" />
       <zipfileset src="lib/log4j.jar" />
       <zipfileset src="lib/jna.jar" />
-      <zipfileset src="lib/jna-utils.jar" />
+      <zipfileset src="lib/jna-platform.jar" />
     </jarjar>
     <!-- The SDK updater also needs to have libraries added to it, and get zipped up with source.properties so it can be published as
         an SDK component -->
@@ -77,7 +77,7 @@
       <zipfileset src="${out.dir}/studio/artifacts/patcher-partial.jar" />
       <zipfileset src="lib/log4j.jar" />
       <zipfileset src="lib/jna.jar" />
-      <zipfileset src="lib/jna-utils.jar" />
+      <zipfileset src="lib/jna-platform.jar" />
     </jarjar>
     <zip destfile="${out.dir}/sdk-patcher.zip" compress="true" basedir="${out.dir}" includes="sdk-patcher/*"/>
   </target>
