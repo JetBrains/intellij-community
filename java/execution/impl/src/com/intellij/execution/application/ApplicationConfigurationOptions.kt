@@ -1,11 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application
 
 import com.intellij.execution.JvmConfigurationOptions
-import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
 open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
@@ -24,6 +22,6 @@ open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)
 
-  @get:MapAnnotation(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name", sortBeforeSave = false)
+  @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
   var env by property(LinkedHashMap<String, String>())
 }

@@ -137,6 +137,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -1642,12 +1643,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   public String getFoldingDescription(boolean withCollapseStatus) {
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
-    return getTagsFromSegments(myEditor.getDocument().getText(),
-                               Arrays.asList(myEditor.getFoldingModel().getAllFoldRegions()),
+    final Editor topEditor = getTopEditor(myEditor);
+    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+    return getTagsFromSegments(topEditor.getDocument().getText(),
+                               Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
                                foldRegion -> "text=\'" + foldRegion.getPlaceholderText() + "\'"
                                              + (withCollapseStatus ? " expand=\'" + foldRegion.isExpanded() + "\'" : ""));
+  }
+
+  @Contract("null -> null")
+  private static Editor getTopEditor(Editor editor) {
+    while(editor instanceof EditorWindow) {
+      editor = ((EditorWindow)editor).getDelegate();
+    }
+    return editor;
   }
 
   @NotNull

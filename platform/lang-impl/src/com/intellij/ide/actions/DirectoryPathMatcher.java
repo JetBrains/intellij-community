@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 /**
@@ -69,7 +71,7 @@ class DirectoryPathMatcher {
     String nextPattern = myPattern + c;
     if (c == '*' || c == '/' || c == ' ') return new DirectoryPathMatcher(myModel, myFiles, nextPattern);
 
-    List<Pair<VirtualFile, String>> files = myFiles != null ? myFiles : getProjectRoots(myModel);
+    List<Pair<VirtualFile, String>> files = getMatchingRoots();
 
     List<Pair<VirtualFile, String>> nextRoots = new ArrayList<>();
     MinusculeMatcher matcher = GotoFileItemProvider.getQualifiedNameMatcher(nextPattern);
@@ -77,22 +79,55 @@ class DirectoryPathMatcher {
       if (containsChar(pair.second, c) && matcher.matches(pair.second)) {
         nextRoots.add(pair);
       } else {
-        processSubdirectoriesContaining(pair.first, c, sub -> {
+        processProjectFilesUnder(pair.first, sub -> {
+          if (!sub.isDirectory()) return false;
+          if (!containsChar(sub.getName(), c)) return true; //go deeper
+
           String fullName = myModel.getFullName(sub);
-          if (fullName == null)  return false;
+          if (fullName == null) return true;
           fullName = FileUtil.toSystemIndependentName(fullName);
           if (matcher.matches(fullName)) {
             nextRoots.add(Pair.create(sub, fullName));
-            return true;
+            return false;
           }
-          return false;
+          return true;
         });
       }
     }
 
     return nextRoots.isEmpty() ? null : new DirectoryPathMatcher(myModel, nextRoots, nextPattern);
   }
-  
+
+  /** return null if not cheap */
+  @Nullable
+  Set<String> findFileNamesMatchingIfCheap(char nextLetter, MinusculeMatcher matcher) {
+    List<Pair<VirtualFile, String>> files = getMatchingRoots();
+    Set<String> names = new HashSet<>();
+    AtomicInteger counter = new AtomicInteger();
+    BooleanSupplier tooMany = () -> counter.incrementAndGet() > 1000;
+    for (Pair<VirtualFile, String> pair : files) {
+      if (containsChar(pair.second, nextLetter) && matcher.matches(pair.second)) {
+        names.add(pair.first.getName());
+      }
+      processProjectFilesUnder(pair.first, sub -> {
+        counter.incrementAndGet();
+        if (tooMany.getAsBoolean()) return false;
+
+        String name = sub.getName();
+        if (containsChar(name, nextLetter) && matcher.matches(name)) {
+          names.add(name);
+        }
+        return true;
+      });
+    }
+    return tooMany.getAsBoolean() ? null : names;
+  }
+
+  @NotNull
+  private List<Pair<VirtualFile, String>> getMatchingRoots() {
+    return myFiles != null ? myFiles : getProjectRoots(myModel);
+  }
+
   @NotNull
   GlobalSearchScope narrowDown(@NotNull GlobalSearchScope fileSearchScope) {
     if (myFiles == null) return fileSearchScope;
@@ -102,19 +137,13 @@ class DirectoryPathMatcher {
 
   }
 
-  private void processSubdirectoriesContaining(VirtualFile root, char c, Processor<VirtualFile> consumer) {
+  private void processProjectFilesUnder(VirtualFile root, Processor<VirtualFile> consumer) {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myModel.getProject());
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Object>() {
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (!file.isDirectory() || !scope.contains(file)) return false;
-
-        String name = file.getName();
-        if (containsChar(name, c) && consumer.process(file)) {
-          return false;
-        }
-        return true;
+        return scope.contains(file) && consumer.process(file);
       }
 
       @Nullable

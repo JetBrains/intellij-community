@@ -41,7 +41,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;

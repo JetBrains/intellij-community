@@ -8,9 +8,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="module" module-name="jps-standalone-builder" />
+    <orderEntry type="module" module-name="jps-standalone-builder" scope="RUNTIME" />
     <orderEntry type="module" module-name="build" />
-    <orderEntry type="module" module-name="buildScripts" />
+    <orderEntry type="module" module-name="buildScripts" scope="RUNTIME" />
     <orderEntry type="module" module-name="python-community-build" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>

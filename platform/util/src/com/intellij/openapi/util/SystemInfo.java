@@ -152,7 +152,11 @@ public class SystemInfo extends SystemInfoRt {
   }
 
   public static String getOsNameAndVersion() {
-    return System.getProperty("os.name") + " " + System.getProperty("os.version");
+    String osName = System.getProperty("os.name");
+    if (isMacOSSierra) {
+      osName = "macOS"; //JDK always returns Mac OS X
+    }
+    return osName + " " + System.getProperty("os.version");
   }
 
   private static int normalize(int number) {

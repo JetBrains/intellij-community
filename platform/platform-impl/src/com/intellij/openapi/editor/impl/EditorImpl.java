@@ -3495,7 +3495,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
         // committed text insertion
         if (commitCount > 0) {
-          //noinspection ForLoopThatDoesntUseLoopVariable
           for (char c = text.current(); commitCount > 0; c = text.next(), commitCount--) {
             if (c >= 0x20 && c != 0x7F) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
               processKeyTyped(c);

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -31,6 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -466,8 +465,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   static class ProjectState {
     @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundValueWithTag = false, surroundKeyWithTag = false,
-      keyAttributeName = "path", entryTagName = "dataType")
+    @XMap(keyAttributeName = "path", entryTagName = "dataType")
     public final Map<String, ModuleState> map = ContainerUtil.newConcurrentMap();
     public boolean isInclusion;
   }

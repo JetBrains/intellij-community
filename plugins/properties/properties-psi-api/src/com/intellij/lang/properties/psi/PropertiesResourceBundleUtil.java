@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.psi;
 
 import gnu.trove.TIntHashSet;
@@ -45,7 +31,7 @@ public class PropertiesResourceBundleUtil {
         escaped = true;
         continue;
       }
-      if (escaped && c == 'n') {
+      if (escaped && (c == 'n' || c == 'r')) {
         buffer.append(ESCAPE_SYMBOL);
       }
       buffer.append(c);
@@ -68,7 +54,7 @@ public class PropertiesResourceBundleUtil {
       char c = text.charAt(i);
 
       if ((i == 0 && (c == ' ' || c == '\t')) // Leading white space
-          || c == '\n'  // Multi-line value
+          || c == '\n' || c == '\r' // Multi-line value
           || (delimiter == ' ' && SYMBOLS_TO_ESCAPE.contains(c)))   // Special symbol
       {
         buffer.append(ESCAPE_SYMBOL);
@@ -76,7 +62,7 @@ public class PropertiesResourceBundleUtil {
       else if (c == ESCAPE_SYMBOL) {           // Escaped 'escape' symbol)
         if (text.length() > i + 1) {
           final char nextChar = text.charAt(i + 1);
-          if (nextChar != 'n' && nextChar != 'u' && nextChar != 'U') {
+          if (nextChar != 'n' && nextChar != 'r' && nextChar != 'u' && nextChar != 'U') {
             buffer.append(ESCAPE_SYMBOL);
           }
         } else {

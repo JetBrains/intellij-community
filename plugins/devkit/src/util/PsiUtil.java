@@ -164,7 +164,8 @@ public class PsiUtil {
       if (dir == null || !dir.isDirectory()) {
         continue;
       }
-      if (dir.findChild("idea.iml") != null || dir.findChild("community-main.iml") != null) {
+      if (dir.findChild("idea.iml") != null || dir.findChild("community-main.iml") != null
+          || dir.findChild("intellij.ideaCommunity.main.iml") != null || dir.findChild("intellij.ideaUltimate.main.iml") != null) {
         return true;
       }
     }
@@ -183,11 +184,7 @@ public class PsiUtil {
     }
 
     GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);
-    if (JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) == null) {
-      return false;
-    }
-
-    return true;
+    return JavaPsiFacade.getInstance(project).findClass(IDE_PROJECT_MARKER_CLASS, scope) != null;
   }
 
   @NotNull

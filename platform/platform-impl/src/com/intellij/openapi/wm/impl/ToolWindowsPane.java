@@ -35,7 +35,7 @@ import com.intellij.openapi.wm.impl.commands.FinalizableCommand;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -19,7 +19,6 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;

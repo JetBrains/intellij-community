@@ -43,8 +43,6 @@ private val LOG = Logger.getInstance(MigrateModuleNamesInSourcesAction::class.ja
 class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in Sources...", "Find and migrate to the new scheme occurrences of module names in IntelliJ IDEA project sources", null) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    val moduleNames = ModuleManager.getInstance(project).modules.map { it.name }
-    val targets = moduleNames.map(::ModuleNameUsageTarget).toTypedArray()
     val viewPresentation = UsageViewPresentation().apply {
       tabText = "Occurrences of Module Names"
       toolwindowTitle = "Occurrences of Module Names"
@@ -59,6 +57,20 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
       isShowNotFoundMessage = true
       isShowPanelIfOnlyOneUsage = true
     }
+
+    val renamingScheme = try {
+      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
+        File(VfsUtil.virtualToIoFile(project.baseDir), "module-renaming-scheme.xml"))?.let {
+        XmlSerializer.deserialize(loadElement(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
+      }
+    }
+    catch (e: XmlSerializationException) {
+      LOG.error(e)
+      return
+    }
+    val moduleNames = renamingScheme?.keys?.toList() ?: ModuleManager.getInstance(project).modules.map { it.name }
+    val targets = moduleNames.map(::ModuleNameUsageTarget).toTypedArray()
+
     val searcherFactory = Factory<UsageSearcher> {
       val processed = HashSet<Pair<VirtualFile, Int>>()
       UsageSearcher { consumer ->
@@ -72,23 +84,17 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
       }
     }
 
-    val renamingScheme = try {
-      LocalFileSystem.getInstance().refreshAndFindFileByIoFile(File(VfsUtil.virtualToIoFile(project.baseDir), "module-renaming-scheme.xml"))?.let {
-        XmlSerializer.deserialize(loadElement(it.inputStream), ModuleRenamingHistoryState::class.java).oldToNewName
-      }
-    }
-    catch (e: XmlSerializationException) {
-      LOG.error(e)
-      return
-    }
-
     val listener = object : UsageViewManager.UsageViewStateListener {
       override fun usageViewCreated(usageView: UsageView) {
         if (renamingScheme == null) return
         val migrateOccurrences = Runnable {
           @Suppress("UNCHECKED_CAST")
           val usages = (usageView.usages - usageView.excludedUsages) as Set<UsageInfo2UsageAdapter>
-          usages.groupBy { it.file }.forEach { (file, usages) ->
+          val usagesByFile = usages.groupBy { it.file }
+          val progressIndicator = ProgressManager.getInstance().progressIndicator
+          var i = 0
+          usagesByFile.forEach { (file, usages) ->
+            progressIndicator?.fraction = (i++).toDouble() / usagesByFile.size
             try {
               usages.sortedByDescending { it.usageInfo.navigationRange!!.startOffset }.forEach {
                 var range = it.usageInfo.navigationRange!!
@@ -157,11 +163,26 @@ class MigrateModuleNamesInSourcesAction : AnAction("Find/Update Module Names in 
                                            UsageSearchContext.IN_CODE or UsageSearchContext.IN_STRINGS, true)
     }
 
+    fun processUsagesInStrings(moduleName: String, substring: String) {
+      val quotedOccurrencesProcessor = TextOccurenceProcessor { element, offset ->
+        val text = element.text
+        if (text[0] == '"' && text.lastOrNull() == '"' || text[0] == '\'' && text.lastOrNull() == '\'') {
+          consumer.process(UsageInfo(element, offset + substring.indexOf(moduleName), offset + substring.length))
+        }
+        else {
+          true
+        }
+      }
+      searchHelper.processElementsWithWord(quotedOccurrencesProcessor, scope, substring, UsageSearchContext.IN_STRINGS, true)
+    }
+
     for ((i, moduleName) in moduleNames.withIndex()) {
       progress.fraction = i.toDouble() / moduleNames.size
       progress.text2 = "Searching for \"$moduleName\""
       processCodeUsages(moduleName, "\"$moduleName\"", groovyOnly = false)
       processCodeUsages(moduleName, "'$moduleName'", groovyOnly = true)
+      processUsagesInStrings(moduleName, "production/$moduleName")
+      processUsagesInStrings(moduleName, "test/$moduleName")
 
       val plainOccurrencesProcessor = TextOccurenceProcessor { element, offset ->
         val endOffset = offset + moduleName.length
@@ -236,9 +257,9 @@ private class ModuleNameUsageTarget(val moduleName: String) : UsageTarget, ItemP
 
 private val regularWordsUsedAsModuleNames = setOf(
   "CloudBees", "AngularJS", "CloudFoundry", "CSS", "CFML", "Docker", "Dart", "EJS", "Guice", "Heroku", "Jade", "Kubernetes", "LiveEdit",
-  "OpenShift", "Meteor", "NodeJS", "Perforce", "TFS", "WSL", "android", "ant", "annotations", "appcode", "asp", "aspectj", "behat", "boot", "bootstrap", "build", "blade",
+  "OpenShift", "Meteor", "NodeJS", "Perforce", "TFS", "WSL", "analyzer", "android", "ant", "annotations", "appcode", "artwork", "asp", "aspectj", "behat", "boot", "bootstrap", "build", "blade",
   "commandLineTool", "chronon", "codeception", "common", "commander", "copyright", "coverage", "dependencies", "designer", "ddmlib", "doxygen", "draw9patch", "drupal", "duplicates", "drools", "eclipse", "el", "emma", "editorconfig",
-  "extensions", "flex", "gherkin", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",
+  "extensions", "flex", "gherkin", "flags", "freemarker", "github", "gradle", "haml", "graph", "icons", "idea", "images", "ipnb", "jira", "joomla", "jbpm",
   "json", "junit", "layoutlib", "less", "localization", "manifest", "main", "markdown", "maven", "ognl", "openapi", "ninepatch", "perflib", "observable", "phing", "php", "phpspec",
   "pixelprobe", "play", "profilers", "properties", "puppet", "postcss", "python", "quirksmode", "repository", "resources", "rs", "relaxng", "restClient", "rest", "ruby", "sass", "sdklib", "seam", "ssh",
   "spellchecker", "stylus", "swift", "terminal", "tomcat", "textmate", "testData", "testFramework", "testng", "testRunner", "twig", "util", "updater", "vaadin", "vagrant", "vuejs", "velocity", "weblogic",

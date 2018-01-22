@@ -17,7 +17,7 @@ package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

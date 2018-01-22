@@ -37,7 +37,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +76,7 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

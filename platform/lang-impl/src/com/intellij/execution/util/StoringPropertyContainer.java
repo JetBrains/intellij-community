@@ -18,7 +18,7 @@ package com.intellij.execution.util;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.Storage;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;

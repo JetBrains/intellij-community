@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -131,9 +129,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     // GradleProjectSettings has transient field isStoredExternally - used when no project yet,
     // but when project created, isStoredExternally stored in the ExternalProjectsManagerImpl and we need to transfer it
     for (GradleProjectSettings setting : settings) {
-      if (!setting.isStoreProjectFilesExternally()) {
-        setting.setStoreProjectFilesExternally(isStoredExternally);
-      }
+      setting.setStoreProjectFilesExternally(isStoredExternally);
     }
     return settings;
   }

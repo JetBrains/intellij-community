@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.containers.BiDirectionalEnumerator;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
@@ -45,18 +45,14 @@ public class InMemoryStorage implements VcsLogStorage {
     return myCommitIdEnumerator.getValue(commitIndex);
   }
 
-  @Nullable
   @Override
-  public CommitId findCommitId(@NotNull final Condition<CommitId> condition) {
-    final CommitId[] result = new CommitId[]{null};
-    myCommitIdEnumerator.forEachValue(commitId -> {
-      if (condition.value(commitId)) {
-        result[0] = commitId;
-        return false;
-      }
-      return true;
-    });
-    return result[0];
+  public boolean containsCommit(@NotNull CommitId id) {
+    return myCommitIdEnumerator.contains(id);
+  }
+
+  @Override
+  public void iterateCommits(@NotNull Function<CommitId, Boolean> consumer) {
+    myCommitIdEnumerator.forEachValue(commitId -> !consumer.fun(commitId));
   }
 
   @Override

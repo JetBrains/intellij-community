@@ -39,7 +39,7 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -203,7 +203,7 @@ public class ExtractSuperClassUtil {
                                                                       final PsiClass derivedClass,
                                                                       final MemberInfo[] selectedMembers) throws IncorrectOperationException {
     final PsiManager manager = derivedClass.getManager();
-    Set<PsiElement> movedElements = new com.intellij.util.containers.HashSet<>();
+    Set<PsiElement> movedElements = new HashSet<>();
     for (final MemberInfo info : selectedMembers) {
       movedElements.add(info.getMember());
     }

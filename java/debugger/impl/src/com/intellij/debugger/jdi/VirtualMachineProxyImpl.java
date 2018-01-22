@@ -18,7 +18,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;

@@ -17,10 +17,15 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.stubs.*;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -28,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 
 /**
  * @author max
@@ -464,12 +470,12 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTupleArguments();
   }
 
-  public void _testImportedNamedTupleName() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedNamedTupleName() {
+    doTestUnsupportedNamedTuple(getTestFile());
   }
 
-  public void _testImportedNamedTupleFields() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedNamedTupleFields() {
+    doTestUnsupportedNamedTuple(getTestFile());
   }
 
   public void testFullyQualifiedTypingNamedTuple() {
@@ -512,12 +518,12 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingNamedTupleArguments();
   }
 
-  public void _testImportedTypingNamedTupleName() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleName() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
-  public void _testImportedTypingNamedTupleFields() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleFields() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
   public void testFullyQualifiedTypingNamedTupleKwargs() {
@@ -552,12 +558,12 @@ public class PyStubsTest extends PyTestCase {
     doTestTypingNamedTupleArguments();
   }
 
-  public void _testImportedTypingNamedTupleKwargsName() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleKwargsName() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
-  public void _testImportedTypingNamedTupleKwargsFields() {
-    doTestUnsupportedNamedTuple();
+  public void testImportedTypingNamedTupleKwargsFields() {
+    doTestUnsupportedTypingNamedTuple(getTestFile());
   }
 
   private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
@@ -600,7 +606,32 @@ public class PyStubsTest extends PyTestCase {
     doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst);
   }
 
-  private void doTestUnsupportedNamedTuple() {
+  private void doTestUnsupportedNamedTuple(@NotNull PsiElement anchor) {
+    doTestUnsupportedNT(
+      (typeFromAst, context) -> {
+        assertInstanceOf(typeFromAst, PyCallableType.class);
+
+        final PyType returnType = ((PyCallableType)typeFromAst).getReturnType(context);
+        assertEquals(PyBuiltinCache.getInstance(anchor).getTupleType(), returnType);
+      }
+    );
+  }
+
+  private void doTestUnsupportedTypingNamedTuple(@NotNull PsiElement anchor) {
+    final QualifiedName typingNTName = QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE);
+
+    final PsiElement member = PyResolveImportUtil.resolveTopLevelMember(typingNTName, PyResolveImportUtil.fromFoothold(anchor));
+    assertInstanceOf(member, PyClass.class);
+
+    doTestUnsupportedNT(
+      (typeFromAst, context) -> {
+        assertInstanceOf(typeFromAst, PyClassType.class);
+        assertEquals(member, ((PyClassType)typeFromAst).getPyClass());
+      }
+    );
+  }
+
+  private void doTestUnsupportedNT(@NotNull BiConsumer<PyType, TypeEvalContext> typeFromAstChecker) {
     final PyFile file = getTestFile();
 
     final PyTargetExpression attribute = file.findTopLevelAttribute("nt");
@@ -613,8 +644,8 @@ public class PyStubsTest extends PyTestCase {
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
-    final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
-    assertNull(typeFromAst);
+    final TypeEvalContext context = TypeEvalContext.userInitiated(myFixture.getProject(), file);
+    typeFromAstChecker.accept(context.getType(attribute), context);
   }
 
   private static void doTestNamedTuple(@NotNull String expectedName,

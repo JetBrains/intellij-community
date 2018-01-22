@@ -27,6 +27,7 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -48,6 +49,10 @@ public class ExpressionUtils {
     convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_CHARACTER);
     convertableBoxedClassNames.add(CommonClassNames.JAVA_LANG_SHORT);
   }
+
+  private static final CallMatcher KNOWN_SIMPLE_CALLS =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyIterator", "emptyMap", "emptySortedMap",
+                           "emptySortedSet", "emptyListIterator").parameterCount(0);
 
   private ExpressionUtils() {}
 
@@ -758,6 +763,9 @@ public class ExpressionUtils {
         PsiElement resolvedQualifier = ((PsiReferenceExpression)qualifier).resolve();
         if(resolvedQualifier instanceof PsiClass) return true;
       }
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      return KNOWN_SIMPLE_CALLS.test((PsiMethodCallExpression)expression);
     }
     return false;
   }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -19,6 +17,7 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -67,7 +66,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -135,6 +134,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
+
+  private List<CapturePoint> myAgentInsertPoints = Collections.emptyList();
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -2213,5 +2214,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
+  }
+
+  @NotNull
+  public List<CapturePoint> getAgentInsertPoints() {
+    return myAgentInsertPoints;
+  }
+
+  public void setAgentInsertPoints(@NotNull List<CapturePoint> agentInsertPoints) {
+    myAgentInsertPoints = agentInsertPoints;
   }
 }

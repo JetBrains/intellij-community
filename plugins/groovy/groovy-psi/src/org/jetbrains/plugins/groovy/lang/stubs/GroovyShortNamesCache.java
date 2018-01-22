@@ -26,7 +26,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

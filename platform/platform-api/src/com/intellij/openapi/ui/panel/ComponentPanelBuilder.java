@@ -1,14 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.panel;
+package com.intellij.openapi.ui.panel;
 
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.panel.GridBagPanelBuilder;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ContextHelpLabel;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
+import com.intellij.ui.TextComponent;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -189,7 +188,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     if (myComponent instanceof JRadioButton || myComponent instanceof JCheckBox) {
       return isMacDefault ? 8 : 13;
     }
-    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField ||//todo[kirill.kirichenko] provide markup interface for EditorTextField in platform-api
+    else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
              myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
       return isMacDefault ? 13 : 14;
     } else {
@@ -207,7 +206,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       left = isMacDefault ? 27 : isWin10 ? 17 : 24;
       bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
     }
-    else if (myComponent instanceof JTextField || myComponent instanceof EditorTextField || //todo[kirill.kirichenko] provide markup interface for EditorTextField in platform-api
+    else if (myComponent instanceof JTextField || myComponent instanceof TextComponent ||
              myComponent instanceof JComboBox || myComponent instanceof ComponentWithBrowseButton) {
       top = isWin10 ? 3 : 4;
       left = isWin10 ? 2 : isMacDefault ? 5 : 4;

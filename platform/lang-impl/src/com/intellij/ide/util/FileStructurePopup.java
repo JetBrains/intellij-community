@@ -73,7 +73,7 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
@@ -1189,7 +1189,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   private static Set<PsiElement> getAllParents(PsiElement element) {
-    Set<PsiElement> parents = new java.util.HashSet<>();
+    Set<PsiElement> parents = new HashSet<>();
 
     while (element != null) {
       parents.add(element);

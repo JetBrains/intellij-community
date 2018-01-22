@@ -18,7 +18,7 @@ package com.intellij.cvsSupport2.cvsoperations.common;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderForLightFiles;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;

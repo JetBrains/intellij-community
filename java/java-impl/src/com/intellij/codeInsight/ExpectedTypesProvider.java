@@ -35,8 +35,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;

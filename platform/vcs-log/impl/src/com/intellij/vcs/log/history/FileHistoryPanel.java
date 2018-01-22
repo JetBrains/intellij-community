@@ -26,12 +26,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiImpl;
 import com.intellij.vcs.log.ui.frame.DetailsPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
@@ -76,7 +79,15 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myGraphTable.setCompactReferencesView(true);
     myGraphTable.setShowTagNames(false);
 
-    myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this);
+    myDetailsPanel = new DetailsPanel(logData, myUi.getColorManager(), this) {
+      @Override
+      protected void navigate(@NotNull CommitId commit) {
+        VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(logData.getProject()).getMainLogUi();
+        if (mainLogUi != null) {
+          mainLogUi.jumpToCommit(commit.getHash(), commit.getRoot());
+        }
+      }
+    };
     myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);

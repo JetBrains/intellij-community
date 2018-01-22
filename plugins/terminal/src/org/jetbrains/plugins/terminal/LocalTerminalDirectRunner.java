@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;

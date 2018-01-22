@@ -153,4 +153,20 @@ class LoopConditionNotUpdatedInsideLoop {
     }
     System.out.println(j);
   }
+
+  class Holder {
+    volatile boolean x;
+
+    final boolean isX() {
+      return x;
+    }
+  }
+
+  Runnable testVolatile(final Holder h) {
+    Runnable r = () -> {
+      while (!h.isX());
+      System.out.println("Has!");
+    };
+    return r;
+  }
 }

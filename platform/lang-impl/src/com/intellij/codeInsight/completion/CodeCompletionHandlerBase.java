@@ -572,12 +572,12 @@ public class CodeCompletionHandlerBase {
     if (editor.getCaretModel().supportsMultipleCarets()) {
       Ref<WatchingInsertionContext> lastContext = Ref.create();
       Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+      boolean wasInjected = hostEditor != editor;
       OffsetsInFile topLevelOffsets = indicator.getHostOffsets();
       hostEditor.getCaretModel().runForEachCaret(new CaretAction() {
         @Override
         public void perform(Caret caret) {
-          PsiDocumentManager.getInstance(indicator.getProject()).commitDocument(hostEditor.getDocument());
-          OffsetsInFile targetOffsets = topLevelOffsets.toInjectedIfAny(caret.getOffset());
+          OffsetsInFile targetOffsets = findInjectedOffsetsIfAny(caret);
           PsiFile targetFile = targetOffsets.getFile();
           Editor targetEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, targetFile);
           int targetCaretOffset = targetEditor.getCaretModel().getOffset();
@@ -590,6 +590,13 @@ public class CodeCompletionHandlerBase {
                                                                                     targetCaretOffset, idEnd,
                                                                                     targetOffsets.getOffsets());
           lastContext.set(currentContext);
+        }
+
+        private OffsetsInFile findInjectedOffsetsIfAny(Caret caret) {
+          if (!wasInjected) return topLevelOffsets;
+          
+          PsiDocumentManager.getInstance(indicator.getProject()).commitDocument(hostEditor.getDocument());
+          return topLevelOffsets.toInjectedIfAny(caret.getOffset());
         }
       });
       context = lastContext.get();
@@ -651,7 +658,9 @@ public class CodeCompletionHandlerBase {
         assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
 
         Project project = indicator.getProject();
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
+        if (item.requiresCommittedDocuments()) {
+          PsiDocumentManager.getInstance(project).commitAllDocuments();
+        }
         item.handleInsert(context);
         PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
       }

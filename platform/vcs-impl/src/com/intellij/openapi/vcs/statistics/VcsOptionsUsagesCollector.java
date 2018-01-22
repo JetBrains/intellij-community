@@ -20,7 +20,7 @@ import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;

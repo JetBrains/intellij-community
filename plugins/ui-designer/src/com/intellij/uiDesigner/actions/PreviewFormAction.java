@@ -60,7 +60,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -411,8 +411,8 @@ public class SvnUtil {
     return (info == null) ? null : info.getRepositoryRootURL();
   }
 
-  public static boolean isWorkingCopyRoot(final File file) {
-    return FileUtil.filesEqual(file, getWorkingCopyRootNew(file));
+  public static boolean isWorkingCopyRoot(@NotNull File file) {
+    return FileUtil.filesEqual(file, getWorkingCopyRoot(file));
   }
 
   @NotNull
@@ -544,15 +544,8 @@ public class SvnUtil {
     return new File(file, SVN_ADMIN_DIR_NAME + "/wc.db");
   }
 
-  /**
-   * Utility method that deals also with 1.8 working copies.
-   * TODO: Should be renamed when all parts updated for 1.8.
-   *
-   * @param file
-   * @return
-   */
   @Nullable
-  public static File getWorkingCopyRootNew(final File file) {
+  public static File getWorkingCopyRoot(@NotNull File file) {
     File current = getParentWithDb(file);
     if (current == null) return null;
 
@@ -561,8 +554,17 @@ public class SvnUtil {
     return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : null;
   }
 
+  /**
+   * @deprecated Use {@link SvnUtil#getWorkingCopyRoot(File)} instead.
+   */
+  @Deprecated
   @Nullable
-  public static File getParentWithDb(File file) {
+  public static File getWorkingCopyRootNew(@NotNull File file) {
+    return getWorkingCopyRoot(file);
+  }
+
+  @Nullable
+  public static File getParentWithDb(@NotNull File file) {
     File current = file;
     boolean wcDbFound = false;
     while (current != null) {

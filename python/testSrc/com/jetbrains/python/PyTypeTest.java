@@ -1410,8 +1410,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-20797
-  // TODO: Enable after switching to collections stub from Typeshed
-  public void _testValueOfEmptyDefaultDict() {
+  public void testValueOfEmptyDefaultDict() {
     doTest("list",
            "from collections import defaultdict\n" +
            "expr = defaultdict(lambda: [])['x']\n");
@@ -2704,6 +2703,20 @@ public class PyTypeTest extends PyTestCase {
                    "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
                    "expr = Cat(\"name\", 5)._replace(age=\"give\").age")
     );
+  }
+
+  // PY-26992
+  public void testImportedOrderedDict() {
+    doTest("OrderedDict[str, str]",
+           "from collections import OrderedDict\n" +
+           "expr = OrderedDict((('name', 'value'), ('another_name', 'another_value')))");
+  }
+
+  // PY-26992
+  public void testFullyQualifiedOrderedDict() {
+    doTest("OrderedDict[str, str]",
+           "import collections\n" +
+           "expr = collections.OrderedDict((('name', 'value'), ('another_name', 'another_value')))");
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

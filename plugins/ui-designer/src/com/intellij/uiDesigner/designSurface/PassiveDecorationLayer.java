@@ -21,7 +21,7 @@ import com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager;
 import com.intellij.uiDesigner.radComponents.RadButtonGroup;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 

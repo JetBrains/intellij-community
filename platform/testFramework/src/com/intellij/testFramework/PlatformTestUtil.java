@@ -53,7 +53,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
@@ -301,20 +301,6 @@ public class PlatformTestUtil {
     }
   }
 
-  public static void pumpInvocationEventsFor(long duration, @NotNull TimeUnit unit) {
-    pumpInvocationEventsFor(unit.toMillis(duration));
-  }
-
-  public static void pumpInvocationEventsFor(long millis) {
-    assert 0 <= millis && millis <= MAX_WAIT_TIME;
-    assertDispatchThreadWithoutWriteAccess();
-    long startTimeMillis = System.currentTimeMillis();
-    UIUtil.dispatchAllInvocationEvents();
-    while (getMillisSince(startTimeMillis) <= millis) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-  }
-
   public static void waitForCallback(@NotNull ActionCallback callback) {
     AsyncPromise<?> promise = new AsyncPromise<>();
     callback.doWhenDone(() -> promise.setResult(null));
@@ -342,9 +328,6 @@ public class PlatformTestUtil {
     return result;
   }
 
-  /**
-   * @see #pumpInvocationEventsFor(long)
-   */
   public static void waitForAlarm(final int delay) {
     @NotNull Application app = getApplication();
     assertDispatchThreadWithoutWriteAccess();

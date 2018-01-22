@@ -216,11 +216,11 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
           Rectangle outerRect = new Rectangle(getSize());
-          Rectangle innerRect = new Rectangle(outerRect);
-
           JBInsets.removeFrom(outerRect, comboBox.getComponentOrientation().isLeftToRight() ?
                                          JBUI.insets(1, 0, 1, 1) : JBUI.insets(1, 1, 1, 0));
-          JBInsets.removeFrom(innerRect, getInsets());
+
+          Rectangle innerRect = new Rectangle(outerRect);
+          JBInsets.removeFrom(innerRect, JBUI.insets(1));
 
           // paint background
           if (comboBox.isEditable() && comboBox.isEnabled()) {
@@ -377,13 +377,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     try {
       checkFocus();
 
-      Rectangle outerRect = new Rectangle(x, y, width, height);
-      Rectangle innerRect = new Rectangle(outerRect);
-      JBInsets.removeFrom(innerRect, JBUI.insets(2));
+      Rectangle r = new Rectangle(x, y, width, height);
+      int bw = 1;
 
       Object op = comboBox.getClientProperty("JComponent.outline");
       if (op != null) {
         DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+        bw = 2;
       } else if (comboBox.isEnabled()) {
         if (comboBox.isEditable()) {
           if (hasFocus) {
@@ -400,18 +400,25 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
           }
         }
-        JBInsets.removeFrom(outerRect, JBUI.insets(1));
+        JBInsets.removeFrom(r, JBUI.insets(1));
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
 
         float alpha = comboBox.isEditable() ? 0.35f : 0.47f;
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        JBInsets.removeFrom(outerRect, JBUI.insets(1));
+        JBInsets.removeFrom(r, JBUI.insets(1));
       }
 
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      border.append(outerRect, false);
+      border.append(r, false);
+
+      Rectangle innerRect = new Rectangle(r);
+      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
       border.append(innerRect, false);
+
       g2.fill(border);
     } finally {
       g2.dispose();

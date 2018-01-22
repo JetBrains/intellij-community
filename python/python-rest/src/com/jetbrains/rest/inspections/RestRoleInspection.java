@@ -29,7 +29,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.rest.RestBundle;

@@ -28,7 +28,7 @@ import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.ThrownExceptionInfo;
 import com.intellij.refactoring.util.CanonicalTypes;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 

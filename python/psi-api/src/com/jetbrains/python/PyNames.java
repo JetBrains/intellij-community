@@ -199,7 +199,8 @@ public class PyNames {
   public static final String CALLABLE_BUILTIN = "callable";
   public static final String NAMEDTUPLE = "namedtuple";
   public static final String COLLECTIONS = "collections";
-  public static final String COLLECTIONS_NAMEDTUPLE = COLLECTIONS + "." + NAMEDTUPLE;
+  public static final String COLLECTIONS_NAMEDTUPLE_PY2 = COLLECTIONS + "." + NAMEDTUPLE;
+  public static final String COLLECTIONS_NAMEDTUPLE_PY3 = COLLECTIONS + "." + INIT + "." + NAMEDTUPLE;
 
   public static final String FORMAT = "format";
 

@@ -233,17 +233,26 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     if (!myWasTreeInitialized) {
       initTree();
       myTree.setShowsRootHandles(false);
-      loadTree();
-    } else {
-      super.disposeUIResources();
-      myTree.setShowsRootHandles(false);
-      loadTree();
+      loadTreeNodes();
     }
-    for (ProjectStructureElement element : getProjectStructureElements()) {
-      myContext.getDaemonAnalyzer().queueUpdate(element);
+    else {
+      reloadTreeNodes();
     }
 
     super.reset();
+  }
+
+  private void loadTreeNodes() {
+    loadTree();
+    for (ProjectStructureElement element : getProjectStructureElements()) {
+      myContext.getDaemonAnalyzer().queueUpdate(element);
+    }
+  }
+
+  protected final void reloadTreeNodes() {
+    super.disposeUIResources();
+    myTree.setShowsRootHandles(false);
+    loadTreeNodes();
   }
 
   @NotNull

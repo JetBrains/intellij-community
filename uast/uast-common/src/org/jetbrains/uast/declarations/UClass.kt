@@ -94,3 +94,8 @@ interface UClass : UDeclaration, PsiClass {
 interface UAnonymousClass : UClass, PsiAnonymousClass {
   override val psi: PsiAnonymousClass
 }
+
+@Deprecated("transitional interface, don't rely on it", ReplaceWith("UClass"))
+interface UClassTypeSpecific : UClass {
+  override val javaPsi: PsiClass
+}

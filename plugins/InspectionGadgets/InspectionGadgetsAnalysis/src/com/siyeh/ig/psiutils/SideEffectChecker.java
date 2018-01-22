@@ -167,7 +167,8 @@ public class SideEffectChecker {
 
     protected boolean isPure(PsiMethod method) {
       if (method == null) return false;
-      if (PropertyUtil.isSimpleGetter(method)) return true;
+      PsiField field = PropertyUtil.getFieldOfGetter(method);
+      if (field != null) return !field.hasModifierProperty(PsiModifier.VOLATILE);
       return ControlFlowAnalyzer.isPure(method) && !mayHaveExceptionalSideEffect(method);
     }
 

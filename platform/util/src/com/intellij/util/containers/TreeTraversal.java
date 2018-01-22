@@ -114,11 +114,11 @@ public abstract class TreeTraversal {
       public <T> It<T> createIterator(@NotNull Iterable<? extends T> roots,
                                       @NotNull final Function<T, ? extends Iterable<? extends T>> tree) {
         class WrappedTree implements Condition<T>, Function<T, Iterable<? extends T>> {
-          HashSet<Object> visited;
+          java.util.HashSet<Object> visited;
 
           @Override
           public boolean value(T e) {
-            if (visited == null) visited = new HashSet<Object>();
+            if (visited == null) visited = new java.util.HashSet<Object>();
             //noinspection unchecked
             return visited.add(((Function<T, Object>)identity).fun(e));
           }

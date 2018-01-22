@@ -26,7 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;

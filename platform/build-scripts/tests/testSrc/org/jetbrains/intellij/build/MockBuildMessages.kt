@@ -30,6 +30,9 @@ class MockBuildMessages : BuildMessages {
   override fun progress(message: String?) {
   }
 
+  override fun buildStatus(message: String?) {
+  }
+
   override fun <V : Any?> block(blockName: String, body: Closure<V>): V {
     return body.call()
   }

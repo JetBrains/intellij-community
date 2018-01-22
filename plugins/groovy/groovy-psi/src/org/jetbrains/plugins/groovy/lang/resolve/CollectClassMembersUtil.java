@@ -7,7 +7,6 @@ import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;

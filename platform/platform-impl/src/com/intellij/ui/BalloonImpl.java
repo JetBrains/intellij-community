@@ -42,7 +42,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;

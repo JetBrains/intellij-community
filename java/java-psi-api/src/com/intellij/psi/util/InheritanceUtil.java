@@ -18,13 +18,13 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -34,7 +34,7 @@ public class InheritanceUtil {
   /**
    * @param aClass     a class to check.
    * @param baseClass  supposed base class.
-   * @param checkDeep  true to check deeper than aClass.super (see {@linkplain PsiClass#isInheritor(com.intellij.psi.PsiClass, boolean)}).
+   * @param checkDeep  true to check deeper than aClass.super (see {@linkplain PsiClass#isInheritor(PsiClass, boolean)}).
    * @return true if aClass is the baseClass or baseClass inheritor
    */
   public static boolean isInheritorOrSelf(@Nullable PsiClass aClass, @Nullable PsiClass baseClass, boolean checkDeep) {

@@ -14,7 +14,5 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="python-community" />
-    <orderEntry type="module" module-name="python-community-tests" scope="TEST" />
   </component>
 </module>
-

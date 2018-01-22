@@ -24,12 +24,7 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -65,7 +60,6 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     if (scheme.isMutable()) return scheme.getMutable();
 
     String name = message("new.keymap.name", keymap.getPresentableName());
-    //noinspection ForLoopThatDoesntUseLoopVariable
     for (int i = 1; containsScheme(name, false); i++) {
       name = message("new.indexed.keymap.name", keymap.getPresentableName(), i);
     }

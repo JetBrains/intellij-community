@@ -44,7 +44,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -885,7 +885,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
       myActiveStack.remove(id, false); // hidden window should be at the top of stack
 
-      if (wasActive && moveFocus) {
+      if (wasActive && moveFocus && !myActiveStack.isEmpty()) {
         final String toBeActivatedId = myActiveStack.pop();
         if (getInfo(toBeActivatedId).isVisible() || isStackEnabled()) {
           activateToolWindowImpl(toBeActivatedId, commandList, false, true);

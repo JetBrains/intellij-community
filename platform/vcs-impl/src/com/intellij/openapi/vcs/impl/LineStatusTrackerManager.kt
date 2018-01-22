@@ -49,7 +49,6 @@ import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.HashMap
 import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt

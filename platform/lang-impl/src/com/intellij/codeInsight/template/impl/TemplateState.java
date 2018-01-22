@@ -52,7 +52,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

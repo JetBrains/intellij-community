@@ -580,8 +580,13 @@
     <localInspection groupPath="Java" language="JAVA" shortName="ExcessiveLambdaUsage"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.ExcessiveLambdaUsageInspection"
+                     implementationClass="com.intellij.codeInspection.lambdaToExplicit.ExcessiveLambdaUsageInspection"
                      displayName="Excessive lambda usage"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArgumentCanBeLambda"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.lambdaToExplicit.ExplicitArgumentCanBeLambdaInspection"
+                     displayName="Explicit argument can be lambda"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java9CollectionFactory"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"

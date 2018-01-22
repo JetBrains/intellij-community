@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.*;import java.util.HashMap;
 
 /**
  * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmart()}, {@link #create(TObjectHashingStrategy)} instead of override.
@@ -58,7 +58,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   protected Map<K, Collection<V>> createMap() {
-    return new HashMap<K, Collection<V>>();
+    return new java.util.HashMap<K, Collection<V>>();
   }
 
   @NotNull

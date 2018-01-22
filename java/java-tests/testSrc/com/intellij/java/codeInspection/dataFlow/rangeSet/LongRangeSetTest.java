@@ -18,7 +18,7 @@ package com.intellij.java.codeInspection.dataFlow.rangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.psi.PsiType;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.junit.Test;
 
 import java.util.Random;

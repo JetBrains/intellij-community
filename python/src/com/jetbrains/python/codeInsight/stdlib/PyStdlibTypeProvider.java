@@ -411,7 +411,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private static PyNamedTupleType getNamedTupleFunctionType(@NotNull PyFunction function,
                                                             @NotNull TypeEvalContext context,
                                                             @NotNull PyCallExpression call) {
-    if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
+    if (ArrayUtil.contains(function.getQualifiedName(), PyNames.COLLECTIONS_NAMEDTUPLE_PY2, PyNames.COLLECTIONS_NAMEDTUPLE_PY3)) {
       return getNamedTupleTypeFromAST(call, context, PyNamedTupleType.DefinitionLevel.NT_FUNCTION);
     }
 

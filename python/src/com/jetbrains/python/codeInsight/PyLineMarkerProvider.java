@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;

@@ -63,7 +63,6 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Function;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -86,6 +85,7 @@ import java.awt.event.KeyEvent;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 

@@ -33,7 +33,6 @@ import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;

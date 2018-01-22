@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.UIUtil;
 import org.apache.commons.imaging.ImageWriteException;
@@ -47,6 +46,7 @@ import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteOrder;
+import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AppIcon {

@@ -16,7 +16,7 @@
 package com.intellij.cvsSupport2.cvsIgnore;
 
 import com.intellij.cvsSupport2.CvsUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.file.AbstractFileObject;
 import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.IIgnoreFileFilter;

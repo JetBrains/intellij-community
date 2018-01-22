@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -27,7 +25,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   private boolean resolveModulePerSourceSet = true;
   @Nullable private CompositeBuild myCompositeBuild;
 
-  private boolean storeProjectFilesExternally = false;
+  private boolean storeProjectFilesExternally = true;
 
   @Nullable
   public String getGradleHome() {

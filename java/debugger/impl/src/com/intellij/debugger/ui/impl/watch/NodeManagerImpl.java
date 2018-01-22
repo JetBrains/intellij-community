@@ -16,7 +16,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.StringBuilderSpinAllocator;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;

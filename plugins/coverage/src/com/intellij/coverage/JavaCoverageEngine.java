@@ -67,7 +67,6 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
-import com.intellij.util.containers.HashSet;
 import jetbrains.coverage.report.ClassInfo;
 import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.ReportGenerationFailedException;

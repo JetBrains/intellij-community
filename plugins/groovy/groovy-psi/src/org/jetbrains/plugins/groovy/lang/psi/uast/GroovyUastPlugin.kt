@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.lang.Language
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parents
@@ -81,13 +82,17 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
 
 }
 
-class GrUAnnotation(val grElement: GrAnnotation, val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement {
+class GrUAnnotation(val grElement: GrAnnotation,
+                    val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement, UAnchorOwner {
+
+  override val javaPsi: PsiAnnotation = grElement
+
   override val qualifiedName: String?
     get() = grElement.qualifiedName
 
   override fun resolve(): PsiClass? = grElement.nameReferenceElement?.resolve() as PsiClass?
 
-  override val uastAnchor: UElement?
+  override val uastAnchor: UIdentifier?
     get() = grElement.classReference.referenceNameElement?.let { UIdentifier(it, this) }
 
   override val attributeValues: List<UNamedExpression> by lazy {

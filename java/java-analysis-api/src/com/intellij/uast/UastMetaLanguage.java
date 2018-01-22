@@ -17,10 +17,10 @@ package com.intellij.uast;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.uast.UastLanguagePlugin;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**

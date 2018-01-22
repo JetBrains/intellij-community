@@ -48,7 +48,7 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

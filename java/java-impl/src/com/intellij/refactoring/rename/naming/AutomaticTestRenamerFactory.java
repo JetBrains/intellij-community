@@ -26,7 +26,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

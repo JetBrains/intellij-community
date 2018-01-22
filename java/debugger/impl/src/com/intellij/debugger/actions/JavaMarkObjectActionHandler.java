@@ -37,7 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.xdebugger.impl.actions.MarkObjectActionHandler;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;

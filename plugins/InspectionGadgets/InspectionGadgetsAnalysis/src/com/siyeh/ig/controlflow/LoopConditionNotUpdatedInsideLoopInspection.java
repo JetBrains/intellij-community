@@ -23,6 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.*;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,10 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
 
   @SuppressWarnings({"PublicField"})
   public boolean ignorePossibleNonLocalChanges = true;
+
+  // Preserved for serialization compatibility
+  @SuppressWarnings("unused")
+  public boolean ignoreIterators = false;
 
   @Override
   @NotNull
@@ -51,6 +56,12 @@ public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection 
     else {
       return InspectionGadgetsBundle.message("loop.variable.not.updated.inside.loop.problem.descriptor");
     }
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignorePossibleNonLocalChanges");
+    writeBooleanOption(node, "ignorePossibleNonLocalChanges", true);
   }
 
   @Override

@@ -29,7 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.*;
 

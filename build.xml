@@ -59,7 +59,7 @@
       <zipfileset src="${out.dir}/updater.jar" />
       <zipfileset src="lib/log4j.jar" />
       <zipfileset src="lib/jna.jar" />
-      <zipfileset src="lib/jna-utils.jar" />
+      <zipfileset src="lib/jna-platform.jar" />
     </jarjar>
   </target>
 </project>

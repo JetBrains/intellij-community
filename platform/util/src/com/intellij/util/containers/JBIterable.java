@@ -515,11 +515,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> unique(@NotNull final Function<? super E, ?> identity) {
     return filter(new SCond<E>() {
-      HashSet<Object> visited;
+      java.util.HashSet<Object> visited;
 
       @Override
       public boolean value(E e) {
-        if (visited == null) visited = new HashSet<Object>();
+        if (visited == null) visited = new java.util.HashSet<Object>();
         return visited.add(identity.fun(e));
       }
     });
@@ -875,7 +875,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   /**
    * Returns a {@code Map} for which the keys and values are defined by the specified converters.
-   * {@code {@link java.util.LinkedHashMap}} is used, so the order is preserved.
+   * {@code {@link LinkedHashMap}} is used, so the order is preserved.
    */
   @NotNull
   public final <K, V> Map<K, V> toMap(@NotNull Convertor<E, K> toKey, @NotNull Convertor<E, V> toValue) {
