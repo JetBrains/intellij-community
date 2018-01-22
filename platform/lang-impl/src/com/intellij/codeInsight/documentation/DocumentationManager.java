@@ -12,7 +12,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
@@ -49,7 +48,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -66,7 +64,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.codeInsight.documentation.DocumentationComponent.BORDER_COLOR;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
@@ -496,9 +493,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
     AbstractPopup hint = (AbstractPopup)JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
-      .setMinSize(new Dimension(300, 59))
       .setProject(element.getProject())
-      .setBorderColor(BORDER_COLOR)
       .addListener(updateProcessor)
       .addUserData(updateProcessor)
       .setKeyboardActions(actions)
@@ -1001,12 +996,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     component.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-  }
-
-  void showHint(final JBPopup hint) {
-    final Component focusOwner = IdeFocusManager.getInstance(myProject).getFocusOwner();
-    DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
-    PopupPositionManager.positionPopupInBestPosition(hint, myEditor, dataContext);
   }
 
   public void requestFocus() {

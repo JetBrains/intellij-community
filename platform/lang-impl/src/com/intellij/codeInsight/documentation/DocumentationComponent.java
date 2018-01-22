@@ -4,6 +4,10 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintManagerImpl;
+import com.intellij.codeInsight.lookup.LookupAdapter;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
@@ -51,6 +55,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import java.util.HashMap;
@@ -658,37 +663,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myEditorPane.setText(decorate(text));
     applyFontProps();
 
-    if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
-      myResizing = true;
-      myManager.showHint(myHint);
-      myIsShown = true;
-      if (myHint.getDimensionServiceKey() == null) {
-        final Window window = myHint.getPopupWindow();
-        final ComponentAdapter listener = new ComponentAdapter() {
-          @Override
-          public void componentResized(ComponentEvent e) {
-            if (myResizing) {
-              myResizing = false;
-              return;
-            }
-            myHint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
-            myHint.getPopupWindow().removeComponentListener(this);
-          }
-        };
-        window.addComponentListener(listener);
-        Disposer.register(this, () -> myHint.getPopupWindow().removeComponentListener(listener));
-      }
-    }
+    showHint();
 
     myText = text;
-
-    if (myHint != null && myHint.getDimensionServiceKey() == null) {
-      final int width = definitionPreferredWidth();
-      if (width >= 0) {
-        myResizing = true;
-        myHint.setSize(new Dimension(Math.min(800, Math.max(300, width)), Math.max(59, myEditorPane.getPreferredSize().height)));
-      }
-    }
 
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
@@ -698,6 +675,68 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       } else if (ScreenReader.isActive()) {
         myEditorPane.setCaretPosition(0);
       }});
+  }
+
+  private void showHint() {
+    LookupEx lookup = LookupManager.getActiveLookup(myManager.getEditor());
+    if (myHint != null && myHint.getDimensionServiceKey() == null) {
+      final int width = definitionPreferredWidth();
+      if (width >= 0) {
+        myResizing = true;
+        final int maxWidth = lookup != null ? 435 : 650;
+        myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(300, width)), Math.max(59, myEditorPane.getPreferredSize().height)));
+      }
+    }
+
+    if (!myIsShown && myHint != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      myResizing = true;
+      Component focusOwner = IdeFocusManager.getInstance(myManager.myProject).getFocusOwner();
+      DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
+      if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
+        // always position documentation to the right
+        Component lookupComponent = lookup.getComponent();
+        Point lookupPosition = lookupComponent.getLocationOnScreen();
+        Rectangle screenRectangle = ScreenUtil.getScreenRectangle(lookupComponent);
+        int lookupWidthAndGap = lookupComponent.getWidth() + 5;
+        int x = lookupPosition.x + lookupWidthAndGap;
+        Dimension hintSize = myHint.getSize() != null ? myHint.getSize() : new Dimension(300, 59);
+        if (x + hintSize.width > screenRectangle.width) {
+          myHint.setSize(new Dimension(screenRectangle.width - x, hintSize.height));
+        }
+        myHint.show(new RelativePoint(lookupComponent, new Point(lookupWidthAndGap, 0)));
+        lookup.addLookupListener(new LookupAdapter() {
+          @Override
+          public void lookupCanceled(LookupEvent event) {
+            final AbstractPopup hint = myHint;
+            if (hint.canClose() && hint.isVisible()) {
+              hint.cancel();
+            }
+          }
+        });
+      } else {
+        PopupPositionManager.positionPopupInBestPosition(myHint, myManager.getEditor(), dataContext);
+      }
+      myIsShown = true;
+      if (myHint.getDimensionServiceKey() == null) {
+        SwingUtilities.invokeLater(() -> registerSizeTracker());
+      }
+    }
+  }
+
+  private void registerSizeTracker() {
+    final Window window = myHint.getPopupWindow();
+    final ComponentAdapter listener = new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        if (myResizing) {
+          myResizing = false;
+          return;
+        }
+        myHint.setDimensionServiceKey(DocumentationManager.NEW_JAVADOC_LOCATION_AND_SIZE);
+      }
+    };
+    window.addComponentListener(listener);
+    Disposer.register(this, () -> myHint.getPopupWindow().removeComponentListener(listener));
   }
 
   private int definitionPreferredWidth() {
@@ -1131,7 +1170,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private class MyShowSettingsButton extends ActionButton {
 
-    private MyShowSettingsButton() {
+    public MyShowSettingsButton() {
       this(new MyGearActionGroup(new ShowAsToolwindowAction(), new MyShowSettingsAction(), new ShowToolbarAction()), new Presentation(), ActionPlaces.JAVADOC_INPLACE_SETTINGS, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
