@@ -51,7 +51,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
   public boolean dispatch(@NotNull final AWTEvent e) {
     LOG.assertTrue(isPopupActive());
 
-    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS) {
+    if (e.getID() == WindowEvent.WINDOW_LOST_FOCUS || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
         if (!isPopupActive()) return false;
 
         boolean shouldCloseAllPopup = false;
