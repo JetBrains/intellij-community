@@ -25,6 +25,10 @@ buildscript {
   }
 }
 
+plugins {
+  id 'com.github.jk1.tcdeps' version '0.16'
+}
+
 allprojects {
   apply plugin: 'idea'
   idea {
