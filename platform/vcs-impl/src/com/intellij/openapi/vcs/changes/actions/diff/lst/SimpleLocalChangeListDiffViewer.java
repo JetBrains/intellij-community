@@ -127,20 +127,20 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(data.vcsText, data.localText, linesRanges, indicator));
 
       boolean isContentsEqual = data.ranges.isEmpty();
-      BitSet areResolved = new BitSet();
+      BitSet areSkipped = new BitSet();
       List<LineFragment> fragments = new ArrayList<>();
 
       for (int i = 0; i < data.ranges.size(); i++) {
         PartialLocalLineStatusTracker.LocalRange localRange = data.ranges.get(i);
         List<LineFragment> rangeFragments = newFragments.get(i);
 
-        boolean isResolved = !localRange.getChangelistId().equals(myChangelistId);
-        areResolved.set(fragments.size(), fragments.size() + newFragments.size(), isResolved);
+        boolean isSkipped = !localRange.getChangelistId().equals(myChangelistId);
+        areSkipped.set(fragments.size(), fragments.size() + newFragments.size(), isSkipped);
 
         fragments.addAll(rangeFragments);
       }
 
-      return apply(new CompareData(fragments, areResolved, isContentsEqual));
+      return apply(new CompareData(fragments, areSkipped, isContentsEqual));
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());

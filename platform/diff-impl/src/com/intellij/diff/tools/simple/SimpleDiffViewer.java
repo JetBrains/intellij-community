@@ -63,7 +63,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final StatusPanel myStatusPanel;
 
   @NotNull private final List<SimpleDiffChange> myDiffChanges = new ArrayList<>();
-  @NotNull private final List<SimpleDiffChange> myNonResolvedDiffChanges = new ArrayList<>();
+  @NotNull private final List<SimpleDiffChange> myNonSkippedDiffChanges = new ArrayList<>();
   @NotNull private final List<SimpleDiffChange> myInvalidDiffChanges = new ArrayList<>();
   private boolean myIsContentsEqual;
 
@@ -237,16 +237,16 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         for (int i = 0; i < fragments.size(); i++) {
           LineFragment fragment = fragments.get(i);
           LineFragment previousFragment = i != 0 ? fragments.get(i - 1) : null;
-          boolean isResolved = data.isResolved(i);
+          boolean isSkipped = data.isSkipped(i);
 
-          SimpleDiffChange change = new SimpleDiffChange(this, fragment, previousFragment, isResolved);
+          SimpleDiffChange change = new SimpleDiffChange(this, fragment, previousFragment, isSkipped);
 
           myDiffChanges.add(change);
-          if (!change.isResolved()) myNonResolvedDiffChanges.add(change);
+          if (!change.isSkipped()) myNonSkippedDiffChanges.add(change);
         }
       }
 
-      myFoldingModel.install(myNonResolvedDiffChanges, myRequest, getFoldingModelSettings());
+      myFoldingModel.install(myNonSkippedDiffChanges, myRequest, getFoldingModelSettings());
 
       myInitialScrollHelper.onRediff();
 
@@ -281,7 +281,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       change.destroyHighlighter();
     }
     myDiffChanges.clear();
-    myNonResolvedDiffChanges.clear();
+    myNonSkippedDiffChanges.clear();
 
     for (SimpleDiffChange change : myInvalidDiffChanges) {
       change.destroyHighlighter();
@@ -323,7 +323,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   @CalledInAwt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
-    SimpleDiffChange targetChange = scrollToPolicy.select(myNonResolvedDiffChanges);
+    SimpleDiffChange targetChange = scrollToPolicy.select(myNonSkippedDiffChanges);
     if (targetChange == null) targetChange = scrollToPolicy.select(myDiffChanges);
     if (targetChange == null) return false;
 
@@ -444,7 +444,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @NotNull
     @Override
     protected List<SimpleDiffChange> getChanges() {
-      return myNonResolvedDiffChanges;
+      return myNonSkippedDiffChanges;
     }
 
     @NotNull
@@ -775,7 +775,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       for (SimpleDiffChange diffChange : myDiffChanges) {
         if (!handler.process(diffChange.getStartLine(Side.LEFT), diffChange.getEndLine(Side.LEFT),
                              diffChange.getStartLine(Side.RIGHT), diffChange.getEndLine(Side.RIGHT),
-                             diffChange.getDiffType().getColor(getEditor1()), diffChange.isResolved())) {
+                             diffChange.getDiffType().getColor(getEditor1()), diffChange.isSkipped())) {
           return;
         }
       }
@@ -799,12 +799,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
 
   protected static class CompareData {
     @Nullable private final List<LineFragment> myFragments;
-    @Nullable private final BitSet myAreResolved;
+    @Nullable private final BitSet myAreSkipped;
     private final boolean myIsContentsEqual;
 
-    public CompareData(@Nullable List<LineFragment> fragments, @Nullable BitSet areResolved, boolean isContentsEqual) {
+    public CompareData(@Nullable List<LineFragment> fragments, @Nullable BitSet areSkipped, boolean isContentsEqual) {
       myFragments = fragments;
-      myAreResolved = areResolved;
+      myAreSkipped = areSkipped;
       myIsContentsEqual = isContentsEqual;
     }
 
@@ -817,8 +817,8 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return myIsContentsEqual;
     }
 
-    public boolean isResolved(int i) {
-      return myAreResolved != null && myAreResolved.get(i);
+    public boolean isSkipped(int i) {
+      return myAreSkipped != null && myAreSkipped.get(i);
     }
   }
 
