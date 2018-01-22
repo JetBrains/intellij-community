@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.UI;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
@@ -628,7 +627,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? UI.getColor("link.foreground") : table.getForeground();
+        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBColor.link() : table.getForeground();
         final JBFont font = JBUI.Fonts.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);
