@@ -149,7 +149,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         final List<String> generated = new ArrayList<>();
         Disposable eventDisposable = Disposer.newDisposable();
-        myProject.getMessageBus().connect(eventDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
+        myProject.getMessageBus().connect(eventDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
           @Override
           public void fileGenerated(String outputRoot, String relativePath) {
             generated.add(relativePath);
