@@ -29,6 +29,7 @@ import com.intellij.refactoring.extractMethodObject.ExtractLightMethodObjectHand
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
@@ -75,7 +76,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
       if (buildRuntimeVersion != null && debuggeeVersion != null) {
         JavaSdkVersion minVersion = debuggeeVersion.compareTo(buildRuntimeVersion) < 0 ? debuggeeVersion : buildRuntimeVersion;
-        String sourceOption = minVersion.getMaxLanguageLevel().getCompilerComplianceDefaultOption();
+        String sourceOption = JpsJavaSdkType.complianceOption(minVersion.getMaxLanguageLevel().toJavaVersion());
         options.add("-source");
         options.add(sourceOption);
         options.add("-target");

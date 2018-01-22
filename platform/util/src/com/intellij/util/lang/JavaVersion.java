@@ -128,6 +128,10 @@ public final class JavaVersion implements Comparable<JavaVersion> {
     return new JavaVersion(feature, minor, update, build, ea);
   }
 
+  public static @NotNull JavaVersion compose(int feature) {
+    return compose(feature, 0, 0, 0, false);
+  }
+
   private static JavaVersion current;
 
   /**

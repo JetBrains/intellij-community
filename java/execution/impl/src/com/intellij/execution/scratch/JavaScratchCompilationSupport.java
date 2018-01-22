@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.io.File;
 import java.io.IOException;
@@ -147,7 +148,7 @@ public class JavaScratchCompilationSupport implements CompileTask {
       options.add("-g"); // always compile with debug info
       final JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(targetSdk);
       if (sdkVersion != null) {
-        final String langLevel = sdkVersion.getMaxLanguageLevel().getCompilerComplianceDefaultOption();
+        final String langLevel = JpsJavaSdkType.complianceOption(sdkVersion.getMaxLanguageLevel().toJavaVersion());
         options.add("-source");
         options.add(langLevel);
         options.add("-target");

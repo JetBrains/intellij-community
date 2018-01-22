@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -114,7 +115,7 @@ public class ModuleChunk {
     }
 
     LanguageLevel languageLevel = ReadAction.compute(() -> EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(myMainModule));
-    String sourceVersion = languageLevel.getCompilerComplianceDefaultOption();
+    String sourceVersion = JpsJavaSdkType.complianceOption(languageLevel.toJavaVersion());
     options.add("-source");
     options.add(sourceVersion);
 

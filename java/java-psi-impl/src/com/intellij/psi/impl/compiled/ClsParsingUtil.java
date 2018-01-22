@@ -170,7 +170,7 @@ public class ClsParsingUtil {
       return JavaSdkVersion.JDK_1_1;
     }
     if (major >= 46) {
-      JavaVersion version = JavaVersion.compose(major - 44, 0, 0, 0, false);  // 46 = 1.2, 47 = 1.3 etc.
+      JavaVersion version = JavaVersion.compose(major - 44);  // 46 = 1.2, 47 = 1.3 etc.
       return JavaSdkVersion.fromJavaVersion(version);
     }
     return null;
