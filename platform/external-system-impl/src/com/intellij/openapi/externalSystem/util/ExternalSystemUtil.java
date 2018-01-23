@@ -632,7 +632,7 @@ public class ExternalSystemUtil {
                                   ExternalSystemProcessHandler processHandler) {
     if (consoleView instanceof ConsoleView) {
       for (com.intellij.build.events.Failure failure : failureResult.getFailures()) {
-        BuildConsoleUtils.printFailure((ConsoleView)consoleView, failure);
+        BuildConsoleUtils.printDetails((ConsoleView)consoleView, failure);
       }
     }
     else {

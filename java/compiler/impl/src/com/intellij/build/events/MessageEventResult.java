@@ -2,6 +2,7 @@
 package com.intellij.build.events;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -9,4 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.Experimental
 public interface MessageEventResult extends EventResult {
   MessageEvent.Kind getKind();
+
+  @Nullable
+  String getDetails();
 }
