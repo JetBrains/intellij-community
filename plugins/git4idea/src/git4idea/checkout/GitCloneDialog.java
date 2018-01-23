@@ -16,6 +16,7 @@
 package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
+import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.ui.CloneDvcsDialog;
 import com.intellij.openapi.project.Project;
 import git4idea.GitUtil;
@@ -23,10 +24,13 @@ import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.remote.GitRememberedInputs;
+import git4idea.remote.GitRepositoryHostingService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 
 public class GitCloneDialog extends CloneDvcsDialog {
 
@@ -45,6 +49,12 @@ public class GitCloneDialog extends CloneDvcsDialog {
   protected TestResult test(@NotNull String url) {
     GitCommandResult result = myGit.lsRemote(myProject, new File("."), url);
     return result.success() ? TestResult.SUCCESS : new TestResult(result.getErrorOutputAsJoinedString());
+  }
+
+  @NotNull
+  @Override
+  protected Collection<RepositoryHostingService> getRepositoryHostingServices() {
+    return Arrays.asList(GitRepositoryHostingService.EP_NAME.getExtensions());
   }
 
   @NotNull
