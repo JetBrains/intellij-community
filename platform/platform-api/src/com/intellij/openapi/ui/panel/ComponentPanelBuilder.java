@@ -83,7 +83,15 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return this;
   }
 
-
+  /**
+   * Sets optional help tooltip link and link action.
+   *
+   * @param linkText help tooltip link text.
+   *
+   * @param action help tooltip link action.
+   *
+   * @return <code>this</code>
+   */
   public ComponentPanelBuilder withTooltipLink(@NotNull String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
