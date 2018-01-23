@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,14 +27,12 @@ import org.jetbrains.plugins.ruby.RBundle;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.run.RubyAbstractRunner;
 import org.jetbrains.plugins.ruby.rvm.RVMSupportUtil;
+import org.jetbrains.plugins.ruby.utils.OSUtil;
 import org.jetbrains.plugins.ruby.version.management.rbenv.gemsets.RbenvGemsetManager;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class RunAnythingUndefinedItem extends RunAnythingItem {
   static final Icon UNDEFINED_COMMAND_ICON = RubyIcons.RunAnything.Run_anything;
@@ -57,19 +56,32 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
 
     Sdk sdk = RModuleUtil.getInstance().findRubySdkForModule(myModule);
 
+    GeneralCommandLine commandLine = new GeneralCommandLine()
+      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
+
     String command = myCommandLine;
-    Map<String, String> env = ContainerUtil.newHashMap();
-    if (RVMSupportUtil.isRVMInterpreter(sdk)) {
-      command = getRVMAwareCommand(sdk);
-    }
-    else if (RbenvGemsetManager.isRbenvSdk(sdk)) {
-      command = getRbenvAwareCommand(sdk, env);
+    Map<String, String> env = ContainerUtil.newHashMap(commandLine.getEffectiveEnvironment());
+    if (sdk != null) {
+      if (RVMSupportUtil.isRVMInterpreter(sdk)) {
+        command = getRVMAwareCommand(sdk);
+      }
+      else if (RbenvGemsetManager.isRbenvSdk(sdk)) {
+        command = getRbenvAwareCommand(sdk, env);
+      }
+      else {
+        command = getRubyAwareCommand(sdk, env);
+      }
     }
 
-    GeneralCommandLine commandLine = new GeneralCommandLine(ParametersListUtil.parse(command))
-      .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
-      .withEnvironment(env)
-      .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(myProject, workDirectory));
+    List<String> args = ParametersListUtil.parse(command);
+    String exePath = ContainerUtil.getFirstItem(args);
+    List<String> parameters = ContainerUtil.newArrayList(args);
+    parameters.remove(0);
+
+    commandLine.withExePath(Objects.requireNonNull(exePath))
+               .withParameters(parameters)
+               .withEnvironment(env)
+               .withWorkDirectory(RunAnythingItem.getActualWorkDirectory(myProject, workDirectory));
 
     runInConsole(commandLine);
   }
@@ -105,6 +117,21 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
     catch (ExecutionException e) {
       Messages.showInfoMessage(myProject, e.getMessage(), RBundle.message("run.anything.console.error.title"));
     }
+  }
+
+  private String getRubyAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env) {
+    VirtualFile sdkHomeDirectory = sdk.getHomeDirectory();
+    if (sdkHomeDirectory == null) return myCommandLine;
+
+    VirtualFile parent = sdkHomeDirectory.getParent();
+    if (parent == null) return myCommandLine;
+
+    final String path = FileUtil.toSystemDependentName(parent.getPath());
+    final String envName = OSUtil.getPathEnvVariableName();
+    final String newPath = OSUtil.prependToPathEnvVariable(env.get(envName), path);
+    env.put(envName, newPath);
+
+    return myCommandLine;
   }
 
   private String getRbenvAwareCommand(@NotNull Sdk sdk, @NotNull Map<String, String> env) {
