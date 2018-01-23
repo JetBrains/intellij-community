@@ -39,13 +39,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -477,7 +477,16 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   @Override
   @NotNull
   public List<FileEditor> openEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
-    return Collections.emptyList();
+    FileEditor[] result = openFileWithProviders(descriptor.getFile(), focusEditor, false).getFirst();
+    for (FileEditor fileEditor : result) {
+      if (getSelectedEditor(descriptor.getFile()) == fileEditor) {
+        if (fileEditor instanceof NavigatableFileEditor) {
+          ((NavigatableFileEditor)fileEditor).navigateTo(descriptor);
+        }
+        break;
+      }
+    }
+    return Arrays.asList(result);
   }
 
   @Override
