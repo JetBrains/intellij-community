@@ -30,7 +30,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,11 +96,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && methods.length > 1) {
         return;
       }
-      if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
-        return;
-      }
-      final PsiType superReturnType = superMethod.getReturnType();
-      if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
+      if (!AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
+          !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
+          !AbstractMethodOverridesAbstractMethodInspection.haveSameExceptionSignatures(method, superMethod) ||
+          method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
       final PsiCodeBlock superBody = superMethod.getBody();
@@ -123,7 +121,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
 
       @Override
       protected Match referenceExpressionsMatch(PsiReferenceExpression referenceExpression1,
-                                                                PsiReferenceExpression referenceExpression2) {
+                                                PsiReferenceExpression referenceExpression2) {
         if (areSameParameters(referenceExpression1, referenceExpression2)) {
           return EXACT_MATCH;
         }
