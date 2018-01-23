@@ -22,7 +22,6 @@ class KotlincOutputParser : BuildOutputParser {
 
   companion object {
     private val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
-    private val END_DETAIL = "* Try:"
   }
 
   override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<MessageEvent>): Boolean {
@@ -37,11 +36,9 @@ class KotlincOutputParser : BuildOutputParser {
       val path = lineWoSeverity.substringBeforeAndTrim(colonIndex2)
       val file = File(path)
 
-      val detail = "$line${SystemProperties.getLineSeparator()}${reader.readUntil(END_DETAIL)}"
-
       val fileExtension = file.extension.toLowerCase()
       if (!file.isFile || (fileExtension != "kt" && fileExtension != "java")) {
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), detail), consumer)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), line), consumer)
       }
 
       val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
@@ -50,7 +47,9 @@ class KotlincOutputParser : BuildOutputParser {
         val position = lineWoPath.substringBeforeAndTrim(colonIndex3)
 
         val matcher = KOTLIN_POSITION_PATTERN.matcher(position).takeIf { it.matches() } ?: JAVAC_POSITION_PATTERN.matcher(position)
-        val message = lineWoPath.substringAfterAndTrim(colonIndex3).amendNextLinesIfNeeded(reader)
+        val relatedNextLines = "".amendNextLinesIfNeeded(reader)
+        val message = lineWoPath.substringAfterAndTrim(colonIndex3) + relatedNextLines
+        val details = lineWoSeverity + relatedNextLines
 
         if (matcher.matches()) {
           val lineNumber = matcher.group(1)
@@ -58,14 +57,15 @@ class KotlincOutputParser : BuildOutputParser {
           if (lineNumber != null) {
             val symbolNumberText = symbolNumber.toInt()
             return addMessage(createMessageWithLocation(
-              reader.buildId, getMessageKind(severity), message, path, lineNumber.toInt(), symbolNumberText, detail), consumer)
+              reader.buildId, getMessageKind(severity), message, path, lineNumber.toInt(), symbolNumberText, details), consumer)
           }
         }
 
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), message, detail), consumer)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), message, details), consumer)
       }
       else {
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), detail), consumer)
+        val text = lineWoSeverity.amendNextLinesIfNeeded(reader)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), text, text), consumer)
       }
     }
 
