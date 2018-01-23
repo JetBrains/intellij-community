@@ -354,6 +354,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     };
     prepareCSS(editorKit);
     myEditorPane.setEditorKit(editorKit);
+    myEditorPane.setBorder(JBUI.Borders.empty());
     myScrollPane = new MyScrollPane();
     myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
