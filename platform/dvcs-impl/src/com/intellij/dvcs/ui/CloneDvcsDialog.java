@@ -17,29 +17,44 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.ComboBoxCompositeEditor;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -67,7 +82,9 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     SSH_URL_PATTERN = Pattern.compile(all);
   }
 
-  private TextFieldWithHistory myRepositoryUrlField;
+  private ComboBox<String> myRepositoryUrlCombobox;
+  private EditorTextField myRepositoryUrlField;
+  private ComponentVisibilityProgressManager mySpinnerProgressManager;
   private JButton myTestButton; // test repository
   private MyTextFieldWithBrowseButton myDirectoryField;
 
@@ -75,6 +92,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull protected final String myVcsDirectoryName;
 
   @Nullable private ValidationInfo myCreateDirectoryValidationInfo;
+  @Nullable private ValidationInfo myRepositoryTestValidationInfo;
+  @Nullable private ProgressIndicator myRepositoryTestProgressIndicator;
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
@@ -137,22 +156,39 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     DvcsRememberedInputs rememberedInputs = getRememberedInputs();
     String parentDirectory = rememberedInputs.getCloneParentDir();
 
-    myRepositoryUrlField = new TextFieldWithHistory();
-    myRepositoryUrlField.setHistory(rememberedInputs.getVisitedUrls());
-    myRepositoryUrlField.addDocumentListener(new DocumentAdapter() {
+    myRepositoryUrlField = new EditorTextField();
+
+    JLabel repositoryUrlFieldSpinner = new JLabel(new AnimatedIcon.Default());
+    repositoryUrlFieldSpinner.setVisible(false);
+
+    mySpinnerProgressManager = new ComponentVisibilityProgressManager(repositoryUrlFieldSpinner);
+    Disposer.register(getDisposable(), mySpinnerProgressManager);
+
+    myRepositoryUrlCombobox = new ComboBox<>();
+    myRepositoryUrlCombobox.setEditable(true);
+    myRepositoryUrlCombobox.setEditor(ComboBoxCompositeEditor.withComponents(myRepositoryUrlField,
+                                                                             repositoryUrlFieldSpinner));
+
+    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
         startTrackingValidation();
       }
     });
-    myRepositoryUrlField.addDocumentListener(new DocumentAdapter() {
+    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
         myDirectoryField.trySetChildPath(defaultDirectoryName(myRepositoryUrlField.getText().trim()));
       }
     });
+    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
+        myRepositoryTestValidationInfo = null;
+      }
+    });
 
-    myTestButton = new JButton(DvcsBundle.getString("clone.test"));
+    myTestButton = new JButton(DvcsBundle.getString("clone.repository.url.test.label"));
     myTestButton.addActionListener(e -> test());
 
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -172,26 +208,56 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       }
     });
 
-    if (defaultUrl != null) {
-      myRepositoryUrlField.setTextAndAddToHistory(defaultUrl);
+    boolean defaultAlreadyAdded = false;
+    for (String url : rememberedInputs.getVisitedUrls()) {
+      myRepositoryUrlCombobox.addItem(url);
+      if (defaultUrl != null) {
+        defaultAlreadyAdded = defaultUrl.equalsIgnoreCase(url);
+      }
     }
-    else if (!myRepositoryUrlField.getHistory().isEmpty()) {
-      myRepositoryUrlField.setSelectedIndex(0);
+    if (defaultUrl != null && !defaultAlreadyAdded) {
+      myRepositoryUrlCombobox.addItem(defaultUrl);
+      myRepositoryUrlField.setText(defaultUrl);
     }
     myTestButton.setEnabled(!getCurrentUrlText().isEmpty());
   }
 
   private void test() {
     String testUrl = getCurrentUrlText();
-    TestResult testResult = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> test(testUrl), DvcsBundle.message("clone.testing", testUrl), true, myProject);
-    if (testResult.isSuccess()) {
-      Messages.showInfoMessage(myTestButton, DvcsBundle.message("clone.test.success.message", testUrl),
-                               DvcsBundle.getString("clone.test.connection.title"));
+    if (myRepositoryTestProgressIndicator != null) {
+      myRepositoryTestProgressIndicator.cancel();
+      myRepositoryTestProgressIndicator = null;
     }
-    else {
-      Messages.showErrorDialog(myProject, ObjectUtils.assertNotNull(testResult.getError()), "Repository Test Failed");
-    }
+    myRepositoryTestProgressIndicator =
+      mySpinnerProgressManager
+        .run(new Task.Backgroundable(myProject, DvcsBundle.message("clone.repository.url.test.title", testUrl), true) {
+          private TestResult myTestResult;
+
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            myTestResult = test(testUrl);
+          }
+
+          @Override
+          public void onSuccess() {
+            if (myTestResult.isSuccess()) {
+              myRepositoryTestValidationInfo = null;
+              JBPopupFactory.getInstance()
+                            .createBalloonBuilder(new JLabel(DvcsBundle.getString("clone.repository.url.test.success.message")))
+                            .setDisposable(getDisposable())
+                            .createBalloon()
+                            .show(new RelativePoint(myTestButton, new Point(myTestButton.getWidth() / 2,
+                                                                            myTestButton.getHeight())),
+                                  Balloon.Position.below);
+            }
+            else {
+              myRepositoryTestValidationInfo =
+                new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message", myTestResult.myErrorMessage),
+                                   myRepositoryUrlCombobox);
+            }
+            myRepositoryTestProgressIndicator = null;
+          }
+        });
   }
 
   @NotNull
@@ -209,6 +275,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myTestButton.setEnabled(urlValidation == null);
 
     List<ValidationInfo> infoList = new ArrayList<>();
+    ContainerUtil.addIfNotNull(infoList, myRepositoryTestValidationInfo);
     ContainerUtil.addIfNotNull(infoList, myCreateDirectoryValidationInfo);
     ContainerUtil.addIfNotNull(infoList, urlValidation);
     ContainerUtil.addIfNotNull(infoList, directoryValidation);
@@ -224,7 +291,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private ValidationInfo checkRepositoryURL() {
     String repository = getCurrentUrlText();
     if (repository.length() == 0) {
-      return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), myRepositoryUrlField);
+      return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.empty"), myRepositoryUrlCombobox);
     }
 
     // Is it a proper URL?
@@ -248,7 +315,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
       if (Files.exists(path)) {
         if (!Files.isDirectory(path)) {
-          return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.not.directory"), myRepositoryUrlField);
+          return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.not.directory"), myRepositoryUrlCombobox);
         }
         return null;
       }
@@ -257,7 +324,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       // do nothing
     }
 
-    return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.invalid"), myRepositoryUrlField);
+    return new ValidationInfo(DvcsBundle.getString("clone.repository.url.error.invalid"), myRepositoryUrlCombobox);
   }
 
   /**
@@ -301,9 +368,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   public void prependToHistory(@NotNull final String item) {
-    List<String> history = myRepositoryUrlField.getHistory();
-    history.add(item);
-    myRepositoryUrlField.setHistory(history);
+    myRepositoryUrlCombobox.addItem(item);
   }
 
   public void rememberSettings() {
@@ -358,14 +423,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myRepositoryUrlField;
+    return myRepositoryUrlCombobox;
   }
 
   @NotNull
   protected JComponent createCenterPanel() {
     return PanelFactory.grid()
                        .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                                          .addToCenter(myRepositoryUrlField)
+                                                          .addToCenter(myRepositoryUrlCombobox)
                                                           .addToRight(myTestButton))
                                         .withLabel(DvcsBundle.getString("clone.repository.url.label")))
                        .add(PanelFactory.panel(myDirectoryField)
@@ -410,6 +475,36 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
       if (!myModifiedByUser) {
         setText(myDefaultParentPath.resolve(child).toString());
         myModifiedByUser = false;
+      }
+    }
+  }
+
+  private static class ComponentVisibilityProgressManager implements Disposable {
+    @NotNull private final JComponent myProgressDisplayComponent;
+    @NotNull private final List<ProgressIndicator> myIndicators;
+
+    public ComponentVisibilityProgressManager(@NotNull JComponent progressDisplayComponent) {
+      myProgressDisplayComponent = progressDisplayComponent;
+      myIndicators = new ArrayList<>();
+    }
+
+    @CalledInAwt
+    public ProgressIndicator run(@NotNull Task.Backgroundable task) {
+      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.stateForComponent(myProgressDisplayComponent));
+      myIndicators.add(indicator);
+      myProgressDisplayComponent.setVisible(true);
+      ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, () ->
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myIndicators.remove(indicator);
+          myProgressDisplayComponent.setVisible(!myIndicators.isEmpty());
+        }, indicator.getModalityState()));
+      return indicator;
+    }
+
+    @Override
+    public void dispose() {
+      for (ProgressIndicator indicator : myIndicators) {
+        indicator.cancel();
       }
     }
   }
