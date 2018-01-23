@@ -516,6 +516,11 @@
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.OptionalAssignedToNullInspection"
                      displayName="Null value for Optional type"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ConditionalCanBeOptional"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.codeInspection.ConditionalCanBeOptionalInspection"
+                     displayName="Conditional can be replaced with Optional"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="ReplaceNullCheck"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids9" enabledByDefault="true" level="WARNING"
