@@ -89,11 +89,8 @@ public class TestPackage extends TestObject {
               PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
               List<PsiClass> classes = new ArrayList<>();
               if (aPackage != null) {
-                PsiDirectory[] directories =
-                  ReadAction.compute(() -> aPackage.getDirectories(GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope())));
-                for (PsiDirectory directory : directories) {
-                  collectClassesRecursively(directory, classes);
-                }
+                collectClassesRecursively(aPackage, GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope()), classes
+                );
               }
               classes
                 .stream()
@@ -122,19 +119,19 @@ public class TestPackage extends TestObject {
         }
       }
 
-      private void collectClassesRecursively(PsiElement root, List<PsiClass> classes) {
-        PsiElement[] children = ReadAction.compute(() -> root.getChildren());
-        for (PsiElement child : children) {
-          if (child instanceof PsiClassOwner) {
-            for (PsiClass aClass : ReadAction.compute(() -> ((PsiClassOwner)child).getClasses())) {
-              classes.add(aClass);
-              if (Registry.is("junit4.accept.inner.classes", true)) {
-                classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).toList()));
-              }
-            }
-          }
-          else {
-            collectClassesRecursively(child, classes);
+      private void collectClassesRecursively(PsiPackage aPackage,
+                                             GlobalSearchScope scope, 
+                                             List<PsiClass> classes) {
+        PsiPackage[] psiPackages =
+          ReadAction.compute(() -> aPackage.getSubPackages(scope));
+        for (PsiPackage psiPackage : psiPackages) {
+          collectClassesRecursively(psiPackage, scope, classes);
+        }
+        PsiClass[] psiClasses = ReadAction.compute(() -> aPackage.getClasses(scope));
+        for (PsiClass aClass : psiClasses) {
+          classes.add(aClass);
+          if (Registry.is("junit4.accept.inner.classes", true)) {
+            classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).toList()));
           }
         }
       }
