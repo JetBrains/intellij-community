@@ -35,10 +35,10 @@ public class PyTypeHintGenerationUtil {
 
   private PyTypeHintGenerationUtil() {}
 
-  public static void insertAttributeTypeComment(@NotNull PyTargetExpression target,
-                                                @NotNull String annotation,
-                                                boolean startTemplate,
-                                                @NotNull List<TextRange> typeRanges) {
+  public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
+                                                          @NotNull String annotation,
+                                                          boolean startTemplate,
+                                                          @NotNull List<TextRange> typeRanges) {
 
     final PyClass pyClass = target.getContainingClass();
     if (pyClass == null) {
@@ -61,7 +61,9 @@ public class PyTypeHintGenerationUtil {
     }
   }
 
-  public static void insertAttributeAnnotation(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
+  public static void insertStandaloneAttributeAnnotation(@NotNull PyTargetExpression target,
+                                                         @NotNull String annotation,
+                                                         boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
       throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);

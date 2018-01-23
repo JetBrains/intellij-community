@@ -191,7 +191,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertAttributeAnnotation(target, annotationText, true);
+        PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, annotationText, true);
       }
       else {
         PyTypeHintGenerationUtil.insertVariableAnnotation(classLevelAttrs.get(0), annotationText, true);
@@ -210,7 +210,7 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertAttributeTypeComment(target, annotationText, true, typeRanges);
+        PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, annotationText, true, typeRanges);
       }
       else {
         // Use existing class level definition (say, assignment of the default value) for annotation
