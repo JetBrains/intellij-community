@@ -24,6 +24,7 @@ import icons.RubyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.RBundle;
+import org.jetbrains.plugins.ruby.remote.RubyRemoteInterpreterManager;
 import org.jetbrains.plugins.ruby.ruby.RModuleUtil;
 import org.jetbrains.plugins.ruby.ruby.run.RubyAbstractRunner;
 import org.jetbrains.plugins.ruby.rvm.RVMSupportUtil;
@@ -61,7 +62,7 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
 
     String command = myCommandLine;
     Map<String, String> env = ContainerUtil.newHashMap(commandLine.getEffectiveEnvironment());
-    if (sdk != null) {
+    if (sdk != null && !RubyRemoteInterpreterManager.getInstance().isRemoteSdk(sdk)) {
       if (RVMSupportUtil.isRVMInterpreter(sdk)) {
         command = getRVMAwareCommand(sdk);
       }
