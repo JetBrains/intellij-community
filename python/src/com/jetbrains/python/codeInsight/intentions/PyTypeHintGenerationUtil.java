@@ -2,9 +2,11 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -21,7 +23,6 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -45,16 +46,20 @@ public class PyTypeHintGenerationUtil {
       throw new IllegalArgumentException("Target '" + target.getText() + "' in not contained in a class definition");
     }
 
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
+
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     final String assignedValue = langLevel.isAtLeast(LanguageLevel.PYTHON30) ? "..." : "None";
     final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + annotation;
     final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
-    PyAssignmentStatement inserted = (PyAssignmentStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
-    inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
 
-    final PsiComment insertedComment = as(inserted.getLastChild(), PsiComment.class);
+    final PsiComment insertedComment = WriteAction.compute(() -> {
+      PyAssignmentStatement inserted = (PyAssignmentStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+      inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+      return as(inserted.getLastChild(), PsiComment.class);
+    });
 
     if (startTemplate && insertedComment != null) {
       openEditorAndAddTemplateForTypeComment(insertedComment, annotation, typeRanges);
@@ -74,15 +79,20 @@ public class PyTypeHintGenerationUtil {
       throw new IllegalArgumentException("Target '" + target.getText() + "' in not contained in a class definition");
     }
 
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
+
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final String declarationText = target.getName() + ": " + annotation;
     final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
-    PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
-    inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
 
-    if (startTemplate && inserted != null) {
-      openEditorAndAddTemplateForAnnotation(inserted);
+    final PyTypeDeclarationStatement insertedDeclaration = WriteAction.compute(() -> {
+      final PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+      return CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+    });
+
+    if (startTemplate && insertedDeclaration != null) {
+      openEditorAndAddTemplateForAnnotation(insertedDeclaration);
     }
   }
 
@@ -102,16 +112,20 @@ public class PyTypeHintGenerationUtil {
       throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);
     }
 
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
+
     final Project project = target.getProject();
     final PyAnnotationOwner createdAnnotationOwner;
     if (canUseInlineAnnotation(target)) {
       final SmartPointerManager manager = SmartPointerManager.getInstance(project);
       final PyAssignmentStatement assignment = (PyAssignmentStatement)target.getParent();
       final SmartPsiElementPointer<PyAssignmentStatement> pointer = manager.createSmartPsiElementPointer(assignment);
-      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-        document.insertString(target.getTextRange().getEndOffset(), ": " + annotation);
+      createdAnnotationOwner = WriteAction.compute(() -> {
+        return PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+          document.insertString(target.getTextRange().getEndOffset(), ": " + annotation);
+          return pointer.getElement();
+        });
       });
-      createdAnnotationOwner = pointer.getElement();
     }
     else {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
@@ -119,8 +133,10 @@ public class PyTypeHintGenerationUtil {
       final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
       final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
       assert statement != null;
-      final PyAnnotationOwner inserted = (PyAnnotationOwner)statement.getParent().addBefore(declaration, statement);
-      createdAnnotationOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+      createdAnnotationOwner = WriteAction.compute(() -> {
+        final PyAnnotationOwner inserted = (PyAnnotationOwner)statement.getParent().addBefore(declaration, statement);
+        return CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
+      });
     }
 
     if (startTemplate && createdAnnotationOwner != null) {
@@ -145,7 +161,7 @@ public class PyTypeHintGenerationUtil {
       final String replacementText = ApplicationManager.getApplication().isUnitTestMode() ? "[" + annotation + "]" : annotation;
       //noinspection ConstantConditions
       templateBuilder.replaceElement(annotated.getAnnotation().getValue(), replacementText);
-      templateBuilder.run(editor, true);
+      WriteAction.run(() -> templateBuilder.run(editor, true));
     }
   }
 
@@ -154,17 +170,12 @@ public class PyTypeHintGenerationUtil {
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
 
-  @SuppressWarnings("unused")
-  public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
-                                               @NotNull String annotation,
-                                               boolean startTemplate) {
-    insertVariableTypeComment(target, annotation, startTemplate, Collections.singletonList(TextRange.allOf(annotation)));
-  }
-
   public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
                                                @NotNull String annotation,
                                                boolean startTemplate,
                                                @NotNull List<TextRange> typeRanges) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
+
     final String typeCommentText = "  " + TYPE_COMMENT_PREFIX + annotation;
 
     final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
@@ -187,14 +198,18 @@ public class PyTypeHintGenerationUtil {
       final PsiElement lastNonComment = PyPsiUtils.getPrevNonCommentSibling(insertionAnchor, true);
       final int startOffset = lastNonComment.getTextRange().getEndOffset();
       final int endOffset = insertionAnchor.getTextRange().getEndOffset();
-      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-        document.replaceString(startOffset, endOffset, combinedTypeCommentText);
+      WriteAction.run(() -> {
+        PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+          document.replaceString(startOffset, endOffset, combinedTypeCommentText);
+        });
       });
     }
     else if (insertionAnchor != null) {
       final int offset = insertionAnchor.getTextRange().getEndOffset();
-      PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-        document.insertString(offset, typeCommentText);
+      WriteAction.run(() -> {
+        PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+          document.insertString(offset, typeCommentText);
+        });
       });
     }
 
@@ -223,7 +238,7 @@ public class PyTypeHintGenerationUtil {
         final String replacementText = testMode ? "[" + individualType + "]" : individualType;
         templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
       }
-      templateBuilder.run(editor, true);
+      WriteAction.run(() -> templateBuilder.run(editor, true));
     }
   }
 }

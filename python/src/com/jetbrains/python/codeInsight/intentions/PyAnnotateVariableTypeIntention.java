@@ -260,4 +260,9 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
       builder.append(type);
     }
   }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
 }
