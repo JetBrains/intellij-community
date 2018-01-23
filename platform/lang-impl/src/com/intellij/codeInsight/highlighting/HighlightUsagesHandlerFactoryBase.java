@@ -17,6 +17,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,31 @@ public abstract class HighlightUsagesHandlerFactoryBase implements HighlightUsag
   @Nullable
   @Override
   public final HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file) {
-    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    PsiElement target = file.findElementAt(offset);
+    PsiElement target = findTarget(editor, file);
     if (target == null) return null;
     return createHighlightUsagesHandler(editor, file, target);
   }
 
   @Nullable
+  @Override
+  public final HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file,
+                                                                       @NotNull ProperTextRange visibleRange) {
+    PsiElement target = findTarget(editor, file);
+    if (target == null) return null;
+    return createHighlightUsagesHandler(editor, file, target, visibleRange);
+  }
+
+  @Nullable
   public abstract HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target);
+
+  @Nullable
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target,
+                                                                 @NotNull ProperTextRange visibleRange) {
+    return createHighlightUsagesHandler(editor, file, target);
+  }
+
+  private static PsiElement findTarget(@NotNull Editor editor, @NotNull PsiFile file) {
+    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    return file.findElementAt(offset);
+  }
 }
