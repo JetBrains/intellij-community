@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
@@ -28,12 +28,12 @@ public final class CompletionParameters {
   private final PsiElement myPosition;
   private final PsiFile myOriginalFile;
   private final CompletionType myCompletionType;
-  private final Editor myEditor;
+  @Nullable private final Editor myEditor;
   private final int myOffset;
   private final int myInvocationCount;
 
   CompletionParameters(@NotNull final PsiElement position, @NotNull final PsiFile originalFile,
-                       @NotNull CompletionType completionType, int offset, final int invocationCount, @NotNull Editor editor) {
+                       @NotNull CompletionType completionType, int offset, final int invocationCount, @Nullable Editor editor) {
     assert position.getTextRange().containsOffset(offset) : position;
     myPosition = position;
     assert position.isValid();
@@ -106,8 +106,22 @@ public final class CompletionParameters {
     return myCompletionType == CompletionType.BASIC && myInvocationCount >= 2;
   }
 
+  /**
+   * @return the editor where the completion was started, or null if completion API was invoked in absence of editor.
+   * @see #hasEditor()
+   */
   @NotNull
   public Editor getEditor() {
+    if (myEditor == null) throw new CompletionWithoutEditorException(); 
     return myEditor;
   }
+
+  /** 
+   * @return whether this completion was started within an editor
+   * @since 181.*
+   */
+  public boolean hasEditor() {
+    return myEditor != null;
+  }
+
 }
