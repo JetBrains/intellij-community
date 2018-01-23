@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  *
- * @see com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
+ * @see HighlightUsagesHandlerFactoryBase
  */
 public interface HighlightUsagesHandlerFactory {
   ExtensionPointName<HighlightUsagesHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.highlightUsagesHandlerFactory");

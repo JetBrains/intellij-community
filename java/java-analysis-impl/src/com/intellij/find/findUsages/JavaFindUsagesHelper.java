@@ -25,7 +25,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
@@ -204,8 +203,7 @@ public class JavaFindUsagesHelper {
     }
     final Boolean isSearchable = ReadAction.compute(() -> ThrowSearchUtil.isSearchable(element));
     if (!isSearchable && options.isSearchForTextOccurrences && options.searchScope instanceof GlobalSearchScope) {
-      Collection<String> stringsToSearch = ApplicationManager.getApplication().runReadAction(
-        (NullableComputable<Collection<String>>)() -> getElementNames(element));
+      Collection<String> stringsToSearch = ReadAction.compute(() -> getElementNames(element));
       // todo add to fastTrack
       if (!FindUsagesHelper.processUsagesInText(element, stringsToSearch, (GlobalSearchScope)options.searchScope, processor)) return false;
     }

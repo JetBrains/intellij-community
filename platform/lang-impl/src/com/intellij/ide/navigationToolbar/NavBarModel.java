@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -167,11 +165,7 @@ public class NavBarModel {
       }
     }
 
-    final Computable<List<Object>> modelUpdater = () -> {
-      if (!isValid(psiElement)) return new ArrayList<>();
-      return myBuilder.createModel(psiElement, roots);
-    };
-    final List<Object> updatedModel = ApplicationManager.getApplication().runReadAction(modelUpdater);
+    List<Object> updatedModel = ReadAction.compute(() -> isValid(psiElement) ? myBuilder.createModel(psiElement, roots) : Collections.emptyList());
 
     setModel(ContainerUtil.reverse(updatedModel));
   }
