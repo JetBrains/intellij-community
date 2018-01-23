@@ -61,10 +61,10 @@ public class ImageLoader implements Serializable {
    * For internal usage.
    */
   public interface LoadFunction {
-    Image load(@Nullable LoadFunction delegate) throws IOException;
+    Image load(@Nullable LoadFunction delegate, @Nullable ImageDesc.Type type) throws IOException;
   }
 
-  private static class ImageDesc {
+  public static class ImageDesc {
     public enum Type {
       PNG,
 
@@ -73,14 +73,14 @@ public class ImageLoader implements Serializable {
         public Image load(final URL url, final InputStream is, final double scale) throws IOException {
           LoadFunction f = new LoadFunction() {
             @Override
-            public Image load(LoadFunction delegate) throws IOException {
+            public Image load(LoadFunction delegate, Type type) throws IOException {
               return SVGLoader.load(url, is, scale);
             }
           };
-          if (measureLoad != null && Registry.is("ide.svg.icon")) {
-            return measureLoad.load(f);
+          if (measureLoad != null) {
+            return measureLoad.load(f, SVG);
           }
-          return f.load(null);
+          return f.load(null, null);
         }
       },
 
@@ -89,14 +89,14 @@ public class ImageLoader implements Serializable {
       public Image load(final URL url, final InputStream is, final double scale) throws IOException {
         LoadFunction f = new LoadFunction() {
           @Override
-          public Image load(LoadFunction delegate) {
+          public Image load(LoadFunction delegate, Type type) {
             return ImageLoader.load(is, scale);
           }
         };
-        if (measureLoad != null && !Registry.is("ide.svg.icon")) {
-          return measureLoad.load(f);
+        if (measureLoad != null) {
+          return measureLoad.load(f, PNG);
         }
-        return f.load(null);
+        return f.load(null, null);
       }
     }
 
