@@ -446,12 +446,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         public MessageEvent.Kind getKind() {
           return eventKind;
         }
-
-        @Override
-        @Nullable
-        public String getDetails() {
-          return null;
-        }
       });
     }
     if (messageEvent instanceof FileMessageEvent) {
