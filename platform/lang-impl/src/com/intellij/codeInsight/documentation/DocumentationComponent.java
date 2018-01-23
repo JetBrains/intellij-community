@@ -470,7 +470,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
-    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UI.getColor("link.foreground")) + "; text-decoration: none;}");
+    editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(UIManager.getColor("link.foreground")) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 10px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
     editorKit.getStyleSheet().addRule(".content { padding: 5px 9px 0 7px; }");
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 5px 7px; }");
@@ -862,7 +862,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void updateControlState() {
-    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     if (needsToolbar()) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
