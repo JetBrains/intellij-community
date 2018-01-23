@@ -2,7 +2,6 @@
 package com.intellij.build.output;
 
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,12 +23,4 @@ public interface BuildOutputInstantReader {
   void pushBack(int numberOfLines);
 
   String getCurrentLine();
-
-  /***
-   * Read lines until a given line is found or there are no more lines. The match is done by {@link String#equals(Object)} if endLine is not null.
-   * @param endLine
-   * @return All lines read until endLine is found or no more lines exist
-   */
-  @NotNull
-  String readUntil(@Nullable String endLine);
 }

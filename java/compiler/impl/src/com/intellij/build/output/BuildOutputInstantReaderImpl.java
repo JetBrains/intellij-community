@@ -172,26 +172,4 @@ public class BuildOutputInstantReaderImpl implements Appendable, Closeable, Buil
   public String getCurrentLine() {
     return myLinesBuffer.size() > myCurrentIndex ? myLinesBuffer.get(myCurrentIndex) : null;
   }
-
-  @NotNull
-  @Override
-  public String readUntil(@Nullable String endString) {
-    List<String> lineList = new ArrayList<>();
-    int readLines = 0;
-    while (true) {
-      String currentLine = readLine();
-      if (currentLine == null) {
-        break;
-      }
-      readLines++;
-      if (currentLine.equals(endString)) {
-        break;
-      }
-      else {
-        lineList.add(currentLine);
-      }
-    }
-    pushBack(readLines);
-    return StringUtil.join(lineList, SystemProperties.getLineSeparator());
-  }
 }
