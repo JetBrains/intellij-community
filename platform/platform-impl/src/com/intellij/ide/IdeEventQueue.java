@@ -30,10 +30,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -44,7 +41,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import one.util.streamex.StreamEx;
@@ -118,7 +114,8 @@ public class IdeEventQueue extends EventQueue {
   final AtomicInteger myKeyboardEventsPosted = new AtomicInteger();
   final AtomicInteger myKeyboardEventsDispatched = new AtomicInteger();
   private boolean myIsInInputEvent;
-  private AWTEvent myCurrentEvent;
+  @NotNull
+  private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
   private long myLastActiveTime;
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
@@ -373,6 +370,7 @@ public class IdeEventQueue extends EventQueue {
     myEventCount = evCount;
   }
 
+  @NotNull
   public AWTEvent getTrueCurrentEvent() {
     return myCurrentEvent;
   }
