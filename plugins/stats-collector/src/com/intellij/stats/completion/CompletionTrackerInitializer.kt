@@ -53,8 +53,8 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatus): Applicat
 
             val userFactors = UserFactorsManager.getInstance(lookup.project).getAllFactors()
             val userFactorValues = mutableMapOf<String, String?>()
-            userFactors.asSequence().map { "${it.id}Global" to it.compute(globalStorage) }.toMap(userFactorValues)
-            userFactors.asSequence().map { "${it.id}Project" to it.compute(projectStorage) }.toMap(userFactorValues)
+            userFactors.asSequence().map { "${it.id}:Global" to it.compute(globalStorage) }.toMap(userFactorValues)
+            userFactors.asSequence().map { "${it.id}:Project" to it.compute(projectStorage) }.toMap(userFactorValues)
 
             lookup.putUserData(UserFactorsManager.USER_FACTORS_KEY, userFactorValues)
             val shownTimesTracker = PositionTrackingListener(lookup)
