@@ -21,11 +21,6 @@ java_test(
     ],
     jvm_flags = ["-Dtest.suite.jar=AndroidStudioBundleTest.jar"],
     tags = [
-        "ij2017.3",  # TODO: Disabled on all targets due to IJ2017.3 merge
-        "managed",
-        "no_linux",
-        "no_mac",
-        "no_test_mac",  # b/69173266 Time out frequently when run on mac.
         "no_windows",
     ],
     test_class = "com.android.testutils.JarTestSuite",
