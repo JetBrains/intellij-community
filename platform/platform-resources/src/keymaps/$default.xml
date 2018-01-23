@@ -1078,4 +1078,11 @@
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
+
+  <action id="GotoNextElementUnderCaretUsage">
+    <mouse-shortcut keystroke="alt button142"/>
+  </action>
+  <action id="GotoPrevElementUnderCaretUsage">
+    <mouse-shortcut keystroke="alt button143"/>
+  </action>
 </keymap>
