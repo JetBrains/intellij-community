@@ -2,6 +2,11 @@
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -11,10 +16,17 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -22,13 +34,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 
 /**
  * @author gregsh
  */
 public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T> {
-  private final Map<VirtualFile, T> myMappings = ContainerUtil.newHashMap();
+
+  private final TreeMap<VirtualFile, T> myMappings = new TreeMap<>(
+    (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
+
+  public PerFileMappingsBase() {
+    installDeleteUndo();
+  }
 
   @Nullable
   protected FilePropertyPusher<T> getFilePropertyPusher() {
@@ -226,9 +245,10 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       myMappings.clear();
       final List<Element> files = state.getChildren("file");
       for (Element fileElement : files) {
-        final String url = fileElement.getAttributeValue("url");
-        final String dialectID = fileElement.getAttributeValue(getValueAttribute());
-        final VirtualFile file = url.equals("PROJECT") ? null : VirtualFileManager.getInstance().findFileByUrl(url);
+        String url = fileElement.getAttributeValue("url");
+        if (url == null) continue;
+        String dialectID = fileElement.getAttributeValue(getValueAttribute());
+        VirtualFile file = "PROJECT".equals(url) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
         T dialect = dialectMap.get(dialectID);
         if (dialect == null) {
           dialect = handleUnknownMapping(file, dialectID);
@@ -255,6 +275,127 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   public boolean hasMappings() {
     synchronized (myMappings) {
       return !myMappings.isEmpty();
+    }
+  }
+
+  private void installDeleteUndo() {
+    Application app = ApplicationManager.getApplication();
+    if (app == null) return;
+    
+    app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      
+      WeakReference<MyUndoableAction> lastAction;
+      
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {
+        if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) return;
+        Project project = CommandProcessor.getInstance().getCurrentCommandProject();
+        UndoManager undoManager = (project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance());
+        if (project == null) return;
+        MyUndoableAction action = createUndoableAction(events);
+        if (action != null) {
+          action.doRemove(action.removed);
+          lastAction = new WeakReference<>(action);
+          undoManager.undoableActionPerformed(action);
+        }
+      }
+
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        MyUndoableAction action = SoftReference.dereference(lastAction);
+        lastAction = null;
+        if (action != null) {
+          ApplicationManager.getApplication().invokeLater(() -> action.doAdd(action.added));
+        }
+      }
+
+      @Nullable
+      MyUndoableAction createUndoableAction(@NotNull List<? extends VFileEvent> events) {
+        Map<String, T> removed = ContainerUtil.newHashMap();
+        Map<String, T> added = ContainerUtil.newHashMap();
+
+        for (VFileEvent event : events) {
+          String newName = null;
+          if (event instanceof VFilePropertyChangeEvent) {
+            VFilePropertyChangeEvent propEvent = (VFilePropertyChangeEvent)event;
+            String prop = propEvent.getPropertyName();
+            if (VirtualFile.PROP_NAME.equals(prop)) {
+              // todo VFS handles renames, uncomment for string-based mappings 
+              //Object v0 = propEvent.getOldValue();
+              //Object v1 = propEvent.getNewValue();
+              //if (!Comparing.equal(v0, v1)) newName = (String)v1;
+            }
+          }
+          if (newName == null && !(event instanceof VFileDeleteEvent)) continue;
+          VirtualFile file = event.getFile();
+          if (file == null) continue;
+          synchronized (myMappings) {
+            String fileUrl = file.getUrl();
+            if (!file.isDirectory()) {
+              T m = myMappings.get(file);
+              if (m != null) removed.put(fileUrl, m);
+              if (newName != null) {
+                added.put(PathUtil.getParentPath(fileUrl) + "/" + newName, m);
+              }
+            }
+            else {
+              for (VirtualFile child : myMappings.navigableKeySet().tailSet(file)) {
+                if (!VfsUtilCore.isAncestor(file, child, false)) break;
+                String childUrl = child.getUrl();
+                T m = myMappings.get(child);
+                removed.put(childUrl, m);
+                if (newName != null) {
+                  added.put(PathUtil.getParentPath(fileUrl) + "/" + newName + childUrl.substring(fileUrl.length()), m);
+                }
+              }
+            }
+          }
+        }
+        return removed.isEmpty() && added.isEmpty() ? null : new MyUndoableAction(added, removed);
+      }
+    });
+  }
+
+  private class MyUndoableAction extends BasicUndoableAction {
+    final Map<String, T> added;
+    final Map<String, T> removed;
+
+    public MyUndoableAction(Map<String, T> added, Map<String, T> removed) {
+      this.added = added;
+      this.removed = removed;
+    }
+
+    @Override
+    public void undo() {
+      doRemove(added);
+      doAdd(removed);
+    }
+
+    @Override
+    public void redo() {
+      doRemove(removed);
+      doAdd(added);
+    }
+
+    void doAdd(Map<String, T> toAdd) {
+      if (toAdd == null) return;
+      for (String url : toAdd.keySet()) {
+        VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+        if (file == null) continue;
+        setMapping(file, toAdd.get(url));
+      }
+    }
+
+    void doRemove(Map<String, T> toRemove) {
+      if (toRemove != null) {
+        synchronized (myMappings) {
+          for (String url : toRemove.keySet()) {
+            VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+            if (file == null) continue;
+            myMappings.remove(file);
+          }
+        }
+      }
     }
   }
 }
