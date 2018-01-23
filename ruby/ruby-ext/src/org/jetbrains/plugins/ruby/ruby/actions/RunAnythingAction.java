@@ -681,9 +681,10 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
 
     myTextFieldTitle = new JLabel(RBundle.message("run.anything.run.anything.title"));
     JPanel topPanel = new NonOpaquePanel(new BorderLayout());
-    Color foregroundColor = UIUtil.isUnderWin10LookAndFeel() ?
-                            UIManager.getColor("ffffff") :
-                            new JBColor(Gray._240, Gray._200);
+    Color foregroundColor = UIUtil.isUnderDarcula()
+                            ? UIUtil.isUnderWin10LookAndFeel() ? JBColor.WHITE : new JBColor(Gray._240, Gray._200)
+                            : UIUtil.getLabelForeground();
+
 
     myTextFieldTitle.setForeground(foregroundColor);
     myTextFieldTitle.setBorder(BorderFactory.createEmptyBorder(3, 5, 5, 0));
