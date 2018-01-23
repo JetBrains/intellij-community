@@ -18,7 +18,6 @@ import java.util.Objects;
 public class FileMessageEventImpl extends MessageEventImpl implements FileMessageEvent {
 
   private final FilePosition myFilePosition;
-  private final String myDetailedMessage;
 
   public FileMessageEventImpl(@NotNull Object parentId,
                               @NotNull Kind kind,
@@ -28,7 +27,6 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
                               @NotNull FilePosition filePosition) {
     super(parentId, kind, group, message, detailedMessage);
     myFilePosition = filePosition;
-    myDetailedMessage = detailedMessage;
   }
 
   @Override
@@ -47,7 +45,7 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
       @Override
       @Nullable
       public String getDetails() {
-        return myDetailedMessage;
+        return getDescription();
       }
     };
   }
