@@ -90,6 +90,14 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doTestAnnotation();
   }
 
+  public void testAnnotationInstanceAttributeClassLevelAssignment() {
+    doTestAnnotation();
+  }
+
+  public void testAnnotationInstanceAttributeClassLevelAssignmentInAncestor() {
+    doTestAnnotation();
+  }
+
   public void testTypeCommentInstanceAttribute() {
     doTestTypeComment();
   }
@@ -99,6 +107,14 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
   }
 
   public void testTypeCommentInstanceAttributeDocstring() {
+    doTestTypeComment();
+  }
+
+  public void testTypeCommentInstanceAttributeClassLevelAssignment() {
+    doTestTypeComment();
+  }
+
+  public void testTypeCommentInstanceAttributeClassLevelAssignmentInAncestor() {
     doTestTypeComment();
   }
 

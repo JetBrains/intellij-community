@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -119,19 +120,28 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     else if (isInstanceAttribute(target, context)) {
       // Set isDefinition=true to start searching right from the class level.
       //noinspection ConstantConditions
-      final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);
-      final List<? extends RatedResolveResult> classAttrs =
-        classType.resolveMember(name, target, AccessDirection.READ, PyResolveContext.noImplicits().withTypeEvalContext(context), true);
-      if (classAttrs == null) {
-        return false;
-      }
-      return StreamEx.of(classAttrs)
-        .map(RatedResolveResult::getElement)
-        .select(PyTargetExpression.class)
-        .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
-        .anyMatch(PyAnnotateVariableTypeIntention::hasInlineAnnotation);
+      final List<PyTargetExpression> classLevelDefinitions = findClassLevelDefinitions(target, context);
+      return ContainerUtil.exists(classLevelDefinitions, PyAnnotateVariableTypeIntention::hasInlineAnnotation);
     }
     return false;
+  }
+
+  @NotNull
+  private static List<PyTargetExpression> findClassLevelDefinitions(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+    assert target.getContainingClass() != null;
+    assert target.getName() != null;
+    final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<? extends RatedResolveResult> classAttrs =
+      classType.resolveMember(target.getName(), target, AccessDirection.READ, resolveContext, true);
+    if (classAttrs == null) {
+      return Collections.emptyList();
+    }
+    return StreamEx.of(classAttrs)
+      .map(RatedResolveResult::getElement)
+      .select(PyTargetExpression.class)
+      .filter(x -> ScopeUtil.getScopeOwner(x) instanceof PyClass)
+      .toList();
   }
 
   private static boolean isInstanceAttribute(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
@@ -179,7 +189,13 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final PyType inferredType = context.getType(target);
     final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
     if (isInstanceAttribute(target, context)) {
-      PyTypeHintGenerationUtil.insertAttributeAnnotation(target, annotationText, true);
+      final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
+      if (classLevelAttrs.isEmpty()) {
+        PyTypeHintGenerationUtil.insertAttributeAnnotation(target, annotationText, true);
+      }
+      else {
+        PyTypeHintGenerationUtil.insertVariableAnnotation(classLevelAttrs.get(0), annotationText, true);
+      }
     }
     else {
       PyTypeHintGenerationUtil.insertVariableAnnotation(target, annotationText, true);
@@ -189,11 +205,20 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final Pair<String, List<TextRange>> annotationAndRanges = generateNestedTypeHint(target, context);
+    final String annotationText = annotationAndRanges.getFirst();
+    final List<TextRange> typeRanges = annotationAndRanges.getSecond();
     if (isInstanceAttribute(target, context)) {
-      PyTypeHintGenerationUtil.insertAttributeTypeComment(target, annotationAndRanges.getFirst(), true, annotationAndRanges.getSecond());
+      final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
+      if (classLevelAttrs.isEmpty()) {
+        PyTypeHintGenerationUtil.insertAttributeTypeComment(target, annotationText, true, typeRanges);
+      }
+      else {
+        // Use existing class level definition (say, assignment of the default value) for annotation
+        PyTypeHintGenerationUtil.insertVariableTypeComment(classLevelAttrs.get(0), annotationText, true, typeRanges);
+      }
     }
     else {
-      PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationAndRanges.getFirst(), true, annotationAndRanges.getSecond());
+      PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText, true, typeRanges);
     }
   }
 
