@@ -685,8 +685,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       final int width = definitionPreferredWidth();
       if (width >= 0) {
         myResizing = true;
-        final int maxWidth = lookup != null ? 435 : 650;
-        myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(300, width)), Math.max(59, myEditorPane.getPreferredSize().height)));
+        int maxWidth = lookup != null ? 435 : 650;
+        int height = myEditorPane.getPreferredSize().height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
+        myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(300, width)), Math.max(59, height)));
       }
     }
 
@@ -845,7 +846,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void updateControlState() {
-    if (myHint != null && Registry.is("documentation.show.toolbar")) {
+    if (needsToolbar()) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
       removeCornerMenu();
@@ -873,6 +874,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       corner.setNoIconsInPopup(true);
       myScrollPane.setCorner(ScrollPaneConstants.LOWER_RIGHT_CORNER, corner);
     }
+  }
+
+  private boolean needsToolbar() {
+    return myHint != null && Registry.is("documentation.show.toolbar");
   }
 
   private static class MyGearActionGroup extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
@@ -1293,8 +1298,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     public void setSelected(AnActionEvent e, boolean state) {
       Registry.get("documentation.show.toolbar").setValue(state);
       updateControlState();
-      revalidate();
-      repaint();
+      showHint();
     }
   }
 
