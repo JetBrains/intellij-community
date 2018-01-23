@@ -100,6 +100,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private static final int PREFERRED_WIDTH_EM = 37;
   private static final int PREFERRED_HEIGHT_MIN_EM = 7;
   private static final int PREFERRED_HEIGHT_MAX_EM = 20;
+  private final ExternalDocAction myExternalDocAction;
 
   private DocumentationManager myManager;
   private SmartPsiElementPointer myElement;
@@ -159,6 +160,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   public void setToolwindowCallback(Runnable callback) {
     myToolwindowCallback = callback;
+  }
+
+  public void showExternalDoc() {
+    final DataContext dataContext = DataManager.getInstance().getDataContext(this);
+    myExternalDocAction.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext));
   }
 
   private static class Context {
@@ -388,7 +394,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     final BackAction back = new BackAction();
     final ForwardAction forward = new ForwardAction();
     EditDocumentationSourceAction edit = new EditDocumentationSourceAction();
-    ExternalDocAction externalDoc = new ExternalDocAction();
+    myExternalDocAction = new ExternalDocAction();
     actions.add(back);
     actions.add(forward);
     actions.add(edit);
@@ -412,8 +418,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       LOG.error(e);
     }
     
-    externalDoc.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
-    externalDoc.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
+    myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
+    myExternalDocAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(ActionPlaces.JAVADOC_TOOLBAR, actions,
                                                                                                          new MenuItemPresentationFactory(true));
@@ -767,10 +773,21 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
     final String location = getLocationText();
     if (location != null) {
-      text = text + "<div class='" + (hasContent ? "bottom" : "bottom-no-content") +"'>" + location;
+      text = text + getBottom(hasContent) + location;
     }
+    if (hasExternalDoc() && myEffectiveExternalUrl == null) {
+      final PsiElement element = getElement();
+      String title = element != null ? myManager.getTitle(element) : "";
+      text = text + getBottom(location != null) + "<a href='external_doc'>External documentation " + title + "<icon src='AllIcons.Ide.External_link_arrow'></a>";
+    }
+
     text = addExternalLinksIcon(text);
     return text;
+  }
+
+  @NotNull
+  private static String getBottom(boolean hasContent) {
+    return "<div class='" + (hasContent ? "bottom" : "bottom-no-content") + "'>";
   }
 
   private static String addExternalLinksIcon(String text) {
@@ -994,20 +1011,25 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     @Override
     public void update(AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(false);
-      if (myElement != null) {
-        final PsiElement element = myElement.getElement();
-        final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-        final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-        if (provider instanceof ExternalDocumentationProvider) {
-          presentation.setEnabled(element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement));
-        }
-        else {
-          final List<String> urls = provider.getUrlFor(element, originalElement);
-          presentation.setEnabled(element != null && urls != null && !urls.isEmpty());
-        }
+      presentation.setEnabled(hasExternalDoc());
+    }
+  }
+
+  private boolean hasExternalDoc() {
+    boolean enabled = false;
+    if (myElement != null) {
+      final PsiElement element = myElement.getElement();
+      final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
+      final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+      if (provider instanceof ExternalDocumentationProvider) {
+        enabled = element != null && ((ExternalDocumentationProvider)provider).hasDocumentationFor(element, originalElement);
+      }
+      else {
+        final List<String> urls = provider.getUrlFor(element, originalElement);
+        enabled = element != null && urls != null && !urls.isEmpty();
       }
     }
+    return enabled;
   }
 
   private void registerActions() {

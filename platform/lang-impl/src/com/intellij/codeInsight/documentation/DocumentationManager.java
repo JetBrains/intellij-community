@@ -561,7 +561,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return _short ? "for " + (title != null ? title : element.getText()) : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+    return _short ? "for `" + (title != null ? title : element.getText()) + "`": CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
   public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
@@ -860,6 +860,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return;
     }
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
+    if (url.equals("external_doc")) {
+      component.showExternalDoc();
+      return;
+    }
     if (url.startsWith("open")) {
       final PsiFile containingFile = psiElement.getContainingFile();
       OrderEntry libraryEntry = null;
