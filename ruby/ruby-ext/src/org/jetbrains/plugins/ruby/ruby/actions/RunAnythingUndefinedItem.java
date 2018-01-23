@@ -160,6 +160,8 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
 
   @NotNull
   private String getRVMAwareCommand(@NotNull Sdk sdk) {
+    if (myCommandLine.startsWith("rvm")) return myCommandLine;
+
     String exeCommand = (myCommandLine.contains(" ")) ? StringUtil.substringBefore(myCommandLine, " ") : myCommandLine;
     String version = RVMSupportUtil.getRVMSdkVersion(sdk);
 
