@@ -74,6 +74,14 @@ public abstract class FileEditorManager {
   public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor);
 
   /**
+   * Works as {@link #openTextEditor(OpenFileDescriptor, boolean)} but discards the return value.
+   * It allows implementations to avoid accessing PSI for calculating injected editor.
+   */
+  public void navigateToTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
+    openTextEditor(descriptor, focusEditor);
+  }
+
+  /**
    * @return currently selected text editor. The method returns {@code null} in case
    * there is no selected editor at all or selected editor is not a text one.
    */
