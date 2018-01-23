@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl;
 
@@ -20,6 +6,7 @@ import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -44,6 +31,8 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class ProjectViewTree extends DnDAwareTree {
+  private static final Logger LOG = Logger.getInstance(ProjectViewTree.class);
+
   protected ProjectViewTree(Project project, TreeModel model) {
     this(model);
   }
@@ -78,15 +67,25 @@ public abstract class ProjectViewTree extends DnDAwareTree {
 
   @Override
   public final int getToggleClickCount() {
+    int count = super.getToggleClickCount();
     TreePath path = getSelectionPath();
-    Object object = path == null ? null : TreeUtil.getUserObject(path.getLastPathComponent());
-    if (object instanceof NodeDescriptor) {
-      NodeDescriptor descriptor = (NodeDescriptor)object;
-      if (!descriptor.expandOnDoubleClick()) {
-        return -1;
+    if (path != null) {
+      Object object = TreeUtil.getUserObject(path.getLastPathComponent());
+      if (object instanceof NodeDescriptor) {
+        NodeDescriptor descriptor = (NodeDescriptor)object;
+        if (!descriptor.expandOnDoubleClick()) {
+          LOG.info("getToggleClickCount: -1 for " + descriptor.getClass().getName());
+          return -1;
+        }
       }
     }
-    return super.getToggleClickCount();
+    return count;
+  }
+
+  @Override
+  public void setToggleClickCount(int count) {
+    if (count != 2) LOG.info(new IllegalStateException("setToggleClickCount: unexpected count = " + count));
+    super.setToggleClickCount(count);
   }
 
   @Override
