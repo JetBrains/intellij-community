@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.lang.StdLanguages
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -174,11 +175,20 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       modules.forEach {
         model.setModuleGroupPath(it, null)
       }
-      runWriteAction {
-        model.commit()
+
+      val application = ApplicationManagerEx.getApplicationEx()
+      val doNotSaveValue = application.isDoNotSave
+      application.doNotSave(true)
+      try {
+        runWriteAction {
+          model.commit()
+        }
+        if (recordPreviousNamesCheckBox.isSelected) {
+          (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
+        }
       }
-      if (recordPreviousNamesCheckBox.isSelected) {
-        (ModulePointerManager.getInstance(project) as ModulePointerManagerImpl).setRenamingScheme(renamingScheme)
+      finally {
+        application.doNotSave(doNotSaveValue)
       }
       project.save()
     }
