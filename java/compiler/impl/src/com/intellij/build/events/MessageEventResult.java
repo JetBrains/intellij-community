@@ -12,5 +12,5 @@ public interface MessageEventResult extends EventResult {
   MessageEvent.Kind getKind();
 
   @Nullable
-  String getDetails();
+  default String getDetails() { return null; }
 }
