@@ -403,11 +403,17 @@ class DistributionJARsBuilder {
     def resourcesIncluded = RESOURCES_INCLUDED
     def buildContext = buildContext
     checkModuleExcludes(layout.moduleExcludes)
+    MultiValuesMap<String, String> actualModuleJars = new MultiValuesMap<>(true)
+    moduleJars.entrySet().each {
+      def modules = it.value
+      def jarPath = getActualModuleJarPath(it.key, modules)
+      actualModuleJars.putAll(jarPath, modules)
+    }
     layoutBuilder.layout(targetDirectory) {
       dir("lib") {
-        moduleJars.entrySet().each {
+        actualModuleJars.entrySet().each {
           def modules = it.value
-          def jarPath = getActualModuleJarPath(it.key, modules)
+          def jarPath = it.key
           jar(jarPath, true) {
             modules.each { moduleName ->
               modulePatches([moduleName]) {
@@ -433,7 +439,7 @@ class DistributionJARsBuilder {
           }
         }
         def outputResourceJars = new MultiValuesMap<String, String>()
-        moduleJars.values().forEach {
+        actualModuleJars.values().forEach {
           def resourcesJarName = layout.localizableResourcesJarName(it)
           if (resourcesJarName != null) {
             outputResourceJars.put(resourcesJarName, it)
@@ -469,7 +475,7 @@ class DistributionJARsBuilder {
         }
 
         //include all module libraries from the plugin modules added to IDE classpath to layout
-        moduleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
+        actualModuleJars.entrySet().findAll { !it.key.contains("/") }.collectMany { it.value }
                              .findAll {!layout.modulesWithExcludedModuleLibraries.contains(it)}.each { moduleName ->
           findModule(moduleName).dependenciesList.dependencies.
             findAll { it instanceof JpsLibraryDependency && it?.libraryReference?.parentReference?.resolve() instanceof JpsModule }.
