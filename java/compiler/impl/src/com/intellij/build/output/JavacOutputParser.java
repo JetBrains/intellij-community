@@ -26,6 +26,9 @@ public class JavacOutputParser implements BuildOutputParser {
   private static final char COLON = ':';
   private static final String WARNING_PREFIX = "warning:"; // default value
 
+  private static final String END_DETAIL = "* Try:";
+
+  @Override
   public boolean parse(@NotNull String line, @NotNull BuildOutputInstantReader reader, @NotNull Consumer<MessageEvent> messageConsumer) {
     int colonIndex1 = line.indexOf(COLON);
     if (colonIndex1 == 1) { // drive letter
@@ -37,17 +40,20 @@ public class JavacOutputParser implements BuildOutputParser {
       if (part1.equalsIgnoreCase("error") /* jikes */ || part1.equalsIgnoreCase("Caused by")) {
         // +1 so we don't include the colon
         String text = line.substring(colonIndex1 + 1).trim();
-        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, text));
+        String detailMessage = getDetailMessage(line, reader);
+        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, text, detailMessage));
         return true;
       }
       if (part1.equalsIgnoreCase("warning")) {
         // +1 so we don't include the colon
         String text = line.substring(colonIndex1 + 1).trim();
-        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP, text));
+        String detailMessage = getDetailMessage(line, reader);
+        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP, text, detailMessage));
         return true;
       }
       if (part1.equalsIgnoreCase("javac")) {
-        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line));
+        String detailMessage = getDetailMessage(line, reader);
+        messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line, detailMessage));
         return true;
       }
 
@@ -74,6 +80,7 @@ public class JavacOutputParser implements BuildOutputParser {
             return false;
           }
 
+          String detailMessage = getDetailMessage(line, reader);
           List<String> messageList = ContainerUtil.newArrayList();
           messageList.add(text);
           int column; // 0-based.
@@ -107,7 +114,7 @@ public class JavacOutputParser implements BuildOutputParser {
           if (column >= 0) {
             messageList = convertMessages(messageList);
             String msgText = StringUtil.join(messageList, SystemProperties.getLineSeparator());
-            messageConsumer.accept(new FileMessageEventImpl(reader.getBuildId(), kind, COMPILER_MESSAGES_GROUP, msgText,
+            messageConsumer.accept(new FileMessageEventImpl(reader.getBuildId(), kind, COMPILER_MESSAGES_GROUP, msgText, detailMessage,
                                                             new FilePosition(file, lineNumber - 1, column)));
             return true;
           }
@@ -118,11 +125,17 @@ public class JavacOutputParser implements BuildOutputParser {
     }
 
     if (line.endsWith("java.lang.OutOfMemoryError")) {
-      messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, "Out of memory."));
+      String detailMessage = reader.readUntil(null);
+      messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, "Out of memory.", detailMessage));
       return true;
     }
 
     return false;
+  }
+
+  @NotNull
+  private static String getDetailMessage(@NotNull String line, @NotNull BuildOutputInstantReader reader) {
+    return line + SystemProperties.getLineSeparator() + reader.readUntil(END_DETAIL);
   }
 
   private static void addMessage(@NotNull MessageEvent message, @NotNull List<MessageEvent> messages) {

@@ -6,6 +6,7 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.SystemProperties
 import java.io.File
 import java.lang.IllegalStateException
 import java.util.function.Consumer
@@ -21,6 +22,7 @@ class KotlincOutputParser : BuildOutputParser {
 
   companion object {
     private val COMPILER_MESSAGES_GROUP = "Kotlin compiler"
+    private val END_DETAIL = "* Try:"
   }
 
   override fun parse(line: String, reader: BuildOutputInstantReader, consumer: Consumer<MessageEvent>): Boolean {
@@ -35,9 +37,11 @@ class KotlincOutputParser : BuildOutputParser {
       val path = lineWoSeverity.substringBeforeAndTrim(colonIndex2)
       val file = File(path)
 
+      val detail = "$line${SystemProperties.getLineSeparator()}${reader.readUntil(END_DETAIL)}"
+
       val fileExtension = file.extension.toLowerCase()
       if (!file.isFile || (fileExtension != "kt" && fileExtension != "java")) {
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader)), consumer)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), detail), consumer)
       }
 
       val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
@@ -54,14 +58,14 @@ class KotlincOutputParser : BuildOutputParser {
           if (lineNumber != null) {
             val symbolNumberText = symbolNumber.toInt()
             return addMessage(createMessageWithLocation(
-              reader.buildId, getMessageKind(severity), message, path, lineNumber.toInt(), symbolNumberText), consumer)
+              reader.buildId, getMessageKind(severity), message, path, lineNumber.toInt(), symbolNumberText, detail), consumer)
           }
         }
 
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), message), consumer)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), message, detail), consumer)
       }
       else {
-        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader)), consumer)
+        return addMessage(createMessage(reader.buildId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), detail), consumer)
       }
     }
 
@@ -142,8 +146,8 @@ class KotlincOutputParser : BuildOutputParser {
     return true
   }
 
-  private fun createMessage(buildId: Any, messageKind: MessageEvent.Kind, text: String): MessageEvent {
-    return MessageEventImpl(buildId, messageKind, COMPILER_MESSAGES_GROUP, text.trim())
+  private fun createMessage(buildId: Any, messageKind: MessageEvent.Kind, text: String, detail: String): MessageEvent {
+    return MessageEventImpl(buildId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail)
   }
 
   private fun createMessageWithLocation(
@@ -152,9 +156,10 @@ class KotlincOutputParser : BuildOutputParser {
     text: String,
     file: String,
     lineNumber: Int,
-    columnIndex: Int
+    columnIndex: Int,
+    detail: String
   ): FileMessageEventImpl {
-    return FileMessageEventImpl(buildId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(),
+    return FileMessageEventImpl(buildId, messageKind, COMPILER_MESSAGES_GROUP, text.trim(), detail,
                                 FilePosition(File(file), lineNumber - 1, columnIndex - 1))
   }
 

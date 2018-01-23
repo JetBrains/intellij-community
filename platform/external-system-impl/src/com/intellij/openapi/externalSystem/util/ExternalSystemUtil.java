@@ -804,23 +804,27 @@ public class ExternalSystemUtil {
         final Disposable disposable = Disposer.newDisposable();
 
         project.getMessageBus().connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
+          @Override
           public void processStartScheduled(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               targetDone.down();
             }
           }
 
+          @Override
           public void processNotStarted(@NotNull final String executorIdLocal, @NotNull final ExecutionEnvironment environmentLocal) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               targetDone.up();
             }
           }
 
+          @Override
           public void processStarted(@NotNull final String executorIdLocal,
                                      @NotNull final ExecutionEnvironment environmentLocal,
                                      @NotNull final ProcessHandler handler) {
             if (executorId.equals(executorIdLocal) && environment.equals(environmentLocal)) {
               handler.addProcessListener(new ProcessAdapter() {
+                @Override
                 public void processTerminated(@NotNull ProcessEvent event) {
                   result.set(event.getExitCode() == 0);
                   targetDone.up();

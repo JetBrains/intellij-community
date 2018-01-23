@@ -463,6 +463,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         public MessageEvent.Kind getKind() {
           return eventKind;
         }
+
+        @Override
+        @Nullable
+        public String getDetails() {
+          return null;
+        }
       });
     }
     if (messageEvent instanceof FileMessageEvent) {
@@ -656,25 +662,39 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     public boolean setNode(@NotNull ExecutionNode node) {
       EventResult eventResult = node.getResult();
-      if (!(eventResult instanceof FailureResult)) return false;
-      List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
-      if (failures.isEmpty()) return false;
-      myConsole.clear();
-
       boolean hasChanged = false;
-      for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
-        Failure failure = iterator.next();
-        String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
-        if (text == null && failure.getError() != null) {
-          text = failure.getError().getMessage();
-        }
-        if (text == null) continue;
-        printDetails(failure, text);
-        hasChanged = true;
-        if (iterator.hasNext()) {
-          myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
+
+      if (eventResult instanceof FailureResult) {
+        myConsole.clear();
+        List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
+        if (failures.isEmpty()) return false;
+        for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
+          Failure failure = iterator.next();
+          String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
+          if (text == null && failure.getError() != null) {
+            text = failure.getError().getMessage();
+          }
+          if (text == null) continue;
+          printDetails(failure, text);
+          hasChanged = true;
+          if (iterator.hasNext()) {
+            myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
+          }
         }
       }
+      else if (eventResult instanceof MessageEventResult) {
+        String details = ((MessageEventResult)eventResult).getDetails();
+        if (details == null) {
+          return false;
+        }
+        if (details.isEmpty()) {
+          return false;
+        }
+        myConsole.clear();
+        printDetails(null, details);
+        hasChanged = true;
+      }
+
       if (!hasChanged) return false;
 
       myConsole.scrollTo(0);
@@ -689,7 +709,13 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    public void printDetails(Failure failure, String text) {
+    public void printDetails(@Nullable Failure failure, @Nullable String details) {
+      String text = failure == null ? details : ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
+      if (text == null && failure != null && failure.getError() != null) {
+        text = failure.getError().getMessage();
+      }
+      if (text == null) return;
+
       String content = StringUtil.convertLineSeparators(text);
       while (true) {
         Matcher tagMatcher = TAG_PATTERN.matcher(content);
@@ -708,6 +734,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
             myConsole.printHyperlink(linkText, new HyperlinkInfo() {
               @Override
               public void navigate(Project project) {
+                if(failure == null) {
+                  return;
+                }
                 Notification notification = failure.getNotification();
                 if (notification != null && notification.getListener() != null) {
                   notification.getListener().hyperlinkUpdate(
@@ -727,6 +756,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         }
         content = content.substring(tagMatcher.end());
       }
+      myConsole.print("\n", ConsoleViewContentType.SYSTEM_OUTPUT);
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {
