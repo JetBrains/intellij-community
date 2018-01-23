@@ -6,7 +6,6 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FileMessageEventImpl
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.SystemProperties
 import java.io.File
 import java.lang.IllegalStateException
 import java.util.function.Consumer
@@ -80,25 +79,16 @@ class KotlincOutputParser : BuildOutputParser {
     var nextLine = reader.readLine()
 
     val builder = StringBuilder(this)
-    while (nextLine != null && nextLine.isNextMessage().not()) {
-      builder.append("\n").append(nextLine)
-      nextLine = reader.readLine()
-    }
-
-    if (nextLine != null) {
-      // This code is needed for compatibility with AS 2.0 and IDEA 15.0, because of difference in android plugins
-      val positionField = try {
-        reader::class.java.getDeclaredField("myPosition")
+    while (nextLine != null) {
+      if (nextLine.isNextMessage()) {
+        reader.pushBack()
+        break
       }
-      catch (e: Throwable) {
-        null
-      }
-      if (positionField != null) {
-        positionField.isAccessible = true
-        positionField.setInt(reader, positionField.getInt(reader) - 1)
+      else {
+        builder.append("\n").append(nextLine)
+        nextLine = reader.readLine()
       }
     }
-
     return builder.toString()
   }
 
