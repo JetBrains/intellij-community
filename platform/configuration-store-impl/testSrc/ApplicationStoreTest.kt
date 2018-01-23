@@ -127,7 +127,7 @@ internal class ApplicationStoreTest {
   @Test fun `export settings`() {
     testAppConfig.refreshVfs()
 
-    val storageManager = ApplicationManager.getApplication().stateStore.stateStorageManager
+    val storageManager = ApplicationManager.getApplication().stateStore.storageManager
     val optionsPath = storageManager.expandMacros(APP_CONFIG)
     val rootConfigPath = storageManager.expandMacros(ROOT_CONFIG)
     val map = getExportableComponentsMap(false, true, storageManager)

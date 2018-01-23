@@ -99,7 +99,7 @@ class DoNotSaveDefaultsTest {
     }
 
     val directoryTree = printDirectoryTree(Paths.get(
-      componentManager.stateStore.stateStorageManager.expandMacros(APP_CONFIG)), setOf(
+      componentManager.stateStore.storageManager.expandMacros(APP_CONFIG)), setOf(
       "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
       "stubIndex.xml" /* low-level non-roamable stuff */,
       "usage.statistics.xml" /* SHOW_NOTIFICATION_ATTR in internal mode */,
