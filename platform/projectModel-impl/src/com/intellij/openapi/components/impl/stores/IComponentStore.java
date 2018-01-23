@@ -1,42 +1,36 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.components.impl.stores
 
-import com.intellij.configurationStore.StateStorageManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.MessageBus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.configurationStore.StateStorageManager
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.messages.MessageBus
+import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.annotations.TestOnly
 
-import java.util.List;
-import java.util.Set;
+interface IComponentStore {
+  val storageManager: StateStorageManager
 
-public interface IComponentStore {
-  void setPath(@NotNull @SystemIndependent String path);
+  val stateStorageManager: StateStorageManager
 
-  void initComponent(@NotNull Object component, boolean service);
+  fun setPath(path: @SystemIndependent String)
 
-  void initPersistencePlainComponent(@NotNull Object component, @NotNull String key);
+  fun initComponent(component: Any, service: Boolean)
 
-  void reloadStates(@NotNull Set<String> componentNames, @NotNull MessageBus messageBus);
+  fun initPersistencePlainComponent(component: Any, key: String)
 
-  void reloadState(@NotNull Class<? extends PersistentStateComponent<?>> componentClass);
+  fun reloadStates(componentNames: Set<String>, messageBus: MessageBus)
 
-  boolean isReloadPossible(@NotNull Set<String> componentNames);
+  fun reloadState(componentClass: Class<out PersistentStateComponent<*>>)
 
-  @NotNull
-  StateStorageManager getStateStorageManager();
+  fun isReloadPossible(componentNames: Set<String>): Boolean
 
-  class SaveCancelledException extends RuntimeException {
-    public SaveCancelledException() {
-    }
-  }
+  class SaveCancelledException : RuntimeException()
 
-  void save(@NotNull List<Pair<StateStorage.SaveSession, VirtualFile>> readonlyFiles);
+  fun save(readonlyFiles: List<Pair<StateStorage.SaveSession, VirtualFile>>)
 
   @TestOnly
-  void saveApplicationComponent(@NotNull PersistentStateComponent<?> component);
+  fun saveApplicationComponent(component: PersistentStateComponent<*>)
 }
