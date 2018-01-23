@@ -37,6 +37,7 @@ import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
+import com.intellij.util.containers.JBTreeTraverser;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,7 +48,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class TestPackage extends TestObject {
@@ -84,14 +87,21 @@ public class TestPackage extends TestObject {
             if (Registry.is("junit4.search.4.tests.all.in.scope", true)) {
               String packageName = getPackageName(data);
               PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
-              PsiClass[] classes = aPackage == null
-                                   ? PsiClass.EMPTY_ARRAY
-                                   : ReadAction.compute(() ->
-                                                          aPackage.getClasses(GlobalSearchScope.projectScope(myProject)
-                                                                                               .intersectWith(classFilter.getScope())));
-              Arrays.stream(classes)
-                    .filter(aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)))
-                    .forEach(myClasses::add);
+              List<PsiClass> classes = new ArrayList<>();
+              if (aPackage != null) {
+                ReadAction.run(() ->
+                               {
+                                 PsiDirectory[] directories =
+                                   aPackage.getDirectories(GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope()));
+                                 for (PsiDirectory directory : directories) {
+                                   collectClassesRecursively(directory, classes);
+                                 }
+                               });
+              }
+              classes
+                .stream()
+                .filter(aClass -> ReadAction.compute(() -> classFilter.isAccepted(aClass)))
+                .forEach(myClasses::add);
             }
             else if (Registry.is("junit4.search.4.tests.in.classpath", false)) {
               String packageName = getPackageName(data);
@@ -111,6 +121,23 @@ public class TestPackage extends TestObject {
           catch (CantRunException ignored) {}
           finally {
             instance.setAlternativeResolveEnabled(false);
+          }
+        }
+      }
+
+      private void collectClassesRecursively(PsiElement root, List<PsiClass> classes) {
+        PsiElement[] children = root.getChildren();
+        for (PsiElement child : children) {
+          if (child instanceof PsiClassOwner) {
+            for (PsiClass aClass : ((PsiClassOwner)child).getClasses()) {
+              classes.add(aClass);
+              if (Registry.is("junit4.accept.inner.classes", true)) {
+                classes.addAll(JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).toList());
+              }
+            }
+          }
+          else {
+            collectClassesRecursively(child, classes);
           }
         }
       }

@@ -174,8 +174,9 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     Assertion.compareUnordered(
       //category, filters, classNames...
       new Object[]{"", "", psiClass.getQualifiedName(),
-        psiClass.getQualifiedName(),
-        derivedTest.getQualifiedName(), //RT_INNER_TEST_NAME,
+        psiClass2.getQualifiedName(),
+        derivedTest.getQualifiedName(), RT_INNER_TEST_NAME,
+        "test1.nested.TestA",
         testB.getQualifiedName()},
       lines);
   }
