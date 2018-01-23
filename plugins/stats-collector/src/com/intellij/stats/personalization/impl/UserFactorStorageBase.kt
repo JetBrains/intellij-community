@@ -88,7 +88,7 @@ abstract class UserFactorStorageBase
         }
 
         companion object {
-            val DAYS_LIMIT = 10
+            const val DAYS_LIMIT = 10
 
             fun restore(element: Element): DailyAggregateFactor? {
                 val data = sortedMapOf<Day, DailyData>()
