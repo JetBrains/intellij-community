@@ -846,6 +846,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private void updateControlState() {
+    myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     if (needsToolbar()) {
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
