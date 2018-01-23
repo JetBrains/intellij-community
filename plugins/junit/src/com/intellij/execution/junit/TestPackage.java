@@ -89,14 +89,11 @@ public class TestPackage extends TestObject {
               PsiPackage aPackage = JavaPsiFacade.getInstance(myProject).findPackage(packageName);
               List<PsiClass> classes = new ArrayList<>();
               if (aPackage != null) {
-                ReadAction.run(() ->
-                               {
-                                 PsiDirectory[] directories =
-                                   aPackage.getDirectories(GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope()));
-                                 for (PsiDirectory directory : directories) {
-                                   collectClassesRecursively(directory, classes);
-                                 }
-                               });
+                PsiDirectory[] directories =
+                  ReadAction.compute(() -> aPackage.getDirectories(GlobalSearchScope.projectScope(myProject).intersectWith(classFilter.getScope())));
+                for (PsiDirectory directory : directories) {
+                  collectClassesRecursively(directory, classes);
+                }
               }
               classes
                 .stream()
@@ -126,13 +123,13 @@ public class TestPackage extends TestObject {
       }
 
       private void collectClassesRecursively(PsiElement root, List<PsiClass> classes) {
-        PsiElement[] children = root.getChildren();
+        PsiElement[] children = ReadAction.compute(() -> root.getChildren());
         for (PsiElement child : children) {
           if (child instanceof PsiClassOwner) {
-            for (PsiClass aClass : ((PsiClassOwner)child).getClasses()) {
+            for (PsiClass aClass : ReadAction.compute(() -> ((PsiClassOwner)child).getClasses())) {
               classes.add(aClass);
               if (Registry.is("junit4.accept.inner.classes", true)) {
-                classes.addAll(JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).toList());
+                classes.addAll(ReadAction.compute(() -> JBTreeTraverser.of(PsiClass::getInnerClasses).withRoot(aClass).toList()));
               }
             }
           }
