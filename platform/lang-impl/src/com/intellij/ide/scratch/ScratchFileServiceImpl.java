@@ -21,6 +21,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -40,6 +41,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -72,7 +74,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 @State(name = "ScratchFileService", storages = @Storage(value = "scratches.xml", roamingType = RoamingType.DISABLED))
-public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>{
+public class ScratchFileServiceImpl extends ScratchFileService implements PersistentStateComponent<Element>, Disposable {
 
   private static final RootType NULL_TYPE = new RootType("", null) {};
 
@@ -80,6 +82,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   private final MyLanguages myScratchMapping = new MyLanguages();
 
   protected ScratchFileServiceImpl(Application application) {
+    Disposer.register(this, myScratchMapping);
     myIndex = new LightDirectoryIndex<>(application, NULL_TYPE, index -> {
       LocalFileSystem fileSystem = LocalFileSystem.getInstance();
       for (RootType r : RootType.getAllRootIds()) {
@@ -164,6 +167,10 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   @Override
   public void loadState(Element state) {
     myScratchMapping.loadState(state);
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static class MyLanguages extends PerFileMappingsBase<Language> {

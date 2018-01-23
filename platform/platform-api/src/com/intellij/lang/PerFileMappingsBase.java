@@ -16,6 +16,7 @@
 package com.intellij.lang;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -54,13 +55,17 @@ import java.util.*;
 /**
  * @author gregsh
  */
-public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T> {
+public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
 
   private final TreeMap<VirtualFile, T> myMappings = new TreeMap<>(
     (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
 
   public PerFileMappingsBase() {
     installDeleteUndo();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Nullable
@@ -295,8 +300,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   private void installDeleteUndo() {
     Application app = ApplicationManager.getApplication();
     if (app == null) return;
-    
-    app.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    app.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       
       WeakReference<MyUndoableAction> lastAction;
       
