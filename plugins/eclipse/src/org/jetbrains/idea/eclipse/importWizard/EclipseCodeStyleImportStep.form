@@ -51,7 +51,7 @@
           </vspacer>
           <scrollpane id="f7505" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
-              <grid row="4" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="5" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -77,15 +77,6 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </hspacer>
-          <component id="c3857" class="com.intellij.ui.components.JBLabel">
-            <constraints>
-              <grid row="5" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <horizontalAlignment value="4"/>
-              <text resource-bundle="EclipseBundle" key="eclipse.import.code.style.import.limitations"/>
-            </properties>
-          </component>
           <component id="fe1c4" class="com.intellij.ui.components.JBLabel" binding="myImportHint">
             <constraints>
               <grid row="3" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -94,6 +85,14 @@
               <text value="Text"/>
             </properties>
           </component>
+          <vspacer id="bd0a9">
+            <constraints>
+              <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="1" anchor="1" fill="0" indent="0" use-parent-layout="false">
+                <preferred-size width="-1" height="5"/>
+                <maximum-size width="-1" height="5"/>
+              </grid>
+            </constraints>
+          </vspacer>
         </children>
       </grid>
     </children>
