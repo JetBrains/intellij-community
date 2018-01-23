@@ -45,17 +45,17 @@ public class ObjectUtils {
     }
   }
 
-  @Contract("null, null -> null")
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
   }
 
-  @Contract("null,null->null")
+  @Contract(value = "!null, _ -> !null; _, !null -> !null; _, _ -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2) {
     return chooseNotNull(t1, t2);
   }
 
-  @Contract("null,null,null->null")
+  @Contract(value = "!null, _, _ -> !null; _, !null, _ -> !null; _, _, !null -> !null; _,_,_ -> null", pure = true)
   public static <T> T coalesce(@Nullable T t1, @Nullable T t2, @Nullable T t3) {
     return t1 != null ? t1 : t2 != null ? t2 : t3;
   }
@@ -76,6 +76,7 @@ public class ObjectUtils {
   }
 
   @NotNull
+  @Contract(pure = true)
   public static <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
     return value == null ? defaultValue : value;
   }
@@ -85,7 +86,7 @@ public class ObjectUtils {
     return value == null ? defaultValue.create() : value;
   }
 
-  @Contract("null, _ -> null")
+  @Contract(value = "null, _ -> null", pure = true)
   @Nullable
   public static <T> T tryCast(@Nullable Object obj, @NotNull Class<T> clazz) {
     if (clazz.isInstance(obj)) {
@@ -109,6 +110,7 @@ public class ObjectUtils {
   }
 
   @Nullable
+  @Contract("null, _ -> null")
   public static <T> T nullizeByCondition(@Nullable final T obj, @NotNull final Condition<T> condition) {
     if (condition.value(obj)) {
       return null;
