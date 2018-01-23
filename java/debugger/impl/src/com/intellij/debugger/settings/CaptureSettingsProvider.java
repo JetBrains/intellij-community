@@ -26,21 +26,14 @@ public class CaptureSettingsProvider {
   private static final KeyProvider FIRST_PARAM = param(0);
 
   static {
-    addCapture("javax/swing/SwingUtilities", "invokeLater", FIRST_PARAM);
-    addInsert("java/awt/event/InvocationEvent",
-              "dispatch",
-              new FieldKeyProvider("java/awt/event/InvocationEvent", "runnable"));
+    addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY);
+    addInsert("java/awt/event/InvocationEvent", "dispatch", THIS_KEY);
 
     addCapture("java/lang/Thread", "start", THIS_KEY);
     addInsert("java/lang/Thread", "run", THIS_KEY);
 
-    addCapture("java/util/concurrent/AbstractExecutorService", "submit", FIRST_PARAM);
-    addInsert("java/util/concurrent/Executors$RunnableAdapter",
-              "call",
-              new FieldKeyProvider("java/util/concurrent/Executors$RunnableAdapter", "task"));
-
-    addCapture("java/util/concurrent/ThreadPoolExecutor", "execute", FIRST_PARAM);
-    addInsert("java/util/concurrent/FutureTask", "run", new FieldKeyProvider("java/util/concurrent/FutureTask", "callable"));
+    addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY);
+    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY);
 
     addCapture("java/util/concurrent/CompletableFuture", "supplyAsync", FIRST_PARAM);
     AgentInsertPoint point = new AgentInsertPoint("java/util/concurrent/CompletableFuture$AsyncSupply",
