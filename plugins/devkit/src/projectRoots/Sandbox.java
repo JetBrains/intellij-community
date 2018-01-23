@@ -70,8 +70,11 @@ public class Sandbox implements ValidatableSdkAdditionalData {
 
   @Override
   public void checkValid(SdkModel sdkModel) throws ConfigurationException {
-    if (StringUtil.isEmpty(mySandboxHome) || getJavaSdk() == null) {
+    if (StringUtil.isEmpty(mySandboxHome)) {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
+    }
+    if (getJavaSdk() == null) {
+      throw new ConfigurationException(DevKitBundle.message("jdk.specification"));
     }
   }
 
