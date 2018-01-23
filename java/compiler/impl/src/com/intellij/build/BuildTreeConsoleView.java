@@ -47,6 +47,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.text.DateFormatUtil;
@@ -459,6 +460,12 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         public MessageEvent.Kind getKind() {
           return eventKind;
         }
+
+        @Override
+        @Nullable
+        public String getDetails() {
+          return null;
+        }
       });
     }
     if (messageEvent instanceof FileMessageEvent) {
@@ -647,20 +654,39 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
     public boolean setNode(@NotNull ExecutionNode node) {
       EventResult eventResult = node.getResult();
-      if (!(eventResult instanceof FailureResult)) return false;
-      List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
-      if (failures.isEmpty()) return false;
-      myConsole.clear();
-
       boolean hasChanged = false;
-      for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
-        Failure failure = iterator.next();
-        if (!printFailure(failure)) continue;
-        hasChanged = true;
-        if (iterator.hasNext()) {
-          myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
+
+      if (eventResult instanceof FailureResult) {
+        myConsole.clear();
+        List<? extends Failure> failures = ((FailureResult)eventResult).getFailures();
+        if (failures.isEmpty()) return false;
+        for (Iterator<? extends Failure> iterator = failures.iterator(); iterator.hasNext(); ) {
+          Failure failure = iterator.next();
+          String text = ObjectUtils.chooseNotNull(failure.getDescription(), failure.getMessage());
+          if (text == null && failure.getError() != null) {
+            text = failure.getError().getMessage();
+          }
+          if (text == null) continue;
+          printDetails(failure, text);
+          hasChanged = true;
+          if (iterator.hasNext()) {
+            myConsole.print("\n\n", ConsoleViewContentType.NORMAL_OUTPUT);
+          }
         }
       }
+      else if (eventResult instanceof MessageEventResult) {
+        String details = ((MessageEventResult)eventResult).getDetails();
+        if (details == null) {
+          return false;
+        }
+        if (details.isEmpty()) {
+          return false;
+        }
+        myConsole.clear();
+        printDetails(null, details);
+        hasChanged = true;
+      }
+
       if (!hasChanged) return false;
 
       myConsole.scrollTo(0);
@@ -675,8 +701,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       return true;
     }
 
-    private boolean printFailure(Failure failure) {
-      return BuildConsoleUtils.printFailure(myConsole, failure);
+    private boolean printDetails(Failure failure, @Nullable String details) {
+      return BuildConsoleUtils.printDetails(myConsole, failure, details);
     }
 
     public void setNode(@Nullable DefaultMutableTreeNode node) {
