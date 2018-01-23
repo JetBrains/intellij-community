@@ -51,6 +51,21 @@ public class JavacOutputParser implements BuildOutputParser {
         messageConsumer.accept(new MessageEventImpl(reader.getBuildId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line, line));
         return true;
       }
+      if (part1.equalsIgnoreCase("Note")) {
+        String message = line.substring(colonIndex1 + 1).trim();
+        int javaFileExtensionIndex = message.indexOf(".java");
+        if (javaFileExtensionIndex > 0) {
+          File file = new File(message.substring(0, javaFileExtensionIndex + ".java".length()));
+          if (file.isFile()) {
+            message = message.substring(javaFileExtensionIndex + ".java".length() + 1);
+            String detailedMessage = amendNextInfoLinesIfNeeded(file.getPath() + ":\n" + message, reader);
+            messageConsumer.accept(new FileMessageEventImpl(reader.getBuildId(), MessageEvent.Kind.INFO, COMPILER_MESSAGES_GROUP,
+                                                            message, detailedMessage,
+                                                            new FilePosition(file, 0, 0)));
+            return true;
+          }
+        }
+      }
 
       int colonIndex2 = line.indexOf(COLON, colonIndex1 + 1);
       if (colonIndex2 >= 0) {
@@ -125,6 +140,24 @@ public class JavacOutputParser implements BuildOutputParser {
     }
 
     return false;
+  }
+
+  private static String amendNextInfoLinesIfNeeded(String str, BuildOutputInstantReader reader) {
+    StringBuilder builder = new StringBuilder(str);
+    String nextLine = reader.readLine();
+    while (nextLine != null) {
+      if (nextLine.startsWith("Note: ")) {
+        int index = nextLine.indexOf(".java");
+        if (index < 0) {
+          builder.append("\n").append(nextLine.substring("Note: ".length()));
+          nextLine = reader.readLine();
+          continue;
+        }
+      }
+      reader.pushBack();
+      break;
+    }
+    return builder.toString();
   }
 
   @Contract("null -> false")
