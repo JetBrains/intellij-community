@@ -3,7 +3,6 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -28,11 +27,11 @@ import java.util.List;
 public class EmptyClassInspectionBase extends BaseInspection {
   @SuppressWarnings("PublicField")
   public final ExternalizableStringSet ignorableAnnotations = new ExternalizableStringSet();
-  @SuppressWarnings("PublicField")
-  public boolean ignoreClassWithParameterization = false;
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  public boolean ignoreClassWithParameterization;
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean ignoreThrowables = true;
-  @SuppressWarnings("PublicField")
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
   public boolean commentsAreContent = true;
 
   @Override
@@ -203,13 +202,13 @@ public class EmptyClassInspectionBase extends BaseInspection {
       PsiElement lBrace = aClass.getLBrace();
       PsiElement rBrace = aClass.getRBrace();
       if (lBrace != null && rBrace != null) {
-        WriteCommandAction.runWriteCommandAction(project, ()-> {
-          PsiElement prev = lBrace.getPrevSibling();
-          PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
-          Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
-          if (document == null) return;
-          document.deleteString(start.getTextRange().getStartOffset(), rBrace.getTextRange().getEndOffset());
-        });
+        PsiElement prev = lBrace.getPrevSibling();
+        PsiElement start = prev instanceof PsiWhiteSpace ? prev : lBrace;
+        Document document = PsiDocumentManager.getInstance(project).getDocument(aClass.getContainingFile());
+        if (document == null) return;
+        int anonymousStart = start.getTextRange().getStartOffset();
+        int rBraceEnd = rBrace.getTextRange().getEndOffset();
+        document.deleteString(anonymousStart, rBraceEnd);
       }
     }
 
