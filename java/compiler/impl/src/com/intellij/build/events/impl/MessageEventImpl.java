@@ -17,13 +17,17 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
 
   @NotNull private final Kind myKind;
   @NotNull private final String myGroup;
-  @Nullable private final String myDetailedMessage;
 
   public MessageEventImpl(@NotNull Object parentId, @NotNull Kind kind, @Nullable String group, @NotNull String message, @Nullable String detailedMessage) {
     super(new Object(), parentId, System.currentTimeMillis(), message);
     myKind = kind;
     myGroup = group == null ? "Other messages" : group;
-    myDetailedMessage = detailedMessage;
+    setDescription(detailedMessage);
+  }
+
+  @Override
+  public final void setDescription(@Nullable String description) {
+    super.setDescription(description);
   }
 
   @NotNull
@@ -54,7 +58,7 @@ public class MessageEventImpl extends AbstractBuildEvent implements MessageEvent
 
       @Override
       public String getDetails() {
-        return myDetailedMessage;
+        return getDescription();
       }
     };
   }
