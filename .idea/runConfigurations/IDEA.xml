@@ -12,7 +12,7 @@
     <option name="ENABLE_SWING_INSPECTOR" value="false" />
     <option name="ENV_VARIABLES" />
     <option name="PASS_PARENT_ENVS" value="true" />
-    <module name="community-main" />
+    <module name="intellij.ideaCommunity.main" />
     <envs>
       <env name="IDEA_RUNNERW" value="win/runnerw.exe" />
     </envs>
