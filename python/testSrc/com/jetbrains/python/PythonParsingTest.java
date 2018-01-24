@@ -208,7 +208,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   public void testWithStatement31() {
-    doTest(LanguageLevel.PYTHON31);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testLongString() {

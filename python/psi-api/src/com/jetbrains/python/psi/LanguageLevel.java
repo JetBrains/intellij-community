@@ -52,6 +52,10 @@ public enum LanguageLevel {
    */
   @Deprecated
   PYTHON30(30, true, false, false, true),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   */
+  @Deprecated
   PYTHON31(31, true, false, true, true),
   PYTHON32(32, true, false, true, true),
   PYTHON33(33, true, false, true, true),
@@ -70,7 +74,7 @@ public enum LanguageLevel {
     ImmutableList.copyOf(
       Stream
         .of(values())
-        .filter(v -> v.myVersion >= 26 && v.myVersion != 30)
+        .filter(v -> v.myVersion > 31 || v.myVersion == 26 || v.myVersion == 27)
         .collect(Collectors.toList())
     );
 
