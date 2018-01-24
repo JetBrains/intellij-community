@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.actionSystem.impl.PoppedIcon;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +65,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -131,7 +131,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final String AD_DEBUG_TEXT = String.format("%s to debug", SHIFT_SHORTCUT_TEXT);
   private static final String AD_MODULE_CONTEXT =
     String.format("Press %s to run in the current file context", KeymapUtil.getShortcutText(KeyboardShortcut.fromString("pressed ALT")));
-  private static final Icon RUN_ANYTHING_BRIGHTER_ICON = IconUtil.brighter(RubyIcons.RunAnything.Run_anything, 2);
+  private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(RubyIcons.RunAnything.Run_anything, 16, 16);
   private AnAction[] myRakeActions = AnAction.EMPTY_ARRAY;
   private AnAction[] myGeneratorsActions = AnAction.EMPTY_ARRAY;
   private RunAnythingAction.MyListRenderer myRenderer;
@@ -230,7 +230,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
       @Override
       public void mouseEntered(MouseEvent e) {
         if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(RUN_ANYTHING_BRIGHTER_ICON);
+          label.setIcon(RUN_ANYTHING_POPPED_ICON);
         }
       }
 
