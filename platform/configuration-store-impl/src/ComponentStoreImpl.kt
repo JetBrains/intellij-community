@@ -25,15 +25,18 @@ import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMExternalizable
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.project.isDirectoryBased
 import com.intellij.ui.AppUIUtil
@@ -80,9 +83,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   open val loadPolicy: StateLoadPolicy
     get() = StateLoadPolicy.LOAD
 
-  abstract val storageManager: StateStorageManager
-
-  override final fun getStateStorageManager() = storageManager
+  override abstract val storageManager: StateStorageManager
 
   override final fun initComponent(component: Any, isService: Boolean) {
     if (component is SettingsSavingComponent) {
@@ -129,7 +130,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return componentName
   }
 
-  override fun save(readonlyFiles: MutableList<JBPair<StateStorage.SaveSession, VirtualFile>>) {
+  override fun save(readonlyFiles: MutableList<SaveSessionAndFile>) {
     var errors: MutableList<Throwable>? = null
 
     // component state uses scheme manager in an ipr project, so, we must save it before
@@ -251,7 +252,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
+  protected open fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile> = arrayListOf(), prevErrors: MutableList<Throwable>? = null): MutableList<Throwable>? {
     var errors = prevErrors
     for (session in saveSessions) {
       errors = executeSave(session, readonlyFiles, prevErrors)
@@ -331,8 +332,8 @@ abstract class ComponentStoreImpl : IComponentStore {
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        val stateGetter = if (isUseLoadedStateAsExisting(storage, name)) (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass) else null
-        var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
+        val stateGetter = createStateGetter(isUseLoadedStateAsExisting(storage), storage, component, name, stateClass, reloadData = reloadData)
+        var state = stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && changedStorages.contains(storage)) {
             // state will be null if file deleted
@@ -348,7 +349,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           component.loadState(state)
         }
         finally {
-          stateGetter?.close()
+          stateGetter.close()
         }
         return true
       }
@@ -410,7 +411,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return storages.sortByDeprecated()
   }
 
-  final override fun isReloadPossible(componentNames: MutableSet<String>) = !componentNames.any { isNotReloadable(it) }
+  final override fun isReloadPossible(componentNames: Set<String>) = !componentNames.any { isNotReloadable(it) }
 
   private fun isNotReloadable(name: String): Boolean {
     val component = components.get(name)?.component ?: return false
@@ -430,7 +431,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     return notReloadableComponents ?: emptySet()
   }
 
-  override final fun reloadStates(componentNames: MutableSet<String>, messageBus: MessageBus) {
+  override final fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
     runBatchUpdate(messageBus) {
       reinitComponents(componentNames)
     }
@@ -503,14 +504,14 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 }
 
-internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair<SaveSession, VirtualFile>>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<SaveSessionAndFile>, previousErrors: MutableList<Throwable>?): MutableList<Throwable>? {
   var errors = previousErrors
   try {
     session.save()
   }
   catch (e: ReadOnlyModificationException) {
     LOG.warn(e)
-    readonlyFiles.add(JBPair.create<SaveSession, VirtualFile>(e.session ?: session, e.file))
+    readonlyFiles.add(SaveSessionAndFile(e.session ?: session, e.file))
   }
   catch (e: Exception) {
     if (errors == null) {
@@ -544,7 +545,7 @@ internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {
-  val substitutor = store.stateStorageManager.macroSubstitutor ?: return
+  val substitutor = store.storageManager.macroSubstitutor ?: return
 
   val immutableMacros = substitutor.getUnknownMacros(componentName)
   if (immutableMacros.isEmpty()) {

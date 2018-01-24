@@ -41,7 +41,7 @@
     <diff.merge.MergeTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffTool"/>
     <diff.DiffTool implementation="com.intellij.openapi.vcs.changes.patch.tool.PatchDiffTool"/>
-    <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.LocalChangeListDiffTool"/>
+    <diff.impl.DiffToolSubstitutor implementation="com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider"/>
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.openapi.vcs.update.ShowUpdatedDiffActionProvider"/>

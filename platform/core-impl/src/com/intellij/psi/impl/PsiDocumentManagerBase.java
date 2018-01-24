@@ -24,10 +24,7 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.editor.impl.event.RetargetRangeMarkers;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -365,14 +362,16 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     FileViewProvider viewProvider = forceNoPsiCommit ? null : getCachedViewProvider(document);
 
     myIsCommitInProgress = true;
-    boolean success = true;
+    Ref<Boolean> success = new Ref<>(true);
     try {
-      if (viewProvider == null) {
-        handleCommitWithoutPsi(document);
-      }
-      else {
-        success = commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile, viewProvider);
-      }
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        if (viewProvider == null) {
+          handleCommitWithoutPsi(document);
+        }
+        else {
+          success.set(commitToExistingPsi(document, finishProcessors, reparseInjectedProcessors, synchronously, virtualFile, viewProvider));
+        }
+      });
     }
     catch (Throwable e) {
       try {
@@ -383,13 +382,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     finally {
-      if (success) {
+      if (success.get()) {
         myUncommittedDocuments.remove(document);
       }
       myIsCommitInProgress = false;
     }
 
-    return success;
+    return success.get();
   }
 
   private boolean commitToExistingPsi(@NotNull Document document,

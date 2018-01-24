@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -351,14 +351,14 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   @Override
   public void visitAnonymousClass(final PsiAnonymousClass clazz) {
     final PsiAnonymousClass clazz2 = (PsiAnonymousClass)myMatchingVisitor.getElement();
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(clazz.getFirstChild());
+    final PsiElement classReference = clazz.getBaseClassReference();
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
 
     myMatchingVisitor.setResult((myMatchingVisitor.match(clazz.getBaseClassReference(), clazz2.getBaseClassReference()) || isTypedVar) &&
                                 myMatchingVisitor.matchSons(clazz.getArgumentList(), clazz2.getArgumentList()) &&
                                 compareClasses(clazz, clazz2));
-
     if (myMatchingVisitor.getResult() && isTypedVar) {
-      myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(clazz.getFirstChild(), clazz2.getFirstChild()));
+      myMatchingVisitor.setResult(matchType(classReference, clazz2.getBaseClassReference()));
     }
   }
 
@@ -1568,9 +1568,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiElement other = myMatchingVisitor.getElement(); // might not be a PsiTypeElement
 
     final PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(typeElement, PsiAnnotation.class);
-    // also can't use AnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
-    final PsiAnnotation[] annotations2 = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
+    // can't use AnnotationOwner api because it is not implemented completely yet (see e.g. ClsTypeParameterImpl)
     if (annotations != null) {
+      final PsiAnnotation[] annotations2 = PsiTreeUtil.getChildrenOfType(other, PsiAnnotation.class);
       myMatchingVisitor.setResult(annotations2 != null && myMatchingVisitor.matchInAnyOrder(annotations, annotations2));
       if (!myMatchingVisitor.getResult()) return;
     }

@@ -148,7 +148,7 @@ private fun exportInstalledPlugins(zipOut: MyZipOutputStream) {
 // onlyPaths - include only specified paths (relative to config dir, ends with "/" if directory)
 fun getExportableComponentsMap(onlyExisting: Boolean,
                                computePresentableNames: Boolean,
-                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.stateStorageManager,
+                               storageManager: StateStorageManager = ApplicationManager.getApplication().stateStore.storageManager,
                                onlyPaths: Set<String>? = null): Map<Path, List<ExportableItem>> {
   val result = LinkedHashMap<Path, MutableList<ExportableItem>>()
   @Suppress("DEPRECATION")

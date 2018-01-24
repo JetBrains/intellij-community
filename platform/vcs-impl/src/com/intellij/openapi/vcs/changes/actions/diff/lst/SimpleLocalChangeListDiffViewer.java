@@ -1,19 +1,5 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.intellij.openapi.vcs.changes.actions.diff;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.comparison.DiffTooBigException;
@@ -33,6 +19,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
 import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange;
@@ -140,20 +127,20 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       List<List<LineFragment>> newFragments = notNull(myTextDiffProvider.compare(data.vcsText, data.localText, linesRanges, indicator));
 
       boolean isContentsEqual = data.ranges.isEmpty();
-      BitSet areResolved = new BitSet();
+      BitSet areSkipped = new BitSet();
       List<LineFragment> fragments = new ArrayList<>();
 
       for (int i = 0; i < data.ranges.size(); i++) {
         PartialLocalLineStatusTracker.LocalRange localRange = data.ranges.get(i);
         List<LineFragment> rangeFragments = newFragments.get(i);
 
-        boolean isResolved = !localRange.getChangelistId().equals(myChangelistId);
-        areResolved.set(fragments.size(), fragments.size() + newFragments.size(), isResolved);
+        boolean isSkipped = !localRange.getChangelistId().equals(myChangelistId);
+        areSkipped.set(fragments.size(), fragments.size() + newFragments.size(), isSkipped);
 
         fragments.addAll(rangeFragments);
       }
 
-      return apply(new CompareData(fragments, areResolved, isContentsEqual));
+      return apply(new CompareData(fragments, areSkipped, isContentsEqual));
     }
     catch (DiffTooBigException e) {
       return applyNotification(DiffNotifications.createDiffTooBig());

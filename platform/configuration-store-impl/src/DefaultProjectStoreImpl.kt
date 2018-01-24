@@ -56,9 +56,12 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
     service<DefaultProjectExportableAndSaveTrigger>().project = project
   }
 
-  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.stateStorageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
+  private val storage by lazy { DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, pathMacroManager) }
 
   override val storageManager = object : StateStorageManager {
+    override val componentManager: ComponentManager?
+      get() = null
+
     override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     }
 

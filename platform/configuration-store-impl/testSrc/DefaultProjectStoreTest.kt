@@ -55,7 +55,7 @@ internal class DefaultProjectStoreTest {
     tempDirManager,
     WrapRule {
       val app = ApplicationManagerEx.getApplicationEx()
-      val path = Paths.get(app.stateStore.stateStorageManager.expandMacros(APP_CONFIG))
+      val path = Paths.get(app.stateStore.storageManager.expandMacros(APP_CONFIG))
       // dream about using in memory fs per test as ICS partially does and avoid such hacks
       path.refreshVfs()
 

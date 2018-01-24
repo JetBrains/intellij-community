@@ -120,74 +120,9 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @Override
   public void addToPanel(JPanel panel, GridBagConstraints gc) {
-    if (!constrainsValid()) return;
-
-    gc.gridx = 0;
-    gc.gridwidth = 1;
-    gc.weightx = 0.0;
-    gc.anchor = GridBagConstraints.LINE_START;
-
-    if (StringUtil.isNotEmpty(myLabelText)) {
-      JLabel lbl = new JLabel();
-      LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(myLabelText).setToLabel(lbl);
-      lbl.setLabelFor(myComponent);
-
-      if (myLabelOnTop) {
-        gc.insets = JBUI.insetsBottom(4);
-        gc.gridx++;
-        panel.add(lbl, gc);
-        gc.gridy++;
-      } else {
-        gc.insets = JBUI.insetsRight(8);
-        panel.add(lbl, gc);
-      }
+    if (constrainsValid()) {
+      new ComponentPanelImpl().addToPanel(panel, gc);
     }
-
-    gc.gridx += myLabelOnTop ? 0 : 1;
-    gc.weightx = 1.0;
-    gc.insets = JBUI.emptyInsets();
-
-    JPanel componentPanel = new JPanel();
-    componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
-    componentPanel.add(myComponent);
-
-    JLabel comment = null;
-    if (StringUtil.isNotEmpty(myComment)) {
-      comment = new JLabel(myComment);
-      comment.setForeground(Gray.x78);
-
-      if (SystemInfo.isMac) {
-        Font font = comment.getFont();
-        float size = font.getSize2D();
-        Font smallFont = font.deriveFont(size - 2.0f);
-        comment.setFont(smallFont);
-      }
-    }
-
-    if (StringUtil.isNotEmpty(myHTDescription)) {
-      ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
-                             ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
-                             ContextHelpLabel.create(myHTDescription);
-      componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
-      componentPanel.add(lbl);
-    }
-    else if (comment != null && !myCommentBelow) {
-      componentPanel.add(Box.createRigidArea(JBUI.size(getCommentOffset(), 0)));
-      componentPanel.add(comment);
-    }
-
-    panel.add(componentPanel, gc);
-
-    if (comment != null && myCommentBelow) {
-      gc.gridx = 1;
-      gc.gridy++;
-      gc.weightx = 0.0;
-      gc.anchor = GridBagConstraints.NORTHWEST;
-      gc.insets = getCommentInsets();
-      panel.add(comment, gc);
-    }
-
-    gc.gridy++;
   }
 
   private int getCommentOffset() {
@@ -227,5 +162,98 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     }
 
     return JBUI.insets(top, left, bottom, 0);
+  }
+
+  private class ComponentPanelImpl extends ComponentPanel {
+    private final JLabel label;
+    private final JLabel comment;
+
+    private ComponentPanelImpl() {
+      if ((StringUtil.isNotEmpty(myLabelText))) {
+        label = new JLabel();
+        LabeledComponent.TextWithMnemonic.fromTextWithMnemonic(myLabelText).setToLabel(label);
+        label.setLabelFor(myComponent);
+      } else {
+        label = new JLabel("");
+      }
+
+      comment = new JLabel(StringUtil.isNotEmpty(myComment) ? myComment : "");
+      comment.setForeground(Gray.x78);
+
+      if (SystemInfo.isMac) {
+        Font font = comment.getFont();
+        float size = font.getSize2D();
+        Font smallFont = font.deriveFont(size - 2.0f);
+        comment.setFont(smallFont);
+      }
+    }
+
+    @Override
+    public String getCommentText() {
+      return myComment;
+    }
+
+    @Override
+    public void setCommentText(String commentText) {
+      myComment = commentText;
+
+      Insets i = myComponent.getInsets();
+      int maxWidth = myComponent.getWidth() - (i.left + i.right);
+      comment.setText(String.format("<html><div width=%d>%s</div></html>", maxWidth, commentText));
+    }
+
+    private void addToPanel(JPanel panel, GridBagConstraints gc) {
+      gc.gridx = 0;
+      gc.gridwidth = 1;
+      gc.weightx = 0.0;
+      gc.anchor = GridBagConstraints.LINE_START;
+
+      if (StringUtil.isNotEmpty(myLabelText)) {
+        if (myLabelOnTop) {
+          gc.insets = JBUI.insetsBottom(4);
+          gc.gridx++;
+          panel.add(label, gc);
+          gc.gridy++;
+        } else {
+          gc.insets = JBUI.insetsRight(8);
+          panel.add(label, gc);
+        }
+      }
+
+      gc.gridx += myLabelOnTop ? 0 : 1;
+      gc.weightx = 1.0;
+      gc.insets = JBUI.emptyInsets();
+
+      JPanel componentPanel = new JPanel();
+      componentPanel.setLayout(new BoxLayout(componentPanel, BoxLayout.X_AXIS));
+      componentPanel.add(myComponent);
+
+      myComponent.putClientProperty(DECORATED_PANEL_PROPERTY, this);
+
+      if (StringUtil.isNotEmpty(myHTDescription)) {
+        ContextHelpLabel lbl = StringUtil.isNotEmpty(myHTLinkText) && myHTAction != null ?
+                               ContextHelpLabel.createWithLink(null, myHTDescription, myHTLinkText, myHTAction) :
+                               ContextHelpLabel.create(myHTDescription);
+        componentPanel.add(Box.createRigidArea(JBUI.size(7, 0)));
+        componentPanel.add(lbl);
+      }
+      else if (!myCommentBelow) {
+        componentPanel.add(Box.createRigidArea(JBUI.size(getCommentOffset(), 0)));
+        componentPanel.add(comment);
+      }
+
+      panel.add(componentPanel, gc);
+
+      if (myCommentBelow) {
+        gc.gridx = 1;
+        gc.gridy++;
+        gc.weightx = 0.0;
+        gc.anchor = GridBagConstraints.NORTHWEST;
+        gc.insets = getCommentInsets();
+        panel.add(comment, gc);
+      }
+
+      gc.gridy++;
+    }
   }
 }

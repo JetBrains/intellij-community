@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.beans.GroupDescriptor;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -21,7 +22,10 @@ import java.util.Set;
  */
 @State(
   name = "ActionsCollector",
-  storages = @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "statistics.actions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   public void record(String actionId) {

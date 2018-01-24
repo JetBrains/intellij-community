@@ -415,7 +415,7 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
   static HighlightInfo checkLegalVarReference(PsiJavaCodeReferenceElement ref, @NotNull PsiClass resolved) {
-    if (PsiKeyword.VAR.equals(resolved.getName()) && PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_X)) {
+    if (PsiKeyword.VAR.equals(resolved.getName()) && PsiUtil.getLanguageLevel(ref).isAtLeast(LanguageLevel.JDK_10)) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip("Illegal reference to restricted type 'var'")
         .range(ObjectUtils.notNull(ref.getReferenceNameElement(), ref))

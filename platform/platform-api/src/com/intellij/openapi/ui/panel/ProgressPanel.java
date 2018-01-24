@@ -14,6 +14,7 @@
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,13 +24,7 @@ import javax.swing.*;
  * {@link PanelBuilder#createPanel()} has been called. You can use it to manipulate contents of
  * the progressbar panel such as label text, comment text and to receive the current action state.
  */
-public abstract class ProgressPanel {
-  /**
-   * Property if this name installed on the owner component after {@link PanelBuilder#createPanel()}
-   * has been called.
-   */
-  public static final String LABELED_PANEL_PROPERTY = "JComponent.labeledPanel";
-
+public abstract class ProgressPanel extends ComponentPanel {
   /**
    * Recursively finds instance of <code>JProgressBar</code> and takes <code>ProgressPanel</code>
    * associated with it.
@@ -38,9 +33,9 @@ public abstract class ProgressPanel {
    * is found or it has no <code>ProgressPanel</code> associated.
    */
   @Nullable
-  public static ProgressPanel forComponent(JComponent parent) {
+  public static ProgressPanel getProgressPanel(@NotNull JComponent parent) {
     JProgressBar pb = UIUtil.findComponentOfType(parent, JProgressBar.class);
-    return pb != null ? (ProgressPanel)pb.getClientProperty(LABELED_PANEL_PROPERTY) : null;
+    return pb != null ? (ProgressPanel)pb.getClientProperty(DECORATED_PANEL_PROPERTY) : null;
   }
 
   /**
@@ -76,18 +71,6 @@ public abstract class ProgressPanel {
    * @param labelText new label text
    */
   public abstract void setLabelText(String labelText);
-
-  /**
-   * @return the comment text.
-   */
-  public abstract String getCommentText();
-
-  /**
-   * Set the comment text.
-   *
-   * @param comment new comment text
-   */
-  public abstract void setCommentText(String comment);
 
   /**
    * <p>Enables/disables the top separator dynamically. This method has effect only when progressbar panel

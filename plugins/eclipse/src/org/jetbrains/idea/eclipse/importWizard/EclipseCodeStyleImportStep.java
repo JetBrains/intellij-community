@@ -11,11 +11,14 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 import org.jetbrains.idea.eclipse.EclipseProjectFinder;
 import org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -23,24 +26,25 @@ import java.util.List;
 
 public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
   private JPanel myTopPanel;
-  private JBList<EclipseProjectCodeStyleData> myProjectList;
+  private JBList<EclipseProjectCodeStyleData> myCodeStylesList;
   private JBRadioButton myUseDefaultCodeStyleRB;
   private JBRadioButton myImportCodeStyleRB;
   private JPanel myTitlePanel;
   private JLabel myImportCodeStyleLabel;
   private JBLabel myUseDefaultHint;
   private JBLabel myImportHint;
-  private final DefaultListModel<EclipseProjectCodeStyleData> myProjectListModel;
+  private JCheckBox myOrganizeImportsCheckBox;
+  private final DefaultListModel<EclipseProjectCodeStyleData> myCodeStylesListModel;
 
   public EclipseCodeStyleImportStep(WizardContext context) {
     super(context);
-    myProjectListModel = new DefaultListModel<>();
-    myProjectList.setModel(myProjectListModel);
+    myCodeStylesListModel = new DefaultListModel<>();
+    myCodeStylesList.setModel(myCodeStylesListModel);
     ButtonGroup group = new ButtonGroup();
     group.add(myUseDefaultCodeStyleRB);
     group.add(myImportCodeStyleRB);
     myTitlePanel.setBorder(IdeBorderFactory.createTitledBorder("Choose project code style"));
-    myProjectList.setEmptyText("Code styles not found");
+    myCodeStylesList.setEmptyText("Code styles not found");
     myUseDefaultCodeStyleRB.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -53,7 +57,20 @@ public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
         updateProjectListEnabledStatus();
       }
     });
-    myProjectList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myCodeStylesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myCodeStylesList.addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent e) {
+        EclipseProjectCodeStyleData codeStyleData = myCodeStylesList.getSelectedValue();
+        updateOnSelectedItemChange(codeStyleData);
+      }
+    });
+    myOrganizeImportsCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateOnOrganizeImportsBoxChange();
+      }
+    });
     myUseDefaultHint.setText(EclipseBundle.message("eclipse.import.code.style.default.hint"));
     customizeHintLabel(myUseDefaultHint);
     myImportHint.setText(EclipseBundle.message("eclipse.import.code.style.import.hint"));
@@ -75,17 +92,29 @@ public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
     EclipseImportBuilder builder = (EclipseImportBuilder)getWizardContext().getProjectBuilder();
     assert builder != null;
     if (myImportCodeStyleRB.isSelected()) {
-      builder.getParameters().codeStyleData = myProjectList.getSelectedValue();
+      builder.getParameters().codeStyleData = myCodeStylesList.getSelectedValue();
+    }
+  }
+
+  private void updateOnSelectedItemChange(@Nullable EclipseProjectCodeStyleData codeStyleData) {
+    myOrganizeImportsCheckBox.setEnabled(codeStyleData != null && codeStyleData.isEclipseImportsConfigAvailable());
+    myOrganizeImportsCheckBox.setSelected(codeStyleData != null && codeStyleData.isImportOrganizeImportsConfig());
+  }
+
+  private void updateOnOrganizeImportsBoxChange() {
+    EclipseProjectCodeStyleData codeStyleData = myCodeStylesList.getSelectedValue();
+    if (codeStyleData != null) {
+      codeStyleData.setImportOrganizeImportsConfig(myOrganizeImportsCheckBox.isSelected());
     }
   }
 
   @Override
   public void updateStep() {
-    myProjectListModel.clear();
-    for(EclipseProjectCodeStyleData codeStyleData : getCodeStyleDataList()) {
-      myProjectListModel.addElement(codeStyleData);
+    myCodeStylesListModel.clear();
+    for(EclipseProjectCodeStyleData codeStyleData : getCodeStylesList()) {
+      myCodeStylesListModel.addElement(codeStyleData);
     }
-    boolean isEnabled = !myProjectListModel.isEmpty();
+    boolean isEnabled = !myCodeStylesListModel.isEmpty();
     myImportCodeStyleRB.setEnabled(isEnabled);
     myImportCodeStyleLabel.setEnabled(isEnabled);
     myUseDefaultCodeStyleRB.setSelected(true);
@@ -93,18 +122,19 @@ public class EclipseCodeStyleImportStep extends ProjectImportWizardStep {
   }
 
   private void updateProjectListEnabledStatus() {
-    boolean isEnabled = myImportCodeStyleRB.isSelected() && !myProjectListModel.isEmpty();
-    myProjectList.setEnabled(isEnabled);
+    boolean isEnabled = myImportCodeStyleRB.isSelected() && !myCodeStylesListModel.isEmpty();
+    myCodeStylesList.setEnabled(isEnabled);
+    myOrganizeImportsCheckBox.setEnabled(isEnabled);
     if (isEnabled) {
-      myProjectList.getSelectionModel().setSelectionInterval(0, 0);
+      myCodeStylesList.getSelectionModel().setSelectionInterval(0, 0);
     }
     else {
-      myProjectList.getSelectionModel().clearSelection();
+      myCodeStylesList.getSelectionModel().clearSelection();
     }
   }
 
 
-  private List<EclipseProjectCodeStyleData> getCodeStyleDataList() {
+  private List<EclipseProjectCodeStyleData> getCodeStylesList() {
     List<EclipseProjectCodeStyleData> codeStyleDataList = new ArrayList<>();
     ProjectBuilder builder = getWizardContext().getProjectBuilder();
     if (builder instanceof EclipseImportBuilder) {

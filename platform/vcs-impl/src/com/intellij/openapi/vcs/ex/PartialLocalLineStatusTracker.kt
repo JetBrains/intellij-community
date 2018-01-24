@@ -33,7 +33,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.BackgroundVfsOperationListener
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
-import com.intellij.openapi.vcs.actions.AnnotationsSettings
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
@@ -47,7 +46,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
@@ -382,31 +380,12 @@ class PartialLocalLineStatusTracker(project: Project,
     LineStatusTracker.LocalLineStatusMarkerRenderer(tracker) {
 
     override fun paint(editor: Editor, range: Range, g: Graphics) {
-      super.paint(editor, range, g)
-
-      if (range is LocalRange) {
-        val markerColor = getMarkerColor(editor, range)
-        if (markerColor != null) {
-          val area = getMarkerArea(editor, range.line1, range.line2)
-
-          val extraHeight = if (area.height != 0) 0 else JBUI.scale(3)
-          val width = JBUI.scale(2)
-          val x = area.x + area.width - width
-          val y = area.y - extraHeight
-          val height = area.height + 2 * extraHeight
-
-          g.color = markerColor
-          g.fillRect(x, y, width, height)
-        }
+      if (range !is LocalRange ||
+          range.changelistId == tracker.defaultMarker.changelistId) {
+        super.paint(editor, range, g)
+      } else {
+        paintIgnoredRange(g, editor, range)
       }
-    }
-
-    private fun getMarkerColor(editor: Editor, range: LocalRange): Color? {
-      if (range.changelistId == tracker.defaultMarker.changelistId) return null
-
-      val colors = AnnotationsSettings.getInstance().getAuthorsColors(editor.colorsScheme)
-      val seed = range.changelistId.hashCode()
-      return colors[Math.abs(seed % colors.size)]
     }
 
     override fun createAdditionalInfoPanel(editor: Editor, range: Range): JComponent? {
