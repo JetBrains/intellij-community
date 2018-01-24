@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class PsiEventsTest extends PsiTestCase {
+public class GroovyPsiEventsTest extends PsiTestCase {
   public void testEditingInDocComment() {
     final Ref<Boolean> gotIt = new Ref<>(false);
     getPsiManager().addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
