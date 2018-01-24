@@ -368,7 +368,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myIsCommitInProgress = true;
     boolean success = true;
     try {
-      Thread.currentThread().sleep(4000);
       if (viewProvider == null) {
         handleCommitWithoutPsi(document);
       }
