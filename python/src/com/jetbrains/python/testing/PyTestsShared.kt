@@ -23,10 +23,7 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.ConfigurationFactory
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.RefactoringListenerProvider
-import com.intellij.execution.configurations.RuntimeConfigurationWarning
+import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
@@ -41,6 +38,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -69,6 +67,7 @@ import com.jetbrains.reflection.getProperties
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
+import java.util.regex.Matcher
 
 
 /**
@@ -152,6 +151,52 @@ private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationF
 // folder provided by python side. Resolve test names versus it
 private val PATH_URL = java.util.regex.Pattern.compile("^python<([^<>]+)>$")
 
+/**
+ * Resolves url into element
+ */
+fun getElementByUrl(url: String,
+                    module: Module,
+                    evalContext: TypeEvalContext): Location<out PsiElement>? {
+  val protocol = VirtualFileManager.extractProtocol(url) ?: return null
+  return getElementByUrl(protocol,
+                         VirtualFileManager.extractPath(url),
+                         module,
+                         evalContext)
+}
+
+private fun getElementByUrl(protocol: String,
+                            path: String,
+                            module: Module,
+                            evalContext: TypeEvalContext,
+                            matcher: Matcher = PATH_URL.matcher(protocol)): Location<out PsiElement>? {
+  val folder = if (matcher.matches()) {
+    LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
+  }
+  else {
+    null
+  }
+
+  val qualifiedName = QualifiedName.fromDottedString(path)
+  // Assume qname id good and resolve it directly
+  val element = qualifiedName.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(module),
+                                                                   evalContext = evalContext,
+                                                                   folderToStart = folder,
+                                                                   allowInaccurateResult = true))
+  return if (element != null) {
+    // Path is qualified name of python test according to runners protocol
+    // Parentheses are part of generators / parametrized tests
+    // Until https://github.com/JetBrains/teamcity-messages/issues/121 they are disabled,
+    // so we cut them out of path not to provide unsupported targets to runners
+    val pathNoParentheses = QualifiedName.fromComponents(
+      qualifiedName.components.filter { !it.contains('(') }).toString()
+    PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, TestTargetType.PYTHON), element)
+  }
+  else {
+    null
+  }
+}
+
+
 object PyTestsLocator : SMTestLocator {
   override fun getLocation(protocol: String,
                            path: String,
@@ -161,7 +206,7 @@ object PyTestsLocator : SMTestLocator {
       return listOf()
     }
     val matcher = PATH_URL.matcher(protocol)
-    if (! matcher.matches()) {
+    if (!matcher.matches()) {
       // special case: setup.py runner uses unittest configuration but different (old) protocol
       // delegate to old protocol locator until setup.py moved to separate configuration
       val oldLocation = PythonUnitTestTestIdUrlProvider.INSTANCE.getLocation(protocol, path, project, scope)
@@ -170,35 +215,9 @@ object PyTestsLocator : SMTestLocator {
       }
     }
 
-    val folder = if (matcher.matches()) {
-      LocalFileSystem.getInstance().findFileByPath(matcher.group(1))
-    }
-    else {
-      null
-    }
-
-    //TODO: Doc we will not bae able to resolve if different SDK
-    val qualifiedName = QualifiedName.fromDottedString(path)
-    // Assume qname id good and resolve it directly
-    val element = qualifiedName.resolveToElement(QNameResolveContext(ModuleBasedContextAnchor(scope.module),
-                                                                     evalContext = TypeEvalContext.codeAnalysis(
-                                                                       project,
-                                                                       null),
-                                                                     folderToStart = folder,
-                                                                     allowInaccurateResult = true))
-    if (element != null) {
-      // Path is qualified name of python test according to runners protocol
-      // Parentheses are part of generators / parametrized tests
-      // Until https://github.com/JetBrains/teamcity-messages/issues/121 they are disabled,
-      // so we cut them out of path not to provide unsupported targets to runners
-      val pathNoParentheses = QualifiedName.fromComponents(
-        qualifiedName.components.filter { !it.contains('(') }).toString()
-      return listOf(
-        PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, TestTargetType.PYTHON), element))
-    }
-    else {
-      return listOf()
-    }
+    return getElementByUrl(protocol, path, scope.module, TypeEvalContext.codeAnalysis(project, null), matcher)?.let {
+      listOf(it)
+    } ?: listOf()
   }
 }
 
@@ -648,7 +667,7 @@ abstract class PyAbstractTestConfiguration(project: Project,
     // TODO: PythonUnitTestUtil logic is weak. We should give user ability to launch test on symbol since user knows better if folder
     // contains tests etc
     val context = TypeEvalContext.userInitiated(element.project, element.containingFile)
-    return isTestElement(element,isTestClassRequired(), context)
+    return isTestElement(element, isTestClassRequired(), context)
   }
 
   /**
@@ -673,6 +692,19 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
   PythonTestConfigurationType.getInstance()) {
 
   override val configurationClass = PyAbstractTestConfiguration::class.java
+
+  override fun createLightConfiguration(context: ConfigurationContext): RunConfiguration? {
+    // Parent implementation does not support several factories
+    // We need to get factory according to settings
+    val conf = findConfigurationFactoryFromSettings(context.module).createTemplateConfiguration(context.project)
+                 as? PyAbstractTestConfiguration ?: return null
+
+    val ref = Ref(context.psiLocation)
+    if (setupConfigurationFromContext(conf, context, ref)) {
+      return conf
+    }
+    return null
+  }
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
     return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
