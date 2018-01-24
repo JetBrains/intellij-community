@@ -65,17 +65,20 @@ public class PyCompatibilityInspection extends PyInspection {
     .add("typing")
     .build();
 
-  public static final int LATEST_INSPECTION_VERSION = 2;
+  public static final int LATEST_INSPECTION_VERSION = 3;
 
   @NotNull
   public static final List<LanguageLevel> DEFAULT_PYTHON_VERSIONS = ImmutableList.of(LanguageLevel.PYTHON27, LanguageLevel.getLatest());
+
+  @NotNull
+  public static final List<String> SUPPORTED_LEVELS = ContainerUtil.map(LanguageLevel.SUPPORTED_LEVELS, LanguageLevel::toString);
 
   // Legacy DefaultJDOMExternalizer requires public fields for proper serialization
   public JDOMExternalizableStringList ourVersions = new JDOMExternalizableStringList();
 
   public PyCompatibilityInspection () {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourVersions.addAll(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS);
+      ourVersions.addAll(SUPPORTED_LEVELS);
     }
     else {
       ourVersions.addAll(ContainerUtil.map(DEFAULT_PYTHON_VERSIONS, LanguageLevel::toString));
@@ -98,8 +101,10 @@ public class PyCompatibilityInspection extends PyInspection {
     List<LanguageLevel> result = new ArrayList<>();
 
     for (String version : ourVersions) {
-      LanguageLevel level = LanguageLevel.fromPythonVersion(version);
-      result.add(level);
+      if (SUPPORTED_LEVELS.contains(version)) {
+        LanguageLevel level = LanguageLevel.fromPythonVersion(version);
+        result.add(level);
+      }
     }
     return result;
   }
@@ -114,8 +119,8 @@ public class PyCompatibilityInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     final ElementsChooser<String> chooser = new ElementsChooser<>(true);
-    chooser.setElements(UnsupportedFeaturesUtil.ALL_LANGUAGE_LEVELS, false);
-    chooser.markElements(ourVersions);
+    chooser.setElements(SUPPORTED_LEVELS, false);
+    chooser.markElements(ContainerUtil.filter(ourVersions, SUPPORTED_LEVELS::contains));
     chooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<String>() {
       @Override
       public void elementMarkChanged(String element, boolean isMarked) {

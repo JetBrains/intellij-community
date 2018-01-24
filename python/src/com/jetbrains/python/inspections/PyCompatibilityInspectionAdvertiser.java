@@ -147,7 +147,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static List<LanguageLevel> getVersionsNewerThan(@NotNull LanguageLevel version) {
     final List<LanguageLevel> result = new ArrayList<>();
     final LanguageLevel latest = LanguageLevel.getLatest();
-    for (LanguageLevel level : LanguageLevel.values()) {
+    for (LanguageLevel level : LanguageLevel.SUPPORTED_LEVELS) {
       if (version.isOlderThan(level) && latest.isAtLeast(level)) {
         result.add(level);
       }
