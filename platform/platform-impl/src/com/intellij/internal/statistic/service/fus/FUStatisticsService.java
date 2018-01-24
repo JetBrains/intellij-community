@@ -20,6 +20,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Set;
 
 public class FUStatisticsService extends ConfigurableStatisticsService<FUStatisticsSettingsService> {
   private static final Logger LOG = Logger.getInstance("com.intellij.internal.statistic.service.whiteList.FUStatisticsService");
@@ -28,16 +29,27 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
   private static final FUStatisticsAggregator myAggregator = FUStatisticsAggregator.create();
 
   @Override
+  @NotNull
   protected String sendData() {
     String serviceUrl = mySettingsService.getServiceUrl();
-    if (serviceUrl == null) return null;
+    if (serviceUrl == null) {
+      throw new StatServiceException("Unknown Statistics Server URL");
+    }
 
-    FSContent allDataFromCollectors = myAggregator.getUsageCollectorsData(mySettingsService.getApprovedGroups());
-    if (allDataFromCollectors == null) return null;
+    Set<String> approvedGroups = mySettingsService.getApprovedGroups();
+    if (approvedGroups.isEmpty()) {
+        throw new StatServiceException("There are no approved collectors or Statistics White List Service is unavailable.");
+    }
+    FSContent allDataFromCollectors = myAggregator.getUsageCollectorsData(approvedGroups);
+    if (allDataFromCollectors == null) {
+      throw new StatServiceException("There are no data from collectors to send");
+    }
 
     try {
       String dataToSend = FUStatisticsStateService.create().getMergedDataToSend(allDataFromCollectors.asJsonString());
-      if (dataToSend == null) return null;
+      if (dataToSend == null) {
+        throw new StatServiceException("There are no data from collectors to send");
+      }
 
       HttpResponse response = postStatistics(serviceUrl, dataToSend);
 
