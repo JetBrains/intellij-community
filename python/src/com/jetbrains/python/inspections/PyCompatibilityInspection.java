@@ -271,7 +271,7 @@ public class PyCompatibilityInspection extends PyInspection {
     public void visitPyArgumentList(final PyArgumentList node) { //PY-5588
       if (node.getParent() instanceof PyClass) {
         final boolean isPython2 = LanguageLevel.forElement(node).isPython2();
-        if (myVersionsToProcess.stream().anyMatch(level -> level.isOlderThan(LanguageLevel.PYTHON30)) || isPython2) {
+        if (isPython2 || myVersionsToProcess.stream().anyMatch(LanguageLevel::isPython2)) {
           Arrays
             .stream(node.getArguments())
             .filter(PyKeywordArgument.class::isInstance)

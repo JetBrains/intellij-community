@@ -73,15 +73,11 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testReplaceExceptPart() {
-    doTest(PyBundle.message("INTN.convert.except.to"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.convert.except.to"), LanguageLevel.PYTHON34);
   }
 
   public void testConvertBuiltins() {
-    doTest(PyBundle.message("INTN.convert.builtin.import"), LanguageLevel.PYTHON30);
-  }
-
-  public void testRemoveLeadingU() {
-    doTest(PyBundle.message("INTN.remove.leading.$0", "U"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.convert.builtin.import"), LanguageLevel.PYTHON34);
   }
 
   public void testRemoveLeadingF() {
@@ -90,23 +86,23 @@ public class  PyIntentionTest extends PyTestCase {
 
   // PY-18972
   public void testRemoveTrailingL() {
-    doTest(PyBundle.message("INTN.remove.trailing.l"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.remove.trailing.l"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceOctalNumericLiteral() {
-    doTest(PyBundle.message("INTN.replace.octal.numeric.literal"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.replace.octal.numeric.literal"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceListComprehensions() {
-    doTest(PyBundle.message("INTN.replace.list.comprehensions"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.replace.list.comprehensions"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceRaiseStatement() {
-    doTest(PyBundle.message("INTN.replace.raise.statement"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.replace.raise.statement"), LanguageLevel.PYTHON34);
   }
 
   public void testReplaceBackQuoteExpression() {
-    doTest(PyBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON34);
   }
 
   /*
@@ -236,7 +232,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertVariadicParamPositionalContainerInPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest(PyBundle.message("INTN.convert.variadic.param")));
   }
 
   // PY-26284

@@ -65,7 +65,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets3K() {
-    doTest(LanguageLevel.PYTHON30, true, false);    
+    doTest(LanguageLevel.PYTHON34, true, false);    
   }
   
   public void testBreakOutsideOfLoop() {
@@ -128,11 +128,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testRegularAfterVarArgs() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testKeywordOnlyArguments() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testMalformedStringTripleQuoteUnterminated() {
@@ -156,7 +156,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testUnsupportedFeaturesInPython3() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   // PY-6703
@@ -373,7 +373,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-22729
   public void testParametersWithAnnotationsAndDefaults() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-26491

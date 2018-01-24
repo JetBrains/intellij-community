@@ -219,7 +219,7 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   // PY-14774
   public void testAnnotationsForStarredParametersAreNotShownInDialog() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, "def func(a, b:int, *args: tuple, c:list, d:str='foo', ** kwargs:dict):\n" +
                                                          "    pass");
       final PyFunction function = (PyFunction)new PyChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor());
@@ -312,11 +312,17 @@ public class PyChangeSignatureTest extends PyTestCase {
 
   // PY-16683
   public void testKeywordOnlyParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
-      doChangeSignatureTest(null, Arrays.asList(new PyParameterInfo(0, "x", null, false),
-                                                new PyParameterInfo(1, "*args", null, false),
-                                                new PyParameterInfo(-1, "foo", "None", false)));
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () ->
+        doChangeSignatureTest(null,
+                              Arrays.asList(
+                                new PyParameterInfo(0, "x", null, false),
+                                new PyParameterInfo(1, "*args", null, false),
+                                new PyParameterInfo(-1, "foo", "None", false)
+                              )
+        )
+    );
   }
 
   // PY-24602

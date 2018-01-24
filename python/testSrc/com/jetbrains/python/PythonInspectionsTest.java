@@ -24,7 +24,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) {
-    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON30);
+    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON34);
   }
 
   private void doTestWithLanguageLevel(String testName,

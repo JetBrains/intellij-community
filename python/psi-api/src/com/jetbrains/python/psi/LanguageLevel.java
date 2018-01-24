@@ -43,6 +43,14 @@ public enum LanguageLevel {
   PYTHON25(25, false, true, false, false),
   PYTHON26(26, true, true, false, false),
   PYTHON27(27, true, true, true, false),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   * Use it only to distinguish Python 2 and Python 3.
+   * Consider using {@link LanguageLevel#isPython2()}.
+   * Replace {@code level.isOlderThan(PYTHON30)} with {@code level.isPython2()}
+   * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
+   */
+  @Deprecated
   PYTHON30(30, true, false, false, true),
   PYTHON31(31, true, false, true, true),
   PYTHON32(32, true, false, true, true),
@@ -58,8 +66,13 @@ public enum LanguageLevel {
   @Deprecated
   public static final List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
 
-  public static final List<LanguageLevel> SUPPORTED_LEVELS = ImmutableList.copyOf(Stream.of(values()).filter(v -> v.myVersion >= 26).collect(
-    Collectors.toList())); // Python versions 2.4 and 2.5 aren't supported anymore
+  public static final List<LanguageLevel> SUPPORTED_LEVELS =
+    ImmutableList.copyOf(
+      Stream
+        .of(values())
+        .filter(v -> v.myVersion >= 26 && v.myVersion != 30)
+        .collect(Collectors.toList())
+    );
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
   private static final LanguageLevel DEFAULT3 = PYTHON37;

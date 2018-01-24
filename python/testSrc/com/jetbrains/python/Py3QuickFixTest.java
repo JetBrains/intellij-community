@@ -56,31 +56,31 @@ public class Py3QuickFixTest extends PyTestCase {
 
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInSuperInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperKeywordOnlyParamInInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperSingleStarParamInSuperInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-15867
   public void testAddCallSuperSingleStarParamInSuperInitAndVarargInInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
   // PY-11561
   public void testAddCallSuperTypeAnnotationsPreserved() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
 
@@ -91,25 +91,25 @@ public class Py3QuickFixTest extends PyTestCase {
 
   // PY-15867
   public void testAddCallSuperNoRequiredKeywordOnlyParamAfterSingleStarInSuperInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
   
   // PY-16421
   public void testAddCallSuperSingleStarParamPreserved() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
   
     // PY-15867
   public void testAddCallSuperRequiredKeywordOnlyParamAfterSingleStarInSuperInitIsMerged() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30,
+    runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
   
   // PY-16428 
   public void testAddParameterNotAvailableInsideAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
                                                                     PyBundle.message("QFIX.unresolved.reference.add.param.$0", "unresolved"), false, false));
   }
 

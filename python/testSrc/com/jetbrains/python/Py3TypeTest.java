@@ -174,7 +174,7 @@ public class Py3TypeTest extends PyTestCase {
   
   // PY-16987
   public void testNoTypeInGoogleDocstringParamAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def f(x: int):\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def f(x: int):\n" +
                                                                  "    \"\"\"\n" +
                                                                  "    Args:\n" +
                                                                  "        x: foo\n" +
@@ -184,7 +184,7 @@ public class Py3TypeTest extends PyTestCase {
   
   // PY-16987
   public void testUnfilledTypeInGoogleDocstringParamAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def f(x: int):\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def f(x: int):\n" +
                                                                  "    \"\"\"\n" +
                                                                  "    Args:\n" +
                                                                  "        x (): foo\n" +
@@ -194,7 +194,7 @@ public class Py3TypeTest extends PyTestCase {
   
   // PY-16987
   public void testNoTypeInNumpyDocstringParamAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def f(x: int):\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def f(x: int):\n" +
                                                                  "    \"\"\"\n" +
                                                                  "    Parameters\n" +
                                                                  "    ----------\n" +
@@ -206,7 +206,7 @@ public class Py3TypeTest extends PyTestCase {
   
   // PY-17010
   public void testAnnotatedReturnTypePrecedesDocstring() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def func() -> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def func() -> int:\n" +
                                                                  "    \"\"\"\n" +
                                                                  "    Returns:\n" +
                                                                  "        str\n" +
@@ -216,7 +216,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-17010
   public void testAnnotatedParamTypePrecedesDocstring() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("int", "def func(x: int):\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("int", "def func(x: int):\n" +
                                                                  "    \"\"\"\n" +
                                                                  "    Args:\n" +
                                                                  "        x (str):\n" +
@@ -259,7 +259,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-1427
   public void testBytesLiteral() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTest("bytes", "expr = b'foo'"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest("bytes", "expr = b'foo'"));
   }
 
   // PY-20770

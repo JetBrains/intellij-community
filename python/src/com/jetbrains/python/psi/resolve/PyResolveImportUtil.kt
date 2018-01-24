@@ -337,7 +337,7 @@ private fun isRelativeImportResult(name: QualifiedName, directory: PsiDirectory,
     return true
   }
   else {
-    val py2 = LanguageLevel.forElement(directory).isOlderThan(LanguageLevel.PYTHON30)
+    val py2 = LanguageLevel.forElement(directory).isPython2
     return context.relativeLevel == 0 && py2 && PyUtil.isPackage(directory, false, null) &&
         result is PsiFileSystemItem && name != QualifiedNameFinder.findShortestImportableQName(result)
   }

@@ -211,7 +211,7 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
 
   // PY-6625
   public void testNonlocal() {
-    doTest("baz", LanguageLevel.PYTHON30);
+    doTest("baz", LanguageLevel.PYTHON34);
   }
 
   // PY-7381

@@ -83,7 +83,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   public void testCallExpression() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testBasestring() {
@@ -194,7 +194,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   // PY-26510
   public void testTryFinallyEmptyRaisePy3() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

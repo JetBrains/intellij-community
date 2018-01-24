@@ -666,7 +666,7 @@ public class PyTypeChecker {
 
     final boolean isPy2 = subClassFile instanceof PyiFile
                           ? PyBuiltinCache.getInstance(subClass).getObjectType(PyNames.TYPE_UNICODE) != null
-                          : LanguageLevel.forElement(subClass).isOlderThan(LanguageLevel.PYTHON30);
+                          : LanguageLevel.forElement(subClass).isPython2();
 
     final String superClassName = superClass.getName();
     return isPy2 && PyNames.TYPE_STR.equals(superClassName) || !isPy2 && PyNames.TYPE_BYTES.equals(superClassName);

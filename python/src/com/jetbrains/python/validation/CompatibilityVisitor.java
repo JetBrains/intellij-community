@@ -50,8 +50,6 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   static {
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
-    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON31, Sets.newHashSet("R", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON32, Sets.newHashSet("R", "B", "BR"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON36, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
     AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON37, Sets.newHashSet("R", "U", "B", "BR", "RB", "F", "FR", "RF"));
@@ -134,7 +132,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
       if (qName != null) {
         if (qName.matches("builtins")) {
-          registerForAllMatchingVersions(level -> level.isPython2(), " not have module builtins", node, new ReplaceBuiltinsQuickFix());
+          registerForAllMatchingVersions(LanguageLevel::isPython2, " not have module builtins", node, new ReplaceBuiltinsQuickFix());
         }
         else if (qName.matches("__builtin__")) {
           registerForAllMatchingVersions(LanguageLevel::isPy3K, " not have module __builtin__", node, new ReplaceBuiltinsQuickFix());
@@ -148,7 +146,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     super.visitPyStarExpression(node);
 
     if (node.isAssignmentTarget()) {
-      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
+      registerOnFirstMatchingVersion(LanguageLevel::isPython2,
                                      "Python versions < 3.0 do not support starred expressions as assignment targets",
                                      node);
     }
@@ -330,7 +328,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
     final PsiElement firstChild = node.getFirstChild();
     if (firstChild != null && PyNames.SUPER.equals(firstChild.getText()) && ArrayUtil.isEmpty(node.getArguments())) {
-      registerForAllMatchingVersions(level -> level.isPython2(),
+      registerForAllMatchingVersions(LanguageLevel::isPython2,
                                      " not support this syntax. super() should have arguments in Python 2",
                                      node,
                                      null);
@@ -407,7 +405,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (sliceItem != null) {
         return;
       }
-      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
+      registerOnFirstMatchingVersion(LanguageLevel::isPython2,
                                      "Python versions < 3.0 do not support '...' outside of sequence slicings.",
                                      node);
     }
@@ -557,7 +555,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   @Override
   public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
-    registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30), "nonlocal keyword available only since py3", node);
+    registerOnFirstMatchingVersion(LanguageLevel::isPython2, "nonlocal keyword available only since py3", node);
   }
 
   private void highlightIncorrectArguments(@NotNull PyCallExpression callExpression) {

@@ -76,7 +76,7 @@ public class PyMoveTest extends PyTestCase {
 
   // PY-11923
   public void testMovableTopLevelAssignmentDetection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile("/refactoring/move/" + getTestName(true) + ".py");
       assertFalse(isMovableModuleMember(findFirstNamedElement("X1")));
       assertFalse(isMovableModuleMember(findFirstNamedElement("X3")));

@@ -41,7 +41,6 @@ import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
@@ -348,7 +347,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final boolean onlyPython2 = projectGenerator != null && !projectGenerator.supportsPython3();
     final Sdk preferred = ContainerUtil.getFirstItem(sdks);
     if (preferred == null) return null;
-    if (onlyPython2 && PythonSdkType.getLanguageLevelForSdk(preferred).isAtLeast(LanguageLevel.PYTHON30)) {
+    if (onlyPython2 && !PythonSdkType.getLanguageLevelForSdk(preferred).isPython2()) {
       final Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
       return python2Sdk != null ? python2Sdk : preferred;
     }

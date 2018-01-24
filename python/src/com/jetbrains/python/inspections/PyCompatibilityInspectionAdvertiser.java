@@ -121,7 +121,7 @@ public class PyCompatibilityInspectionAdvertiser implements Annotator {
   @Nullable
   private static LanguageLevel getLatestConfiguredCompatiblePython3Version(@NotNull PsiElement element) {
     final LanguageLevel latestVersion = getLatestConfiguredCompatiblePythonVersion(element);
-    return latestVersion != null && latestVersion.isAtLeast(LanguageLevel.PYTHON30) ? latestVersion : null;
+    return latestVersion != null && !latestVersion.isPython2() ? latestVersion : null;
   }
 
   private static void showStalePython3VersionWarning(@NotNull PyFile file, 

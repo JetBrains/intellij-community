@@ -121,7 +121,7 @@ public class PyPullUpPresenterTest extends PyRefactoringPresenterTestCase<PyPull
    * Checks that some members are not allowed (and may nto be abstract), while others are for Py3
    */
   public void testMembersPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> ensureCorrectMembersForHugeChild(true));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureCorrectMembersForHugeChild(true));
   }
 
   /**

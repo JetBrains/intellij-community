@@ -358,7 +358,7 @@ public class PyIndentTest extends PyTestCase {
   // PY-24432
   public void testUnindentAfterEllipsis() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON30,
+      LanguageLevel.PYTHON34,
       () ->
         doTest("def foo():\n" +
                "    if True:\n" +
