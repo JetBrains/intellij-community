@@ -12,7 +12,7 @@ internal fun createComponentInfo(component: Any, stateSpec: State?): ComponentIn
     else -> ComponentInfoImpl(component, stateSpec)
   }
 
-  if (stateSpec != null && stateSpec.storages.all { it.roamingType === RoamingType.DISABLED }) {
+  if (stateSpec != null && !stateSpec.storages.isEmpty() && stateSpec.storages.all { it.roamingType === RoamingType.DISABLED }) {
     componentInfo.lastSaved = (System.currentTimeMillis() / 1000).toInt()
   }
 
