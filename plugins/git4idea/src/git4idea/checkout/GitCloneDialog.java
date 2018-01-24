@@ -67,9 +67,4 @@ public class GitCloneDialog extends CloneDvcsDialog {
   protected String getDimensionServiceKey() {
     return "GitCloneDialog";
   }
-
-  @Override
-  protected String getHelpId() {
-    return "reference.VersionControl.Git.CloneRepository";
-  }
 }
