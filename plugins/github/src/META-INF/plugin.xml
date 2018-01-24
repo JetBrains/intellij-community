@@ -19,7 +19,6 @@
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <checkoutProvider implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
