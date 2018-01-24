@@ -62,48 +62,56 @@ internal class DiffLineMarkerRenderer(
     }
 
     if (myHideWithoutLineNumbers && !editor.getSettings().isLineNumbersShown) {
+      // draw only in "editor" part of the gutter (rightmost part of foldings' "[+]" )
       x1 = gutter.whitespaceSeparatorOffset
     }
     else {
       val annotationsOffset = gutter.annotationsAreaOffset
       val annotationsWidth = gutter.annotationsAreaWidth
       if (annotationsWidth != 0) {
-        drawMarker(editor, g, x1, annotationsOffset, y1, y2, false, false)
+        drawMarker(editor, g, x1, annotationsOffset, y1, y2)
         x1 = annotationsOffset + annotationsWidth
       }
     }
 
-    if (myIgnoredFoldingOutline || mySkipped) {
+    if (mySkipped) {
       val xOutline = gutter.whitespaceSeparatorOffset
-      drawMarker(editor, g, xOutline, x2, y1, y2, true, mySkipped)
-      drawMarker(editor, g, x1, xOutline, y1, y2, false, false)
+      drawMarker(editor, g, xOutline, x2, y1, y2, paintBackground = false, paintBorder = true) // over "editor"
+      drawMarker(editor, g, x1, xOutline, y1, y2, paintBackground = true, paintBorder = true, useIgnoredBackgroundColor = true) // over "gutter"
+    }
+    else if (myIgnoredFoldingOutline) {
+      val xOutline = gutter.whitespaceSeparatorOffset
+      drawMarker(editor, g, xOutline, x2, y1, y2, useIgnoredBackgroundColor = true) // over "editor"
+      drawMarker(editor, g, x1, xOutline, y1, y2) // over "gutter"
     }
     else {
-      drawMarker(editor, g, x1, x2, y1, y2, false, false)
+      drawMarker(editor, g, x1, x2, y1, y2)
     }
   }
 
   private fun drawMarker(editor: Editor, g: Graphics2D,
                          x1: Int, x2: Int, y1: Int, y2: Int,
-                         useIgnoredBackgroundColor: Boolean,
-                         paintBorderOnly: Boolean) {
+                         paintBackground: Boolean = !myResolved,
+                         paintBorder: Boolean = myResolved,
+                         dottedLine: Boolean = myResolved,
+                         useIgnoredBackgroundColor: Boolean = false) {
     if (x1 >= x2) return
 
     val color = myDiffType.getColor(editor)
     if (y2 - y1 > 2) {
-      if (!myResolved && !paintBorderOnly) {
-        g.color = if (useIgnoredBackgroundColor || mySkipped) myDiffType.getIgnoredColor(editor) else color
+      if (paintBackground) {
+        g.color = if (useIgnoredBackgroundColor) myDiffType.getIgnoredColor(editor) else color
         g.fillRect(x1, y1, x2 - x1, y2 - y1)
       }
-      if (myResolved || mySkipped) {
-        DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y1, color, false, myResolved)
-        DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y2 - 1, color, false, myResolved)
+      if (paintBorder) {
+        DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y1, color, false, dottedLine)
+        DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y2 - 1, color, false, dottedLine)
       }
     }
     else {
       // range is empty - insertion or deletion
       // Draw 2 pixel line in that case
-      DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y1 - 1, color, true, myResolved)
+      DiffDrawUtil.drawChunkBorderLine(g, x1, x2, y1 - 1, color, true, dottedLine)
     }
   }
 
