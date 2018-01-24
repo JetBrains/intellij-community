@@ -21,10 +21,11 @@ import java.util.Set;
 
 @State(
   name = "UsagesStatistic",
-  storages = @Storage(value = "usage.statistics.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
 )
 public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersistenceComponent
   implements NamedComponent, PersistentStateComponent<Element> {
+  public static final String USAGE_STATISTICS_XML = "usage.statistics.xml";
 
   @NonNls private boolean isShowNotification = true;
   @NotNull private SendPeriod myPeriod = SendPeriod.DAILY;

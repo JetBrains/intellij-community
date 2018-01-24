@@ -1,6 +1,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -102,8 +103,7 @@ class DoNotSaveDefaultsTest {
       componentManager.stateStore.storageManager.expandMacros(APP_CONFIG)), setOf(
       "path.macros.xml" /* todo EP to register (provide) macro dynamically */,
       "stubIndex.xml" /* low-level non-roamable stuff */,
-      "usage.statistics.xml" /* SHOW_NOTIFICATION_ATTR in internal mode */,
-      "feature.usage.statistics.xml" /* non-roamable usage counters */,
+      UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML /* SHOW_NOTIFICATION_ATTR in internal mode */,
       "tomee.extensions.xml", "jboss.extensions.xml",
       "glassfish.extensions.xml" /* javaee non-roamable stuff, it will be better to fix it */,
       "dimensions.xml" /* non-roamable sizes of window, dialogs, etc. */,
