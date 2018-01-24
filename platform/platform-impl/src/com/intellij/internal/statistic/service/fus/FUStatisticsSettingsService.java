@@ -10,13 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-// this service connects to jetbrains.com resources and gets actual info about running statistics services
+// this service connects to jetbrains.com resources and requests actual info about running statistics services
 // 1. url: where to post statistics data.
 // 2. white-list-service: WhiteListService url: this service returns approved UsagesCollectors(groups)
 // 3. permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
 public class FUStatisticsSettingsService extends StatisticsConnectionService {
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
   public  static FUStatisticsSettingsService getInstance() {return  new FUStatisticsSettingsService();}
+
   private FUStatisticsSettingsService() {
     super(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getFUStatisticsSettingsUrl(), null);
   }

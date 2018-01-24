@@ -25,23 +25,46 @@ import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class SendStatisticsComponent implements ApplicationComponent {
+import static com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence.*;
 
-  private static final int DELAY_IN_MIN = 10;
+public class StatisticsJobsScheduler implements ApplicationComponent {
+  private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
+
+  public static final int PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN = 30;
+  public static final int PERSIST_SESSIONS_DELAY_IN_MIN = 12 * 60;
 
   private final FrameStateManager myFrameStateManager;
 
-  public SendStatisticsComponent(@NotNull FrameStateManager frameStateManager) {
+  private static final Map<Project, Future> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
+
+  @Override
+  public void initComponent() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
+    runStatisticsService();
+    runStatisticsSessionsPersistence();
+  }
+
+  public StatisticsJobsScheduler(@NotNull FrameStateManager frameStateManager) {
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
     NotificationsConfiguration.getNotificationsConfiguration().register(
       StatisticsNotificationManager.GROUP_DISPLAY_ID,
@@ -77,21 +100,36 @@ public class SendStatisticsComponent implements ApplicationComponent {
       });
     }
     else if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
-      runWithDelay(statisticsService, DELAY_IN_MIN);
+      runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
 
       // TODO: to be removed in 2018.1
-      runWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * DELAY_IN_MIN);
+      runStatisticsServiceWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * SEND_STATISTICS_DELAY_IN_MIN);
     }
   }
 
-  private static void runWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {
+  private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {
     JobScheduler.getScheduler().schedule(statisticsService::send, delayInMin, TimeUnit.MINUTES);
   }
 
-  @Override
-  public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+  private static void runStatisticsSessionsPersistence() {
+    if (!StatisticsUploadAssistant.isSendAllowed()) return;
 
-    runStatisticsService();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(Project project) {
+        ScheduledFuture<?> future =
+          JobScheduler.getScheduler().scheduleWithFixedDelay(() -> persistProjectUsages(project), PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN,
+                                                             PERSIST_SESSIONS_DELAY_IN_MIN, TimeUnit.MINUTES);
+        myPersistStatisticsSessionsMap.put(project, future);
+      }
+
+      public void projectClosed(Project project) {
+        Future future = myPersistStatisticsSessionsMap.remove(project);
+        if (future != null) {
+          future.cancel(true);
+        }
+      }
+    });
   }
 }

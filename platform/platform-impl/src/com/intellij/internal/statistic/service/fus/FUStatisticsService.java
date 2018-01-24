@@ -4,13 +4,15 @@ package com.intellij.internal.statistic.service.fus;
 import com.google.gson.Gson;
 import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.service.ConfigurableStatisticsService;
-import com.intellij.internal.statistic.service.fus.beans.gson.FSContent;
+import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsAggregator;
+import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -41,6 +43,11 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
       post.setEntity(postingString);
       post.setHeader("Content-type", "application/json");
       HttpResponse response = httpClient.execute(post);
+      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        throw new StatServiceException("Error during data sending... Code: " + response.getStatusLine().getStatusCode());
+      }
+
+      FUStatisticsPersistence.clearSessionPersistence(System.currentTimeMillis());
 
       if (LOG.isDebugEnabled()) {
         HttpEntity entity = response.getEntity();

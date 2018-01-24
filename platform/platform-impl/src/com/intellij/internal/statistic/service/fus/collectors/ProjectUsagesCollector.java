@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+//see ApplicationUsagesCollector class
 public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   private static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");
