@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency
 
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.TimeoutUtil.sleep
 import org.jetbrains.concurrency.AsyncPromise
 import org.junit.Test
@@ -13,10 +14,6 @@ private const val PRINT = false
 
 private class CheckedException : Exception()
 
-private fun isCheckedException(exception: Exception): Boolean {
-  return exception is CheckedException
-}
-
 private fun isMessageError(exception: Exception): Boolean {
   return exception.javaClass.name == "org.jetbrains.concurrency.MessageError"
 }
@@ -25,24 +22,26 @@ private fun log(message: String) {
   if (PRINT) println(message)
 }
 
-private fun promise(state: AsyncPromiseTest.State, `when`: AsyncPromiseTest.When): AsyncPromise<String> {
+private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<String> {
   assert(!isDispatchThread())
+
   val latch = CountDownLatch(1)
   val promise = AsyncPromise<String>()
   val task = {
     try {
       sleep(10)
       when (state) {
-        AsyncPromiseTest.State.RESOLVE -> {
+        AsyncPromiseTest2.State.RESOLVE -> {
           log("resolve promise")
           promise.setResult("resolved")
         }
-        AsyncPromiseTest.State.REJECT -> {
+        AsyncPromiseTest2.State.REJECT -> {
           log("reject promise")
           promise.setError("rejected")
         }
-        AsyncPromiseTest.State.ERROR -> {
+        AsyncPromiseTest2.State.ERROR -> {
           log("notify promise about error to preserve a cause")
+          promise.rejected { /* add empty error handler to ensure that promise will not call LOG.error */ }
           promise.setError(CheckedException())
         }
       }
@@ -55,26 +54,30 @@ private fun promise(state: AsyncPromiseTest.State, `when`: AsyncPromiseTest.When
   }
 
   when (`when`) {
-    AsyncPromiseTest.When.NOW -> {
+    When.NOW -> {
       log("resolve promise immediately")
       task()
     }
-    AsyncPromiseTest.When.AFTER -> {
+    When.AFTER -> {
       log("resolve promise on another thread")
       invokeLater(task)
     }
-    AsyncPromiseTest.When.BEFORE -> {
+    When.BEFORE -> {
       log("resolve promise on another thread before handler is set")
       invokeLater(task)
       sleep(50)
     }
   }
+
   log("add processing handlers")
   promise.processed { log("promise is processed") }
   try {
     log("wait for task completion")
     latch.await(100, TimeUnit.MILLISECONDS)
-    if (0L == latch.count) return promise
+    if (0L == latch.count) {
+      return promise
+    }
+
     throw AssertionError("task is not completed")
   }
   catch (exception: InterruptedException) {
@@ -82,13 +85,13 @@ private fun promise(state: AsyncPromiseTest.State, `when`: AsyncPromiseTest.When
   }
 }
 
-class AsyncPromiseTest {
+private enum class When {
+  NOW, AFTER, BEFORE
+}
+
+class AsyncPromiseTest2 {
   internal enum class State {
     RESOLVE, REJECT, ERROR
-  }
-
-  internal enum class When {
-    NOW, AFTER, BEFORE
   }
 
   @Test
@@ -129,7 +132,6 @@ class AsyncPromiseTest {
     catch (exception: Exception) {
       if (!isMessageError(exception)) throw exception
     }
-
   }
 
   @Test
@@ -141,19 +143,16 @@ class AsyncPromiseTest {
     catch (exception: Exception) {
       if (!isMessageError(exception)) throw exception
     }
-
   }
 
   @Test
   fun testErrorNow() {
     val promise = promise(State.ERROR, When.NOW)
     try {
-      assert(null == promise.blockingGet(100))
+      assertThat(promise.blockingGet(100)).isNull()
     }
-    catch (exception: Exception) {
-      if (!isCheckedException(exception)) throw exception
+    catch (ignored: CheckedException) {
     }
-
   }
 
   @Test
@@ -162,10 +161,8 @@ class AsyncPromiseTest {
     try {
       assert(null == promise.blockingGet(100))
     }
-    catch (exception: Exception) {
-      if (!isCheckedException(exception)) throw exception
+    catch (ignored: CheckedException) {
     }
-
   }
 
   @Test
@@ -174,9 +171,7 @@ class AsyncPromiseTest {
     try {
       assert(null == promise.blockingGet(100))
     }
-    catch (exception: Exception) {
-      if (!isCheckedException(exception)) throw exception
+    catch (ignored: CheckedException) {
     }
-
   }
 }
