@@ -804,6 +804,10 @@ public class EquivalenceChecker {
     final PsiExpression[] args1 = argumentList1 == null ? null : argumentList1.getExpressions();
     final PsiExpressionList argumentList2 = newExpression2.getArgumentList();
     final PsiExpression[] args2 = argumentList2 == null ? null : argumentList2.getExpressions();
+    if (newExpression1.getAnonymousClass() != null || newExpression2.getAnonymousClass() != null) {
+      // simply consider any anonymous classes not matching
+      return EXACT_MISMATCH;
+    }
     return expressionsAreEquivalent(args1, args2);
   }
 
