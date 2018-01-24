@@ -28,6 +28,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
@@ -696,10 +697,12 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
   override fun createLightConfiguration(context: ConfigurationContext): RunConfiguration? {
     // Parent implementation does not support several factories
     // We need to get factory according to settings
-    val conf = findConfigurationFactoryFromSettings(context.module).createTemplateConfiguration(context.project)
+    val psiElement = context.psiLocation ?: return null
+    val module = context.module ?: ModuleUtilCore.findModuleForPsiElement(psiElement) ?: return null
+    val conf = findConfigurationFactoryFromSettings(module).createTemplateConfiguration(context.project)
                  as? PyAbstractTestConfiguration ?: return null
 
-    val ref = Ref(context.psiLocation)
+    val ref = Ref(psiElement)
     if (setupConfigurationFromContext(conf, context, ref)) {
       return conf
     }
