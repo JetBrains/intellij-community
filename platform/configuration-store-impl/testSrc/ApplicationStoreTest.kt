@@ -392,7 +392,7 @@ internal class ApplicationStoreTest {
   }
 
   private fun saveStore() {
-    runInEdtAndWait { componentStore.save(SmartList()) }
+    runInEdtAndWait { componentStore.save(SmartList(), true) }
   }
 
   private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
