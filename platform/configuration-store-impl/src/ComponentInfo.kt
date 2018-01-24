@@ -4,6 +4,7 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.util.ModificationTracker
+import java.util.concurrent.TimeUnit
 
 internal fun createComponentInfo(component: Any, stateSpec: State?): ComponentInfo {
   val componentInfo = when (component) {
@@ -13,7 +14,7 @@ internal fun createComponentInfo(component: Any, stateSpec: State?): ComponentIn
   }
 
   if (stateSpec != null && !stateSpec.storages.isEmpty() && stateSpec.storages.all { it.roamingType === RoamingType.DISABLED }) {
-    componentInfo.lastSaved = (System.currentTimeMillis() / 1000).toInt()
+    componentInfo.lastSaved = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
   }
 
   return componentInfo

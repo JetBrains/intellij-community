@@ -78,7 +78,7 @@ private class PersistenceStateAdapter(val component: Any) : PersistentStateCompo
 abstract class ComponentStoreImpl : IComponentStore {
   private val components = Collections.synchronizedMap(THashMap<String, ComponentInfo>())
   private val settingsSavingComponents = com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList<SettingsSavingComponent>()
-  
+
   internal open val project: Project?
     get() = null
 
@@ -186,7 +186,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val timeLog = if (LOG.isDebugEnabled) StringBuilder(timeLogPrefix) else null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
-    val nowInSeconds: Int = (System.currentTimeMillis() / 1000).toInt()
+    val nowInSeconds: Int = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
     for (name in names) {
       val start = if (timeLog == null) 0 else System.currentTimeMillis()
 
@@ -204,9 +204,14 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        if (!isForce && info.lastSaved != -1 && (nowInSeconds - info.lastSaved) < NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD) {
-          LOG.debug { "Skip $name: was already saved in last 5 minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
-          continue
+        if (info.lastSaved != -1) {
+          if (isForce || (nowInSeconds - info.lastSaved) > NOT_ROAMABLE_COMPONENT_SAVE_THRESHOLD) {
+            info.lastSaved = nowInSeconds
+          }
+          else {
+            LOG.debug { "Skip $name: was already saved in last 4 minutes (lastSaved ${info.lastSaved}, now: $nowInSeconds)" }
+            continue
+          }
         }
 
         commitComponent(externalizationSession, info, name)
