@@ -59,6 +59,7 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -476,6 +477,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     editorKit.getStyleSheet().addRule(".bottom { padding: 3px 9px 5px 7px; }");
     editorKit.getStyleSheet().addRule(".bottom-no-content { padding: 5px 9px 5px 7px; }");
     editorKit.getStyleSheet().addRule("p { padding: 1px 0 2px 0; }");
+    editorKit.getStyleSheet().addRule("ul { padding: 5px 9px 0 7px; }");
+    editorKit.getStyleSheet().addRule("li { padding: 1px 0 2px 0; }");
 
     // sections table
     editorKit.getStyleSheet().addRule(".sections { padding: 0 9px 0 7px; border-spacing: 0; }");
@@ -690,9 +693,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       final int width = definitionPreferredWidth();
       if (width >= 0) {
         myResizing = true;
-        int maxWidth = lookup != null ? 435 : 650;
+        int maxWidth = JBUI.scale(lookup != null ? 435 : 650);
         int height = myEditorPane.getPreferredSize().height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
-        myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(300, width)), Math.max(59, height)));
+        myHint.setSize(new Dimension(Math.min(maxWidth, Math.max(JBUI.scale(300), width)), Math.max(JBUI.scale(59), height)));
       }
     }
 
@@ -707,7 +710,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         Rectangle screenRectangle = ScreenUtil.getScreenRectangle(lookupComponent);
         int lookupWidthAndGap = lookupComponent.getWidth() + 5;
         int x = lookupPosition.x + lookupWidthAndGap;
-        Dimension hintSize = myHint.getSize() != null ? myHint.getSize() : new Dimension(300, 59);
+        Dimension hintSize = myHint.getSize() != null ? myHint.getSize() : new JBDimension(300, 59);
         if (x + hintSize.width > screenRectangle.width) {
           myHint.setSize(new Dimension(screenRectangle.width - x, hintSize.height));
         }
