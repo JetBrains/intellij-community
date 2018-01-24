@@ -114,11 +114,11 @@ public class Py3QuickFixTest extends PyTestCase {
   }
 
   // PY-8991
-  public void testRemoveUnicodePrefixFromGluedStringNodesWithSlash() {
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> {
+  public void testRemoveUnsupportedPrefixFromGluedStringNodesWithSlash() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");
@@ -126,11 +126,11 @@ public class Py3QuickFixTest extends PyTestCase {
   }
 
   // PY-8990
-  public void testRemoveUnicodePrefixFromGluedStringNodesInParenthesis() {
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> {
+  public void testRemoveUnsupportedPrefixFromGluedStringNodesInParenthesis() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
       myFixture.configureByFile(getTestName(false) + ".py");
       myFixture.checkHighlighting(true, false, false);
-      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "U"));
+      final IntentionAction intentionAction = myFixture.findSingleIntention(PyBundle.message("INTN.remove.leading.$0", "F"));
       assertNotNull(intentionAction);
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");

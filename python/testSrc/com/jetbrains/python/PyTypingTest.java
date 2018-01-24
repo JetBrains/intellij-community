@@ -45,7 +45,7 @@ public class PyTypingTest extends PyTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.PYTHON32);
+    setLanguageLevel(LanguageLevel.PYTHON34);
   }
 
   @Override

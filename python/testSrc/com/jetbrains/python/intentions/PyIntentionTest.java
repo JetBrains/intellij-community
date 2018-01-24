@@ -365,24 +365,24 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testReturnTypeInPy3Annotation() {      //PY-7085
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testReturnTypeInPy3Annotation1() {      //PY-8783
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testReturnTypeInPy3Annotation2() {      //PY-8783
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
   
   // PY-17094
   public void testReturnTypeInPy3AnnotationLocalFunction() {
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
   
   public void testReturnTypeInPy3AnnotationNoColon() {
-    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON32);
+    doTest(PyBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testTypeAnnotation3() {  //PY-7087
@@ -390,7 +390,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   private void doTypeAnnotationTest() {
-    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON32);
+    doTest(PyBundle.message("INTN.specify.type.in.annotation"), LanguageLevel.PYTHON34);
   }
 
   public void testTypeAssertion() {

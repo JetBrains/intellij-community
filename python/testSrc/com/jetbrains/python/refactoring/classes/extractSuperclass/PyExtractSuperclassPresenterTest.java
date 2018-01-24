@@ -44,7 +44,7 @@ public class PyExtractSuperclassPresenterTest
    * Also checks that static method COULD be made abstract in Py3K
    */
   public void testStaticNoObjectPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON32, () -> ensureStaticNoObject(true));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> ensureStaticNoObject(true));
   }
 
   /**

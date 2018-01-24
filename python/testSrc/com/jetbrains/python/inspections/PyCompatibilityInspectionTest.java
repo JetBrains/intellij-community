@@ -59,7 +59,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   public void testRaiseFrom() {
-    doTest(LanguageLevel.PYTHON32);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testReprExpression() {

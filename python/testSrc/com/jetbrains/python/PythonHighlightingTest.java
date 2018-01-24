@@ -164,11 +164,6 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON33, true, false);
   }
 
-  // PY-6702
-  public void testYieldFromBefore33() {
-    doTest(LanguageLevel.PYTHON32, true, false);
-  }
-
   public void testParenthesizedGenerator() {
     doTest(false, false);
   }
@@ -178,7 +173,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testStarArgs() {  // PY-6456
-    doTest(LanguageLevel.PYTHON32, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testDocstring() {  // PY-8025
