@@ -33,7 +33,7 @@ public class StatisticsConnectionService extends SettingsConnectionService {
     this("localhost", null);
   }
 
-  public StatisticsConnectionService(@NotNull String settingsUrl, @Nullable String defaultServiceUrl) {
+  public StatisticsConnectionService(@Nullable String settingsUrl, @Nullable String defaultServiceUrl) {
     super(settingsUrl, defaultServiceUrl);
   }
 
