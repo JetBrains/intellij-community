@@ -18,12 +18,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -36,10 +40,7 @@ public class PyTypeHintGenerationUtil {
 
   private PyTypeHintGenerationUtil() {}
 
-  public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
-                                                          @NotNull String annotation,
-                                                          boolean startTemplate,
-                                                          @NotNull List<TextRange> typeRanges) {
+  public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target, AnnotationInfo info, boolean startTemplate) {
 
     final PyClass pyClass = target.getContainingClass();
     if (pyClass == null) {
@@ -51,7 +52,7 @@ public class PyTypeHintGenerationUtil {
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     final String assignedValue = langLevel.isAtLeast(LanguageLevel.PYTHON30) ? "..." : "None";
-    final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + annotation;
+    final String declarationText = target.getName() + " = " + assignedValue + " " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
     final PyAssignmentStatement declaration = generator.createFromText(langLevel, PyAssignmentStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
 
@@ -62,12 +63,12 @@ public class PyTypeHintGenerationUtil {
     });
 
     if (startTemplate && insertedComment != null) {
-      openEditorAndAddTemplateForTypeComment(insertedComment, annotation, typeRanges);
+      openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
     }
   }
 
   public static void insertStandaloneAttributeAnnotation(@NotNull PyTargetExpression target,
-                                                         @NotNull String annotation,
+                                                         @NotNull AnnotationInfo info,
                                                          boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
@@ -82,7 +83,7 @@ public class PyTypeHintGenerationUtil {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(target.getProject());
-    final String declarationText = target.getName() + ": " + annotation;
+    final String declarationText = target.getName() + ": " + info.getAnnotationText();
     final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
     final PsiElement anchorBefore = findPrecedingAnchorForAttributeDeclaration(pyClass);
 
@@ -106,7 +107,7 @@ public class PyTypeHintGenerationUtil {
     return null;
   }
 
-  public static void insertVariableAnnotation(@NotNull PyTargetExpression target, @NotNull String annotation, boolean startTemplate) {
+  public static void insertVariableAnnotation(@NotNull PyTargetExpression target, @NotNull AnnotationInfo info, boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
     if (langLevel.isOlderThan(LanguageLevel.PYTHON36)) {
       throw new IllegalArgumentException("Target '" + target.getText() + "' doesn't belong to Python 3.6+ project: " + langLevel);
@@ -122,14 +123,14 @@ public class PyTypeHintGenerationUtil {
       final SmartPsiElementPointer<PyAssignmentStatement> pointer = manager.createSmartPsiElementPointer(assignment);
       createdAnnotationOwner = WriteAction.compute(() -> {
         return PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
-          document.insertString(target.getTextRange().getEndOffset(), ": " + annotation);
+          document.insertString(target.getTextRange().getEndOffset(), ": " + info.getAnnotationText());
           return pointer.getElement();
         });
       });
     }
     else {
       final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-      final String declarationText = target.getName() + ": " + annotation;
+      final String declarationText = target.getName() + ": " + info.getAnnotationText();
       final PyTypeDeclarationStatement declaration = generator.createFromText(langLevel, PyTypeDeclarationStatement.class, declarationText);
       final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
       assert statement != null;
@@ -170,13 +171,10 @@ public class PyTypeHintGenerationUtil {
     return assignment != null && assignment.getRawTargets().length == 1 && assignment.getLeftHandSideExpression() == target;
   }
 
-  public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
-                                               @NotNull String annotation,
-                                               boolean startTemplate,
-                                               @NotNull List<TextRange> typeRanges) {
+  public static void insertVariableTypeComment(@NotNull PyTargetExpression target, @NotNull AnnotationInfo info, boolean startTemplate) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
 
-    final String typeCommentText = "  " + TYPE_COMMENT_PREFIX + annotation;
+    final String typeCommentText = "  " + TYPE_COMMENT_PREFIX + info.getAnnotationText();
 
     final PyStatement statement = PsiTreeUtil.getParentOfType(target, PyStatement.class);
     final PsiElement insertionAnchor;
@@ -215,7 +213,7 @@ public class PyTypeHintGenerationUtil {
 
     final PsiComment insertedComment = target.getTypeComment();
     if (startTemplate && insertedComment != null) {
-      openEditorAndAddTemplateForTypeComment(insertedComment, annotation, typeRanges);
+      openEditorAndAddTemplateForTypeComment(insertedComment, info.getAnnotationText(), info.getTypeRanges());
     }
   }
 
@@ -239,6 +237,85 @@ public class PyTypeHintGenerationUtil {
         templateBuilder.replaceRange(range.shiftRight(TYPE_COMMENT_PREFIX.length()), replacementText);
       }
       WriteAction.run(() -> templateBuilder.run(editor, true));
+    }
+  }
+
+  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types, @NotNull PyFile file) {
+    final Set<PyClass> classes = new HashSet<>();
+    final Set<String> namesFromTyping = new HashSet<>();
+
+    for (PyType type : types) {
+      collectImportTargetsFromType(type, classes, namesFromTyping);
+    }
+
+    final boolean builtinTyping = LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON35);
+    final ImportPriority priority = builtinTyping ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
+    for (String name : namesFromTyping) {
+      AddImportHelper.addOrUpdateFromImportStatement(file, "typing", name, null, priority, null);
+    }
+
+    for (PyClass pyClass : classes) {
+      PyClassRefactoringUtil.insertImport(file, pyClass, null, true);
+    }
+  }
+
+  private static void collectImportTargetsFromType(@Nullable PyType type, @NotNull Set<PyClass> classes, @NotNull Set<String> names) {
+    if (type == null) {
+      names.add("Any");
+    }
+    else if (type instanceof PyUnionType) {
+      final Collection<PyType> members = ((PyUnionType)type).getMembers();
+      final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
+      names.add(isOptional ? "Optional" : "Union");
+      for (PyType pyType : members) {
+        collectImportTargetsFromType(pyType, classes, names);
+      }
+    }
+    else if (type instanceof PyClassType) {
+      classes.add(((PyClassType)type).getPyClass());
+    }
+    else if (type instanceof PyCollectionType) {
+      if (type instanceof PyCollectionTypeImpl) {
+        classes.add(((PyCollectionTypeImpl)type).getPyClass());
+      }
+      for (PyType pyType : ((PyCollectionType)type).getElementTypes()) {
+        collectImportTargetsFromType(pyType, classes, names);
+      }
+    }
+  }
+
+  public static final class AnnotationInfo {
+    private final String myAnnotationText;
+    private final List<PyType> myTypes;
+    private final List<TextRange> myTypeRanges;
+
+    public AnnotationInfo(@NotNull String annotationText) {
+      this(annotationText, Collections.emptyList(), Collections.singletonList(TextRange.allOf(annotationText)));
+    }
+
+    public AnnotationInfo(@NotNull String annotationText, @Nullable PyType type) {
+      this(annotationText, Collections.singletonList(type), Collections.singletonList(TextRange.allOf(annotationText)));
+    }
+
+    public AnnotationInfo(@NotNull String annotationText, @NotNull List<PyType> types, @NotNull List<TextRange> typeRanges) {
+      myAnnotationText = annotationText;
+      myTypes = types;
+      myTypeRanges = typeRanges;
+    }
+
+    @NotNull
+    public String getAnnotationText() {
+      return myAnnotationText;
+    }
+
+    @NotNull
+    public List<PyType> getTypes() {
+      return myTypes;
+    }
+
+    @NotNull
+    public List<TextRange> getTypeRanges() {
+      return myTypeRanges;
     }
   }
 }
