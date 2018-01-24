@@ -14,6 +14,7 @@ import com.intellij.util.ImageLoader;
 import com.intellij.util.ImageLoader.ImageDesc.Type;
 import com.intellij.util.ImageLoader.LoadFunction;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
@@ -46,6 +47,36 @@ public class IconsLoadTime extends DumbAwareAction {
     }
   }
 
+  public static class StatData {
+    public final Type type;
+    public final boolean startup;
+    public final int count;
+
+    // millis
+    public final float totalTime;
+    public final float averageTime;
+    public final float medianTime;
+
+    private StatData(Type type, boolean startup, int totalTime, int averageTime, int medianTime, int count) {
+      this.type = type;
+      this.startup = startup;
+      this.count = count;
+
+      this.totalTime = totalTime / 1000000f;
+      this.averageTime = averageTime / 1000000f;
+      this.medianTime = medianTime / 1000000f;
+    }
+
+    @Override
+    public String toString() {
+      return type + " load time: " +
+             (startup ? "ide_startup=" : "total=") + String.format("%.02fms", totalTime) +
+             ", average=" + String.format("%.02fms", averageTime) +
+             ", median=" + String.format("%.02fms", medianTime) +
+             "; number of icons: " + count;
+    }
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     log(false);
@@ -57,21 +88,20 @@ public class IconsLoadTime extends DumbAwareAction {
   }
 
   private static void log(boolean measureStartupLoad, Type type) {
+    StatData data = getStatData(measureStartupLoad, type);
+    if (data != null) LOG.info(data.toString());
+  }
+
+  public static @Nullable StatData getStatData(boolean measureStartupLoad, Type type) {
     List<Integer> stats = getStats(type);
-    if (stats == null || stats.isEmpty()) return;
+    if (stats == null || stats.isEmpty()) return null;
 
     int size = stats.size();
-    long sum = stats.stream().mapToInt(Integer::intValue).sum();
-    long average = sum / size;
-    long median = (size % 2 == 0) ? stats.get(size / 2 - 1) + stats.get(size / 2) : stats.get(size / 2);
+    int sum = stats.stream().mapToInt(Integer::intValue).sum();
+    int average = sum / size;
+    int median = (size % 2 == 0) ? stats.get(size / 2 - 1) + stats.get(size / 2) : stats.get(size / 2);
 
-    Function<Long, String> ms = (nano) -> String.format("%.02fms", nano / 1000000f);
-
-    LOG.info(type + " load time: " +
-             (measureStartupLoad ? "ide_startup=" : "total=") + ms.apply(sum) +
-             ", average=" + ms.apply(average) +
-             ", median=" + ms.apply(median) +
-             "; number of icons: " + size);
+    return new StatData(type, measureStartupLoad, sum, average, median, size);
   }
 
   private static Image measure(LoadFunction func, Type type) throws IOException {
