@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.Pass;
@@ -651,7 +651,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!(parent instanceof PsiAnonymousClass) && aClass.getNameIdentifier() == identifier) {
         myHolder.add(HighlightNamesUtil.highlightClassName(aClass, identifier, colorsScheme));
       }
-      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_X)) {
+      if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
         myHolder.add(HighlightClassUtil.checkVarClassConflict(aClass, identifier));
       }
       if (!myHolder.hasErrorResults() && myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
