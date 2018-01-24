@@ -44,6 +44,8 @@ public class FUStatisticsService extends ConfigurableStatisticsService<FUStatist
         throw new StatServiceException("Error during data sending. \n " + responseMessage);
       }
       FUStatisticsPersistence.clearSessionPersistence(System.currentTimeMillis());
+      FUStatisticsPersistence.persistSentState(content);
+
       if (LOG.isDebugEnabled()) LOG.debug(getResponseMessage(response));
 
       return content;
