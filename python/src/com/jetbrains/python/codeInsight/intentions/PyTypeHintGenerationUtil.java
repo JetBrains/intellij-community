@@ -13,11 +13,9 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.psi.*;
@@ -58,6 +56,7 @@ public class PyTypeHintGenerationUtil {
 
     final PsiComment insertedComment = WriteAction.compute(() -> {
       PyAssignmentStatement inserted = (PyAssignmentStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
       inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
       return as(inserted.getLastChild(), PsiComment.class);
     });
@@ -89,6 +88,7 @@ public class PyTypeHintGenerationUtil {
 
     final PyTypeDeclarationStatement insertedDeclaration = WriteAction.compute(() -> {
       final PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
+      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
       return CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
     });
 
@@ -122,10 +122,15 @@ public class PyTypeHintGenerationUtil {
       final PyAssignmentStatement assignment = (PyAssignmentStatement)target.getParent();
       final SmartPsiElementPointer<PyAssignmentStatement> pointer = manager.createSmartPsiElementPointer(assignment);
       createdAnnotationOwner = WriteAction.compute(() -> {
-        return PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
+        final PyAssignmentStatement updated = PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
           document.insertString(target.getTextRange().getEndOffset(), ": " + info.getAnnotationText());
           return pointer.getElement();
         });
+        if (updated == null) {
+          return null;
+        }
+        addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
+        return CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(updated);
       });
     }
     else {
@@ -136,6 +141,7 @@ public class PyTypeHintGenerationUtil {
       assert statement != null;
       createdAnnotationOwner = WriteAction.compute(() -> {
         final PyAnnotationOwner inserted = (PyAnnotationOwner)statement.getParent().addBefore(declaration, statement);
+        addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
         return CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
       });
     }
@@ -191,25 +197,34 @@ public class PyTypeHintGenerationUtil {
       throw new IllegalArgumentException("Target expression must belong to an assignment, \"with\" statement or \"for\" loop");
     }
 
+    final ThrowableRunnable<RuntimeException> insertComment;
     if (insertionAnchor instanceof PsiComment) {
       final String combinedTypeCommentText = typeCommentText + " " + insertionAnchor.getText();
       final PsiElement lastNonComment = PyPsiUtils.getPrevNonCommentSibling(insertionAnchor, true);
       final int startOffset = lastNonComment.getTextRange().getEndOffset();
       final int endOffset = insertionAnchor.getTextRange().getEndOffset();
-      WriteAction.run(() -> {
+      insertComment = () -> {
         PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
           document.replaceString(startOffset, endOffset, combinedTypeCommentText);
         });
-      });
+      };
     }
     else if (insertionAnchor != null) {
       final int offset = insertionAnchor.getTextRange().getEndOffset();
-      WriteAction.run(() -> {
+      insertComment = () -> {
         PyUtil.updateDocumentUnblockedAndCommitted(target, document -> {
           document.insertString(offset, typeCommentText);
         });
-      });
+      };
     }
+    else {
+      return;
+    }
+
+    WriteAction.run(() -> {
+      insertComment.run();
+      addImportsForTypeAnnotations(info.getTypes(), target.getContainingFile());
+    });
 
     final PsiComment insertedComment = target.getTypeComment();
     if (startTemplate && insertedComment != null) {
@@ -240,7 +255,7 @@ public class PyTypeHintGenerationUtil {
     }
   }
 
-  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types, @NotNull PyFile file) {
+  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types, @NotNull PsiFile file) {
     final Set<PyClass> classes = new HashSet<>();
     final Set<String> namesFromTyping = new HashSet<>();
 
