@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
@@ -367,6 +368,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     myIsCommitInProgress = true;
     boolean success = true;
     try {
+      Thread.currentThread().sleep(4000);
       if (viewProvider == null) {
         handleCommitWithoutPsi(document);
       }
@@ -375,12 +377,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
     }
     catch (Throwable e) {
-      try {
-        forceReload(virtualFile, viewProvider);
-      }
-      finally {
+      //noinspection InstanceofCatchParameter
+      if (!(e instanceof ControlFlowException)) {
         LOG.error(e);
       }
+
+      forceReload(virtualFile, viewProvider);
     }
     finally {
       if (success) {
