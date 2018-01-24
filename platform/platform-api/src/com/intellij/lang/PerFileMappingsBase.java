@@ -294,14 +294,15 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       public void before(@NotNull List<? extends VFileEvent> events) {
         if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) return;
         Project project = CommandProcessor.getInstance().getCurrentCommandProject();
-        UndoManager undoManager = (project != null ? UndoManager.getInstance(project) : UndoManager.getGlobalInstance());
-        if (project == null) return;
+        if (project == null || !project.isOpen()) return;
+
         MyUndoableAction action = createUndoableAction(events);
-        if (action != null) {
-          action.doRemove(action.removed);
-          lastAction = new WeakReference<>(action);
-          undoManager.undoableActionPerformed(action);
-        }
+        if (action == null) return;
+        
+        action.doRemove(action.removed);
+        lastAction = new WeakReference<>(action);
+        
+        UndoManager.getInstance(project).undoableActionPerformed(action);
       }
 
       @Override
