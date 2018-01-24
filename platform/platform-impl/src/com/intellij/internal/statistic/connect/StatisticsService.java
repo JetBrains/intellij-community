@@ -15,7 +15,6 @@
  */
 package com.intellij.internal.statistic.connect;
 
-
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -25,24 +24,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@Deprecated // to be removed in 2018.1. it will not be allowed to use own services
 public interface StatisticsService {
 
+  @Deprecated  // to be removed in 2018.1
   ExtensionPointName<StatisticsServiceEP> EP_NAME = ExtensionPointName.create("com.intellij.statisticsService");
-
-  @NonNls String TITLE = "title";
-  @NonNls String DETAILS = "details";
-  @NonNls String ALLOW_CHECKBOX = "allow-checkbox";
 
   StatisticsResult send();
 
   Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener);
-
-  /**
-   * Returns the custom text to be displayed in the statistics dialog. The keys in the map are control IDs ({@link #TITLE}, {@link #DETAILS}
-   * and {@link #ALLOW_CHECKBOX} and the values are the text to be displayed in the dialog.
-   *
-   * @return the text override map, or null if the standard text should be used.
-   */
-  @Nullable
-  Map<String, String> getStatisticsConfigurationLabels();
 }
