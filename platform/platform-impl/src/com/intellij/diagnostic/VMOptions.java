@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -163,7 +161,7 @@ public class VMOptions {
     }
 
     vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
-    if (!FileUtil.isAncestor(canonicalPath(PathManager.getHomePath()), canonicalPath(vmOptionsFile), true)) {
+    if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
       return new File(vmOptionsFile);
     }
@@ -178,15 +176,6 @@ public class VMOptions {
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
     return new File(location, fileName);
-  }
-
-  private static String canonicalPath(String path) {
-    try {
-      return new File(path).getCanonicalPath();
-    }
-    catch (IOException e) {
-      return path;
-    }
   }
 
   //<editor-fold desc="Deprecated stuff.">
