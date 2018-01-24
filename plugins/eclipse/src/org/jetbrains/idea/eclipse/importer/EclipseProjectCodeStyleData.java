@@ -89,7 +89,7 @@ public class EclipseProjectCodeStyleData extends EclipseCodeStylePropertiesImpor
   @Override
   public String toString() {
     String profileName = getFormatterProfileName();
-    return myProjectName + (profileName != null ? "[" + profileName + "]" : "");
+    return myProjectName + (profileName != null ? ": " + profileName : "");
   }
 
   @Nullable
