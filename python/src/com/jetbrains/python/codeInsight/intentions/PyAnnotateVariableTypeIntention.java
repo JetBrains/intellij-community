@@ -4,7 +4,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -16,6 +15,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
@@ -188,59 +188,60 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
     final PyType inferredType = context.getType(target);
     final String annotationText = PythonDocumentationProvider.getTypeName(inferredType, context);
+    final AnnotationInfo info = new AnnotationInfo(annotationText, inferredType);
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, annotationText, true);
+        PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, info, true);
       }
       else {
-        PyTypeHintGenerationUtil.insertVariableAnnotation(classLevelAttrs.get(0), annotationText, true);
+        PyTypeHintGenerationUtil.insertVariableAnnotation(classLevelAttrs.get(0), info, true);
       }
     }
     else {
-      PyTypeHintGenerationUtil.insertVariableAnnotation(target, annotationText, true);
+      PyTypeHintGenerationUtil.insertVariableAnnotation(target, info, true);
     }
   }
 
   private static void insertVariableTypeComment(@NotNull PyTargetExpression target) {
     final TypeEvalContext context = TypeEvalContext.userInitiated(target.getProject(), target.getContainingFile());
-    final Pair<String, List<TextRange>> annotationAndRanges = generateNestedTypeHint(target, context);
-    final String annotationText = annotationAndRanges.getFirst();
-    final List<TextRange> typeRanges = annotationAndRanges.getSecond();
+    final AnnotationInfo info = generateNestedTypeHint(target, context);
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, annotationText, true, typeRanges);
+        PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, info, true);
       }
       else {
         // Use existing class level definition (say, assignment of the default value) for annotation
-        PyTypeHintGenerationUtil.insertVariableTypeComment(classLevelAttrs.get(0), annotationText, true, typeRanges);
+        PyTypeHintGenerationUtil.insertVariableTypeComment(classLevelAttrs.get(0), info, true);
       }
     }
     else {
-      PyTypeHintGenerationUtil.insertVariableTypeComment(target, annotationText, true, typeRanges);
+      PyTypeHintGenerationUtil.insertVariableTypeComment(target, info, true);
     }
   }
 
   @NotNull
-  private static Pair<String, List<TextRange>> generateNestedTypeHint(@NotNull PyTargetExpression target, TypeEvalContext context) {
+  private static AnnotationInfo generateNestedTypeHint(@NotNull PyTargetExpression target, TypeEvalContext context) {
     final PyElement validTargetParent = PsiTreeUtil.getParentOfType(target, PyForPart.class, PyWithItem.class, PyAssignmentStatement.class);
     assert validTargetParent != null;
     final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetParent, target);
     final StringBuilder builder = new StringBuilder();
+    final List<PyType> types = new ArrayList<>();
     final ArrayList<TextRange> typeRanges = new ArrayList<>();
-    generateNestedTypeHint(topmostTarget, context, builder, typeRanges);
-    return Pair.create(builder.toString(), typeRanges);
+    generateNestedTypeHint(topmostTarget, context, builder, types, typeRanges);
+    return new AnnotationInfo(builder.toString(), types, typeRanges);
   }
 
   private static void generateNestedTypeHint(@NotNull PsiElement target,
                                              @NotNull TypeEvalContext context,
                                              @NotNull StringBuilder builder,
+                                             @NotNull List<PyType> types,
                                              @NotNull List<TextRange> typeRanges) {
     if (target instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)target).getContainedExpression();
       if (contained != null) {
-        generateNestedTypeHint(contained, context, builder, typeRanges);
+        generateNestedTypeHint(contained, context, builder, types, typeRanges);
       }
     }
     else if (target instanceof PyTupleExpression) {
@@ -250,14 +251,16 @@ public class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction {
         if (i > 0) {
           builder.append(", ");
         }
-        generateNestedTypeHint(elements[i], context, builder, typeRanges);
+        generateNestedTypeHint(elements[i], context, builder, types, typeRanges);
       }
       builder.append(")");
     }
     else if (target instanceof PyTypedElement) {
-      final String type = PythonDocumentationProvider.getTypeName(context.getType((PyTypedElement)target), context);
-      typeRanges.add(TextRange.from(builder.length(), type.length()));
-      builder.append(type);
+      final PyType singleTargetType = context.getType((PyTypedElement)target);
+      final String singleTargetAnnotation = PythonDocumentationProvider.getTypeName(singleTargetType, context);
+      types.add(singleTargetType);
+      typeRanges.add(TextRange.from(builder.length(), singleTargetAnnotation.length()));
+      builder.append(singleTargetAnnotation);
     }
   }
 

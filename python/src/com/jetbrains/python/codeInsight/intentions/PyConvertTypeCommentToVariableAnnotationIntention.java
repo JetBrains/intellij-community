@@ -27,6 +27,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -47,11 +48,11 @@ public class PyConvertTypeCommentToVariableAnnotationIntention extends PyBaseInt
         if (typeComment.getParent() instanceof PyAssignmentStatement && map.size() == 1) {
           final PyTargetExpression target = ContainerUtil.getFirstItem(map.keySet());
           assert target != null;
-          PyTypeHintGenerationUtil.insertVariableAnnotation(target, map.get(target), false);
+          PyTypeHintGenerationUtil.insertVariableAnnotation(target, new AnnotationInfo(map.get(target)), false);
         }
         else {
           for (Map.Entry<PyTargetExpression, String> entry : new ArrayList<>(map.entrySet())) {
-            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), entry.getValue(), false);
+            PyTypeHintGenerationUtil.insertVariableAnnotation(entry.getKey(), new AnnotationInfo(entry.getValue()), false);
           }
         }
 
