@@ -6,7 +6,6 @@ import com.intellij.codeInspection.dataFlow.NullnessUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -48,8 +47,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
         boolean mayChangeSemantics =
           !ExpressionUtils.isNullLiteral(nullBranch) && NullnessUtil.getExpressionNullness(notNullBranch, true) != Nullness.NOT_NULL;
         if (!isOnTheFly && mayChangeSemantics) return;
-        boolean informationLevel = mayChangeSemantics || InspectionProjectProfileManager.isInformationLevel(getShortName(), ternary);
-        holder.registerProblem(informationLevel ? ternary : ternary.getCondition(),
+        holder.registerProblem(ternary.getCondition(),
                                "Can be replaced with Optional.ofNullable()",
                                mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                new ReplaceConditionWithOptionalFix(mayChangeSemantics));
