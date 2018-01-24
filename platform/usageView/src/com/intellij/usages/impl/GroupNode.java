@@ -72,6 +72,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @NotNull
   List<Node> getSwingChildren() {
+    //noinspection unchecked
     return ObjectUtils.notNull(children, Collections.emptyList());
   }
 
@@ -154,10 +155,6 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return null;
   }
 
-  void removeUsage(@NotNull UsageNode usage, @NotNull DefaultTreeModel treeModel) {
-    removeUsagesBulk(Collections.singleton(usage), treeModel);
-  }
-
   int removeUsagesBulk(@NotNull Set<UsageNode> usages, @NotNull DefaultTreeModel treeModel) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     int removed = 0;
@@ -183,7 +180,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
           }
         }
       }
-      if (myChildren.size() > 0) {
+      if (!myChildren.isEmpty()) {
         removeNodesFromParent(treeModel, this, removedNodes);
       }
     }

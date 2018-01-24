@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -133,6 +132,7 @@ public class YourkitFilter implements Filter{
       return "(" + psiPackage.getQualifiedName() + ")";
     }
 
+    @Override
     protected int getIconFlags() {
       return 0;
     }
