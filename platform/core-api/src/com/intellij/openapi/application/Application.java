@@ -138,6 +138,15 @@ public interface Application extends ComponentManager {
 
   /**
    * Saves application settings.
+   *
+   * @param isForce Whether to force save non-roamable component configuration.
+   */
+  default void saveAll(boolean isForce) {
+    saveAll();
+  }
+
+  /**
+   * Saves application settings.
    */
   void saveSettings();
 
