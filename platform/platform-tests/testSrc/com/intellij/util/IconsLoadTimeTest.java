@@ -6,7 +6,10 @@ package com.intellij.util;
 import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.*;
@@ -27,11 +30,20 @@ public class IconsLoadTimeTest {
   // a list of icons for which we have SVG versions
   private static final String ICONS_LIST_PATH = PlatformTestUtil.getPlatformTestDataPath() + "icons/icons_list.txt";
 
+  private static boolean internalProp;
+  private static boolean svgProp;
+
+  @Before
+  public void setState() {
+    internalProp = "true".equalsIgnoreCase(System.getProperty("idea.is.internal"));
+    System.setProperty("idea.is.internal", "true");
+    RegistryValue rv = Registry.get("ide.svg.icon");
+    svgProp = rv.asBoolean();
+    rv.setValue(true);
+  }
+
   @Test
   public void loadIcons() throws ClassNotFoundException, IOException {
-    System.setProperty("idea.is.internal", "true");
-    Registry.get("ide.svg.icon").setValue(true);
-
     assertNotNull(Class.forName(IconsLoadTime.class.getName())); // force static init
 
     try (BufferedReader br = new BufferedReader(new FileReader(new File(ICONS_LIST_PATH)))) {
@@ -50,5 +62,11 @@ public class IconsLoadTimeTest {
     assertEquals("SVG icon load time raised to " + String.format("%.02fms", svgData.averageTime) +
                  ", exceeding max " + SVG_ICON_AVERAGE_LOAD_TIME_ESTIMATE + "ms",
                  true, svgData.averageTime <= SVG_ICON_AVERAGE_LOAD_TIME_ESTIMATE);
+  }
+
+  @After
+  public void restoreState() {
+    System.setProperty("idea.is.internal", internalProp ? "true" : "false");
+    Registry.get("ide.svg.icon").setValue(svgProp);
   }
 }
