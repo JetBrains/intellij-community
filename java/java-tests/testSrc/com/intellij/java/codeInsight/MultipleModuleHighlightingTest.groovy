@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight
+
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ModuleSourceOrderEntry
 import com.intellij.openapi.roots.OrderEntry
+import com.intellij.psi.util.PsiUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
@@ -61,6 +63,53 @@ class Class3 {
 
 """).containingFile.virtualFile)
     myFixture.checkHighlighting()
+  }
+  
+  void "test missed method in hierarchy"() {
+    def mod1 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod1", myFixture.tempDirFixture.findOrCreateDir("mod1"))
+    def mod2 = PsiTestUtil.addModule(project, JavaModuleType.moduleType, "mod2", myFixture.tempDirFixture.findOrCreateDir("mod2"))
+    ModuleRootModificationUtil.addDependency(mod2, mod1)
+
+    myFixture.addFileToProject "mod1/p/A.java", '''
+package p; 
+public class A {
+   public void foo() {}
+}
+'''
+    myFixture.addFileToProject "mod1/p/B.java", '''
+package p; 
+public class B extends A {
+   public void foo() {}
+}
+'''
+    myFixture.addFileToProject "mod1/p/C.java", '''
+package p; 
+public class C extends B {
+   public void foo() {}
+}
+'''
+    myFixture.addFileToProject "mod2/p/A.java", '''
+package p; 
+public class A {
+   public void foo() {}
+}
+'''
+    myFixture.addFileToProject "mod2/p/B.java", '''
+package p; 
+public class B extends A {
+}
+'''
+    def file = myFixture.addFileToProject("mod2/p/D.java", '''
+package p; 
+public class D extends C {
+   {
+      super.foo();
+   }
+}
+''')
+
+     myFixture.configureFromExistingVirtualFile(PsiUtil.getVirtualFile(file))
+     myFixture.checkHighlighting()
   }
 
   void "test class qualifier with inaccessible super"() {
