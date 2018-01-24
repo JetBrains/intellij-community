@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.CommonBundle
@@ -54,7 +52,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
         if (result == Messages.CANCEL) return
 
         try {
-          FileUtil.writeToFile(file, template())
+          FileUtil.writeToFile(file, StringUtil.convertLineSeparators(template(), LineSeparator.getSystemLineSeparator().separatorString))
         }
         catch (ex: IOException) {
           Logger.getInstance(javaClass).warn(file.path, ex)
@@ -71,7 +69,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
       }
     }
     else if (frame != null) {
-      val text = if (file.exists()) StringUtil.convertLineSeparators(FileUtil.loadFile(file)) else template()
+      val text = StringUtil.convertLineSeparators(if (file.exists()) FileUtil.loadFile(file) else template())
 
       object : DialogWrapper(frame, true) {
         private val editor: EditorTextField
