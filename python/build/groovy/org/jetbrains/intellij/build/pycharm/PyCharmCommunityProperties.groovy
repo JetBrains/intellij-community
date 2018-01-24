@@ -24,16 +24,16 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   PyCharmCommunityProperties(String communityHome) {
     productCode = "PC"
     platformPrefix = "PyCharmCore"
-    applicationInfoModule = "python-community-ide-resources"
+    applicationInfoModule = "intellij.pycharmCommunity.resources"
     brandingResourcePaths = ["$communityHome/python/resources"]
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
+    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["intellij.xml.dom"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
-      "dom-impl", "python-community", "python-community-ide-resources",
-      "python-community-ide", "python-community-configure", "python-openapi", "python-psi-api", "platform-main"
+      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharmCommunity.resources",
+      "intellij.pycharmCommunity", "intellij.python.configure", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$communityHome/python/build/plugin-list.txt").readLines()
-    productLayout.mainModules = ["main_pycharm_ce"]
+    productLayout.mainModules = ["intellij.pycharmCommunity.main"]
   }
 
   @Override

@@ -28,17 +28,17 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     baseFileName = "idea"
     platformPrefix = "Idea"
     productCode = "IC"
-    applicationInfoModule = "community-resources"
+    applicationInfoModule = "intellij.ideaCommunity.resources"
     additionalIDEPropertiesFilePaths = ["$home/build/conf/ideaCE.properties".toString()]
     toolsJarRequired = true
     buildCrossPlatformDistribution = true
 
     productLayout.productApiModules = JAVA_API_MODULES
     productLayout.productImplementationModules =  JAVA_IMPLEMENTATION_MODULES +
-                                                 ["duplicates-analysis", "structuralsearch", "structuralsearch-java", "typeMigration", "platform-main"]
-    productLayout.additionalPlatformJars.put("resources.jar", "community-resources")
+                                                 ["intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.java.structuralSearch", "intellij.java.typeMigration", "intellij.platform.main"]
+    productLayout.additionalPlatformJars.put("resources.jar", "intellij.ideaCommunity.resources")
     productLayout.bundledPluginModules = BUNDLED_PLUGIN_MODULES
-    productLayout.mainModules = ["community-main"]
+    productLayout.mainModules = ["intellij.ideaCommunity.main"]
     productLayout.compatiblePluginsToIgnore = PythonCommunityPluginModules.PYCHARM_ONLY_PLUGIN_MODULES
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       CommunityRepositoryModules.androidPlugin([:]),
