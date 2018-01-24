@@ -585,4 +585,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableGetterInLoop() { doTest(); }
   public void testNullabilityBasics() { doTest(); }
   public void testReassignedVarInLoop() { doTest(); }
+  public void testLoopDoubleComparisonNotComplex() { doTest(); }
 }
