@@ -20,13 +20,11 @@ import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.StatisticsService;
-import com.intellij.internal.statistic.connect.StatisticsServiceEP;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -35,12 +33,9 @@ import com.intellij.ui.BalloonLayoutImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 public class SendStatisticsComponent implements ApplicationComponent {
-
-  private static final Logger LOG = Logger.getInstance(SendStatisticsComponent.class);
 
   private static final int DELAY_IN_MIN = 10;
 
@@ -68,7 +63,7 @@ public class SendStatisticsComponent implements ApplicationComponent {
   }
 
   private void runStatisticsService() {
-    final StatisticsService statisticsService = StatisticsUploadAssistant.getStatisticsService();
+    final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
 
     if (StatisticsUploadAssistant.isShouldShowNotification()) {
       myFrameStateManager.addListener(new FrameStateListener.Adapter() {
@@ -82,12 +77,15 @@ public class SendStatisticsComponent implements ApplicationComponent {
       });
     }
     else if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
-      runWithDelay(statisticsService);
+      runWithDelay(statisticsService, DELAY_IN_MIN);
+
+      // TODO: to be removed in 2018.1
+      runWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * DELAY_IN_MIN);
     }
   }
 
-  private static void runWithDelay(@NotNull final StatisticsService statisticsService) {
-    JobScheduler.getScheduler().schedule(statisticsService::send, DELAY_IN_MIN, TimeUnit.MINUTES);
+  private static void runWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {
+    JobScheduler.getScheduler().schedule(statisticsService::send, delayInMin, TimeUnit.MINUTES);
   }
 
   @Override
