@@ -164,8 +164,12 @@ public class RunAnythingUndefinedItem extends RunAnythingItem {
 
     String exeCommand = (myCommandLine.contains(" ")) ? StringUtil.substringBefore(myCommandLine, " ") : myCommandLine;
     String version = RVMSupportUtil.getRVMSdkVersion(sdk);
+    String gemset = RVMSupportUtil.getGemset(sdk);
 
-    if (!COMMANDS.contains(exeCommand) || !RunAnythingCache.getInstance(myProject).CAN_RUN_RVM || version == null) return myCommandLine;
+    if (version == null) return myCommandLine;
+    if (gemset != null) version += '@' + gemset;
+
+    if (!COMMANDS.contains(exeCommand) || !RunAnythingCache.getInstance(myProject).CAN_RUN_RVM) return myCommandLine;
 
     return "rvm " + version + " do " + myCommandLine;
   }
